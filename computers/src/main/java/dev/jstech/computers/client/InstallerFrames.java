@@ -19,6 +19,7 @@ import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -306,7 +307,7 @@ final class InstallerFrames {
         final Wizard c = WIZARD.get();
         g.fillGradient(sx, sy, sx + sw, sy + sh, c.groundFrom(), c.groundTo());
         final String title = GameText.resolve(flow.style().title(flow.systemName()));
-        g.drawString(font, title, sx + 14, sy + 8, c.titleInk(), false);
+        Draw.text(g, font, title, sx + 14, sy + 8, c.titleInk());
 
         final int dx = sx + 22;
         final int dy = sy + 26;
@@ -314,8 +315,8 @@ final class InstallerFrames {
         final int dh = sh - 38;
         bevel(g, dx, dy, dw, dh, c.face(), true);
         g.fillGradient(dx + 2, dy + 2, dx + dw - 2, dy + 2 + TITLE_BAR, c.groundFrom(), c.groundTo());
-        g.drawString(font, GameText.resolve(InstallerScreenTexts.FRAME_WIZARD.with(title)), dx + 6, dy + 6,
-                c.titleInk(), false);
+        Draw.text(g, font, GameText.resolve(InstallerScreenTexts.FRAME_WIZARD.with(title)), dx + 6, dy + 6,
+                c.titleInk());
 
         final int railW = WIZARD_W;
         final int railTop = dy + TITLE_BAR + 8;
@@ -374,17 +375,16 @@ final class InstallerFrames {
             final boolean done = i < running;
             final boolean now = i == running;
             g.fill(sx + 8, ty + 2, sx + 13, ty + 7, done ? c.stepDone() : now ? c.stepNow() : c.stepTodo());
-            g.drawString(font, clip(font, GameText.resolve(flow.steps().get(i).label()), panelW - 26), sx + 17, ty,
-                    done || now ? c.stepInk() : c.stepTodoInk(), false);
+            Draw.text(g, font, clip(font, GameText.resolve(flow.steps().get(i).label()), panelW - 26), sx + 17, ty,
+                    done || now ? c.stepInk() : c.stepTodoInk());
             ty += 11;
         }
         ty += 6;
-        g.drawString(font, GameText.resolve(InstallerScreenTexts.FRAME_COMPLETE_IN), sx + 8, ty, c.note(), false);
-        g.drawString(font, GameText.resolve(InstallerScreenTexts.FRAME_APPROXIMATELY), sx + 8, ty + 9, c.note(),
-                false);
+        Draw.text(g, font, GameText.resolve(InstallerScreenTexts.FRAME_COMPLETE_IN), sx + 8, ty, c.note());
+        Draw.text(g, font, GameText.resolve(InstallerScreenTexts.FRAME_APPROXIMATELY), sx + 8, ty + 9, c.note());
         final int left = Math.max(0, (flow.ticksTotal() - ticksDone) / 20);
-        g.drawString(font, GameText.resolve(InstallerScreenTexts.FRAME_SECONDS.with(left)), sx + 8, ty + 20,
-                c.seconds(), false);
+        Draw.text(g, font, GameText.resolve(InstallerScreenTexts.FRAME_SECONDS.with(left)), sx + 8, ty + 20,
+                c.seconds());
         g.fill(sx + 8, ty + 34, sx + panelW - 8, ty + 40, c.barBack());
         g.fill(sx + 8, ty + 34, sx + 8 + (panelW - 16) * flow.permille(ticksDone) / 1000, ty + 40, c.barFill());
 
@@ -406,8 +406,8 @@ final class InstallerFrames {
         g.fill(cx, dy, cx + cw, dy + dh, c.dialog());
         outline(g, cx, dy, cw, dh, c.dialogEdge());
         g.fillGradient(cx + 1, dy + 1, cx + cw - 1, dy + 1 + TITLE_BAR, c.dialogTitleFrom(), c.dialogTitleTo());
-        g.drawString(font, GameText.resolve(flow.style().title(flow.systemName())), cx + 5, dy + 5,
-                c.dialogTitleInk(), false);
+        Draw.text(g, font, GameText.resolve(flow.style().title(flow.systemName())), cx + 5, dy + 5,
+                c.dialogTitleInk());
         final int by = dy + dh - 18;
         final boolean canGo = flow.canContinue();
         final int[] next = button(g, font, cx + cw - 6 - 52, by, 52,
@@ -432,11 +432,10 @@ final class InstallerFrames {
         outline(g, cx, cy, cw, ch, c.cardEdge());
 
         FramesEmblem.draw(g, cx + 8, cy + 5, editionOf(flow));
-        g.drawString(font, GameText.resolve(flow.style().title(flow.systemName())), cx + 20, cy + 6, c.title(),
-                false);
+        Draw.text(g, font, GameText.resolve(flow.style().title(flow.systemName())), cx + 20, cy + 6, c.title());
         g.fill(cx + 1, cy + 19, cx + cw - 1, cy + 20, c.rule());
-        g.drawString(font, GameText.resolve(flow.style().heading(flow.page(), flow.systemName())), cx + 10, cy + 27,
-                c.heading(), false);
+        Draw.text(g, font, GameText.resolve(flow.style().heading(flow.page(), flow.systemName())), cx + 10, cy + 27,
+                c.heading());
 
         final int by = cy + ch - 20;
         /*
@@ -469,8 +468,7 @@ final class InstallerFrames {
                                    final boolean asks) {
         final Bsd c = BSD.get();
         g.fill(sx, sy, sx + sw, sy + sh, c.ground());
-        g.drawString(font, GameText.resolve(flow.style().title(flow.systemName())), sx + 4, sy + 3, c.groundText(),
-                false);
+        Draw.text(g, font, GameText.resolve(flow.style().title(flow.systemName())), sx + 4, sy + 3, c.groundText());
         g.fill(sx + 4, sy + 12, sx + sw - 4, sy + 13, c.groundText());
 
         final int dx = sx + InstallerLayout.BSD_DIALOG_INSET_X;
@@ -485,7 +483,7 @@ final class InstallerFrames {
         final int titleW = font.width(title);
         final int titleX = dx + (dw - titleW) / 2;
         g.fill(titleX, dy - 4, titleX + titleW, dy + 4, c.face());
-        g.drawString(font, title, titleX, dy - 3, c.select(), false);
+        Draw.text(g, font, title, titleX, dy - 3, c.select());
 
         final boolean copying = flow.page() == InstallerPage.COPY;
         final boolean welcome = flow.page() == InstallerPage.WELCOME;
@@ -572,7 +570,7 @@ final class InstallerFrames {
     /** One letter of a button's label, answering where the next one starts. */
     private static int drawLetter(final GuiGraphics g, final Font font, final String letter, final int x,
                                   final int y, final int ink) {
-        g.drawString(font, letter, x, y, ink, false);
+        Draw.text(g, font, letter, x, y, ink);
         return x + font.width(letter);
     }
 
@@ -684,7 +682,7 @@ final class InstallerFrames {
             outline(g, x - 1, y - 1, w + 2, BUTTON + 2, c.defaultRing());
         }
         final int nudge = held ? 1 : 0;
-        g.drawString(font, label, x + (w - font.width(label)) / 2 + nudge, y + 3 + nudge, c.buttonInk(), false);
+        Draw.text(g, font, label, x + (w - font.width(label)) / 2 + nudge, y + 3 + nudge, c.buttonInk());
         return new int[]{x, y, w, BUTTON};
     }
 
@@ -693,7 +691,7 @@ final class InstallerFrames {
                                  final String label, final boolean on, final boolean held) {
         final Card c = CARD.get();
         g.fill(x, y, x + w, y + BUTTON, on ? (held ? c.primaryHeld() : c.primary()) : c.primaryOff());
-        g.drawString(font, label, x + (w - font.width(label)) / 2, y + 3, c.primaryInk(), false);
+        Draw.text(g, font, label, x + (w - font.width(label)) / 2, y + 3, c.primaryInk());
         return new int[]{x, y, w, BUTTON};
     }
 
@@ -702,7 +700,7 @@ final class InstallerFrames {
         final Card c = CARD.get();
         g.fill(x, y, x + w, y + BUTTON, held ? c.paleHeld() : c.pale());
         outline(g, x, y, w, BUTTON, held ? c.paleHeldEdge() : c.paleEdge());
-        g.drawString(font, label, x + (w - font.width(label)) / 2, y + 3, c.paleInk(), false);
+        Draw.text(g, font, label, x + (w - font.width(label)) / 2, y + 3, c.paleInk());
         return new int[]{x, y, w, BUTTON};
     }
 

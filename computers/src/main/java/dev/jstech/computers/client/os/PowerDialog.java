@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.operation.payload.MachinePowerPayload;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;
@@ -73,7 +74,7 @@ final class PowerDialog {
         skin.windowShadow(g, x, y, POWER_W, height());
         skin.windowFrame(g, x, y, POWER_W, height());
         skin.titleBar(g, x, y, POWER_W, 14);
-        g.drawString(font, GameText.resolve(DesktopTexts.POWER), x + 6, y + 3, skin.titleText(), false);
+        Draw.text(g, font, GameText.resolve(DesktopTexts.POWER), x + 6, y + 3, skin.titleText());
         for (int i = 0; i < CHOICES.length; i++) {
             final int rowY = y + 18 + i * ROW_H;
             final boolean hovered = mouseX >= x + 4 && mouseX < x + POWER_W - 4
@@ -81,8 +82,8 @@ final class PowerDialog {
             if (hovered) {
                 g.fill(x + 4, rowY, x + POWER_W - 4, rowY + ROW_H - 2, skin.listHover());
             }
-            g.drawString(font, GameText.resolve(CHOICES[i][0]), x + 12, rowY + 2, skin.text(), false);
-            g.drawString(font, GameText.resolve(CHOICES[i][1]), x + 12, rowY + 11, skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(CHOICES[i][0]), x + 12, rowY + 2, skin.text());
+            Draw.text(g, font, GameText.resolve(CHOICES[i][1]), x + 12, rowY + 11, skin.dim());
         }
     }
 

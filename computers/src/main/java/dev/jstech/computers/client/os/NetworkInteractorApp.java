@@ -2613,7 +2613,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         @Override
         public void render(final GuiGraphics g, final UiContext ctx) {
             ctx.skin().field(g, x(), y(), width(), height(), false);
-            g.drawString(ctx.font(), text.get(), x() + 4, y() + (height() - 7) / 2, ctx.skin().text(), false);
+            Draw.text(g, ctx.font(), text.get(), x() + 4, y() + (height() - 7) / 2, ctx.skin().text());
         }
     }
 
@@ -2654,10 +2654,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 }
                 DesktopItems.data(g, ctx.font(), popupEntry.key(), x(), y(), null);
                 final int nameW = popupStorage ? POPUP_W - 30 : POPUP_W - 64;
-                g.drawString(ctx.font(), Texts.clip(ctx.font(), requestTitle(), nameW), x() + 20, y() + 1,
-                        ctx.skin().text(), false);
-                g.drawString(ctx.font(), Texts.clip(ctx.font(), requestSubtitle(), POPUP_W - 30), x() + 20, y() + 11,
-                        ctx.skin().dim(), false);
+                Draw.text(g, ctx.font(), Texts.clip(ctx.font(), requestTitle(), nameW), x() + 20, y() + 1,
+                        ctx.skin().text());
+                Draw.text(g, ctx.font(), Texts.clip(ctx.font(), requestSubtitle(), POPUP_W - 30), x() + 20, y() + 11,
+                        ctx.skin().dim());
             }
         });
         private final Button adv = add(new Button(GameText.resolve(ADVANCED), NetworkInteractorApp.this::toggleAdvanced)
@@ -2970,8 +2970,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                     return;
                 }
                 DesktopItems.item(g, craftEntry.result(), x(), y() - 1);
-                g.drawString(ctx.font(), GameText.resolve(CRAFT_ITEM.with(Texts.clip(ctx.font(), craftEntry.title(),
-                        width() - 40))), x() + 20, y() + 2, ctx.skin().text(), false);
+                Draw.text(g, ctx.font(), GameText.resolve(CRAFT_ITEM.with(Texts.clip(ctx.font(), craftEntry.title(),
+                        width() - 40))), x() + 20, y() + 2, ctx.skin().text());
             }
         });
         private final QuantityBox qty = add(new QuantityBox(() -> Long.toString(craftQty)));
@@ -3231,7 +3231,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         for (final String word : text.split(" ")) {
             final String candidate = line.length() == 0 ? word : line + " " + word;
             if (font.width(candidate) > maxWidth && line.length() > 0) {
-                g.drawString(font, line.toString(), x, ry, color, false);
+                Draw.text(g, font, line.toString(), x, ry, color);
                 ry += 11;
                 line.setLength(0);
                 line.append(word);
@@ -3241,7 +3241,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             }
         }
         if (line.length() > 0) {
-            g.drawString(font, line.toString(), x, ry, color, false);
+            Draw.text(g, font, line.toString(), x, ry, color);
         }
     }
 

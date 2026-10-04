@@ -11,6 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.OpenWithLayout;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Popup;
@@ -161,8 +162,8 @@ public final class OpenWithPopup extends Popup {
         }
         ProgramIcons.draw(g, x + OpenWithLayout.ICON_X, y + (h - ProgramIcons.SIZE) / 2, ProgramIcons.SIZE,
                 ProgramIcons.SIZE, ResourceLocation.fromNamespaceAndPath("jsc", programId), iconSet);
-        g.drawString(ctx.font(), ActiveDesktop.openerName(programId), x + OpenWithLayout.ROW_TEXT_X,
-                y + (h - OpenWithLayout.LINE_H) / 2, color, false);
+        Draw.text(g, ctx.font(), ActiveDesktop.openerName(programId), x + OpenWithLayout.ROW_TEXT_X,
+                y + (h - OpenWithLayout.LINE_H) / 2, color);
     }
 
     /** A click picks a program; a second click on the same one soon after is the same as Only this time. */

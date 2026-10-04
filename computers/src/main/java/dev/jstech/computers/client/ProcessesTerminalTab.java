@@ -64,7 +64,7 @@ final class ProcessesTerminalTab extends AbstractTerminalTab {
         final var processes = menu.processes();
         clampSelection(processes.size());
 
-        g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.SERVICES_AND_JOBS), cx, cy + SUBHEAD_Y, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalUpkeepTexts.SERVICES_AND_JOBS), cx, cy + SUBHEAD_Y, DIM());
 
         // Toolbar: two context buttons for the selected process (disabled when the list is empty).
         final boolean any = !processes.isEmpty();
@@ -81,7 +81,7 @@ final class ProcessesTerminalTab extends AbstractTerminalTab {
                 any ? ACCENT() : DIM(), any);
 
         if (!any) {
-            g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.NO_PROCESSES), cx, cy + LIST_Y + 6, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(TerminalUpkeepTexts.NO_PROCESSES), cx, cy + LIST_Y + 6, DIM());
             return;
         }
 
@@ -93,10 +93,10 @@ final class ProcessesTerminalTab extends AbstractTerminalTab {
             } else {
                 jobIcon(g, cx + 3, row + 3);
             }
-            g.drawString(font(), p.name(), cx + 18, row + 2, TEXT(), false);
+            Draw.text(g, font(), p.name(), cx + 18, row + 2, TEXT());
             final String state = GameText.resolve(p.state().word());
-            g.drawString(font(), state, cx + cw - 4 - font().width(state), row + 2, stateColor(p.state()), false);
-            g.drawString(font(), GameText.resolve(p.detail()), cx + 18, row + 12, DIM(), false);
+            Draw.text(g, font(), state, cx + cw - 4 - font().width(state), row + 2, stateColor(p.state()));
+            Draw.text(g, font(), GameText.resolve(p.detail()), cx + 18, row + 12, DIM());
             row += ROW_H;
         }
     }

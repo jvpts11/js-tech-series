@@ -244,8 +244,7 @@ public final class SettingsApp implements IDesktopApp {
         final boolean sel = page == index;
         ctx.skin().listRow(g, x, y, w, h, hovered, sel);
         final int tc = sel ? ctx.skin().listRowText(true) : (index >= FIRST_SOON ? ctx.skin().dim() : ctx.skin().text());
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(item), w - 7), x + 5, y + 4, tc,
-                false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(item), w - 7), x + 5, y + 4, tc);
     }
 
     // rendering

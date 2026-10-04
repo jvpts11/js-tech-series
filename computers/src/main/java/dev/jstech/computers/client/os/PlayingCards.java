@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.program.SolitaireGame;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -61,7 +62,7 @@ public final class PlayingCards {
         g.fill(x + 1, y + 1, x + WIDTH - 1, y + HEIGHT - 1, colours().face());
         final int ink = inkOf(card.suit());
         final String label = rankLabel(card.rank());
-        g.drawString(font, label, x + 2, y + 2, ink, false);
+        Draw.text(g, font, label, x + 2, y + 2, ink);
         suit(g, card.suit(), x + WIDTH - 9, y + 2);
         // The big mark in the middle is what a card is recognised by across a table of them.
         suit(g, card.suit(), x + (WIDTH - 7) / 2, y + HEIGHT - 12);
@@ -89,7 +90,7 @@ public final class PlayingCards {
             return;
         }
         final int ink = inkOf(card.suit());
-        g.drawString(font, rankLabel(card.rank()), x + 2, y + 2, ink, false);
+        Draw.text(g, font, rankLabel(card.rank()), x + 2, y + 2, ink);
         suit(g, card.suit(), x + WIDTH - 9, y + 2);
     }
 

@@ -11,6 +11,7 @@ import dev.jstech.computers.operation.payload.RequestWelcomePayload;
 import dev.jstech.computers.operation.payload.WelcomePayload;
 import dev.jstech.computers.operation.payload.WelcomeStartupPayload;
 import dev.jstech.computers.os.boot.WelcomeFacts;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -138,7 +139,7 @@ public final class WelcomeApp implements IDesktopApp {
         this.startupBox = null;
         g.fill(x, y, x + width, y + height, this.skin.windowBg());
         if (this.facts == null) {
-            g.drawString(font, GameText.resolve(WelcomeTexts.GETTING_READY), x + PAD, y + PAD, this.skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(WelcomeTexts.GETTING_READY), x + PAD, y + PAD, this.skin.dim());
             return;
         }
         switch (this.skin.form()) {
@@ -186,15 +187,14 @@ public final class WelcomeApp implements IDesktopApp {
     private void renderTips(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                             final int h) {
         final int right = x + w - PAD - DOOR_COLUMN;
-        g.drawString(font, GameText.resolve(WelcomeTexts.WELCOME_TO.with(this.facts.systemName())), x + PAD, y + PAD,
-                this.skin.text(), false);
+        Draw.text(g, font, GameText.resolve(WelcomeTexts.WELCOME_TO.with(this.facts.systemName())), x + PAD, y + PAD,
+                this.skin.text());
 
         final int boxY = y + PAD + 14;
         final int boxW = right - x - PAD * 2;
         final int boxH = h - PAD * 2 - 14 - ROW;
         this.skin.field(g, x + PAD, boxY, boxW, boxH, false);
-        g.drawString(font, GameText.resolve(WelcomeTexts.DID_YOU_KNOW), x + PAD + 4, boxY + 4, this.skin.text(),
-                false);
+        Draw.text(g, font, GameText.resolve(WelcomeTexts.DID_YOU_KNOW), x + PAD + 4, boxY + 4, this.skin.text());
         int ty = boxY + 16;
         if (!this.facts.tips().isEmpty()) {
             final String said = GameText.resolve(this.facts.tips().get(this.tip % this.facts.tips().size()));
@@ -202,7 +202,7 @@ public final class WelcomeApp implements IDesktopApp {
                 if (ty > boxY + boxH - 10) {
                     break;
                 }
-                g.drawString(font, line, x + PAD + 4, ty, this.skin.dim(), false);
+                Draw.text(g, font, line, x + PAD + 4, ty, this.skin.dim());
                 ty += 10;
             }
         }
@@ -219,8 +219,8 @@ public final class WelcomeApp implements IDesktopApp {
                              final int h) {
         final int paneW = 88;
         this.skin.panel(g, x, y, paneW, h - ROW - 4);
-        g.drawString(font, clip(font, GameText.resolve(WelcomeTexts.GET_GOING), paneW - 10), x + 5, y + 5,
-                this.skin.accent(), false);
+        Draw.text(g, font, clip(font, GameText.resolve(WelcomeTexts.GET_GOING), paneW - 10), x + 5, y + 5,
+                this.skin.accent());
         int by = y + 18;
         by = this.door(g, font, x + 4, by, paneW - 8, "this_pc");
         by = this.door(g, font, x + 4, by, paneW - 8, "files");
@@ -228,18 +228,17 @@ public final class WelcomeApp implements IDesktopApp {
         this.door(g, font, x + 4, by, paneW - 8, "settings");
 
         final int fx = x + paneW + PAD;
-        g.drawString(font, GameText.resolve(WelcomeTexts.IS_READY.with(this.facts.machineName())), fx, y + PAD,
-                this.skin.accent(), false);
+        Draw.text(g, font, GameText.resolve(WelcomeTexts.IS_READY.with(this.facts.machineName())), fx, y + PAD,
+                this.skin.accent());
         this.machineFacts(g, font, fx, y + PAD + 16, x + w - fx - PAD);
     }
 
     /** The newest shape: one card per door, each saying what is true of this computer. */
     private void renderCards(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                              final int h) {
-        g.drawString(font, GameText.resolve(WelcomeTexts.IS_READY.with(this.facts.machineName())), x + PAD, y + PAD,
-                this.skin.text(), false);
-        g.drawString(font, GameText.resolve(WelcomeTexts.WHAT_IT_HAS), x + PAD, y + PAD + 11, this.skin.dim(),
-                false);
+        Draw.text(g, font, GameText.resolve(WelcomeTexts.IS_READY.with(this.facts.machineName())), x + PAD, y + PAD,
+                this.skin.text());
+        Draw.text(g, font, GameText.resolve(WelcomeTexts.WHAT_IT_HAS), x + PAD, y + PAD + 11, this.skin.dim());
         final int cardW = (w - PAD * 2 - 4) / 2;
         final int cardH = Math.max(24, (h - PAD * 2 - 30 - ROW) / 2);
         final int top = y + PAD + 26;
@@ -271,8 +270,8 @@ public final class WelcomeApp implements IDesktopApp {
     private int fact(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                      final String key, final String value) {
         final int keyW = Math.min(76, w / 2);
-        g.drawString(font, clip(font, key, keyW - 4), x, y, this.skin.dim(), false);
-        g.drawString(font, clip(font, value, w - keyW), x + keyW, y, this.skin.text(), false);
+        Draw.text(g, font, clip(font, key, keyW - 4), x, y, this.skin.dim());
+        Draw.text(g, font, clip(font, value, w - keyW), x + keyW, y, this.skin.text());
         return y + 11;
     }
 
@@ -280,13 +279,13 @@ public final class WelcomeApp implements IDesktopApp {
                       final String program, final String body) {
         this.skin.panel(g, x, y, w, h);
         final String name = label(program);
-        g.drawString(font, name, x + 4, y + 3, this.skin.text(), false);
+        Draw.text(g, font, name, x + 4, y + 3, this.skin.text());
         int ty = y + 13;
         for (final FormattedCharSequence line : font.split(Component.literal(body), w - 8)) {
             if (ty > y + h - 8) {
                 break;
             }
-            g.drawString(font, line, x + 4, ty, this.skin.dim(), false);
+            Draw.text(g, font, line, x + 4, ty, this.skin.dim());
             ty += 9;
         }
         this.doors.add(new Door(program, new int[]{x, y, w, h}));
@@ -299,9 +298,9 @@ public final class WelcomeApp implements IDesktopApp {
         this.startupBox = new int[]{x + PAD, by, 9, 9};
         this.skin.field(g, x + PAD, by, 9, 9, false);
         if (this.facts.showAtStartup()) {
-            g.drawString(font, "x", x + PAD + 2, by, this.skin.accent(), false);
+            Draw.text(g, font, "x", x + PAD + 2, by, this.skin.accent());
         }
-        g.drawString(font, GameText.resolve(WelcomeTexts.SHOW_AT_STARTUP), x + PAD + 13, by, this.skin.dim(), false);
+        Draw.text(g, font, GameText.resolve(WelcomeTexts.SHOW_AT_STARTUP), x + PAD + 13, by, this.skin.dim());
         this.closeButton = this.button(g, font, x + w - PAD - 46, by - 3, 46, GameText.resolve(WelcomeTexts.CLOSE));
     }
 

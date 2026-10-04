@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.JobActionPayload;
 import dev.jstech.computers.operation.payload.RequestAutomationPayload;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.ColumnHeader;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
@@ -413,15 +414,15 @@ public final class AutomationManagerApp implements IDesktopApp {
         ctx.skin().listRow(g, x, y, w, h, false, false);
         final int typeX = jobColumns.columnX(1);
         final int triggerX = jobColumns.columnX(2);
-        g.drawString(font, Texts.clip(font, j.name(), typeX - x - 6), x + 2, y + 3, j.paused() ? ctx.skin().dim() : ctx.skin().text(), false);
-        g.drawString(font, Texts.clip(font, GameText.resolve(j.type()), triggerX - typeX - 4), typeX, y + 3,
-                ctx.skin().dim(), false);
-        g.drawString(font, Texts.clip(font, GameText.resolve(j.trigger()), (x + w - 22) - triggerX - 4), triggerX,
-                y + 3, j.paused() ? PALETTE.get().warn() : PALETTE.get().good(), false);
+        Draw.text(g, font, Texts.clip(font, j.name(), typeX - x - 6), x + 2, y + 3, j.paused() ? ctx.skin().dim() : ctx.skin().text());
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(j.type()), triggerX - typeX - 4), typeX, y + 3,
+                ctx.skin().dim());
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(j.trigger()), (x + w - 22) - triggerX - 4), triggerX,
+                y + 3, j.paused() ? PALETTE.get().warn() : PALETTE.get().good());
         // Pause/resume + delete glyphs.
-        g.drawString(font, j.paused() ? ">" : "=", x + w - 22, y + 3, ctx.skin().text(), false);
-        g.drawString(font, GameText.resolve(AutomationManagerTexts.DELETE_MARK), x + w - 10, y + 3,
-                PALETTE.get().delete(), false);
+        Draw.text(g, font, j.paused() ? ">" : "=", x + w - 22, y + 3, ctx.skin().text());
+        Draw.text(g, font, GameText.resolve(AutomationManagerTexts.DELETE_MARK), x + w - 10, y + 3,
+                PALETTE.get().delete());
     }
 
     private void jobClicked(final int index, final int button, final double mx, final double my) {

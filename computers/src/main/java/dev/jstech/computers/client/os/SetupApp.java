@@ -12,6 +12,7 @@ import dev.jstech.computers.operation.payload.CancelSetupPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.ProgressBar;
@@ -249,15 +250,15 @@ public final class SetupApp implements IDesktopApp {
         if (this.skin.form() == OsSkin.Form.LUNA) {
             // The header carries the headline and the publisher; the body starts below it.
             this.headline.setBounds(x + 26, y + 4, width - 32, 10);
-            g.drawString(font, font.plainSubstrByWidth(subtitle(), width - 32), x + 26, y + 14,
-                    PALETTE.get().publisher(), false);
+            Draw.text(g, font, font.plainSubstrByWidth(subtitle(), width - 32), x + 26, y + 14,
+                    PALETTE.get().publisher());
         } else if (this.skin.form() == OsSkin.Form.BEVEL || this.skin.form() == OsSkin.Form.GNOME1) {
             this.headline.setBounds(textX, rowY, textW, 10);
             rowY += 12;
         } else {
             this.headline.setBounds(x + 26, y + 6, width - 32, 10);
-            g.drawString(font, font.plainSubstrByWidth(subtitle(), width - 32), x + 26, y + 15, this.skin.isDark()
-                    ? PALETTE.get().publisherOnDark() : PALETTE.get().publisher(), false);
+            Draw.text(g, font, font.plainSubstrByWidth(subtitle(), width - 32), x + 26, y + 15, this.skin.isDark()
+                    ? PALETTE.get().publisherOnDark() : PALETTE.get().publisher());
         }
         this.line.setBounds(textX, rowY, textW, 10);
         rowY += 11;

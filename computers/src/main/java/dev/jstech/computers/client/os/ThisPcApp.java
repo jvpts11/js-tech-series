@@ -151,7 +151,7 @@ public final class ThisPcApp implements IDesktopApp {
         public void render(final GuiGraphics g, final UiContext ctx) {
             g.fill(x() + 1, y(), right() - 1, bottom(), ctx.skin().listHover());
             g.fill(x() + 1, bottom() - 1, right() - 1, bottom(), ctx.skin().edge());
-            g.drawString(ctx.font(), text.get(), x() + 4, y() + 2, ctx.skin().dim(), false);
+            Draw.text(g, ctx.font(), text.get(), x() + 4, y() + 2, ctx.skin().dim());
         }
     }
 
@@ -227,13 +227,13 @@ public final class ThisPcApp implements IDesktopApp {
             if (disk != null) {
                 drawDiskIcon(g, cx + 4, cy + 5);
                 final String label = GameText.resolve(disk.label()) + (drive().isEmpty() ? "" : "  " + drive());
-                g.drawString(font, Texts.trim(font, label, maxW), tx, cy + 2, textColor, false);
+                Draw.text(g, font, Texts.trim(font, label, maxW), tx, cy + 2, textColor);
                 if (disk.system()) {
                     final String badge = GameText.resolve(disk.osPath().isEmpty() ? ThisPcTexts.SYSTEM.text()
                             : ThisPcTexts.SYSTEM_IS.with(prettyOs(disk.osPath())));
                     final int bw = font.width(badge);
                     if (font.width(label) + 6 + bw <= maxW) {
-                        g.drawString(font, badge, tx + maxW - bw, cy + 2, PALETTE.get().good(), false);
+                        Draw.text(g, font, badge, tx + maxW - bw, cy + 2, PALETTE.get().good());
                     }
                 }
                 /*
@@ -254,7 +254,7 @@ public final class ThisPcApp implements IDesktopApp {
                     }
                 }
                 final String usage = GameText.resolve(ThisPcTexts.FREE.with(disk.freeItems(), disk.capItems()));
-                g.drawString(font, usage, tx + maxW - font.width(usage), cy + 11, ctx.skin().dim(), false);
+                Draw.text(g, font, usage, tx + maxW - font.width(usage), cy + 11, ctx.skin().dim());
             } else if (media != null && media.docked()) {
                 // A docked disk is an external drive: the disk's picture, its name and letter, and how full it is.
                 drawDiskIcon(g, cx + 4, cy + 5);
@@ -272,7 +272,7 @@ public final class ThisPcApp implements IDesktopApp {
                 drawMediaIcon(g, cx + 4, cy + 5, media);
                 final String head = prettyDrive(media.drive()) + (drive().isEmpty() ? "" : "  " + drive()) + "   "
                         + GameText.resolve(media.loaded() ? media.mediaName() : ThisPcTexts.NO_DISC.text());
-                g.drawString(font, Texts.trim(font, head, maxW), tx, cy + 2, media.loaded() ? textColor : ctx.skin().dim(), false);
+                Draw.text(g, font, Texts.trim(font, head, maxW), tx, cy + 2, media.loaded() ? textColor : ctx.skin().dim());
                 final String detail;
                 int detailColor = ctx.skin().dim();
                 if (!media.loaded()) {
@@ -288,7 +288,7 @@ public final class ThisPcApp implements IDesktopApp {
                 } else {
                     detail = GameText.resolve(ThisPcTexts.DATA_MEDIUM.with(media.stored()));
                 }
-                g.drawString(font, Texts.trim(font, detail, maxW), tx, cy + 11, detailColor, false);
+                Draw.text(g, font, Texts.trim(font, detail, maxW), tx, cy + 11, detailColor);
             }
             super.render(g, ctx);
         }
@@ -950,9 +950,9 @@ public final class ThisPcApp implements IDesktopApp {
         final boolean sel = ("program:" + id).equals(selectedKey);
         ProgramIcons.draw(g, cx + w / 2 - 6, cy + 2, 12, 12, programIdOf(id), skin.osPath());
         final String name = Texts.trim(font, prettyProgram(id), w - 4);
-        g.drawString(font, name, cx + (w - font.width(name)) / 2, cy + 16, ctx.skin().listRowText(sel), false);
+        Draw.text(g, font, name, cx + (w - font.width(name)) / 2, cy + 16, ctx.skin().listRowText(sel));
         final String pkg = Texts.trim(font, packageIdOf(id), w - 4);
-        g.drawString(font, pkg, cx + (w - font.width(pkg)) / 2, cy + 24, ctx.skin().dim(), false);
+        Draw.text(g, font, pkg, cx + (w - font.width(pkg)) / 2, cy + 24, ctx.skin().dim());
     }
 
     private List<Component> programTooltip(final int index) {

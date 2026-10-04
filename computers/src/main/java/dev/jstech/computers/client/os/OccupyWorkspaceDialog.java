@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.os.WorkspaceSet;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import java.util.function.IntConsumer;
 import net.minecraft.client.gui.Font;
@@ -113,15 +114,15 @@ final class OccupyWorkspaceDialog implements IDesktopApp {
         // The program's name gives way to the words around it, which are as wide as the language makes them.
         final int around = font.width(GameText.resolve(OccupyWorkspaceTexts.IS_ON.with("")));
         final String name = font.plainSubstrByWidth(this.program, w - PAD * 2 - around);
-        g.drawString(font, GameText.resolve(OccupyWorkspaceTexts.IS_ON.with(name)), x + PAD, y + 6,
-                this.skin.text(), false);
+        Draw.text(g, font, GameText.resolve(OccupyWorkspaceTexts.IS_ON.with(name)), x + PAD, y + 6,
+                this.skin.text());
         for (int i = 0; i < WorkspaceSet.COUNT; i++) {
             final int rowY = rowY(i);
             this.skin.panel(g, x + PAD, rowY, BOX, BOX);
             if (WorkspaceSet.holds(this.chosen, i)) {
                 g.fill(x + PAD + 2, rowY + 2, x + PAD + BOX - 2, rowY + BOX - 2, this.skin.accent());
             }
-            g.drawString(font, CdePanels.workspaceName(i), x + PAD + BOX + 6, rowY + 1, this.skin.text(), false);
+            Draw.text(g, font, CdePanels.workspaceName(i), x + PAD + BOX + 6, rowY + 1, this.skin.text());
         }
         final int by = buttonsY();
         this.skin.button(g, font, okX(), by, BUTTON_W, BUTTON_H, GameText.resolve(OccupyWorkspaceTexts.OK),

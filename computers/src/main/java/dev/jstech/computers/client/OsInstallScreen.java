@@ -13,6 +13,7 @@ import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -253,7 +254,7 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
             case DONE -> InstallerScreenTexts.COPY_COMPLETE.text();
             case FAILED -> InstallerScreenTexts.COPY_FAILED.text();
         });
-        g.drawString(font, title, x + OsInstallLayout.TITLE_X, y + OsInstallLayout.TITLE_Y, p.bright, false);
+        Draw.text(g, font, title, x + OsInstallLayout.TITLE_X, y + OsInstallLayout.TITLE_Y, p.bright);
 
         int ty = y + OsInstallLayout.CONTENT_TOP;
         switch (phase) {
@@ -262,14 +263,14 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
                 for (int i = 0; i < OsInstallLayout.STEP_COUNT; i++) {
                     final boolean finished = i < done;
                     final boolean current = i == done;
-                    g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_STEP.with(STEPS[i])),
-                            x + OsInstallLayout.STEP_LABEL_X, ty, finished || current ? p.text : p.dim, false);
+                    Draw.text(g, font, GameText.resolve(InstallerScreenTexts.COPY_STEP.with(STEPS[i])),
+                            x + OsInstallLayout.STEP_LABEL_X, ty, finished || current ? p.text : p.dim);
                     if (finished) {
-                        g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_DONE),
-                                x + OsInstallLayout.stepStatusX(), ty, p.ok, false);
+                        Draw.text(g, font, GameText.resolve(InstallerScreenTexts.COPY_DONE),
+                                x + OsInstallLayout.stepStatusX(), ty, p.ok);
                     } else if (current) {
-                        g.drawString(font, (permille() % 1000) / 10 + "%", x + OsInstallLayout.stepStatusX(), ty,
-                                p.bright, false);
+                        Draw.text(g, font, (permille() % 1000) / 10 + "%", x + OsInstallLayout.stepStatusX(), ty,
+                                p.bright);
                     }
                     ty += OsInstallLayout.STEP_ROW_H;
                 }
@@ -279,16 +280,16 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
                 g.fill(x + OsInstallLayout.BAR_X, ty,
                         x + OsInstallLayout.BAR_X + OsInstallLayout.barW() * permille() / 1000,
                         ty + OsInstallLayout.BAR_H, p.bright);
-                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_KEEP_MEDIUM), x + OsInstallLayout.BAR_X,
-                        ty + OsInstallLayout.BAR_TO_HINT_DY, p.dim, false);
+                Draw.text(g, font, GameText.resolve(InstallerScreenTexts.COPY_KEEP_MEDIUM), x + OsInstallLayout.BAR_X,
+                        ty + OsInstallLayout.BAR_TO_HINT_DY, p.dim);
             }
             case DONE -> {
-                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_INSTALLED_ON.with(osName, targetLabel)),
-                        x + OsInstallLayout.STEP_LABEL_X, ty, p.text, false);
-                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_TAKE_OUT_FIRST),
-                        x + OsInstallLayout.STEP_LABEL_X, ty + OsInstallLayout.LINE2_DY, p.dim, false);
-                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_TAKE_OUT_SECOND),
-                        x + OsInstallLayout.STEP_LABEL_X, ty + OsInstallLayout.LINE3_DY, p.dim, false);
+                Draw.text(g, font, GameText.resolve(InstallerScreenTexts.COPY_INSTALLED_ON.with(osName, targetLabel)),
+                        x + OsInstallLayout.STEP_LABEL_X, ty, p.text);
+                Draw.text(g, font, GameText.resolve(InstallerScreenTexts.COPY_TAKE_OUT_FIRST),
+                        x + OsInstallLayout.STEP_LABEL_X, ty + OsInstallLayout.LINE2_DY, p.dim);
+                Draw.text(g, font, GameText.resolve(InstallerScreenTexts.COPY_TAKE_OUT_SECOND),
+                        x + OsInstallLayout.STEP_LABEL_X, ty + OsInstallLayout.LINE3_DY, p.dim);
                 primary = button(g, x + OsInstallLayout.DONE_PRIMARY_X, y + OsInstallLayout.buttonY(),
                         OsInstallLayout.DONE_PRIMARY_W, OsInstallLayout.BUTTON_H,
                         GameText.resolve(InstallerScreenTexts.COPY_REBOOT), p, true, mouseX, mouseY);
@@ -297,11 +298,11 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
                         GameText.resolve(InstallerScreenTexts.COPY_BACK_TO_SETUP), p, false, mouseX, mouseY);
             }
             case FAILED -> {
-                g.drawString(font, GameText.resolve(InstallerScreenTexts.COPY_NOTHING_WRITTEN.with(targetLabel)),
-                        x + OsInstallLayout.STEP_LABEL_X, ty, p.dim, false);
+                Draw.text(g, font, GameText.resolve(InstallerScreenTexts.COPY_NOTHING_WRITTEN.with(targetLabel)),
+                        x + OsInstallLayout.STEP_LABEL_X, ty, p.dim);
                 int ly = ty + OsInstallLayout.LINE2_DY;
                 for (final String line : failureLines()) {
-                    g.drawString(font, line, x + OsInstallLayout.STEP_LABEL_X, ly, p.text, false);
+                    Draw.text(g, font, line, x + OsInstallLayout.STEP_LABEL_X, ly, p.text);
                     ly += OsInstallLayout.FAILURE_WRAP_LINE_H;
                 }
                 primary = button(g, x + OsInstallLayout.FAILED_PRIMARY_X, y + OsInstallLayout.buttonY(),
@@ -339,8 +340,8 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
 
     private void row(final GuiGraphics g, final int x, final int y, final Look p,
                      final String key, final String value) {
-        g.drawString(font, key, x + 10, y, p.dim, false);
-        g.drawString(font, value, x + 90, y, p.text, false);
+        Draw.text(g, font, key, x + 10, y, p.dim);
+        Draw.text(g, font, value, x + 90, y, p.text);
     }
 
     private int[] button(final GuiGraphics g, final int bx, final int by, final int bw, final int bh,
@@ -353,8 +354,8 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
         g.fill(bx, by + bh - 1, bx + bw, by + bh, edge);
         g.fill(bx, by, bx + 1, by + bh, edge);
         g.fill(bx + bw - 1, by, bx + bw, by + bh, edge);
-        g.drawString(font, label, bx + (bw - font.width(label)) / 2, by + (bh - 8) / 2,
-                strong ? p.bright : p.text, false);
+        Draw.text(g, font, label, bx + (bw - font.width(label)) / 2, by + (bh - 8) / 2,
+                strong ? p.bright : p.text);
         return new int[]{bx, by, bw, bh};
     }
 

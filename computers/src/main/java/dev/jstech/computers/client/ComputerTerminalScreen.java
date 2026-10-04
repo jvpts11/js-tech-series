@@ -23,6 +23,7 @@ import dev.jstech.computers.operation.payload.TerminalInsertPayload;
 import dev.jstech.computers.operation.payload.TerminalLocalDepositPayload;
 import dev.jstech.computers.operation.payload.TerminalMaintenancePayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -819,8 +820,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         for (int row = 0; row < visible && railScroll + row < rail.length; row++) {
             final int i = railScroll + row;
             final int ty = TAB_Y0 + row * TAB_H;
-            g.drawString(font, GameText.resolve(TAB_NAMES[rail[i]]), RAIL_X + 8, ty + 5,
-                    rail[i] == menu.activeTab() ? TAB_LABEL_ON : DIM, false);
+            Draw.text(g, font, GameText.resolve(TAB_NAMES[rail[i]]), RAIL_X + 8, ty + 5,
+                    rail[i] == menu.activeTab() ? TAB_LABEL_ON : DIM);
         }
 
         renderStatusBar(g);
@@ -833,8 +834,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         }
 
         // The player's own rows, named so the two halves of the glass are never confused for one another.
-        g.drawString(font, GameText.resolve(TerminalTexts.YOUR_INVENTORY), CONTENT_X,
-                ComputerTerminalLayout.INV_LABEL_Y, DIM, false);
+        Draw.text(g, font, GameText.resolve(TerminalTexts.YOUR_INVENTORY), CONTENT_X,
+                ComputerTerminalLayout.INV_LABEL_Y, DIM);
     }
 
     /**
@@ -844,21 +845,21 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
      * time they look at the screen and should never have to change headings to ask.
      */
     private void renderStatusBar(final GuiGraphics g) {
-        g.drawString(font, this.title, 6, 4, ACCENT, false);
+        Draw.text(g, font, this.title, 6, 4, ACCENT);
         final int netState = menu.networkLinkState();
         int at = 6 + font.width(this.title) + 10;
         if (netState == 2) {
-            g.drawString(font, GameText.resolve(TerminalTexts.NETWORK_CONFLICT), at, 4, RED, false);
+            Draw.text(g, font, GameText.resolve(TerminalTexts.NETWORK_CONFLICT), at, 4, RED);
         } else if (netState == 1) {
             final int serverCount = menu.serverCount();
             final String servers = GameText.resolve(
                     (serverCount == 1 ? AssemblyTexts.ONE_SERVER : AssemblyTexts.SERVERS).with(serverCount));
-            g.drawString(font, servers, at, 4, DIM, false);
+            Draw.text(g, font, servers, at, 4, DIM);
             at += font.width(servers) + 10;
             final String held = GameText.resolve(TerminalTexts.HELD.with(fmt(menu.networkStorageUsed())));
-            g.drawString(font, held, at, 4, TEXT, false);
+            Draw.text(g, font, held, at, 4, TEXT);
         } else {
-            g.drawString(font, GameText.resolve(TerminalTexts.NO_NETWORK), at, 4, DIM, false);
+            Draw.text(g, font, GameText.resolve(TerminalTexts.NO_NETWORK), at, 4, DIM);
         }
         /*
          * What the machine itself is doing, at the far end: a build that will not run, a machine that is
@@ -878,7 +879,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                     : (live == 1 ? TerminalTexts.ONE_OP : TerminalTexts.OPS).with(live));
             stateColor = live == 0 ? DIM : GREEN;
         }
-        g.drawString(font, state, imageWidth - font.width(state) - 6, 4, stateColor, false);
+        Draw.text(g, font, state, imageWidth - font.width(state) - 6, 4, stateColor);
     }
 
     // Craft tab: catalog grid + running/recent panels + request popup
@@ -910,7 +911,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
 
 
     private void placeholder(final GuiGraphics g, final int cx, final int cy, final String text) {
-        g.drawString(font, text, cx + 6, cy + 28, DIM, false);
+        Draw.text(g, font, text, cx + 6, cy + 28, DIM);
     }
 
     // Network tab: a virtual item grid drawn from the snapshot
@@ -1045,12 +1046,12 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         final int left = cx + 6;
         final int right = cx + ComputerTerminalLayout.POPUP_W - 6;
         final String from = font.plainSubstrByWidth(mv.from(), (right - left) / 2 - 6);
-        g.drawString(font, from, left, my, DIM, false);
+        Draw.text(g, font, from, left, my, DIM);
         final int arrowX = left + font.width(from) + 4;
-        g.drawString(font, ">", arrowX, my, ACCENT, false);
+        Draw.text(g, font, ">", arrowX, my, ACCENT);
         final int tailX = arrowX + font.width(">") + 4;
-        g.drawString(font, font.plainSubstrByWidth(fmt(mv.qty()) + " " + mv.to(), right - tailX),
-                tailX, my, TEXT, false);
+        Draw.text(g, font, font.plainSubstrByWidth(fmt(mv.qty()) + " " + mv.to(), right - tailX),
+                tailX, my, TEXT);
     }
 
     int statusColor(final byte status) {
@@ -1165,17 +1166,17 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
 
     void tile(final GuiGraphics g, final int x, final int y, final String key,
                       final String value, final String unit) {
-        g.drawString(font, key, x + 4, y + 4, DIM, false);
-        g.drawString(font, value, x + 4, y + 14, TEXT, false);
+        Draw.text(g, font, key, x + 4, y + 4, DIM);
+        Draw.text(g, font, value, x + 4, y + 14, TEXT);
         if (!unit.isEmpty()) {
-            g.drawString(font, unit, x + 5 + font.width(value), y + 16, DIM, false);
+            Draw.text(g, font, unit, x + 5 + font.width(value), y + 16, DIM);
         }
     }
 
     void barLabel(final GuiGraphics g, final int x, final int y, final int w,
                           final String label, final String value) {
-        g.drawString(font, label, x, y, TEXT, false);
-        g.drawString(font, value, x + w - font.width(value), y, DIM, false);
+        Draw.text(g, font, label, x, y, TEXT);
+        Draw.text(g, font, value, x + w - font.width(value), y, DIM);
     }
 
     // Interaction
@@ -1703,7 +1704,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                 final String c = fmt(count);
                 g.pose().pushPose();
                 g.pose().translate(0, 0, 200);
-                g.drawString(font, c, x + 17 - font.width(c), y + 9, HIGHLIGHTS.get().dataCount(), false);
+                Draw.text(g, font, c, x + 17 - font.width(c), y + 9, HIGHLIGHTS.get().dataCount());
                 g.pose().popPose();
             }
         } else {

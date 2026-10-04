@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.gui.layout.NetworkGatewayLayout;
 import dev.jstech.computers.menu.NetworkGatewayMenu;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
@@ -108,18 +109,18 @@ public class NetworkGatewayScreen extends CoreContainerScreen<NetworkGatewayMenu
         g.pose().pushPose();
         g.pose().translate(x, y, 0);
         g.pose().scale(scale, scale, 1.0f);
-        g.drawString(font, text, 0, 0, color, false);
+        Draw.text(g, font, text, 0, 0, color);
         g.pose().popPose();
     }
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        g.drawString(font, GameText.resolve(NetworkGatewayTexts.TITLE), NetworkGatewayLayout.TITLE_X,
-                NetworkGatewayLayout.TITLE_Y, theme.text(), false);
+        Draw.text(g, font, GameText.resolve(NetworkGatewayTexts.TITLE), NetworkGatewayLayout.TITLE_X,
+                NetworkGatewayLayout.TITLE_Y, theme.text());
         smallLabel(g, "J's", NetworkGatewayLayout.LED_JS_LABEL_X, NetworkGatewayLayout.TITLE_Y);
         smallLabel(g, "CC", NetworkGatewayLayout.LED_CC_LABEL_X, NetworkGatewayLayout.TITLE_Y);
-        g.drawString(font, playerInventoryTitle, NetworkGatewayLayout.INV_X, NetworkGatewayLayout.INV_LABEL_Y,
-                theme.dim(), false);
+        Draw.text(g, font, playerInventoryTitle, NetworkGatewayLayout.INV_X, NetworkGatewayLayout.INV_LABEL_Y,
+                theme.dim());
     }
 
     private void smallLabel(final GuiGraphics g, final String text, final int x, final int y) {
@@ -127,7 +128,7 @@ public class NetworkGatewayScreen extends CoreContainerScreen<NetworkGatewayMenu
         g.pose().pushPose();
         g.pose().translate(x, y, 0);
         g.pose().scale(scale, scale, 1.0f);
-        g.drawString(font, text, 0, 0, theme.dim(), false);
+        Draw.text(g, font, text, 0, 0, theme.dim());
         g.pose().popPose();
     }
 

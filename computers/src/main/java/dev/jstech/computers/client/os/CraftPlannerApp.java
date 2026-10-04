@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
@@ -332,8 +333,8 @@ public final class CraftPlannerApp implements IDesktopApp {
         final boolean sel = ItemStack.isSameItemSameComponents(e.result(), selected);
         ctx.skin().listRow(g, x, y, w, h, hovered, sel);
         itemIcon(g, e.result(), x + 1, y, 12);
-        g.drawString(ctx.font(), Texts.clip(ctx.font(), e.title(), w - 18), x + 15, y + 3,
-                sel ? ctx.skin().accent() : ctx.skin().text(), false);
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), e.title(), w - 18), x + 15, y + 3,
+                sel ? ctx.skin().accent() : ctx.skin().text());
     }
 
     private void catalogClicked(final int index, final int button, final double mx, final double my) {
@@ -346,9 +347,9 @@ public final class CraftPlannerApp implements IDesktopApp {
     private void renderStageRow(final GuiGraphics g, final UiContext ctx, final CraftPlannerPayload.Stage s, final int index,
                                 final int x, final int y, final int w, final int h, final boolean hovered, final boolean selectedRow) {
         final Font font = ctx.font();
-        g.drawString(font, Texts.clip(font, GameText.resolve(s.name()), w - 60), x + 4, y, ctx.skin().text(), false);
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(s.name()), w - 60), x + 4, y, ctx.skin().text());
         final String tag = GameText.resolve((s.machine() ? MACHINE_RUNS : BENCH_RUNS).with(s.runs()));
-        g.drawString(font, tag, x + w - font.width(tag), y, ctx.skin().dim(), false);
+        Draw.text(g, font, tag, x + w - font.width(tag), y, ctx.skin().dim());
     }
 
     private void renderIngredientRow(final GuiGraphics g, final UiContext ctx, final CraftPlanPayload.Row r, final int index,
@@ -356,10 +357,10 @@ public final class CraftPlannerApp implements IDesktopApp {
         final Font font = ctx.font();
         final boolean ok = r.have() >= r.need();
         itemIcon(g, r.item(), x + 1, y - 1, 11);
-        g.drawString(font, Texts.clip(font, r.item().getHoverName().getString(), w - 76), x + 15, y, ctx.skin().text(), false);
+        Draw.text(g, font, Texts.clip(font, r.item().getHoverName().getString(), w - 76), x + 15, y, ctx.skin().text());
         final String s = GameText.resolve(ok ? HAVE.with(JsTechTheme.fmt(r.have()))
                 : SHORT.with(JsTechTheme.fmt(r.need() - r.have())));
-        g.drawString(font, s, x + w - font.width(s), y, ok ? PALETTE.get().good() : PALETTE.get().missing(), false);
+        Draw.text(g, font, s, x + w - font.width(s), y, ok ? PALETTE.get().good() : PALETTE.get().missing());
     }
 
     /** One node of the recipe dependency tree, flattened in pre-order and drawn indented by depth. */
@@ -373,10 +374,10 @@ public final class CraftPlannerApp implements IDesktopApp {
         itemIcon(g, n.item(), ix, y - 1, 10);
         final String label =
                 GameText.resolve(TREE_NODE.with(JsTechTheme.fmt(n.qty()), n.item().getHoverName().getString()));
-        g.drawString(font, Texts.clip(font, label, w - (ix - x) - 13 - 40), ix + 12, y, ctx.skin().text(), false);
+        Draw.text(g, font, Texts.clip(font, label, w - (ix - x) - 13 - 40), ix + 12, y, ctx.skin().text());
         if (!n.craftable()) {
             final String raw = GameText.resolve(RAW);
-            g.drawString(font, raw, x + w - font.width(raw), y, ctx.skin().dim(), false);
+            Draw.text(g, font, raw, x + w - font.width(raw), y, ctx.skin().dim());
         }
     }
 

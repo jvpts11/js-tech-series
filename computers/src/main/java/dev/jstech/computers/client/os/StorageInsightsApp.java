@@ -400,16 +400,16 @@ public final class StorageInsightsApp implements IDesktopApp {
         }
         final long max = data == null || data.topItems().isEmpty() ? 1 : Math.max(1, data.topItems().get(0).total());
         final boolean pin = pinned.contains(e.key().toString());
-        g.drawString(font, pin ? "*" : "-", x, y + 2, pin ? PALETTE.get().pinned() : ctx.skin().dim(), false);
+        Draw.text(g, font, pin ? "*" : "-", x, y + 2, pin ? PALETTE.get().pinned() : ctx.skin().dim());
         itemIcon(g, e.key(), x + 8, y, 12);
-        g.drawString(font, Texts.clip(font, e.key().displayName().getString(), 96 - 24), x + 22, y + 2, ctx.skin().text(), false);
+        Draw.text(g, font, Texts.clip(font, e.key().displayName().getString(), 96 - 24), x + 22, y + 2, ctx.skin().text());
         final int barX = x + 96;
         final int qtyW = 34;
         final int barW = Math.max(10, w - 96 - qtyW - 4);
         g.fill(barX, y + 4, barX + barW, y + 10, ctx.skin().fieldBg());
         g.fill(barX, y + 4, barX + (int) (barW * Math.min(1.0, (double) e.total() / max)), y + 10, ctx.skin().accent());
         final String q = JsTechTheme.fmt(e.total());
-        g.drawString(font, q, x + w - font.width(q), y + 2, ctx.skin().dim(), false);
+        Draw.text(g, font, q, x + w - font.width(q), y + 2, ctx.skin().dim());
     }
 
     private void topClicked(final int index, final int button, final double mx, final double my) {
@@ -430,9 +430,9 @@ public final class StorageInsightsApp implements IDesktopApp {
         final Font font = ctx.font();
         g.fill(x, y, x + w, y + h - 1, PALETTE.get().lowRow());
         itemIcon(g, e.key(), x + 1, y, 11);
-        g.drawString(font, Texts.clip(font, e.key().displayName().getString(), w - 56), x + 15, y + 2, ctx.skin().text(), false);
+        Draw.text(g, font, Texts.clip(font, e.key().displayName().getString(), w - 56), x + 15, y + 2, ctx.skin().text());
         final String s = e.total() + "/" + threshold;
-        g.drawString(font, s, x + w - font.width(s), y + 2, PALETTE.get().critical(), false);
+        Draw.text(g, font, s, x + w - font.width(s), y + 2, PALETTE.get().critical());
     }
 
     private void lowClicked(final int index, final int button, final double mx, final double my) {
@@ -451,27 +451,27 @@ public final class StorageInsightsApp implements IDesktopApp {
                 smax = Math.max(smax, share.qty());
             }
         }
-        g.drawString(font, Texts.clip(font, GameText.resolve(s.label()), 44), x, y, ctx.skin().dim(), false);
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(s.label()), 44), x, y, ctx.skin().dim());
         final int bx = x + 46;
         final int bw = Math.max(8, w - 46 - 30);
         g.fill(bx, y, bx + bw, y + 6, ctx.skin().fieldBg());
         g.fill(bx, y, bx + (int) (bw * Math.min(1.0, (double) s.qty() / smax)), y + 6, ctx.skin().accent());
         final String q = JsTechTheme.fmt(s.qty());
-        g.drawString(font, q, x + w - font.width(q), y - 1, ctx.skin().dim(), false);
+        Draw.text(g, font, q, x + w - font.width(q), y - 1, ctx.skin().dim());
     }
 
     private void renderStoredRow(final GuiGraphics g, final UiContext ctx, final StorageShare s, final int index, final int x,
                                  final int y, final int w, final int h, final boolean hovered, final boolean selected) {
         final String line = GameText.resolve(s.label()) + "  " + JsTechTheme.fmt(s.qty());
-        g.drawString(ctx.font(), Texts.clip(ctx.font(), line, w - 4), x, y, ctx.skin().text(), false);
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), line, w - 4), x, y, ctx.skin().text());
     }
 
     private void renderBusRow(final GuiGraphics g, final UiContext ctx, final BusRef b, final int index, final int x,
                               final int y, final int w, final int h, final boolean hovered, final boolean selected) {
         final Font font = ctx.font();
-        g.drawString(font, Texts.clip(font, b.name(), w - 60), x, y, ctx.skin().text(), false);
+        Draw.text(g, font, Texts.clip(font, b.name(), w - 60), x, y, ctx.skin().text());
         final String kind = GameText.resolve(b.kind());
-        g.drawString(font, kind, x + w - font.width(kind), y, ctx.skin().accent(), false);
+        Draw.text(g, font, kind, x + w - font.width(kind), y, ctx.skin().accent());
     }
 
     // state

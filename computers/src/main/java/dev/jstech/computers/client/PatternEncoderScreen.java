@@ -186,16 +186,16 @@ public class PatternEncoderScreen extends AbstractComputerScreen<PatternEncoderM
         g.pose().pushPose();
         g.pose().translate(x, y, 0);
         g.pose().scale(scale, scale, 1.0f);
-        g.drawString(font, shown, 0, 0, color, false);
+        Draw.text(g, font, shown, 0, 0, color);
         g.pose().popPose();
     }
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        g.drawString(font, of(TITLE), PatternEncoderLayout.TITLE_X, PatternEncoderLayout.TITLE_Y,
-                theme.text(), false);
-        g.drawString(font, playerInventoryTitle, PatternEncoderLayout.INV_X, PatternEncoderLayout.INV_LABEL_Y,
-                theme.dim(), false);
+        Draw.text(g, font, of(TITLE), PatternEncoderLayout.TITLE_X, PatternEncoderLayout.TITLE_Y,
+                theme.text());
+        Draw.text(g, font, playerInventoryTitle, PatternEncoderLayout.INV_X, PatternEncoderLayout.INV_LABEL_Y,
+                theme.dim());
     }
 
     @Override

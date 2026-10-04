@@ -518,8 +518,7 @@ public final class DesktopWindow {
         final int titleX = skin.titleCentered()
                 ? Math.max(titleFloor, Math.min(wx + (ww - font.width(title)) / 2, minX() - font.width(title) - 4))
                 : textLeft;
-        g.drawString(font, title, titleX, wy + 3,
-                focused ? skin.titleText() : PALETTE.get().unfocusedTitle(), focused && skin.textShadow());
+        Draw.text(g, font, title, titleX, wy + 3, focused ? skin.titleText() : PALETTE.get().unfocusedTitle());
         /*
          * The focused window also carries an accent outline, so "which one am I typing into" reads
          * at a glance even when several windows overlap.

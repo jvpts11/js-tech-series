@@ -25,6 +25,7 @@ import dev.jstech.computers.operation.payload.RequestClusterManagerPayload;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
 import dev.jstech.core.client.gui.component.ColumnHeader;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
@@ -789,9 +790,9 @@ public final class ClusterManagerApp implements IDesktopApp {
         }
         g.fill(x + 5, y + 3, x + 8, y + 6, c.reachable()
                 ? (c.online() ? PALETTE.get().good() : PALETTE.get().bad()) : ctx.skin().dim());
-        g.drawString(ctx.font(), Texts.clip(ctx.font(), c.name(), w - 16), x + 11, y + 1, ctx.skin().text(), false);
-        g.drawString(ctx.font(), Texts.clip(ctx.font(), GameText.resolve(c.sub()), w - 8), x + 5, y + ROW_H + 1,
-                ctx.skin().dim(), false);
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), c.name(), w - 16), x + 11, y + 1, ctx.skin().text());
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), GameText.resolve(c.sub()), w - 8), x + 5, y + ROW_H + 1,
+                ctx.skin().dim());
     }
 
     private void renderNodeRow(final GuiGraphics g, final UiContext ctx, final WireNode n, final int index, final int x,
@@ -806,18 +807,18 @@ public final class ClusterManagerApp implements IDesktopApp {
         final int c3 = columns.columnX(3);
         final int c4 = columns.columnX(4);
         final int ty = y + 1;
-        g.drawString(font, GameText.resolve(ClusterManagerTexts.RACK_UNIT.with(n.rackIndex(), n.row() + 1)), c0, ty,
-                col, false);
-        g.drawString(font, Texts.clip(font, n.name(), c2 - c1 - GAP), c1, ty, col, false);
+        Draw.text(g, font, GameText.resolve(ClusterManagerTexts.RACK_UNIT.with(n.rackIndex(), n.row() + 1)), c0, ty,
+                col);
+        Draw.text(g, font, Texts.clip(font, n.name(), c2 - c1 - GAP), c1, ty, col);
         if (n.osLabel().isEmpty()) {
-            g.drawString(font, "-", c2, ty, ctx.skin().dim(), false);
+            Draw.text(g, font, "-", c2, ty, ctx.skin().dim());
         } else {
-            g.drawString(font, Texts.clip(font, n.osLabel(), c3 - c2 - GAP), c2, ty, col, false);
+            Draw.text(g, font, Texts.clip(font, n.osLabel(), c3 - c2 - GAP), c2, ty, col);
         }
-        g.drawString(font, Texts.clip(font, stateLabel(n.state()), c4 - c3 - GAP), c3, ty, stateColor(n.state(), ctx), false);
+        Draw.text(g, font, Texts.clip(font, stateLabel(n.state()), c4 - c3 - GAP), c3, ty, stateColor(n.state(), ctx));
         final String right = tab == 0 ? (n.phiModel() < 0 ? "-" : MODELS[Math.min(n.phiModel(), MODELS.length - 1)])
                 : (n.total() <= 0 ? "-" : (100 * n.used() / Math.max(1, n.total())) + "%");
-        g.drawString(font, Texts.clip(font, right, 32 - GAP), c4, ty, ctx.skin().accent(), false);
+        Draw.text(g, font, Texts.clip(font, right, 32 - GAP), c4, ty, ctx.skin().accent());
         // The bay switch at the row's right edge.
         final int sx = x + w - PAD - SWITCH_W + 2;
         g.fill(sx, ty, sx + 14, ty + 8, ctx.skin().fieldBg());
@@ -859,21 +860,21 @@ public final class ClusterManagerApp implements IDesktopApp {
         }
         final Font font = ctx.font();
         final int ty = y + 1;
-        g.drawString(font, String.valueOf(slot + 1), mapColumns.columnX(0), ty, ctx.skin().dim(), false);
-        g.drawString(font, LADDER[slot], mapColumns.columnX(1), ty, ctx.skin().accent(), false);
+        Draw.text(g, font, String.valueOf(slot + 1), mapColumns.columnX(0), ty, ctx.skin().dim());
+        Draw.text(g, font, LADDER[slot], mapColumns.columnX(1), ty, ctx.skin().accent());
         if (node == null) {
-            g.drawString(font, GameText.resolve(ClusterManagerTexts.NO_NODE), mapColumns.columnX(2), ty,
-                    ctx.skin().dim(), false);
+            Draw.text(g, font, GameText.resolve(ClusterManagerTexts.NO_NODE), mapColumns.columnX(2), ty,
+                    ctx.skin().dim());
             return;
         }
-        g.drawString(font, Texts.clip(font, GameText.resolve(ClusterManagerTexts.RACK_UNIT.with(node.rackIndex(),
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(ClusterManagerTexts.RACK_UNIT.with(node.rackIndex(),
                         node.row() + 1)) + " " + node.name(),
-                mapColumns.columnX(3) - mapColumns.columnX(2) - GAP), mapColumns.columnX(2), ty, ctx.skin().text(), false);
+                mapColumns.columnX(3) - mapColumns.columnX(2) - GAP), mapColumns.columnX(2), ty, ctx.skin().text());
         final String st = GameText.resolve(node.code() >= 16 ? ClusterManagerTexts.ONLINE
                 : node.code() == 3 ? ClusterManagerTexts.BAY_OFF : node.code() == 2 ? ClusterManagerTexts.RATING_LOW
                 : node.code() == 1 ? ClusterManagerTexts.NO_PHI_CARD : ClusterManagerTexts.SLOT_NO_NODE);
-        g.drawString(font, st, mapColumns.columnX(3), ty,
-                node.code() >= 16 ? PALETTE.get().good() : PALETTE.get().busy(), false);
+        Draw.text(g, font, st, mapColumns.columnX(3), ty,
+                node.code() >= 16 ? PALETTE.get().good() : PALETTE.get().busy());
     }
 
     private void renderQueueRow(final GuiGraphics g, final UiContext ctx, final WireCraft c, final int index, final int x,
@@ -884,11 +885,11 @@ public final class ClusterManagerApp implements IDesktopApp {
         final int c0 = queueColumns.columnX(0);
         final int c1 = queueColumns.columnX(1);
         final int c2 = queueColumns.columnX(2);
-        g.drawString(font, Texts.clip(font, GameText.resolve(ClusterManagerTexts.CRAFT.with(c.label())), c1 - c0 - GAP),
-                c0, ty, col, false);
-        g.drawString(font, Texts.clip(font, c.requester(), c2 - c1 - GAP), c1, ty, ctx.skin().dim(), false);
-        g.drawString(font, c.waiting() ? GameText.resolve(ClusterManagerTexts.WAITING) : String.valueOf(c.slots()),
-                c2, ty, c.waiting() ? PALETTE.get().busy() : ctx.skin().accent(), false);
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(ClusterManagerTexts.CRAFT.with(c.label())), c1 - c0 - GAP),
+                c0, ty, col);
+        Draw.text(g, font, Texts.clip(font, c.requester(), c2 - c1 - GAP), c1, ty, ctx.skin().dim());
+        Draw.text(g, font, c.waiting() ? GameText.resolve(ClusterManagerTexts.WAITING) : String.valueOf(c.slots()),
+                c2, ty, c.waiting() ? PALETTE.get().busy() : ctx.skin().accent());
     }
 
     private void renderInventoryCell(final GuiGraphics g, final UiContext ctx, final int index, final int cx, final int cy,

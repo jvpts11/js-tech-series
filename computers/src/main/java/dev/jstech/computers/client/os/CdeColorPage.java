@@ -11,6 +11,7 @@ import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.CdeStyleLayout;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
@@ -106,7 +107,7 @@ final class CdeColorPage implements IDesktopApp {
         final CdePalette shown = scheme.colours();
         CdeStylePages.list(g, font, this.skin, shown, x, y, true, NAMES, NAMES.indexOf(this.picked));
         final Rect name = CdeStyleLayout.colorName();
-        g.drawString(font, scheme.label(), x + name.x(), y + name.y(), this.skin.text(), false);
+        Draw.text(g, font, scheme.label(), x + name.x(), y + name.y(), this.skin.text());
         final int[] colours = {shown.active(), shown.window(), shown.inset(), shown.light(), shown.shade(),
             shown.backdropA(), shown.backdropB(), shown.ink()};
         for (int i = 0; i < CdeStyleLayout.SWATCHES; i++) {

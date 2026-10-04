@@ -15,6 +15,7 @@ import dev.jstech.computers.os.fs.Archive;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.palette.Palette;
@@ -396,7 +397,7 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     private void drawHeader(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.fill(x + MARGIN, y, x + width - MARGIN, y + HEADER_H, skin.listHover());
         final int[] cols = columns(x, width);
-        g.drawString(font, GameText.resolve(ArchiverTexts.NAME_COLUMN), cols[0], y + 2, skin.text(), false);
+        Draw.text(g, font, GameText.resolve(ArchiverTexts.NAME_COLUMN), cols[0], y + 2, skin.text());
         if (mode == Mode.LIST) {
             right(g, font, GameText.resolve(ArchiverTexts.SIZE_COLUMN), cols[1], y + 2, skin.text());
             right(g, font, GameText.resolve(ArchiverTexts.SAVED_COLUMN), cols[2], y + 2, skin.text());
@@ -408,8 +409,8 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     private void drawArchive(final GuiGraphics g, final Font font, final int x, final int top,
                              final int width, final int bottom) {
         if (entries.isEmpty()) {
-            g.drawString(font, GameText.resolve(archivePath.isEmpty() ? ArchiverTexts.NO_ARCHIVE
-                    : ArchiverTexts.NOTHING_IN_IT), x + MARGIN + 4, top + 4, skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(archivePath.isEmpty() ? ArchiverTexts.NO_ARCHIVE
+                    : ArchiverTexts.NOTHING_IN_IT), x + MARGIN + 4, top + 4, skin.dim());
             return;
         }
         final int[] cols = columns(x, width);
@@ -423,8 +424,8 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
                 g.fill(x + MARGIN, ry, x + width - MARGIN, ry + ROW_H, skin.listSelect());
             }
             final int ink = skin.listRowText(on);
-            g.drawString(font, font.plainSubstrByWidth(entry.name(), cols[1] - cols[0] - 6),
-                    cols[0], ry + 2, ink, false);
+            Draw.text(g, font, font.plainSubstrByWidth(entry.name(), cols[1] - cols[0] - 6),
+                    cols[0], ry + 2, ink);
             right(g, font, bytes(entry.weighs()), cols[1], ry + 2, ink);
             right(g, font, entry.type().extension().isEmpty() ? GameText.resolve(ArchiverTexts.FILE)
                     : entry.type().extension(), cols[2], ry + 2, on ? ink : skin.dim());
@@ -434,8 +435,7 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     private void drawChosen(final GuiGraphics g, final Font font, final int x, final int top,
                             final int width, final int bottom) {
         if (chosen.isEmpty()) {
-            g.drawString(font, GameText.resolve(ArchiverTexts.ADD_FILES), x + MARGIN + 4, top + 4, skin.dim(),
-                    false);
+            Draw.text(g, font, GameText.resolve(ArchiverTexts.ADD_FILES), x + MARGIN + 4, top + 4, skin.dim());
             return;
         }
         final int[] cols = columns(x, width);
@@ -449,8 +449,8 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
                 g.fill(x + MARGIN, ry, x + width - MARGIN, ry + ROW_H, skin.listSelect());
             }
             final int ink = skin.listRowText(on);
-            g.drawString(font, font.plainSubstrByWidth(Archive.leaf(path), cols[1] - cols[0] - 6),
-                    cols[0], ry + 2, ink, false);
+            Draw.text(g, font, font.plainSubstrByWidth(Archive.leaf(path), cols[1] - cols[0] - 6),
+                    cols[0], ry + 2, ink);
             final String where = folderOf(path);
             right(g, font, font.plainSubstrByWidth(where, cols[2] - cols[1] - 6), cols[2], ry + 2,
                     on ? ink : skin.dim());
@@ -459,8 +459,8 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.fill(x, y, x + width, y + STATUS_H, skin.windowBg());
-        g.drawString(font, font.plainSubstrByWidth(GameText.resolve(status), width - MARGIN * 2 - 70), x + MARGIN,
-                y + 2, statusGood ? PALETTE.get().savedGood() : skin.dim(), false);
+        Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(status), width - MARGIN * 2 - 70), x + MARGIN,
+                y + 2, statusGood ? PALETTE.get().savedGood() : skin.dim());
         if (mode == Mode.LIST && originalBytes > 0) {
             // What the archive is for, said as one number: how much of the disk it handed back.
             final long saved = 100L - Math.min(100L, packedBytes * 100L / originalBytes);
@@ -478,7 +478,7 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private static void right(final GuiGraphics g, final Font font, final String text,
                               final int rightEdge, final int y, final int colour) {
-        g.drawString(font, text, rightEdge - font.width(text), y, colour, false);
+        Draw.text(g, font, text, rightEdge - font.width(text), y, colour);
     }
 
     private static String bytes(final long value) {

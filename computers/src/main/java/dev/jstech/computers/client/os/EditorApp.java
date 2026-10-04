@@ -12,6 +12,7 @@ import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextArea;
 import dev.jstech.core.client.gui.component.UiContext;
@@ -446,10 +447,10 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
             final boolean on = i == active;
             g.fill(bx, y + 1, bx + w, y + TAB_H - (on ? 0 : 1), on ? skin.fieldBg() : skin.listHover());
             g.fill(bx, y + 1, bx + w, y + 2, on ? skin.accent() : skin.edge());
-            g.drawString(font, font.plainSubstrByWidth(label, w - 14), bx + 4, y + 3,
-                    on ? skin.text() : skin.dim(), false);
+            Draw.text(g, font, font.plainSubstrByWidth(label, w - 14), bx + 4, y + 3,
+                    on ? skin.text() : skin.dim());
             // The cross that closes it, drawn small so it is not mistaken for part of the name.
-            g.drawString(font, "x", bx + w - 7, y + 3, skin.dim(), false);
+            Draw.text(g, font, "x", bx + w - 7, y + 3, skin.dim());
             bx += w + 2;
             tabEnds.add(bx);
         }
@@ -471,8 +472,8 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         final int caret = doc.cursorLine();
         for (int i = 0; i < body.visibleLines() && first + i < doc.lineCount(); i++) {
             final String number = String.valueOf(first + i + 1);
-            g.drawString(font, number, x + gutter - 3 - font.width(number),
-                    body.textTop() + i * pitch + 1, first + i == caret ? skin.text() : skin.dim(), false);
+            Draw.text(g, font, number, x + gutter - 3 - font.width(number),
+                    body.textTop() + i * pitch + 1, first + i == caret ? skin.text() : skin.dim());
         }
     }
 
@@ -486,15 +487,15 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         final TextDocument doc = body.document();
         final String left = GameText.resolve(EditorTexts.LINE_AND_COLUMN.with(doc.cursorLine() + 1,
                 doc.cursorCol() + 1));
-        g.drawString(font, left, x + MARGIN, y + 1, skin.text(), false);
+        Draw.text(g, font, left, x + MARGIN, y + 1, skin.text());
         final String right = GameText.resolve(
                 (doc.lineCount() == 1 ? EditorTexts.ONE_LINE : EditorTexts.LINES).with(doc.lineCount()))
                 + "   " + bytes(body.text());
-        g.drawString(font, right, x + width - MARGIN - font.width(right), y + 1, skin.dim(), false);
+        Draw.text(g, font, right, x + width - MARGIN - font.width(right), y + 1, skin.dim());
         final int room = width - MARGIN * 2 - font.width(left) - font.width(right) - 12;
         if (room > 20) {
-            g.drawString(font, font.plainSubstrByWidth(status, room),
-                    x + MARGIN + font.width(left) + 6, y + 1, skin.dim(), false);
+            Draw.text(g, font, font.plainSubstrByWidth(status, room),
+                    x + MARGIN + font.width(left) + 6, y + 1, skin.dim());
         }
     }
 

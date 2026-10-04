@@ -165,12 +165,12 @@ public final class JsTechTheme {
 
     public static void text(final GuiGraphics g, final Font f, final String s, final int x, final int y,
                             final int color) {
-        g.drawString(f, s, x, y, color, false);
+        Draw.text(g, f, s, x, y, color);
     }
 
     public static void textRight(final GuiGraphics g, final Font f, final String s, final int xRight,
                                  final int y, final int color) {
-        g.drawString(f, s, xRight - f.width(s), y, color, false);
+        Draw.text(g, f, s, xRight - f.width(s), y, color);
     }
 
     /**
@@ -192,7 +192,7 @@ public final class JsTechTheme {
         g.pose().pushPose();
         g.pose().translate(x, y, 0);
         g.pose().scale(scale, scale, 1.0f);
-        g.drawString(f, s, 0, 0, color, false);
+        Draw.text(g, f, s, 0, 0, color);
         g.pose().popPose();
     }
 
@@ -214,10 +214,10 @@ public final class JsTechTheme {
 
     public static void tileText(final GuiGraphics g, final Font f, final int x, final int y,
                                 final String key, final String value, final String unit, final int valueColor) {
-        g.drawString(f, key, x + 4, y + 4, active.dim(), false);
-        g.drawString(f, value, x + 4, y + 13, valueColor, false);
+        Draw.text(g, f, key, x + 4, y + 4, active.dim());
+        Draw.text(g, f, value, x + 4, y + 13, valueColor);
         if (unit != null && !unit.isEmpty()) {
-            g.drawString(f, unit, x + 6 + f.width(value), y + 15, active.dim(), false);
+            Draw.text(g, f, unit, x + 6 + f.width(value), y + 15, active.dim());
         }
     }
 

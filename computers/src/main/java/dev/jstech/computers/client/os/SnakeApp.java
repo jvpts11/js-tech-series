@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.program.SnakeGame;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.palette.Palette;
@@ -257,15 +258,15 @@ public final class SnakeApp implements IDesktopApp {
 
     private static void centre(final GuiGraphics g, final Font font, final String text,
                                final int x, final int y, final int width, final int colour) {
-        g.drawString(font, text, x + (width - font.width(text)) / 2, y, colour, false);
+        Draw.text(g, font, text, x + (width - font.width(text)) / 2, y, colour);
     }
 
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.fill(x, y, x + width, y + STATUS_H, skin.windowBg());
         final String left = GameText.resolve(SnakeTexts.SCORE_AND_BEST.with(game.score(), best));
-        g.drawString(font, left, x + MARGIN, y + 2, skin.text(), false);
+        Draw.text(g, font, left, x + MARGIN, y + 2, skin.text());
         final String right = GameText.resolve(SnakeTexts.LENGTH.with(game.length()));
-        g.drawString(font, right, x + width - MARGIN - font.width(right), y + 2, skin.dim(), false);
+        Draw.text(g, font, right, x + width - MARGIN - font.width(right), y + 2, skin.dim());
     }
 
     /** Steps the game as many times as the clock says have come due since the last frame. */

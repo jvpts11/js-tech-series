@@ -16,6 +16,7 @@ import dev.jstech.computers.sigma.edit.CompletionContext;
 import dev.jstech.computers.sigma.sem.BuiltIns;
 import dev.jstech.computers.sigma.sem.SemanticModel;
 import dev.jstech.core.client.gui.component.ContextMenu;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.logic.TextDocument;
 import dev.jstech.core.language.IProgrammingLanguage;
@@ -217,8 +218,8 @@ public final class CodeCompletions {
         final int y = this.menu.bottom();
         g.fill(this.menu.x() - 1, y, this.menu.right() + 1, y + ROW_H + 1, PALETTE.get().outline());
         g.fill(this.menu.x(), y, this.menu.right(), y + ROW_H, ctx.skin().fieldBg());
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(text, this.menu.width() - 6),
-                this.menu.x() + 3, y + 1, ctx.skin().dim(), false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(text, this.menu.width() - 6),
+                this.menu.x() + 3, y + 1, ctx.skin().dim());
     }
 
     /** Gives the keys to the list while it is up; false when it wants none of them. */

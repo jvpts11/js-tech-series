@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.gui.layout.UiLayout;
 import dev.jstech.computers.operation.payload.UiEventPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -266,15 +267,15 @@ public final class SigmaWindowApp implements IDesktopApp {
                 && mouseY >= rect.y() && mouseY < rect.y() + rect.h();
         final int middle = rect.y() + (rect.h() - 7) / 2;
         switch (widget.kind()) {
-            case "Label" -> g.drawString(font, widget.text(), rect.x(), middle,
-                    widget.answers() ? this.skin.text() : this.skin.dim(), this.skin.textShadow());
+            case "Label" -> Draw.text(g, font, widget.text(), rect.x(), middle,
+                    widget.answers() ? this.skin.text() : this.skin.dim());
             case "Button" -> this.skin.button(g, font, rect.x(), rect.y(), rect.w(), rect.h(), widget.text(),
                     over && widget.answers(), this.pressed == widget.id(), false);
             case "TextBox" -> {
                 this.skin.field(g, rect.x(), rect.y(), rect.w(), rect.h(), this.focused == widget.id());
                 final String said = this.textOf(widget);
                 final String shown = said.length() > 64 ? said.substring(said.length() - 64) : said;
-                g.drawString(font, shown, rect.x() + 4, middle, this.skin.text(), false);
+                Draw.text(g, font, shown, rect.x() + 4, middle, this.skin.text());
                 if (this.focused == widget.id() && (System.currentTimeMillis() / 500) % 2 == 0) {
                     g.fill(rect.x() + 4 + font.width(shown), rect.y() + 3,
                             rect.x() + 5 + font.width(shown), rect.y() + rect.h() - 3, this.skin.text());
@@ -284,10 +285,9 @@ public final class SigmaWindowApp implements IDesktopApp {
                 final int box = Math.min(BOX_H, rect.h());
                 this.skin.field(g, rect.x(), rect.y() + (rect.h() - box) / 2, box, box, false);
                 if (widget.ticked()) {
-                    g.drawString(font, "x", rect.x() + 3, middle, this.skin.text(), false);
+                    Draw.text(g, font, "x", rect.x() + 3, middle, this.skin.text());
                 }
-                g.drawString(font, widget.text(), rect.x() + box + 4, middle, this.skin.text(),
-                        this.skin.textShadow());
+                Draw.text(g, font, widget.text(), rect.x() + box + 4, middle, this.skin.text());
             }
             case "ProgressBar" -> this.bar(g, widget, rect);
             case "ListBox" -> this.list(g, font, widget, rect, mouseX, mouseY);
@@ -325,10 +325,10 @@ public final class SigmaWindowApp implements IDesktopApp {
             final boolean picked = at == widget.number(4) - 1;
             this.skin.listRow(g, rect.x() + 2, top, rect.w() - 4, ROW_H, over, picked);
             final int colour = this.skin.listRowText(picked);
-            g.drawString(font, widget.rows().get(at), rect.x() + 4, top + 2, colour, false);
+            Draw.text(g, font, widget.rows().get(at), rect.x() + 4, top + 2, colour);
             if (at < widget.details().size() && !widget.details().get(at).isEmpty()) {
                 final String right = widget.details().get(at);
-                g.drawString(font, right, rect.x() + rect.w() - 4 - font.width(right), top + 2, colour, false);
+                Draw.text(g, font, right, rect.x() + rect.w() - 4 - font.width(right), top + 2, colour);
             }
         }
         if (widget.rows().size() > rows) {
@@ -353,8 +353,8 @@ public final class SigmaWindowApp implements IDesktopApp {
                         rect.y() + 1 + stroke.y() + Math.max(0, stroke.y2()), colour);
                 case "DrawLine" -> line(g, rect.x() + 1 + stroke.x(), rect.y() + 1 + stroke.y(),
                         rect.x() + 1 + stroke.x2(), rect.y() + 1 + stroke.y2(), colour);
-                case "DrawText" -> g.drawString(font, stroke.text(), rect.x() + 1 + stroke.x(),
-                        rect.y() + 1 + stroke.y(), colour, false);
+                case "DrawText" -> Draw.text(g, font, stroke.text(), rect.x() + 1 + stroke.x(),
+                        rect.y() + 1 + stroke.y(), colour);
                 case "SetPixel" -> g.fill(rect.x() + 1 + stroke.x(), rect.y() + 1 + stroke.y(),
                         rect.x() + 2 + stroke.x(), rect.y() + 2 + stroke.y(), colour);
                 default -> {

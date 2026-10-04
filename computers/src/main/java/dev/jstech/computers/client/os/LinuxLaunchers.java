@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -88,8 +89,8 @@ final class LinuxLaunchers {
         g.fill(x, y, x + w, y + h, c.fill());
         // Header: the user and the search hint.
         g.fill(x + 6, y + 6, x + 20, y + 20, desktop.themeColours().startButton());
-        g.drawString(desktop.textFont(), desktop.accountLabel(), x + 26, y + 6, c.ink(), false);
-        g.drawString(desktop.textFont(), words(DesktopTexts.TYPE_TO_SEARCH_MORE), x + 26, y + 15, c.hint(), false);
+        Draw.text(g, desktop.textFont(), desktop.accountLabel(), x + 26, y + 6, c.ink());
+        Draw.text(g, desktop.textFont(), words(DesktopTexts.TYPE_TO_SEARCH_MORE), x + 26, y + 15, c.hint());
         // Side column: places.
         final int bodyTop = y + KDE_HEADER_H;
         final int bodyBot = y + h - KDE_FOOTER_H;
@@ -99,8 +100,7 @@ final class LinuxLaunchers {
             if (i == 0) {
                 g.fill(x, py - 2, x + KDE_SIDE_W, py + 10, desktop.themeColours().startButton());
             }
-            g.drawString(desktop.textFont(), words(KDE_PLACES.get(i)), x + 8, py, i == 0 ? c.chosen() : c.muted(),
-                    false);
+            Draw.text(g, desktop.textFont(), words(KDE_PLACES.get(i)), x + 8, py, i == 0 ? c.chosen() : c.muted());
         }
         // App list.
         int my = bodyTop + 4;
@@ -112,16 +112,16 @@ final class LinuxLaunchers {
                 g.fill(listX, my, listX + listW, my + KDE_ROW_H, c.rowHover());
             }
             ProgramIcons.draw(g, listX + 2, my, 16, KDE_ROW_H, l.programId(), desktop.icons());
-            g.drawString(desktop.textFont(), desktop.shorten(l.label(), 18), listX + 22, my + 4, c.ink(), false);
+            Draw.text(g, desktop.textFont(), desktop.shorten(l.label(), 18), listX + 22, my + 4, c.ink());
             my += KDE_ROW_H;
         }
         // Footer: session actions.
         g.fill(x, bodyBot, x + w, y + h, c.side());
-        g.drawString(desktop.textFont(), words(DesktopTexts.SLEEP), x + 8, bodyBot + 4, c.hint(), false);
+        Draw.text(g, desktop.textFont(), words(DesktopTexts.SLEEP), x + 8, bodyBot + 4, c.hint());
         final String off = words(DesktopTexts.START_SHUT_DOWN);
         final int offX = x + w - desktop.textFont().width(off) - 8;
         final boolean offHov = desktop.hoverBelowRight(bodyBot, offX - 4, x + w);
-        g.drawString(desktop.textFont(), off, offX, bodyBot + 4, offHov ? c.chosen() : c.muted(), false);
+        Draw.text(g, desktop.textFont(), off, offX, bodyBot + 4, offHov ? c.chosen() : c.muted());
     }
 
     boolean clickKde(final int mx, final int my, final int tbY) {
@@ -169,11 +169,11 @@ final class LinuxLaunchers {
         final String q = desktop.start().searchText();
         if (q.isEmpty()) {
             final String hint = words(DesktopTexts.TYPE_TO_SEARCH);
-            g.drawString(desktop.textFont(), hint,
-                    fieldX + (fieldW - desktop.textFont().width(hint)) / 2, fieldY + 3, c.hint(), false);
+            Draw.text(g, desktop.textFont(), hint,
+                    fieldX + (fieldW - desktop.textFont().width(hint)) / 2, fieldY + 3, c.hint());
         } else {
-            g.drawString(desktop.textFont(), desktop.shorten(q, (fieldW - 8) / 6),
-                    fieldX + 6, fieldY + 3, c.ink(), false);
+            Draw.text(g, desktop.textFont(), desktop.shorten(q, (fieldW - 8) / 6),
+                    fieldX + 6, fieldY + 3, c.ink());
         }
         final List<Launcher> filtered = desktop.start().filtered();
         int contentTop = fieldY + 22;
@@ -260,15 +260,15 @@ final class LinuxLaunchers {
             if (i == 0) {
                 g.fill(catsX, cy - 2, catsX + CIN_CATS_W - 1, cy + 10, desktop.themeColours().startButton());
             }
-            g.drawString(desktop.textFont(), words(CIN_CATEGORIES.get(i)), catsX + 8, cy,
-                    i == 0 ? c.chosen() : c.category(), false);
+            Draw.text(g, desktop.textFont(), words(CIN_CATEGORIES.get(i)), catsX + 8, cy,
+                    i == 0 ? c.chosen() : c.category());
         }
         // Search hint + app list.
         final int listX = catsX + CIN_CATS_W + 4;
         final int listW = x + w - listX - 4;
         g.fill(listX, y + 5, listX + listW, y + 17, c.search());
         desktop.drawOutline(g, listX, y + 5, listW, 12, c.searchEdge());
-        g.drawString(desktop.textFont(), words(DesktopTexts.SEARCH), listX + 4, y + 7, c.searchHint(), false);
+        Draw.text(g, desktop.textFont(), words(DesktopTexts.SEARCH), listX + 4, y + 7, c.searchHint());
         int my = y + CIN_HEADER_H;
         for (final Launcher l : all) {
             final boolean hov = desktop.hoverIn(listX, my, listW, CIN_ROW_H);
@@ -276,7 +276,7 @@ final class LinuxLaunchers {
                 g.fill(listX, my, listX + listW, my + CIN_ROW_H, c.hover());
             }
             ProgramIcons.draw(g, listX + 2, my, 16, CIN_ROW_H, l.programId(), desktop.icons());
-            g.drawString(desktop.textFont(), desktop.shorten(l.label(), 16), listX + 22, my + 4, c.ink(), false);
+            Draw.text(g, desktop.textFont(), desktop.shorten(l.label(), 16), listX + 22, my + 4, c.ink());
             my += CIN_ROW_H;
         }
     }
@@ -347,8 +347,8 @@ final class LinuxLaunchers {
             while (label.length() > 3 && desktop.textFont().width(label) > GN_TILE_W - 2) {
                 label = label.substring(0, label.length() - 1);
             }
-            g.drawString(desktop.textFont(), label,
-                    tx + (GN_TILE_W - desktop.textFont().width(label)) / 2, ty + 22, c.ink(), false);
+            Draw.text(g, desktop.textFont(), label,
+                    tx + (GN_TILE_W - desktop.textFont().width(label)) / 2, ty + 22, c.ink());
         }
     }
 
@@ -369,16 +369,16 @@ final class LinuxLaunchers {
     private void drawSearchResults(final GuiGraphics g, final int fieldX, final int fieldW, final int contentTop,
                                    final List<Launcher> filtered) {
         final Overview c = GNOME.get();
-        g.drawString(desktop.textFont(),
+        Draw.text(g, desktop.textFont(),
                 words(filtered.isEmpty() ? DesktopTexts.NO_RESULTS : DesktopTexts.APPLICATIONS),
-                fieldX, contentTop, c.hint(), false);
+                fieldX, contentTop, c.hint());
         int my = contentTop + 12;
         for (final Launcher l : filtered) {
             if (desktop.hoverIn(fieldX, my, fieldW, 16)) {
                 g.fill(fieldX, my, fieldX + fieldW, my + 16, c.hover());
             }
             ProgramIcons.draw(g, fieldX + 2, my, 16, 16, l.programId(), desktop.icons());
-            g.drawString(desktop.textFont(), l.label(), fieldX + 22, my + 4, c.ink(), false);
+            Draw.text(g, desktop.textFont(), l.label(), fieldX + 22, my + 4, c.ink());
             my += 16;
         }
     }

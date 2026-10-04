@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import net.minecraft.client.gui.GuiGraphics;
@@ -69,14 +70,14 @@ final class OpsTerminalTab extends AbstractTerminalTab {
 
     @Override
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
-        g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.OPERATIONS), cx, cy + 20, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalUpkeepTexts.OPERATIONS), cx, cy + 20, DIM());
         final List<OperationRecord> ops = ops();
         final int live = menu.activeOps().size();
         final String n = GameText.resolve(live > 0 ? TerminalUpkeepTexts.LIVE_OF.with(live, ops.size())
                 : (ops.size() == 1 ? TerminalTexts.ONE_OP : TerminalTexts.OPS).with(ops.size()));
-        g.drawString(font(), n, cx + cw - font().width(n), cy + 20, DIM(), false);
+        Draw.text(g, font(), n, cx + cw - font().width(n), cy + 20, DIM());
         if (ops.isEmpty()) {
-            g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.NO_OPERATIONS), cx, cy + 40, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(TerminalUpkeepTexts.NO_OPERATIONS), cx, cy + 40, DIM());
             return;
         }
         final int start = clampOpScroll(ops.size());
@@ -85,7 +86,7 @@ final class OpsTerminalTab extends AbstractTerminalTab {
         }
         if (screen.selectedOp >= 0 && screen.selectedOp < ops.size()) {
             final OperationRecord op = ops.get(screen.selectedOp);
-            g.drawString(font(), op.name().getString(), cx + 24, cy + DETAIL_Y + 6, TEXT(), false);
+            Draw.text(g, font(), op.name().getString(), cx + 24, cy + DETAIL_Y + 6, TEXT());
             /*
              * Show "all" for an uncapped request, so a Long.MAX demand never renders as an absurd,
              * overflowing "9223372036854.8M" total.
@@ -94,7 +95,7 @@ final class OpsTerminalTab extends AbstractTerminalTab {
                     ? GameText.resolve(TerminalUpkeepTexts.ALL) : fmt(op.requested());
             final String sub = GameText.resolve(
                     TerminalUpkeepTexts.MOVED_OF.with(fmt(op.moved()), reqLabel, statusLabel(op.status())));
-            g.drawString(font(), sub, cx + 24, cy + DETAIL_Y + 16, statusColor(op.status()), false);
+            Draw.text(g, font(), sub, cx + 24, cy + DETAIL_Y + 16, statusColor(op.status()));
             /*
              * A craft carries its stages as sub-operations; show those (what it is made of, how far each is)
              * rather than provenance rows, which is what makes a multi-stage craft legible here.
@@ -108,8 +109,8 @@ final class OpsTerminalTab extends AbstractTerminalTab {
                     if (mv.size() == 2) {
                         moveRow(g, cx, cy + DETAIL_Y + 38, mv.get(1));
                     } else if (mv.size() > 2) {
-                        g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.MORE_SOURCES.with(mv.size() - 1)),
-                                cx + 6, cy + DETAIL_Y + 38, DIM(), false);
+                        Draw.text(g, font(), GameText.resolve(TerminalUpkeepTexts.MORE_SOURCES.with(mv.size() - 1)),
+                                cx + 6, cy + DETAIL_Y + 38, DIM());
                     }
                 }
             }
@@ -123,12 +124,12 @@ final class OpsTerminalTab extends AbstractTerminalTab {
             final OperationRecord.SubRow s = subs.get(i);
             final String name = font().plainSubstrByWidth(s.server(), 90);
             final String prog = s.moved() + "/" + s.planned();
-            g.drawString(font(), name, cx + 6, ry + i * 10, TEXT(), false);
-            g.drawString(font(), prog, cx + 100, ry + i * 10, subStateColor(s.state()), false);
+            Draw.text(g, font(), name, cx + 6, ry + i * 10, TEXT());
+            Draw.text(g, font(), prog, cx + 100, ry + i * 10, subStateColor(s.state()));
         }
         if (subs.size() > show) {
-            g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.MORE_STAGES.with(subs.size() - show)),
-                    cx + 6, ry + show * 10, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(TerminalUpkeepTexts.MORE_STAGES.with(subs.size() - show)),
+                    cx + 6, ry + show * 10, DIM());
         }
     }
 
@@ -144,11 +145,11 @@ final class OpsTerminalTab extends AbstractTerminalTab {
     private void opListRow(final GuiGraphics g, final int cx, final int ry, final int cw,
                            final OperationRecord op) {
         final byte type = op.type();
-        g.drawString(font(), opTypeLabel(type), cx + 4, ry, opTypeColor(type), false);
+        Draw.text(g, font(), opTypeLabel(type), cx + 4, ry, opTypeColor(type));
         final String q = fmt(op.moved());
         final int nameW = Math.max(0, cw - 44 - font().width(q) - 8);
         final String name = font().plainSubstrByWidth(op.name().getString(), nameW);
-        g.drawString(font(), name, cx + 44, ry, TEXT(), false);
-        g.drawString(font(), q, cx + cw - font().width(q) - 4, ry, statusColor(op.status()), false);
+        Draw.text(g, font(), name, cx + 44, ry, TEXT());
+        Draw.text(g, font(), q, cx + cw - font().width(q) - 4, ry, statusColor(op.status()));
     }
 }

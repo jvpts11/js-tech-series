@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
@@ -103,20 +104,20 @@ final class TerminalOperationPopup {
         g.fill(px, py, px + POPUP_W, py + POPUP_H, JsTechTheme.panel());
         g.fill(px, py, px + POPUP_W, py + 1, JsTechTheme.accent());
         screen.drawDataIcon(g, op.key(), -1L, px + 6, py + 5);
-        g.drawString(screen.tabFont(), ComputerTerminalScreen.opTypeLabel(op.type()) + "  "
-                + op.name().getString(), px + 28, py + 6, JsTechTheme.text(), false);
-        g.drawString(screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.MOVED_OF.with(
+        Draw.text(g, screen.tabFont(), ComputerTerminalScreen.opTypeLabel(op.type()) + "  "
+                + op.name().getString(), px + 28, py + 6, JsTechTheme.text());
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.MOVED_OF.with(
                         ComputerTerminalScreen.fmt(op.moved()), ComputerTerminalScreen.fmt(op.requested()),
                         ComputerTerminalScreen.statusLabel(op.status()))),
-                px + 28, py + 17, screen.statusColor(op.status()), false);
+                px + 28, py + 17, screen.statusColor(op.status()));
         final double f = op.requested() <= 0
                 ? (op.status() == OperationRecord.STATUS_PROCESSING ? 0 : 1)
                 : Math.min(1.0, (double) op.moved() / op.requested());
         screen.track(g, px + 6, py + 30, POPUP_W - 12, f,
                 op.status() == OperationRecord.STATUS_PROCESSING
                         ? JsTechTheme.accent2() : screen.statusColor(op.status()));
-        g.drawString(screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.SUBOPERATIONS), px + 6, py + 42,
-                JsTechTheme.dim(), false);
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.SUBOPERATIONS), px + 6, py + 42,
+                JsTechTheme.dim());
         /*
          * A live Operation carries its real SubOperation rows (per-server share, progress, state);
          * a finished log entry carries only its provenance moves, so render whichever it has.
@@ -129,8 +130,8 @@ final class TerminalOperationPopup {
                 subRow(g, px, py + 56 + i * 12, subs.get(start + i));
             }
         } else if (moves.isEmpty()) {
-            g.drawString(screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.NO_MOVEMENT), px + 6, py + 56,
-                    JsTechTheme.dim(), false);
+            Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.NO_MOVEMENT), px + 6, py + 56,
+                    JsTechTheme.dim());
         } else {
             final int start = clampScroll(moves.size());
             for (int i = 0; i < ROWS && start + i < moves.size(); i++) {
@@ -138,8 +139,8 @@ final class TerminalOperationPopup {
             }
         }
         final String hint = GameText.resolve(TerminalUpkeepTexts.RIGHT_CLICK_TO_CLOSE);
-        g.drawString(screen.tabFont(), hint, px + POPUP_W - screen.tabFont().width(hint) - 6,
-                py + POPUP_H - 10, JsTechTheme.dim(), false);
+        Draw.text(g, screen.tabFont(), hint, px + POPUP_W - screen.tabFont().width(hint) - 6,
+                py + POPUP_H - 10, JsTechTheme.dim());
         g.pose().popPose();
     }
 
@@ -174,10 +175,10 @@ final class TerminalOperationPopup {
     }
 
     private void subRow(final GuiGraphics g, final int px, final int my, final OperationRecord.SubRow sub) {
-        g.drawString(screen.tabFont(), screen.tabFont().plainSubstrByWidth(sub.server(), 62), px + 6, my,
-                JsTechTheme.dim(), false);
-        g.drawString(screen.tabFont(), ComputerTerminalScreen.fmt(sub.moved()) + " / "
-                + ComputerTerminalScreen.fmt(sub.planned()), px + 72, my, JsTechTheme.text(), false);
+        Draw.text(g, screen.tabFont(), screen.tabFont().plainSubstrByWidth(sub.server(), 62), px + 6, my,
+                JsTechTheme.dim());
+        Draw.text(g, screen.tabFont(), ComputerTerminalScreen.fmt(sub.moved()) + " / "
+                + ComputerTerminalScreen.fmt(sub.planned()), px + 72, my, JsTechTheme.text());
         final String state = GameText.resolve(switch (sub.state()) {
             case OperationRecord.SubRow.SUB_READING -> TerminalUpkeepTexts.READING;
             case OperationRecord.SubRow.SUB_STREAMING -> TerminalUpkeepTexts.STREAMING;
@@ -190,7 +191,7 @@ final class TerminalOperationPopup {
             case OperationRecord.SubRow.SUB_COMPLETED -> JsTechTheme.green();
             default -> JsTechTheme.dim();
         };
-        g.drawString(screen.tabFont(), state, px + POPUP_W - screen.tabFont().width(state) - 6, my,
-                color, false);
+        Draw.text(g, screen.tabFont(), state, px + POPUP_W - screen.tabFont().width(state) - 6, my,
+                color);
     }
 }

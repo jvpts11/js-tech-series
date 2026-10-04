@@ -11,6 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.ChemicalSprite;
 import dev.jstech.computers.client.FluidSprite;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -95,7 +96,7 @@ public final class DesktopItems {
         if (label != null) {
             g.pose().pushPose();
             g.pose().translate(0.0F, 0.0F, DesktopZ.BAND_COUNT);
-            g.drawString(font, label, x + 17 - font.width(label), y + 9, PALETTE.get().badgeInk(), false);
+            Draw.text(g, font, label, x + 17 - font.width(label), y + 9, PALETTE.get().badgeInk());
             g.pose().popPose();
         }
     }

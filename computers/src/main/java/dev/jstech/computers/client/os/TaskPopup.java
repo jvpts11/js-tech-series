@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.TaskbarGroups;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -356,8 +357,8 @@ final class TaskPopup {
         if (over) {
             g.fill(close[0], close[1], close[0] + close[2], close[1] + close[3], PALETTE.get().closeHover());
         }
-        g.drawString(desktop.textFont(), "x", close[0] + 2, close[1],
-                over ? PALETTE.get().closeHoverInk() : skin.text(), false);
+        Draw.text(g, desktop.textFont(), "x", close[0] + 2, close[1],
+                over ? PALETTE.get().closeHoverInk() : skin.text());
     }
 
     /** The rows of a period panel: an icon and the window's title, dimmed while that window is put away. */
@@ -373,9 +374,9 @@ final class TaskPopup {
                 g.fill(row[0], row[1], row[0] + row[2], row[1] + row[3], skin.listHover());
             }
             ProgramIcons.draw(g, row[0] + 2, row[1] + 1, 9, 9, icon, desktop.icons());
-            g.drawString(desktop.textFont(),
+            Draw.text(g, desktop.textFont(),
                     desktop.textFont().plainSubstrByWidth(desktop.titleOf(w), row[2] - 16),
-                    row[0] + 14, row[1] + 2, w.minimized() ? skin.dim() : skin.text(), false);
+                    row[0] + 14, row[1] + 2, w.minimized() ? skin.dim() : skin.text());
         }
         final int[] all = closeAllRect();
         if (all == null) {
@@ -385,8 +386,8 @@ final class TaskPopup {
         if (inRect(lmx, lmy, all)) {
             g.fill(all[0], all[1], all[0] + all[2], all[1] + all[3], skin.listHover());
         }
-        g.drawString(desktop.textFont(), GameText.resolve(PanelTexts.CLOSE_ALL), all[0] + 14, all[1] + 2,
-                PALETTE.get().closeHover(), false);
+        Draw.text(g, desktop.textFont(), GameText.resolve(PanelTexts.CLOSE_ALL), all[0] + 14, all[1] + 2,
+                PALETTE.get().closeHover());
     }
 
     /** A click landing inside the popup: a close box, a window, the Close all row, or nothing at all. */

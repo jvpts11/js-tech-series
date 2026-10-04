@@ -12,6 +12,7 @@ import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.fs.PixImage;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.palette.Palette;
@@ -375,9 +376,9 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
                     && mouseY >= ty && mouseY < ty + TOOL_SIZE;
             g.fill(toolsX, ty, toolsX + TOOL_SIZE, ty + TOOL_SIZE,
                     on ? skin.accent() : (hover ? skin.listHover() : skin.panelBg()));
-            g.drawString(font, each.mark(),
+            Draw.text(g, font, each.mark(),
                     toolsX + (TOOL_SIZE - font.width(each.mark())) / 2, ty + 3,
-                    on ? skin.windowBg() : skin.text(), false);
+                    on ? skin.windowBg() : skin.text());
         }
     }
 
@@ -535,13 +536,13 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
         g.fill(x, y, x + width, y + STATUS_H, skin.windowBg());
         final String left = GameText.resolve(hoverX >= 0 ? PaintTexts.POSITION.with(hoverX, hoverY)
                 : tool.label().text());
-        g.drawString(font, left, x + MARGIN, y + 2, skin.text(), false);
+        Draw.text(g, font, left, x + MARGIN, y + 2, skin.text());
         final String right = GameText.resolve(PaintTexts.SIZE.with(image.width(), image.height()));
-        g.drawString(font, right, x + width - MARGIN - font.width(right), y + 2, skin.dim(), false);
+        Draw.text(g, font, right, x + width - MARGIN - font.width(right), y + 2, skin.dim());
         final int room = width - MARGIN * 2 - font.width(left) - font.width(right) - 10;
         if (room > 20) {
-            g.drawString(font, font.plainSubstrByWidth(GameText.resolve(status), room),
-                    x + MARGIN + font.width(left) + 6, y + 2, skin.dim(), false);
+            Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(status), room),
+                    x + MARGIN + font.width(left) + 6, y + 2, skin.dim());
         }
     }
 

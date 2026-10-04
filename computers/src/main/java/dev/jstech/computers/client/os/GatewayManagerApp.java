@@ -21,6 +21,7 @@ import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
 import dev.jstech.core.client.gui.component.Checkbox;
 import dev.jstech.core.client.gui.component.ColumnHeader;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
@@ -757,7 +758,7 @@ public final class GatewayManagerApp implements IDesktopApp {
         final Font font = ctx.font();
         g.fill(x + w - 14, y + 3, x + w - 10, y + 7, gw.linked() ? PALETTE.get().good() : PALETTE.get().bad());
         g.fill(x + w - 8, y + 3, x + w - 4, y + 7, gw.ccLinked() ? PALETTE.get().good() : ctx.skin().dim());
-        g.drawString(font, Texts.clip(font, gw.name(), w - 22), x + PAD, y + 2, ctx.skin().text(), false);
+        Draw.text(g, font, Texts.clip(font, gw.name(), w - 22), x + PAD, y + 2, ctx.skin().text());
         // Where it stands on one line, how it is linked on the next.
         final String place = GameText.resolve(gw.place());
         final String link = GameText.resolve(gw.link());
@@ -821,18 +822,18 @@ public final class GatewayManagerApp implements IDesktopApp {
         ctx.skin().listRow(g, x + 2, y, w - 4, h, hovered, false);
         final Font font = ctx.font();
         final int ty = y + 1;
-        g.drawString(font, String.valueOf(c.id()), computerColumns.columnX(0), ty, ctx.skin().text(), false);
+        Draw.text(g, font, String.valueOf(c.id()), computerColumns.columnX(0), ty, ctx.skin().text());
         final String label = c.label().isEmpty() ? GameText.resolve(GatewayManagerTexts.NO_LABEL) : c.label();
-        g.drawString(font, Texts.clip(font, label,
+        Draw.text(g, font, Texts.clip(font, label,
                 computerColumns.columnX(2) - computerColumns.columnX(1) - GAP), computerColumns.columnX(1), ty,
-                c.label().isEmpty() ? ctx.skin().dim() : ctx.skin().text(), false);
+                c.label().isEmpty() ? ctx.skin().dim() : ctx.skin().text());
         final int sx = computerColumns.columnX(2);
         g.fill(sx, ty + 2, sx + 4, ty + 6, c.on() ? PALETTE.get().good() : PALETTE.get().bad());
-        g.drawString(font, GameText.resolve(c.on() ? GatewayManagerTexts.ON : GatewayManagerTexts.OFF), sx + 6, ty,
-                ctx.skin().text(), false);
-        g.drawString(font, GameText.resolve(c.agent() ? GatewayManagerTexts.ANSWERING : GatewayManagerTexts.NONE),
-                computerColumns.columnX(3), ty, c.agent() ? PALETTE.get().good() : ctx.skin().dim(), false);
-        g.drawString(font, GameText.resolve(c.lastSeen()), computerColumns.columnX(4), ty, ctx.skin().dim(), false);
+        Draw.text(g, font, GameText.resolve(c.on() ? GatewayManagerTexts.ON : GatewayManagerTexts.OFF), sx + 6, ty,
+                ctx.skin().text());
+        Draw.text(g, font, GameText.resolve(c.agent() ? GatewayManagerTexts.ANSWERING : GatewayManagerTexts.NONE),
+                computerColumns.columnX(3), ty, c.agent() ? PALETTE.get().good() : ctx.skin().dim());
+        Draw.text(g, font, GameText.resolve(c.lastSeen()), computerColumns.columnX(4), ty, ctx.skin().dim());
     }
 
     // dialogs

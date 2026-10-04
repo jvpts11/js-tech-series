@@ -68,7 +68,7 @@ final class NetworkTerminalTab extends AbstractTerminalTab {
         final int shown = visibleItems().size();
         final String kinds = GameText.resolve(
                 (shown == 1 ? TerminalGridTexts.ONE_KIND : TerminalGridTexts.KINDS).with(shown));
-        g.drawString(font(), kinds, cx + cw - font().width(kinds), TOOLBAR_Y + 3, DIM(), false);
+        Draw.text(g, font(), kinds, cx + cw - font().width(kinds), TOOLBAR_Y + 3, DIM());
         Draw.textCentered(g,font(),
                 GameText.resolve(screen.sortByQuantity ? TerminalGridTexts.QUANTITY : TerminalGridTexts.NAME),
                 SORT_X + SORT_W / 2, TOOLBAR_Y + 3, ACCENT());
@@ -88,52 +88,52 @@ final class NetworkTerminalTab extends AbstractTerminalTab {
         final int px = PANE_X + 6;
         final int right = PANE_X + PANE_W - 6;
         if (picked == null) {
-            g.drawString(font(), GameText.resolve(TerminalGridTexts.NOTHING_PICKED), px, PANE_Y + 6, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(TerminalGridTexts.NOTHING_PICKED), px, PANE_Y + 6, DIM());
             int y = PANE_Y + 20;
             for (final FormattedCharSequence line
                     : font().split(GameText.component(TerminalGridTexts.PICK_HINT), PANE_W - 12)) {
-                g.drawString(font(), line, px, y, DIM(), false);
+                Draw.text(g, font(), line, px, y, DIM());
                 y += 10;
             }
             return;
         }
-        g.drawString(font(), font().plainSubstrByWidth(picked.name().getString(), PANE_W - 12),
-                px, PANE_Y + 6, ACCENT(), false);
-        g.drawString(font(), font().plainSubstrByWidth(picked.key().id(), PANE_W - 12),
-                px, PANE_Y + 18, DIM(), false);
+        Draw.text(g, font(), font().plainSubstrByWidth(picked.name().getString(), PANE_W - 12),
+                px, PANE_Y + 6, ACCENT());
+        Draw.text(g, font(), font().plainSubstrByWidth(picked.key().id(), PANE_W - 12),
+                px, PANE_Y + 18, DIM());
         rule(g, px, PANE_Y + 29, right);
 
-        g.drawString(font(), GameText.resolve(TerminalGridTexts.HELD_BY), px, PANE_Y + 35, TEXT(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalGridTexts.HELD_BY), px, PANE_Y + 35, TEXT());
         final String total = fmt(picked.total());
-        g.drawString(font(), total, right - font().width(total), PANE_Y + 35, TEXT(), false);
+        Draw.text(g, font(), total, right - font().width(total), PANE_Y + 35, TEXT());
         final List<ServerBreakdownPayload.ServerHolding> held = menu.serverBreakdown();
         if (held.isEmpty()) {
-            g.drawString(font(), GameText.resolve(TerminalGridTexts.ASKING), px + 6, PANE_Y + 47, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(TerminalGridTexts.ASKING), px + 6, PANE_Y + 47, DIM());
         }
         for (int i = 0; i < PANE_SERVER_ROWS && i < held.size(); i++) {
             final ServerBreakdownPayload.ServerHolding row = held.get(i);
             final int ry = PANE_Y + 47 + i * 12;
-            g.drawString(font(), font().plainSubstrByWidth(row.label(), PANE_W - 60), px + 6, ry, DIM(), false);
+            Draw.text(g, font(), font().plainSubstrByWidth(row.label(), PANE_W - 60), px + 6, ry, DIM());
             final String count = fmt(row.count());
-            g.drawString(font(), count, right - font().width(count), ry, TEXT(), false);
+            Draw.text(g, font(), count, right - font().width(count), ry, TEXT());
         }
         if (held.size() > PANE_SERVER_ROWS) {
-            g.drawString(font(), GameText.resolve(AssemblyTexts.MORE.with(held.size() - PANE_SERVER_ROWS)),
-                    px + 6, PANE_Y + 47 + PANE_SERVER_ROWS * 12, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(AssemblyTexts.MORE.with(held.size() - PANE_SERVER_ROWS)),
+                    px + 6, PANE_Y + 47 + PANE_SERVER_ROWS * 12, DIM());
         }
         rule(g, px, PANE_Y + 81, right);
 
-        g.drawString(font(), GameText.resolve(TerminalGridTexts.MADE_FROM), px, PANE_Y + 85, TEXT(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalGridTexts.MADE_FROM), px, PANE_Y + 85, TEXT());
         final CraftCatalogPayload.Entry pattern = screen.craftFor(picked);
         if (pattern == null) {
-            g.drawString(font(), GameText.resolve(TerminalGridTexts.NO_PATTERN), px + 6, PANE_Y + 95, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(TerminalGridTexts.NO_PATTERN), px + 6, PANE_Y + 95, DIM());
         } else {
             final int dot = switch (pattern.availability()) {
                 case CraftCatalogPayload.DOT_GREEN -> GREEN();
                 case CraftCatalogPayload.DOT_AMBER -> AMBER();
                 default -> RED();
             };
-            g.drawString(font(), GameText.resolve(TerminalGridTexts.HAS_PATTERN), px + 6, PANE_Y + 95, dot, false);
+            Draw.text(g, font(), GameText.resolve(TerminalGridTexts.HAS_PATTERN), px + 6, PANE_Y + 95, dot);
         }
         Draw.textCentered(g,font(), GameText.resolve(TerminalGridTexts.GET),
                 ComputerTerminalScreen.PANE_GET_X + ComputerTerminalScreen.PANE_BTN_W / 2,

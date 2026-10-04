@@ -742,8 +742,8 @@ public final class NetworkManagerApp implements IDesktopApp {
         final Font font = ctx.font();
         ctx.skin().listRow(g, x, y, w, h, hovered, false);
         final byte type = stat.type();
-        g.drawString(font, OperationPalette.labelFor(type), statsColumns.columnX(0), y + 2,
-                OperationPalette.colorFor(type), false);
+        Draw.text(g, font, OperationPalette.labelFor(type), statsColumns.columnX(0), y + 2,
+                OperationPalette.colorFor(type));
         final String[] figures = {
                 String.valueOf(stat.count()),
                 ticksLabel(stat.averageWait()),
@@ -753,7 +753,7 @@ public final class NetworkManagerApp implements IDesktopApp {
             // Each figure sits right-aligned in its lane, so the columns read as a table.
             final int laneRight = i == figures.length - 1 ? x + w - 4 : statsColumns.columnX(i + 2) - 6;
             final int color = i == 3 && stat.shortfallPercent() > 0 ? colours().warn() : ctx.skin().text();
-            g.drawString(font, figures[i], laneRight - font.width(figures[i]), y + 2, color, false);
+            Draw.text(g, font, figures[i], laneRight - font.width(figures[i]), y + 2, color);
         }
     }
 
@@ -802,12 +802,12 @@ public final class NetworkManagerApp implements IDesktopApp {
         final Font font = ctx.font();
         ctx.skin().listRow(g, x, y, w, h, hovered, false);
         final String type = OperationPalette.labelFor(op.type());
-        g.drawString(font, type, x + 4, y + 2, OperationPalette.colorFor(op.type()), false);
+        Draw.text(g, font, type, x + 4, y + 2, OperationPalette.colorFor(op.type()));
         final int nameX = x + 4 + font.width(type) + 4;
         final String st = statusLabel(op.status());
-        g.drawString(font, Texts.clip(font, op.name().getString(), w - (nameX - x) - font.width(st) - 8), nameX, y + 2,
-                ctx.skin().text(), false);
-        g.drawString(font, st, x + w - font.width(st), y + 2, statusColor(op.status()), false);
+        Draw.text(g, font, Texts.clip(font, op.name().getString(), w - (nameX - x) - font.width(st) - 8), nameX, y + 2,
+                ctx.skin().text());
+        Draw.text(g, font, st, x + w - font.width(st), y + 2, statusColor(op.status()));
     }
 
     /* The log, newest first as it is shown, one Operation a line, to the machine's printer. */
@@ -889,8 +889,7 @@ public final class NetworkManagerApp implements IDesktopApp {
             final int h = height();
             g.fill(x, y, x + w, y + h, ctx.skin().fieldBg());
             Draw.outline(g, x, y, w, h, ctx.skin().edge());
-            g.drawString(font, GameText.resolve(NetworkManagerTexts.MAP_HINT), x + 4, y + h - 10, ctx.skin().dim(),
-                    false);
+            Draw.text(g, font, GameText.resolve(NetworkManagerTexts.MAP_HINT), x + 4, y + h - 10, ctx.skin().dim());
             final List<NetworkNodeInfo> nodes = nodes();
             int mainframe = -1;
             for (int i = 0; i < nodes.size(); i++) {
@@ -1037,7 +1036,7 @@ public final class NetworkManagerApp implements IDesktopApp {
             final int ny = cy - 6;
             g.fill(nx, ny, nx + tw, ny + 13, ctx.skin().windowBg());
             Draw.outline(g, nx, ny, tw, 13, kindColor(n.kind()));
-            g.drawString(font, label, nx + 4, ny + 3, ctx.skin().text(), false);
+            Draw.text(g, font, label, nx + 4, ny + 3, ctx.skin().text());
             if (n.link().optical()) {
                 // The square of an Optical Network Card, on the box's corner.
                 NetworkLinkDrawing.cardSquare(g, nx + tw - 3, ny - 1);
@@ -1167,7 +1166,7 @@ public final class NetworkManagerApp implements IDesktopApp {
                 break;
             }
             final int color = i == 0 ? colours().cardTitle() : (i == 1 ? kindColor(n.kind()) : colours().cardText());
-            g.drawString(font, lines.get(i), bx + 4, ly, color, false);
+            Draw.text(g, font, lines.get(i), bx + 4, ly, color);
             ly += 10;
         }
         for (int i = network; i < lines.size(); i++) {
@@ -1274,8 +1273,8 @@ public final class NetworkManagerApp implements IDesktopApp {
                                  final boolean selected) {
         final Font font = ctx.font();
         final int rightW = font.width(row.right());
-        g.drawString(font, Texts.clip(font, row.left(), w - rightW - 6), x, y, ctx.skin().text(), false);
-        g.drawString(font, row.right(), x + w - rightW, y, row.color(), false);
+        Draw.text(g, font, Texts.clip(font, row.left(), w - rightW - 6), x, y, ctx.skin().text());
+        Draw.text(g, font, row.right(), x + w - rightW, y, row.color());
     }
 
     @Override

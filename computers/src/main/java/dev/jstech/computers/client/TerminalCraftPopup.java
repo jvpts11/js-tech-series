@@ -128,9 +128,9 @@ final class TerminalCraftPopup {
         g.fill(px, py, px + POPUP_W, py + 1, JsTechTheme.accent());
 
         screen.drawDataIcon(g, StorageKey.of(pattern.result()), -1L, px + 6, py + 5);
-        g.drawString(screen.tabFont(), GameText.resolve(TerminalTexts.CRAFT_TITLE.with(
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalTexts.CRAFT_TITLE.with(
                         trim(pattern.result().getHoverName().getString(), 18))),
-                px + 28, py + 8, JsTechTheme.text(), false);
+                px + 28, py + 8, JsTechTheme.text());
 
         /*
          * The quantity field is a widget the screen drew earlier, under this panel. It is drawn again here,
@@ -145,37 +145,35 @@ final class TerminalCraftPopup {
             Draw.textCentered(g,screen.tabFont(), STEP_LABELS[i], bx + 8, py + 33, JsTechTheme.accent());
         }
 
-        g.drawString(screen.tabFont(), GameText.resolve(TerminalTexts.PLAN_RAW), px + 6, py + 52, JsTechTheme.dim(),
-                false);
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalTexts.PLAN_RAW), px + 6, py + 52, JsTechTheme.dim());
         int rowY = py + 63;
         if (plan == null) {
-            g.drawString(screen.tabFont(), GameText.resolve(TerminalTexts.PLANNING), px + 6, rowY, JsTechTheme.dim(),
-                    false);
+            Draw.text(g, screen.tabFont(), GameText.resolve(TerminalTexts.PLANNING), px + 6, rowY, JsTechTheme.dim());
         } else {
             for (int i = 0; i < Math.min(PLAN_ROWS, plan.rows().size()); i++) {
                 final var row = plan.rows().get(i);
                 screen.drawDataIcon(g, StorageKey.of(row.item()), -1L, px + 6, rowY - 2);
-                g.drawString(screen.tabFont(), trim(row.item().getHoverName().getString(), 14),
-                        px + 26, rowY + 2, JsTechTheme.text(), false);
+                Draw.text(g, screen.tabFont(), trim(row.item().getHoverName().getString(), 14),
+                        px + 26, rowY + 2, JsTechTheme.text());
                 final String counts = ComputerTerminalScreen.fmt(row.have()) + " / "
                         + ComputerTerminalScreen.fmt(row.need());
-                g.drawString(screen.tabFont(), counts, px + POPUP_W - screen.tabFont().width(counts) - 8,
-                        rowY + 2, row.satisfied() ? JsTechTheme.green() : JsTechTheme.red(), false);
+                Draw.text(g, screen.tabFont(), counts, px + POPUP_W - screen.tabFont().width(counts) - 8,
+                        rowY + 2, row.satisfied() ? JsTechTheme.green() : JsTechTheme.red());
                 rowY += 14;
             }
             if (plan.rows().size() > PLAN_ROWS) {
-                g.drawString(screen.tabFont(),
+                Draw.text(g, screen.tabFont(),
                         GameText.resolve(TerminalTexts.MORE.with(plan.rows().size() - PLAN_ROWS)),
-                        px + 26, rowY, JsTechTheme.dim(), false);
+                        px + 26, rowY, JsTechTheme.dim());
             }
             final String est = GameText.resolve(plan.estimateTicks() > 0
                     ? TerminalTexts.ESTIMATE.with(Math.max(1, plan.estimateTicks() / 20))
                     : TerminalTexts.NO_ESTIMATE.text());
-            g.drawString(screen.tabFont(), est, px + 6, py + 144, JsTechTheme.dim(), false);
+            Draw.text(g, screen.tabFont(), est, px + 6, py + 144, JsTechTheme.dim());
             if (!plan.feasible()) {
-                g.drawString(screen.tabFont(), GameText.resolve(TerminalTexts.MAX_NOW.with(
+                Draw.text(g, screen.tabFont(), GameText.resolve(TerminalTexts.MAX_NOW.with(
                                 ComputerTerminalScreen.fmt(plan.maxFeasible()))),
-                        px + 70, py + 144, JsTechTheme.amber(), false);
+                        px + 70, py + 144, JsTechTheme.amber());
             }
         }
 

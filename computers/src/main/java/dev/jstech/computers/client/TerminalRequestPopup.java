@@ -135,14 +135,14 @@ final class TerminalRequestPopup {
 
         // Header: icon, name and what there is, plus the toggle that opens the question out.
         screen.drawDataIcon(g, picked.key(), -1L, px + 8, py + 5);
-        g.drawString(screen.tabFont(),
+        Draw.text(g, screen.tabFont(),
                 screen.tabFont().plainSubstrByWidth(picked.name().getString(), POPUP_W - 78),
-                px + 28, py + 6, JsTechTheme.text(), false);
+                px + 28, py + 6, JsTechTheme.text());
         // A fluid's amount is in millibuckets, which is the game's own unit and is written the same everywhere.
         final String amount = ComputerTerminalScreen.fmt(picked.total()) + (picked.key().isItem() ? "" : " mB");
-        g.drawString(screen.tabFont(),
+        Draw.text(g, screen.tabFont(),
                 GameText.resolve((this.local ? TerminalGridTexts.IN_LOCAL : TerminalGridTexts.AVAILABLE).with(amount)),
-                px + 28, py + 17, JsTechTheme.dim(), false);
+                px + 28, py + 17, JsTechTheme.dim());
         if (!this.local) {
             final boolean advHover = inRect(mouseX, mouseY, px + POPUP_W - 44, py + 5, 36, 12);
             g.fill(px + POPUP_W - 44, py + 5, px + POPUP_W - 8, py + 17,
@@ -356,17 +356,17 @@ final class TerminalRequestPopup {
     private void renderSimple(final GuiGraphics g, final int mouseX, final int mouseY,
                               final int px, final int py, final int ph) {
         final boolean hasStorage = menu.usableStorageSlots() > 0;
-        g.drawString(screen.tabFont(),
+        Draw.text(g, screen.tabFont(),
                 GameText.resolve(hasStorage ? TerminalGridTexts.LANDS_HERE : TerminalGridTexts.NEEDS_STORAGE),
-                px + 8, py + 70, hasStorage ? JsTechTheme.dim() : JsTechTheme.amber(), false);
+                px + 8, py + 70, hasStorage ? JsTechTheme.dim() : JsTechTheme.amber());
         actionButton(g, mouseX, mouseY, px + 8, py + ph - 22, POPUP_W - 16,
                 GameText.resolve(TerminalGridTexts.REQUEST.with(ComputerTerminalScreen.fmt(this.amount))));
     }
 
     private void renderStorageActions(final GuiGraphics g, final int mouseX, final int mouseY,
                                       final int px, final int py, final int ph) {
-        g.drawString(screen.tabFont(), GameText.resolve(TerminalGridTexts.SEND_LOCAL_TO), px + 8, py + 70,
-                JsTechTheme.dim(), false);
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalGridTexts.SEND_LOCAL_TO), px + 8, py + 70,
+                JsTechTheme.dim());
         final int by = py + ph - 22;
         actionButton(g, mouseX, mouseY, px + 8, by, 90, GameText.resolve(TerminalGridTexts.TO_INVENTORY));
         actionButton(g, mouseX, mouseY, px + 104, by, 90, GameText.resolve(TerminalGridTexts.TO_NETWORK));
@@ -374,13 +374,13 @@ final class TerminalRequestPopup {
 
     private void renderAdvanced(final GuiGraphics g, final int mouseX, final int mouseY,
                                 final int px, final int py, final int ph) {
-        g.drawString(screen.tabFont(), GameText.resolve(TerminalGridTexts.PULL_FROM), px + 8, py + 66,
-                JsTechTheme.dim(), false);
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalGridTexts.PULL_FROM), px + 8, py + 66,
+                JsTechTheme.dim());
         final List<ServerBreakdownPayload.ServerHolding> servers = menu.serverBreakdown();
         if (servers.isEmpty()) {
             final String all = GameText.resolve(TerminalGridTexts.ALL_SERVERS);
-            g.drawString(screen.tabFont(), all, px + POPUP_W - 8 - screen.tabFont().width(all), py + 66,
-                    JsTechTheme.dim(), false);
+            Draw.text(g, screen.tabFont(), all, px + POPUP_W - 8 - screen.tabFont().width(all), py + 66,
+                    JsTechTheme.dim());
         }
         for (int i = 0; i < Math.min(SERVER_ROWS, servers.size()); i++) {
             final ServerBreakdownPayload.ServerHolding s = servers.get(i);
@@ -388,25 +388,25 @@ final class TerminalRequestPopup {
             final boolean on = !this.deselectedServers.contains(s.key());
             g.fill(px + 8, ry, px + 18, ry + 10, on ? JsTechTheme.accent() : TerminalPopupPalette.get().checkEdge());
             g.fill(px + 9, ry + 1, px + 17, ry + 9, on ? JsTechTheme.accent() : TerminalPopupPalette.get().checkFill());
-            g.drawString(screen.tabFont(), screen.tabFont().plainSubstrByWidth(s.label(), 120), px + 22,
-                    ry + 1, on ? JsTechTheme.text() : JsTechTheme.dim(), false);
+            Draw.text(g, screen.tabFont(), screen.tabFont().plainSubstrByWidth(s.label(), 120), px + 22,
+                    ry + 1, on ? JsTechTheme.text() : JsTechTheme.dim());
             final String c = ComputerTerminalScreen.fmt(s.count());
-            g.drawString(screen.tabFont(), c, px + POPUP_W - 8 - screen.tabFont().width(c), ry + 1,
-                    JsTechTheme.dim(), false);
+            Draw.text(g, screen.tabFont(), c, px + POPUP_W - 8 - screen.tabFont().width(c), ry + 1,
+                    JsTechTheme.dim());
         }
         if (servers.size() > SERVER_ROWS) {
-            g.drawString(screen.tabFont(),
+            Draw.text(g, screen.tabFont(),
                     GameText.resolve(TerminalGridTexts.MORE_INCLUDED.with(servers.size() - SERVER_ROWS)),
-                    px + 22, py + 78 + SERVER_ROWS * 12, JsTechTheme.dim(), false);
+                    px + 22, py + 78 + SERVER_ROWS * 12, JsTechTheme.dim());
         }
 
         // SEND TO: cycle through every computer that can receive items.
-        g.drawString(screen.tabFont(), GameText.resolve(TerminalGridTexts.SEND_TO), px + 8, py + 140,
-                JsTechTheme.dim(), false);
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalGridTexts.SEND_TO), px + 8, py + 140,
+                JsTechTheme.dim());
         final List<NetworkServersPayload.ServerEntry> comp = menu.networkServers();
         if (comp.isEmpty()) {
-            g.drawString(screen.tabFont(), GameText.resolve(TerminalGridTexts.NO_COMPUTERS), px + 8, py + 154,
-                    JsTechTheme.amber(), false);
+            Draw.text(g, screen.tabFont(), GameText.resolve(TerminalGridTexts.NO_COMPUTERS), px + 8, py + 154,
+                    JsTechTheme.amber());
         } else {
             final NetworkServersPayload.ServerEntry target =
                     comp.get(Math.floorMod(this.destServerIndex, comp.size()));
@@ -420,7 +420,7 @@ final class TerminalRequestPopup {
             final String text = screen.tabFont().plainSubstrByWidth(GameText.resolve(
                     TerminalGridTexts.WITH_FREE.with(target.name(), ComputerTerminalScreen.fmt(target.free()))),
                     POPUP_W - 52);
-            g.drawString(screen.tabFont(), text, px + 26, py + 155, JsTechTheme.text(), false);
+            Draw.text(g, screen.tabFont(), text, px + 26, py + 155, JsTechTheme.text());
         }
         actionButton(g, mouseX, mouseY, px + 8, py + ph - 22, POPUP_W - 16,
                 GameText.resolve(TerminalGridTexts.SEND.with(ComputerTerminalScreen.fmt(this.amount))));

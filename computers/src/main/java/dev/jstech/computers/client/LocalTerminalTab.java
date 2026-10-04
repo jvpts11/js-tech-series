@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.GuiGraphics;
@@ -57,14 +58,14 @@ final class LocalTerminalTab extends AbstractTerminalTab {
     @Override
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
         final int tileW = (COL_W - 8) / 3;
-        g.drawString(font(), GameText.resolve(TerminalGridTexts.THIS_COMPUTER), cx, cy + 20, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalGridTexts.THIS_COMPUTER), cx, cy + 20, DIM());
         tile(g, cx, cy + 32, GameText.resolve(AssemblyTexts.CAPACITY), fmt(menu.capacity()),
                 GameText.resolve(AssemblyTexts.ITEMS_PER_TICK));
         tile(g, cx + tileW + 4, cy + 32, GameText.resolve(AssemblyTexts.QUEUES), String.valueOf(menu.queues()), "");
         tile(g, cx + 2 * (tileW + 4), cy + 32, GameText.resolve(AssemblyTexts.RAM_BUFFER_SHORT),
                 fmt(menu.ramBuffer()), GameText.resolve(AssemblyTexts.ITEMS));
 
-        g.drawString(font(), GameText.resolve(TerminalGridTexts.HARDWARE), cx, cy + 64, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalGridTexts.HARDWARE), cx, cy + 64, DIM());
         barLabel(g, cx, cy + 76, COL_W, GameText.resolve(AssemblyTexts.CPU),
                 menu.installedCpus() + "/" + menu.cpuSlots());
         barLabel(g, cx, cy + 88, COL_W, GameText.resolve(AssemblyTexts.RAM),
@@ -84,17 +85,17 @@ final class LocalTerminalTab extends AbstractTerminalTab {
     private void renderNetworkPane(final GuiGraphics g) {
         final int px = PANE_X + 6;
         final int right = PANE_X + PANE_W - 6;
-        g.drawString(font(), GameText.resolve(TerminalGridTexts.THE_NETWORK), px, PANE_Y + 6, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalGridTexts.THE_NETWORK), px, PANE_Y + 6, DIM());
         final int net = menu.networkLinkState();
         final TextKey state = net == 2 ? TerminalGridTexts.TWO_ORCHESTRATORS
                 : net == 1 ? TerminalGridTexts.JOINED : TerminalGridTexts.NOT_ON_ONE;
-        g.drawString(font(), GameText.resolve(state), px, PANE_Y + 20,
-                net == 2 ? RED() : net == 1 ? GREEN() : DIM(), false);
+        Draw.text(g, font(), GameText.resolve(state), px, PANE_Y + 20,
+                net == 2 ? RED() : net == 1 ? GREEN() : DIM());
         if (net != 1) {
             int y = PANE_Y + 36;
             for (final FormattedCharSequence line
                     : font().split(GameText.component(TerminalGridTexts.CABLE_HINT), PANE_W - 12)) {
-                g.drawString(font(), line, px, y, DIM(), false);
+                Draw.text(g, font(), line, px, y, DIM());
                 y += 10;
             }
             return;
@@ -110,7 +111,7 @@ final class LocalTerminalTab extends AbstractTerminalTab {
 
     private void row(final GuiGraphics g, final int px, final int right, final int y,
                      final TextKey key, final String value) {
-        g.drawString(font(), GameText.resolve(key), px, y, DIM(), false);
-        g.drawString(font(), value, right - font().width(value), y, TEXT(), false);
+        Draw.text(g, font(), GameText.resolve(key), px, y, DIM());
+        Draw.text(g, font(), value, right - font().width(value), y, TEXT());
     }
 }

@@ -358,34 +358,34 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
     }
 
     private void labelDraft(final GuiGraphics g) {
-        g.drawString(font(), GameText.resolve(DRAFT), GRID_X, 22, DIM(), false);
-        g.drawString(font(), GameText.resolve(MAKES), GRID_X + 60, RESULT_Y + 5, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(DRAFT), GRID_X, 22, DIM());
+        Draw.text(g, font(), GameText.resolve(MAKES), GRID_X + 60, RESULT_Y + 5, DIM());
         if (studio == null) {
-            g.drawString(font(), GameText.resolve(ASKING), GRID_X, DRAFT_Y + 60, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(ASKING), GRID_X, DRAFT_Y + 60, DIM());
         }
     }
 
     private void labelEncoder(final GuiGraphics g) {
         final int px = RIGHT_X;
-        g.drawString(font(), GameText.resolve(ENCODER_HEADING), px, 22, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(ENCODER_HEADING), px, 22, DIM());
         final PatternStudioStatePayload.Encoder enc = studio == null ? null : studio.encoder();
         if (enc == null || !enc.linked()) {
-            g.drawString(font(), GameText.resolve(NONE_LINKED), px, 36, DIM(), false);
-            g.drawString(font(), GameText.resolve(BORN_AT_ENCODER), px, 48, DIM(), false);
-            g.drawString(font(), GameText.resolve(TAUGHT_IN_ROM), px, 58, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(NONE_LINKED), px, 36, DIM());
+            Draw.text(g, font(), GameText.resolve(BORN_AT_ENCODER), px, 48, DIM());
+            Draw.text(g, font(), GameText.resolve(TAUGHT_IN_ROM), px, 58, DIM());
         } else {
             final String era = GameText.resolve(enc.era());
-            g.drawString(font(), GameText.resolve(era.isEmpty() ? LINKED.text() : LINKED_ERA.with(enc.era())), px, 36,
-                    enc.error() ? RED() : GREEN(), false);
+            Draw.text(g, font(), GameText.resolve(era.isEmpty() ? LINKED.text() : LINKED_ERA.with(enc.era())), px, 36,
+                    enc.error() ? RED() : GREEN());
             final String media = GameText.resolve(enc.media().isEmpty() ? NO_MEDIUM_IN_BAY.text() : enc.media());
-            g.drawString(font(), font().plainSubstrByWidth(media, RIGHT_W), px, 47, DIM(), false);
+            Draw.text(g, font(), font().plainSubstrByWidth(media, RIGHT_W), px, 47, DIM());
             final String status = GameText.resolve(enc.status());
             if (!status.isEmpty()) {
-                g.drawString(font(), font().plainSubstrByWidth(status, RIGHT_W), px, 58,
-                        enc.error() ? RED() : DIM(), false);
+                Draw.text(g, font(), font().plainSubstrByWidth(status, RIGHT_W), px, 58,
+                        enc.error() ? RED() : DIM());
             }
         }
-        g.drawString(font(), GameText.resolve(SEND_DRAFT_TO), px, SEND_Y - 10, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(SEND_DRAFT_TO), px, SEND_Y - 10, DIM());
         final boolean draft = studio != null && !studio.preview().isEmpty();
         Draw.textCentered(g,font(), GameText.resolve(SEND_ENCODER), SEND_ENCODER_X + SEND_W / 2, SEND_Y + 2,
                 draft && encoderLinked() ? ACCENT() : DIM());
@@ -399,15 +399,15 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
         final List<String> files = mediaFiles();
         final String label = manager == null || manager.mediaVolumeKey().isEmpty()
                 ? GameText.resolve(NO_MEDIUM_IN_DRIVE) : GameText.resolve(MEDIUM.with(manager.mediaLabel()));
-        g.drawString(font(), font().plainSubstrByWidth(label, PANE_X - GRID_X - 12), GRID_X, SPLIT_Y + 6,
-                files.isEmpty() ? DIM() : TEXT(), false);
+        Draw.text(g, font(), font().plainSubstrByWidth(label, PANE_X - GRID_X - 12), GRID_X, SPLIT_Y + 6,
+                files.isEmpty() ? DIM() : TEXT());
         for (int i = 0; i < LIST_ROWS && i + fileScroll < files.size(); i++) {
             final String name = files.get(i + fileScroll);
-            g.drawString(font(), font().plainSubstrByWidth(name, PANE_X - GRID_X - 16),
-                    GRID_X + 4, LIST_Y + i * ROW_H + 2, i + fileScroll == pickedFile ? ACCENT() : TEXT(), false);
+            Draw.text(g, font(), font().plainSubstrByWidth(name, PANE_X - GRID_X - 16),
+                    GRID_X + 4, LIST_Y + i * ROW_H + 2, i + fileScroll == pickedFile ? ACCENT() : TEXT());
         }
         if (files.isEmpty()) {
-            g.drawString(font(), GameText.resolve(NOTHING_TO_LOAD), GRID_X + 4, LIST_Y + 2, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(NOTHING_TO_LOAD), GRID_X + 4, LIST_Y + 2, DIM());
         }
         Draw.textCentered(g,font(), GameText.resolve(LOAD_ALL), GRID_X + ACTION_W / 2, ACTION_Y + 2,
                 files.isEmpty() ? DIM() : ACCENT());
@@ -415,16 +415,16 @@ final class PatternsTerminalTab extends AbstractTerminalTab {
                 pickedFile >= 0 ? ACCENT() : DIM());
 
         final List<CraftManagerStatePayload.WireRomEntry> rom = romEntries();
-        g.drawString(font(), GameText.resolve(RECIPE_ROM), PANE_X, SPLIT_Y + 6, TEXT(), false);
+        Draw.text(g, font(), GameText.resolve(RECIPE_ROM), PANE_X, SPLIT_Y + 6, TEXT());
         final String count = GameText.resolve(ROM_COUNT.with(rom.size(), romCapacity()));
-        g.drawString(font(), count, PANE_X + PANE_W - font().width(count), SPLIT_Y + 6, ACCENT(), false);
+        Draw.text(g, font(), count, PANE_X + PANE_W - font().width(count), SPLIT_Y + 6, ACCENT());
         for (int i = 0; i < LIST_ROWS && i + romScroll < rom.size(); i++) {
             final CraftManagerStatePayload.WireRomEntry entry = rom.get(i + romScroll);
-            g.drawString(font(), font().plainSubstrByWidth(GameText.resolve(entry.name()), PANE_W - 10),
-                    PANE_X + 4, LIST_Y + i * ROW_H + 2, i + romScroll == pickedRom ? ACCENT() : TEXT(), false);
+            Draw.text(g, font(), font().plainSubstrByWidth(GameText.resolve(entry.name()), PANE_W - 10),
+                    PANE_X + 4, LIST_Y + i * ROW_H + 2, i + romScroll == pickedRom ? ACCENT() : TEXT());
         }
         if (rom.isEmpty()) {
-            g.drawString(font(), GameText.resolve(NOTHING_TAUGHT), PANE_X + 4, LIST_Y + 2, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(NOTHING_TAUGHT), PANE_X + 4, LIST_Y + 2, DIM());
         }
         Draw.textCentered(g,font(), GameText.resolve(UNLOAD), PANE_X + (ACTION_W - 8) / 2, ACTION_Y + 2,
                 pickedRom >= 0 ? ACCENT() : DIM());

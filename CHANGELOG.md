@@ -1079,6 +1079,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- The last text drawn with a shadow under it is drawn plain like the rest: Frames XP's window titles, its Start
+  button and the name and the Log Off and Turn Off Computer buttons of its Start menu, and the labels and check boxes
+  of a window a Σ program opens.
 - The terminals are drawn in the terminal font, Misc Fixed: MC-DOS and the UNIX, FreeBSD and Linux consoles, the
   terminal windows of every desktop with the line typed in them, the console editors and the text-mode installers.
   Every character takes a cell of its own, the rows are as far apart as the font is tall, the box lines and blocks

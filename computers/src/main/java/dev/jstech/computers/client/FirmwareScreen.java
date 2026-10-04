@@ -102,6 +102,7 @@ import dev.jstech.computers.os.InstallMode;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -517,18 +518,18 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         final int tx = x + FirmwareLayout.CLI_MARGIN;
         int ty = y + FirmwareLayout.CLI_TITLE_Y;
         final String title = Branding.biosBanner(era());
-        g.drawString(font, title, tx, ty, CLI.get().bright(), false);
+        Draw.text(g, font, title, tx, ty, CLI.get().bright());
         // The machine's name takes what is left of the line, cut short rather than drawn over the title.
         final int nameRoom = x + W - FirmwareLayout.CLI_MARGIN - (tx + font.width(title) + 10);
         final String name = font.width(machineName) > nameRoom ? trimTo(machineName, nameRoom) : machineName;
-        g.drawString(font, name, x + W - font.width(name) - FirmwareLayout.CLI_MARGIN, ty, CLI.get().dim(), false);
+        Draw.text(g, font, name, x + W - font.width(name) - FirmwareLayout.CLI_MARGIN, ty, CLI.get().dim());
         ty += FirmwareLayout.CLI_TABS_DY;
         // Page "tabs" as a bracketed menu line.
         int px = tx;
         for (int i = 0; i < PAGES.length; i++) {
             final String label = (i == page ? "[" : " ") + of(PAGES[i]) + (i == page ? "]" : " ");
             tabHits[i] = new int[]{px, ty, font.width(label), FirmwareLayout.CLI_TAB_H};
-            g.drawString(font, label, px, ty, i == page ? CLI.get().bright() : CLI.get().dim(), false);
+            Draw.text(g, font, label, px, ty, i == page ? CLI.get().bright() : CLI.get().dim());
             px += font.width(label) + FirmwareLayout.CLI_TAB_GAP;
         }
         ty += FirmwareLayout.CLI_CONTENT_DY;
@@ -539,14 +540,14 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             renderStorageLines(g, tx, ty, FirmwareLayout.CLI_LINE_STEP, CLI.get().text(), CLI.get().bright(),
                     CLI.get().dim(), W - FirmwareLayout.CLI_CONTENT_WIDTH_MARGIN);
         } else {
-            g.drawString(font, of(page == PAGE_ORDER ? BOOT_DEVICE_PRIORITY_LIST : BOOT_MENU_LIST), tx, ty,
-                    CLI.get().text(), false);
+            Draw.text(g, font, of(page == PAGE_ORDER ? BOOT_DEVICE_PRIORITY_LIST : BOOT_MENU_LIST), tx, ty,
+                    CLI.get().text());
             ty += FirmwareLayout.CLI_LIST_HEADER_DY;
             final List<FirmwareStatePayload.Entry> rows = rows();
             if (state == null) {
-                g.drawString(font, "  " + of(DETECTING_DRIVES_OLD), tx, ty, CLI.get().dim(), false);
+                Draw.text(g, font, "  " + of(DETECTING_DRIVES_OLD), tx, ty, CLI.get().dim());
             } else if (rows.isEmpty()) {
-                g.drawString(font, "  " + of(NO_BOOTABLE_FOUND_SENTENCE), tx, ty, CLI.get().dim(), false);
+                Draw.text(g, font, "  " + of(NO_BOOTABLE_FOUND_SENTENCE), tx, ty, CLI.get().dim());
             }
             for (int i = 0; i < rows.size(); i++) {
                 final FirmwareStatePayload.Entry e = rows.get(i);
@@ -556,8 +557,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 final String line = (sel ? ">" : " ") + mark + (i + 1) + ". "
                         + of(BESIDE.with(e.label(), entryWhere(e)));
                 rowHits.add(new int[]{tx, ty, W - FirmwareLayout.CLI_CONTENT_WIDTH_MARGIN, FirmwareLayout.ROW_H});
-                g.drawString(font, line, tx, ty, e.bootable() || page == PAGE_ORDER
-                        ? (sel ? CLI.get().bright() : CLI.get().text()) : CLI.get().dim(), false);
+                Draw.text(g, font, line, tx, ty, e.bootable() || page == PAGE_ORDER
+                        ? (sel ? CLI.get().bright() : CLI.get().text()) : CLI.get().dim());
                 ty += FirmwareLayout.ROW_H;
             }
             ty += FirmwareLayout.CLI_BOOT_GAP_DY;
@@ -565,16 +566,16 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             bootHit = new int[]{tx, ty, font.width(boot) + 4, FirmwareLayout.CLI_BUTTON_H};
             g.fill(bootHit[0], bootHit[1], bootHit[0] + bootHit[2], bootHit[1] + bootHit[3],
                     in(bootHit, mouseX, mouseY) ? CLI.get().text() : CLI.get().bright());
-            g.drawString(font, boot, bootHit[0] + 2, bootHit[1] + 3, CLI.get().ground(), false);
+            Draw.text(g, font, boot, bootHit[0] + 2, bootHit[1] + 3, CLI.get().ground());
             final String inst = " " + of(INSTALL_OS) + " ";
             installHit = new int[]{bootHit[0] + bootHit[2] + FirmwareLayout.CLI_BUTTON_GAP, ty,
                     font.width(inst) + 4, FirmwareLayout.CLI_BUTTON_H};
             g.fill(installHit[0], installHit[1], installHit[0] + installHit[2], installHit[1] + installHit[3],
                     in(installHit, mouseX, mouseY) ? CLI.get().text()
                             : (hasInstaller() ? CLI.get().bright() : CLI.get().dim()));
-            g.drawString(font, inst, installHit[0] + 2, installHit[1] + 3, CLI.get().ground(), false);
+            Draw.text(g, font, inst, installHit[0] + 2, installHit[1] + 3, CLI.get().ground());
         }
-        g.drawString(font, hintText(), tx, y + H - FirmwareLayout.CLI_HINT_BOTTOM_MARGIN, CLI.get().dim(), false);
+        Draw.text(g, font, hintText(), tx, y + H - FirmwareLayout.CLI_HINT_BOTTOM_MARGIN, CLI.get().dim());
     }
 
     // Legacy: classic blue BIOS setup utility
@@ -595,13 +596,13 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 g.fill(tabHits[i][0], tabHits[i][1], tabHits[i][0] + tabHits[i][2], tabHits[i][1] + tabHits[i][3],
                         BIOS.get().title());
             }
-            g.drawString(font, name, px, y + FirmwareLayout.BIOS_TAB_TEXT_DY, i == page ? BIOS.get().ground()
-                    : BIOS.get().dim(), false);
+            Draw.text(g, font, name, px, y + FirmwareLayout.BIOS_TAB_TEXT_DY, i == page ? BIOS.get().ground()
+                    : BIOS.get().dim());
             px += font.width(name) + FirmwareLayout.BIOS_TAB_GAP;
         }
         final String exit = of(EXIT);
-        g.drawString(font, exit, x + W - font.width(exit) - FirmwareLayout.BIOS_EXIT_MARGIN,
-                y + FirmwareLayout.BIOS_TAB_TEXT_DY, BIOS.get().dim(), false);
+        Draw.text(g, font, exit, x + W - font.width(exit) - FirmwareLayout.BIOS_EXIT_MARGIN,
+                y + FirmwareLayout.BIOS_TAB_TEXT_DY, BIOS.get().dim());
         g.fill(x, y + FirmwareLayout.BIOS_RULE_Y, x + W, y + FirmwareLayout.BIOS_RULE_Y + 1, BIOS.get().border());
 
         final int top = y + FirmwareLayout.BIOS_CONTENT_TOP;
@@ -628,12 +629,11 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             int ry = top + FirmwareLayout.BIOS_CONTENT_INSET_Y;
             final List<FirmwareStatePayload.Entry> rows = rows();
             if (state == null) {
-                g.drawString(font, of(DETECTING_DEVICES), boxX + FirmwareLayout.BIOS_CONTENT_INSET_X, ry,
-                        BIOS.get().dim(), false);
+                Draw.text(g, font, of(DETECTING_DEVICES), boxX + FirmwareLayout.BIOS_CONTENT_INSET_X, ry,
+                        BIOS.get().dim());
                 ry += FirmwareLayout.ROW_H; // the message occupies a row; the actions below must not land on it
             } else if (rows.isEmpty()) {
-                g.drawString(font, of(NO_BOOTABLE), boxX + FirmwareLayout.BIOS_CONTENT_INSET_X, ry, BIOS.get().amber(),
-                        false);
+                Draw.text(g, font, of(NO_BOOTABLE), boxX + FirmwareLayout.BIOS_CONTENT_INSET_X, ry, BIOS.get().amber());
                 ry += FirmwareLayout.ROW_H;
             }
             for (int i = 0; i < rows.size(); i++) {
@@ -650,11 +650,11 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                         ? (state.bootSlot() == e.ref() && e.kind() == FirmwareStatePayload.KIND_DISK
                                 ? of(FIRST) + " " : "    ")
                         : "";
-                g.drawString(font, order + of(e.label()), boxX + FirmwareLayout.BIOS_CONTENT_INSET_X, ry,
-                        sel ? BIOS.get().ground() : (e.bootable() ? BIOS.get().text() : BIOS.get().dim()), false);
+                Draw.text(g, font, order + of(e.label()), boxX + FirmwareLayout.BIOS_CONTENT_INSET_X, ry,
+                        sel ? BIOS.get().ground() : (e.bootable() ? BIOS.get().text() : BIOS.get().dim()));
                 final String right = of(e.kind() == FirmwareStatePayload.KIND_DISK ? DISK.with(e.ref()) : DRIVE.text());
-                g.drawString(font, right, boxX + boxW - font.width(right) - FirmwareLayout.BIOS_CONTENT_INSET_X, ry,
-                        sel ? BIOS.get().ground() : BIOS.get().value(), false);
+                Draw.text(g, font, right, boxX + boxW - font.width(right) - FirmwareLayout.BIOS_CONTENT_INSET_X, ry,
+                        sel ? BIOS.get().ground() : BIOS.get().value());
                 ry += FirmwareLayout.ROW_H;
             }
             ry += FirmwareLayout.BIOS_BOOT_GAP_DY;
@@ -665,8 +665,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 g.fill(bootHit[0], bootHit[1], bootHit[0] + bootHit[2], bootHit[1] + bootHit[3],
                         BIOS.get().selection());
             }
-            g.drawString(font, bootLabel, bootHit[0] + 6, bootHit[1] + 3,
-                    in(bootHit, mouseX, mouseY) ? BIOS.get().ground() : BIOS.get().amber(), false);
+            Draw.text(g, font, bootLabel, bootHit[0] + 6, bootHit[1] + 3,
+                    in(bootHit, mouseX, mouseY) ? BIOS.get().ground() : BIOS.get().amber());
             ry += FirmwareLayout.BIOS_BUTTON_ROW_GAP;
             installHit = new int[]{boxX + FirmwareLayout.BIOS_ROW_INSET, ry - FirmwareLayout.BIOS_BUTTON_Y_OFFSET,
                     boxW - 2 * FirmwareLayout.BIOS_ROW_INSET, FirmwareLayout.BIOS_BUTTON_H};
@@ -674,9 +674,9 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 g.fill(installHit[0], installHit[1], installHit[0] + installHit[2], installHit[1] + installHit[3],
                         BIOS.get().selection());
             }
-            g.drawString(font, "> " + of(INSTALL_SYSTEM), installHit[0] + 6, installHit[1] + 3,
+            Draw.text(g, font, "> " + of(INSTALL_SYSTEM), installHit[0] + 6, installHit[1] + 3,
                     in(installHit, mouseX, mouseY) ? BIOS.get().ground()
-                            : (hasInstaller() ? BIOS.get().amber() : BIOS.get().dim()), false);
+                            : (hasInstaller() ? BIOS.get().amber() : BIOS.get().dim()));
             help = of(page == PAGE_ORDER ? ORDER_HELP.text()
                     : BOOT_HELP.with(state == null ? "-" : Integer.toString(state.installTargetSlot())));
         }
@@ -684,8 +684,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         drawWrapped(g, help, helpX + FirmwareLayout.BIOS_HELP_TEXT_X_INSET, top + FirmwareLayout.BIOS_CONTENT_INSET_Y,
                 helpW - FirmwareLayout.BIOS_HELP_TEXT_WIDTH_MARGIN, BIOS.get().dim());
         g.fill(x, y + H - FirmwareLayout.BIOS_FOOT_H, x + W, y + H, BIOS.get().title());
-        g.drawString(font, hintText(), x + FirmwareLayout.BIOS_CONTENT_INSET_X,
-                y + H - FirmwareLayout.BIOS_FOOT_TEXT_DY, BIOS.get().ground(), false);
+        Draw.text(g, font, hintText(), x + FirmwareLayout.BIOS_CONTENT_INSET_X,
+                y + H - FirmwareLayout.BIOS_FOOT_TEXT_DY, BIOS.get().ground());
     }
 
     private void drawBox(final GuiGraphics g, final int x, final int y, final int w, final int h, final String header) {
@@ -694,8 +694,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         g.fill(x, y, x + 1, y + h, BIOS.get().border());
         g.fill(x + w - 1, y, x + w, y + h, BIOS.get().border());
         g.fill(x + 1, y + 1, x + w - 1, y + FirmwareLayout.BIOS_BOX_HEADER_H, BIOS.get().border());
-        g.drawString(font, header, x + FirmwareLayout.BIOS_BOX_HEADER_TEXT_X, y + FirmwareLayout.BIOS_BOX_HEADER_TEXT_Y,
-                BIOS.get().ground(), false);
+        Draw.text(g, font, header, x + FirmwareLayout.BIOS_BOX_HEADER_TEXT_X, y + FirmwareLayout.BIOS_BOX_HEADER_TEXT_Y,
+                BIOS.get().ground());
     }
 
     // Standard: modern UEFI boot manager
@@ -706,15 +706,15 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         g.fill(x, y, x + W, y + FirmwareLayout.UEFI_HEAD_H, UEFI.get().head());
         g.fill(x, y + FirmwareLayout.UEFI_HEAD_H, x + W, y + FirmwareLayout.UEFI_HEAD_H + FirmwareLayout.UEFI_ACCENT_H,
                 UEFI.get().accent());
-        g.drawString(font, Branding.HARDWARE_HOUSE, x + FirmwareLayout.UEFI_HEADER_TEXT_X,
-                y + FirmwareLayout.UEFI_HEADER_TEXT_Y, UEFI.get().text(), false);
+        Draw.text(g, font, Branding.HARDWARE_HOUSE, x + FirmwareLayout.UEFI_HEADER_TEXT_X,
+                y + FirmwareLayout.UEFI_HEADER_TEXT_Y, UEFI.get().text());
         /*
          * The firmware's own version, from the one place that decides it, so this header and the self-test
          * that ran before it cannot disagree about which firmware the player is looking at.
          */
         final String version = "UEFI " + Branding.biosVersion(era());
-        g.drawString(font, version, x + W - font.width(version) - FirmwareLayout.UEFI_HEADER_TEXT_X,
-                y + FirmwareLayout.UEFI_HEADER_TEXT_Y, UEFI.get().dim(), false);
+        Draw.text(g, font, version, x + W - font.width(version) - FirmwareLayout.UEFI_HEADER_TEXT_X,
+                y + FirmwareLayout.UEFI_HEADER_TEXT_Y, UEFI.get().dim());
 
         final int top = y + FirmwareLayout.UEFI_CONTENT_TOP;
         final int navX = x + FirmwareLayout.UEFI_NAV_X;
@@ -731,12 +731,12 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             if (i == page) {
                 g.fill(navX, itemTop, navX + navW, itemTop + FirmwareLayout.UEFI_NAV_ITEM_H, UEFI.get().accent());
             }
-            g.drawString(font, of(navLabels[i]), navX + FirmwareLayout.UEFI_NAV_TEXT_X,
-                    ny + FirmwareLayout.UEFI_NAV_TEXT_DY, i == page ? UEFI.get().onAccent() : UEFI.get().key(), false);
+            Draw.text(g, font, of(navLabels[i]), navX + FirmwareLayout.UEFI_NAV_TEXT_X,
+                    ny + FirmwareLayout.UEFI_NAV_TEXT_DY, i == page ? UEFI.get().onAccent() : UEFI.get().key());
             ny += FirmwareLayout.UEFI_NAV_ROW_PITCH;
         }
-        g.drawString(font, of(EXIT), navX + FirmwareLayout.UEFI_NAV_TEXT_X,
-                top + panelH - FirmwareLayout.UEFI_EXIT_BOTTOM_MARGIN, UEFI.get().dim(), false);
+        Draw.text(g, font, of(EXIT), navX + FirmwareLayout.UEFI_NAV_TEXT_X,
+                top + panelH - FirmwareLayout.UEFI_EXIT_BOTTOM_MARGIN, UEFI.get().dim());
 
         final int uefiInsetX = FirmwareLayout.UEFI_CONTENT_INSET_X;
         final int uefiInsetY = FirmwareLayout.UEFI_CONTENT_INSET_Y;
@@ -755,11 +755,11 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             int ry = top + FirmwareLayout.UEFI_LIST_TOP_DY;
             final List<FirmwareStatePayload.Entry> rows = rows();
             if (state == null) {
-                g.drawString(font, of(SCANNING_DEVICES), mainX + FirmwareLayout.UEFI_CONTENT_INSET_X,
-                        ry + FirmwareLayout.UEFI_LIST_MSG_DY, UEFI.get().dim(), false);
+                Draw.text(g, font, of(SCANNING_DEVICES), mainX + FirmwareLayout.UEFI_CONTENT_INSET_X,
+                        ry + FirmwareLayout.UEFI_LIST_MSG_DY, UEFI.get().dim());
             } else if (rows.isEmpty()) {
-                g.drawString(font, of(NO_BOOTABLE), mainX + FirmwareLayout.UEFI_CONTENT_INSET_X,
-                        ry + FirmwareLayout.UEFI_LIST_MSG_DY, UEFI.get().amber(), false);
+                Draw.text(g, font, of(NO_BOOTABLE), mainX + FirmwareLayout.UEFI_CONTENT_INSET_X,
+                        ry + FirmwareLayout.UEFI_LIST_MSG_DY, UEFI.get().amber());
             }
             /*
              * The action buttons sit at a fixed height at the foot of the panel, so the list has to stop
@@ -771,8 +771,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 if (ry + FirmwareLayout.ROW_H + 2 > listBottom) {
                     // Say that the list is cut off; a device silently missing reads as a missing device.
                     final String more = of(MORE.with(rows.size() - i));
-                    g.drawString(font, more, mainX + FirmwareLayout.UEFI_MORE_X,
-                            listBottom - FirmwareLayout.UEFI_MORE_ABOVE, UEFI.get().dim(), false);
+                    Draw.text(g, font, more, mainX + FirmwareLayout.UEFI_MORE_X,
+                            listBottom - FirmwareLayout.UEFI_MORE_ABOVE, UEFI.get().dim());
                     break;
                 }
                 final FirmwareStatePayload.Entry e = rows.get(i);
@@ -796,14 +796,14 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                         ry + FirmwareLayout.UEFI_DOT_DY + FirmwareLayout.UEFI_DOT_H, dot);
                 final String first = page == PAGE_ORDER && state.bootSlot() == e.ref()
                         && e.kind() == FirmwareStatePayload.KIND_DISK ? "  " + of(FIRST_TAG) : "";
-                g.drawString(font, of(e.label()) + first, mainX + FirmwareLayout.UEFI_LABEL_X,
+                Draw.text(g, font, of(e.label()) + first, mainX + FirmwareLayout.UEFI_LABEL_X,
                         ry + FirmwareLayout.UEFI_LABEL_DY,
-                        e.bootable() || page == PAGE_ORDER ? UEFI.get().text() : UEFI.get().dim(), false);
+                        e.bootable() || page == PAGE_ORDER ? UEFI.get().text() : UEFI.get().dim());
                 final String detail = entryWhere(e);
                 final String shown = font.width(detail) > mainW - FirmwareLayout.UEFI_DETAIL_WIDTH_MARGIN
                         ? trimTo(detail, mainW - FirmwareLayout.UEFI_DETAIL_WIDTH_MARGIN) : detail;
-                g.drawString(font, shown, mainX + mainW - font.width(shown) - FirmwareLayout.UEFI_DETAIL_RIGHT_MARGIN,
-                        ry + FirmwareLayout.UEFI_LABEL_DY, UEFI.get().dim(), false);
+                Draw.text(g, font, shown, mainX + mainW - font.width(shown) - FirmwareLayout.UEFI_DETAIL_RIGHT_MARGIN,
+                        ry + FirmwareLayout.UEFI_LABEL_DY, UEFI.get().dim());
                 ry += FirmwareLayout.ROW_H + FirmwareLayout.UEFI_ROW_PITCH_GAP;
             }
             final int by = top + panelH - FirmwareLayout.UEFI_ACTION_BOTTOM_MARGIN;
@@ -825,8 +825,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         }
         g.fill(x, y + H - FirmwareLayout.UEFI_FOOT_H, x + W, y + H, UEFI.get().head());
         final String hint = hintText();
-        g.drawString(font, hint, x + W - font.width(hint) - FirmwareLayout.UEFI_HEADER_TEXT_X,
-                y + H - FirmwareLayout.UEFI_FOOT_TEXT_DY, UEFI.get().dim(), false);
+        Draw.text(g, font, hint, x + W - font.width(hint) - FirmwareLayout.UEFI_HEADER_TEXT_X,
+                y + H - FirmwareLayout.UEFI_FOOT_TEXT_DY, UEFI.get().dim());
     }
 
     private void panel(final GuiGraphics g, final int x, final int y, final int w, final int h, final String header) {
@@ -834,8 +834,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         g.fill(x, y, x + w, y + h, UEFI.get().panel());
         g.fill(x, y, x + w, y + headerH, UEFI.get().placeholder());
         g.fill(x, y, x + FirmwareLayout.UEFI_PANEL_ACCENT_W, y + headerH, UEFI.get().accent());
-        g.drawString(font, header, x + FirmwareLayout.UEFI_PANEL_HEADER_TEXT_X,
-                y + FirmwareLayout.UEFI_PANEL_HEADER_TEXT_Y, UEFI.get().text(), false);
+        Draw.text(g, font, header, x + FirmwareLayout.UEFI_PANEL_HEADER_TEXT_X,
+                y + FirmwareLayout.UEFI_PANEL_HEADER_TEXT_Y, UEFI.get().text());
     }
 
     // Shared helpers
@@ -886,9 +886,9 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         final int valueAt = Math.min(FirmwareLayout.VALUE_COLUMN, width / 2);
         final int room = Math.max(20, width - valueAt);
         for (final String[] pair : kv) {
-            g.drawString(font, InstallerFrames.clip(font, pair[0], valueAt - 6), x, ty, keyColor, false);
-            g.drawString(font, InstallerFrames.clip(font, pair[1], room), x + valueAt, ty,
-                    detecting.equals(pair[1]) ? dimColor : valueColor, false);
+            Draw.text(g, font, InstallerFrames.clip(font, pair[0], valueAt - 6), x, ty, keyColor);
+            Draw.text(g, font, InstallerFrames.clip(font, pair[1], room), x + valueAt, ty,
+                    detecting.equals(pair[1]) ? dimColor : valueColor);
             ty += lh;
         }
     }
@@ -904,32 +904,32 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         final FirmwareStatePayload.RaidInfo raid = state == null ? null : state.raid();
         int ty = y;
         if (raid == null || !raid.present()) {
-            g.drawString(font, of(NO_CONTROLLER), x, ty, dimColor, false);
+            Draw.text(g, font, of(NO_CONTROLLER), x, ty, dimColor);
             /*
              * Wrapped to the panel: this sentence is longer than the box, and drawn as one line it ran
              * straight through the border and over the help panel beside it.
              */
             ty += lh;
             for (final FormattedCharSequence line : font.split(GameText.component(MOUNT_CONTROLLER), maxWidth)) {
-                g.drawString(font, line, x, ty, dimColor, false);
+                Draw.text(g, font, line, x, ty, dimColor);
                 ty += lh;
             }
             return;
         }
         final boolean degraded = raid.members() > 0 && raid.drives() < raid.members();
         final String health = of(raid.members() == 0 ? UNCONFIGURED : degraded ? DEGRADED : HEALTHY);
-        g.drawString(font, of(LABEL_CONTROLLER), x, ty, keyColor, false);
-        g.drawString(font, of(RAID_CONTROLLER), x + FirmwareLayout.VALUE_COLUMN, ty, valueColor, false);
+        Draw.text(g, font, of(LABEL_CONTROLLER), x, ty, keyColor);
+        Draw.text(g, font, of(RAID_CONTROLLER), x + FirmwareLayout.VALUE_COLUMN, ty, valueColor);
         ty += lh;
-        g.drawString(font, of(LABEL_MEMBER_DRIVES), x, ty, keyColor, false);
-        g.drawString(font, raid.members() > 0 ? of(COUNT_OF.with(raid.drives(), raid.members()))
-                        : Integer.toString(raid.drives()), x + FirmwareLayout.VALUE_COLUMN, ty, valueColor, false);
+        Draw.text(g, font, of(LABEL_MEMBER_DRIVES), x, ty, keyColor);
+        Draw.text(g, font, raid.members() > 0 ? of(COUNT_OF.with(raid.drives(), raid.members()))
+                        : Integer.toString(raid.drives()), x + FirmwareLayout.VALUE_COLUMN, ty, valueColor);
         ty += lh;
-        g.drawString(font, of(LABEL_ARRAY_STATE), x, ty, keyColor, false);
-        g.drawString(font, health, x + FirmwareLayout.VALUE_COLUMN, ty,
-                degraded ? STORAGE.get().degraded() : valueColor, false);
+        Draw.text(g, font, of(LABEL_ARRAY_STATE), x, ty, keyColor);
+        Draw.text(g, font, health, x + FirmwareLayout.VALUE_COLUMN, ty,
+                degraded ? STORAGE.get().degraded() : valueColor);
         ty += lh + 4;
-        g.drawString(font, of(ARRAY_MODE), x, ty, dimColor, false);
+        Draw.text(g, font, of(ARRAY_MODE), x, ty, dimColor);
         ty += lh;
         storageRowY = ty;
         storageRowH = lh;
@@ -949,12 +949,12 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             };
             final String detail = !usable ? of(NEEDS_DRIVES.with(mode.minDrives()))
                     : of(CAPACITY_ITEMS.with(capacity)) + strength;
-            g.drawString(font, label, x, ty, current ? STORAGE.get().current() : usable ? valueColor : dimColor, false);
-            g.drawString(font, detail, x + FirmwareLayout.DETAIL_COLUMN, ty, dimColor, false);
+            Draw.text(g, font, label, x, ty, current ? STORAGE.get().current() : usable ? valueColor : dimColor);
+            Draw.text(g, font, detail, x + FirmwareLayout.DETAIL_COLUMN, ty, dimColor);
             ty += lh;
             row++;
         }
-        g.drawString(font, of(APPLIES_MODE), x, ty + 4, dimColor, false);
+        Draw.text(g, font, of(APPLIES_MODE), x, ty + 4, dimColor);
     }
 
     private String trimTo(final String s, final int maxW) {
@@ -973,7 +973,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     }
 
     private void drawCentered(final GuiGraphics g, final String s, final int cx, final int y, final int color) {
-        g.drawString(font, s, cx - font.width(s) / 2, y, color, false);
+        Draw.text(g, font, s, cx - font.width(s) / 2, y, color);
     }
 
     private void drawWrapped(final GuiGraphics g, final String text, final int x, final int y,
@@ -983,7 +983,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         for (final String word : text.split(" ")) {
             final String trial = lineBuf.isEmpty() ? word : lineBuf + " " + word;
             if (font.width(trial) > maxW && !lineBuf.isEmpty()) {
-                g.drawString(font, lineBuf.toString(), x, ly, color, false);
+                Draw.text(g, font, lineBuf.toString(), x, ly, color);
                 ly += 10;
                 lineBuf.setLength(0);
                 lineBuf.append(word);
@@ -993,7 +993,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             }
         }
         if (!lineBuf.isEmpty()) {
-            g.drawString(font, lineBuf.toString(), x, ly, color, false);
+            Draw.text(g, font, lineBuf.toString(), x, ly, color);
         }
     }
 

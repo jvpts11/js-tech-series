@@ -12,6 +12,7 @@ import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.MoveFilePayload;
 import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.gui.layout.DesktopZ;
 import java.util.List;
 import net.minecraft.client.gui.Font;
@@ -245,7 +246,7 @@ final class DesktopDrags {
             final int gy = (int) iconY + 2;
             final DesktopShellPalette.Colours c = DesktopShellPalette.get();
             g.fill(gx, gy, gx + font.width(label) + 6, gy + 12, c.ghostFill());
-            g.drawString(font, label, gx + 3, gy + 2, c.ghostInk(), false);
+            Draw.text(g, font, label, gx + 3, gy + 2, c.ghostInk());
         }
         g.pose().popPose();
     }

@@ -15,6 +15,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.SchedulerKind;
 import dev.jstech.computers.os.VramLedger;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
@@ -177,7 +178,7 @@ final class DesktopMemory {
         final String head = " Frames ";
         final int hw = font.width(head) + 6;
         g.fill((sw - hw) / 2, cy - 2, (sw + hw) / 2, cy + 10, c.crashBand());
-        g.drawString(font, head, (sw - font.width(head)) / 2, cy, c.crashGround(), false);
+        Draw.text(g, font, head, (sw - font.width(head)) / 2, cy, c.crashGround());
         final List<String> lines = new ArrayList<>();
         lines.add(GameText.resolve(DesktopTexts.CRASH_FATAL));
         // The cause is written over two lines of the screen, where the language breaks it.
@@ -187,7 +188,7 @@ final class DesktopMemory {
         lines.add(GameText.resolve(DesktopTexts.REBOOTING));
         int ly = cy + 20;
         for (final String s : lines) {
-            g.drawString(font, s, (sw - font.width(s)) / 2, ly, c.crashInk(), false);
+            Draw.text(g, font, s, (sw - font.width(s)) / 2, ly, c.crashInk());
             ly += 11;
         }
     }

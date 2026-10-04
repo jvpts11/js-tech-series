@@ -408,7 +408,7 @@ public final class TaskManagerApp implements IDesktopApp {
         ch = height;
         g.fill(x, y, x + width, y + height, skin.windowBg());
         if (data == null) {
-            g.drawString(font, GameText.resolve(TaskManagerTexts.READING), x + 6, y + 8, skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(TaskManagerTexts.READING), x + 6, y + 8, skin.dim());
             return;
         }
         switch (form) {
@@ -605,8 +605,8 @@ public final class TaskManagerApp implements IDesktopApp {
                                   final int w, final int h) {
         final boolean up = DesktopState.hostNetworked(host);
         Texts.small(g, font, GameText.resolve(TaskManagerTexts.NETWORK), x + 2, y + 2, skin.dim());
-        g.drawString(font, GameText.resolve(up ? TaskManagerTexts.CONNECTED : TaskManagerTexts.NOT_CONNECTED), x + 2,
-                y + 11, up ? PALETTE.get().connected() : skin.dim(), false);
+        Draw.text(g, font, GameText.resolve(up ? TaskManagerTexts.CONNECTED : TaskManagerTexts.NOT_CONNECTED), x + 2,
+                y + 11, up ? PALETTE.get().connected() : skin.dim());
         history(g, x + 2, y + 24, w - 4, h - 30, cpuHistory, 100);
         Texts.small(g, font, GameText.resolve(TaskManagerTexts.LINK_ACTIVITY), x + 2, y + h - 8, skin.dim());
     }
@@ -748,7 +748,7 @@ public final class TaskManagerApp implements IDesktopApp {
         g.fill(x, y, x + w, y + h, skin.fieldBg());
         Draw.outline(g, x, y, w, h, skin.edge());
         Texts.small(g, font, name, x + 4, y + 3, skin.dim());
-        g.drawString(font, Texts.clip(font, value, w - 8), x + 4, y + 11, skin.text(), false);
+        Draw.text(g, font, Texts.clip(font, value, w - 8), x + 4, y + 11, skin.text());
     }
 
     /** A boxed pair-list, as the XP performance page groups its totals. */

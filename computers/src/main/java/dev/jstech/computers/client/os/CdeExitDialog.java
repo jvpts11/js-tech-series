@@ -12,6 +12,7 @@ import dev.jstech.computers.gui.CdeExitMessage;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -52,18 +53,18 @@ final class CdeExitDialog {
         MotifChrome.titleBar(g, d.x(), d.y(), d.w(), CdeExitLayout.TITLE_H, true, MENU_BUTTON + 2, 0, p);
         MotifChrome.control(g, d.x() + 1, d.y() + 1, MENU_BUTTON, MENU_BUTTON, OsSkin.Control.CLOSE, false, p);
         final String title = GameText.resolve(CdeExitMessage.TITLE);
-        g.drawString(font, title, d.x() + (d.w() - font.width(title)) / 2, d.y() + 3, p.activeInk(), false);
+        Draw.text(g, font, title, d.x() + (d.w() - font.width(title)) / 2, d.y() + 3, p.activeInk());
         final List<Text> lines = CdeExitMessage.lines(open);
         for (int i = 0; i < lines.size() && i < CdeExitLayout.LINES; i++) {
             final String line = GameText.resolve(lines.get(i));
-            g.drawString(font, line, d.x() + (d.w() - font.width(line)) / 2, CdeExitLayout.lineY(i, sw, sh),
-                    p.ink(), false);
+            Draw.text(g, font, line, d.x() + (d.w() - font.width(line)) / 2, CdeExitLayout.lineY(i, sw, sh),
+                    p.ink());
         }
         for (int i = 0; i < CdeExitLayout.BUTTONS; i++) {
             final Rect r = CdeExitLayout.button(i, sw, sh);
             MotifChrome.button(g, r.x(), r.y(), r.w(), r.h(), false, i == CdeExitLayout.SHUT_DOWN, p);
             final String label = GameText.resolve(BUTTONS.get(i));
-            g.drawString(font, label, r.x() + (r.w() - font.width(label)) / 2, r.y() + 3, p.ink(), false);
+            Draw.text(g, font, label, r.x() + (r.w() - font.width(label)) / 2, r.y() + 3, p.ink());
         }
     }
 

@@ -475,8 +475,8 @@ public final class ExposureApp implements IDesktopApp {
                              final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, width, height, hovered, selected);
         FileIcons.draw(g, x + 2, y, FileIcons.kindOfPath(file.path(), false), this.skin.iconSet());
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(ProblemReport.nameOf(file.path()),
-                width - FILE_NAME_DX - 2), x + FILE_NAME_DX, y + FILE_TEXT_DY, ctx.skin().listRowText(selected), false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(ProblemReport.nameOf(file.path()),
+                width - FILE_NAME_DX - 2), x + FILE_NAME_DX, y + FILE_TEXT_DY, ctx.skin().listRowText(selected));
     }
 
     private void onFilePicked(final int index, final int button, final double mx, final double my) {
@@ -534,8 +534,8 @@ public final class ExposureApp implements IDesktopApp {
                                 final int x, final int y, final int width, final int height,
                                 final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, width, height, hovered, selected);
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(row.label(), width - 4 - row.depth() * 5),
-                x + 2 + row.depth() * 5, y + 1, ctx.skin().listRowText(selected), false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(row.label(), width - 4 - row.depth() * 5),
+                x + 2 + row.depth() * 5, y + 1, ctx.skin().listRowText(selected));
     }
 
     /**
@@ -572,13 +572,13 @@ public final class ExposureApp implements IDesktopApp {
                                 final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, width, height, hovered, selected);
         final Font font = ctx.font();
-        g.drawString(font, font.plainSubstrByWidth(row.name(), NAME_W - 4), x + 2, y + 1,
-                ctx.skin().text(), false);
+        Draw.text(g, font, font.plainSubstrByWidth(row.name(), NAME_W - 4), x + 2, y + 1,
+                ctx.skin().text());
         final String where = String.valueOf(row.complaint().line());
-        g.drawString(font, where, x + NAME_W, y + 1, ctx.skin().dim(), false);
+        Draw.text(g, font, where, x + NAME_W, y + 1, ctx.skin().dim());
         final int textX = x + NAME_W + LINE_W;
-        g.drawString(font, font.plainSubstrByWidth(GameText.resolve(row.complaint().message()),
-                width - (textX - x) - 2), textX, y + 1, PALETTE.get().complaintInk(), false);
+        Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(row.complaint().message()),
+                width - (textX - x) - 2), textX, y + 1, PALETTE.get().complaintInk());
     }
 
     /** Clicking a row opens the file it is about and puts the caret where the compiler stopped. */
@@ -680,8 +680,8 @@ public final class ExposureApp implements IDesktopApp {
         this.survey.setBounds(x + 3, y + MenuBar.HEIGHT + 2, 52, TOOLBAR_H - 4);
         final String where = GameText.resolve(ExposureTexts.FOLDER.with(
                 "C:\\" + this.workspace.folder().replace('/', '\\')));
-        g.drawString(font, font.plainSubstrByWidth(where, width - 64), x + 60, y + MenuBar.HEIGHT + 4,
-                this.skin.dim(), false);
+        Draw.text(g, font, font.plainSubstrByWidth(where, width - 64), x + 60, y + MenuBar.HEIGHT + 4,
+                this.skin.dim());
 
         final int bodyY = y + MenuBar.HEIGHT + TOOLBAR_H;
         final int bodyH = height - MenuBar.HEIGHT - TOOLBAR_H - STATUS_H;
@@ -689,14 +689,14 @@ public final class ExposureApp implements IDesktopApp {
         final int upperH = dockShown ? bodyH - DOCK_H : bodyH;
 
         this.skin.panel(g, x, bodyY, SIDE_W, upperH);
-        g.drawString(font, font.plainSubstrByWidth(GameText.resolve(ExposureTexts.PACKAGE), SIDE_W - 6), x + 3,
-                bodyY + 1, this.skin.dim(), false);
+        Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(ExposureTexts.PACKAGE), SIDE_W - 6), x + 3,
+                bodyY + 1, this.skin.dim());
         this.explorer.setBounds(x, bodyY + CAPTION_H, SIDE_W, upperH - CAPTION_H);
 
         final int outlineX = x + width - OUTLINE_W;
         this.skin.panel(g, outlineX, bodyY, OUTLINE_W, upperH);
-        g.drawString(font, font.plainSubstrByWidth(GameText.resolve(ExposureTexts.OUTLINE), OUTLINE_W - 6),
-                outlineX + 3, bodyY + 1, this.skin.dim(), false);
+        Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(ExposureTexts.OUTLINE), OUTLINE_W - 6),
+                outlineX + 3, bodyY + 1, this.skin.dim());
         this.outline.setBounds(outlineX, bodyY + CAPTION_H, OUTLINE_W, upperH - CAPTION_H);
 
         final int codeX = x + SIDE_W;
@@ -742,12 +742,12 @@ public final class ExposureApp implements IDesktopApp {
         this.skin.panel(g, x, y, width, CAPTION_H);
         // The heading names the columns the rows have: the file, the line, and what was said.
         final String heading = GameText.resolve(ExposureTexts.PROBLEMS.with(count));
-        g.drawString(font, heading, x + 3, y + 1, this.skin.dim(), false);
+        Draw.text(g, font, heading, x + 3, y + 1, this.skin.dim());
         if (x + 3 + font.width(heading) + 6 < x + NAME_W) {
-            g.drawString(font, GameText.resolve(ExposureTexts.LINE), x + NAME_W, y + 1, this.skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(ExposureTexts.LINE), x + NAME_W, y + 1, this.skin.dim());
         }
-        g.drawString(font, GameText.resolve(ExposureTexts.COMPILER_SAID), x + NAME_W + LINE_W, y + 1,
-                this.skin.dim(), false);
+        Draw.text(g, font, GameText.resolve(ExposureTexts.COMPILER_SAID), x + NAME_W + LINE_W, y + 1,
+                this.skin.dim());
         this.problems.setBounds(x, y + CAPTION_H, width, height - CAPTION_H);
     }
 
@@ -756,20 +756,20 @@ public final class ExposureApp implements IDesktopApp {
         final InkPalette palette = InkPalette.forGround(this.skin.isDark()).get();
         g.fill(x, y, x + width, y + height, palette.ground());
         Draw.pushScissor(g, x, y, x + width, y + height);
-        g.drawString(font, GameText.resolve(ExposureTexts.EMPTY), x + 6, y + 6, palette.gutterText(), false);
+        Draw.text(g, font, GameText.resolve(ExposureTexts.EMPTY), x + 6, y + 6, palette.gutterText());
         Draw.popScissor(g);
     }
 
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y,
                             final int width, final CodeWorkspace.Doc doc) {
         this.skin.statusBar(g, x, y, width, STATUS_H);
-        g.drawString(font, this.workspace.status().isEmpty() ? GameText.resolve(ExposureTexts.WRITABLE)
+        Draw.text(g, font, this.workspace.status().isEmpty() ? GameText.resolve(ExposureTexts.WRITABLE)
                         : this.workspace.status(),
-                x + 3, y + 1, this.skin.dim(), false);
+                x + 3, y + 1, this.skin.dim());
         if (doc != null) {
             final String where = (doc.area().document().cursorLine() + 1)
                     + " : " + (doc.area().document().cursorCol() + 1);
-            g.drawString(font, where, x + width - font.width(where) - 3, y + 1, this.skin.dim(), false);
+            Draw.text(g, font, where, x + width - font.width(where) - 3, y + 1, this.skin.dim());
         }
     }
 

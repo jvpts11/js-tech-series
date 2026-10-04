@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -100,8 +101,8 @@ final class PanelTray {
     void draw(final GuiGraphics g, final int panelY, final int sw, final int textColor) {
         final int x = left(sw) + PAD;
         drawStatus(g, x, panelY, textColor);
-        g.drawString(desktop.textFont(), desktop.prefs().clockText(),
-                x + statusWidth() + GAP, panelY + 8, textColor, false);
+        Draw.text(g, desktop.textFont(), desktop.prefs().clockText(),
+                x + statusWidth() + GAP, panelY + 8, textColor);
     }
 
     /** The status group alone, for a panel that puts its clock somewhere else of its own. */
@@ -166,7 +167,7 @@ final class PanelTray {
             final Colours c = PALETTE.get();
             g.fill(x - 1, y - 1, x + w + 1, y + 14, c.tipBorder());
             g.fill(x, y, x + w, y + 13, c.tip());
-            g.drawString(desktop.textFont(), volume, x + 4, y + 3, c.tipInk(), false);
+            Draw.text(g, desktop.textFont(), volume, x + 4, y + 3, c.tipInk());
             return;
         }
         final String link =
@@ -179,8 +180,8 @@ final class PanelTray {
         final Colours c = PALETTE.get();
         g.fill(x - 1, y - 1, x + w + 1, y + h + 1, c.tipBorder());
         g.fill(x, y, x + w, y + h, c.tip());
-        g.drawString(desktop.textFont(), link, x + 4, y + 3, c.tipInk(), false);
-        g.drawString(desktop.textFont(), mem, x + 4, y + 12, c.tipDim(), false);
+        Draw.text(g, desktop.textFont(), link, x + 4, y + 3, c.tipInk());
+        Draw.text(g, desktop.textFont(), mem, x + 4, y + 12, c.tipDim());
     }
 
     /**

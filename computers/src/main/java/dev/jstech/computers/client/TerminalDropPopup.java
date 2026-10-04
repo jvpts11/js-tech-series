@@ -100,10 +100,10 @@ final class TerminalDropPopup {
         g.fill(px - 1, py - 1, px + DROP_W + 1, py + DROP_H + 1, JsTechTheme.red());
         g.fill(px, py, px + DROP_W, py + DROP_H, c.panel());
 
-        g.drawString(screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.DROP_DATA), px + 8, py + 6,
-                JsTechTheme.red(), false);
-        g.drawString(screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.IRREVERSIBLE), px + 8, py + 17,
-                JsTechTheme.dim(), false);
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.DROP_DATA), px + 8, py + 6,
+                JsTechTheme.red());
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.IRREVERSIBLE), px + 8, py + 17,
+                JsTechTheme.dim());
 
         // Scope selector: NETWORK | SERVER | TYPES.
         final int segW = (DROP_W - 16) / 3;
@@ -125,12 +125,12 @@ final class TerminalDropPopup {
                 int y = bodyY;
                 for (final FormattedCharSequence line : screen.tabFont().split(
                         GameText.component(TerminalUpkeepTexts.DESTROYS_ALL), DROP_W - 16)) {
-                    g.drawString(screen.tabFont(), line, px + 8, y, JsTechTheme.text(), false);
+                    Draw.text(g, screen.tabFont(), line, px + 8, y, JsTechTheme.text());
                     y += 11;
                 }
-                g.drawString(screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.TYPES_OVER.with(
+                Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.TYPES_OVER.with(
                                 ComputerTerminalScreen.fmt(menu.indexedTypes()), menu.indexedServers())),
-                        px + 8, y + 6, JsTechTheme.amber(), false);
+                        px + 8, y + 6, JsTechTheme.amber());
             }
         }
 
@@ -225,8 +225,8 @@ final class TerminalDropPopup {
                               final int px, final int bodyY) {
         final List<NetworkServersPayload.ServerEntry> servers = menu.networkServers();
         if (servers.isEmpty()) {
-            g.drawString(screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.NO_SERVERS), px + 8, bodyY,
-                    JsTechTheme.amber(), false);
+            Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.NO_SERVERS), px + 8, bodyY,
+                    JsTechTheme.amber());
             return;
         }
         final NetworkServersPayload.ServerEntry target =
@@ -241,18 +241,18 @@ final class TerminalDropPopup {
         Draw.textCentered(g,screen.tabFont(),
                 screen.tabFont().plainSubstrByWidth(target.name(), DROP_W - 56),
                 px + DROP_W / 2, bodyY + 3, JsTechTheme.text());
-        g.drawString(screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.WIPES_SERVER), px + 8, bodyY + 20,
-                JsTechTheme.text(), false);
-        g.drawString(screen.tabFont(),
+        Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.WIPES_SERVER), px + 8, bodyY + 20,
+                JsTechTheme.text());
+        Draw.text(g, screen.tabFont(),
                 GameText.resolve(TerminalUpkeepTexts.FREE_NOW.with(ComputerTerminalScreen.fmt(target.free()))),
-                px + 8, bodyY + 32, JsTechTheme.dim(), false);
+                px + 8, bodyY + 32, JsTechTheme.dim());
     }
 
     private void renderTypes(final GuiGraphics g, final int px, final int bodyY) {
         final List<NetworkItemEntry> items = menu.networkItems();
         if (items.isEmpty()) {
-            g.drawString(screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.NO_TYPES), px + 8, bodyY,
-                    JsTechTheme.amber(), false);
+            Draw.text(g, screen.tabFont(), GameText.resolve(TerminalUpkeepTexts.NO_TYPES), px + 8, bodyY,
+                    JsTechTheme.amber());
             return;
         }
         final int gridX = px + (DROP_W - DROP_GRID_COLS * 18) / 2;
@@ -280,9 +280,9 @@ final class TerminalDropPopup {
                 }
             }
         }
-        g.drawString(screen.tabFont(),
+        Draw.text(g, screen.tabFont(),
                 GameText.resolve(TerminalUpkeepTexts.SELECTED.with(this.types.size(), items.size())),
-                px + 8, bodyY + DROP_GRID_ROWS * 18 + 2, JsTechTheme.amber(), false);
+                px + 8, bodyY + DROP_GRID_ROWS * 18 + 2, JsTechTheme.amber());
     }
 
     private int typeCellAt(final int mx, final int my, final int px, final int bodyY) {

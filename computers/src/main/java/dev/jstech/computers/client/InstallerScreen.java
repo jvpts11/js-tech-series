@@ -130,6 +130,7 @@ import dev.jstech.computers.os.install.InstallerChrome;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -846,7 +847,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             final TermFace.Fitted wall = InstallerFrames.wall();
             TermText.draw(wall.face(), g, font, text, x, y, wall.scale(), colour);
         } else {
-            g.drawString(font, text, x, y, colour, false);
+            Draw.text(g, font, text, x, y, colour);
         }
     }
 
@@ -988,7 +989,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             ty += step * 2;
         }
         if (table) {
-            g.drawString(font, of(COLUMN_DISK), f.x() + InstallerLayout.TABLE_INSET, ty, p.dim(), false);
+            Draw.text(g, font, of(COLUMN_DISK), f.x() + InstallerLayout.TABLE_INSET, ty, p.dim());
             right(g, of(COLUMN_SIZE), f.x() + f.w() - InstallerLayout.SIZE_COLUMN, ty, p.dim());
             right(g, of(COLUMN_FREE), f.x() + f.w() - InstallerLayout.FREE_COLUMN, ty, p.dim());
             right(g, of(COLUMN_HOLDS), f.x() + f.w() - InstallerLayout.TABLE_INSET, ty, p.dim());
@@ -1017,9 +1018,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             if (table) {
                 final String sizeText = size(disk.sizeMb());
                 final int sizeLeft = f.x() + f.w() - InstallerLayout.SIZE_COLUMN - font.width(sizeText);
-                g.drawString(font, InstallerFrames.clip(font, of(DISK_NARROW.with(disk.slot(), disk.label())),
+                Draw.text(g, font, InstallerFrames.clip(font, of(DISK_NARROW.with(disk.slot(), disk.label())),
                         sizeLeft - InstallerLayout.COLUMN_GAP - (f.x() + InstallerLayout.TABLE_INSET)),
-                        f.x() + InstallerLayout.TABLE_INSET, ty, row, false);
+                        f.x() + InstallerLayout.TABLE_INSET, ty, row);
                 right(g, sizeText, f.x() + f.w() - InstallerLayout.SIZE_COLUMN, ty, faint);
                 right(g, size(this.flow.freeOn(disk)), f.x() + f.w() - InstallerLayout.FREE_COLUMN, ty, faint);
                 right(g, disk.hasSystem() ? disk.holds() : of(NOTHING), f.x() + f.w() - InstallerLayout.TABLE_INSET,
@@ -1369,10 +1370,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
          * Drawn twice: black over the whole gauge first, so it reads on the white trough, then again clipped
          * to the filled part in white, so the same figure reads on the navy underneath it too.
          */
-        g.drawString(font, percentText, textX, ty + 1, p.text(), false);
+        Draw.text(g, font, percentText, textX, ty + 1, p.text());
         if (fillEdge > f.x()) {
             g.enableScissor(f.x(), ty, fillEdge, ty + barH);
-            g.drawString(font, percentText, textX, ty + 1, p.selectText(), false);
+            Draw.text(g, font, percentText, textX, ty + 1, p.selectText());
             g.disableScissor();
         }
     }
@@ -1500,8 +1501,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         for (int i = 0; i < this.flow.steps().size(); i++) {
             final InstallerFlow.Step line = this.flow.steps().get(i);
             final boolean done = i < running;
-            g.drawString(font, InstallerFrames.clip(font, GameText.resolve(line.label()), f.w() - 40), f.x(), ty,
-                    done || i == running ? p.text() : p.dim(), false);
+            Draw.text(g, font, InstallerFrames.clip(font, GameText.resolve(line.label()), f.w() - 40), f.x(), ty,
+                    done || i == running ? p.text() : p.dim());
             if (done) {
                 right(g, "100%", f.x() + f.w(), ty, p.dim());
             } else if (i == running) {
@@ -1517,17 +1518,16 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
          * Two lines rather than one that runs off the card. The sentence is long, the card is not wide, and a
          * time that grows a digit made it longer still.
          */
-        g.drawString(font, of(RESTARTS_WHEN_FINISHED), f.x(), ty + InstallerLayout.CARD_LINE1_DY, p.dim(), false);
-        g.drawString(font, of(SECONDS_LEFT_SENTENCE.with(this.secondsLeft())), f.x(),
-                ty + InstallerLayout.CARD_LINE2_DY, p.dim(), false);
+        Draw.text(g, font, of(RESTARTS_WHEN_FINISHED), f.x(), ty + InstallerLayout.CARD_LINE1_DY, p.dim());
+        Draw.text(g, font, of(SECONDS_LEFT_SENTENCE.with(this.secondsLeft())), f.x(),
+                ty + InstallerLayout.CARD_LINE2_DY, p.dim());
     }
 
     /** The graphical phase, whose frame has already listed the steps down its own side. */
     private void drawWorkBeside(final GuiGraphics g, final InstallerFrames.Frame f) {
         final InstallerFrames.Paint p = f.paint();
         final InstallerFlow.Step step = this.flow.steps().get(this.flow.stepAt(this.ticksDone));
-        g.drawString(font, InstallerFrames.clip(font, GameText.resolve(step.label()), f.w()), f.x(), f.y(), p.text(),
-                false);
+        Draw.text(g, font, InstallerFrames.clip(font, GameText.resolve(step.label()), f.w()), f.x(), f.y(), p.text());
         final InstallerFlow.Disk disk = this.flow.target();
         if (disk != null) {
             /*
@@ -1535,8 +1535,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
              * and this line was drawn at full length whatever the room: on a long name it ran out past the
              * edge of the glass and off the monitor.
              */
-            g.drawString(font, InstallerFrames.clip(font, of(INSTALLING_ON.with(disk.slot(), disk.label())), f.w()),
-                    f.x(), f.y() + 12, p.dim(), false);
+            Draw.text(g, font, InstallerFrames.clip(font, of(INSTALLING_ON.with(disk.slot(), disk.label())), f.w()),
+                    f.x(), f.y() + 12, p.dim());
         }
     }
 
@@ -1616,17 +1616,17 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         g.fill(bx + bw - 1, by, bx + bw, by + bh, c.dialogEdge());
         final String ask = this.flow.style() == InstallerStyle.BSD_INSTALL
                 ? of(ERASE_ASK_NAMED.with(disk.label())) : of(ERASE_ASK.with(disk.slot()));
-        g.drawString(font, ask, bx + InstallerLayout.ERASE_TEXT_X,
-                by + InstallerLayout.ERASE_LINE1_DY, c.dialogInk(), false);
-        g.drawString(font, of(disk.hasSystem() ? AND_EVERY_FILE.with(disk.holds()) : EVERY_FILE.text()),
-                bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE2_DY, c.dialogInk(), false);
-        g.drawString(font, of(WILL_BE_DELETED.with(
+        Draw.text(g, font, ask, bx + InstallerLayout.ERASE_TEXT_X,
+                by + InstallerLayout.ERASE_LINE1_DY, c.dialogInk());
+        Draw.text(g, font, of(disk.hasSystem() ? AND_EVERY_FILE.with(disk.holds()) : EVERY_FILE.text()),
+                bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE2_DY, c.dialogInk());
+        Draw.text(g, font, of(WILL_BE_DELETED.with(
                 InstallerFrames.clip(font, disk.label(), bw - 2 * InstallerLayout.ERASE_TEXT_X))),
-                bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE3_DY, c.dialogInk(), false);
-        g.drawString(font, of(CANNOT_UNDO), bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE4_DY,
-                c.dialogDim(), false);
-        g.drawString(font, of(ERASE_KEYS), bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE5_DY,
-                c.alarm(), false);
+                bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE3_DY, c.dialogInk());
+        Draw.text(g, font, of(CANNOT_UNDO), bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE4_DY,
+                c.dialogDim());
+        Draw.text(g, font, of(ERASE_KEYS), bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE5_DY,
+                c.alarm());
     }
 
     /**
@@ -1640,7 +1640,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     }
 
     private void right(final GuiGraphics g, final String text, final int rightEdge, final int y, final int colour) {
-        g.drawString(font, text, rightEdge - font.width(text), y, colour, false);
+        Draw.text(g, font, text, rightEdge - font.width(text), y, colour);
     }
 
     private static boolean hit(final int[] rect, final double mouseX, final double mouseY) {

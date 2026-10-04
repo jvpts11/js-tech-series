@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.program.CalcEngine;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.text.GameText;
@@ -105,9 +106,9 @@ public final class CalculatorApp implements IDesktopApp {
          */
         skin.field(g, x + 2, y + 2, width - 4, DISPLAY_H - 4, false);
         final String shown = tail(font, input.isEmpty() ? "0" : input, width - 12);
-        g.drawString(font, shown, x + width - 6 - font.width(shown), y + 6, skin.text(), false);
+        Draw.text(g, font, shown, x + width - 6 - font.width(shown), y + 6, skin.text());
         final String res = tail(font, result.isEmpty() ? "" : "= " + result, width - 12);
-        g.drawString(font, res, x + width - 6 - font.width(res), y + 18, skin.accent(), false);
+        Draw.text(g, font, res, x + width - 6 - font.width(res), y + 18, skin.accent());
 
         // Keypad: six labelled rows plus a wide "=" row at the bottom.
         final int padTop = y + DISPLAY_H;

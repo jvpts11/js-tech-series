@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Grounds;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -131,7 +132,7 @@ final class ChromeShapes {
             case RESTORE -> "❐";
             case CLOSE -> "✕";
         };
-        g.drawString(font, s, x + (bw - font.width(s)) / 2, y + (bh - 7) / 2, color, false);
+        Draw.text(g, font, s, x + (bw - font.width(s)) / 2, y + (bh - 7) / 2, color);
     }
 
     /** The colour a little lighter, for the lit face of a hovered button. */

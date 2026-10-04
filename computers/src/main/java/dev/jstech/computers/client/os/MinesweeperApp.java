@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.MachineSoundPayload;
 import dev.jstech.computers.operation.payload.desktop.GamePayloads;
 import dev.jstech.computers.program.MinesweeperGame;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
@@ -95,8 +96,8 @@ public final class MinesweeperApp implements IDesktopApp {
                     final int n = game.adjacent(r, c);
                     if (n > 0) {
                         final String s = String.valueOf(n);
-                        g.drawString(font, s, cx + (cell - font.width(s)) / 2 + 1, cy + (cell - 8) / 2 + 1,
-                                colours().number(n), false);
+                        Draw.text(g, font, s, cx + (cell - font.width(s)) / 2 + 1, cy + (cell - 8) / 2 + 1,
+                                colours().number(n));
                     }
                 }
                 return;
@@ -257,7 +258,7 @@ public final class MinesweeperApp implements IDesktopApp {
         } else {
             s = String.format(Locale.ROOT, "%03d", Math.min(999, value));
         }
-        g.drawString(font, s, x + 3, y + 4, colours().ledOn(), false);
+        Draw.text(g, font, s, x + 3, y + 4, colours().ledOn());
     }
 
     private static void sunken(final GuiGraphics g, final int x, final int y, final int w, final int h) {

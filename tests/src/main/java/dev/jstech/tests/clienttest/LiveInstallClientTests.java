@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.CommandPromptScreen;
+import dev.jstech.computers.os.media.LiveMedium;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
@@ -188,7 +189,20 @@ public final class LiveInstallClientTests {
                     world.blockEntity(DRIVE, MediaReaderBlockEntity.class).mediaSlot().setStackInSlot(0, disc);
                     world.placeMonitor(MONITOR, Direction.EAST);
                 })
-                .thenServer(SETTLE * 3, level -> TestWorldBuilder.at(level, ctx.origin())
+                /*
+                 * The session is started by hand rather than booted from the drive, so it waits for what a boot
+                 * would have had: the machine cabled to the drive and seeing the medium in it. Started before the
+                 * cable is resolved, the machine sees no drive at all, takes the medium for gone and ends the
+                 * session on its next tick, which a loaded machine took long enough to do.
+                 */
+                .thenWaitUntilServer(level -> {
+                    final MainframeBlockEntity machine = TestWorldBuilder.at(level, ctx.origin())
+                            .blockEntity(MACHINE, MainframeBlockEntity.class);
+                    return LiveMedium.holding(level, machine.enabledEndpoints(), distro) == LiveMedium.Answer.PRESENT;
+                }, BOOT_WAIT, "the machine to see the live medium in its drive",
+                        level -> "drives cabled: " + TestWorldBuilder.at(level, ctx.origin())
+                                .blockEntity(MACHINE, MainframeBlockEntity.class).enabledEndpoints())
+                .thenServer(1, level -> TestWorldBuilder.at(level, ctx.origin())
                         .blockEntity(MACHINE, MainframeBlockEntity.class).console().startLiveInstall(distro))
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
                 .thenRightClick(SETTLE, MONITOR)

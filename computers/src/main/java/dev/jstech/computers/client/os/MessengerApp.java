@@ -12,6 +12,7 @@ import dev.jstech.computers.operation.payload.MessengerActionPayload;
 import dev.jstech.computers.operation.payload.MessengerStatePayload;
 import dev.jstech.computers.program.MessengerLog;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
@@ -226,8 +227,8 @@ public final class MessengerApp implements IDesktopApp {
         g.fill(x, y, x + ROSTER_W, bottom, skin.fieldBg());
         g.fill(x + ROSTER_W, y, x + ROSTER_W + 1, bottom, skin.edge());
         final boolean serving = state.service().online();
-        g.drawString(font, GameText.resolve(serving ? SocialTexts.ON_THE_NETWORK : SocialTexts.NO_SERVICE_HEADING),
-                x + MARGIN, y + 2, serving ? skin.text() : PALETTE.get().mine(), false);
+        Draw.text(g, font, GameText.resolve(serving ? SocialTexts.ON_THE_NETWORK : SocialTexts.NO_SERVICE_HEADING),
+                x + MARGIN, y + 2, serving ? skin.text() : PALETTE.get().mine());
         this.rosterLeft = x;
         this.rosterTop = y + TOOLBAR_H;
         this.rosterBottom = bottom;
@@ -248,13 +249,13 @@ public final class MessengerApp implements IDesktopApp {
                         online ? PALETTE.get().online() : PALETTE.get().offline());
             }
             final int ink = on ? skin.listRowText(true) : (lobby || online ? skin.text() : skin.dim());
-            g.drawString(font, font.plainSubstrByWidth(lobby ? GameText.resolve(SocialTexts.EVERYBODY) : name,
+            Draw.text(g, font, font.plainSubstrByWidth(lobby ? GameText.resolve(SocialTexts.EVERYBODY) : name,
                             ROSTER_W - 14),
-                    x + MARGIN + (lobby ? 0 : 7), ry + 1, ink, false);
+                    x + MARGIN + (lobby ? 0 : 7), ry + 1, ink);
         }
         if (rows.size() == 1) {
             final int ry = rosterTop + ROW_H;
-            g.drawString(font, GameText.resolve(SocialTexts.NOBODY_ELSE), x + MARGIN, ry + 1, skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(SocialTexts.NOBODY_ELSE), x + MARGIN, ry + 1, skin.dim());
         }
     }
 
@@ -308,23 +309,22 @@ public final class MessengerApp implements IDesktopApp {
             if (line.nudge()) {
                 g.fill(x + MARGIN, ry, right - MARGIN, ry + ROW_H - 1, PALETTE.get().nudge());
                 final String text = GameText.resolve(SocialTexts.SENT_A_NUDGE.with(line.from()));
-                g.drawString(font, text, x + (right - x - font.width(text)) / 2, ry + 1, PALETTE.get().nudgeInk(),
-                        false);
+                Draw.text(g, font, text, x + (right - x - font.width(text)) / 2, ry + 1, PALETTE.get().nudgeInk());
             } else {
                 final String who = line.from() + ":";
-                g.drawString(font, who, x + MARGIN, ry + 1,
-                        line.online() ? PALETTE.get().theirs() : PALETTE.get().offline(), false);
-                g.drawString(font,
+                Draw.text(g, font, who, x + MARGIN, ry + 1,
+                        line.online() ? PALETTE.get().theirs() : PALETTE.get().offline());
+                Draw.text(g, font,
                         font.plainSubstrByWidth(line.text(), right - x - MARGIN * 2 - font.width(who) - 3),
-                        x + MARGIN + font.width(who) + 3, ry + 1, skin.text(), false);
+                        x + MARGIN + font.width(who) + 3, ry + 1, skin.text());
             }
             ry += ROW_H;
         }
         if (lines.isEmpty()) {
             final String empty = GameText.resolve(state.service().online()
                     ? SocialTexts.NOTHING_SAID : SocialTexts.NO_MESSENGER);
-            g.drawString(font, font.plainSubstrByWidth(empty, right - x - MARGIN * 2),
-                    x + MARGIN, y + 3, skin.dim(), false);
+            Draw.text(g, font, font.plainSubstrByWidth(empty, right - x - MARGIN * 2),
+                    x + MARGIN, y + 3, skin.dim());
         }
     }
 
@@ -353,10 +353,10 @@ public final class MessengerApp implements IDesktopApp {
          * this program exists to show and the name on the left gives way to it rather than over it.
          */
         final String right = bytes(service.historyBytes()) + "   " + service.ramMb() + " MB";
-        g.drawString(font, right, x + width - MARGIN - font.width(right), y + 2, skin.text(), false);
+        Draw.text(g, font, right, x + width - MARGIN - font.width(right), y + 2, skin.text());
         final int room = width - MARGIN * 3 - font.width(right);
-        g.drawString(font, font.plainSubstrByWidth(left, Math.max(0, room)), x + MARGIN, y + 2,
-                skin.dim(), false);
+        Draw.text(g, font, font.plainSubstrByWidth(left, Math.max(0, room)), x + MARGIN, y + 2,
+                skin.dim());
     }
 
     private static String bytes(final long value) {

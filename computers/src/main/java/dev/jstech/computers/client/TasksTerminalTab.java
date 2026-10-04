@@ -79,30 +79,30 @@ final class TasksTerminalTab extends AbstractTerminalTab {
                 String.valueOf(menu.pendingOps()), "");
         tile(g, cx + 2 * (tileW + 4), cy + 44, GameText.resolve(TerminalUpkeepTexts.DONE),
                 fmt(menu.completedOps()), "");
-        g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.IN_PROGRESS), cx, cy + 78, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalUpkeepTexts.IN_PROGRESS), cx, cy + 78, DIM());
         if (active.isEmpty()) {
-            g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.IDLE), cx, cy + 90, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(TerminalUpkeepTexts.IDLE), cx, cy + 90, DIM());
             return;
         }
         for (int i = 0; i < TASK_OP_ROWS && i < active.size(); i++) {
             taskOpRow(g, cx, cy + 90 + i * 14, cw, active.get(i));
         }
         if (active.size() > TASK_OP_ROWS) {
-            g.drawString(font(), GameText.resolve(AssemblyTexts.MORE.with(active.size() - TASK_OP_ROWS)),
-                    cx, cy + 90 + TASK_OP_ROWS * 14, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(AssemblyTexts.MORE.with(active.size() - TASK_OP_ROWS)),
+                    cx, cy + 90 + TASK_OP_ROWS * 14, DIM());
         }
     }
 
     private void taskOpRow(final GuiGraphics g, final int cx, final int ry, final int cw,
                            final OperationRecord op) {
         final byte type = op.type();
-        g.drawString(font(), opTypeLabel(type), cx + 4, ry, opTypeColor(type), false);
+        Draw.text(g, font(), opTypeLabel(type), cx + 4, ry, opTypeColor(type));
         final double f = op.requested() <= 0 ? 0 : Math.min(1.0, (double) op.moved() / op.requested());
         final String pct = (int) Math.round(f * 100) + "%";
         final int nameW = Math.max(0, cw - 44 - font().width(pct) - 8);
-        g.drawString(font(), font().plainSubstrByWidth(op.name().getString(), nameW),
-                cx + 44, ry, TEXT(), false);
-        g.drawString(font(), pct, cx + cw - font().width(pct) - 4, ry, ACCENT(), false);
+        Draw.text(g, font(), font().plainSubstrByWidth(op.name().getString(), nameW),
+                cx + 44, ry, TEXT());
+        Draw.text(g, font(), pct, cx + cw - font().width(pct) - 4, ry, ACCENT());
         track(g, cx + 4, ry + 9, cw - 8, f, ACCENT2());
     }
 
@@ -113,7 +113,7 @@ final class TasksTerminalTab extends AbstractTerminalTab {
         tile(g, cx + tileW + 4, cy + 44, GameText.resolve(AssemblyTexts.QUEUES), String.valueOf(menu.queues()), "");
         tile(g, cx + 2 * (tileW + 4), cy + 44, GameText.resolve(AssemblyTexts.RAM_BUFFER_SHORT),
                 fmt(menu.ramBuffer()), GameText.resolve(AssemblyTexts.ITEMS));
-        g.drawString(font(), GameText.resolve(TerminalGridTexts.HARDWARE), cx, cy + 78, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalGridTexts.HARDWARE), cx, cy + 78, DIM());
         barLabel(g, cx, cy + 90, cw, GameText.resolve(AssemblyTexts.CPU),
                 menu.installedCpus() + "/" + menu.cpuSlots());
         barLabel(g, cx, cy + 102, cw, GameText.resolve(AssemblyTexts.RAM),
@@ -129,15 +129,15 @@ final class TasksTerminalTab extends AbstractTerminalTab {
         deviceRow(g, cx, cy + 62, cw, TerminalUpkeepTexts.DEVICE_SERVERS, menu.serverCount());
         deviceRow(g, cx, cy + 76, cw, TerminalUpkeepTexts.PERSONAL_COMPUTERS, menu.pcCount());
         deviceRow(g, cx, cy + 90, cw, TerminalUpkeepTexts.SUBFRAMES, menu.subframeCount());
-        g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.NETWORK_STORAGE), cx, cy + 110, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalUpkeepTexts.NETWORK_STORAGE), cx, cy + 110, DIM());
         final String st = fmt(menu.storageUsed()) + " / " + fmt(menu.storageCapacity());
-        g.drawString(font(), st, cx + cw - font().width(st), cy + 110, TEXT(), false);
+        Draw.text(g, font(), st, cx + cw - font().width(st), cy + 110, TEXT());
     }
 
     private void deviceRow(final GuiGraphics g, final int cx, final int y, final int cw,
                            final TextKey name, final int count) {
-        g.drawString(font(), GameText.resolve(name), cx + 4, y, TEXT(), false);
+        Draw.text(g, font(), GameText.resolve(name), cx + 4, y, TEXT());
         final String c = String.valueOf(count);
-        g.drawString(font(), c, cx + cw - font().width(c) - 4, y, count > 0 ? GREEN() : DIM(), false);
+        Draw.text(g, font(), c, cx + cw - font().width(c) - 4, y, count > 0 ? GREEN() : DIM());
     }
 }

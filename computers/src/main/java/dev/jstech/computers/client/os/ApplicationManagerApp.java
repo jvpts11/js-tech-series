@@ -12,6 +12,7 @@ import dev.jstech.computers.gui.layout.CdeAppManagerLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.os.CdeAppGroup;
 import dev.jstech.computers.os.WindowKeys;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -157,7 +158,7 @@ final class ApplicationManagerApp implements IDesktopApp {
             final int count = programs().size();
             final String says = GameText.resolve((count == 1 ? ApplicationManagerTexts.GROUP_ONE_PROGRAM
                     : ApplicationManagerTexts.GROUP_PROGRAMS).with(this.group.label(), count));
-            g.drawString(font, says, x + head.x() + 4, y + head.y() + 3, this.skin.text(), false);
+            Draw.text(g, font, says, x + head.x() + 4, y + head.y() + 3, this.skin.text());
         }
         final Rect well = CdeAppManagerLayout.well(headed, w, h);
         this.skin.panel(g, x + well.x(), y + well.y(), well.w(), well.h());

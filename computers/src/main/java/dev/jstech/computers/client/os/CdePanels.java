@@ -13,6 +13,7 @@ import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Control;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.os.WorkspaceSet;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -103,7 +104,7 @@ final class CdePanels {
         final int w = desktop.textFont().width(this.shownTip) + TIP_PAD * 2;
         final Rect at = CdeFrontPanelLayout.tip(over, w, TIP_H, sw, sh);
         MotifChrome.raised(g, at.x(), at.y(), at.w(), at.h(), p.window(), p);
-        g.drawString(desktop.textFont(), this.shownTip, at.x() + TIP_PAD, at.y() + 2, p.ink(), false);
+        Draw.text(g, desktop.textFont(), this.shownTip, at.x() + TIP_PAD, at.y() + 2, p.ink());
     }
 
     /** What workspace {@code index} is called, counted from nought: the four names CDE's switch came with. */
@@ -193,8 +194,8 @@ final class CdePanels {
                 MotifChrome.raised(g, r.x(), r.y(), r.w(), r.h(), p.window(), p);
             }
             final String name = GameText.resolve(WORKSPACE_NAMES[i]);
-            g.drawString(desktop.textFont(), name, r.x() + (r.w() - desktop.textFont().width(name)) / 2,
-                    r.y() + (r.h() - 7) / 2, up ? p.activeInk() : p.ink(), false);
+            Draw.text(g, desktop.textFont(), name, r.x() + (r.w() - desktop.textFont().width(name)) / 2,
+                    r.y() + (r.h() - 7) / 2, up ? p.activeInk() : p.ink());
         }
         final Rect exit = CdeFrontPanelLayout.exit(sw, sh);
         // Pushed in for as long as the question it raised is still up.
@@ -204,8 +205,8 @@ final class CdePanels {
             MotifChrome.raised(g, exit.x(), exit.y(), exit.w(), exit.h(), p.window(), p);
         }
         final String word = GameText.resolve(CdePanelsTexts.EXIT);
-        g.drawString(desktop.textFont(), word, exit.x() + (exit.w() - desktop.textFont().width(word)) / 2,
-                exit.y() + (exit.h() - 7) / 2, p.ink(), false);
+        Draw.text(g, desktop.textFont(), word, exit.x() + (exit.w() - desktop.textFont().width(word)) / 2,
+                exit.y() + (exit.h() - 7) / 2, p.ink());
     }
 
     /** The small raised button at the head of a control that has more behind it, its mark turned when open. */
@@ -265,7 +266,7 @@ final class CdePanels {
     /** The day of the world on the calendar page, under its red band. */
     private void day(final GuiGraphics g, final int cx, final int y) {
         final String day = Integer.toString(desktop.prefs().dayOfWorld());
-        g.drawString(desktop.textFont(), day, cx - desktop.textFont().width(day) / 2, y, PALETTE.get().ink(), false);
+        Draw.text(g, desktop.textFont(), day, cx - desktop.textFont().width(day) / 2, y, PALETTE.get().ink());
     }
 
     /** The ink the clock's hands and the calendar day are drawn in. */

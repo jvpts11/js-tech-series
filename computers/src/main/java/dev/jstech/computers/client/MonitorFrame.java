@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -69,7 +70,7 @@ public final class MonitorFrame {
             g.pose().pushPose();
             g.pose().translate(geo.x() + 8, rowY, 0);
             g.pose().scale(LABEL_SCALE, LABEL_SCALE, 1.0f);
-            g.drawString(font, s.model(), 0, 0, s.labelColor(), false);
+            Draw.text(g, font, s.model(), 0, 0, s.labelColor());
             g.pose().popPose();
         }
 

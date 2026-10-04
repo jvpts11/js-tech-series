@@ -12,6 +12,7 @@ import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -95,41 +96,40 @@ final class CraftTerminalTab extends AbstractTerminalTab {
     @Override
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
         final var catalog = menu.craftCatalog();
-        g.drawString(font(), GameText.resolve(TerminalTexts.CRAFTABLE), GRID_X, cy + 20, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalTexts.CRAFTABLE), GRID_X, cy + 20, DIM());
         final String count = GameText.resolve((catalog.size() == 1 ? TerminalTexts.ONE_PATTERN : TerminalTexts.PATTERNS)
                 .with(catalog.size()));
-        g.drawString(font(), count, GRID_X + CRAFT_COLS * 18 - font().width(count), cy + 20, TEXT(), false);
+        Draw.text(g, font(), count, GRID_X + CRAFT_COLS * 18 - font().width(count), cy + 20, TEXT());
         if (catalog.isEmpty()) {
-            g.drawString(font(), GameText.resolve(TerminalTexts.NO_PATTERNS), GRID_X, GRID_Y + 6, DIM(), false);
-            g.drawString(font(), GameText.resolve(TerminalTexts.LOAD_UNDER_PATTERNS), GRID_X, GRID_Y + 18, DIM(),
-                    false);
+            Draw.text(g, font(), GameText.resolve(TerminalTexts.NO_PATTERNS), GRID_X, GRID_Y + 6, DIM());
+            Draw.text(g, font(), GameText.resolve(TerminalTexts.LOAD_UNDER_PATTERNS), GRID_X, GRID_Y + 18, DIM());
         }
         final int totalRows = (catalog.size() + CRAFT_COLS - 1) / CRAFT_COLS;
         if (totalRows > CRAFT_ROWS) {
             final String at = (screen.craftScroll + 1) + "/" + (totalRows - CRAFT_ROWS + 1);
-            g.drawString(font(), at, GRID_X, GRID_Y + CRAFT_ROWS * 18 + 4, DIM(), false);
+            Draw.text(g, font(), at, GRID_X, GRID_Y + CRAFT_ROWS * 18 + 4, DIM());
         }
 
         final int px = PANE_X + 6;
         final int right = PANE_X + PANE_W - 6;
-        g.drawString(font(), GameText.resolve(TerminalTexts.RUNNING), px, RUNNING_Y, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalTexts.RUNNING), px, RUNNING_Y, DIM());
         final var running = runningCrafts();
         if (running.isEmpty()) {
-            g.drawString(font(), GameText.resolve(TerminalTexts.NOTHING_BEING_MADE), px, RUNNING_Y + 14, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(TerminalTexts.NOTHING_BEING_MADE), px, RUNNING_Y + 14, DIM());
         }
         for (int i = 0; i < Math.min(RUNNING_ROWS, running.size()); i++) {
             final OperationRecord op = running.get(i);
             final int ry = RUNNING_Y + 14 + i * 14;
-            g.drawString(font(), font().plainSubstrByWidth(op.name().getString(), PANE_W - 70), px + 2, ry,
-                    TEXT(), false);
+            Draw.text(g, font(), font().plainSubstrByWidth(op.name().getString(), PANE_W - 70), px + 2, ry,
+                    TEXT());
             final String made = fmt(op.moved()) + "/" + fmt(op.requested());
-            g.drawString(font(), made, right - font().width(made) - 2, ry, DIM(), false);
+            Draw.text(g, font(), made, right - font().width(made) - 2, ry, DIM());
         }
 
-        g.drawString(font(), GameText.resolve(TerminalTexts.JUST_MADE), px, RECENT_Y, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalTexts.JUST_MADE), px, RECENT_Y, DIM());
         final var recent = recentCrafts();
         if (recent.isEmpty()) {
-            g.drawString(font(), GameText.resolve(TerminalTexts.NOTHING_YET), px, RECENT_Y + 14, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(TerminalTexts.NOTHING_YET), px, RECENT_Y + 14, DIM());
         }
         for (int i = 0; i < Math.min(RECENT_ROWS, recent.size()); i++) {
             final OperationRecord op = recent.get(i);
@@ -150,8 +150,8 @@ final class CraftTerminalTab extends AbstractTerminalTab {
             final String name = font().plainSubstrByWidth(
                     GameText.resolve(TerminalTexts.MADE.with(op.name().getString(), fmt(op.moved()))),
                     PANE_W - 26 - font().width(st));
-            g.drawString(font(), name, px + 2, ry, TEXT(), false);
-            g.drawString(font(), st, right - font().width(st) - 2, ry, color, false);
+            Draw.text(g, font(), name, px + 2, ry, TEXT());
+            Draw.text(g, font(), st, right - font().width(st) - 2, ry, color);
         }
     }
 

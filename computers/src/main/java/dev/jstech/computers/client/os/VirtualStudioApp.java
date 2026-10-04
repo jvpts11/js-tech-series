@@ -768,8 +768,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final int iconX = x + 2 + node.depth() * 8;
         FileIcons.draw(g, iconX, y, iconOf(node), this.skin.iconSet());
         final int textX = iconX + FileIcons.SIZE + 3;
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(node.label(), x + width - 2 - textX), textX,
-                y + TREE_TEXT_DY, color, false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(node.label(), x + width - 2 - textX), textX,
+                y + TREE_TEXT_DY, color);
     }
 
     /** The icon beside a row of the tree: what the explorer gives the same file, and a few of the tree's own. */
@@ -857,13 +857,13 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         // Code, description, file and line, each in its column, the way the real error list lays them out.
         final int fileX = x + width - COL_LINE_W - COL_FILE_W;
         final int descriptionW = fileX - (x + 3 + COL_CODE_W) - 4;
-        g.drawString(ctx.font(), row.complaint().code(), x + 3, y + 1, PALETTE.get().complaint(), false);
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(row.complaint().message()),
-                descriptionW), x + 3 + COL_CODE_W, y + 1, ctx.skin().listRowText(selected), false);
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(row.name(), COL_FILE_W - 4), fileX, y + 1,
-                ctx.skin().dim(), false);
-        g.drawString(ctx.font(), String.valueOf(row.complaint().line()), x + width - COL_LINE_W, y + 1,
-                ctx.skin().dim(), false);
+        Draw.text(g, ctx.font(), row.complaint().code(), x + 3, y + 1, PALETTE.get().complaint());
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(row.complaint().message()),
+                descriptionW), x + 3 + COL_CODE_W, y + 1, ctx.skin().listRowText(selected));
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(row.name(), COL_FILE_W - 4), fileX, y + 1,
+                ctx.skin().dim());
+        Draw.text(g, ctx.font(), String.valueOf(row.complaint().line()), x + width - COL_LINE_W, y + 1,
+                ctx.skin().dim());
     }
 
     private void onError(final int index, final int button, final double mx, final double my) {
@@ -888,8 +888,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             case FAILED -> PALETTE.get().failed();
             case PLAIN -> ctx.skin().text();
         };
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(line.text()), width - 4), x + 2,
-                y + 1, ink, false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(line.text()), width - 4), x + 2,
+                y + 1, ink);
     }
 
     /** A line of the Output pane, as it is worded. */
@@ -1234,11 +1234,11 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         FileIcons.draw(g, x + 2, y + 1, iconOf(offer.template()), this.skin.iconSet());
         final int textX = x + 2 + FileIcons.SIZE + 3;
         final int textW = x + width - 2 - textX;
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(offer.title()), textW), textX, y + 1,
-                ctx.skin().listRowText(selected), false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(offer.title()), textW), textX, y + 1,
+                ctx.skin().listRowText(selected));
         final String kind = GameText.resolve(offer.kindText());
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(offer.language().mark() + "  " + kind, textW),
-                textX, y + 10, ctx.skin().dim(), false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(offer.language().mark() + "  " + kind, textW),
+                textX, y + 10, ctx.skin().dim());
     }
 
     /** The templates that fit what was typed and the three filters, each in every language it comes in. */
@@ -1272,16 +1272,15 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         FileIcons.draw(g, x + 3, y + 2, iconOf(template.template()), this.skin.iconSet());
         final int textX = x + 3 + FileIcons.SIZE + 3;
         final int textW = x + width - 3 - textX;
-        g.drawString(ctx.font(), GameText.resolve(template.title()), textX, y + 1, ctx.skin().listRowText(selected),
-                false);
+        Draw.text(g, ctx.font(), GameText.resolve(template.title()), textX, y + 1, ctx.skin().listRowText(selected));
         // The language at the far end of the title's row, since two rows of one shape differ in nothing else there.
         final String mark = template.language().mark();
-        g.drawString(ctx.font(), mark, x + width - 4 - ctx.font().width(mark), y + 1, ctx.skin().dim(), false);
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(template.description()), textW),
-                textX, y + 9, ctx.skin().dim(), false);
+        Draw.text(g, ctx.font(), mark, x + width - 4 - ctx.font().width(mark), y + 1, ctx.skin().dim());
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(template.description()), textW),
+                textX, y + 9, ctx.skin().dim());
         final String tags = GameText.resolve(TextLists.join("  ", template.shownTags()));
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(tags, textW), textX, y + 17,
-                ctx.skin().dim(), false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(tags, textW), textX, y + 17,
+                ctx.skin().dim());
     }
 
     private void pickTemplate(final int index) {
@@ -2471,7 +2470,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             this.start.setBounds(x + 3, top + 2, 34, TOOLBAR_H - 4);
             final String config = GameText.resolve(VirtualStudioTexts.RELEASE);
             this.skin.field(g, x + 42, top + 2, 40, TOOLBAR_H - 4, false);
-            g.drawString(font, font.plainSubstrByWidth(config, 36), x + 45, top + 3, this.skin.text(), false);
+            Draw.text(g, font, font.plainSubstrByWidth(config, 36), x + 45, top + 3, this.skin.text());
             final int bodyY = top + TOOLBAR_H;
             final int bodyH = height - MenuBar.HEIGHT - TOOLBAR_H - STATUS_H;
             final int codeX = x;
@@ -2480,8 +2479,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             final int codeW = width - this.sideW;
             final int sideX = x + codeW;
             this.skin.panel(g, sideX, bodyY, this.sideW, bodyH);
-            g.drawString(font, font.plainSubstrByWidth(GameText.resolve(VirtualStudioTexts.SOLUTION_EXPLORER),
-                    this.sideW - 6), sideX + 3, bodyY + 1, this.skin.dim(), false);
+            Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(VirtualStudioTexts.SOLUTION_EXPLORER),
+                    this.sideW - 6), sideX + 3, bodyY + 1, this.skin.dim());
             this.explorer.setBounds(sideX, bodyY + CAPTION_H, this.sideW, bodyH - CAPTION_H);
             this.skin.panel(g, codeX, bodyY, codeW, TAB_H);
             this.tabs.setBounds(codeX, bodyY, codeW, TAB_H);
@@ -2546,14 +2545,14 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private void drawErrorHeader(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         this.skin.panel(g, x, y, width, CAPTION_H);
         final int fileX = x + width - COL_LINE_W - COL_FILE_W;
-        g.drawString(font, font.plainSubstrByWidth(GameText.resolve(VirtualStudioTexts.CODE_COLUMN), COL_CODE_W - 2),
-                x + 3, y + 1, this.skin.dim(), false);
-        g.drawString(font, GameText.resolve(VirtualStudioTexts.DESCRIPTION_COLUMN), x + 3 + COL_CODE_W, y + 1,
-                this.skin.dim(), false);
-        g.drawString(font, font.plainSubstrByWidth(GameText.resolve(VirtualStudioTexts.FILE_COLUMN), COL_FILE_W - 2),
-                fileX, y + 1, this.skin.dim(), false);
-        g.drawString(font, font.plainSubstrByWidth(GameText.resolve(VirtualStudioTexts.LINE_COLUMN), COL_LINE_W - 2),
-                x + width - COL_LINE_W, y + 1, this.skin.dim(), false);
+        Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(VirtualStudioTexts.CODE_COLUMN), COL_CODE_W - 2),
+                x + 3, y + 1, this.skin.dim());
+        Draw.text(g, font, GameText.resolve(VirtualStudioTexts.DESCRIPTION_COLUMN), x + 3 + COL_CODE_W, y + 1,
+                this.skin.dim());
+        Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(VirtualStudioTexts.FILE_COLUMN), COL_FILE_W - 2),
+                fileX, y + 1, this.skin.dim());
+        Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(VirtualStudioTexts.LINE_COLUMN), COL_LINE_W - 2),
+                x + width - COL_LINE_W, y + 1, this.skin.dim());
     }
 
     /** The Start Window: what was opened lately on the left, the ways to begin on the right. */
@@ -2567,23 +2566,23 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         g.fill(x + half, y, x + width, y + height, palette.ground());
         Draw.pushScissor(g, x, y, x + width, y + height);
         int ly = y + 6;
-        g.drawString(font, GameText.resolve(VirtualStudioTexts.OPEN_RECENT), x + 6, ly, this.skin.text(), false);
+        Draw.text(g, font, GameText.resolve(VirtualStudioTexts.OPEN_RECENT), x + 6, ly, this.skin.text());
         ly += 12;
         final List<String> recent = recent();
         if (recent.isEmpty()) {
-            g.drawString(font, GameText.resolve(StudioTexts.NOTHING_YET), x + 6, ly, this.skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(StudioTexts.NOTHING_YET), x + 6, ly, this.skin.dim());
         }
         for (final String dir : recent) {
             final String label = SolutionFile.fileName(shortName(dir));
-            g.drawString(font, label, x + 6, ly, this.skin.accent(), false);
-            g.drawString(font, font.plainSubstrByWidth("C:\\" + dir.replace('/', '\\'), half - 12), x + 6, ly + 9,
-                    this.skin.dim(), false);
+            Draw.text(g, font, label, x + 6, ly, this.skin.accent());
+            Draw.text(g, font, font.plainSubstrByWidth("C:\\" + dir.replace('/', '\\'), half - 12), x + 6, ly + 9,
+                    this.skin.dim());
             this.links.add(new Link(label, x + 6, ly - 1, half - 12, 18, () -> openSolutionFolder(dir)));
             ly += 20;
         }
         int ry = y + 6;
         final int rx = x + half + 8;
-        g.drawString(font, GameText.resolve(VirtualStudioTexts.GET_STARTED), rx, ry, palette.plain(), false);
+        Draw.text(g, font, GameText.resolve(VirtualStudioTexts.GET_STARTED), rx, ry, palette.plain());
         ry += 12;
         final int cardW = width - half - 16;
         ry = card(g, font, rx, ry, cardW, VirtualStudioTexts.OPEN_SOLUTION_CARD, VirtualStudioTexts.OPEN_SOLUTION_HINT,
@@ -2601,9 +2600,9 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                      final TextKey titleKey, final TextKey subKey, final Runnable action, final InkPalette palette) {
         final String title = GameText.resolve(titleKey);
         g.fill(x, y, x + width, y + 20, palette.gutter());
-        g.drawString(font, font.plainSubstrByWidth(title, width - 6), x + 3, y + 2, palette.plain(), false);
-        g.drawString(font, font.plainSubstrByWidth(GameText.resolve(subKey), width - 6), x + 3, y + 11,
-                palette.gutterText(), false);
+        Draw.text(g, font, font.plainSubstrByWidth(title, width - 6), x + 3, y + 2, palette.plain());
+        Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(subKey), width - 6), x + 3, y + 11,
+                palette.gutterText());
         this.links.add(new Link(title, x, y, width, 20, action));
         return y + 23;
     }
@@ -2618,8 +2617,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final InkPalette palette = InkPalette.forGround(this.skin.isDark()).get();
         g.fill(x, y, x + width, y + height, palette.ground());
         Draw.pushScissor(g, x, y, x + width, y + height);
-        g.drawString(font, GameText.resolve(this.solution == null ? VirtualStudioTexts.EMPTY_FOLDER
-                : VirtualStudioTexts.EMPTY_SOLUTION), x + 6, y + 6, palette.gutterText(), false);
+        Draw.text(g, font, GameText.resolve(this.solution == null ? VirtualStudioTexts.EMPTY_FOLDER
+                : VirtualStudioTexts.EMPTY_SOLUTION), x + 6, y + 6, palette.gutterText());
         Draw.popScissor(g);
     }
 
@@ -2629,7 +2628,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final int errorCount = errorRows().size();
         final String left = GameText.resolve(errorCount == 0 ? VirtualStudioTexts.READY.text()
                 : VirtualStudioTexts.ERRORS.with(errorCount));
-        g.drawString(font, left, x + 3, y + 1, this.skin.dim(), false);
+        Draw.text(g, font, left, x + 3, y + 1, this.skin.dim());
         /*
          * The right-hand pieces are laid out first, so the message on the left is cut to the room
          * left before them: a saved path can be longer than the bar, and it stops rather than runs
@@ -2640,8 +2639,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             final int from = x + 5 + font.width(left) + 6;
             final int room = right - 6 - from;
             if (room > 8) {
-                g.drawString(font, font.plainSubstrByWidth(this.workspace.status(), room), from, y + 1,
-                        this.skin.dim(), false);
+                Draw.text(g, font, font.plainSubstrByWidth(this.workspace.status(), room), from, y + 1,
+                        this.skin.dim());
             }
         }
     }
@@ -2652,14 +2651,14 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         int right = x + width - 3;
         if (this.solution != null) {
             right -= font.width(this.solution.name());
-            g.drawString(font, this.solution.name(), right, y + 1, this.skin.dim(), false);
+            Draw.text(g, font, this.solution.name(), right, y + 1, this.skin.dim());
             right -= 8;
         }
         if (doc != null) {
             final String where = GameText.resolve(EditorTexts.LINE_AND_COLUMN.with(
                     doc.area().document().cursorLine() + 1, doc.area().document().cursorCol() + 1));
             right -= font.width(where);
-            g.drawString(font, where, right, y + 1, this.skin.dim(), false);
+            Draw.text(g, font, where, right, y + 1, this.skin.dim());
             right -= 8;
             /*
              * The zoom, the way the studio keeps it at the bottom of the editor: the size in percent
@@ -2669,9 +2668,9 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             final int plusX = right - font.width("+") - 1;
             final int percentX = plusX - 3 - font.width(percent);
             final int minusX = percentX - 3 - font.width("-");
-            g.drawString(font, "-", minusX, y + 1, this.skin.text(), false);
-            g.drawString(font, percent, percentX, y + 1, this.skin.dim(), false);
-            g.drawString(font, "+", plusX, y + 1, this.skin.text(), false);
+            Draw.text(g, font, "-", minusX, y + 1, this.skin.text());
+            Draw.text(g, font, percent, percentX, y + 1, this.skin.dim());
+            Draw.text(g, font, "+", plusX, y + 1, this.skin.text());
             this.zoomMinus = new int[] {minusX - 2, y, font.width("-") + 4, STATUS_H};
             this.zoomPlus = new int[] {plusX - 2, y, font.width("+") + 4, STATUS_H};
             right = minusX - 2;

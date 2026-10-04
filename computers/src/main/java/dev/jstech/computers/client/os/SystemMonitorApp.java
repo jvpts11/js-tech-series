@@ -240,8 +240,8 @@ public final class SystemMonitorApp implements IDesktopApp {
         final String label = kind == RamLedger.Kind.WINDOW ? ActiveDesktop.windowName(use.label())
                 : kind == RamLedger.Kind.GRAPHICS ? GameText.resolve(SystemMonitorTexts.SHARED_GRAPHICS) : use.label();
         final String name = font.plainSubstrByWidth(label, w - amountW - 6);
-        g.drawString(font, name, x, y + 1, ctx.skin().text(), false);
-        g.drawString(font, amount, x + w - amountW, y + 1, ctx.skin().dim(), false);
+        Draw.text(g, font, name, x, y + 1, ctx.skin().text());
+        Draw.text(g, font, amount, x + w - amountW, y + 1, ctx.skin().dim());
     }
 
     private void renderDiskRow(final GuiGraphics g, final UiContext ctx, final DiskUse disk, final int index, final int x,
@@ -249,12 +249,12 @@ public final class SystemMonitorApp implements IDesktopApp {
         final Font font = ctx.font();
         final String tag = GameText.resolve(disk.system() ? SystemMonitorTexts.SYSTEM_DISK.with(disk.label())
                 : disk.label());
-        g.drawString(font, tag, x, y, ctx.skin().text(), false);
+        Draw.text(g, font, tag, x, y, ctx.skin().text());
         final long cap = Math.max(1L, disk.capMb());
         final double frac = Math.min(1.0, (double) disk.usedMb() / cap);
         final String usage = DiskSpec.sizeLabel(disk.usedMb())
                 + " / " + DiskSpec.sizeLabel(disk.capMb());
-        g.drawString(font, usage, x + w - font.width(usage), y, ctx.skin().dim(), false);
+        Draw.text(g, font, usage, x + w - font.width(usage), y, ctx.skin().dim());
         final int barY = y + 10;
         g.fill(x, barY, x + w, barY + BAR_H, ctx.skin().fieldBg());
         g.fill(x, barY, x + (int) (w * frac), barY + BAR_H, usageColor(frac));

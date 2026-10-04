@@ -11,6 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.FramesEmblem;
 import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -161,8 +162,8 @@ final class FramesPanels {
         bevel(g, 4, tbY + 3, sbW, DesktopScreen.TASKBAR_H - 6, c.bevelLight(), c.bevelDark());
         // The edition's own mark, the same one its setup and its boot screen wear.
         FramesEmblem.draw(g, 8, tbY + 7, desktop.panelStyle());
-        g.drawString(desktop.textFont(), GameText.resolve(PanelTexts.START), 8 + FramesEmblem.SIZE + 3, tbY + 8,
-                c.startInk(), false);
+        Draw.text(g, desktop.textFont(), GameText.resolve(PanelTexts.START), 8 + FramesEmblem.SIZE + 3, tbY + 8,
+                c.startInk());
     }
 
     /**
@@ -199,9 +200,9 @@ final class FramesPanels {
             final int textColor = minimized
                     ? (xp ? luna.minimizedInk() : classic.minimizedInk())
                     : desktop.themeColours().startText();
-            g.drawString(desktop.textFont(),
+            Draw.text(g, desktop.textFont(),
                     desktop.shorten(desktop.taskbar().label(entry), TaskbarModel.titleRoom(btnW - (several ? 8 : 0))),
-                    bx + 20, tbY + 8, textColor, false);
+                    bx + 20, tbY + 8, textColor);
             if (several) {
                 TaskbarModel.drawCaret(g, bx + btnW - 8, tbY + 10, textColor);
             }
@@ -304,9 +305,9 @@ final class FramesPanels {
         final int fx = 7;
         final int fy = tbY + 7;
         FramesEmblem.draw(g, fx, fy, PanelStyle.FRAMES_XP);
-        g.drawString(desktop.textFont(), GameText.component(PanelTexts.XP_START)
+        Draw.text(g, desktop.textFont(), GameText.component(PanelTexts.XP_START)
                         .withStyle(ChatFormatting.BOLD, ChatFormatting.ITALIC),
-                fx + 13, tbY + 8, c.startInk(), true);
+                fx + 13, tbY + 8, c.startInk());
     }
 
     /** One vertical slice of the Start pill: light crown, body, and a darker foot, as the Luna button had. */

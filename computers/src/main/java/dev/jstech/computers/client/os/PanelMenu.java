@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import java.util.List;
@@ -73,8 +74,8 @@ final class PanelMenu {
                 if (k == hover) {
                     g.fill(x + 1, iy, x + W - 1, iy + DeskMenu.ITEM_H, skin.accent());
                 }
-                g.drawString(desktop.textFont(), ROWS.get(k).words(), x + 4, iy + 2,
-                        k == hover ? c.menuHoverInk() : fg, false);
+                Draw.text(g, desktop.textFont(), ROWS.get(k).words(), x + 4, iy + 2,
+                        k == hover ? c.menuHoverInk() : fg);
             }
             iy += DeskMenu.ITEM_H;
         }

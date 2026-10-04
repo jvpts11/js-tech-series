@@ -14,6 +14,7 @@ import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.boot.BootIdentity;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -278,7 +279,7 @@ public final class DesktopSplashArt {
         g.pose().pushPose();
         g.pose().translate(cx - font.width(text) * scale / 2.0f, top, 0.0F);
         g.pose().scale(scale, scale, 1.0F);
-        g.drawString(font, text, 0, 0, color, false);
+        Draw.text(g, font, text, 0, 0, color);
         g.pose().popPose();
     }
 

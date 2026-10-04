@@ -188,7 +188,7 @@ public final class BootSplashArt {
             final int logoY = y + h / 2 - SplashLogos.H / 2;
             SplashLogos.draw(g, SplashLogos.FRAMES_XP, x + w / 4 + 6, logoY);
             g.fill(x + w * 53 / 100, y + h * 30 / 100, x + w * 53 / 100 + 1, y + h * 70 / 100, c.rule());
-            g.drawString(font, message, x + w * 57 / 100, y + h / 2 - 4, c.message(), false);
+            Draw.text(g, font, message, x + w * 57 / 100, y + h / 2 - 4, c.message());
             return;
         }
         /*
@@ -224,8 +224,8 @@ public final class BootSplashArt {
             }
         }
 
-        g.drawString(font, "(C) 2001 Midsoft Corp.", x + 8, y + h - 12, c.smallPrint(), false);
-        g.drawString(font, "Midsoft", x + w - font.width("Midsoft") - 8, y + h - 12, c.maker(), false);
+        Draw.text(g, font, "(C) 2001 Midsoft Corp.", x + 8, y + h - 12, c.smallPrint());
+        Draw.text(g, font, "Midsoft", x + w - font.width("Midsoft") - 8, y + h - 12, c.maker());
     }
 
     /** The blue ground with one word on it, which is how that edition ended every start. */
@@ -260,7 +260,7 @@ public final class BootSplashArt {
         g.pose().pushPose();
         g.pose().translate(cx - font.width(text) * scale / 2.0f, top, 0);
         g.pose().scale(scale, scale, 1.0f);
-        g.drawString(font, text, 0, 0, colour, false);
+        Draw.text(g, font, text, 0, 0, colour);
         g.pose().popPose();
     }
 

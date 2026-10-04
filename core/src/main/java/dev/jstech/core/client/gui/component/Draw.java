@@ -12,6 +12,7 @@ import dev.jstech.core.gui.layout.WindowGeometry;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import org.joml.Matrix4f;
 
 /**
@@ -86,6 +87,18 @@ public final class Draw {
     /** A line of game text, styles and all, written on a ground of that colour. */
     public static void text(final GuiGraphics g, final Font font, final Component text, final int x, final int y,
                             final int color, final int ground) {
+        g.drawString(font, text, x, y, color, false);
+    }
+
+    /** A line of game text, styles and all, on whatever ground was declared under it. */
+    public static void text(final GuiGraphics g, final Font font, final Component text, final int x, final int y,
+                            final int color) {
+        g.drawString(font, text, x, y, color, false);
+    }
+
+    /** A line already laid out, a wrapped row of game text, on whatever ground was declared under it. */
+    public static void text(final GuiGraphics g, final Font font, final FormattedCharSequence text, final int x,
+                            final int y, final int color) {
         g.drawString(font, text, x, y, color, false);
     }
 

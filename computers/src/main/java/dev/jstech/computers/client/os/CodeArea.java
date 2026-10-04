@@ -363,8 +363,8 @@ public final class CodeArea extends UiComponent {
             drawMark(g, i, ry);
             if (this.numbered) {
                 final String number = String.valueOf(i + 1);
-                g.drawString(font, number, gutter - GUTTER_PAD - font.width(number), ry + 1,
-                        ink.gutterText(), false);
+                Draw.text(g, font, number, gutter - GUTTER_PAD - font.width(number), ry + 1,
+                        ink.gutterText());
             }
             ry += LINE_H;
         }
@@ -452,7 +452,7 @@ public final class CodeArea extends UiComponent {
                           final List<CodeRuns.Run> runs, final int startX, final int textY) {
         final InkPalette ink = this.palette.get();
         if (runs.isEmpty()) {
-            g.drawString(font, line, startX, textY, ink.plain(), false);
+            Draw.text(g, font, line, startX, textY, ink.plain());
             return;
         }
         int rx = startX;
@@ -463,7 +463,7 @@ public final class CodeArea extends UiComponent {
                 continue;
             }
             final String piece = line.substring(from, to);
-            g.drawString(font, piece, rx, textY, ink.of(run.ink()), false);
+            Draw.text(g, font, piece, rx, textY, ink.of(run.ink()));
             rx += font.width(piece);
         }
     }

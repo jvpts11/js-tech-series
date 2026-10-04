@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.CdeStyleLayout;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import java.util.List;
@@ -39,8 +40,8 @@ final class CdeStylePages {
             if (i == picked) {
                 g.fill(left + r.x(), top + r.y(), left + r.x() + r.w(), top + r.y() + r.h(), p.active());
             }
-            g.drawString(font, labels.get(i), left + r.x() + 4, top + r.y() + 2,
-                    i == picked ? p.activeInk() : skin.text(), false);
+            Draw.text(g, font, labels.get(i), left + r.x() + 4, top + r.y() + 2,
+                    i == picked ? p.activeInk() : skin.text());
         }
     }
 

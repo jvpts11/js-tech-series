@@ -15,6 +15,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.ColumnHeader;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
@@ -402,14 +403,14 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
                            final int x, final int y, final int width, final int height,
                            final boolean hovered, final boolean selected) {
         if (place.heading()) {
-            g.drawString(ctx.font(), place.label(), x + 2, y + TEXT_DY, ctx.skin().dim(), false);
+            Draw.text(g, ctx.font(), place.label(), x + 2, y + TEXT_DY, ctx.skin().dim());
             return;
         }
         final boolean here = place.target().equals(onMedia() ? mediaRoot() : this.dir);
         ctx.skin().listRow(g, x, y, width, height, hovered, here);
         FileIcons.draw(g, x + 2, y, place.icon(), this.skin.iconSet());
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(place.label(), width - NAME_DX - 3), x + NAME_DX,
-                y + TEXT_DY, ctx.skin().listRowText(here), false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(place.label(), width - NAME_DX - 3), x + NAME_DX,
+                y + TEXT_DY, ctx.skin().listRowText(here));
     }
 
     private void onPlace(final int index, final int button, final double mx, final double my) {
@@ -558,16 +559,16 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         FileIcons.draw(g, nameX - NAME_DX + 2, y, entry.up() ? FileIcons.Kind.UP
                 : FileIcons.kindOfPath(entry.file().path(), entry.file().directory()), this.skin.iconSet());
         final int textY = y + TEXT_DY;
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(entry.name(), typeX - nameX - 4), nameX, textY,
-                ctx.skin().listRowText(selected), false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(entry.name(), typeX - nameX - 4), nameX, textY,
+                ctx.skin().listRowText(selected));
         final String type = entry.up() ? GameText.resolve(FileDialogTexts.UP_ONE_LEVEL)
                 : entry.file().directory() ? GameText.resolve(FileDialogTexts.FOLDER)
                 : FilesApp.typeLabel(entry.file());
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(type, sizeX - typeX - 4), typeX, textY,
-                selected ? ctx.skin().listRowText(true) : ctx.skin().dim(), false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(type, sizeX - typeX - 4), typeX, textY,
+                selected ? ctx.skin().listRowText(true) : ctx.skin().dim());
         if (!entry.up() && !entry.file().directory()) {
-            g.drawString(ctx.font(), GameText.resolve(FileDialogTexts.SIZE.with(entry.file().weight())), sizeX, textY,
-                    selected ? ctx.skin().listRowText(true) : ctx.skin().dim(), false);
+            Draw.text(g, ctx.font(), GameText.resolve(FileDialogTexts.SIZE.with(entry.file().weight())), sizeX, textY,
+                    selected ? ctx.skin().listRowText(true) : ctx.skin().dim());
         }
     }
 

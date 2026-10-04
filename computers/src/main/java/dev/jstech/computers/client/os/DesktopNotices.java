@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.operation.payload.MachineSoundPayload;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.layout.DesktopZ;
@@ -221,19 +222,19 @@ final class DesktopNotices {
         g.fill(x + 7, y + 4, x + 13, y + 14, c.balloonIcon());
         g.fill(x + 9, y + 6, x + 11, y + 7, c.balloonIconMark());
         g.fill(x + 9, y + 8, x + 11, y + 12, c.balloonIconMark());
-        g.drawString(font, Component.literal(balloon.title()).withStyle(ChatFormatting.BOLD),
-                x + 18, y + 5, c.balloonTitle(), false);
+        Draw.text(g, font, Component.literal(balloon.title()).withStyle(ChatFormatting.BOLD),
+                x + 18, y + 5, c.balloonTitle());
         int ly = y + 16;
         final List<FormattedCharSequence> lines = font.split(Component.literal(balloon.body()), w - 12);
         for (final FormattedCharSequence line : lines) {
-            g.drawString(font, line, x + 6, ly, c.balloonBody(), false);
+            Draw.text(g, font, line, x + 6, ly, c.balloonBody());
             ly += 9;
         }
         // The close box, the one part of a balloon anyone ever clicked.
         final int bx = x + w - 12;
         g.fill(bx, y + 4, bx + 8, y + 12, c.balloonCloseFill());
         desktop.drawOutline(g, bx, y + 4, 8, 8, c.balloonCloseEdge());
-        g.drawString(font, "x", bx + 2, y + 5, c.balloonBody(), false);
+        Draw.text(g, font, "x", bx + 2, y + 5, c.balloonBody());
     }
 
     /**

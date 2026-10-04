@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -108,10 +109,10 @@ final class LinuxPanels {
         if (hot) {
             g.fill(4, 3, 62, DesktopScreen.TASKBAR_H - 3, PALETTE.get().hover());
         }
-        g.drawString(desktop.textFont(), GameText.resolve(PanelTexts.ACTIVITIES), 8, 8, theme.startText(), false);
+        Draw.text(g, desktop.textFont(), GameText.resolve(PanelTexts.ACTIVITIES), 8, 8, theme.startText());
         final String clock = desktop.prefs().clockText();
-        g.drawString(desktop.textFont(), clock,
-                (sw - desktop.textFont().width(clock)) / 2, 8, theme.startText(), false);
+        Draw.text(g, desktop.textFont(), clock,
+                (sw - desktop.textFont().width(clock)) / 2, 8, theme.startText());
         // GNOME keeps its clock in the middle, so only the status group sits at the right end.
         desktop.tray().drawStatus(g, sw - PanelTray.PAD - desktop.tray().statusWidth(), 0, theme.startText());
     }
@@ -125,15 +126,13 @@ final class LinuxPanels {
         }
         if (kde) {
             g.fill(8, tbY + 5, 22, tbY + 19, theme.startButton());
-            g.drawString(desktop.textFont(), "K", 12, tbY + 8, c.glyph(), false);
-            g.drawString(desktop.textFont(), GameText.resolve(PanelTexts.APPS), 26, tbY + 8, theme.startText(),
-                    false);
+            Draw.text(g, desktop.textFont(), "K", 12, tbY + 8, c.glyph());
+            Draw.text(g, desktop.textFont(), GameText.resolve(PanelTexts.APPS), 26, tbY + 8, theme.startText());
         } else {
             g.fill(8, tbY + 5, 22, tbY + 19, theme.startButton());
             g.fill(11, tbY + 8, 19, tbY + 16, c.glyph());
             g.fill(13, tbY + 10, 17, tbY + 14, theme.startButton());
-            g.drawString(desktop.textFont(), GameText.resolve(PanelTexts.MENU), 26, tbY + 8, theme.startText(),
-                    false);
+            Draw.text(g, desktop.textFont(), GameText.resolve(PanelTexts.MENU), 26, tbY + 8, theme.startText());
         }
     }
 
@@ -191,9 +190,9 @@ final class LinuxPanels {
         }
         final int textColor = active ? c.activeInk() : minimized ? c.minimizedInk() : theme.startText();
         final int textW = bw - 22 - (several ? 12 : 0);
-        g.drawString(desktop.textFont(),
+        Draw.text(g, desktop.textFont(),
                 desktop.shorten(desktop.taskbar().label(entry), TaskbarModel.titleRoom(textW + 20)),
-                bx + 22, tbY + 8, textColor, false);
+                bx + 22, tbY + 8, textColor);
         if (several) {
             final int badgeX = bx + bw - 12;
             g.fill(badgeX, tbY + 5, badgeX + 10, tbY + 13, active ? c.badge() : accent);
@@ -232,9 +231,9 @@ final class LinuxPanels {
                     hot, active, false);
             ProgramIcons.draw(g, bx + 3, tbY + 5, 12, 12, desktop.programIdFor(entry.key()), desktop.icons());
             final int textColor = minimized ? skin.dim() : skin.text();
-            g.drawString(desktop.textFont(),
+            Draw.text(g, desktop.textFont(),
                     desktop.shorten(desktop.taskbar().label(entry), TaskbarModel.titleRoom(btnW - (several ? 8 : 0))),
-                    bx + 19, tbY + 8 + (active ? 1 : 0), textColor, false);
+                    bx + 19, tbY + 8 + (active ? 1 : 0), textColor);
             if (several) {
                 TaskbarModel.drawCaret(g, bx + btnW - 8, tbY + 10 + (active ? 1 : 0), textColor);
             }

@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.program.SolitaireGame;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.palette.Palette;
@@ -211,7 +212,7 @@ public final class SolitaireApp implements IDesktopApp {
 
     private void drawSeed(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         final String seed = "#" + Long.toString(Math.abs(game.seed()) % 1_000_000L);
-        g.drawString(font, seed, x + width - MARGIN - font.width(seed), y + 4, skin.dim(), false);
+        Draw.text(g, font, seed, x + width - MARGIN - font.width(seed), y + 4, skin.dim());
     }
 
     private void drawStockAndWaste(final GuiGraphics g, final Font font) {
@@ -219,8 +220,7 @@ public final class SolitaireApp implements IDesktopApp {
         if (game.stockSize() > 0) {
             PlayingCards.back(g, sx, tableY, H);
             final String left = String.valueOf(game.stockSize());
-            g.drawString(font, left, sx + (W - font.width(left)) / 2, tableY + H - 10, PALETTE.get().stockCount(),
-                    false);
+            Draw.text(g, font, left, sx + (W - font.width(left)) / 2, tableY + H - 10, PALETTE.get().stockCount());
         } else {
             PlayingCards.emptyStock(g, sx, tableY);
         }
@@ -286,10 +286,10 @@ public final class SolitaireApp implements IDesktopApp {
         g.fill(x, feltBottom, x + width, feltBottom + STATUS_H, skin.windowBg());
         final int ty = feltBottom + 2;
         final String left = GameText.resolve(SolitaireTexts.SCORE_MOVES.with(game.score(), game.moves()));
-        g.drawString(font, left, x + MARGIN, ty, skin.text(), false);
+        Draw.text(g, font, left, x + MARGIN, ty, skin.text());
         final String right = game.isWon() ? GameText.resolve(SolitaireTexts.YOU_WIN) : clock();
-        g.drawString(font, right, x + width - MARGIN - font.width(right), ty,
-                game.isWon() ? PALETTE.get().won() : skin.dim(), false);
+        Draw.text(g, font, right, x + width - MARGIN - font.width(right), ty,
+                game.isWon() ? PALETTE.get().won() : skin.dim());
     }
 
     /** The cards being carried, drawn last so they sit over everything they are passing across. */

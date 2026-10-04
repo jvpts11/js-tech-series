@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.CdeStyle;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -65,15 +66,15 @@ public final class CdeSplashArt {
         g.pose().pushPose();
         g.pose().translate(w / 2.0F, py + 9, 0);
         g.pose().scale(NAME_SCALE, NAME_SCALE, 1.0F);
-        g.drawString(font, NAME, -font.width(NAME) / 2, 0, p.ink(), false);
+        Draw.text(g, font, NAME, -font.width(NAME) / 2, 0, p.ink());
         g.pose().popPose();
-        g.drawString(font, MAKER, (w - font.width(MAKER)) / 2, py + PLATE_H - 15, p.ink(), false);
+        Draw.text(g, font, MAKER, (w - font.width(MAKER)) / 2, py + PLATE_H - 15, p.ink());
 
         final String line = GameText.resolve(hostName.isEmpty() ? CdeSplashArtTexts.STARTING.text()
                 : CdeSplashArtTexts.STARTING_ON_WORKSTATION.with(hostName));
         final int lx = (w - font.width(line)) / 2;
         final int ly = py + PLATE_H + LINE_GAP;
-        g.drawString(font, line, lx, ly, PALETTE.get().lineInk(), false);
+        Draw.text(g, font, line, lx, ly, PALETTE.get().lineInk());
         g.pose().popPose();
     }
 

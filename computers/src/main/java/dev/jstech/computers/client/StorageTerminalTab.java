@@ -75,7 +75,7 @@ final class StorageTerminalTab extends AbstractTerminalTab {
         final int shown = visibleItems().size();
         final String t = GameText.resolve(
                 (shown == 1 ? TerminalGridTexts.ONE_TYPE : TerminalGridTexts.TYPES).with(shown));
-        g.drawString(font(), t, cx + cw - font().width(t), TOOLBAR_Y + 3, DIM(), false);
+        Draw.text(g, font(), t, cx + cw - font().width(t), TOOLBAR_Y + 3, DIM());
         Draw.textCentered(g,font(),
                 GameText.resolve(screen.sortByQuantity ? TerminalGridTexts.QUANTITY : TerminalGridTexts.NAME),
                 SORT_X + SORT_W / 2, TOOLBAR_Y + 3, ACCENT());
@@ -135,25 +135,25 @@ final class StorageTerminalTab extends AbstractTerminalTab {
     private void sliderBandLabels(final GuiGraphics g) {
         final int px = PANE_X + 6;
         final int right = PANE_X + PANE_W - 6;
-        g.drawString(font(), GameText.resolve(TerminalGridTexts.THIS_MACHINES_DISKS), px, PANE_Y + 6, ACCENT(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalGridTexts.THIS_MACHINES_DISKS), px, PANE_Y + 6, ACCENT());
         if (!menu.storageHasSlider()) {
             final int below = lines(g, TerminalGridTexts.ALL_OFFERED, px, PANE_Y + 22, TEXT());
             final String store = menu.storageCapacity() <= 0 ? GameText.resolve(TerminalGridTexts.NO_DISK)
                     : fmt(menu.storageUsed()) + " / " + fmt(menu.storageCapacity());
-            g.drawString(font(), store, px, below + 8, GREEN(), false);
+            Draw.text(g, font(), store, px, below + 8, GREEN());
             return;
         }
         for (int d = 0; d < shownDisks(); d++) {
             final int ty = PANE_Y + SLIDER_TRACK0_DY + d * SLIDER_ROW_PITCH;
-            g.drawString(font(), GameText.resolve(TerminalGridTexts.DISK_LETTER.with(String.valueOf((char) ('A' + d)))),
-                    px, ty - SLIDER_LABEL_DY, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(TerminalGridTexts.DISK_LETTER.with(String.valueOf((char) ('A' + d)))),
+                    px, ty - SLIDER_LABEL_DY, DIM());
             if (menu.diskCapacityWeight(d) <= 0L) {
                 final String empty = GameText.resolve(TerminalGridTexts.EMPTY);
-                g.drawString(font(), empty, right - font().width(empty), ty - SLIDER_LABEL_DY, DIM(), false);
+                Draw.text(g, font(), empty, right - font().width(empty), ty - SLIDER_LABEL_DY, DIM());
                 continue;
             }
             final String readout = GameText.resolve(TerminalGridTexts.OFFERED.with(sliderValue(d) / 10));
-            g.drawString(font(), readout, right - font().width(readout), ty - SLIDER_LABEL_DY, GREEN(), false);
+            Draw.text(g, font(), readout, right - font().width(readout), ty - SLIDER_LABEL_DY, GREEN());
         }
         // The word about dragging only where there is room left for all of it under the last track.
         final int footY = PANE_Y + SLIDER_TRACK0_DY + shownDisks() * SLIDER_ROW_PITCH + 6;
@@ -168,7 +168,7 @@ final class StorageTerminalTab extends AbstractTerminalTab {
     private int lines(final GuiGraphics g, final TextKey sentence, final int x, final int y, final int color) {
         int at = y;
         for (final FormattedCharSequence line : font().split(GameText.component(sentence), PANE_W - 12)) {
-            g.drawString(font(), line, x, at, color, false);
+            Draw.text(g, font(), line, x, at, color);
             at += 10;
         }
         return at;

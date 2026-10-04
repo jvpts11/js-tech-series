@@ -12,6 +12,7 @@ import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Control;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
@@ -116,8 +117,8 @@ final class CdeLaunchers {
         final String heading = heading(this.open);
         MotifChrome.raised(g, box.x(), box.y(), box.w(), box.h(), p.window(), p);
         g.fill(box.x() + PAD, box.y() + PAD, box.x() + box.w() - PAD, box.y() + PAD + HEAD_H, p.active());
-        g.drawString(desktop.textFont(), heading,
-                box.x() + (box.w() - desktop.textFont().width(heading)) / 2, box.y() + PAD + 3, p.activeInk(), false);
+        Draw.text(g, desktop.textFont(), heading,
+                box.x() + (box.w() - desktop.textFont().width(heading)) / 2, box.y() + PAD + 3, p.activeInk());
         int y = box.y() + PAD + HEAD_H + 1;
         for (final Row row : rows) {
             if (desktop.hoverIn(box.x() + PAD, y, box.w() - PAD * 2, ROW_H)) {
@@ -126,8 +127,8 @@ final class CdeLaunchers {
             if (row.icon() != null) {
                 ProgramIcons.draw(g, box.x() + PAD + 2, y + 1, 14, 14, row.icon(), desktop.icons());
             }
-            g.drawString(desktop.textFont(), desktop.shorten(row.label(), LABEL_CHARS), box.x() + PAD + 20, y + 4,
-                    p.ink(), false);
+            Draw.text(g, desktop.textFont(), desktop.shorten(row.label(), LABEL_CHARS), box.x() + PAD + 20, y + 4,
+                    p.ink());
             y += ROW_H;
         }
     }

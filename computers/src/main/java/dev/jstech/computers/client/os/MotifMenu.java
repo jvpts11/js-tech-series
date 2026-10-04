@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -147,7 +148,7 @@ final class MotifMenu {
                 MotifChrome.raised(g, this.x + PAD, top, this.w - PAD * 2, ROW_H, p.window(), p);
             }
             final int ink = entry.enabled() ? p.ink() : PALETTE.get().dimInk();
-            g.drawString(font, entry.label(), this.x + PAD * 2, top + 2, ink, false);
+            Draw.text(g, font, entry.label(), this.x + PAD * 2, top + 2, ink);
             if (!entry.keys().isEmpty()) {
                 final int keysW = Texts.smallWidth(font, entry.keys());
                 Texts.small(g, font, entry.keys(), this.x + this.w - PAD * 2 - keysW, top + 3, PALETTE.get().dimInk());

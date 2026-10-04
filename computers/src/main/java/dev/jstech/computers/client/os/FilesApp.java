@@ -900,7 +900,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             final int gx = (int) dragMx + 6;
             final int gy = (int) dragMy + 2;
             g.fill(gx, gy, gx + gw, gy + 11, PALETTE.get().ghost());
-            g.drawString(font, label, gx + 3, gy + 2, PALETTE.get().ghostInk(), false);
+            Draw.text(g, font, label, gx + 3, gy + 2, PALETTE.get().ghostInk());
         }
         context.render(g, ctx);
     }
@@ -979,8 +979,8 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
                                final int x, final int y, final int w, final int h, final boolean hovered,
                                final boolean selectedRow) {
         if (item.section()) {
-            g.drawString(ctx.font(), item.label().toUpperCase(Locale.ROOT), x + 3, y + FilesLayout.TEXT_DY,
-                    ctx.skin().dim(), false);
+            Draw.text(g, ctx.font(), item.label().toUpperCase(Locale.ROOT), x + 3, y + FilesLayout.TEXT_DY,
+                    ctx.skin().dim());
             return;
         }
         final boolean cur = item.target().isEmpty() ? (dir.isEmpty() && isVolumeItem(item))
@@ -998,8 +998,8 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         }
         if (!(isVolumeItem(item) && item.volumeIndex() == volRenaming)) {
             final int maxW = w + 2 - (FilesLayout.ICON_W + 8) - (item.removable() ? 8 : 0);
-            g.drawString(ctx.font(), Texts.clip(ctx.font(), item.label(), maxW), x + 5 + FilesLayout.ICON_W,
-                    y + FilesLayout.TEXT_DY, ctx.skin().listRowText(cur), false);
+            Draw.text(g, ctx.font(), Texts.clip(ctx.font(), item.label(), maxW), x + 5 + FilesLayout.ICON_W,
+                    y + FilesLayout.TEXT_DY, ctx.skin().listRowText(cur));
         }
         if (item.removable()) {
             // The eject control at the row's right edge: a tray glyph, in the middle of the row.
@@ -1047,12 +1047,12 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         final int subColor = sel ? ctx.skin().listRowText(true) : ctx.skin().dim();
         final int textY = y + FilesLayout.TEXT_DY;
         if (index != renaming) {
-            g.drawString(ctx.font(), Texts.clip(ctx.font(), r.name(), FilesLayout.nameMaxW(contentW, typeColW, sizeColW)),
-                    x + 3 + FilesLayout.ICON_W + 3, textY, nameColor, false);
+            Draw.text(g, ctx.font(), Texts.clip(ctx.font(), r.name(), FilesLayout.nameMaxW(contentW, typeColW, sizeColW)),
+                    x + 3 + FilesLayout.ICON_W + 3, textY, nameColor);
         }
-        g.drawString(ctx.font(), Texts.clip(ctx.font(), r.type(), typeColW - 4),
-                lastX + FilesLayout.typeColX(contentW, typeColW, sizeColW), textY, subColor, false);
-        g.drawString(ctx.font(), r.size(), lastX + contentW - 4 - ctx.font().width(r.size()), textY, subColor, false);
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), r.type(), typeColW - 4),
+                lastX + FilesLayout.typeColX(contentW, typeColW, sizeColW), textY, subColor);
+        Draw.text(g, ctx.font(), r.size(), lastX + contentW - 4 - ctx.font().width(r.size()), textY, subColor);
     }
 
     private void renderIconCell(final GuiGraphics g, final UiContext ctx, final int index, final int cx, final int cy,
@@ -1068,8 +1068,8 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         }
         if (index != renaming) {
             final String label = Texts.clip(ctx.font(), r.name(), w - 4);
-            g.drawString(ctx.font(), label, cx + (w - ctx.font().width(label)) / 2, cy + h - 9,
-                    ctx.skin().listRowText(isSelected(index)), false);
+            Draw.text(g, ctx.font(), label, cx + (w - ctx.font().width(label)) / 2, cy + h - 9,
+                    ctx.skin().listRowText(isSelected(index)));
         }
     }
 

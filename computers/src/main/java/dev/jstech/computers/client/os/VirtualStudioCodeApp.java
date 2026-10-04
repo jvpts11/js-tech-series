@@ -351,8 +351,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             FileIcons.draw(g, textX, y, FileIcons.kindOfPath(path, folder), this.skin.iconSet());
             textX += FileIcons.SIZE + 3;
         }
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(row.label(), x + width - 2 - textX), textX,
-                y + SIDE_TEXT_DY, color, false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(row.label(), x + width - 2 - textX), textX,
+                y + SIDE_TEXT_DY, color);
     }
 
     /**
@@ -406,10 +406,10 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     private void drawLanguage(final GuiGraphics g, final UiContext ctx, final IProgrammingLanguage language,
                               final int index, final int x, final int y, final int width, final int height,
                               final boolean hovered, final boolean selected) {
-        g.drawString(ctx.font(), language.displayName(), x + 2, y + 1, ctx.skin().text(), false);
+        Draw.text(g, ctx.font(), language.displayName(), x + 2, y + 1, ctx.skin().text());
         final String installed = GameText.resolve(VsCodeTexts.INSTALLED);
-        g.drawString(ctx.font(), installed, x + width - ctx.font().width(installed) - 2, y + 1,
-                ctx.skin().dim(), false);
+        Draw.text(g, ctx.font(), installed, x + width - ctx.font().width(installed) - 2, y + 1,
+                ctx.skin().dim());
     }
 
     private void drawProblemRow(final GuiGraphics g, final UiContext ctx,
@@ -417,10 +417,10 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
                                 final int x, final int y, final int width, final int height,
                                 final boolean hovered, final boolean selected) {
         final String where = complaint.line() + ":" + complaint.column();
-        g.drawString(ctx.font(), where, x + 2, y + 1, ctx.skin().dim(), false);
+        Draw.text(g, ctx.font(), where, x + 2, y + 1, ctx.skin().dim());
         final int textX = x + 2 + ctx.font().width("00:00") + 4;
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(complaint.message()),
-                width - (textX - x) - 2), textX, y + 1, PALETTE.get().problem(), false);
+        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(complaint.message()),
+                width - (textX - x) - 2), textX, y + 1, PALETTE.get().problem());
     }
 
     private void onProblemPicked(final int index, final int button, final double mx, final double my) {
@@ -940,8 +940,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (sideShown) {
             this.skin.panel(g, x + RAIL_W, top, sideW, bodyTotal);
             if (captioned) {
-                g.drawString(font, font.plainSubstrByWidth(GameText.resolve(VsCodeTexts.EXTENSIONS_CAPTION), sideW - 6),
-                        x + RAIL_W + 4, top + 1, this.skin.dim(), false);
+                Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(VsCodeTexts.EXTENSIONS_CAPTION), sideW - 6),
+                        x + RAIL_W + 4, top + 1, this.skin.dim());
             }
         }
         // A list that is not on show is hidden outright: one with no room still has rows to draw.
@@ -1061,21 +1061,21 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         this.links.clear();
         final int left = x + 10;
         int ly = y + 8;
-        g.drawString(font, "Virtual Studio Code", left, ly, palette.plain(), false);
+        Draw.text(g, font, "Virtual Studio Code", left, ly, palette.plain());
         ly += 10;
-        g.drawString(font, GameText.resolve(VsCodeTexts.EDITING_EVOLVED), left, ly, palette.gutterText(), false);
+        Draw.text(g, font, GameText.resolve(VsCodeTexts.EDITING_EVOLVED), left, ly, palette.gutterText());
         ly += 14;
-        g.drawString(font, GameText.resolve(StudioTexts.START), left, ly, palette.plain(), false);
+        Draw.text(g, font, GameText.resolve(StudioTexts.START), left, ly, palette.plain());
         ly += 10;
         ly = link(g, font, left, ly, GameText.resolve(StudioTexts.NEW_FILE_ITEM), this::newFile, palette);
         ly = link(g, font, left, ly, GameText.resolve(StudioTexts.OPEN_FILE_ITEM), this::pickFolder, palette);
         ly = link(g, font, left, ly, GameText.resolve(StudioTexts.OPEN_FOLDER_ITEM), this::pickFolder, palette);
         ly += 6;
-        g.drawString(font, GameText.resolve(VsCodeTexts.RECENT_HEADING), left, ly, palette.plain(), false);
+        Draw.text(g, font, GameText.resolve(VsCodeTexts.RECENT_HEADING), left, ly, palette.plain());
         ly += 10;
         final List<String> recent = recent();
         if (recent.isEmpty()) {
-            g.drawString(font, GameText.resolve(StudioTexts.NOTHING_YET), left, ly, palette.gutterText(), false);
+            Draw.text(g, font, GameText.resolve(StudioTexts.NOTHING_YET), left, ly, palette.gutterText());
             ly += 9;
         }
         for (final String path : recent) {
@@ -1083,13 +1083,13 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         }
         final int rightX = x + width / 2 + 6;
         int ry = y + 32;
-        g.drawString(font, GameText.resolve(VsCodeTexts.WALKTHROUGHS), rightX, ry, palette.plain(), false);
+        Draw.text(g, font, GameText.resolve(VsCodeTexts.WALKTHROUGHS), rightX, ry, palette.plain());
         ry += 10;
-        g.drawString(font, GameText.resolve(VsCodeTexts.GET_STARTED), rightX, ry, palette.gutterText(), false);
+        Draw.text(g, font, GameText.resolve(VsCodeTexts.GET_STARTED), rightX, ry, palette.gutterText());
         ry += 9;
-        g.drawString(font, GameText.resolve(VsCodeTexts.WALKTHROUGH_STEPS), rightX, ry, palette.gutterText(), false);
+        Draw.text(g, font, GameText.resolve(VsCodeTexts.WALKTHROUGH_STEPS), rightX, ry, palette.gutterText());
         ry += 14;
-        g.drawString(font, GameText.resolve(StudioTexts.HELP_MENU), rightX, ry, palette.plain(), false);
+        Draw.text(g, font, GameText.resolve(StudioTexts.HELP_MENU), rightX, ry, palette.plain());
         ry += 10;
         ry = link(g, font, rightX, ry, GameText.resolve(VsCodeTexts.SHORTCUTS_LINK), this::showShortcuts, palette);
         link(g, font, rightX, ry, GameText.resolve(VsCodeTexts.PALETTE_LINK), this::openPalette, palette);
@@ -1098,7 +1098,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
 
     private int link(final GuiGraphics g, final Font font, final int x, final int y, final String label,
                      final Runnable action, final InkPalette palette) {
-        g.drawString(font, label, x, y, palette.of(CodeRuns.Ink.KEYWORD), false);
+        Draw.text(g, font, label, x, y, palette.of(CodeRuns.Ink.KEYWORD));
         this.links.add(new Link(x, y - 1, font.width(label), 9, action));
         return y + 9;
     }
@@ -1108,7 +1108,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         final InkPalette palette = InkPalette.forGround(this.skin.isDark()).get();
         g.fill(x, y, x + width, y + height, palette.ground());
         Draw.pushScissor(g, x, y, x + width, y + height);
-        g.drawString(font, GameText.resolve(VsCodeTexts.EMPTY), x + 6, y + 6, palette.gutterText(), false);
+        Draw.text(g, font, GameText.resolve(VsCodeTexts.EMPTY), x + 6, y + 6, palette.gutterText());
         Draw.popScissor(g);
     }
 
@@ -1117,28 +1117,28 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         this.skin.statusBar(g, x, y, width, STATUS_H);
         final String where = this.folderOpen ? "[+] " + shortName(this.workspace.folder())
                 : GameText.resolve(VsCodeTexts.NO_FOLDER);
-        g.drawString(font, where, x + 3, y + 1, this.skin.dim(), false);
+        Draw.text(g, font, where, x + 3, y + 1, this.skin.dim());
         int right = x + width - 3;
         final IProgrammingLanguage language = this.workspace.language();
         if (language != null) {
             right -= font.width(language.displayName());
-            g.drawString(font, language.displayName(), right, y + 1, this.skin.dim(), false);
+            Draw.text(g, font, language.displayName(), right, y + 1, this.skin.dim());
             right -= 8;
         }
         if (doc != null) {
             final String spaces = GameText.resolve(VsCodeTexts.SPACES.with(this.tabSize));
             right -= font.width(spaces);
-            g.drawString(font, spaces, right, y + 1, this.skin.dim(), false);
+            Draw.text(g, font, spaces, right, y + 1, this.skin.dim());
             right -= 8;
             final String pos = GameText.resolve(EditorTexts.LINE_AND_COLUMN.with(
                     doc.area().document().cursorLine() + 1, doc.area().document().cursorCol() + 1));
             right -= font.width(pos);
-            g.drawString(font, pos, right, y + 1, this.skin.dim(), false);
+            Draw.text(g, font, pos, right, y + 1, this.skin.dim());
         }
         if (!this.workspace.status().isEmpty()) {
             final int from = x + 3 + font.width(where) + 8;
-            g.drawString(font, font.plainSubstrByWidth(this.workspace.status(), Math.max(0, right - from - 8)),
-                    from, y + 1, this.skin.dim(), false);
+            Draw.text(g, font, font.plainSubstrByWidth(this.workspace.status(), Math.max(0, right - from - 8)),
+                    from, y + 1, this.skin.dim());
         }
     }
 

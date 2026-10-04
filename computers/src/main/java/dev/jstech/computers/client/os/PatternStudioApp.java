@@ -18,6 +18,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.AmountStepper;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.FlowLayout;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
@@ -515,7 +516,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
         layoutMachine(x, editorY + spare(editorH, machineHeight()), editorW, loaded && tab == TAB_MACHINE);
         layoutPipeline(g, x, editorY, editorW, editorH, loaded && tab == TAB_PIPELINE);
         if (!loaded) {
-            g.drawString(font, GameText.resolve(LOADING), x + PAD, editorY + PAD, skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(LOADING), x + PAD, editorY + PAD, skin.dim());
         }
         if (bandVisible(height)) {
             renderBand(g, font, x + PAD, y + bandTop(height), PatternStudioLayout.bandLabelVisible(height));
@@ -534,7 +535,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     private void renderBand(final GuiGraphics g, final Font font, final int bx, final int by, final boolean label) {
         if (label) {
-            g.drawString(font, GameText.resolve(INVENTORY), bx + 2, by - 9, skin.dim(), false);
+            Draw.text(g, font, GameText.resolve(INVENTORY), bx + 2, by - 9, skin.dim());
         }
         skin.panel(g, bx, by, BAND_W, BAND_H);
         for (int r = 0; r < INV_ROWS; r++) {
@@ -619,7 +620,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
         final ItemStack shown = cell.resolved().isEmpty() ? cell.stack() : cell.resolved();
         DesktopItems.itemWithCount(g, ctx.font(), shown, cx + 1, cy + 1, shortCount(cell.stock()));
         if (!cell.tag().isEmpty()) {
-            g.drawString(ctx.font(), "*", cx + 2, cy + 1, ctx.skin().accent(), false);
+            Draw.text(g, ctx.font(), "*", cx + 2, cy + 1, ctx.skin().accent());
         }
     }
 
@@ -635,7 +636,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
         if (!state.preview().isEmpty()) {
             DesktopItems.itemWithCount(g, ctx.font(), state.preview(), cx + 1, cy + 1, null);
         } else {
-            g.drawString(ctx.font(), "?", cx + 7, cy + 5, ctx.skin().dim(), false);
+            Draw.text(g, ctx.font(), "?", cx + 7, cy + 5, ctx.skin().dim());
         }
     }
 
@@ -715,7 +716,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
         final String label = cell.cell().isItem() ? Long.toString(cell.cell().amount()) : shortAmount(cell.cell().amount());
         DesktopItems.data(g, ctx.font(), cell.cell().key(), cx + 1, cy + 1, label);
         if (output && cell.chance() < ProcessingPattern.FULL_CHANCE) {
-            g.drawString(ctx.font(), cell.chance() + "%", cx + 1, cy + 1, ctx.skin().accent(), false);
+            Draw.text(g, ctx.font(), cell.chance() + "%", cx + 1, cy + 1, ctx.skin().accent());
         }
     }
 
@@ -827,7 +828,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
                                 final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, w, h, hovered, selected);
         final String text = GameText.resolve((s.bench() ? STAGE_BENCH : STAGE_MACHINE).with(index + 1, s.label()));
-        g.drawString(ctx.font(), Texts.clip(ctx.font(), text, w - 6), x + 3, y + 2, ctx.skin().listRowText(selected), false);
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), text, w - 6), x + 3, y + 2, ctx.skin().listRowText(selected));
     }
 
     private void removeSelectedStage() {
@@ -902,12 +903,12 @@ public final class PatternStudioApp implements IInventoryBandApp {
     private void renderFileRow(final GuiGraphics g, final UiContext ctx, final FileRow r, final int index, final int x,
                                final int y, final int w, final int h, final boolean hovered, final boolean selected) {
         if (r.header()) {
-            g.drawString(ctx.font(), Texts.clip(ctx.font(), r.label(), w - 4), x + 2, y + 2, ctx.skin().dim(), false);
+            Draw.text(g, ctx.font(), Texts.clip(ctx.font(), r.label(), w - 4), x + 2, y + 2, ctx.skin().dim());
             return;
         }
         ctx.skin().listRow(g, x, y, w, h, hovered, false);
-        g.drawString(ctx.font(), Texts.clip(ctx.font(), "  " + r.label(), w - 4), x + 2, y + 2,
-                ctx.skin().listRowText(false), false);
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), "  " + r.label(), w - 4), x + 2, y + 2,
+                ctx.skin().listRowText(false));
     }
 
     private void fileRowClicked(final int index, final int button, final double mx, final double my) {

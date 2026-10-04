@@ -15,6 +15,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.computers.program.Spreadsheet;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
@@ -418,8 +419,8 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
                                 final int width) {
         final String name = Spreadsheet.cellName(cursorRow, cursorColumn);
         g.fill(x + MARGIN, y + 1, x + MARGIN + 28, y + FORMULA_H - 1, skin.fieldBg());
-        g.drawString(font, name, x + MARGIN + (28 - font.width(name)) / 2, y + 3, skin.text(), false);
-        g.drawString(font, GameText.resolve(ExceedAppTexts.FORMULA_MARK), x + MARGIN + 31, y + 3, skin.dim(), false);
+        Draw.text(g, font, name, x + MARGIN + (28 - font.width(name)) / 2, y + 3, skin.text());
+        Draw.text(g, font, GameText.resolve(ExceedAppTexts.FORMULA_MARK), x + MARGIN + 31, y + 3, skin.dim());
         formula.setBounds(x + MARGIN + 43, y + 1, Math.max(20, width - MARGIN * 2 - 43), FORMULA_H - 2);
     }
 
@@ -437,14 +438,14 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         for (int c = 0; c < shownColumns; c++) {
             final int cx = gridX + ROW_HEAD_W + c * COL_W;
             final String label = Spreadsheet.columnName(scrollColumn + c);
-            g.drawString(font, label, cx + (COL_W - font.width(label)) / 2, gridY + 1, skin.text(), false);
+            Draw.text(g, font, label, cx + (COL_W - font.width(label)) / 2, gridY + 1, skin.text());
         }
         for (int r = 0; r < shownRows; r++) {
             final int ry = gridY + HEAD_H + r * ROW_H;
             g.fill(gridX, ry, gridX + ROW_HEAD_W, ry + ROW_H, skin.listHover());
             final String label = String.valueOf(scrollRow + r + 1);
-            g.drawString(font, label, gridX + ROW_HEAD_W - 2 - font.width(label), ry + 1,
-                    skin.text(), false);
+            Draw.text(g, font, label, gridX + ROW_HEAD_W - 2 - font.width(label), ry + 1,
+                    skin.text());
         }
 
         for (int r = 0; r < shownRows; r++) {
@@ -475,7 +476,7 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
             final boolean numeric = !shown.isEmpty()
                     && (Character.isDigit(shown.charAt(0)) || shown.charAt(0) == '-' || bad);
             final int tx = numeric ? cx + COL_W - 3 - font.width(clipped) : cx + 2;
-            g.drawString(font, clipped, tx, cy + 1, ink, false);
+            Draw.text(g, font, clipped, tx, cy + 1, ink);
         }
         if (row == cursorRow && column == cursorColumn) {
             final int accent = skin.accent();
@@ -490,11 +491,11 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         g.fill(x, y, x + width, y + STATUS_H, skin.windowBg());
         final int live = sheet.liveCells();
         final String left = GameText.resolve(live == 0 ? ExceedTexts.READY.text() : liveCells(live));
-        g.drawString(font, left, x + MARGIN, y + 2, skin.text(), false);
+        Draw.text(g, font, left, x + MARGIN, y + 2, skin.text());
         if (!status.isEmpty()) {
             final String clipped = font.plainSubstrByWidth(GameText.resolve(status),
                     width - MARGIN * 2 - font.width(left) - 8);
-            g.drawString(font, clipped, x + width - MARGIN - font.width(clipped), y + 2, skin.dim(), false);
+            Draw.text(g, font, clipped, x + width - MARGIN - font.width(clipped), y + 2, skin.dim());
         }
     }
 

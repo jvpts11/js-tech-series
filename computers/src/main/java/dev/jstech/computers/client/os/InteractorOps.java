@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.OperationPalette;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.text.GameText;
@@ -171,13 +172,13 @@ final class InteractorOps {
         g.fill(x + 1, y + 4, x + 4, y + 7, live ? c.live() : c.idle());
         final Font font = ctx.font();
         final String type = OperationPalette.labelFor(op.type());
-        g.drawString(font, type, x + 7, y + 2, OperationPalette.colorFor(op.type()), false);
+        Draw.text(g, font, type, x + 7, y + 2, OperationPalette.colorFor(op.type()));
         final int nameX = x + 8 + font.width(type) + 3;
         final String st = statusShort(op.status());
         final int stW = font.width(st);
-        g.drawString(font, Texts.trim(font, op.name().getString(), x + w - nameX - stW - 6), nameX, y + 2,
-                ctx.skin().text(), false);
-        g.drawString(font, st, x + w - stW - 2, y + 2, statusColor(op.status()), false);
+        Draw.text(g, font, Texts.trim(font, op.name().getString(), x + w - nameX - stW - 6), nameX, y + 2,
+                ctx.skin().text());
+        Draw.text(g, font, st, x + w - stW - 2, y + 2, statusColor(op.status()));
     }
 
     /** Clicking a row opens its detail, and clicking the open one closes it again. */

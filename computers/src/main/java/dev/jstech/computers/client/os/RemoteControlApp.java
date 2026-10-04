@@ -11,6 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.RemoteControlPayload;
 import dev.jstech.computers.operation.payload.RemoteHostsPayload;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
@@ -151,13 +152,13 @@ public final class RemoteControlApp implements IDesktopApp {
         if (sel || hovered) {
             g.fill(x, y, x + w, y + h, ctx.skin().listHover());
         }
-        g.drawString(font, entry.hostname(), x + 4, y + 3, ctx.skin().listRowText(sel), false);
+        Draw.text(g, font, entry.hostname(), x + 4, y + 3, ctx.skin().listRowText(sel));
         final String detail = GameText.resolve(entry.os().isEmpty() ? entry.type()
                 : RemoteControlTexts.KIND_AND_SYSTEM.with(entry.type(), entry.os()));
-        g.drawString(font, detail, x + 4, y + 12, ctx.skin().dim(), false);
+        Draw.text(g, font, detail, x + 4, y + 12, ctx.skin().dim());
         final String state = GameText.resolve(entry.running() ? RemoteControlTexts.UP : RemoteControlTexts.OFF);
         final Colours c = PALETTE.get();
-        g.drawString(font, state, x + w - 4 - font.width(state), y + 7, entry.running() ? c.up() : c.down(), false);
+        Draw.text(g, font, state, x + w - 4 - font.width(state), y + 7, entry.running() ? c.up() : c.down());
     }
 
     @Override

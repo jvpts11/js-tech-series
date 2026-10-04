@@ -78,7 +78,7 @@ final class MaintenanceTerminalTab extends AbstractTerminalTab {
 
     @Override
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
-        g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.STORAGE_INDEX), cx, cy + 20, DIM(), false);
+        Draw.text(g, font(), GameText.resolve(TerminalUpkeepTexts.STORAGE_INDEX), cx, cy + 20, DIM());
         final int tileW = (cw - 4) / 2;
         tile(g, cx, cy + MNT_TILE_ROW1_Y, GameText.resolve(TerminalUpkeepTexts.TYPES), fmt(menu.indexedTypes()), "");
         tile(g, cx + tileW + 4, cy + MNT_TILE_ROW1_Y, GameText.resolve(TerminalUpkeepTexts.SERVERS),
@@ -91,7 +91,7 @@ final class MaintenanceTerminalTab extends AbstractTerminalTab {
                 total <= 0 ? "0" : fmt(used) + "/" + fmt(total), "");
         final var health = menu.indexHealth();
         if (health == IndexHealth.State.OK) {
-            g.drawString(font(), GameText.resolve(TerminalUpkeepTexts.ACTIONS), cx, cy + MNT_ACTIONS_Y, DIM(), false);
+            Draw.text(g, font(), GameText.resolve(TerminalUpkeepTexts.ACTIONS), cx, cy + MNT_ACTIONS_Y, DIM());
         } else {
             // Name the state, how many item types are in doubt, and the run that settles it.
             final int types = menu.indexHealthTypes();
@@ -100,10 +100,10 @@ final class MaintenanceTerminalTab extends AbstractTerminalTab {
             final TextKey state = fragmented ? TerminalUpkeepTexts.FRAGMENTED : TerminalUpkeepTexts.STALE;
             final String affected = GameText.resolve(
                     (types == 1 ? TerminalUpkeepTexts.ONE_AFFECTED : TerminalUpkeepTexts.AFFECTED).with(state, types));
-            g.drawString(font(), affected, cx + 2, cy + MNT_ACTIONS_Y, PALETTE.get().ink(), false);
+            Draw.text(g, font(), affected, cx + 2, cy + MNT_ACTIONS_Y, PALETTE.get().ink());
             final String hint = GameText.resolve(TerminalUpkeepTexts.RUN.with(action));
-            g.drawString(font(), hint, cx + cw - 2 - font().width(hint), cy + MNT_ACTIONS_Y,
-                    PALETTE.get().hint(), false);
+            Draw.text(g, font(), hint, cx + cw - 2 - font().width(hint), cy + MNT_ACTIONS_Y,
+                    PALETTE.get().hint());
         }
         final int ink = PALETTE.get().ink();
         final int halfW = (cw - 4) / 2;
@@ -113,8 +113,8 @@ final class MaintenanceTerminalTab extends AbstractTerminalTab {
         Draw.textCentered(g,font(), GameText.resolve(TerminalUpkeepTexts.DROP_DATA_BUTTON), cx + cw / 2,
                 cy + MNT_BTN_DROP_Y + 4, ink);
         if (!screen.maintHint.isEmpty()) {
-            g.drawString(font(), GameText.resolve(screen.maintHint), cx, cy + MNT_BTN_DROP_Y + MNT_BTN_H + 2,
-                    ACCENT(), false);
+            Draw.text(g, font(), GameText.resolve(screen.maintHint), cx, cy + MNT_BTN_DROP_Y + MNT_BTN_H + 2,
+                    ACCENT());
         }
     }
 
