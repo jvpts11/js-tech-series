@@ -603,7 +603,9 @@ public final class DeviceManagerApp implements IDesktopApp {
         }
         at += TOGGLE + 1;
         if (!row.icon().isEmpty()) {
-            final ResourceLocation icon = SkinSprites.find("device", row.icon(), row.icon(), this.skin.iconSet());
+            // The machine itself, at the root, wears This PC's own picture rather than a device's.
+            final String set = row.icon().equals(DeviceRows.HOST_ICON) ? "program" : "device";
+            final ResourceLocation icon = SkinSprites.find(set, row.icon(), row.icon(), this.skin.iconSet());
             if (SkinSprites.exists(icon)) {
                 SkinSprites.draw(g, icon, at, y + 1, ICON, ICON, 16);
             }

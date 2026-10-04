@@ -204,11 +204,15 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
 
     /**
      * The icon kind of a device, from its block's id: one icon serves every era of a hub, a Redstone Interface and a
-     * Pattern Encoder; the monitors, speakers and drives each have their own.
+     * Pattern Encoder, and a Network Gateway wears the network's; the monitors, speakers and drives each have their
+     * own.
      */
     public static String iconOf(final String blockId) {
-        if (blockId.endsWith("_hub")) {
+        if (blockId.endsWith("_hub") || blockId.equals("hub")) {
             return "usb_hub";
+        }
+        if (blockId.equals("network_gateway")) {
+            return "network";
         }
         if (blockId.endsWith("redstone_interface")) {
             return "redstone_interface";

@@ -41,6 +41,7 @@ public final class ClientTestSuite {
             CraftingChainClientTests.class,
             DesktopMenuClientTests.class,
             DeviceManagerClientTests.class,
+            DeviceIconClientTests.class,
             ExposureClientTests.class,
             FilesSyncClientTests.class,
             FreeBsdClientTests.class,

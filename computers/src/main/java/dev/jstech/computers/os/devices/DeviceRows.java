@@ -52,6 +52,9 @@ public final class DeviceRows {
     /** The branch the by-type view opens folded, as the systems of the day did: the memory modules. */
     public static final String MEMORY_KEY = "type/memory";
 
+    /** The icon of the machine itself at the root of every view, which is This PC's picture. */
+    public static final String HOST_ICON = "this_pc";
+
     private DeviceRows() {
     }
 
@@ -90,7 +93,7 @@ public final class DeviceRows {
     /** The rows of {@code map} in {@code view}, every branch in {@code folded} kept closed. */
     public static List<Row> rows(final DeviceMap map, final View view, final Set<String> folded) {
         final Builder b = new Builder(folded);
-        b.heading(0, "this_pc", Text.literal(map.host()), "host", true);
+        b.heading(0, HOST_ICON, Text.literal(map.host()), "host", true);
         if (b.open("host")) {
             switch (view) {
                 case BY_PORT -> byPort(map, b);

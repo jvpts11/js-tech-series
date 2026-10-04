@@ -410,6 +410,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - CDE's Workstation Info has a Devices... button that opens the workstation's devices in a dialog of their own:
   Video, Audio and every port by its name (COM1 and LPT1 on a Vintage machine) with what is plugged into it or
   free, and Disable and Enable for the device selected.
+- Every row of the Device Manager and of the Info Center has its icon, drawn in the look of the desktop it is on (the
+  period one of Frames 95 and the older Linux desktops, Frames XP's with its gloss, the flat modern one): the board's
+  parts, every port, and every device that stands on one, the monitors, speakers and drives of each era with their own.
 - Text shadowed by the ground it is written on, in J's Core: whoever paints a background says which colour it is,
   and text drawn over it takes its shadow from that ground: never the letter's colour, never the ground's, and never
   a colour foreign to the letter. Where nobody said, the text is taken to be on the ground it reads best on. The
