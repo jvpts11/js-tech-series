@@ -46,6 +46,8 @@ class HardcodedColorTest {
     private static final Map<String, Data> DATA = Map.of(
             "core/src/main/java/dev/jstech/core/gui/TextShadow.java", new Data(2,
                     "the two ends of the grey scale, which an undeclared ground is taken to be; not a look"),
+            "core/src/main/java/dev/jstech/core/font/FontSheet.java", new Data(1,
+                    "the white of a lit pixel in a font's picture, which the game tints with the text's colour"),
             "computers/src/main/java/dev/jstech/computers/os/fs/PixImage.java", new Data(16,
                     "the colours the in-game image format stores its pixels as: a file's contents, not the look"),
             "computers/src/main/java/dev/jstech/computers/program/install/voice/KernelVoices.java", new Data(2,

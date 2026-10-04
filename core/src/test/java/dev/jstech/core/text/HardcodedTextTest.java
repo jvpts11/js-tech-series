@@ -161,6 +161,8 @@ class HardcodedTextTest {
             data("core/src/main/java/dev/jstech/core/config/ConfigValidator.java", 11,
                     "why a configuration value was set aside, written to the log"),
             data("core/src/main/java/dev/jstech/core/config/ConfigKey.java", 1, SETTINGS_FILE),
+            data("core/src/main/java/dev/jstech/core/font/CoreFonts.java", 2,
+                    "a font's licence and who made it, named as its makers name them"),
             data(INDUSTRIAL + "client/CoalGeneratorScreen.java", 1, "the energy unit's symbol"),
             data(INDUSTRIAL + "client/ProcessingMachineScreen.java", 1, "the energy unit's symbol"));
 

@@ -59,6 +59,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## Misc Fixed 6x10
+
+J's Core's font `jscore:fixed_6x10`, the font the terminals of the series draw in, is the X Window System's Misc
+Fixed font at six by ten pixels, from Markus Kuhn's ucs-fonts as the X.Org Foundation ships it in font-misc-misc. Its
+glyphs are carried unchanged, laid out on the picture the game's fonts are drawn from. Its makers put it in the public
+domain, which asks for no notice; it is credited here with thanks. The notice it carries:
+
+https://gitlab.freedesktop.org/xorg/font/misc-misc
+
+```
+Public domain font.  Share and enjoy.
+```
+
 ## Sounds of J's Computers
 
 The machine and system sounds in `computers/src/main/resources/assets/jsc/sounds/` are recordings made by other

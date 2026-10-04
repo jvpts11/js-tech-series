@@ -16,6 +16,7 @@ import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.event.CoreEventDispatcher;
+import dev.jstech.core.font.CoreFonts;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.integration.mekanism.MekanismIntegration;
 import dev.jstech.core.item.ItemStates;
@@ -79,6 +80,8 @@ public final class JsCore {
         CoreAttachments.register(modEventBus);
         // The cable block every mod's cables are laid in is the Core's own content.
         CoreCables.declare();
+        // The fonts every mod can draw in, declared with the licence and credit they come under.
+        CoreFonts.declare();
         CoreItems.register(modEventBus);
         // The units energy is counted in, FE first, and the energy an item holds.
         CoreEnergy.register(modEventBus);

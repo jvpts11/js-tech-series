@@ -450,6 +450,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   applied. It opens only where Prophet YourIQL runs.
 - The Automation Manager's "Restock below" points whoever wants a level held, counting what is on its way, to
   Prophet YourIQL's KEEP.
+- Fonts of their own for every mod built on J's Core. A mod declares a font once, with its source, its cell, its
+  baseline, its licence and who made it; the data generation reads the source, a BDF bitmap font (the first format
+  read), and writes the picture and the font file the game draws from, with the game's font for every character the
+  font lacks. J's Core carries Misc Fixed 6x10, the small fixed font of the old Unix terminals, in the public
+  domain: a six by ten cell and nearly sixteen hundred characters, for any mod's terminal-like views.
+- A grid painter in J's Core puts text on a monospace grid, every character in a cell of its own, in a declared font
+  or the game's: characters the font lacks are drawn in the game's font in the middle of their cells, and the box
+  lines and blocks are drawn by the painter to fill their cells, so frames and bars join from cell to cell and from
+  row to row at any spacing.
 - The menus of J's Core write an item's keys at the right of its row.
 - A shared list of the network's Operations in flight, which the Network Manager's Processes tab and the studio's
   Activity Monitor both show.

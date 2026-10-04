@@ -19,8 +19,8 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 /**
  * A mod's data generation, started from its declared content: {@link #gather} adds everything the declarations
- * already say (block states, models, the English, palettes, loot, block tags, recipe machines), and the mod adds
- * only what is its own on top.
+ * already say (block states, models, the English, palettes, sounds, fonts, loot, block tags, recipe machines), and
+ * the mod adds only what is its own on top.
  *
  * <pre>{@code
  * @SubscribeEvent
@@ -50,6 +50,9 @@ public final class ContentData {
         data.client(new PaletteProvider(output, content.modid()));
         data.client(new ContentSoundProvider(output, content, data.existingFiles()));
         data.client(new ContentCueProvider(output, content));
+        if (!content.declaredFonts().isEmpty()) {
+            data.client(new FontSheetProvider(output, content, data.existingFiles()));
+        }
         data.server(new ContentLootProvider(output, data.lookup(), content));
         data.server(new ContentBlockTagsProvider(output, data.lookup(), content, data.existingFiles()));
         if (!content.declaredFluids().isEmpty()) {

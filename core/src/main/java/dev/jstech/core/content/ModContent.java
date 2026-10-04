@@ -13,6 +13,7 @@ import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.font.CellFont;
 import dev.jstech.core.item.ItemStates;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,7 +54,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * What one mod puts in the game, declared in one place: its blocks, its items and the components they carry, the
- * block entities its blocks make, its creative tabs and the registries datapacks fill.
+ * block entities its blocks make, its creative tabs, its sounds and fonts, and the registries datapacks fill.
  *
  * <p>A block or an item is declared once, with everything about it, and nothing else lists it again: the
  * generator writes its block state, models, name, loot and tags from the declaration, the tab shows it from the
@@ -77,6 +78,7 @@ public final class ModContent {
             new ArrayList<>();
     private final List<CableEntry> declaredCables = new ArrayList<>();
     private final List<FluidEntry> declaredFluids = new ArrayList<>();
+    private final List<CellFont> declaredFonts = new ArrayList<>();
     private final List<Consumer<DataPackRegistryEvent.NewRegistry>> datapackRegistries = new ArrayList<>();
     private @Nullable DeferredRegister<CableType> cables;
     private DeferredRegister.@Nullable DataComponents components;
@@ -205,6 +207,16 @@ public final class ModContent {
         return Collections.unmodifiableList(declaredCues);
     }
 
+    /** Starts declaring a font, known by that path under the mod's namespace ({@code terminal}). */
+    public FontBuilder font(final String path) {
+        return new FontBuilder(this, path);
+    }
+
+    /** The fonts declared so far, in declaration order. */
+    public List<CellFont> declaredFonts() {
+        return Collections.unmodifiableList(declaredFonts);
+    }
+
     /** The cables declared so far, in declaration order. */
     public List<CableEntry> declaredCables() {
         return Collections.unmodifiableList(declaredCables);
@@ -315,6 +327,13 @@ public final class ModContent {
 
     void declare(final SoundCue cue) {
         declaredCues.add(cue);
+    }
+
+    void declare(final CellFont font) {
+        if (declaredFonts.stream().anyMatch(declared -> declared.id().equals(font.id()))) {
+            throw new IllegalStateException("the font " + font.id() + " is declared twice");
+        }
+        declaredFonts.add(font);
     }
 
     /* An item that holds something gets the game's capability for each thing it holds. */

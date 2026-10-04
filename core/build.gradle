@@ -11,6 +11,8 @@ sourceSets.main.resources {
     srcDir('src/generated/resources')
     exclude("**/*.bbmodel")
     exclude("src/generated/**/.cache")
+    // A font's source is read by the data run, which writes the picture and font file the game draws from.
+    exclude("**/*.bdf")
 }
 
 dependencies {
