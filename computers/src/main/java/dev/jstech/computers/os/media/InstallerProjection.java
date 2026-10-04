@@ -129,6 +129,7 @@ public final class InstallerProjection {
             case SERVER -> "a server in a rack";
             case CRAFTING_COMPUTER -> "a Crafting Computer";
             case CLUSTER_MANAGEMENT_COMPUTER -> "a Cluster Management Computer";
+            case PERSONAL_COMPUTER -> "a Personal Computer";
             default -> "any computer";
         }).english();
     }

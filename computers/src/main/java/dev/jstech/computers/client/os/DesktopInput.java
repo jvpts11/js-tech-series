@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.operation.payload.NiDepositPayload;
 import dev.jstech.computers.operation.payload.NiShiftInsertPayload;
+import dev.jstech.computers.operation.payload.workshop.WorkshopActionPayload;
 import dev.jstech.computers.os.PanelStyle;
 import java.util.Optional;
 import net.minecraft.client.Minecraft;
@@ -504,6 +505,15 @@ final class DesktopInput {
     private Click clickedWindowBody(final DesktopWindow w, final double absX, final double absY, final double mouseX,
                                     final double mouseY, final int button) {
         final InventoryBand band = desktop.band();
+        // A shift-click on the inventory in the Workshop sends that whole stack to the station of the tab that is up.
+        if (w.app() instanceof WorkshopApp workshop && Screen.hasShiftDown()) {
+            final Slot slot = band.slotAt(absX, absY);
+            if (slot != null && slot.hasItem()) {
+                PacketDistributor.sendToServer(new WorkshopActionPayload(desktop.hostPos(), desktop.monitorPos(),
+                        WorkshopActionPayload.SHIFT_INSERT, slot.getContainerSlot(), workshop.shiftInsertTab(), ""));
+                return Click.TAKEN;
+            }
+        }
         // A click on a live inventory slot is a real container click: the container drives the cursor and the drag.
         if (w.app() instanceof IInventoryBandApp && !(w.app() instanceof NetworkInteractorApp)
                 && !w.app().modalActive() && band.slotAt(absX, absY) != null) {

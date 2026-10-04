@@ -342,6 +342,22 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   router's filter with `SET ROUTER 'North' FILTER ONLY gravel`, and `RENAME INTERFACE` and `RENAME ROUTER`. Programs
   do the same with `craftInterface("Mixer").Exclusive(true).MaxJobs(2).Pause()` and
   `craftRouter("North").Only("gravel")`, new in Σ 2 as `CraftInterface` and `CraftRouter`.
+- The personal-use cards: the Crafting Table Card, the Furnace Card, the Enchanting Card and the Anvil Card, one of
+  each for every era from the Legacy on, seated in any PCI, AGP or PCI Express slot of a Personal Computer. In the
+  Device Manager each wears its own picture.
+- The Workshop, by Autodeck, the program that works them on a Personal Computer, on every windowed system from the
+  Legacy on but Frames 95: a tab for each card (dim, with "no card", when the card is not in), the station on top
+  with what is on it beside, the player's inventory below and a status bar with the cards, the furnace and the
+  player's level. Items go in and out with the cursor as in any container, and a shift-click on the inventory sends
+  a stack to the station. Crafting: the grid with the game's recipes, Craft, Craft all (which refills the grid from
+  the inventory) and Clear grid; the grid goes back to the player when the window closes. Furnace: no fuel, two
+  times a furnace's pace on a Legacy computer, three on a Transition, four on a Standard and six on an Advanced; it
+  goes on smelting with the window closed while the computer is on, keeps what goes in and comes out in the
+  computer, pays the experience when its output is taken, shows in the panel's tray while it works and says in a
+  balloon when it is done. Enchanting: the three offers of a table with every bookshelf around it, for 1, 1 and 2
+  levels and no lapis. Anvil: the anvil's repairs, combinations and names for two thirds of its levels, and it never
+  wears. What the cards hold falls out of a broken computer. The numbers are first estimates.
+- A tab strip can have tabs that cannot be chosen, drawn dim with a word after them, in J's Core.
 - A menu's player inventory can be shown on some pages of a screen and hidden on the others, in J's Core.
 - The External Storage Bus, of every era: it moves nothing itself, the network uses the inventory it faces as
   storage of its own, ten times slower than its servers. The Vintage one shows the network all of it; from the

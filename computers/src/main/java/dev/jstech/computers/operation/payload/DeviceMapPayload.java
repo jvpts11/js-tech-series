@@ -68,6 +68,11 @@ public record DeviceMapPayload(BlockPos hostPos, DeviceMap map) implements Custo
         writePorts(buf, m.devicePorts(), 0);
         writeTexts(buf, m.network());
         writeTexts(buf, m.cards());
+        final int icons = Math.min(m.cardIcons().size(), MAX_ITEMS);
+        buf.writeVarInt(icons);
+        for (int i = 0; i < icons; i++) {
+            buf.writeUtf(m.cardIcons().get(i), MAX_TEXT);
+        }
     }
 
     private static DeviceMapPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -89,8 +94,15 @@ public record DeviceMapPayload(BlockPos hostPos, DeviceMap map) implements Custo
         }
         final DeviceMap.PortFamily portFamily = FAMILY.decode(buf);
         final List<DeviceMap.Port> ports = readPorts(buf, 0);
+        final List<Text> network = readTexts(buf);
+        final List<Text> cardNames = readTexts(buf);
+        final int icons = Math.min(buf.readVarInt(), MAX_ITEMS);
+        final List<String> cardIcons = new ArrayList<>(icons);
+        for (int i = 0; i < icons; i++) {
+            cardIcons.add(buf.readUtf(MAX_TEXT));
+        }
         return new DeviceMapPayload(host, new DeviceMap(name, board, processors, memory, disks, video, audio,
-                portFamily, ports, readTexts(buf), readTexts(buf)));
+                portFamily, ports, network, cardNames, cardIcons));
     }
 
     private static void writePorts(final RegistryFriendlyByteBuf buf, final List<DeviceMap.Port> ports,

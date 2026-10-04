@@ -25,6 +25,7 @@ import dev.jstech.computers.item.NetworkCardItem;
 import dev.jstech.computers.item.PhiCoprocessorItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.item.SoundCardItem;
+import dev.jstech.computers.item.WorkshopCardItem;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.core.peripheral.IPeripheralHub;
@@ -66,6 +67,7 @@ public final class DeviceMaps {
         final List<Text> soundCards = new ArrayList<>();
         final List<Text> network = new ArrayList<>();
         final List<Text> cards = new ArrayList<>();
+        final List<String> cardIcons = new ArrayList<>();
         network.add(DeviceMap.boardNetwork(DataLinkNames.access(era).text()));
         for (final ItemStack part : computer.hardwareStacks()) {
             final Text name = GameText.of(part.getHoverName());
@@ -77,21 +79,23 @@ public final class DeviceMaps {
                 case GpuItem ignored -> gpus.add(part);
                 case SoundCardItem ignored -> soundCards.add(name);
                 case NetworkCardItem ignored -> network.add(name);
-                case CraftingCardItem ignored -> cards.add(name);
-                case ClusterInterfaceCardItem ignored -> cards.add(name);
-                case PhiCoprocessorItem ignored -> cards.add(name);
+                case CraftingCardItem ignored -> addCard(cards, cardIcons, name, DeviceMap.CARD_ICON);
+                case ClusterInterfaceCardItem ignored -> addCard(cards, cardIcons, name, DeviceMap.CARD_ICON);
+                case PhiCoprocessorItem ignored -> addCard(cards, cardIcons, name, DeviceMap.CARD_ICON);
+                // A personal-use card wears its own picture, under the id of its item.
+                case WorkshopCardItem card -> addCard(cards, cardIcons, name, card.spec().card().id());
                 default -> {
                 }
             }
         }
         if (build == null) {
             return new DeviceMap(Installers.hostName(computer), board, processors, memory, disks, List.of(),
-                    List.of(), family(era), List.of(), network, cards);
+                    List.of(), family(era), List.of(), network, cards, cardIcons);
         }
         final Linked linked = new Linked(level, computer);
         return new DeviceMap(Installers.hostName(computer), board, processors, memory, disks,
                 video(build, gpus, linked), audio(build, soundCards, linked), family(era), devicePorts(era, linked),
-                network, cards);
+                network, cards, cardIcons);
     }
 
     /** The kind of device port a board of {@code era} has. */
@@ -106,6 +110,11 @@ public final class DeviceMaps {
      * The graphics cards in their slots' order, after the board's own outputs: a server board's console output, and
      * the output of the graphics its processor carries on the die. The monitors in turn.
      */
+    private static void addCard(final List<Text> cards, final List<String> icons, final Text name, final String icon) {
+        cards.add(name);
+        icons.add(icon);
+    }
+
     private static List<DeviceMap.VideoCard> video(final ComputerBuild build, final List<ItemStack> gpus,
                                                    final Linked linked) {
         final List<DeviceMap.VideoCard> out = new ArrayList<>();

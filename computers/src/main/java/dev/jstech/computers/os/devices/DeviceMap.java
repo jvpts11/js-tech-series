@@ -37,11 +37,13 @@ import java.util.List;
  * @param devicePorts the device ports on the board, in order
  * @param network     the network adapters by name: the board's own port first, then the cards
  * @param cards       the other expansion cards by name
+ * @param cardIcons   the icon each of those cards is drawn with, in the same order; a card past the end of the list
+ *                    is drawn with the crafting card's
  */
 @TextHolder
 public record DeviceMap(String host, Text board, List<Text> processors, List<Text> memory, List<Text> disks,
                         List<VideoCard> video, List<AudioSource> audio, PortFamily family, List<Port> devicePorts,
-                        List<Text> network, List<Text> cards) {
+                        List<Text> network, List<Text> cards, List<String> cardIcons) {
 
     private static final TextKey OUTPUT = TextKey.of("jsc.devices.output", "Output %s");
     private static final TextKey HUB_PORT = TextKey.of("jsc.devices.hub_port", "Hub port %s");
@@ -55,6 +57,8 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
     private static final TextKey HUB = TextKey.of("jsc.devices.hub", "%s (%s ports)");
     private static final TextKey NAMED = TextKey.of("jsc.devices.named", "%s \"%s\"");
     private static final TextKey UNKNOWN = TextKey.of("jsc.devices.unknown", "Device out of reach");
+    /** The icon an expansion card is drawn with when it names none of its own. */
+    public static final String CARD_ICON = "crafting_card";
 
     public DeviceMap {
         host = host == null ? "" : host;
@@ -67,6 +71,21 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
         devicePorts = List.copyOf(devicePorts);
         network = List.copyOf(network);
         cards = List.copyOf(cards);
+        cardIcons = List.copyOf(cardIcons);
+    }
+
+    /** A machine whose cards all wear the crafting card's icon. */
+    public DeviceMap(final String host, final Text board, final List<Text> processors, final List<Text> memory,
+                     final List<Text> disks, final List<VideoCard> video, final List<AudioSource> audio,
+                     final PortFamily family, final List<Port> devicePorts, final List<Text> network,
+                     final List<Text> cards) {
+        this(host, board, processors, memory, disks, video, audio, family, devicePorts, network, cards, List.of());
+    }
+
+    /** The icon expansion card {@code index} is drawn with. */
+    public String cardIcon(final int index) {
+        return index >= 0 && index < cardIcons.size() && !cardIcons.get(index).isEmpty() ? cardIcons.get(index)
+                : CARD_ICON;
     }
 
     /** A graphics card, or a server board's console output, with its video outputs in order. */
@@ -237,7 +256,8 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
 
     /** The same machine under another name: the Frames editions write a computer's name in capitals. */
     public DeviceMap withHost(final String name) {
-        return new DeviceMap(name, board, processors, memory, disks, video, audio, family, devicePorts, network, cards);
+        return new DeviceMap(name, board, processors, memory, disks, video, audio, family, devicePorts, network, cards,
+                cardIcons);
     }
 
     /** How many device ports the machine has: the board's and every hub's on them. */

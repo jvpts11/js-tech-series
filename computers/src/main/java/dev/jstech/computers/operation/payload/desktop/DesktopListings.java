@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload.desktop;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
@@ -203,6 +204,7 @@ final class DesktopListings {
              */
             case SERVER -> computer instanceof ServerRackBlockEntity;
             case CLUSTER_MANAGEMENT_COMPUTER -> computer instanceof ClusterManagementComputerBlockEntity;
+            case PERSONAL_COMPUTER -> computer instanceof PersonalComputerBlockEntity;
         };
     }
 

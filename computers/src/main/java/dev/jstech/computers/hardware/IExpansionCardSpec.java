@@ -14,11 +14,16 @@ package dev.jstech.computers.hardware;
  */
 public sealed interface IExpansionCardSpec
         permits GpuSpec, CraftingCardSpec, PhiCoprocessorSpec, ClusterInterfaceCardSpec, SoundCardSpec,
-        NetworkCardSpec {
+        NetworkCardSpec, WorkshopCardSpec {
 
     PcieGeneration bus();
 
     int tdpWatts();
 
     ExpansionCardKind kind();
+
+    /** Whether the card seats in a board whose slots are {@code slot}: by default, a slot of its own bus family. */
+    default boolean fits(final PcieGeneration slot) {
+        return bus().compatibleWith(slot);
+    }
 }

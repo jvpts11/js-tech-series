@@ -54,7 +54,8 @@ class LayoutAuditTest {
             "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
             "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
             "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
-            "NetworkServicesLayout", "NetworkLinksLayout", "PrinterLayout", "DockLayout", "PrintedPaperLayout");
+            "NetworkServicesLayout", "NetworkLinksLayout", "PrinterLayout", "DockLayout", "PrintedPaperLayout",
+            "WorkshopLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -88,6 +89,14 @@ class LayoutAuditTest {
             }
         }
         c.add(new AuditCase("SoundfoundryLayout", SoundfoundryLayout.layout(), true));
+        // The Workshop: a desktop window at the smallest it allows, and each station alone in its area.
+        c.add(new AuditCase("WorkshopLayout", WorkshopLayout.layout(WorkshopLayout.MIN_W,
+                WorkshopLayout.minContentHeight()), false));
+        final int station = WorkshopLayout.stationWidth(WorkshopLayout.MIN_W);
+        c.add(new AuditCase("WorkshopLayout.crafting", WorkshopLayout.crafting(station), false));
+        c.add(new AuditCase("WorkshopLayout.furnace", WorkshopLayout.furnace(station), false));
+        c.add(new AuditCase("WorkshopLayout.enchanting", WorkshopLayout.enchanting(station), false));
+        c.add(new AuditCase("WorkshopLayout.anvil", WorkshopLayout.anvil(station), false));
         // Virtual Studio's Properties at the most it holds: every instruction set and every version beside Default.
         c.add(new AuditCase("StudioPropertiesLayout", StudioPropertiesLayout.layout(5, 4), true));
         // A window on the desktop, not a panel over the game: held to its own frame, not to the panel budget.

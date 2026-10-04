@@ -84,6 +84,7 @@ import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.hardware.RamGeneration;
 import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.CabinetBlockItem;
 import dev.jstech.computers.item.ClusterInterfaceCardItem;
 import dev.jstech.computers.item.CpuItem;
@@ -101,6 +102,7 @@ import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.item.ServerCaseItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.item.WorkshopCardItem;
 import dev.jstech.computers.os.media.DockStationBlock;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.FormattedMediaItem;
@@ -110,6 +112,7 @@ import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaReaderBlock;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.workshop.WorkshopCard;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.computers.registry.ComputingMenus;
@@ -198,6 +201,8 @@ public final class ComputingModule {
             ComputingLooks.REDSTONE_LENS_FULL, ComputingLooks.REDSTONE_LAMP_IN, ComputingLooks.REDSTONE_LAMP_OUT);
     /** How thick the long distance line is, in pixels; every other data cable is four. */
     private static final int LONG_DISTANCE_PIXELS = 6;
+    /** What a personal-use card draws, in watts. */
+    private static final int WORKSHOP_CARD_WATTS = 15;
     /** A small computer's lamps, dark on its item. */
     private static final List<String> COMPUTER_LAMPS =
             List.of(ComputingLooks.COMPUTER_POWER_LAMP, ComputingLooks.COMPUTER_DISK_LAMP);
@@ -915,6 +920,18 @@ public final class ComputingModule {
                     IndustrialTier.T4, PcieGeneration.PCIE_4_0, 0.2, 8, 125)))
             .named("Forge Logic Crafting Card T4").register();
     /*
+     * The personal-use cards, one of each kind for every era from the Legacy on, worked by the Workshop program of a
+     * Personal Computer. Their draw is an estimate.
+     */
+    public static final ItemEntry<WorkshopCardItem> CRAFTING_TABLE_CARD = workshopCard(WorkshopCard.CRAFTING_TABLE)
+            .named("Crafting Table Card").register();
+    public static final ItemEntry<WorkshopCardItem> FURNACE_CARD = workshopCard(WorkshopCard.FURNACE)
+            .named("Furnace Card").register();
+    public static final ItemEntry<WorkshopCardItem> ENCHANTING_CARD = workshopCard(WorkshopCard.ENCHANTING)
+            .named("Enchanting Card").register();
+    public static final ItemEntry<WorkshopCardItem> ANVIL_CARD = workshopCard(WorkshopCard.ANVIL)
+            .named("Anvil Card").register();
+    /*
      * The Cluster Interface Cards: exclusive to the Cluster Management Computer, one per era. Each era
      * reaches further and writes more nodes at once. Numbers are estimates.
      */
@@ -1309,5 +1326,10 @@ public final class ComputingModule {
 
     private static ItemBuilder<PhiCoprocessorItem> phi(final String id, final PhiCoprocessorSpec spec) {
         return part(id, properties -> new PhiCoprocessorItem(properties, spec));
+    }
+
+    private static ItemBuilder<WorkshopCardItem> workshopCard(final WorkshopCard card) {
+        return part(card.id(), properties -> new WorkshopCardItem(properties, new WorkshopCardSpec(card,
+                WORKSHOP_CARD_WATTS)));
     }
 }

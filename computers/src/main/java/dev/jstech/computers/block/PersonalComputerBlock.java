@@ -166,6 +166,11 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
                 && level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof PersonalComputerBlockEntity computer) {
             computer.onBroken(serverLevel); // drop this PC's network-node registration
+            // What the personal-use cards held is the player's, so it falls out however the computer goes, as a
+            // furnace's contents do.
+            for (final ItemStack held : computer.workshopDrops()) {
+                Block.popResource(serverLevel, pos, held);
+            }
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

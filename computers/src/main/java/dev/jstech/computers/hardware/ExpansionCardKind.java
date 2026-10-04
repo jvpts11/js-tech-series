@@ -25,5 +25,8 @@ public enum ExpansionCardKind {
     SOUND,
 
     /** A network adapter: the Optical Network Card, what lets a machine on the backbone take the fibre. */
-    NETWORK
+    NETWORK,
+
+    /** A personal-use card: the crafting table, furnace, enchanting table or anvil the Workshop program works. */
+    WORKSHOP
 }

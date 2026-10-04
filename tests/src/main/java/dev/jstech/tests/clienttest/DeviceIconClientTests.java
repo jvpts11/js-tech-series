@@ -23,8 +23,8 @@ public final class DeviceIconClientTests {
 
     /** The parts and the ports the windows draw, by the kind their icons are drawn by. */
     private static final List<String> PARTS_AND_PORTS = List.of("motherboard", "cpu", "ram", "disk", "ssd", "gpu",
-            "sound_card", "network", "crafting_card", "video_port", "audio_jack", "serial_port", "parallel_port",
-            "usb_port", "usb3_port");
+            "sound_card", "network", "crafting_card", "crafting_table_card", "furnace_card", "enchanting_card",
+            "anvil_card", "video_port", "audio_jack", "serial_port", "parallel_port", "usb_port", "usb3_port");
 
     /** Every block that can stand on a port, by its id, which the icon is found from. */
     private static final List<String> DEVICES = List.of("vintage_monitor", "legacy_monitor", "monitor",

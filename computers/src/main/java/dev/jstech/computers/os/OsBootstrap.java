@@ -442,6 +442,15 @@ public final class OsBootstrap {
                     .described("Author bench, machine and multi-stage recipes, then burn them onto media at a"
                             + " linked encoder.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.AUTODECK).withRam(24),
+            /*
+             * The Workshop works the personal-use cards with the player's own items: every windowed system from the
+             * Legacy on but Frames 95 (Frames XP or newer), on a Personal Computer only.
+             */
+            ProgramSpec.of(rl("workshop"), "workshop", false, DESKTOPS, 64, ProgramKind.APP, 2,
+                            HostScope.PERSONAL_COMPUTER)
+                    .named("Workshop")
+                    .described("Craft, smelt, enchant and repair with the personal-use cards in this computer.")
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.AUTODECK).withRam(16),
             // The Cluster Manager installs only on a Cluster Management Computer -> Frames XP or newer.
             ProgramSpec.of(rl("cluster_manager"), "clustermgr", false, DESKTOPS, 96, ProgramKind.APP, 2,
                             HostScope.CLUSTER_MANAGEMENT_COMPUTER)

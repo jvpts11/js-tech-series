@@ -11,6 +11,7 @@ import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.IMainframeService;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.RackUnitHost;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.os.IOsHost;
@@ -76,6 +77,8 @@ public final class SetupGate {
     private static final TextKey ON_A_SERVER = TextKey.of("jsc.install.setup_gate.on_a_server", "a server in a rack");
     private static final TextKey ON_A_CLUSTER_MANAGER = TextKey.of("jsc.install.setup_gate.on_a_cluster_manager",
             "a Cluster Management Computer");
+    private static final TextKey ON_A_PERSONAL_COMPUTER = TextKey.of(
+            "jsc.install.setup_gate.on_a_personal_computer", "a Personal Computer");
     private static final TextKey ON_THIS_COMPUTER = TextKey.of("jsc.install.setup_gate.on_this_computer",
             "this computer");
     private static final TextKey AND = TextKey.of("jsc.install.setup_gate.and", "%s and %s");
@@ -172,6 +175,7 @@ public final class SetupGate {
             case CRAFTING_COMPUTER -> host instanceof CraftingComputerBlockEntity;
             case SERVER -> host instanceof ServerRackBlockEntity || host instanceof RackUnitHost;
             case CLUSTER_MANAGEMENT_COMPUTER -> host instanceof ClusterManagementComputerBlockEntity;
+            case PERSONAL_COMPUTER -> host instanceof PersonalComputerBlockEntity;
         };
         if (allowed) {
             return Optional.empty();
@@ -181,6 +185,7 @@ public final class SetupGate {
             case CRAFTING_COMPUTER -> ON_A_CRAFTING_COMPUTER;
             case SERVER -> ON_A_SERVER;
             case CLUSTER_MANAGEMENT_COMPUTER -> ON_A_CLUSTER_MANAGER;
+            case PERSONAL_COMPUTER -> ON_A_PERSONAL_COMPUTER;
             default -> ON_THIS_COMPUTER;
         };
         return Optional.of(ONLY_INSTALLS_ON.with(spec.displayName(), where));

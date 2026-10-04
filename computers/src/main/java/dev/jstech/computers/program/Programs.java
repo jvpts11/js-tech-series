@@ -61,6 +61,10 @@ public final class Programs {
     public static final ResourceLocation PATTERN_STUDIO =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "pattern_studio");
 
+    /** Workshop: the personal-use cards of a Personal Computer, worked with the player's own items. */
+    public static final ResourceLocation WORKSHOP =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "workshop");
+
     /** Cluster Manager: the Cluster Management Computer's front for every cluster on its network. */
     public static final ResourceLocation CLUSTER_MANAGER =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "cluster_manager");

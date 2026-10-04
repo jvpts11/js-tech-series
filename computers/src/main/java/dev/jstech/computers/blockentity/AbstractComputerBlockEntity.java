@@ -26,6 +26,7 @@ import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.hardware.SoundCardSpec;
+import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.IExpansionCardItem;
@@ -279,6 +280,9 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         if (!(stack.getItem() instanceof IExpansionCardItem card)) {
             return false;
         }
+        if (card.cardSpec() instanceof WorkshopCardSpec && !takesWorkshopCards()) {
+            return false;
+        }
         final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
         if (!(boardStack.getItem() instanceof MotherboardItem motherboard)) {
             /*
@@ -291,7 +295,12 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             // A sound card sits only on a board of its own age; no Standard card exists, the boards have it built in.
             return false;
         }
-        return card.cardSpec().bus().compatibleWith(motherboard.spec().pcieGeneration());
+        return card.cardSpec().fits(motherboard.spec().pcieGeneration());
+    }
+
+    /** Whether this computer seats the personal-use cards, which only a Personal Computer has a program for. */
+    protected boolean takesWorkshopCards() {
+        return false;
     }
 
     public boolean isValidForSlot(final int slot, final ItemStack stack) {

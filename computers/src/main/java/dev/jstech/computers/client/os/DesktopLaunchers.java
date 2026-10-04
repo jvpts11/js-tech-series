@@ -11,6 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
@@ -109,11 +110,6 @@ final class DesktopLaunchers {
      */
     void build() {
         all.clear();
-        final boolean isMainframe = hostIs(MainframeBlockEntity.class);
-        final boolean isCraftingComputer = hostIs(CraftingComputerBlockEntity.class);
-        // A rack shows the desktop of the server mounted in it, so a rack host is a server session.
-        final boolean isServer = hostIs(ServerRackBlockEntity.class);
-        final boolean isClusterManager = hostIs(ClusterManagementComputerBlockEntity.class);
         final int rank = OsRegistry.osVersionRank(osId);
         final Platform platform = desktop.platform();
         for (final ProgramSpec spec : OsRegistry.programs()) {
@@ -125,7 +121,7 @@ final class DesktopLaunchers {
                 if (chrome != null && !chrome.bundles(spec.id())) {
                     continue;
                 }
-                if (!hostScopeAllows(spec.hostScope(), isMainframe, isCraftingComputer, isServer, isClusterManager)) {
+                if (!hostScopeAllows(spec.hostScope())) {
                     continue;
                 }
                 if (rank != 0 && rank < spec.minOsRank()) {
@@ -222,15 +218,15 @@ final class DesktopLaunchers {
     }
 
     /** Whether a program's host scope allows it on this machine. */
-    private static boolean hostScopeAllows(final HostScope scope, final boolean isMainframe,
-                                           final boolean isCraftingComputer, final boolean isServer,
-                                           final boolean isClusterManager) {
+    private boolean hostScopeAllows(final HostScope scope) {
         return switch (scope) {
             case ANY -> true;
-            case MAINFRAME -> isMainframe;
-            case CRAFTING_COMPUTER -> isCraftingComputer;
-            case SERVER -> isServer;
-            case CLUSTER_MANAGEMENT_COMPUTER -> isClusterManager;
+            case MAINFRAME -> hostIs(MainframeBlockEntity.class);
+            case CRAFTING_COMPUTER -> hostIs(CraftingComputerBlockEntity.class);
+            // A rack shows the desktop of the server mounted in it, so a rack host is a server session.
+            case SERVER -> hostIs(ServerRackBlockEntity.class);
+            case CLUSTER_MANAGEMENT_COMPUTER -> hostIs(ClusterManagementComputerBlockEntity.class);
+            case PERSONAL_COMPUTER -> hostIs(PersonalComputerBlockEntity.class);
         };
     }
 

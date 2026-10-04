@@ -262,7 +262,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
             problems.add(TOO_MANY_CARDS.with(pcieCards.size(), motherboard.pcieSlots()));
         }
         for (final IExpansionCardSpec card : pcieCards) {
-            if (!card.bus().compatibleWith(motherboard.pcieGeneration())) {
+            if (!card.fits(motherboard.pcieGeneration())) {
                 problems.add(WRONG_BUS.with(card.bus().busFamily(), motherboard.pcieGeneration().busFamily()));
             }
             if (card instanceof SoundCardSpec sound && sound.era() != motherboard.era()) {

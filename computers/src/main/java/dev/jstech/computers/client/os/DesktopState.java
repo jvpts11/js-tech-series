@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.audio.SoundOutput;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
@@ -951,6 +952,18 @@ final class DesktopState {
     static boolean hostNetworked(final BlockPos pos) {
         final Level level = Minecraft.getInstance().level;
         return level != null && level.getBlockEntity(pos) instanceof IOsHost computer && computer.networkAttached();
+    }
+
+    /** Whether this machine's Furnace Card is smelting, which the tray shows while it works. */
+    boolean furnaceSmelting() {
+        final Level level = Minecraft.getInstance().level;
+        return level != null && level.getBlockEntity(host) instanceof PersonalComputerBlockEntity computer
+                && computer.furnaceSmelting();
+    }
+
+    /** The set of icons the desktop's look draws its pictures from. */
+    String iconSet() {
+        return prefs.skin().iconSet();
     }
 
     private boolean is(final PanelStyle style) {

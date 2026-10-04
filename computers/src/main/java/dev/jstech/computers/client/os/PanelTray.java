@@ -51,6 +51,9 @@ final class PanelTray {
     private static final int BADGE = 4;
     private static final int RAM_BAR_W = 26;
     private static final int RAM_BAR_H = 6;
+    /** A program's tray picture, drawn at its own size. */
+    private static final int PROGRAM_ICON = 16;
+    private static final String FURNACE_CARD = "furnace_card";
 
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "panel/tray",
             new Colours(0xFF101318, 0xFFF2F4F8, 0xFF202430, 0xFF505868, 0xFF2A2F3A, 0xFF11151E, 0xFF5FE07A,
@@ -65,9 +68,12 @@ final class PanelTray {
         this.desktop = desktop;
     }
 
-    /** How wide the status group runs: the network icon, the speaker and the memory bar. */
+    /**
+     * How wide the status group runs: the network icon, the speaker and the memory bar, and after them the Furnace
+     * Card's own picture while it is smelting.
+     */
     int statusWidth() {
-        return ICON + GAP + ICON + GAP + RAM_BAR_W;
+        return ICON + GAP + ICON + GAP + RAM_BAR_W + (desktop.furnaceSmelting() ? GAP + PROGRAM_ICON : 0);
     }
 
     /** How wide the whole notification area runs: the status group, the clock, and the padding around them. */
@@ -104,6 +110,16 @@ final class PanelTray {
         drawNetworkIcon(g, x, iconY, desktop.onNetwork(), textColor);
         speaker(g, x + ICON + GAP, iconY, textColor, desktop.soundMuted());
         drawRamBar(g, x + 2 * (ICON + GAP), panelY + (DesktopScreen.TASKBAR_H - RAM_BAR_H) / 2);
+        if (desktop.furnaceSmelting()) {
+            // A program's picture rather than a status mask: the card at work, in its own colours.
+            final ResourceLocation furnace = SkinSprites.find("device", FURNACE_CARD, FURNACE_CARD,
+                    desktop.iconSet());
+            if (SkinSprites.exists(furnace)) {
+                SkinSprites.draw(g, furnace, x + 2 * (ICON + GAP) + RAM_BAR_W + GAP,
+                        panelY + (DesktopScreen.TASKBAR_H - PROGRAM_ICON) / 2, PROGRAM_ICON, PROGRAM_ICON,
+                        PROGRAM_ICON);
+            }
+        }
     }
 
     /**

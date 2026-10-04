@@ -7,25 +7,40 @@
  */
 package dev.jstech.computers.blockentity;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.PersonalComputerBlock;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.IExpansionCardSpec;
+import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.computers.workshop.Workshop;
+import dev.jstech.computers.workshop.WorkshopCard;
+import dev.jstech.computers.workshop.WorkshopRates;
+import dev.jstech.computers.workshop.WorkshopTexts;
 import dev.jstech.core.blockentity.DerivedInt;
+import dev.jstech.core.blockentity.FieldItemHandler;
+import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,9 +77,64 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
      * could have changed, since moving a slider changes the public view with no item movement at all.
      */
     private long storageModCount;
+    /*
+     * What the personal-use cards hold: the crafting grid, the furnace, the enchanting item and the anvil's two, kept
+     * with the computer and given back or dropped as a block's would be.
+     */
+    private final FieldItemHandler workshopSlots = fields().items("WorkshopSlots", Workshop.SLOTS).save();
+    private final ValueField<Integer> furnaceProgress = fields().value("WorkshopFurnace", Codec.INT, 0).save();
+    private final ValueField<Float> furnaceExperience = fields().value("WorkshopExperience", Codec.FLOAT, 0f).save();
+    private final ValueField<String> anvilName = fields().value("WorkshopAnvilName", Codec.STRING, "").save();
+    /* Whether the Furnace Card is smelting, which the desktop's tray shows. */
+    private final ValueField<Boolean> smelting = fields().value("WorkshopSmelting", Codec.BOOL, false).toClient();
+    private final Workshop workshop = new Workshop(workshopSlots, furnaceProgress, furnaceExperience, anvilName);
 
     public PersonalComputerBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.PERSONAL_COMPUTER_BE.get(), pos, state, LAYOUT);
+    }
+
+    /** What the personal-use cards hold and do on this computer. */
+    public Workshop workshop() {
+        return workshop;
+    }
+
+    /** The personal-use cards in this computer's build, as a mask of {@link WorkshopCard#bit()}; none while off. */
+    public int workshopCards() {
+        final ComputerBuild build = currentBuild();
+        if (build == null || !isRunning()) {
+            return 0;
+        }
+        int mask = 0;
+        for (final IExpansionCardSpec card : build.cardsOfKind(ExpansionCardKind.WORKSHOP)) {
+            if (card instanceof WorkshopCardSpec workshopCard) {
+                mask |= workshopCard.card().bit();
+            }
+        }
+        return mask;
+    }
+
+    /** How many times a furnace's pace the Furnace Card smelts at here: by the era of the computer's board. */
+    public int furnaceSpeed() {
+        final ComputerBuild build = currentBuild();
+        return build == null ? 0 : WorkshopRates.furnaceSpeed(build.motherboard().era());
+    }
+
+    /** Whether the Furnace Card is smelting now, as the client sees it. */
+    public boolean furnaceSmelting() {
+        return Boolean.TRUE.equals(smelting.get());
+    }
+
+    /** Every item the personal-use cards hold, for the computer's drops. */
+    public List<ItemStack> workshopDrops() {
+        final List<ItemStack> drops = new ArrayList<>();
+        for (int i = 0; i < Workshop.SLOTS; i++) {
+            final ItemStack stack = workshopSlots.getStackInSlot(i);
+            if (!stack.isEmpty()) {
+                drops.add(stack.copy());
+                workshopSlots.setStackInSlot(i, ItemStack.EMPTY);
+            }
+        }
+        return drops;
     }
 
     public long storageModCount() {
@@ -122,12 +192,40 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
         return blockEra();
     }
 
+    @Override
+    protected boolean takesWorkshopCards() {
+        return true;
+    }
+
     // Network node, a passive Category-C node read from the adjacent cable
 
     public static void serverTick(final Level level, final BlockPos pos,
                                   final BlockState state, final PersonalComputerBlockEntity be) {
         if (level instanceof ServerLevel serverLevel) {
             be.tickNode(serverLevel);
+            be.tickWorkshop(serverLevel);
+        }
+    }
+
+    /*
+     * The Furnace Card goes on smelting while the computer is on, window open or not; when the last of its input is
+     * done the desktops showing this computer say so in a balloon.
+     */
+    private void tickWorkshop(final ServerLevel level) {
+        final boolean furnace = WorkshopCard.FURNACE.in(workshopCards());
+        final boolean finished = furnace && workshop.tickFurnace(level, furnaceSpeed());
+        final boolean now = furnace && workshop.ticksPerItem(level, furnaceSpeed()) > 0;
+        if (now != furnaceSmelting()) {
+            smelting.set(now);
+        }
+        if (finished) {
+            final ItemStack made = workshop.slot(Workshop.FURNACE_OUT);
+            final DesktopBalloonPayload balloon = new DesktopBalloonPayload(worldPosition, WorkshopTexts.TITLE.text(),
+                    WorkshopTexts.FURNACE_DONE.with(made.getCount(), GameText.of(made.getHoverName())),
+                    Programs.WORKSHOP.toString());
+            for (final ServerPlayer viewer : consoleViewers(level)) {
+                PacketDistributor.sendToPlayer(viewer, balloon);
+            }
         }
     }
 

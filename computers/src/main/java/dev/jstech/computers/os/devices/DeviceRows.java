@@ -159,7 +159,12 @@ public final class DeviceRows {
                 map.audio().stream().map(DeviceMap.AudioSource::name).toList(), "sound_card");
         b.group(1, "network", NETWORK_ADAPTERS.text(), "type/network", map.network(), "network");
         if (!map.cards().isEmpty()) {
-            b.group(1, "crafting_card", EXPANSION_CARDS.text(), "type/cards", map.cards(), "crafting_card");
+            b.heading(1, DeviceMap.CARD_ICON, EXPANSION_CARDS.text(), "type/cards", true);
+            if (b.open("type/cards")) {
+                for (int i = 0; i < map.cards().size(); i++) {
+                    b.leaf(2, map.cardIcon(i), map.cards().get(i));
+                }
+            }
         }
     }
 
@@ -203,8 +208,8 @@ public final class DeviceRows {
         for (final Text adapter : map.network()) {
             b.leaf(2, "network", adapter);
         }
-        for (final Text card : map.cards()) {
-            b.leaf(2, "crafting_card", card);
+        for (int i = 0; i < map.cards().size(); i++) {
+            b.leaf(2, map.cardIcon(i), map.cards().get(i));
         }
     }
 

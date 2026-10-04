@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.item.DiskItem;
@@ -239,6 +240,7 @@ abstract class ServerCliShell implements ICliComputer {
             /* A rack answers as the server mounted in it, which is what a server-only command belongs to. */
             case SERVER -> hostBlock instanceof ServerRackBlockEntity;
             case CLUSTER_MANAGEMENT_COMPUTER -> hostBlock instanceof ClusterManagementComputerBlockEntity;
+            case PERSONAL_COMPUTER -> hostBlock instanceof PersonalComputerBlockEntity;
         };
     }
 
