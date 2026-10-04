@@ -34,6 +34,8 @@ public final class PosixCommands {
         out.addAll(MachineToolCommands.posix());
         // And the work a machine is left with when nobody is at it.
         out.addAll(JobCommands.posix());
+        // Printing a file, and seeing what waits at the printers.
+        out.addAll(PrintCommands.posix());
         // What the machine is built of and what is plugged into its ports.
         out.addAll(DeviceCommands.posix());
         // This family's own words for giving a name a value and taking it away again.

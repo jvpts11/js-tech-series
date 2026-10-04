@@ -24,6 +24,7 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.RequestNetworkManagerPayload;
 import dev.jstech.computers.operation.payload.RequestNiOperationsPayload;
 import dev.jstech.computers.operation.payload.SetOperationPriorityPayload;
+import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.computers.program.OperationPalette;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.ColumnHeader;
@@ -94,6 +95,11 @@ public final class NetworkManagerApp implements IDesktopApp {
     private static final int DEV_ROW_H = 12;
     private static final int PROC_ROW_H = 13;
     private static final int LOG_ROW_H = 12;
+    /** The row under the log its Print button stands in, and the button's width. */
+    private static final int PRINT_ROW_H = 14;
+    private static final int PRINT_W = 40;
+    /** The manager's own id, whose name on the desktop its printouts say they came from. */
+    private static final String PROGRAM = "jsc:network_manager";
     private static final int HW_ROW_H = 12;
     private static final int BAR_W = 3;
     private static final int DETAIL_W = 240;
@@ -192,6 +198,8 @@ public final class NetworkManagerApp implements IDesktopApp {
     private final MapCanvas map;
     private final Label noLogLabel;
     private final ListView<OperationRecord> logList;
+    private final Button logPrint;
+    private final PrintDialog printDialog;
     private final ScrollBar logBar;
     private final Label statsHeader;
     private final Label noStatsLabel;
@@ -280,6 +288,8 @@ public final class NetworkManagerApp implements IDesktopApp {
                 .setOnClick(this::logClicked));
         logBar = root.add(new ScrollBar(() -> Math.max(0, logNewestFirst.size() - logList.visibleRows()), logList::scroll,
                 v -> logList.setScroll(v)));
+        printDialog = new PrintDialog(host, this);
+        logPrint = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::printLog));
 
         statsHeader = root.add(new Label(this::statsHeaderText, Label.Tone.DIM));
         noStatsLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.NO_STATS), Label.Tone.DIM));
@@ -724,10 +734,14 @@ public final class NetworkManagerApp implements IDesktopApp {
         noLogLabel.setVisible(log && logNewestFirst.isEmpty());
         logList.setVisible(log && !logNewestFirst.isEmpty());
         logBar.setVisible(logList.visible() && logNewestFirst.size() > logList.visibleRows());
+        // The log prints from a button under it, as a list a program keeps has its Print beside it.
+        logPrint.setVisible(log && !logNewestFirst.isEmpty());
         if (log) {
+            final int listH = Math.max(LOG_ROW_H, h - PRINT_ROW_H);
             noLogLabel.setBounds(px + 2, top + 2, pw, 8);
-            logList.setBounds(px, top, pw - BAR_W, Math.max(LOG_ROW_H, h));
+            logList.setBounds(px, top, pw - BAR_W, listH);
             logBar.setBounds(px + pw - BAR_W, top, BAR_W, logList.visibleRows() * LOG_ROW_H);
+            logPrint.setBounds(px + pw - PRINT_W, top + h - PRINT_ROW_H + 2, PRINT_W, 11);
         }
 
         final boolean stats = ready && tab == TAB_STATS;
@@ -845,6 +859,16 @@ public final class NetworkManagerApp implements IDesktopApp {
         g.drawString(font, Texts.clip(font, op.name().getString(), w - (nameX - x) - font.width(st) - 8), nameX, y + 2,
                 ctx.skin().text(), false);
         g.drawString(font, st, x + w - font.width(st), y + 2, statusColor(op.status()), false);
+    }
+
+    /* The log, newest first as it is shown, one Operation a line, to the machine's printer. */
+    private void printLog() {
+        final List<List<String>> table = new ArrayList<>();
+        for (final OperationRecord op : logNewestFirst) {
+            table.add(List.of(OperationPalette.labelFor(op.type()), op.name().getString(), statusLabel(op.status())));
+        }
+        printDialog.show(PrintDialog.Document.text(GameText.resolve(NetworkManagerTexts.LOG_TITLE),
+                ActiveDesktop.windowName(PROGRAM), PrintLayout.table(table, false)));
     }
 
     private void logClicked(final int index, final int button, final double mx, final double my) {

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/advanced_printer_body"
+    }
+  }
+}

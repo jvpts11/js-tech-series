@@ -97,6 +97,7 @@ public final class ExposureApp implements IDesktopApp {
     private final Button survey;
     /** The system's file window, for everything the editor opens or saves by choosing on the disk. */
     private final FileDialog dialog;
+    private final PrintDialog printDialog;
     private final ContextMenu editorContext = new ContextMenu(110, 11);
 
     /* The small window that asks for one thing: a file's name, a line number. */
@@ -121,6 +122,7 @@ public final class ExposureApp implements IDesktopApp {
         this.host = host;
         this.workspace = new CodeWorkspace(host);
         this.dialog = new FileDialog(host, this);
+        this.printDialog = new PrintDialog(host, this);
         this.explorer = this.root.add(new ListView<>(this.workspace::files, FILE_ROW_H, this::drawFileRow))
                 .setOnClick(this::onFilePicked);
         this.tabs = this.root.add(new TabStrip(this.workspace::tabLabels).fitToLabels(10).setUnderline(false)
@@ -181,6 +183,8 @@ public final class ExposureApp implements IDesktopApp {
                     this.workspace.surveyFolder();
                 }),
                 ContextMenu.Item.separator(),
+                item(PrintTexts.PRINT_MENU, hasDoc(), this::print),
+                ContextMenu.Item.separator(),
                 item(ExposureTexts.CLOSE_FILE, hasDoc(), () -> closeTab(this.workspace.currentIndex())),
                 item(StudioTexts.EXIT, true, () -> ActiveDesktop.requestClose(KEY)));
     }
@@ -215,6 +219,15 @@ public final class ExposureApp implements IDesktopApp {
                 item(StudioTexts.TOGGLE_LINE_COMMENT, hasDoc(), this::toggleComment),
                 ContextMenu.Item.submenu(GameText.resolve(StudioTexts.REFACTOR), List.of(
                         item(StudioTexts.IMPLEMENT_INTERFACE, hasDoc(), this::implementInterface))));
+    }
+
+    /* The source file open now, as text, to the machine's printer by way of the system's Print window. */
+    private void print() {
+        final CodeWorkspace.Doc doc = this.workspace.current();
+        if (doc != null) {
+            final String name = doc.path().substring(doc.path().lastIndexOf('/') + 1);
+            this.printDialog.show(PrintDialog.Document.text(name, ActiveDesktop.windowName(KEY), doc.area().text()));
+        }
     }
 
     private void pressInEditor(final int key) {

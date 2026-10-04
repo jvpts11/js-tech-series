@@ -26,7 +26,11 @@ import dev.jstech.computers.client.audio.SoundfoundryStates;
 import dev.jstech.computers.client.bus.ExportBusScreen;
 import dev.jstech.computers.client.monitor.MonitorPictureCache;
 import dev.jstech.computers.client.monitor.MonitorScreenRenderer;
+import dev.jstech.computers.client.printer.PrintedPaperFrames;
+import dev.jstech.computers.client.printer.PrintedPaperScreen;
+import dev.jstech.computers.client.printer.PrintedPictureTextures;
 import dev.jstech.computers.monitor.IMonitorPictureSink;
+import dev.jstech.computers.printer.IPrintedPaperReader;
 import dev.jstech.computers.client.bus.ExternalStorageBusScreen;
 import dev.jstech.computers.client.bus.ImportBusScreen;
 import dev.jstech.computers.client.bus.InputBusScreen;
@@ -47,6 +51,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.RenderItemInFrameEvent;
 
 /**
  * Client-only wiring for the Computing module: binds each computer menu to its screen, registers the data-cable renderer that draws mounted bus parts, and makes the standalone funnel part models available to the model manager.
@@ -69,6 +74,13 @@ public final class ComputingClientSetup {
         SoundfoundryShares.clear();
         SoundfoundryPages.clear();
         SoundfoundryCoverArt.clear();
+        PrintedPictureTextures.forgetAll();
+    }
+
+    /** A printed picture in an item frame shows on it, as a map does. */
+    @SubscribeEvent
+    public static void onRenderItemInFrame(final RenderItemInFrameEvent event) {
+        PrintedPaperFrames.onRenderItemInFrame(event);
     }
 
     @SubscribeEvent
@@ -116,6 +128,7 @@ public final class ComputingClientSetup {
                 });
         IKvmScreenOpener.Holder.set(KvmChannelScreen::expect);
         IMonitorPictureSink.Holder.set(MonitorPictureCache::accept);
+        IPrintedPaperReader.Holder.set(PrintedPaperScreen::open);
 
         /*
          * Every session on a monitor that is not a system shares one menu, so which screen it opens is read
@@ -138,6 +151,8 @@ public final class ComputingClientSetup {
         event.register(ComputingMenus.CRAFTING_COMPUTER_MENU.get(), CraftingComputerScreen::new);
         event.register(ComputingMenus.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), ClusterManagementComputerScreen::new);
         event.register(ComputingMenus.PATTERN_ENCODER_MENU.get(), PatternEncoderScreen::new);
+        event.register(ComputingMenus.PRINTER_MENU.get(), PrinterScreen::new);
+        event.register(ComputingMenus.DOCK_STATION_MENU.get(), DockStationScreen::new);
         event.register(ComputingMenus.NETWORK_GATEWAY_MENU.get(), NetworkGatewayScreen::new);
         event.register(ComputingMenus.COMMAND_PROMPT_MENU.get(),
                 (final CommandPromptMenu menu,
@@ -182,6 +197,8 @@ public final class ComputingClientSetup {
         event.registerBlockEntityRenderer(ComputingModule.MAINFRAME_BE.get(), MainframeRenderer::new);
         // The Pattern Encoder: one burner body per era, with its bay and lamps.
         event.registerBlockEntityRenderer(ComputingModule.PATTERN_ENCODER_BE.get(), PatternEncoderRenderer::new);
+        event.registerBlockEntityRenderer(ComputingModule.PRINTER_BE.get(), PrinterRenderer::new);
+        event.registerBlockEntityRenderer(ComputingModule.DOCK_STATION_BE.get(), DockStationRenderer::new);
         // The floppy, CD and DVD drives the same way; the Dock Station keeps its block model.
         event.registerBlockEntityRenderer(ComputingModule.MEDIA_READER_BE.get(), MediaDriveRenderer::new);
         // The Redstone Interfaces: the sensor of each era, its lens and mode lamps showing what it does.

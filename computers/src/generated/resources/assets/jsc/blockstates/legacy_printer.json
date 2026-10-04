@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/legacy_printer_body"
+    }
+  }
+}

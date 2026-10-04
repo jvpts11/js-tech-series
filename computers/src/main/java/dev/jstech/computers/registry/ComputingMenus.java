@@ -15,6 +15,7 @@ import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.computers.menu.CraftingSwitchMenu;
 import dev.jstech.computers.menu.ExternalStorageBusMenu;
 import dev.jstech.computers.menu.DesktopMenu;
+import dev.jstech.computers.menu.DockStationMenu;
 import dev.jstech.computers.menu.DosTerminalMenu;
 import dev.jstech.computers.menu.ExportBusMenu;
 import dev.jstech.computers.menu.ImportBusMenu;
@@ -26,6 +27,7 @@ import dev.jstech.computers.menu.NetTerminalMenu;
 import dev.jstech.computers.menu.NetworkGatewayMenu;
 import dev.jstech.computers.menu.PatternEncoderMenu;
 import dev.jstech.computers.menu.PersonalComputerMenu;
+import dev.jstech.computers.menu.PrinterMenu;
 import dev.jstech.computers.menu.ReceivingBusMenu;
 import dev.jstech.computers.menu.RedstoneInterfaceMenu;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
@@ -79,6 +81,12 @@ public final class ComputingMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<PatternEncoderMenu>> PATTERN_ENCODER_MENU =
             menu("pattern_encoder", PatternEncoderMenu::fromNetwork);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<PrinterMenu>> PRINTER_MENU =
+            menu("printer", PrinterMenu::fromNetwork);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<DockStationMenu>> DOCK_STATION_MENU =
+            menu("dock_station", DockStationMenu::fromNetwork);
 
     public static final DeferredHolder<MenuType<?>, MenuType<NetworkGatewayMenu>> NETWORK_GATEWAY_MENU =
             menu("network_gateway", NetworkGatewayMenu::fromNetwork);

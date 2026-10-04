@@ -74,9 +74,10 @@ asiekierka (the floppy disk ejected), soundandmelodies (the server room), Johnmo
 (Frames XP's chime), marlonnnnnn (Frames 11's chime and the Frames notice), Kastenfrosch (Frames 11's error), CZghost
 (the failed self-test), Klerrp (the hard drive seeking), Sanderboah (the monitor switching off), leocb (a server on
 its rails), SamsterBirdies (the disc drive turning), kyles (the Vintage Mainframe's tapes), dland (a device plugged in
-and pulled out on Frames), Breviceps (the minefield's click), Tony B kksm (the mine exploding) and Fupicat (the
-minefield cleared). From Kenney's Interface Sounds (https://kenney.nl/assets/interface-sounds), under CC0 as well: the
-Frames bell.
+and pulled out on Frames), Breviceps (the minefield's click), Tony B kksm (the mine exploding), Fupicat (the
+minefield cleared), chungus43A (the dot matrix printer), JeromeMarrz and kyles (the two inkjets), megashroom (the
+laser printer) and Muizz737 (the ink tank printer). From Kenney's Interface Sounds
+(https://kenney.nl/assets/interface-sounds), under CC0 as well: the Frames bell.
 
 ### The desktops' own sound themes
 

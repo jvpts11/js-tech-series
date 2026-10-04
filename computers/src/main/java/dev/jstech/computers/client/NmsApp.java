@@ -8,9 +8,13 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.IDesktopApp;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.OsSkin;
+import dev.jstech.computers.client.os.PrintDialog;
+import dev.jstech.computers.client.os.PrintTexts;
+import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.computers.client.theme.NmsThemes;
 import dev.jstech.computers.gui.layout.NmsLayout;
 import dev.jstech.computers.operation.payload.IqlFileContentPayload;
@@ -95,7 +99,9 @@ public final class NmsApp implements IDesktopApp {
     private static final int EDITOR_LINE_H = 10;
 
     private static final TextKey[] FILE_ITEMS =
-            {NmsTexts.NEW, NmsTexts.SAVE, NmsTexts.SAVE_AS_ITEM, NmsTexts.OPEN_ITEM};
+            {NmsTexts.NEW, NmsTexts.SAVE, NmsTexts.SAVE_AS_ITEM, NmsTexts.OPEN_ITEM, PrintTexts.PRINT_MENU};
+    /** The studio's own id, whose name on the desktop its printouts say they came from. */
+    private static final String PROGRAM = Programs.NMS.toString();
 
     private static final int DIALOG_NONE = 0;
     private static final int DIALOG_SAVE_AS = 1;
@@ -130,6 +136,7 @@ public final class NmsApp implements IDesktopApp {
 
     private final BlockPos host;
     private final BlockPos monitorPos;
+    private final PrintDialog printDialog;
 
     // Set fresh every frame from renderContent, so input handlers and tooltips share the live geometry.
     private Font font = Minecraft.getInstance().font;
@@ -186,6 +193,7 @@ public final class NmsApp implements IDesktopApp {
     public NmsApp(final BlockPos host, final BlockPos monitorPos) {
         this.host = host;
         this.monitorPos = monitorPos;
+        this.printDialog = new PrintDialog(host, this);
         active = this;
         treeRoot = buildTree();
         rebuildVisible();
@@ -536,6 +544,23 @@ public final class NmsApp implements IDesktopApp {
         PacketDistributor.sendToServer(new SaveIqlFilePayload(host, name, editor().value()));
         currentFile = name + ".iql";
         dialogMode = DIALOG_NONE;
+    }
+
+    /*
+     * The results of the last query as a table under the query itself, to the machine's printer by way of the
+     * system's Print window.
+     */
+    private void filePrint() {
+        fileMenuOpen = false;
+        final List<List<String>> table = new ArrayList<>();
+        table.add(List.of(GameText.resolve(NmsTexts.ITEM), GameText.resolve(NmsTexts.QUANTITY)));
+        for (final IqlResultPayload.Row row : rows) {
+            table.add(List.of(GameText.resolve(row.label()), String.valueOf(row.quantity())));
+        }
+        final String query = editor().value().strip();
+        final String text = query + "\n\n" + (rows.isEmpty() ? "" : PrintLayout.table(table, true));
+        final String title = currentFile == null ? GameText.resolve(NmsTexts.QUERY) : currentFile + ".iql";
+        printDialog.show(PrintDialog.Document.text(title, ActiveDesktop.windowName(PROGRAM), text));
     }
 
     private void fileOpen() {
@@ -997,6 +1022,7 @@ public final class NmsApp implements IDesktopApp {
                     case 1 -> fileSave();
                     case 2 -> fileSaveAs();
                     case 3 -> fileOpen();
+                    case 4 -> filePrint();
                     default -> fileMenuOpen = false;
                 }
             } else {
@@ -1119,6 +1145,10 @@ public final class NmsApp implements IDesktopApp {
                 } else {
                     fileSave();
                 }
+                return true;
+            }
+            if (key == GLFW.GLFW_KEY_P) {
+                filePrint();
                 return true;
             }
             if (key == GLFW.GLFW_KEY_N) {

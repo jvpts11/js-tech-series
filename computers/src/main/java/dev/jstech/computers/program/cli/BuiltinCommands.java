@@ -43,6 +43,8 @@ public final class BuiltinCommands {
             "find", "sort", "more",
             // And the ones whose DOS names are that family's own: the Unix shells have ps, kill, which, date.
             "tasklist", "taskkill", "where", "mem", "date", "tree",
+            // A Unix shell prints with lp, and lists what waits with lpstat.
+            "print",
             // START and AT are this family's jobs; the Unix systems have & with jobs and crontab.
             "start", "at");
 
@@ -76,6 +78,8 @@ public final class BuiltinCommands {
         out.addAll(MachineToolCommands.dos());
         // And its own way of leaving a machine with work: START and AT.
         out.addAll(JobCommands.dos());
+        // PRINT, which prints in the background from a resident part, as this family's own.
+        out.addAll(PrintCommands.dos());
         // Giving a name a value, which both families do and only the words differ over.
         out.addAll(VariableCommands.shared());
         return List.copyOf(out);

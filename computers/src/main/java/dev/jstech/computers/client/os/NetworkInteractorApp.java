@@ -29,6 +29,7 @@ import dev.jstech.computers.operation.payload.RequestNetworkInteractorPayload;
 import dev.jstech.computers.operation.payload.RequestNiOperationsPayload;
 import dev.jstech.computers.operation.payload.RequestNiServersPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
+import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
@@ -236,6 +237,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
      */
     private static final int TAB_H = NetworkInteractorLayout.TAB_H;
     private static final int SEARCH_H = NetworkInteractorLayout.SEARCH_H;
+    /** The Print button's width at the header's right end. */
+    private static final int PRINT_W = 30;
+    /** The Interactor's own id, whose name on the desktop its printouts say they came from. */
+    private static final String PROGRAM = "jsc:network";
     private static final int CELL = NetworkInteractorLayout.CELL;
     private static final int INV_COLS = NetworkInteractorLayout.INV_COLS;
     private static final int INV_ROWS = NetworkInteractorLayout.INV_ROWS;
@@ -413,6 +418,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     private final Button detailRequest;
     private final Button detailCraft;
     private final Button detailStar;
+    private final Button printButton;
+    private final PrintDialog printDialog;
     private final ContextMenu filterMenu = new ContextMenu(72, 10);
     private final RequestPopup requestPopup;
     private final CraftPopup craftPopup;
@@ -448,6 +455,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         detailCraft = root.add(new Button(GameText.resolve(CRAFT), this::detailCraftPressed)
                 .setLabelScale(Texts.SMALL));
         detailStar = root.add(new Button(STAR, this::detailStarPressed).setLabelScale(Texts.SMALL));
+        printDialog = new PrintDialog(host, this);
+        printButton = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::printList)
+                .setLabelScale(Texts.SMALL));
         requestPopup = new RequestPopup();
         craftPopup = new CraftPopup();
 
@@ -751,6 +761,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         categoryButton.setPrimary(!categoryFilter.isEmpty());
         sortButton.setBounds(x + z.sortX(), y + z.searchY(), z.sortW(), SEARCH_H);
         sortButton.setVisible(onGrid);
+        // The list prints from the header's right end, over the details panel, where the row is free.
+        printButton.setBounds(x + width - NetworkInteractorLayout.INSET - PRINT_W, y + z.searchY(), PRINT_W,
+                SEARCH_H);
+        printButton.setVisible(onGrid);
 
         /*
          * The grid zone: a captioned, sunken well between the toolbar and the grip strip. Every cell that fits
@@ -1111,6 +1125,16 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     /** The entries the active entry tab lists, after the search, the filters and the sort. */
     private List<NetworkItemEntry> gridEntries() {
         return filtered(sourceEntries());
+    }
+
+    /* The list as it is shown, searched, filtered and sorted, one entry a line with its count, to the printer. */
+    private void printList() {
+        final List<List<String>> table = new ArrayList<>();
+        for (final NetworkItemEntry entry : gridEntries()) {
+            table.add(List.of(entry.key().displayName().getString(), String.valueOf(entry.total())));
+        }
+        printDialog.show(PrintDialog.Document.text(tabLabels().get(Math.min(tab, tabLabels().size() - 1)),
+                ActiveDesktop.windowName(PROGRAM), PrintLayout.table(table, false)));
     }
 
     /**

@@ -50,6 +50,8 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int MARGIN = 3;
     private static final int MAX_TABS = 8;
     private static final String UNTITLED = "untitled.txt";
+    /** The editor's own id, whose name on the desktop its printouts say they came from. */
+    private static final String PROGRAM = "jsc:editor";
 
     /** One file open in the window: what it is called, what is in it, and whether it has been changed. */
     private static final class Tab {
@@ -74,6 +76,8 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     private final Button openButton;
     private final Button saveButton;
     private final Button saveAsButton;
+    private final Button printButton;
+    private final PrintDialog printDialog;
     private final Button findButton;
     private final Button gotoButton;
     private final EditorFindBar find;
@@ -101,6 +105,8 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         openButton = root.add(new Button(GameText.resolve(EditorTexts.OPEN), this::chooseOpen));
         saveButton = root.add(new Button(GameText.resolve(EditorTexts.SAVE), this::save));
         saveAsButton = root.add(new Button(GameText.resolve(EditorTexts.SAVE_AS), this::chooseSaveAs));
+        this.printDialog = new PrintDialog(host, this);
+        printButton = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::print));
         findButton = root.add(new Button(GameText.resolve(EditorTexts.FIND),
                 () -> toggleFind(EditorFindBar.Mode.FIND)));
         gotoButton = root.add(new Button(GameText.resolve(EditorTexts.GO_TO),
@@ -202,6 +208,11 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     }
 
     /* Opening and saving */
+
+    /* The page being read, to the machine's printer, by way of the system's Print window. */
+    private void print() {
+        printDialog.show(PrintDialog.Document.text(current().name, ActiveDesktop.windowName(PROGRAM), body.text()));
+    }
 
     private void chooseOpen() {
         dialog.openFile(EditorTexts.OPEN.text(), "", FileDialog.Filter.sources(), this::openFile);
@@ -338,6 +349,11 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         return GameText.resolve(EditorAppTexts.TITLE.with((tab.dirty ? "*" : "") + tab.name));
     }
 
+    /** The Print window this editor opens over itself. */
+    public PrintDialog printDialog() {
+        return printDialog;
+    }
+
     /** The text in the buffer, which is what the player is reading or writing. */
     public String text() {
         return body.text();
@@ -398,6 +414,7 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         bx = place(openButton, font, GameText.resolve(EditorTexts.OPEN), bx, y);
         bx = place(saveButton, font, GameText.resolve(EditorTexts.SAVE), bx, y);
         bx = place(saveAsButton, font, GameText.resolve(EditorTexts.SAVE_AS), bx, y);
+        bx = place(printButton, font, GameText.resolve(PrintTexts.PRINT), bx, y);
         bx = place(findButton, font, GameText.resolve(EditorTexts.FIND), bx, y);
         final int gotoW = font.width(GameText.resolve(EditorTexts.GO_TO)) + 8;
         // Pinned right, never back over the button before it; a narrow window clips rather than overlaps.
@@ -576,6 +593,7 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         switch (key) {
             case GLFW.GLFW_KEY_S -> save();
             case GLFW.GLFW_KEY_O -> chooseOpen();
+            case GLFW.GLFW_KEY_P -> print();
             case GLFW.GLFW_KEY_F -> toggleFind(EditorFindBar.Mode.FIND);
             case GLFW.GLFW_KEY_G -> toggleFind(EditorFindBar.Mode.GO_TO_LINE);
             case GLFW.GLFW_KEY_N -> newTab("", UNTITLED);

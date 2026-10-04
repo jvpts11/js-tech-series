@@ -314,6 +314,51 @@
     ],
     "subtitle": "subtitles.jsc.os.kde_plasma_legacy.startup"
   },
+  "printer/epsilon_ecotonk_et_2720": {
+    "sounds": [
+      {
+        "attenuation_distance": 10,
+        "name": "jsc:printer/epsilon_ecotonk_et_2720"
+      }
+    ],
+    "subtitle": "subtitles.jsc.printer.epsilon_ecotonk_et_2720"
+  },
+  "printer/epsilon_fx_80": {
+    "sounds": [
+      {
+        "attenuation_distance": 12,
+        "name": "jsc:printer/epsilon_fx_80"
+      }
+    ],
+    "subtitle": "subtitles.jsc.printer.epsilon_fx_80"
+  },
+  "printer/pakard_deskjot_940": {
+    "sounds": [
+      {
+        "attenuation_distance": 10,
+        "name": "jsc:printer/pakard_deskjot_940"
+      }
+    ],
+    "subtitle": "subtitles.jsc.printer.pakard_deskjot_940"
+  },
+  "printer/pakard_fotosmart_c4280": {
+    "sounds": [
+      {
+        "attenuation_distance": 10,
+        "name": "jsc:printer/pakard_fotosmart_c4280"
+      }
+    ],
+    "subtitle": "subtitles.jsc.printer.pakard_fotosmart_c4280"
+  },
+  "printer/pakard_laserjot_1102": {
+    "sounds": [
+      {
+        "attenuation_distance": 10,
+        "name": "jsc:printer/pakard_laserjot_1102"
+      }
+    ],
+    "subtitle": "subtitles.jsc.printer.pakard_laserjot_1102"
+  },
   "program/minesweeper_click": {
     "sounds": [
       "jsc:program/minesweeper_click"

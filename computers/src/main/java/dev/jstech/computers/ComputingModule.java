@@ -35,6 +35,7 @@ import dev.jstech.computers.block.MonitorKind;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.block.PatternEncoderBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
+import dev.jstech.computers.block.PrinterBlock;
 import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.RedstoneInterfaceBlock;
 import dev.jstech.computers.block.RepeaterBlock;
@@ -59,6 +60,7 @@ import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.PrinterBlockEntity;
 import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.RepeaterBlockEntity;
 import dev.jstech.computers.blockentity.RouterBlockEntity;
@@ -94,12 +96,15 @@ import dev.jstech.computers.item.MainframeBlockItem;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.NetworkCardItem;
 import dev.jstech.computers.item.PhiCoprocessorItem;
+import dev.jstech.computers.item.PrintedPaperItem;
 import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.item.ServerCaseItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.os.media.DockStationBlock;
+import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaBay;
 import dev.jstech.computers.os.media.MediaDriveType;
@@ -187,6 +192,9 @@ public final class ComputingModule {
     private static final CabinetBlockItem.Fit DEVICE_FIT = new CabinetBlockItem.Fit(16.0F, 0.0F, -0.5F, 0.0F);
     /** A device's lamps, dark on its item, whatever the devices in the world show. */
     private static final List<String> DEVICE_LAMPS = List.of(MediaBay.POWER_LAMP, MediaBay.BUSY_LAMP);
+    /** A printer's lamps and the sheet that comes out of it, none of them on its item. */
+    private static final List<String> PRINTER_AT_REST = List.of(ComputingLooks.PRINTER_POWER_LAMP,
+            ComputingLooks.PRINTER_BUSY_LAMP, ComputingLooks.PRINTER_PAPER);
     /** A Redstone Interface's lit lens and mode lamps, dark on its item: the item shows the lens at rest. */
     private static final List<String> REDSTONE_INTERFACE_LIT = List.of(ComputingLooks.REDSTONE_LENS_HALF,
             ComputingLooks.REDSTONE_LENS_FULL, ComputingLooks.REDSTONE_LAMP_IN, ComputingLooks.REDSTONE_LAMP_OUT);
@@ -565,6 +573,32 @@ public final class ComputingModule {
                     ADVANCED_PATTERN_ENCODER);
 
     /*
+     * The printers, one per era, each the printer of its day on a period base, drawn by the block entity: a dot
+     * matrix, two inkjets, a laser and an ink tank printer. They print whatever their computer's programs send.
+     */
+
+    public static final BlockEntry<PrinterBlock> VINTAGE_PRINTER =
+            printer("vintage_printer", MapColor.TERRACOTTA_WHITE, HardwareEra.VINTAGE).named("Epsilon FX-80")
+                    .register();
+    public static final BlockEntry<PrinterBlock> LEGACY_PRINTER =
+            printer("legacy_printer", MapColor.COLOR_LIGHT_GRAY, HardwareEra.LEGACY).named("Pakard DeskJot 940")
+                    .register();
+    public static final BlockEntry<PrinterBlock> TRANSITION_PRINTER =
+            printer("transition_printer", MapColor.COLOR_LIGHT_GRAY, HardwareEra.TRANSITION)
+                    .named("Pakard FotoSmart C4280").register();
+    public static final BlockEntry<PrinterBlock> PRINTER =
+            printer("printer", MapColor.COLOR_BLACK, HardwareEra.STANDARD).named("Pakard LaserJot 1102").register();
+    public static final BlockEntry<PrinterBlock> ADVANCED_PRINTER =
+            printer("advanced_printer", MapColor.SNOW, HardwareEra.ADVANCED).named("Epsilon EcoTonk ET-2720")
+                    .register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PrinterBlockEntity>> PRINTER_BE =
+            CONTENT.blockEntity("printer", PrinterBlockEntity::new, VINTAGE_PRINTER, LEGACY_PRINTER,
+                    TRANSITION_PRINTER, PRINTER, ADVANCED_PRINTER);
+    /** The sheet a printer turns out, carrying what it printed. */
+    public static final ItemEntry<PrintedPaperItem> PRINTED_PAPER =
+            CONTENT.item("printed_paper", PrintedPaperItem::new).named("Printed Paper").tab(DEVICES).register();
+
+    /*
      * Media drives: one block per drive type, each linked to a computer over the Peripheral Cable. A drive is drawn
      * by its block entity as the drive of its day, the medium in it the player's own; the Dock Station is a low hub
      * on the desk, drawn by hand, with the stick standing in it.
@@ -579,17 +613,26 @@ public final class ComputingModule {
             drive("dvd_drive", MediaDriveType.DVD_DRIVE, MapColor.COLOR_BLACK).named("DVD Drive").register();
     public static final BlockEntry<MediaReaderBlock> BLU_RAY_DRIVE =
             drive("blu_ray_drive", MediaDriveType.BLU_RAY_DRIVE, MapColor.SNOW).named("Blu-ray Drive").register();
-    public static final BlockEntry<MediaReaderBlock> DOCK_STATION =
-            CONTENT.block("dock_station", properties -> new MediaReaderBlock(MediaDriveType.DOCK_STATION, properties))
+    /*
+     * The Dock Station, a full block drawn by its block entity: three trays for disks of any era, each showing the
+     * player's own disk, and the USB port for the flash drive. Its item shows it as it comes, empty and dark.
+     */
+    public static final BlockEntry<DockStationBlock> DOCK_STATION =
+            CONTENT.block("dock_station", DockStationBlock::new)
                     .properties(properties -> properties.mapColor(MapColor.COLOR_BLACK).strength(1.5F)
-                            .sound(SoundType.METAL))
+                            .sound(SoundType.METAL).noOcclusion())
                     .named("Dock Station")
-                    .look(IBlockLook.facing(new IBlockModel.Handmade("dock_station"))
-                            .whileOn(MediaReaderBlock.LOADED, new IBlockModel.Handmade("dock_station_docked")))
-                    .item().tab(DEVICES).register();
+                    .look(IBlockLook.fixed(new IBlockModel.ParticleOnly("dock_station_body",
+                            "block/dock_station_particle")))
+                    .geo(ComputingLooks.DOCK_STATION)
+                    .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.DOCK_STATION,
+                            "dock_station", DEVICE_FIT, ComputingLooks.DOCK_AT_REST))
+                    .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(DEVICES).register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MediaReaderBlockEntity>> MEDIA_READER_BE =
             CONTENT.blockEntity("media_reader", MediaReaderBlockEntity::new,
-                    FLOPPY_DRIVE, CD_DRIVE, DVD_DRIVE, BLU_RAY_DRIVE, DOCK_STATION);
+                    FLOPPY_DRIVE, CD_DRIVE, DVD_DRIVE, BLU_RAY_DRIVE);
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DockStationBlockEntity>>
+            DOCK_STATION_BE = CONTENT.blockEntity("dock_station", DockStationBlockEntity::new, DOCK_STATION);
 
     /*
      * The Redstone Interfaces, one each era: a sensor on the peripheral cable that reads a redstone signal for its
@@ -1111,6 +1154,22 @@ public final class ComputingModule {
                 .look(ENCODER_BODY).geo(ComputingLooks.PATTERN_ENCODER)
                 .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.PATTERN_ENCODER,
                         id, DEVICE_FIT, DEVICE_LAMPS))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(DEVICES);
+    }
+
+    /**
+     * A printer, whose body its block entity draws: the block shows nothing but the particles a break scatters, and
+     * without noOcclusion the full cube would block its own light and cull the faces of its neighbours. Its item
+     * shows the printer at rest, its lamps dark and no page coming out.
+     */
+    private static BlockBuilder<PrinterBlock> printer(final String id, final MapColor color, final HardwareEra era) {
+        return CONTENT.block(id, properties -> new PrinterBlock(properties, era))
+                .properties(properties -> properties.mapColor(color).strength(1.5F).sound(SoundType.METAL)
+                        .noOcclusion())
+                .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body", "block/" + id + "_particle")))
+                .geo(ComputingLooks.PRINTER)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.PRINTER, id,
+                        DEVICE_FIT, PRINTER_AT_REST))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(DEVICES);
     }
 

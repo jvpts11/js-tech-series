@@ -30,6 +30,7 @@ import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
 import dev.jstech.core.client.gui.component.Button;
@@ -559,22 +560,16 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         return dir.startsWith("media:");
     }
 
-    /** The reader position of the medium being browsed, or {@code -1} on the system disk. */
-    private long mediaReaderPos() {
-        return mediaReaderPos(dir);
+    /** The key of the removable volume being browsed: a drive's medium or a docked disk; empty on the system disk. */
+    private String mediaRoot() {
+        final MediaVolume volume = MediaVolume.parse(dir);
+        return volume == null ? "" : volume.key();
     }
 
+    /** The reader position of a removable volume's path, or {@code -1} for any other path. */
     private static long mediaReaderPos(final String path) {
-        if (!path.startsWith("media:")) {
-            return -1L;
-        }
-        final String rest = path.substring("media:".length());
-        final int slash = rest.indexOf('/');
-        try {
-            return Long.parseLong(slash < 0 ? rest : rest.substring(0, slash));
-        } catch (final NumberFormatException e) {
-            return -1L;
-        }
+        final MediaVolume volume = MediaVolume.parse(path);
+        return volume == null ? -1L : volume.readerPos();
     }
 
     /** Whether the volume being browsed refuses writes: an installer's projection, or a pressed disc. */
@@ -831,7 +826,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             return out;
         }
         if (onMedia()) {
-            final String rootKey = "media:" + mediaReaderPos();
+            final String rootKey = mediaRoot();
             out.add(new Breadcrumbs.Crumb(computerPlace(), ""));
             out.add(new Breadcrumbs.Crumb(onDrive(volumeLabel(rootKey), letterOf(rootKey)), rootKey));
             final int slash = dir.indexOf('/');
@@ -1362,7 +1357,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             return "/" + (onMedia() ? mediaRest() : dir) + (dir.isEmpty() ? "" : "/");
         }
         if (onMedia()) {
-            final String rootKey = "media:" + mediaReaderPos();
+            final String rootKey = mediaRoot();
             final String letter = letterOf(rootKey);
             final String rest = mediaRest();
             return (letter.isEmpty() ? "D:" : letter) + "\\" + rest.replace('/', '\\') + (rest.isEmpty() ? "" : "\\");
@@ -1535,7 +1530,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             }
             items.add(ContextMenu.Item.separator());
             if (onMedia()) {
-                items.add(item(FilesTexts.EJECT, true, () -> eject("media:" + mediaReaderPos())));
+                items.add(item(FilesTexts.EJECT, true, () -> eject(mediaRoot())));
             }
         }
         items.add(item(FilesTexts.REFRESH, true, () -> request(dir)));
@@ -1897,9 +1892,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     }
 
     private void eject(final String volumeKey) {
-        final long reader = mediaReaderPos(volumeKey);
-        if (reader >= 0) {
-            PacketDistributor.sendToServer(new EjectMediaPayload(host, reader));
+        final MediaVolume volume = MediaVolume.parse(volumeKey);
+        if (volume != null) {
+            PacketDistributor.sendToServer(EjectMediaPayload.of(host, volume));
             if (isCurrentVolume(volumeKey)) {
                 go("");
             } else {

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextCodecs;
 import dev.jstech.core.text.TextHolder;
@@ -241,12 +242,16 @@ public record ThisPcPayload(BlockPos host, WireMachine machine, List<WireDisk> d
      * @param needs       its requirements, one line each
      * @param stored      what a data medium holds, in item-equivalents
      * @param blocksAway  how far the drive is from the computer, in blocks
+     * @param bay         the Dock Station tray a docked disk is in, or -1 for a drive's own medium
+     * @param capItems    a docked disk's capacity, in item-equivalents; 0 for a medium
+     * @param usedItems   what a docked disk holds, in item-equivalents; 0 for a medium
      */
     public record WireMedia(long readerPos, String drive, Text mediaName, String kind,
                             String payloadPath, boolean installable, String payloadName, int payloadYear,
-                            String packageId, List<Text> needs, long stored, int blocksAway) {
+                            String packageId, List<Text> needs, long stored, int blocksAway, int bay,
+                            long capItems, long usedItems) {
 
-        // Written by hand: composite() tops out at six pairs, and a drive now carries twelve fields.
+        // Written by hand: composite() tops out at six pairs, and a drive now carries fifteen fields.
         public static final StreamCodec<RegistryFriendlyByteBuf, WireMedia> STREAM_CODEC =
                 StreamCodec.of((buf, m) -> {
                     buf.writeVarLong(m.readerPos());
@@ -261,18 +266,45 @@ public record ThisPcPayload(BlockPos host, WireMachine machine, List<WireDisk> d
                     TextCodecs.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_NEEDS)).encode(buf, m.needs());
                     buf.writeVarLong(m.stored());
                     buf.writeVarInt(m.blocksAway());
+                    buf.writeInt(m.bay());
+                    buf.writeVarLong(m.capItems());
+                    buf.writeVarLong(m.usedItems());
                 }, buf -> new WireMedia(buf.readVarLong(), buf.readUtf(48), TextCodecs.STREAM_CODEC.decode(buf),
                         buf.readUtf(24), buf.readUtf(96), buf.readBoolean(), buf.readUtf(96), buf.readVarInt(),
                         buf.readUtf(64), TextCodecs.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_NEEDS)).decode(buf),
-                        buf.readVarLong(), buf.readVarInt()));
+                        buf.readVarLong(), buf.readVarInt(), buf.readInt(), buf.readVarLong(), buf.readVarLong()));
 
         public WireMedia {
             needs = List.copyOf(needs);
         }
 
+        /** A drive and the medium in it, which no tray of a dock holds. */
+        public WireMedia(final long readerPos, final String drive, final Text mediaName, final String kind,
+                         final String payloadPath, final boolean installable, final String payloadName,
+                         final int payloadYear, final String packageId, final List<Text> needs, final long stored,
+                         final int blocksAway) {
+            this(readerPos, drive, mediaName, kind, payloadPath, installable, payloadName, payloadYear, packageId,
+                    needs, stored, blocksAway, -1, 0L, 0L);
+        }
+
         /** Whether the drive holds anything at all. */
         public boolean loaded() {
             return !mediaName.isEmpty();
+        }
+
+        /** Whether it is a disk in a Dock Station's tray, an external drive of the computer. */
+        public boolean docked() {
+            return bay >= 0;
+        }
+
+        /** A docked disk's free room, in item-equivalents. */
+        public long freeItems() {
+            return Math.max(0L, capItems - usedItems);
+        }
+
+        /** The key the explorers open it by. */
+        public String volumeKey() {
+            return MediaVolume.key(readerPos, bay);
         }
     }
 }

@@ -24,6 +24,7 @@ final class NetworkManagerTexts {
     static final TextKey HARDWARE = TextKey.of("jsc.network_manager.hardware", "Hardware");
     static final TextKey MAP = TextKey.of("jsc.network_manager.map", "Map");
     static final TextKey LOG = TextKey.of("jsc.network_manager.log", "Log");
+    static final TextKey LOG_TITLE = TextKey.of("jsc.network_manager.log_title", "Network log");
     static final TextKey STATS = TextKey.of("jsc.network_manager.stats", "Stats");
     static final TextKey LOADING = TextKey.of("jsc.network_manager.loading", "Loading network...");
     static final TextKey NETWORK_LINE = TextKey.of("jsc.network_manager.network_line", "Network %s   -   %s node(s)");

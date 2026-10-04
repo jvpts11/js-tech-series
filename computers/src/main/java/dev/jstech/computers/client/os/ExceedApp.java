@@ -12,6 +12,7 @@ import dev.jstech.computers.operation.payload.RequestSheetFactsPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.operation.payload.SheetFactsPayload;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.computers.program.Spreadsheet;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Panel;
@@ -64,6 +65,8 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
             new Colours(0xFF1C4FA8, 0xFFB4231F));
     /** How long the sheet waits before asking the machine again, so typing does not send a packet a key. */
     private static final long ASK_EVERY_MS = 3000L;
+    /** Exceed's own id, whose name on the desktop its printouts say they came from. */
+    private static final String PROGRAM = "jsc:exceed";
     /** The longest name a cell may ask about, which is what the request payload carries. */
     private static final int MAX_ITEM_NAME = 120;
 
@@ -79,6 +82,8 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
     private final Button openButton;
     private final Button saveButton;
     private final Button saveAsButton;
+    private final Button printButton;
+    private final PrintDialog printDialog;
     private final Button refreshButton;
 
     private final Spreadsheet sheet = new Spreadsheet();
@@ -131,6 +136,8 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         openButton = root.add(new Button(GameText.resolve(ExceedTexts.OPEN), this::chooseOpen));
         saveButton = root.add(new Button(GameText.resolve(ExceedTexts.SAVE), this::save));
         saveAsButton = root.add(new Button(GameText.resolve(ExceedTexts.SAVE_AS), this::chooseSaveAs));
+        this.printDialog = new PrintDialog(host, this);
+        printButton = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::print));
         refreshButton = root.add(new Button(GameText.resolve(ExceedTexts.REFRESH), this::ask));
         root.add(formula);
         sheet.setFacts(facts);
@@ -240,6 +247,42 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
                     this.path = target;
                     save();
                 });
+    }
+
+    /*
+     * The cells in use as a table, the column letters over them and the row numbers beside, worked out as the sheet
+     * shows them, to the machine's printer by way of the system's Print window.
+     */
+    private void print() {
+        commit();
+        int lastRow = -1;
+        int lastColumn = -1;
+        for (int r = 0; r < Spreadsheet.ROWS; r++) {
+            for (int c = 0; c < Spreadsheet.COLUMNS; c++) {
+                if (!sheet.display(r, c).isEmpty()) {
+                    lastRow = Math.max(lastRow, r);
+                    lastColumn = Math.max(lastColumn, c);
+                }
+            }
+        }
+        final List<List<String>> rows = new ArrayList<>();
+        final List<String> head = new ArrayList<>();
+        head.add("");
+        for (int c = 0; c <= lastColumn; c++) {
+            head.add(Spreadsheet.columnName(c));
+        }
+        rows.add(head);
+        for (int r = 0; r <= lastRow; r++) {
+            final List<String> row = new ArrayList<>();
+            row.add(String.valueOf(r + 1));
+            for (int c = 0; c <= lastColumn; c++) {
+                row.add(sheet.display(r, c));
+            }
+            rows.add(row);
+        }
+        final String title = path.isEmpty() ? "untitled.csv" : leaf(path);
+        printDialog.show(PrintDialog.Document.text(title, ActiveDesktop.windowName(PROGRAM),
+                lastRow < 0 ? "" : PrintLayout.table(rows, true)));
     }
 
     private void save() {
@@ -358,6 +401,7 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         bx = place(openButton, font, bx, y);
         bx = place(saveButton, font, bx, y);
         bx = place(saveAsButton, font, bx, y);
+        bx = place(printButton, font, bx, y);
         final int w = font.width(refreshButton.label()) + 8;
         // Pinned right, never back over the button before it; a narrow window clips rather than overlaps.
         refreshButton.setBounds(Math.max(bx, x + width - MARGIN - w), y + 1, w, 12);
@@ -537,6 +581,10 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         if ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0 && key == GLFW.GLFW_KEY_S) {
             save();
+            return true;
+        }
+        if ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0 && key == GLFW.GLFW_KEY_P) {
+            print();
             return true;
         }
         final int dr = switch (key) {

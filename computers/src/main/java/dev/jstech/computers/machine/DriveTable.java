@@ -21,6 +21,7 @@ import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.ProgramFilesProjection;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.InstallerProjection;
+import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.storage.DriveVolumes;
@@ -111,6 +112,16 @@ public final class DriveTable {
             final ItemStack media = reader.mediaSlot().getStackInSlot(0);
             table.add(new Drive(letter, media, FilesystemKind.HIERARCHICAL, () -> syncReader(reader)));
             letter++;
+            // A dock's disks follow its stick: each one docked is an external drive of its own, top tray first.
+            if (reader instanceof DockStationBlockEntity dock) {
+                for (int bay = 0; bay < DockStationBlockEntity.BAYS && letter <= 'Z'; bay++) {
+                    final ItemStack disk = dock.disk(bay);
+                    if (!disk.isEmpty()) {
+                        table.add(new Drive(letter, disk, FilesystemKind.HIERARCHICAL, dock::diskChanged));
+                        letter++;
+                    }
+                }
+            }
         }
         return new DriveTable(table);
     }

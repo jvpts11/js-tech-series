@@ -29,6 +29,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -188,7 +189,7 @@ public final class InstallMediaGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void dockStation_holdsTheStickAndIsAHubNotACube(final GameTestHelper helper) {
+    public static void dockStation_holdsTheStickAndFillsItsBlock(final GameTestHelper helper) {
         final BlockPos dockPos = new BlockPos(2, 2, 2);
         final BlockPos dvdPos = new BlockPos(4, 2, 2);
         helper.setBlock(dockPos, ComputingModule.DOCK_STATION.get());
@@ -202,11 +203,11 @@ public final class InstallMediaGameTests {
                     final ItemStack stick = installer(ComputingModule.USB_FLASH_DRIVE.get(), MediaKind.OS_INSTALL, "frames_11");
                     helper.assertTrue(dock.acceptsMedia(stick), "the Dock Station takes a flash drive");
                     helper.assertTrue(!dvd.acceptsMedia(stick), "a DVD drive cannot read a flash drive: Frames 11 needs the dock");
-                    final net.minecraft.world.phys.AABB hub = helper.getBlockState(dockPos)
+                    final AABB box = helper.getBlockState(dockPos)
                             .getShape(helper.getLevel(), helper.absolutePos(dockPos)).bounds();
-                    helper.assertTrue(hub.maxY <= 0.5D && hub.getXsize() < 1.0D,
-                            "the dock is a low hub on the desk, not a full block: " + hub);
-                    final net.minecraft.world.phys.AABB drive = helper.getBlockState(dvdPos)
+                    helper.assertTrue(box.maxY >= 1.0D && box.getXsize() >= 1.0D,
+                            "the dock is a full block, as every device is: " + box);
+                    final AABB drive = helper.getBlockState(dvdPos)
                             .getShape(helper.getLevel(), helper.absolutePos(dvdPos)).bounds();
                     helper.assertTrue(drive.maxY >= 1.0D, "the disc drives stay full blocks");
                     helper.assertTrue(dock.insertMedia(stick.copyWithCount(1)).isEmpty(), "the stick docks");

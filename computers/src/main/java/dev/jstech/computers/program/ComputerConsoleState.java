@@ -77,6 +77,11 @@ public final class ComputerConsoleState {
      */
     private long session;
     /*
+     * The run of the machine in which MC-DOS's PRINT put its resident part in memory, or -1: a restart takes it
+     * out again, so the first PRINT of the next run installs it afresh. Not saved, as the run is not.
+     */
+    private long printResident = -1L;
+    /*
      * The program being set up right now, if any. One at a time: a machine installs one thing and
      * then the next, and a second request while one runs is told the machine is busy.
      */
@@ -267,6 +272,15 @@ public final class ComputerConsoleState {
     /** Which run of this machine is on the glass. */
     public long session() {
         return this.session;
+    }
+
+    /** Puts PRINT's resident part in memory for this run of the machine; whether it was not already there. */
+    public boolean installPrint() {
+        if (this.printResident == this.session) {
+            return false;
+        }
+        this.printResident = this.session;
+        return true;
     }
 
     /** The machine started over: whatever a terminal printed belongs to the run that has just ended. */

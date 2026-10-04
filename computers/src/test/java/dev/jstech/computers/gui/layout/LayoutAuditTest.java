@@ -15,6 +15,7 @@ import dev.jstech.computers.gui.CdeBackdrop;
 import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.os.boot.BootMenu;
+import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.tier.HardwareEra;
 import java.io.File;
@@ -54,7 +55,7 @@ class LayoutAuditTest {
             "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
             "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
             "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
-            "NetworkServicesLayout", "NetworkLinksLayout");
+            "NetworkServicesLayout", "NetworkLinksLayout", "PrinterLayout", "DockLayout", "PrintedPaperLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -197,6 +198,13 @@ class LayoutAuditTest {
         c.add(new AuditCase("InfoCenterLayout", InfoCenterLayout.layout(), true));
         // The power strip beside an opened monitor screen's frame: Power over Restart.
         c.add(new AuditCase("PowerStripLayout", PowerStripLayout.layout(), true));
+        // A printer's window: the tray, the job and its page, the queue, the output, the buttons, the inventory.
+        c.add(new AuditCase("PrinterLayout", PrinterLayout.layout(), true));
+        // The Dock Station's window: each tray and the port with what it holds, the note, the inventory.
+        c.add(new AuditCase("DockLayout", DockLayout.layout(), true));
+        // A printed sheet being read, the widest: a fanfold page on its side, which the screen scales to fit.
+        c.add(new AuditCase("PrintedPaperLayout", PrintedPaperLayout.layout(PrintedPaperLayout.landscape(true),
+                PrintLayout.LANDSCAPE_COLUMNS, PrintLayout.LANDSCAPE_LINES), false));
         /*
          * The Personalize page scrolls rather than being held to a budget, so it is audited for being clean
          * (no overlaps, nothing spilling past its own content height) at the worst case: the flat skin (every

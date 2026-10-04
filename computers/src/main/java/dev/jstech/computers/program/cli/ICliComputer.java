@@ -41,6 +41,43 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
     }
 
     /**
+     * One printer the machine prints on, for {@code lpstat} and {@code PRINT}.
+     *
+     * @param queue    the name its queue goes by in {@code lp -d}
+     * @param name     the name it was sold under
+     * @param printing whether a page is coming out now
+     * @param jobs     the documents in its queue, the one printing first
+     */
+    record PrinterInfo(String queue, String name, boolean printing, List<PrintJobInfo> jobs) {
+    }
+
+    /**
+     * One document in a printer's queue.
+     *
+     * @param id        its request id, the queue's name and a number
+     * @param user      who sent it
+     * @param bytes     how big it is
+     * @param submitted the world's time when it was sent
+     * @param title     its title, a file's name
+     */
+    record PrintJobInfo(String id, String user, int bytes, long submitted, String title) {
+    }
+
+    /**
+     * What became of a file sent to print.
+     *
+     * @param ok        whether a printer took it
+     * @param requestId the request id it became, empty when it was refused
+     * @param printer   the queue it went to, empty when none took it
+     * @param message   why it was refused, empty when it was taken
+     */
+    record PrintAnswer(boolean ok, String requestId, String printer, Text message) {
+
+        /** No printer took it, since the machine has none. */
+        public static final PrintAnswer NONE = new PrintAnswer(false, "", "", Text.EMPTY);
+    }
+
+    /**
      * Everything {@code screenfetch} shows about this machine: the distribution and its id (picks the
      * ASCII logo), kernel line, host and shell, the desktop environment (or the TTY), the hardware, disk
      * usage, installed package count and the world's uptime in ticks.

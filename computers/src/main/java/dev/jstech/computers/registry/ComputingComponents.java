@@ -12,6 +12,8 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.DiskSystems;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.printer.PrintedDocument;
+import dev.jstech.computers.printer.PrintedDocuments;
 import dev.jstech.computers.storage.DiskUsage;
 import dev.jstech.computers.storage.ServerStorageContents;
 import dev.jstech.core.id.StableCodecs;
@@ -179,6 +181,12 @@ public final class ComputingComponents {
             VOLUME_LABEL = COMPONENTS.registerComponentType("volume_label", b -> b
                     .persistent(Codec.STRING)
                     .networkSynchronized(ByteBufCodecs.STRING_UTF8));
+
+    /* What a Printed Paper carries: the document a printer printed, read page by page as it came out. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PrintedDocument>>
+            PRINTED_DOCUMENT = COMPONENTS.registerComponentType("printed_document", b -> b
+                    .persistent(PrintedDocuments.CODEC)
+                    .networkSynchronized(PrintedDocuments.STREAM_CODEC));
 
     private ComputingComponents() {
     }

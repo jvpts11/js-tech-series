@@ -26,7 +26,7 @@ import net.minecraft.world.phys.Vec3;
  * The floppy, CD, DVD and Blu-ray drives as a player sees them: each the drive of its day, the very medium the player put in
  * drawn in it (a floppy in the slot, a disc on the tray), a medium taken out still drawn on its way out and then
  * gone, the power lamp lit once a computer is linked, and the drive's item dark in a frame. The Dock Station beside
- * them keeps its block model. Each drive is shot close up in the middle of the clip that moves its medium.
+ * them stands with its stick in the port. Each drive is shot close up in the middle of the clip that moves its medium.
  */
 public final class MediaDriveClientTests {
 

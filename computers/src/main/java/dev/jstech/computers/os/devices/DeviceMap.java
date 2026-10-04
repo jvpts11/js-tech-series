@@ -7,10 +7,12 @@
  */
 package dev.jstech.computers.os.devices;
 
+import dev.jstech.computers.printer.PrinterModel;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.tier.HardwareEra;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -219,6 +221,16 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
         }
         if (blockId.endsWith("pattern_encoder")) {
             return "pattern_encoder";
+        }
+        // A printer wears the icon of its kind: the dot matrix, the inkjet, the all-in-one, the laser, the ink tank.
+        if (blockId.equals("printer") || blockId.endsWith("_printer")) {
+            return PrinterModel.of(switch (blockId) {
+                case "vintage_printer" -> HardwareEra.VINTAGE;
+                case "legacy_printer" -> HardwareEra.LEGACY;
+                case "transition_printer" -> HardwareEra.TRANSITION;
+                case "advanced_printer" -> HardwareEra.ADVANCED;
+                default -> HardwareEra.STANDARD;
+            }).icon();
         }
         return blockId;
     }

@@ -26,8 +26,10 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.ProgramFilesProjection;
+import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.InstallerProjection;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.interac.InteracState;
@@ -37,6 +39,7 @@ import dev.jstech.computers.program.cli.msd.MsdView;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
@@ -113,6 +116,15 @@ public final class FilePayloads {
                             .orElse(DiskFilesPayload.REMOVABLE_DRIVE.text());
                     volumes.add(new DiskFilesPayload.WireVolume("media:" + endpoint,
                             VolumeLabel.of(medium, fallback)));
+                }
+                // A dock's disks follow its stick, each a drive of its own, named as the disk is.
+                if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof DockStationBlockEntity dock) {
+                    for (int bay = 0; bay < DockStationBlockEntity.BAYS; bay++) {
+                        if (!dock.disk(bay).isEmpty()) {
+                            volumes.add(new DiskFilesPayload.WireVolume(MediaVolume.key(endpoint, bay),
+                                    VolumeLabel.of(dock.disk(bay), GameText.of(dock.disk(bay).getHoverName()))));
+                        }
+                    }
                 }
             }
             // The other machines' shared folders, reached through this machine's own shell.
@@ -196,13 +208,14 @@ public final class FilePayloads {
         if (media.isEmpty()) {
             return;
         }
-        final String rest = reqDir.substring("media:".length());
-        final int slash = rest.indexOf('/');
-        final long readerPos = Long.parseLong(slash < 0 ? rest : rest.substring(0, slash));
-        final String subDir = slash < 0 ? "" : rest.substring(slash + 1);
+        final MediaVolume volume = MediaVolume.parse(reqDir);
+        if (volume == null) {
+            return;
+        }
+        final String subDir = MediaVolume.subPath(reqDir);
         final FilesystemKind kind =
                 FilesystemKind.HIERARCHICAL;
-        final String prefix = "media:" + readerPos + "/";
+        final String prefix = volume.key() + "/";
         /*
          * An installer shows the disc of its era: setup, readme, manifest and payload, generated from
          * the medium's stamp the way a disk's .dat files are generated from its storage. It carries no

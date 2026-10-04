@@ -41,6 +41,7 @@ import dev.jstech.computers.operation.payload.machine.MachinePayloads;
 import dev.jstech.computers.operation.payload.network.NetworkPayloads;
 import dev.jstech.computers.operation.payload.network.NetworkServicesPayloads;
 import dev.jstech.computers.operation.payload.operations.OperationsPayloads;
+import dev.jstech.computers.operation.payload.printer.PrintPayloads;
 import dev.jstech.computers.operation.payload.program.ConsolePayloads;
 import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
 import dev.jstech.computers.operation.payload.program.ProgramPayloads;
@@ -102,5 +103,6 @@ public final class ComputingPayloads {
         AutomationPayloads.register(registrar);
         ClusterManagerPayloads.register(registrar);
         GatewayManagerPayloads.register(registrar);
+        PrintPayloads.register(registrar);
     }
 }

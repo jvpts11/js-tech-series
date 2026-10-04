@@ -76,8 +76,8 @@ public final class NmsLayout {
 
     // File menu dropdown: appears below the menu bar when File is clicked.
 
-    /** Number of items in the File dropdown (New / Save / Save As... / Open...). */
-    public static final int FILE_DROP_ITEMS = 4;
+    /** Number of items in the File dropdown (New / Save / Save As... / Open... / Print...). */
+    public static final int FILE_DROP_ITEMS = 5;
 
     /** Width of the File dropdown panel. */
     public static final int FILE_DROP_W = 76;

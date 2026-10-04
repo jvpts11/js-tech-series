@@ -32,6 +32,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,8 @@ import java.util.Optional;
  *
  * <p>The floppy, CD and DVD drives are drawn as models of the drives of their day: the medium in the drive is the
  * very item the player put in, the tray or the slot plays its clip as a medium goes in or comes out, and the lamps
- * say whether a computer is linked and whether it is reading the drive. The Dock Station keeps its block model.
+ * say whether a computer is linked and whether it is reading the drive. The Dock Station is a reader of a kind of its
+ * own, its stick port being this slot, with trays for disks besides.
  */
 public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IAudible,
         GeoBlockEntity {
@@ -80,7 +82,12 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
     private boolean breaking;
 
     public MediaReaderBlockEntity(final BlockPos pos, final BlockState state) {
-        super(ComputingModule.MEDIA_READER_BE.get(), pos, state);
+        this(ComputingModule.MEDIA_READER_BE.get(), pos, state);
+    }
+
+    /** A reader of a kind of its own, as the Dock Station is, which holds disks besides its stick. */
+    protected MediaReaderBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
+        super(type, pos, state);
         fields().mirror(MediaReaderBlock.LOADED, this::hasMedia);
         fields().whenBroken((level, at) -> breaking = true);
     }
@@ -200,7 +207,7 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
         return geckoCache;
     }
 
-    /** Whether this reader is drawn as a model: the drives are, the Dock Station keeps its block model. */
+    /** Whether this reader plays a drive's clips as its medium moves: the drives do, the Dock Station has none. */
     public boolean modelled() {
         return driveType() != MediaDriveType.DOCK_STATION;
     }

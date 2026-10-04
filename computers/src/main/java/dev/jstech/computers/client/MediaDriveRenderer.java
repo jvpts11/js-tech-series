@@ -21,8 +21,7 @@ import software.bernie.geckolib.renderer.GeoBlockRenderer;
 /**
  * Draws a floppy, CD or DVD drive as the drive of its day. The power lamp is lit while a computer is at the other
  * end of its cable, and the activity lamp blinks while that computer reads the drive. The medium in it is the very
- * item the player put in. The Dock Station shares the drives' block entity but keeps its block model, so nothing is
- * drawn for it here.
+ * item the player put in. The Dock Station is a reader too, with a block entity and a renderer of its own.
  */
 public final class MediaDriveRenderer extends GeoBlockRenderer<MediaReaderBlockEntity> {
 

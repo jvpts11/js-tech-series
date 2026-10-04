@@ -8,16 +8,21 @@
 package dev.jstech.computers.program;
 
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.blockentity.PrinterBlockEntity;
 import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.computers.printer.PrintedDocument;
+import dev.jstech.computers.printer.Printers;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.DosPath;
 import dev.jstech.computers.program.cli.PosixPath;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.Text;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,6 +33,10 @@ import org.jetbrains.annotations.Nullable;
  * {@link ServerCliComputer} over the machine itself.
  */
 abstract class ServerCliFiles extends ServerCliShell {
+
+    /** The commands a file is printed with, which its printout says it came from. */
+    private static final String POSIX_PRINT = "lp";
+    private static final String DOS_PRINT = "PRINT";
 
     protected ServerCliFiles(final IComputerTerminalHost host, final ServerLevel level,
                              @Nullable final ServerPlayer typist) {
@@ -107,6 +116,54 @@ abstract class ServerCliFiles extends ServerCliShell {
     @Override
     public List<MountInfo> mounts() {
         return files().mounts();
+    }
+
+    @Override
+    public List<PrinterInfo> printers() {
+        if (!(hostBlock instanceof IOsHost computer)) {
+            return List.of();
+        }
+        final List<PrinterInfo> out = new ArrayList<>();
+        for (final PrinterBlockEntity printer : Printers.of(level, computer)) {
+            final List<PrintJobInfo> jobs = new ArrayList<>();
+            for (final PrinterBlockEntity.PrintJob job : printer.jobs()) {
+                jobs.add(new PrintJobInfo(Printers.requestId(printer, job), job.user(),
+                        job.document().bytes() * job.copies(), job.submitted(), job.document().title()));
+            }
+            out.add(new PrinterInfo(printer.model().queueName(), printer.model().displayName().english(),
+                    printer.printing(), jobs));
+        }
+        return out;
+    }
+
+    @Override
+    public boolean installPrint() {
+        final ComputerConsoleState console = host.console();
+        return console != null && console.installPrint();
+    }
+
+    @Override
+    public PrintAnswer printFile(final String path, final String printer, final int copies) {
+        if (!(hostBlock instanceof IOsHost computer)) {
+            return PrintAnswer.NONE;
+        }
+        final FsResult read = readFile(path);
+        if (!read.ok()) {
+            return new PrintAnswer(false, "", "", read.message());
+        }
+        final PrinterBlockEntity target = printer.isEmpty() ? Printers.at(level, computer, -1L)
+                : Printers.named(level, computer, printer);
+        final String name = path.substring(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1);
+        final String program = shellFamily() == ShellFamily.POSIX ? POSIX_PRINT : DOS_PRINT;
+        final PrintedDocument document = Printers.text(name, Printers.machineName(computer), program,
+                read.message().english(), false, 0, 0);
+        final Printers.Result result = Printers.print(level, target, document, copies,
+                typist == null ? "root" : typist.getGameProfile().getName());
+        if (!result.ok() || result.printer() == null || result.job() == null) {
+            return new PrintAnswer(false, "", "", result.message());
+        }
+        return new PrintAnswer(true, Printers.requestId(result.printer(), result.job()),
+                result.printer().model().queueName(), Text.EMPTY);
     }
 
     @Override

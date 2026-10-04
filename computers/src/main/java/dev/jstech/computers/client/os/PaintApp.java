@@ -87,6 +87,9 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int CHECKER_SQUARE = 6;
     /** How many steps back the program remembers, which is what a drawing hand actually needs. */
     private static final int UNDO_DEPTH = 24;
+    /** What a picture not yet saved is called on its printout, and Paint's own id for where it came from. */
+    private static final String UNTITLED = "untitled.pix";
+    private static final String PROGRAM = "jsc:paint";
     /** Paint's own colours, {@code jsc:app/paint}: the chequer under a transparent pixel, and the canvas edge. */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/paint",
             new Colours(0xFFBFBFBF, 0xFFA0A0A0, 0xFF2B2B2B));
@@ -102,6 +105,8 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     private final Button saveButton;
     private final Button undoButton;
     private final Button zoomButton;
+    private final Button printButton;
+    private final PrintDialog printDialog;
     private final Button wallpaperButton;
 
     private OsSkin skin = OsSkin.fallback();
@@ -147,7 +152,15 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
         saveButton = root.add(new Button(GameText.resolve(PaintTexts.SAVE), this::chooseSave));
         undoButton = root.add(new Button(GameText.resolve(PaintTexts.UNDO), this::undo));
         zoomButton = root.add(new Button(() -> GameText.resolve(PaintTexts.ZOOM.with(zoom)), this::cycleZoom));
+        this.printDialog = new PrintDialog(host, this);
+        printButton = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::print));
         wallpaperButton = root.add(new Button(GameText.resolve(PaintTexts.WALLPAPER), this::setAsWallpaper));
+    }
+
+    /* The picture, one to a page and fitted to the sheet, to the printer, which puts it on paper its own way. */
+    private void print() {
+        final String name = path.isEmpty() ? UNTITLED : path.substring(path.lastIndexOf('/') + 1);
+        printDialog.show(PrintDialog.Document.picture(name, ActiveDesktop.windowName(PROGRAM), image.encode()));
     }
 
     /* What the picture is */
@@ -187,6 +200,11 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
         dialog.openFile(PaintTexts.OPEN_PICTURE.text(), "",
                 List.of(FileDialog.Filter.of(PaintTexts.PICTURES, PixImage.EXTENSION), FileDialog.Filter.ALL),
                 this::openFile);
+    }
+
+    /** The Print window Paint opens over itself. */
+    public PrintDialog printDialog() {
+        return printDialog;
     }
 
     @Override
@@ -332,6 +350,7 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
         bx = place(undoButton, font, undoButton.label(), bx, y);
         // Sized for one digit, so the button keeps its width as the zoom steps through them.
         bx = place(zoomButton, font, GameText.resolve(PaintTexts.ZOOM.with(0)), bx, y);
+        bx = place(printButton, font, printButton.label(), bx, y);
         final int w = font.width(wallpaperButton.label()) + 8;
         // Pinned right, never back over the button before it; a narrow window clips rather than overlaps.
         wallpaperButton.setBounds(Math.max(bx, x + width - MARGIN - w), y + 1, w, 12);
@@ -690,6 +709,10 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
         }
         if ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0 && key == GLFW.GLFW_KEY_S) {
             chooseSave();
+            return true;
+        }
+        if ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0 && key == GLFW.GLFW_KEY_P) {
+            print();
             return true;
         }
         return false;

@@ -457,6 +457,36 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   figures; Frames 11 a GPU page with how busy it is, how full its memory is, its cores and slot, and what holds its
   memory; the Plasma monitor a GPU card beside memory and processor; GNOME its video memory history; the System
   Monitor the card's name, its memory and its load.
+- Printers, one for each era, each the printer of its day on a period base: the Epsilon FX-80 dot matrix, the Pakard
+  DeskJot 940 and FotoSmart C4280 inkjets, the Pakard LaserJot 1102 laser and the Epsilon EcoTonk ET-2720 ink tank
+  printer. A printer is a peripheral of a computer, on the port of its era in the middle of its back, and prints
+  whatever the computer's programs send it: a sheet of paper from its tray for each page, a page taking as long as
+  the printer's sound lasts, the page sliding out and the busy lamp blinking while it prints. Documents wait in its
+  queue in the order they came; with the tray empty or no room for the next sheet in the output the queue waits.
+  Its window, in the skin of its era, shows the paper, what prints now and its page, the queue with the machine
+  each document came from, the sheets that came out, and Pause and Cancel job.
+- The Printed Paper, the sheet a printer turns out: its tooltip gives the title, the pages, the first lines and the
+  printer, and a right click reads it page by page, on the fanfold paper with its green bars and tractor holes from
+  the dot matrix and a plain sheet from the others. A printed picture shows on it as that printer put it on paper,
+  and in an item frame it shows on the frame, as a map does.
+- Print in the programs: the Editor, Exceed, the IQL results of the management studio, the Network Manager's log,
+  the Network Interactor's list, Exposure's open file, and Paint's picture, each printer printing a picture its own
+  way (the dot matrix in black dots, the inkjets in coloured dots, the laser in a grey halftone, the ink tank as it
+  is). The Print window is each system's own: the classic one of Frames 95 and XP and the older desktops, with the
+  printer, its status, where it is and its paper, the pages, the copies and the way the page lies, and on Frames 11
+  and the flat desktops of today the same beside a preview of the page; it counts the sheets before anything is sent.
+- MC-DOS prints from its prompt with `PRINT`, which installs its resident part the first time and lists what is
+  printing and what waits; UNIX, Linux and FreeBSD with `lp`, which answers with a request id (`-d` for the
+  printer, `-n` for the copies), and `lpstat`, which lists the requests and, with `-p`, the printers.
+- The Dock Station is redone as a full block, a black aluminium enclosure on four feet with three trays and the USB
+  port: a hard disk in the 3.5" bay, a SATA disk in the 2.5" bay and an NVMe in the M.2 tray, of any era, each shown
+  in its tray's window with its lamp, and the flash drive in the port. A disk going in or out of a tray sounds like a
+  server on its rails. Its window lists each tray and the port with what it holds, the letter the computer gives it,
+  its era and how full it is, whether it is mounted, and Eject.
+- A disk in a Dock Station's tray is an external drive of the computer the dock is linked to, lettered after the
+  dock's stick: This PC and the explorers list it and open it, the shells read and write it by its letter, and on
+  Linux, UNIX and FreeBSD it is mounted under `/media` or `/mnt`.
+- The Network Gateway's back has the Vintage serial port, the DE-9, in its middle, so a computer of any era links it.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

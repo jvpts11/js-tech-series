@@ -109,6 +109,26 @@ public final class ComputingSounds {
     public static final SoundKey RACK_SLIDE_OUT = CONTENT.sound("rack/slide_out")
             .channel(AudioChannels.DEVICES).subtitle("Server slides out of a rack").register();
 
+    /*
+     * The printers, each one page coming out: a printer plays its loop while it prints, once a page, and stops when
+     * its tray runs out of paper or its queue empties.
+     */
+
+    public static final SoundKey PRINTER_EPSILON_FX_80 = CONTENT.sound("printer/epsilon_fx_80").loop()
+            .channel(AudioChannels.DEVICES).range(12).subtitle("Dot matrix printer prints").register();
+
+    public static final SoundKey PRINTER_PAKARD_DESKJOT_940 = CONTENT.sound("printer/pakard_deskjot_940").loop()
+            .channel(AudioChannels.DEVICES).range(10).subtitle("Inkjet printer prints").register();
+
+    public static final SoundKey PRINTER_PAKARD_FOTOSMART_C4280 = CONTENT.sound("printer/pakard_fotosmart_c4280")
+            .loop().channel(AudioChannels.DEVICES).range(10).subtitle("Inkjet printer prints").register();
+
+    public static final SoundKey PRINTER_PAKARD_LASERJOT_1102 = CONTENT.sound("printer/pakard_laserjot_1102").loop()
+            .channel(AudioChannels.DEVICES).range(10).subtitle("Laser printer prints").register();
+
+    public static final SoundKey PRINTER_EPSILON_ECOTONK_ET_2720 = CONTENT.sound("printer/epsilon_ecotonk_et_2720")
+            .loop().channel(AudioChannels.DEVICES).range(10).subtitle("Ink tank printer prints").register();
+
     /** The tape reels of a Vintage Mainframe turning while it runs. */
     public static final SoundKey MAINFRAME_TAPE = CONTENT.sound("mainframe/tape").loop()
             .range(12).subtitle("Tape reels turn").register();

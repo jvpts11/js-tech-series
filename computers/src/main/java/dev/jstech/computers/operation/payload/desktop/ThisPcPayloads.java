@@ -43,6 +43,9 @@ import dev.jstech.computers.os.WorkstationFacts;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.machine.DriveTable;
+import dev.jstech.computers.os.media.DockStationBlockEntity;
+import dev.jstech.computers.os.media.MediaDriveType;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.DriveVolumes;
@@ -54,6 +57,7 @@ import dev.jstech.core.text.TextLists;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -131,10 +135,20 @@ public final class ThisPcPayloads {
                 }
                 slot++;
             }
-            for (final long endpoint : computer.enabledEndpoints()) {
+            // In the order the machine letters them, so a row's letter is the drive's; a dock's disks after its stick.
+            final List<Long> endpoints = new ArrayList<>(computer.enabledEndpoints());
+            Collections.sort(endpoints);
+            for (final long endpoint : endpoints) {
                 if (Loaded.blockEntity(level, BlockPos.of(endpoint))
                         instanceof MediaReaderBlockEntity reader) {
                     media.add(mediaRow(computer, payload.hostPos(), endpoint, reader));
+                    if (reader instanceof DockStationBlockEntity dock) {
+                        for (int bay = 0; bay < DockStationBlockEntity.BAYS; bay++) {
+                            if (!dock.disk(bay).isEmpty()) {
+                                media.add(dockedRow(payload.hostPos(), endpoint, dock, bay));
+                            }
+                        }
+                    }
                 }
             }
             installed.addAll(computer.console().installed());
@@ -144,6 +158,20 @@ public final class ThisPcPayloads {
         }
         PacketDistributor.sendToPlayer(player,
                 new ThisPcPayload(payload.hostPos(), ThisPcPayload.WireMachine.EMPTY, disks, media, installed));
+    }
+
+    /** A disk in a Dock Station's tray, as This PC lists it: an external drive, its name, size and use. */
+    private static ThisPcPayload.WireMedia dockedRow(final BlockPos host, final long endpoint,
+                                                     final DockStationBlockEntity dock, final int bay) {
+        final ItemStack disk = dock.disk(bay);
+        final long capItems = disk.getItem() instanceof DiskItem item ? item.spec().capacityItems() : 0L;
+        final long usedItems = Math.max(0L, capItems - DriveTable.freeWeightOf(disk) / StorageKey.MB_EQ_PER_ITEM);
+        final BlockPos at = BlockPos.of(endpoint);
+        final int blocksAway = Math.abs(at.getX() - host.getX()) + Math.abs(at.getY() - host.getY())
+                + Math.abs(at.getZ() - host.getZ());
+        return new ThisPcPayload.WireMedia(endpoint, MediaDriveType.DOCK_STATION.serializedName(),
+                GameText.of(disk.getHoverName()), "", "", false, "", 0, "", List.of(), 0L, blocksAway, bay,
+                capItems, usedItems);
     }
 
     /** One drive row for This PC: what is in the drive and, for an installer, what it would install. */
@@ -343,7 +371,8 @@ public final class ThisPcPayloads {
                 && computer.enabledEndpoints().contains(payload.readerPos())
                 && Loaded.blockEntity(level, BlockPos.of(payload.readerPos()))
                         instanceof MediaReaderBlockEntity reader) {
-            final ItemStack ejected = reader.ejectMedia();
+            final ItemStack ejected = payload.bay() < 0 ? reader.ejectMedia()
+                    : reader instanceof DockStationBlockEntity dock ? dock.ejectDisk(payload.bay()) : ItemStack.EMPTY;
             if (!ejected.isEmpty() && !player.addItem(ejected)) {
                 final BlockPos at = BlockPos.of(payload.readerPos());
                 Containers.dropItemStack(level, at.getX() + 0.5, at.getY() + 1.0,

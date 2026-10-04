@@ -15,9 +15,13 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.StorageProjection;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.machine.DriveTable;
+import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.ServerStorageContents;
@@ -76,50 +80,43 @@ public final class FileAccess {
     public static ItemStack mediaStackFor(final ServerLevel level,
             final IOsHost computer,
             final String mediaPath) {
-        final String rest = mediaPath.substring("media:".length());
-        final int slash = rest.indexOf('/');
-        final long readerPos;
-        try {
-            readerPos = Long.parseLong(slash < 0 ? rest : rest.substring(0, slash));
-        } catch (final NumberFormatException e) {
-            return ItemStack.EMPTY;
-        }
-        if (!computer.enabledEndpoints().contains(readerPos)
-                || !(Loaded.blockEntity(level, BlockPos.of(readerPos))
+        final MediaVolume volume = MediaVolume.parse(mediaPath);
+        if (volume == null || !computer.enabledEndpoints().contains(volume.readerPos())
+                || !(Loaded.blockEntity(level, BlockPos.of(volume.readerPos()))
                         instanceof MediaReaderBlockEntity reader)) {
             return ItemStack.EMPTY;
+        }
+        if (volume.docked()) {
+            return reader instanceof DockStationBlockEntity dock ? dock.disk(volume.bay()) : ItemStack.EMPTY;
         }
         return reader.mediaSlot().getStackInSlot(0);
     }
 
-    /** Strips the {@code media:<readerPos>/} prefix from a media path, leaving the path within the medium. */
+    /** Strips the volume's key from a media path, leaving the path within the medium. */
     public static String mediaSubPath(final String mediaPath) {
-        final String rest = mediaPath.substring("media:".length());
-        final int slash = rest.indexOf('/');
-        return slash < 0 ? "" : rest.substring(slash + 1);
+        return MediaVolume.subPath(mediaPath);
     }
 
-    /** Re-syncs the reader holding {@code media:<readerPos>} after its medium's filesystem changed. */
+    /** Saves and shows the reader holding a media path's volume after its filesystem changed. */
     static void commitMedia(final ServerLevel level,
             final IOsHost computer,
             final String mediaPath) {
-        final String rest = mediaPath.substring("media:".length());
-        final int slash = rest.indexOf('/');
-        final long readerPos;
-        try {
-            readerPos = Long.parseLong(slash < 0 ? rest : rest.substring(0, slash));
-        } catch (final NumberFormatException e) {
-            return;
-        }
-        if (Loaded.blockEntity(level, BlockPos.of(readerPos))
+        final MediaVolume volume = MediaVolume.parse(mediaPath);
+        if (volume != null && Loaded.blockEntity(level, BlockPos.of(volume.readerPos()))
                 instanceof MediaReaderBlockEntity reader) {
             reader.setChanged();
             reader.fields().syncToClients();
         }
     }
 
-    /** Free space on a medium in mB-equivalents (capacity minus its stored files). */
+    /**
+     * Free space on a medium in mB-equivalents (capacity minus its stored files); a docked disk's as the computer's
+     * own disks count it.
+     */
     static long mediaFreeWeight(final ItemStack media) {
+        if (media.getItem() instanceof DiskItem) {
+            return DriveTable.freeWeightOf(media);
+        }
         final long cap = media.getItem()
                 instanceof FormattedMediaItem fm
                 ? fm.format().capacityItems() : 64L;

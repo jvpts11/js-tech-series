@@ -183,7 +183,7 @@ public final class ThisPcApp implements IDesktopApp {
         }
 
         DriveRow(final WireMedia media, final int letterIndex) {
-            this.key = "media:" + media.readerPos();
+            this.key = media.volumeKey();
             this.disk = null;
             this.media = media;
             this.letterIndex = letterIndex;
@@ -195,7 +195,7 @@ public final class ThisPcApp implements IDesktopApp {
             }
             if (media.loaded()) {
                 buttons.add(add(new Button(GameText.resolve(ThisPcTexts.OPEN), open)));
-                buttons.add(add(new Button(GameText.resolve(ThisPcTexts.EJECT), () -> eject(media.readerPos()))));
+                buttons.add(add(new Button(GameText.resolve(ThisPcTexts.EJECT), () -> eject(media))));
             }
         }
 
@@ -255,6 +255,19 @@ public final class ThisPcApp implements IDesktopApp {
                 }
                 final String usage = GameText.resolve(ThisPcTexts.FREE.with(disk.freeItems(), disk.capItems()));
                 g.drawString(font, usage, tx + maxW - font.width(usage), cy + 11, ctx.skin().dim(), false);
+            } else if (media != null && media.docked()) {
+                // A docked disk is an external drive: the disk's picture, its name and letter, and how full it is.
+                drawDiskIcon(g, cx + 4, cy + 5);
+                final String label = GameText.resolve(media.mediaName()) + (drive().isEmpty() ? "" : "  " + drive());
+                Draw.text(g, font, Texts.trim(font, label, maxW), tx, cy + 2, textColor);
+                final int barW = maxW - 70;
+                final Colours c = PALETTE.get();
+                g.fill(tx, cy + 12, tx + barW, cy + 15, c.barTrack());
+                final long cap = Math.max(1, media.capItems());
+                final int used = (int) Math.min(barW, barW * media.usedItems() / cap);
+                g.fill(tx, cy + 12, tx + used, cy + 15, c.segmentFiles());
+                final String usage = GameText.resolve(ThisPcTexts.FREE.with(media.freeItems(), media.capItems()));
+                Draw.text(g, font, usage, tx + maxW - font.width(usage), cy + 11, ctx.skin().dim());
             } else if (media != null) {
                 drawMediaIcon(g, cx + 4, cy + 5, media);
                 final String head = prettyDrive(media.drive()) + (drive().isEmpty() ? "" : "  " + drive()) + "   "
@@ -1121,8 +1134,8 @@ public final class ThisPcApp implements IDesktopApp {
         ActiveDesktop.refreshActive();
     }
 
-    private void eject(final long readerPos) {
-        PacketDistributor.sendToServer(new EjectMediaPayload(host, readerPos));
+    private void eject(final WireMedia media) {
+        PacketDistributor.sendToServer(new EjectMediaPayload(host, media.readerPos(), media.bay()));
         request();
     }
 
@@ -1143,9 +1156,8 @@ public final class ThisPcApp implements IDesktopApp {
                 }
             }
         } else {
-            final long pos = Long.parseLong(selectedKey.substring(6));
             for (final WireMedia m : data.media()) {
-                if (m.readerPos() == pos) {
+                if (m.volumeKey().equals(selectedKey)) {
                     label = GameText.resolve(m.mediaName());
                 }
             }

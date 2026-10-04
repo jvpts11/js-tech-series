@@ -216,6 +216,24 @@ public interface ICliFiles {
         return List.of();
     }
 
+    /** The printers the machine prints on, with their queues; none on a machine with none, or no world. */
+    default List<ICliComputer.PrinterInfo> printers() {
+        return List.of();
+    }
+
+    /**
+     * Prints a text file of the machine's disks, on the printer whose queue goes by {@code printer}, or on the first
+     * when it is empty.
+     */
+    default ICliComputer.PrintAnswer printFile(final String path, final String printer, final int copies) {
+        return ICliComputer.PrintAnswer.NONE;
+    }
+
+    /** Puts PRINT's resident part in memory for this run of the machine; whether it was not there before. */
+    default boolean installPrint() {
+        return false;
+    }
+
     /**
      * Formats the drive with the given letter: erases the installed system, every file, and the item
      * storage on it. Refuses the drive the running system lives on.

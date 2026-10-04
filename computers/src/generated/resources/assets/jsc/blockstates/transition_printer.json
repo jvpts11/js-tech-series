@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/transition_printer_body"
+    }
+  }
+}

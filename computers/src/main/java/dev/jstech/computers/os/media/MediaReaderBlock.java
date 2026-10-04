@@ -20,7 +20,6 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
@@ -82,16 +81,13 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
     private static final TextKey DOCK_STATION = TextKey.of("jsc.media.media_reader_block.dock_station",
             "dock station");
 
-    /**
-     * The Dock Station is a low hub on the desk, not a cube: 14 wide, 10 deep and a hand tall, with the stick
-     * standing out of its front when one is docked. Its shape follows the model so a player can stand things on it
-     * and walk past the stick; the disc drives stay full blocks.
-     */
-    private static final VoxelShape DOCK_NORTH_SOUTH = Block.box(1, 0, 3, 15, 6.5, 13);
-    private static final VoxelShape DOCK_EAST_WEST = Block.box(3, 0, 1, 13, 6.5, 15);
-
     public MediaReaderBlock(final MediaDriveType driveType, final Properties properties) {
-        super(properties, DEVICE);
+        this(driveType, properties, DEVICE);
+    }
+
+    /** A reader with a block entity of its own kind, as the Dock Station's, which holds disks besides its stick. */
+    protected MediaReaderBlock(final MediaDriveType driveType, final Properties properties, final Device<?> device) {
+        super(properties, device);
         this.driveType = driveType;
         this.ports = PeripheralSockets.back(driveType.era());
         registerDefaultState(defaultBlockState().setValue(LOADED, false));
@@ -162,13 +158,11 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
+    /* Every reader fills its block, the Dock Station as much as the drives. */
     @Override
     protected VoxelShape getShape(final BlockState state, final BlockGetter level, final BlockPos pos,
                                   final CollisionContext context) {
-        if (driveType != MediaDriveType.DOCK_STATION) {
-            return Shapes.block();
-        }
-        return state.getValue(FACING).getAxis() == Direction.Axis.Z ? DOCK_NORTH_SOUTH : DOCK_EAST_WEST;
+        return Shapes.block();
     }
 
     /** A readable name for this drive, for the message a refused disc gets. */

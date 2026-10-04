@@ -11,11 +11,14 @@ import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.SupercomputerRackBlock;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.blockentity.PrinterBlockEntity;
 import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.content.GeoLook;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.List;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -35,6 +38,24 @@ public final class ComputingLooks {
     /** The Pattern Encoder's bodies, by era; they share the medium going in and out. */
     public static final GeoLook<PatternEncoderBlockEntity> PATTERN_ENCODER = GeoLook.of(JsComputers.MODID,
             "pattern_encoder", "pattern_encoder", encoder -> patternEncoder(encoder.era()));
+    /** The printers, one model each era; they share one animation file, a clip of the page coming out for each. */
+    public static final GeoLook<PrinterBlockEntity> PRINTER = GeoLook.of(JsComputers.MODID, "printer", "printer",
+            printer -> printer(printer.model().era()));
+    /** A printer's lamps: its power, lit while linked, and its busy lamp; and the sheet coming out. */
+    public static final String PRINTER_POWER_LAMP = "lamp_power";
+    public static final String PRINTER_BUSY_LAMP = "lamp_busy";
+    public static final String PRINTER_PAPER = "paper";
+    /** The Dock Station: one model, its trays marking where each disk is drawn, no clips. */
+    public static final GeoLook<DockStationBlockEntity> DOCK_STATION = GeoLook.of(JsComputers.MODID, "dock",
+            "dock_station", dock -> "dock_station");
+    /** The Dock Station's power lamp, each tray's lamp, and the stick standing in its port. */
+    public static final String DOCK_POWER_LAMP = "lamp_power";
+    public static final List<String> DOCK_BAY_LAMPS = List.of("lamp_bay_hdd", "lamp_bay_ssd", "lamp_bay_nvme");
+    public static final List<String> DOCK_BAYS = List.of("bay_hdd", "bay_ssd", "bay_nvme");
+    public static final String DOCK_STICK = "stick";
+    /** What the Dock's item does not show: its lamps and the stick. */
+    public static final List<String> DOCK_AT_REST = List.of(DOCK_POWER_LAMP, "lamp_bay_hdd", "lamp_bay_ssd",
+            "lamp_bay_nvme", DOCK_STICK);
     /** The drives, one model each: a floppy drive, a CD drive and a DVD drive are different machines. */
     public static final GeoLook<MediaReaderBlockEntity> MEDIA_DRIVE = GeoLook.of(JsComputers.MODID, "media_drive",
             "media_drive", drive -> drive.driveType().serializedName());
@@ -100,6 +121,17 @@ public final class ComputingLooks {
         }
         // An era after the Advanced has the Advanced's.
         return era.level() >= HardwareEra.ADVANCED.level() ? "advanced_pattern_encoder" : "pattern_encoder";
+    }
+
+    /** The model of the printer of {@code era}: the Standard one has no era in its name, as its block has none. */
+    public static String printer(final HardwareEra era) {
+        return switch (era) {
+            case VINTAGE -> "vintage_printer";
+            case LEGACY -> "legacy_printer";
+            case TRANSITION -> "transition_printer";
+            case STANDARD -> "printer";
+            case ADVANCED, EXA, SINGULARITY -> "advanced_printer";
+        };
     }
 
     /** The model of a rack's cabinet: by kind first, then by era. */
