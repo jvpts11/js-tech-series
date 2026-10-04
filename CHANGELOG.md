@@ -432,6 +432,24 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   and Explain Analyze (Shift+F7). Its Statistics tab lists what the planner reckons with, its Rules tab its rules,
   each switched on or off, and the hints it takes, and its History tab the plans made lately, any of which opens on
   the Explain tab. It opens only where NextgreIQL runs.
+- Prophet YourIQL, a third Network Operations Engine, from the Prophet house: the state-oriented one. A Mainframe from
+  the Legacy on installs it as a package, in the version of its age (3.23 on a Legacy, 5.0 on a Transition, 5.6 on a
+  Standard, 8.0 on an Advanced). Told what state the network is to keep, it works out the crafts to get there and
+  stay there: `KEEP item >= n` or `KEEP item BETWEEN a AND b` holds a level, counting what is already on its way so
+  nothing is asked for twice, and says when nothing on the network can make it or when the level is over its band;
+  `WATCH item < n DO statement` runs a statement once when a level crosses a line, and again only after it crossed
+  back (`CRAFT item TO n` makes up to a level); `FORGET` lets either go and `SHOW STATES` lists them. It looks at the
+  network once a second by default and does only what changed: on a network standing still a look costs one
+  comparison. How often it looks, how much it asks for in one craft and whether it reacts at all are settings of
+  the Mainframe. The Midsoft IQL Server does not speak these words.
+- The Prophet Reactive Console, Prophet YourIQL's own tool, on any windowed system from the Legacy on: its States
+  tab lists each state with where it stands, its level against its band, the work on its way and the last thing done
+  for it, and under them the selected state's graph (the band, the level as it went, and where the work on its way
+  takes it) with the Operations set going for it; its Subscriptions tab the watches, its Reactions tab what the
+  engine did, its Settings tab how it looks and reacts. A statement is written at the YourIQL prompt, checked and
+  applied. It opens only where Prophet YourIQL runs.
+- The Automation Manager's "Restock below" points whoever wants a level held, counting what is on its way, to
+  Prophet YourIQL's KEEP.
 - The menus of J's Core write an item's keys at the right of its row.
 - A shared list of the network's Operations in flight, which the Network Manager's Processes tab and the studio's
   Activity Monitor both show.

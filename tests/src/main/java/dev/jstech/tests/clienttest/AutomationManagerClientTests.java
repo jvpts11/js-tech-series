@@ -60,7 +60,10 @@ public final class AutomationManagerClientTests {
                 .thenWaitUntil(() -> manager(ctx).restockNoteShown(), SCREEN_WAIT,
                         "Restock below to say it does not count what is on its way")
                 .thenScreenshot(4, "restock-below")
-                .then(0, () -> ctx.assertTrue(manager(ctx).engineOnline(), "the Automation Engine shows online"));
+                .then(0, () -> ctx.assertTrue(manager(ctx).engineOnline(), "the Automation Engine shows online"))
+                .then(0, () -> ctx.assertTrue(manager(ctx).prophetTipText().contains("KEEP"),
+                        "and points whoever wants a level held to Prophet YourIQL's KEEP; got "
+                                + manager(ctx).prophetTipText()));
     }
 
     @Nullable

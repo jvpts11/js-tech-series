@@ -24,6 +24,7 @@ import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -54,7 +55,9 @@ public final class AutomationManagerApp implements IDesktopApp {
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/automation_manager",
             new Colours(0xFF2EA043, 0xFFE0A020, 0xFFC0504A, 0x162EA043, 0x22E0A020));
     private static final int JOB_ROW_H = 13;
-    private static final int FORM_H = 78;
+    private static final int FORM_H = 88;
+    /** The level the tip shows before one is typed. */
+    private static final String DEFAULT_LEVEL = "256";
     private static final int FIELD_MAX = 48;
 
     private static final TextKey[] TYPE_LABELS =
@@ -114,6 +117,7 @@ public final class AutomationManagerApp implements IDesktopApp {
     private final Label amountCaption;
     private final TextField amountField;
     private final Label restockNote;
+    private final Label prophetTip;
     private final Label intervalCaption;
     private final TextField intervalField;
     private final Label fromCaption;
@@ -159,6 +163,8 @@ public final class AutomationManagerApp implements IDesktopApp {
                         : AutomationTexts.AMOUNT), Label.Tone.DIM));
         amountField = root.add(new DigitField());
         restockNote = root.add(new Label(GameText.resolve(AutomationTexts.RESTOCK_NOTE), Label.Tone.DIM));
+        // Who wants a level held, counting what is on its way, is pointed at the engine whose word "keep" is.
+        prophetTip = root.add(new Label(this::tipText, Label.Tone.DIM));
         intervalCaption = root.add(new Label(GameText.resolve(AutomationTexts.EVERY), Label.Tone.DIM));
         intervalField = root.add(new TokenField());
         fromCaption = root.add(new Label(GameText.resolve(AutomationTexts.FROM), Label.Tone.DIM));
@@ -293,8 +299,8 @@ public final class AutomationManagerApp implements IDesktopApp {
         final int colW = (w - 6) / 2;
         final int right = x + colW + 6;
         for (final var c : List.of(nameCaption, nameField, itemCaption, itemField, amountCaption, amountField,
-                restockNote, intervalCaption, intervalField, fromCaption, fromField, toCaption, toField, scriptCaption,
-                noScriptsLabel, scripts)) {
+                restockNote, prophetTip, intervalCaption, intervalField, fromCaption, fromField, toCaption, toField,
+                scriptCaption, noScriptsLabel, scripts)) {
             c.setVisible(false);
         }
         final int cw = font.width(create.label()) + 14;
@@ -307,6 +313,8 @@ public final class AutomationManagerApp implements IDesktopApp {
                     // Under the fields and clear of the Create button: a restock does not count what is coming.
                     restockNote.setVisible(true);
                     restockNote.setBounds(x, rowY + 48, w - cw - 6, 8);
+                    prophetTip.setVisible(true);
+                    prophetTip.setBounds(x, rowY + 58, w - cw - 6, 8);
                 }
                 case CreateAutomationJobPayload.TYPE_BATCH_CRAFT -> {
                     field(itemCaption, itemField, right, rowY, colW);
@@ -345,6 +353,18 @@ public final class AutomationManagerApp implements IDesktopApp {
     /** Whether the form is showing the line that says a restock does not count what is on its way. */
     public boolean restockNoteShown() {
         return restockNote.visible();
+    }
+
+    /** The tip under it pointing at Prophet YourIQL's KEEP, as it reads now, or empty when it is not shown. */
+    public String prophetTipText() {
+        return prophetTip.visible() ? tipText() : "";
+    }
+
+    /* The KEEP that would hold the level the form is about, with what the form says so far. */
+    private String tipText() {
+        return GameText.resolve(AutomationTexts.PROPHET_TIP.with(
+                itemField.edit().isBlank() ? AutomationTexts.AN_ITEM.text() : Text.literal(itemField.edit().strip()),
+                amountField.edit().isBlank() ? DEFAULT_LEVEL : amountField.edit().strip()));
     }
 
     private static void field(final Label caption, final TextField field, final int x, final int y, final int w) {

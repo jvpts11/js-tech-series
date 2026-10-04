@@ -47,6 +47,16 @@ public final class NetworkEngines {
                     HardwareEra.ADVANCED, "16"),
             Set.of(EngineCapability.EXPLAIN, EngineCapability.PLANNER_HINTS, EngineCapability.EXTENSIONS));
 
+    /**
+     * Prophet YourIQL, the state-oriented engine, from the Legacy on: told what state the network is to keep, it works
+     * out the Operations to get there and stay there, counting what is already on its way, and it reacts to what
+     * changed rather than going over everything again.
+     */
+    public static final EngineDef PROPHET_YOURIQL = new EngineDef(Programs.YOURIQL, "YourIQL",
+            Map.of(HardwareEra.LEGACY, "3.23", HardwareEra.TRANSITION, "5.0", HardwareEra.STANDARD, "5.6",
+                    HardwareEra.ADVANCED, "8.0"),
+            Set.of(EngineCapability.DECLARATIVE_STATE, EngineCapability.SUBSCRIPTIONS));
+
     private static final Map<ResourceLocation, INetworkEngine> ENGINES = new LinkedHashMap<>();
 
     private NetworkEngines() {

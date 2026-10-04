@@ -87,10 +87,22 @@ public final class NetworkIndex {
      */
     private volatile long rebuildsAsked;
 
+    /*
+     * Counts every change to the catalog, so whatever watches what the network holds can tell in one comparison that
+     * nothing changed since it last looked, and do nothing on a network standing still.
+     */
+    private long version;
+
     private record ManualLock(UUID id, long amount) {
     }
 
+    /** A number that changes whenever what the catalog says the network holds does; equal means nothing changed. */
+    public long version() {
+        return version;
+    }
+
     public void rebuild(final ServerLevel level, final NetworkUuid network) {
+        version++;
         catalog.clear();
         indexedModCounts.clear();
         health.onFullRebuild(); // a rebuild from scratch settles every doubt the index carried
@@ -124,6 +136,7 @@ public final class NetworkIndex {
 
     public void analyzeIncremental(final ServerLevel level, final NetworkUuid network) {
         if (network == null) {
+            version++;
             catalog.clear();
             indexedModCounts.clear();
             return;
@@ -179,6 +192,7 @@ public final class NetworkIndex {
         if (dirty.isEmpty() && gone.isEmpty()) {
             return; // nothing changed, the whole pass cost only counter comparisons
         }
+        version++;
         /*
          * A node that left the network takes rows with it: those types were pointing at storage that
          * is no longer there, which is exactly what a vacuum exists to sweep up.
@@ -249,6 +263,9 @@ public final class NetworkIndex {
         }
         indexedModCounts.keySet().retainAll(registered);
         health.onVacuum(); // the ghost rows are gone, and with them the doubt they carried
+        if (freed > 0) {
+            version++;
+        }
         return freed;
     }
 
@@ -386,6 +403,7 @@ public final class NetworkIndex {
                  * has already moved on.
                  */
                 if (asked >= this.rebuildsAsked) {
+                    version++;
                     catalog.clear();
                     catalog.putAll(built);
                     indexedModCounts.clear();
@@ -724,6 +742,7 @@ public final class NetworkIndex {
     }
 
     public void clear() {
+        version++;
         catalog.clear();
         locks.clear();
         indexedModCounts.clear();

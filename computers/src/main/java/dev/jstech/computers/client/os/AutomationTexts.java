@@ -42,6 +42,9 @@ final class AutomationTexts {
     /** What a restock does not count, so nobody mistakes it for keeping a stock. */
     static final TextKey RESTOCK_NOTE =
             TextKey.of("jsc.automation.form.restock_note", "Does not count what is already on its way.");
+    static final TextKey PROPHET_TIP = TextKey.of("jsc.automation.form.prophet_tip",
+            "Prophet YourIQL counts it: KEEP %s >= %s");
+    static final TextKey AN_ITEM = TextKey.of("jsc.automation.form.an_item", "item");
     static final TextKey AMOUNT = TextKey.of("jsc.automation.form.amount", "Amount");
     static final TextKey EVERY = TextKey.of("jsc.automation.form.every", "Every (30s)");
     static final TextKey FROM = TextKey.of("jsc.automation.form.from", "From");

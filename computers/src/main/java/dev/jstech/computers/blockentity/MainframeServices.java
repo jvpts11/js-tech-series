@@ -287,6 +287,11 @@ final class MainframeServices {
         }
         lastTickAt = now;
         jobAgent.tick(mainframe, level);
+        // The engine that plans the network's work gets its turn too: one that holds states reacts here.
+        final INetworkEngine engine = runningEngine();
+        if (engine != null) {
+            engine.tick(mainframe, level);
+        }
     }
 
     boolean automationEngineInstalled() {

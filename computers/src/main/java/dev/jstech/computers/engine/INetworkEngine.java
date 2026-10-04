@@ -23,6 +23,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.workshop.UpdateRequest;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.Set;
+import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -120,6 +121,13 @@ public interface INetworkEngine {
      */
     default ICraftPlanning planner(final MainframeBlockEntity core) {
         return planner();
+    }
+
+    /**
+     * The engine's turn on each tick of the Mainframe it runs on, while it runs: an engine that holds the network in
+     * a declared state reacts to what changed here. It must cost next to nothing on a tick where nothing did.
+     */
+    default void tick(final MainframeBlockEntity core, final ServerLevel level) {
     }
 
     /**

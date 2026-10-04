@@ -55,7 +55,7 @@ class LayoutAuditTest {
             "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
             "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
             "NetworkServicesLayout", "NetworkLinksLayout", "PrinterLayout", "DockLayout", "PrintedPaperLayout",
-            "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout");
+            "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -194,6 +194,11 @@ class LayoutAuditTest {
                 NextgreStudioLayout.MIN_H), false));
         c.add(new AuditCase("NextgreStudioLayout", NextgreStudioLayout.layout(), false));
         c.add(new AuditCase("NextgreStudioLayout(large)", NextgreStudioLayout.layout(640, 400), false));
+        // The Prophet Reactive Console is a resizable window too.
+        c.add(new AuditCase("ProphetConsoleLayout(min)", ProphetConsoleLayout.layout(ProphetConsoleLayout.MIN_W,
+                ProphetConsoleLayout.MIN_H), false));
+        c.add(new AuditCase("ProphetConsoleLayout", ProphetConsoleLayout.layout(), false));
+        c.add(new AuditCase("ProphetConsoleLayout(large)", ProphetConsoleLayout.layout(640, 420), false));
         c.add(new AuditCase("ServerRackLayout", ServerRackLayout.layout(), true));
         c.add(AuditCase.onTheGlass("ComputerTerminalLayout", ComputerTerminalLayout.layout()));
         /*

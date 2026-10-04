@@ -39,6 +39,8 @@ public final class ProgramVersions {
             Map.entry("iqlengine", "16.0"),
             Map.entry("nextgreiql", "16.0"),
             Map.entry("nextgre_studio", "8.4"),
+            Map.entry("youriql", "8.0"),
+            Map.entry("prophet_console", "8.0"),
             Map.entry("crafting_manager", "3.2"),
             Map.entry("pattern_studio", "2.0"),
             Map.entry("cluster_manager", "1.4"),

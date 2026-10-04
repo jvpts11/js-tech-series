@@ -36,6 +36,10 @@ import dev.jstech.computers.operation.payload.NextgreStudioPayload;
 import dev.jstech.computers.operation.payload.NiGridClickPayload;
 import dev.jstech.computers.engine.nextgre.NextgreEngine;
 import dev.jstech.computers.engine.nextgre.NextgrePlanView;
+import dev.jstech.computers.engine.prophet.ProphetEngine;
+import dev.jstech.computers.engine.prophet.ProphetStates;
+import dev.jstech.computers.operation.payload.ProphetActionPayload;
+import dev.jstech.computers.operation.payload.ProphetConsolePayload;
 import dev.jstech.computers.operation.payload.NodeLink;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.OperationsLogPayload;
@@ -260,6 +264,25 @@ public final class PayloadRoundTripGameTests {
         roundTrip(helper, NextgreStudioPayload.STREAM_CODEC, new NextgreStudioPayload(7, false, Text.EMPTY,
                 Text.EMPTY, Text.literal("No compatible NextgreIQL was found on this network."), Optional.empty(),
                 List.of(), List.of(), List.of()));
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void prophet_consoleRoundTrips(final GameTestHelper helper) {
+        roundTrip(helper, ProphetActionPayload.STREAM_CODEC, new ProphetActionPayload(HOST, 4,
+                ProphetActionPayload.APPLY, "KEEP uranium_fuel BETWEEN 500 AND 1000"));
+        final ProphetEngine.StateRow state = new ProphetEngine.StateRow("minecraft:iron_ingot",
+                Text.literal("Iron Ingot"), "KEEP iron_ingot >= 256", Text.literal("Working"),
+                ProphetEngine.StateRow.TONE_WORKING, 200L, 56L, 256L, Long.MAX_VALUE,
+                Text.literal("asked for 56 Iron Ingot, Operation 1a2b3c"),
+                List.of(new ProphetStates.Sample(9000L, 180L, 0L), new ProphetStates.Sample(9020L, 200L, 56L)),
+                List.of(Text.literal("#1a2b3c running")));
+        roundTrip(helper, ProphetConsolePayload.STREAM_CODEC, new ProphetConsolePayload(4, true,
+                Text.literal("Prophet YourIQL 8.0"), Text.literal("jsc-net-1a2b"), Text.EMPTY, List.of(state),
+                List.of(new ProphetEngine.WatchRow(1, "WATCH redstone < 500 DO CRAFT redstone TO 1000", false, true,
+                        2)),
+                List.of(new ProphetEngine.ReactionRow(9020L, Text.literal("asked for 56 Iron Ingot"))),
+                new ProphetEngine.Settings(20, 1024L, true), 9040L));
         helper.succeed();
     }
 

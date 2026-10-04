@@ -54,6 +54,14 @@ public final class Programs {
     public static final ResourceLocation NEXTGRE_IQL =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nextgreiql");
 
+    /** Prophet YourIQL: the engine told what state to keep, which reacts to what changes. */
+    public static final ResourceLocation YOURIQL =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "youriql");
+
+    /** Prophet Reactive Console: Prophet YourIQL's own tool, where its states are declared and watched. */
+    public static final ResourceLocation PROPHET_CONSOLE =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "prophet_console");
+
     /** Nextgre Planner Studio: NextgreIQL's own tool, where its plans are explained and its planner is tuned. */
     public static final ResourceLocation NEXTGRE_STUDIO =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nextgre_studio");

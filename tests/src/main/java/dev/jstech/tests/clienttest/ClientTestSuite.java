@@ -90,6 +90,7 @@ public final class ClientTestSuite {
             UpdateClientTests.class,
             IsmsClientTests.class,
             NextgreClientTests.class,
+            ProphetClientTests.class,
             SettingsPersonalizeClientTests.class,
             SettingsScreenClientTests.class,
             SettingsSharingClientTests.class,

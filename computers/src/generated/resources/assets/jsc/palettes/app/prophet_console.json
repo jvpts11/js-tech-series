@@ -1,0 +1,18 @@
+{
+  "band": "#3A2EA043",
+  "bandEdge": "#FF2EA043",
+  "graph": "#FFFAFAFA",
+  "graphDim": "#FF5A6472",
+  "graphText": "#FF1B1B1B",
+  "holding": "#FF1E7F34",
+  "level": "#FF0067C0",
+  "marker": "#FF1B1B1B",
+  "over": "#FF8A5A00",
+  "prompt": "#FFB85A12",
+  "status": "#FFB85A12",
+  "statusText": "#FFFFFFFF",
+  "track": "#FFD9DEE5",
+  "trouble": "#FFB3263A",
+  "waiting": "#FF5E5E5E",
+  "working": "#FF0067C0"
+}

@@ -66,6 +66,8 @@ public record SoftwareHouse(String name, String legalName) {
     /** NextgreIQL's house: an open group that writes the engine in the open, the next thing after the last. */
     public static final SoftwareHouse NEXTGRE =
             new SoftwareHouse("Nextgre", "the Nextgre Global Development Group");
+    /** Prophet YourIQL's house, which sees what a network will need before it needs it. */
+    public static final SoftwareHouse PROPHET = new SoftwareHouse("Prophet", "Prophet Corporation");
 
     /** Not a house: the program is credited to the system or desktop that ships it. */
     public static final SoftwareHouse BUNDLED = new SoftwareHouse("", "");

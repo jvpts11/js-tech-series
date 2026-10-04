@@ -22,6 +22,7 @@ import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.engine.nextgre.NextgreEngine;
+import dev.jstech.computers.engine.prophet.ProphetEngine;
 import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.Optional;
@@ -52,8 +53,9 @@ public final class OsBootstrap {
         registerPrograms();
         // The engine every Mainframe ships with, whose package is the Midsoft IQL Server program above.
         JsComputersApi.registerEngine(NetworkEngines.MIDSOFT_IQL_SERVER);
-        // NextgreIQL, which plans with a planner of its own.
+        // NextgreIQL, which plans with a planner of its own, and Prophet YourIQL, which holds declared states.
         NetworkEngines.register(new NextgreEngine());
+        NetworkEngines.register(new ProphetEngine());
     }
 
     /**
@@ -448,6 +450,24 @@ public final class OsBootstrap {
                     .described("The engine that shows how it plans the network's work, and lets you take part in"
                             + " the planning.")
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.NEXTGRE).withRam(48),
+            /*
+             * Prophet YourIQL, the state-oriented engine, from the Legacy on: what it holds is a few states and what
+             * it last saw of them, so it asks for less memory than an engine that keeps statistics. Its console
+             * needs it running.
+             */
+            ProgramSpec.of(rl("youriql"), "youriql", false, ALL_PLATFORMS, 32, ProgramKind.NETWORK_ENGINE, 0,
+                            HostScope.MAINFRAME)
+                    .named("Prophet YourIQL")
+                    .described("The engine you tell what state the network is to keep, which works out how to"
+                            + " get there and stay there.")
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.PROPHET).withRam(32),
+            ProgramSpec.of(rl("prophet_console"), "prophet", false, DESKTOPS, 96, ProgramKind.APP, 2,
+                            HostScope.ANY)
+                    .named("Prophet Reactive Console")
+                    .described("Declare the states your network keeps, watch how it holds them and what it does"
+                            + " for them.")
+                    .withMinEra(LEGACY).withEra(STANDARD).withHouse(SoftwareHouse.PROPHET).withRam(64)
+                    .requiring(ProgramRequirement.engine(rl("youriql"), "3.23")),
             ProgramSpec.of(rl("nextgre_studio"), "nextgre", false, DESKTOPS, 96, ProgramKind.APP, 2, HostScope.ANY)
                     .named("Nextgre Planner Studio")
                     .described("Explain NextgreIQL's plans, watch what each step takes, and tune its planner.")
