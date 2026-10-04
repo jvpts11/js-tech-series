@@ -43,7 +43,7 @@ class LayoutAuditTest {
 
     /** Layout classes that produce a {@link GuiLayout} and are exercised by {@link #cases()}. */
     private static final Set<String> COVERED = Set.of(
-            "BusLayout", "ClusterManagementComputerLayout", "CraftingComputerLayout", "NmsLayout",
+            "BusLayout", "ClusterManagementComputerLayout", "CraftingComputerLayout", "IsmsLayout",
             "ComputerTerminalLayout", "ServerRouterLayout", "NetworkInteractorLayout",
             "CraftingInterfaceLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
@@ -177,7 +177,18 @@ class LayoutAuditTest {
         c.add(AuditCase.onTheGlass("FirmwareLayout(cli)", FirmwareLayout.cliLayout()));
         c.add(AuditCase.onTheGlass("FirmwareLayout(bios)", FirmwareLayout.biosLayout()));
         c.add(AuditCase.onTheGlass("FirmwareLayout(uefi)", FirmwareLayout.uefiLayout()));
-        c.add(new AuditCase("NmsLayout", NmsLayout.layout(), true));
+        // The studio is a resizable window: its smallest, its default and a large size, then its dialogs.
+        c.add(new AuditCase("IsmsLayout(min)", IsmsLayout.layout(IsmsLayout.MIN_W, IsmsLayout.MIN_H,
+                IsmsLayout.EXPLORER_W, IsmsLayout.defaultEditorH(IsmsLayout.MIN_H)), false));
+        c.add(new AuditCase("IsmsLayout", IsmsLayout.layout(), false));
+        c.add(new AuditCase("IsmsLayout(large)", IsmsLayout.layout(600, 340, 400, 400), false));
+        c.add(new AuditCase("IsmsLayout.confirm", IsmsLayout.confirm(), true));
+        c.add(new AuditCase("IsmsLayout.template", IsmsLayout.template(IsmsLayout.MOST_TEMPLATE_ROWS + 2), true));
+        c.add(new AuditCase("IsmsLayout.options", IsmsLayout.options(), true));
+        c.add(new AuditCase("IsmsLayout.indexMaintenance", IsmsLayout.indexMaintenance(), true));
+        c.add(new AuditCase("IsmsLayout.note", IsmsLayout.note(), true));
+        c.add(new AuditCase("IsmsLayout.profiler", IsmsLayout.profiler(IsmsLayout.PROFILER_MIN_W,
+                IsmsLayout.PROFILER_MIN_H), false));
         c.add(new AuditCase("ServerRackLayout", ServerRackLayout.layout(), true));
         c.add(AuditCase.onTheGlass("ComputerTerminalLayout", ComputerTerminalLayout.layout()));
         /*

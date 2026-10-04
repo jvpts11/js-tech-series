@@ -86,15 +86,15 @@ public final class InstallMediaGameTests {
     public static void installMedia_everyProgramShipsOnItsErasMedium(final GameTestHelper helper) {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final ProgramSpec nms = OsRegistry.getProgram(rl("nms"));
+                    final ProgramSpec isms = OsRegistry.getProgram(rl("isms"));
                     final ProgramSpec mirror = OsRegistry.getProgram(rl("mirror"));
                     final ProgramSpec craftmgr = OsRegistry.getProgram(rl("crafting_manager"));
                     final ProgramSpec mines = OsRegistry.getProgram(rl("minesweeper"));
                     final ProgramSpec cache = OsRegistry.getProgram(rl("predictive_cache"));
-                    helper.assertTrue(nms != null && mirror != null && craftmgr != null && mines != null && cache != null,
-                            "the built-in programs are registered");
-                    helper.assertTrue(nms.era() == HardwareEra.STANDARD
-                                    && InstallMedia.forProgram(nms.era(), nms.kind()) == MediaFormat.DVD,
+                    helper.assertTrue(isms != null && mirror != null && craftmgr != null && mines != null
+                                    && cache != null, "the built-in programs are registered");
+                    helper.assertTrue(isms.era() == HardwareEra.STANDARD
+                                    && InstallMedia.forProgram(isms.era(), isms.kind()) == MediaFormat.DVD,
                             "a Standard application ships on a DVD");
                     helper.assertTrue(mirror.era() == HardwareEra.STANDARD
                                     && InstallMedia.forProgram(mirror.era(), mirror.kind()) == MediaFormat.USB,
@@ -107,8 +107,8 @@ public final class InstallMediaGameTests {
                             "a Vintage program ships on a floppy");
                     helper.assertTrue(InstallMedia.forProgram(cache.era(), cache.kind()) == MediaFormat.USB,
                             "a small server daemon is no longer a floppy because it is small");
-                    helper.assertTrue(nms.minEra() == HardwareEra.VINTAGE,
-                            "the era never gates where a program installs: minEra is untouched");
+                    helper.assertTrue(isms.minEra() == HardwareEra.LEGACY,
+                            "the studio starts at the Legacy age: a Vintage network uses its engine from the prompt");
                     helper.assertTrue(InstallMedia.forSystem(OsRegistry.getOs(rl("frames_11")).minEra()) == MediaFormat.USB
                                     && InstallMedia.forSystem(OsRegistry.getOs(rl("frames_xp")).minEra()) == MediaFormat.CD
                                     && InstallMedia.forSystem(OsRegistry.getOs(rl("mc_dos")).minEra()) == MediaFormat.FLOPPY,

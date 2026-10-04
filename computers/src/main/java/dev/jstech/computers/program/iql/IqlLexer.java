@@ -9,6 +9,7 @@ package dev.jstech.computers.program.iql;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Splits IQL source text into tokens for the parser. Pure logic, no Minecraft, so it is unit-tested
@@ -39,50 +40,72 @@ final class IqlLexer {
     }
 
     static List<Token> lex(final String input) {
+        return scan(input, null);
+    }
+
+    /**
+     * Where each token {@link #lex} would read lies in {@code input}: its first character and the one past its
+     * last, quotes included, in the same order, so the token a parser stopped on can be underlined.
+     */
+    static List<int[]> spans(final String input) {
+        final List<int[]> spans = new ArrayList<>();
+        scan(input, spans);
+        return spans;
+    }
+
+    /* Reads the tokens, and where each lies when {@code spans} is given. */
+    private static List<Token> scan(final String input, @Nullable final List<int[]> spans) {
         final List<Token> tokens = new ArrayList<>();
         final int n = input.length();
         int i = 0;
         while (i < n) {
-            final char c = input.charAt(i);
-            if (Character.isWhitespace(c)) {
+            if (Character.isWhitespace(input.charAt(i))) {
                 i++;
                 continue;
             }
-            if (c == '"') {
-                final int start = i + 1;
-                int j = start;
-                while (j < n && input.charAt(j) != '"') {
-                    j++;
-                }
-                tokens.add(new Token(Type.STRING, input.substring(start, j)));
-                i = (j < n) ? j + 1 : j; // step past the closing quote when present
-                continue;
+            final int start = i;
+            final int before = tokens.size();
+            i = next(input, i, tokens);
+            if (spans != null && tokens.size() > before) {
+                spans.add(new int[] {start, i});
             }
-            if (c == '\'') {
-                i = readQuoted(input, i + 1, tokens);
-                continue;
-            }
-            if (c == '(') {
-                tokens.add(new Token(Type.LPAREN, "("));
-                i++;
-                continue;
-            }
-            if (c == ')') {
-                tokens.add(new Token(Type.RPAREN, ")"));
-                i++;
-                continue;
-            }
-            if (isOperatorChar(c)) {
-                final int start = i;
-                while (i < n && isOperatorChar(input.charAt(i))) {
-                    i++;
-                }
-                tokens.add(new Token(Type.OPERATOR, input.substring(start, i)));
-                continue;
-            }
-            i = readWord(input, i, tokens);
         }
         return tokens;
+    }
+
+    /* Reads the one token at {@code i}, which is not a space, and returns the index past it. */
+    private static int next(final String input, final int i, final List<Token> tokens) {
+        final int n = input.length();
+        final char c = input.charAt(i);
+        if (c == '"') {
+            final int start = i + 1;
+            int j = start;
+            while (j < n && input.charAt(j) != '"') {
+                j++;
+            }
+            tokens.add(new Token(Type.STRING, input.substring(start, j)));
+            return (j < n) ? j + 1 : j; // step past the closing quote when present
+        }
+        if (c == '\'') {
+            return readQuoted(input, i + 1, tokens);
+        }
+        if (c == '(') {
+            tokens.add(new Token(Type.LPAREN, "("));
+            return i + 1;
+        }
+        if (c == ')') {
+            tokens.add(new Token(Type.RPAREN, ")"));
+            return i + 1;
+        }
+        if (isOperatorChar(c)) {
+            int j = i;
+            while (j < n && isOperatorChar(input.charAt(j))) {
+                j++;
+            }
+            tokens.add(new Token(Type.OPERATOR, input.substring(i, j)));
+            return j;
+        }
+        return readWord(input, i, tokens);
     }
 
     /**

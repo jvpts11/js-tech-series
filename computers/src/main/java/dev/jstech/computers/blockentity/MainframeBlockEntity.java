@@ -44,6 +44,7 @@ import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.computers.trace.TracePoints;
 import dev.jstech.computers.workshop.UpdateRequest;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.DerivedInt;
@@ -73,6 +74,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -296,6 +298,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     @Nullable
     private OperationDispatch dispatch;
+    /* While some work runs under capturingStarted, the ids of the Operations it starts; null otherwise. */
+    @Nullable
+    private List<UUID> capturing;
     private int dispatchQueues;
     /** The holds this Mainframe was saved with, waiting for the catalog to be read before being taken again. */
     private Map<StorageKey, Long> heldOnLoad;
@@ -689,6 +694,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             operationLog.removeLast();
         }
         setChanged();
+        if (level instanceof ServerLevel serverLevel) {
+            TracePoints.operationSettled(serverLevel, networkUuid(), record);
+        }
     }
 
     // Multi-tick network Operations (decomposed into SubOperations)
@@ -1016,7 +1024,11 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         if (!isRunning() || networkUuid() == null) {
             return 0L;
         }
-        return networkIndex.manualLock(key, demand, sources);
+        final long held = networkIndex.manualLock(key, demand, sources);
+        if (held > 0L && level instanceof ServerLevel serverLevel) {
+            TracePoints.lockedByHand(serverLevel, networkUuid(), key, held);
+        }
+        return held;
     }
 
     public long unlockType(final StorageKey key) {
@@ -1195,6 +1207,34 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     /** Takes an Operation on: the scheduler holds it, ticks it and writes it down when it settles. */
     private void track(final INetworkOperation operation) {
         scheduler.track(operation);
+        if (capturing != null) {
+            capturing.add(operation.operationId());
+        }
+        if (level instanceof ServerLevel serverLevel) {
+            TracePoints.operationCreated(serverLevel, networkUuid(), operation);
+        }
+    }
+
+    /**
+     * Runs {@code work} and gives back what it answered, with the ids of the Operations this Mainframe took on while
+     * it ran: what a studio needs to say which Operations a statement started, and to stop them.
+     */
+    public <T> Started<T> capturingStarted(final Supplier<T> work) {
+        final List<UUID> outer = capturing;
+        final List<UUID> started = new ArrayList<>();
+        capturing = started;
+        try {
+            return new Started<>(work.get(), List.copyOf(started));
+        } finally {
+            capturing = outer;
+            if (outer != null) {
+                outer.addAll(started);
+            }
+        }
+    }
+
+    /** What some work answered, and the Operations it started. */
+    public record Started<T>(T answer, List<UUID> operations) {
     }
 
     /** The operations in flight right now, for views that need the live objects rather than the log. */
@@ -1882,15 +1922,5 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     /** Restarts a job: resumes it if paused and re-arms its trigger so it reschedules from now. */
     public void restartJob(final String jobName) {
         services.restartJob(jobName);
-    }
-
-    /** The persisted NMS editor script for this Mainframe, or "" if none has been saved. */
-    public String savedScript() {
-        return services.savedScript();
-    }
-
-    /** Persists the NMS editor script so it survives closing and reopening the studio (and a reload). */
-    public void setSavedScript(final String script) {
-        services.savedScript(script);
     }
 }

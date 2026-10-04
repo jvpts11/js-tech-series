@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.operations;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.client.os.IsmsApp;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
 import dev.jstech.computers.client.os.NetworkManagerApp;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
@@ -123,6 +124,7 @@ public final class OperationsPayloads {
                     .acceptActiveOps(payload.operations(), payload.scSlotsUsed(), payload.scSlotsTotal());
             NetworkManagerApp
                     .acceptActiveOps(payload.operations(), payload.scSlotsUsed(), payload.scSlotsTotal());
+            IsmsApp.acceptActiveOps(payload.operations(), payload.scSlotsUsed(), payload.scSlotsTotal());
         }
     }
 

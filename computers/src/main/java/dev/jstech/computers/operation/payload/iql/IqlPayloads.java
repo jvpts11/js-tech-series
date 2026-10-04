@@ -9,61 +9,95 @@ package dev.jstech.computers.operation.payload.iql;
 
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.client.NmsApp;
+import dev.jstech.computers.client.os.IsmsApp;
+import dev.jstech.computers.client.os.IsmsProfilerApp;
+import dev.jstech.computers.crafting.CraftPlanner;
+import dev.jstech.computers.engine.ICraftPlanning;
 import dev.jstech.computers.engine.NetworkEngines;
-import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.engine.NetworkOperationsService;
+import dev.jstech.computers.machine.IqlTables;
+import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
-import dev.jstech.computers.operation.payload.IqlFileContentPayload;
-import dev.jstech.computers.operation.payload.IqlFileListPayload;
 import dev.jstech.computers.operation.payload.IqlResultPayload;
-import dev.jstech.computers.operation.payload.NmsSchemaPayload;
-import dev.jstech.computers.operation.payload.OpenIqlFilePayload;
-import dev.jstech.computers.operation.payload.RequestIqlFileListPayload;
-import dev.jstech.computers.operation.payload.RequestNmsSchemaPayload;
+import dev.jstech.computers.operation.payload.IsmsActionPayload;
+import dev.jstech.computers.operation.payload.IsmsPlanPayload;
+import dev.jstech.computers.operation.payload.IsmsSchemaPayload;
+import dev.jstech.computers.operation.payload.IsmsTracePayload;
+import dev.jstech.computers.operation.payload.RequestIsmsSchemaPayload;
 import dev.jstech.computers.operation.payload.RunIqlPayload;
-import dev.jstech.computers.operation.payload.SaveIqlFilePayload;
-import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.operation.payload.operations.OperationsPayloads;
 import dev.jstech.computers.os.IOsHost;
-import dev.jstech.computers.os.fs.DiskFilesystem;
-import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.IqlEngine;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.iql.IqlCatalog;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlSavedObject;
-import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.computers.trace.IsmsTraces;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
-import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.text.TextLists;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
-import net.minecraft.core.BlockPos;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static dev.jstech.computers.operation.payload.files.FileAccess.filesystemKindOf;
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.networkLabel;
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.resolveMainframe;
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.serverLabel;
 
 /**
- * The payloads of IQL: running a statement, the schema the NMS shows and the query files kept on the Mainframe's
- * disk.
+ * The payloads of the IQL Server Management Studio: a statement of a query tab run against the network, the network
+ * as its Object Explorer shows it, what it asks of the network beside statements (the engine, the jobs, the locks,
+ * an Operation stopped, a craft's estimated plan, the Activity Monitor) and the traces its Profiler records.
+ *
+ * <p>Every answer carries the number of the studio window that asked, so two studios open at once each hear their
+ * own. The scripts, traces and results a studio keeps are files on the computer it runs on, read and written the way
+ * every program reads and writes them.
  */
+@TextHolder
 public final class IqlPayloads {
+
+    /** The columns of what a statement brought back when it read no table: a name, how many, and where. */
+    private static final List<String> ROW_COLUMNS = List.of("name", "qty", "detail");
+    /** The network a computer on no network would be part of, by the name every network starts with. */
+    private static final Text DEFAULT_NETWORK = Text.literal("jsc-net");
+
+    // An estimated plan, a line for each thing it does, top down as a plan reads.
+    private static final TextKey PLAN_ROOT = TextKey.of("jsc.isms.plan.root", "CRAFT %s %s: %s");
+    private static final TextKey PLAN_FEASIBLE = TextKey.of("jsc.isms.plan.feasible", "can be made now");
+    private static final TextKey PLAN_SHORT = TextKey.of("jsc.isms.plan.short", "short of what it needs");
+    private static final TextKey PLAN_BENCH = TextKey.of("jsc.isms.plan.bench", "Bench Craft: %s x%s, %s runs");
+    private static final TextKey PLAN_MACHINE = TextKey.of("jsc.isms.plan.machine",
+            "Machine Process: %s x%s, %s runs");
+    private static final TextKey PLAN_SEEK = TextKey.of("jsc.isms.plan.seek", "Index Seek: %s x%s of %s held");
+    private static final TextKey PLAN_MISSING = TextKey.of("jsc.isms.plan.missing", "Missing: %s x%s");
+    private static final TextKey PLAN_NO_RECIPE = TextKey.of("jsc.isms.plan.no_recipe",
+            "no recipe on the network makes %s");
+    private static final TextKey PLAN_UNKNOWN = TextKey.of("jsc.isms.plan.unknown", "unknown item: %s");
+    private static final TextKey JOB_STARTED = TextKey.of("jsc.isms.job.started", "job %s started");
+    private static final TextKey JOB_PAUSED = TextKey.of("jsc.isms.job.paused", "job %s paused");
+    private static final TextKey JOB_DELETED = TextKey.of("jsc.isms.job.deleted", "job %s deleted");
+    private static final TextKey JOB_NONE = TextKey.of("jsc.isms.job.none", "no job named %s");
+    private static final TextKey NO_MAINFRAME = TextKey.of("jsc.isms.action.no_mainframe",
+            "the network has no Mainframe");
 
     private IqlPayloads() {
     }
@@ -74,310 +108,321 @@ public final class IqlPayloads {
                 ComputerAccess.machine(RunIqlPayload::hostPos), IqlPayloads::handleRunIql);
         registrar.playToClient(IqlResultPayload.TYPE, IqlResultPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(IqlPayloads::handleIqlResult));
-        ComputerAccess.accept(registrar, RequestNmsSchemaPayload.TYPE, RequestNmsSchemaPayload.STREAM_CODEC,
-                ComputerAccess.machine(RequestNmsSchemaPayload::hostPos), IqlPayloads::handleRequestNmsSchema);
-        registrar.playToClient(NmsSchemaPayload.TYPE, NmsSchemaPayload.STREAM_CODEC,
-                ClientPayloadHandlers.onMainThread(IqlPayloads::handleNmsSchema));
-        ComputerAccess.accept(registrar, SaveIqlFilePayload.TYPE, SaveIqlFilePayload.STREAM_CODEC,
-                ComputerAccess.machine(SaveIqlFilePayload::hostPos), IqlPayloads::handleSaveIqlFile);
-        ComputerAccess.accept(registrar, RequestIqlFileListPayload.TYPE, RequestIqlFileListPayload.STREAM_CODEC,
-                ComputerAccess.machine(RequestIqlFileListPayload::hostPos), IqlPayloads::handleRequestIqlFileList);
-        registrar.playToClient(IqlFileListPayload.TYPE, IqlFileListPayload.STREAM_CODEC,
-                ClientPayloadHandlers.onMainThread(IqlPayloads::handleIqlFileList));
-        ComputerAccess.accept(registrar, OpenIqlFilePayload.TYPE, OpenIqlFilePayload.STREAM_CODEC,
-                ComputerAccess.machine(OpenIqlFilePayload::hostPos), IqlPayloads::handleOpenIqlFile);
-        registrar.playToClient(IqlFileContentPayload.TYPE, IqlFileContentPayload.STREAM_CODEC,
-                ClientPayloadHandlers.onMainThread(IqlPayloads::handleIqlFileContent));
+        ComputerAccess.accept(registrar, RequestIsmsSchemaPayload.TYPE, RequestIsmsSchemaPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestIsmsSchemaPayload::hostPos), IqlPayloads::handleRequestSchema);
+        registrar.playToClient(IsmsSchemaPayload.TYPE, IsmsSchemaPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread(IqlPayloads::handleSchema));
+        ComputerAccess.accept(registrar, IsmsActionPayload.TYPE, IsmsActionPayload.STREAM_CODEC,
+                ComputerAccess.machine(IsmsActionPayload::hostPos), IqlPayloads::handleAction);
+        registrar.playToClient(IsmsPlanPayload.TYPE, IsmsPlanPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread(IqlPayloads::handlePlan));
+        registrar.playToClient(IsmsTracePayload.TYPE, IsmsTracePayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread(IqlPayloads::handleTrace));
     }
 
     /**
-     * Anti-spoof for the windowed NMS (it has no container menu to authenticate against): the player must be
-     * within 8 blocks of the host computer or one of its linked monitors, so a forged packet aimed at a
-     * foreign computer is rejected.
+     * The network as a studio on {@code host} shows it, for its window {@code window}: the engine with its version,
+     * how many rows each table holds, the saved objects, the servers, the index and the items held by hand.
      */
-    private static boolean nmsNear(final ServerPlayer player, final BlockPos hostPos,
-                                   final IComputerTerminalHost host) {
-        final Vec3 p = player.position();
-        if (hostPos.distToCenterSqr(p) <= 64.0) {
-            return true;
+    public static IsmsSchemaPayload ismsSchema(final ServerLevel level, final IComputerTerminalHost host,
+                                               final int window) {
+        final NetworkUuid net = host.networkUuid();
+        if (net == null) {
+            return new IsmsSchemaPayload(window, IsmsSchemaPayload.OFFLINE.with(DEFAULT_NETWORK), host.hostname(),
+                    IsmsSchemaPayload.Engine.offline(), List.of(), List.of(), List.of(), List.of(), List.of(),
+                    new IsmsSchemaPayload.Index(IndexHealth.State.OK, 0, 0), List.of());
         }
-        if (host instanceof IPeripheralOwner owner) {
-            for (final long endpoint : owner.linkedEndpoints()) {
-                if (BlockPos.of(endpoint).distToCenterSqr(p) <= 64.0) {
-                    return true;
-                }
+        final MainframeBlockEntity mainframe = resolveMainframe(level, net);
+        final List<Integer> tableRows = new ArrayList<>();
+        for (final String table : IqlTables.TABLES) {
+            tableRows.add(IqlTables.count(level, net, table));
+        }
+        final List<String> servers = new ArrayList<>();
+        for (final ServerNode server : NetworkSystem.get(level).serversOf(net)) {
+            servers.add(serverLabel(level, server.nodeUuid()));
+        }
+        final List<IsmsSchemaPayload.Saved> views = new ArrayList<>();
+        final List<IsmsSchemaPayload.Saved> procedures = new ArrayList<>();
+        final List<IsmsSchemaPayload.Job> jobs = new ArrayList<>();
+        final List<IsmsSchemaPayload.Lock> locks = new ArrayList<>();
+        IsmsSchemaPayload.Index index = new IsmsSchemaPayload.Index(IndexHealth.State.OK, 0, 0);
+        if (mainframe != null) {
+            final IqlCatalog catalog = mainframe.iqlCatalog();
+            catalog.ofType(IqlDefinition.ObjectType.VIEW)
+                    .forEach(view -> views.add(new IsmsSchemaPayload.Saved(view.name(), view.body())));
+            catalog.ofType(IqlDefinition.ObjectType.PROCEDURE)
+                    .forEach(procedure -> procedures.add(new IsmsSchemaPayload.Saved(procedure.name(),
+                            procedure.body())));
+            for (final IqlSavedObject job : catalog.ofType(IqlDefinition.ObjectType.JOB)) {
+                jobs.add(new IsmsSchemaPayload.Job(job.name(), mainframe.isJobPaused(job.name()), trigger(job),
+                        job.body()));
+            }
+            index = new IsmsSchemaPayload.Index(IndexHealth.State.byId(mainframe.indexHealthState()),
+                    mainframe.indexedTypes(), mainframe.indexedServers());
+            for (final Map.Entry<StorageKey, Long> lock : mainframe.lockedTypes().entrySet()) {
+                locks.add(new IsmsSchemaPayload.Lock(lock.getKey().registryId().toString(),
+                        GameText.of(lock.getKey().displayName()), lock.getValue()));
             }
         }
-        return false;
+        return new IsmsSchemaPayload(window, Text.literal(networkLabel(net)), host.hostname(), engine(mainframe),
+                tableRows, views, procedures, jobs, servers, index, locks);
+    }
+
+    /**
+     * Runs one statement of a studio's query tab for the computer {@code host}, on behalf of {@code requester}, and
+     * answers it for the window, the tab and the place in the script that sent it.
+     */
+    public static IqlResultPayload runStatement(final ServerLevel level, final IComputerTerminalHost host,
+                                                final String requester, final RunIqlPayload payload) {
+        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
+        if (mainframe == null) {
+            return IqlResultPayload.said(payload.window(), payload.tab(), payload.seq(), false,
+                    IqlResultPayload.NO_MAINFRAME.text());
+        }
+        final ServerCliComputer computer = new ServerCliComputer(host, level);
+        // A trace says who ran the statement and on which computer, as the studio knows them.
+        final IsmsTraces.Origin origin = new IsmsTraces.Origin(requester, host.hostname());
+        final MainframeBlockEntity.Started<IqlEngine.Outcome> run = IsmsTraces.as(origin,
+                () -> mainframe.capturingStarted(() -> mainframe.networkOperations().query(
+                        IqlEngine.viewOf(computer), payload.statement(), IqlResultPayload.MAX_ROWS)));
+        final List<String> started = new ArrayList<>();
+        for (final UUID id : run.operations()) {
+            started.add(ShortId.of(id.toString()));
+        }
+        return result(payload, run.answer(), started);
+    }
+
+    /** Does what a studio asked of the engine, a job, a lock or an Operation, and says how it went. */
+    public static ICliComputer.OpResult act(final IsmsActionPayload payload,
+                                            @Nullable final MainframeBlockEntity mainframe,
+                                            final ServerCliComputer computer) {
+        final String target = payload.target();
+        return switch (payload.action()) {
+            case IsmsActionPayload.ENGINE_START -> computer.engineControl("start");
+            case IsmsActionPayload.ENGINE_STOP -> computer.engineControl("stop");
+            case IsmsActionPayload.ENGINE_RESTART -> {
+                computer.engineControl("stop");
+                yield computer.engineControl("start");
+            }
+            case IsmsActionPayload.UNLOCK -> computer.unlock(target);
+            case IsmsActionPayload.CANCEL -> computer.cancelOperation(target);
+            case IsmsActionPayload.JOB_START, IsmsActionPayload.JOB_PAUSE, IsmsActionPayload.JOB_DELETE ->
+                    job(payload.action(), mainframe, target);
+            default -> ICliComputer.OpResult.fail(Text.EMPTY);
+        };
+    }
+
+    /**
+     * The estimated plan of {@code quantity} of {@code item}: what the engine would make it from now, root first as a
+     * plan reads, then each step it would take, then what it would read from the index and what it lacks. Nothing is
+     * made and nothing is held.
+     */
+    public static IsmsPlanPayload plan(@Nullable final MainframeBlockEntity mainframe, final int window,
+                                       final String item, final long quantity) {
+        final ICraftPlanning planner = mainframe == null ? null : mainframe.networkOperations().planner();
+        if (planner == null) {
+            return refused(window, NetworkOperationsService.UNAVAILABLE.text());
+        }
+        final StorageKey key = StorageKey.byName(item);
+        if (key == null) {
+            return refused(window, PLAN_UNKNOWN.with(item));
+        }
+        final Map<StorageKey, Long> stock = mainframe.networkIndex().snapshot();
+        final CraftPlanner.Plan plan = planner.plan(key, quantity, mainframe.networkPatterns(),
+                mainframe.networkProcessingPatterns(), stock);
+        if (plan.steps().isEmpty()) {
+            return refused(window, PLAN_NO_RECIPE.with(GameText.of(key.displayName())));
+        }
+        final List<Text> lines = new ArrayList<>();
+        final List<Integer> depth = new ArrayList<>();
+        lines.add(PLAN_ROOT.with(quantity, GameText.of(key.displayName()),
+                (plan.feasible() ? PLAN_FEASIBLE : PLAN_SHORT).text()));
+        depth.add(0);
+        for (int i = plan.steps().size() - 1; i >= 0; i--) {
+            final CraftPlanner.Step step = plan.steps().get(i);
+            lines.add((step.isMachine() ? PLAN_MACHINE : PLAN_BENCH).with(step.resultText(), step.produced(),
+                    step.runs()));
+            depth.add(1);
+        }
+        for (final Map.Entry<StorageKey, Long> read : plan.rawConsumption().entrySet()) {
+            lines.add(PLAN_SEEK.with(GameText.of(read.getKey().displayName()), read.getValue(),
+                    stock.getOrDefault(read.getKey(), 0L)));
+            depth.add(2);
+        }
+        for (final Map.Entry<StorageKey, Long> missing : plan.missing().entrySet()) {
+            lines.add(PLAN_MISSING.with(GameText.of(missing.getKey().displayName()), missing.getValue()));
+            depth.add(2);
+        }
+        return new IsmsPlanPayload(window, true, lines, depth);
     }
 
     private static void handleRunIql(final RunIqlPayload payload, final ServerPlayer player, final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos())
-                instanceof IComputerTerminalHost host)
-                || !nmsNear(player, payload.hostPos(), host)) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof IComputerTerminalHost host)) {
             return;
         }
-        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
-        if (mainframe == null) {
-            PacketDistributor.sendToPlayer(player,
-                    new IqlResultPayload(false, IqlResultPayload.NO_MAINFRAME.text(), List.of()));
-            return;
-        }
-        final var computer = new ServerCliComputer(host, level);
-        final var outcome = mainframe.networkOperations().query(IqlEngine.viewOf(computer), payload.statement(),
-                IqlResultPayload.MAX_ROWS);
-        final List<IqlResultPayload.Row> rows = new ArrayList<>(outcome.rows().size());
-        for (final var item : outcome.rows()) {
-            final Text label = item.detail().isEmpty() ? item.name()
-                    : TextLists.join("  ·  ", List.of(item.name(), item.detail()));
-            rows.add(new IqlResultPayload.Row(label, item.quantity()));
-        }
-        PacketDistributor.sendToPlayer(player,
-                new IqlResultPayload(outcome.ok(), outcome.said(), rows));
+        final IqlResultPayload answer = runStatement(level, host, player.getGameProfile().getName(), payload);
+        PacketDistributor.sendToPlayer(player, answer);
         // A query that fails is an error of the program's, which the machine sounds as its system sounds one.
-        if (!outcome.ok() && host instanceof IOsHost machine) {
+        if (!answer.ok() && host instanceof IOsHost machine) {
             machine.systemSound(level, SystemSound.ERROR);
         }
     }
 
+    /*
+     * What a statement came to as its tab shows it: the table it read with that table's own columns, or the rows a
+     * statement that reads no table brought back, each a name, how many and where.
+     */
+    private static IqlResultPayload result(final RunIqlPayload asked, final IqlEngine.Outcome outcome,
+                                           final List<String> started) {
+        if (!outcome.table().isNone()) {
+            return new IqlResultPayload(asked.window(), asked.tab(), asked.seq(), outcome.ok(), outcome.said(),
+                    outcome.table().columns(), outcome.table().rows(), started);
+        }
+        if (outcome.rows().isEmpty()) {
+            return new IqlResultPayload(asked.window(), asked.tab(), asked.seq(), outcome.ok(), outcome.said(),
+                    List.of(), List.of(), started);
+        }
+        final List<List<Text>> rows = new ArrayList<>(outcome.rows().size());
+        for (final ICliComputer.StoredItem item : outcome.rows()) {
+            rows.add(List.of(item.name(), Text.literal(Long.toString(item.quantity())), item.detail()));
+        }
+        return new IqlResultPayload(asked.window(), asked.tab(), asked.seq(), outcome.ok(), outcome.said(),
+                ROW_COLUMNS, rows, started);
+    }
+
     private static void handleIqlResult(final IqlResultPayload payload, final Player player) {
-        NmsApp.accept(payload);
+        IsmsApp.accept(payload);
     }
 
-    private static void handleRequestNmsSchema(final RequestNmsSchemaPayload payload, final ServerPlayer player,
-                                               final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos())
-                instanceof IComputerTerminalHost host)
-                || !nmsNear(player, payload.hostPos(), host)) {
+    private static void handleRequestSchema(final RequestIsmsSchemaPayload payload, final ServerPlayer player,
+                                            final ServerLevel level) {
+        if (level.getBlockEntity(payload.hostPos()) instanceof IComputerTerminalHost host) {
+            PacketDistributor.sendToPlayer(player, ismsSchema(level, host, payload.window()));
+        }
+    }
+
+    private static void handleSchema(final IsmsSchemaPayload payload, final Player player) {
+        IsmsApp.acceptSchema(payload);
+        IsmsProfilerApp.acceptSchema(payload);
+    }
+
+    private static void handleAction(final IsmsActionPayload payload, final ServerPlayer player,
+                                     final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof IComputerTerminalHost host)) {
             return;
         }
-        PacketDistributor.sendToPlayer(player, nmsSchema(level, host));
-    }
-
-    private static void handleNmsSchema(final NmsSchemaPayload payload, final Player player) {
-        NmsApp.acceptSchema(payload);
-    }
-
-    /**
-     * The Object Explorer snapshot for an open Studio: the network label, the real server labels, and live item-type and active-operation counts. The IQL schema (table and column names) is fixed on the client; this fills in only the parts that reflect the running network.
-     */
-    public static NmsSchemaPayload nmsSchema(final ServerLevel level,
-            final IComputerTerminalHost host) {
         final NetworkUuid net = host.networkUuid();
-        if (net == null) {
-            return new NmsSchemaPayload(NmsSchemaPayload.OFFLINE.with("jsc-net"), List.of(), 0, 0,
-                    NmsSchemaPayload.EngineSnapshot.offline());
-        }
-        final NetworkSystem system = NetworkSystem.get(level);
-        final List<String> servers = new ArrayList<>();
-        for (final ServerNode server : system.serversOf(net)) {
-            if (servers.size() >= NmsSchemaPayload.MAX_SERVERS) {
-                break;
+        final MainframeBlockEntity mainframe = net == null ? null : resolveMainframe(level, net);
+        final int window = payload.window();
+        switch (payload.action()) {
+            case IsmsActionPayload.ACTIVITY -> {
+                if (net != null) {
+                    OperationsPayloads.dispatchActiveOperations(player, net, level);
+                }
+                return;
             }
-            servers.add(serverLabel(level, server.nodeUuid()));
-        }
-        final int itemTypes = NetworkStorage
-                .of(level, net).query().size();
-        final MainframeBlockEntity mainframe = resolveMainframe(level, net);
-        final int operations = mainframe != null ? mainframe.activeOperationRecords().size() : 0;
-        return new NmsSchemaPayload(Text.literal(networkLabel(net)), List.copyOf(servers), itemTypes, operations,
-                engineSnapshot(mainframe));
-    }
-
-    private static NmsSchemaPayload.EngineSnapshot engineSnapshot(final MainframeBlockEntity mainframe) {
-        // The studio is the Midsoft IQL Server's: it shows that engine, whichever the network runs.
-        final ResourceLocation midsoft = NetworkEngines.MIDSOFT_IQL_SERVER.program();
-        if (mainframe == null || !mainframe.installedEngines().containsKey(midsoft)) {
-            return NmsSchemaPayload.EngineSnapshot.offline();
-        }
-        final var catalog = mainframe.iqlCatalog();
-        final boolean serving = midsoft.equals(mainframe.activeEngine()) && mainframe.engineRunning();
-        return new NmsSchemaPayload.EngineSnapshot(serving
-                        ? NmsSchemaPayload.EngineState.RUNNING : NmsSchemaPayload.EngineState.STOPPED,
-                objectNames(catalog.ofType(
-                        IqlDefinition.ObjectType.VIEW)),
-                objectNames(catalog.ofType(
-                        IqlDefinition.ObjectType.PROCEDURE)),
-                objectNames(catalog.ofType(
-                        IqlDefinition.ObjectType.JOB)),
-                mainframe.savedScript());
-    }
-
-    private static List<String> objectNames(
-            final List<IqlSavedObject> objects) {
-        final List<String> names = new ArrayList<>();
-        for (final var object : objects) {
-            if (names.size() >= NmsSchemaPayload.MAX_OBJECTS) {
-                break;
+            case IsmsActionPayload.TRACE_START -> {
+                if (net != null) {
+                    IsmsTraces.start(player, net, window, payload.arg());
+                }
+                return;
             }
-            names.add(object.name());
+            case IsmsActionPayload.TRACE_STOP -> {
+                IsmsTraces.stop(player, window);
+                return;
+            }
+            case IsmsActionPayload.PLAN -> {
+                PacketDistributor.sendToPlayer(player, plan(mainframe, window, payload.target(),
+                        Math.max(1, payload.arg())));
+                return;
+            }
+            case IsmsActionPayload.REFRESH -> {
+                // Nothing to do but answer with the network as it stands.
+            }
+            default -> {
+                final ICliComputer.OpResult done = act(payload, mainframe, new ServerCliComputer(host, level));
+                PacketDistributor.sendToPlayer(player, IqlResultPayload.said(window, IsmsActionPayload.NO_TAB, 0,
+                        done.ok(), done.message()));
+            }
         }
-        return names;
+        // Whatever was asked, the explorer is shown the network as it now stands.
+        PacketDistributor.sendToPlayer(player, ismsSchema(level, host, window));
     }
 
-    /**
-     * Computes the available free weight on the given disk, mirroring the formula used in
-     * {@link IOsHost#installOs}:
-     * capacity minus storage used minus filesystem used minus the OS footprint.
-     */
-    private static long computeDiskFreeWeight(
-            final IOsHost computer,
-            final ItemStack disk) {
-        if (!(disk.getItem() instanceof DiskItem diskItem)) {
-            return 0L;
-        }
-        final long capacityWeight = diskItem.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
-        final long storageUsed = DriveVolumes.usedWeight(disk);
-        final long fsUsed = DiskFilesystem.filesWeight(disk);
-        final long osReserved = computer.reservedByOs() * StorageKey.MB_EQ_PER_ITEM;
-        return Math.max(0L, capacityWeight - storageUsed - fsUsed - osReserved);
-    }
-
-    /**
-     * Resolves the Mainframe reachable from {@code hostPos}, then writes the editor content to an
-     * {@code .iql} file on its system disk. Replies with a refreshed {@link IqlFileListPayload}
-     * carrying a short outcome message in the status field.
-     */
-    private static void handleSaveIqlFile(final SaveIqlFilePayload payload, final ServerPlayer player,
-                                          final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos())
-                instanceof IComputerTerminalHost host)
-                || !nmsNear(player, payload.hostPos(), host)
-                || host.networkUuid() == null) {
-            return;
-        }
-        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
+    /* Starts, pauses or deletes the saved job {@code name}. */
+    private static ICliComputer.OpResult job(final int action, @Nullable final MainframeBlockEntity mainframe,
+                                             final String name) {
         if (mainframe == null) {
-            PacketDistributor.sendToPlayer(player,
-                    new IqlFileListPayload(List.of(), IqlFileListPayload.NO_MAINFRAME.text(), false));
-            return;
+            return ICliComputer.OpResult.fail(NO_MAINFRAME.text());
         }
-        final ItemStack sysDisk = mainframe.systemDisk();
-        if (sysDisk.isEmpty()) {
-            PacketDistributor.sendToPlayer(player,
-                    new IqlFileListPayload(List.of(), IqlFileListPayload.NO_SYSTEM_DISK.text(), false));
-            return;
+        if (!mainframe.iqlCatalog().contains(IqlDefinition.ObjectType.JOB, name)) {
+            return ICliComputer.OpResult.fail(JOB_NONE.with(name));
         }
-        final FilesystemKind kind = filesystemKindOf(mainframe);
-        if (kind == FilesystemKind.NONE) {
-            PacketDistributor.sendToPlayer(player,
-                    new IqlFileListPayload(List.of(), IqlFileListPayload.NO_OS.text(), false));
-            return;
-        }
-        final String fileName = sanitizeIqlName(payload.fileName()) + ".iql";
-        final long freeWeight = computeDiskFreeWeight(mainframe, sysDisk);
-        final DiskFilesystem.WriteResult result =
-                DiskFilesystem.write(sysDisk, fileName, FileType.IQL, payload.content(),
-                        freeWeight, kind, mainframe.getLevel() == null ? 0L : mainframe.getLevel().getGameTime());
-        final boolean ok = result == DiskFilesystem.WriteResult.OK;
-        if (ok) {
-            mainframe.setChanged();
-        }
-        final Text status = switch (result) {
-            case OK -> IqlFileListPayload.SAVED.with(fileName);
-            case DISK_FULL -> IqlFileListPayload.DISK_FULL.text();
-            case INVALID_PATH -> IqlFileListPayload.INVALID_NAME.text();
-            case READ_ONLY -> IqlFileListPayload.READ_ONLY.text();
+        return switch (action) {
+            case IsmsActionPayload.JOB_START -> {
+                mainframe.restartJob(name);
+                yield ICliComputer.OpResult.ok(JOB_STARTED.with(name));
+            }
+            case IsmsActionPayload.JOB_PAUSE -> {
+                mainframe.pauseJob(name);
+                yield ICliComputer.OpResult.ok(JOB_PAUSED.with(name));
+            }
+            default -> {
+                mainframe.iqlCatalog().remove(IqlDefinition.ObjectType.JOB, name);
+                mainframe.markIqlCatalogChanged();
+                yield ICliComputer.OpResult.ok(JOB_DELETED.with(name));
+            }
         };
-        PacketDistributor.sendToPlayer(player, iqlFileList(sysDisk, kind, status, ok));
     }
 
-    /** Sends the list of {@code .iql} files on the Mainframe's system disk to the NMS client. */
-    private static void handleRequestIqlFileList(final RequestIqlFileListPayload payload, final ServerPlayer player,
-                                                 final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos())
-                instanceof IComputerTerminalHost host)
-                || !nmsNear(player, payload.hostPos(), host)
-                || host.networkUuid() == null) {
-            return;
-        }
-        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
+    private static IsmsPlanPayload refused(final int window, final Text why) {
+        return new IsmsPlanPayload(window, false, List.of(why), List.of(0));
+    }
+
+    private static void handlePlan(final IsmsPlanPayload payload, final Player player) {
+        IsmsApp.acceptPlan(payload);
+    }
+
+    private static void handleTrace(final IsmsTracePayload payload, final Player player) {
+        IsmsProfilerApp.accept(payload);
+    }
+
+    /*
+     * The Midsoft IQL Server on the network's Mainframe: its version, whether it serves, and whether it is the engine
+     * the network runs, which is what the studio needs; when another runs, which.
+     */
+    private static IsmsSchemaPayload.Engine engine(@Nullable final MainframeBlockEntity mainframe) {
+        final ResourceLocation midsoft = NetworkEngines.MIDSOFT_IQL_SERVER.program();
+        final String name = programName(midsoft);
         if (mainframe == null) {
-            PacketDistributor.sendToPlayer(player,
-                    new IqlFileListPayload(List.of(), Text.EMPTY, false));
-            return;
+            return new IsmsSchemaPayload.Engine(IsmsSchemaPayload.EngineState.NOT_INSTALLED, name, "", false, "");
         }
-        final ItemStack sysDisk = mainframe.systemDisk();
-        if (sysDisk.isEmpty()) {
-            PacketDistributor.sendToPlayer(player, new IqlFileListPayload(List.of(), Text.EMPTY, true));
-            return;
+        final ResourceLocation active = mainframe.activeEngine();
+        final boolean other = active != null && !active.equals(midsoft);
+        final String running = other ? (programName(active) + " "
+                + mainframe.installedEngines().getOrDefault(active, "")).strip() : "";
+        final String version = mainframe.installedEngines().get(midsoft);
+        if (version == null) {
+            return new IsmsSchemaPayload.Engine(IsmsSchemaPayload.EngineState.NOT_INSTALLED, name, "", false,
+                    running);
         }
-        final FilesystemKind kind = filesystemKindOf(mainframe);
-        PacketDistributor.sendToPlayer(player, iqlFileList(sysDisk, kind, Text.EMPTY, true));
+        final boolean serving = midsoft.equals(active) && mainframe.engineRunning();
+        return new IsmsSchemaPayload.Engine(serving ? IsmsSchemaPayload.EngineState.RUNNING
+                : IsmsSchemaPayload.EngineState.STOPPED, name, version, !other, running);
     }
 
-    /** Forwards the {@link IqlFileListPayload} to the open NMS screen. */
-    private static void handleIqlFileList(final IqlFileListPayload payload, final Player player) {
-        NmsApp.acceptFileList(payload);
+    /* A program's name as its package calls it, which is a product's name and reads the same in every language. */
+    private static String programName(final ResourceLocation program) {
+        final ProgramSpec spec = Programs.get(program);
+        return spec == null ? program.getPath() : Text.of(spec.name()).english();
     }
 
-    /** Reads an {@code .iql} file from the Mainframe's disk and sends its content back. */
-    private static void handleOpenIqlFile(final OpenIqlFilePayload payload, final ServerPlayer player,
-                                          final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos())
-                instanceof IComputerTerminalHost host)
-                || !nmsNear(player, payload.hostPos(), host)
-                || host.networkUuid() == null) {
-            return;
-        }
-        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
-        if (mainframe == null) {
-            PacketDistributor.sendToPlayer(player,
-                    new IqlFileContentPayload("", "", false));
-            return;
-        }
-        final ItemStack sysDisk = mainframe.systemDisk();
-        if (sysDisk.isEmpty()) {
-            PacketDistributor.sendToPlayer(player,
-                    new IqlFileContentPayload("", "", false));
-            return;
-        }
-        final var content = DiskFilesystem.read(sysDisk, payload.fileName());
-        /*
-         * A script past what the reply may carry is answered as though it were not there, rather than
-         * taking the packet down: the cap throws when it is handed more than it takes.
-         */
-        if (content.isEmpty() || content.get().length() > SaveIqlFilePayload.MAX_CONTENT_LEN) {
-            PacketDistributor.sendToPlayer(player,
-                    new IqlFileContentPayload("", "", false));
-            return;
-        }
-        PacketDistributor.sendToPlayer(player,
-                new IqlFileContentPayload(payload.fileName(), content.get(), true));
-    }
-
-    /** Forwards the {@link IqlFileContentPayload} to the open NMS screen. */
-    private static void handleIqlFileContent(final IqlFileContentPayload payload, final Player player) {
-        NmsApp.acceptFileContent(payload);
-    }
-
-    /** Builds the payload listing every {@code .iql} file on the given disk. */
-    private static IqlFileListPayload iqlFileList(final ItemStack disk, final FilesystemKind kind,
-                                                   final Text status, final boolean ok) {
-        final List<DiskFilesystem.FileEntry> entries = DiskFilesystem.list(disk, "", kind);
-        final List<String> names = new ArrayList<>();
-        for (final DiskFilesystem.FileEntry entry : entries) {
-            if (entry.type() == FileType.IQL && names.size() < IqlFileListPayload.MAX_FILES) {
-                names.add(entry.path());
-            }
-        }
-        return new IqlFileListPayload(names, status, ok);
-    }
-
-    /** Sanitizes a user-provided base name for an {@code .iql} file (strips extension and invalid chars). */
-    private static String sanitizeIqlName(final String raw) {
-        String name = raw == null ? "" : raw.trim();
-        final int dot = name.lastIndexOf('.');
-        if (dot > 0) {
-            name = name.substring(0, dot);
-        }
-        name = name.replaceAll("[/\\\\\\x00-\\x1F]", "_");
-        if (name.isEmpty()) {
-            name = "query";
-        }
-        if (name.length() > SaveIqlFilePayload.MAX_NAME_LEN) {
-            name = name.substring(0, SaveIqlFilePayload.MAX_NAME_LEN);
-        }
-        return name;
+    /* What fires a job, as its statement wrote it: EVERY or WHEN and what follows; nothing for one never fired. */
+    private static String trigger(final IqlSavedObject job) {
+        return switch (job.triggerKind()) {
+            case EVERY -> "EVERY " + job.triggerSpec();
+            case WHEN -> "WHEN " + job.triggerSpec();
+            case NONE -> "";
+        };
     }
 }

@@ -39,9 +39,9 @@ public final class Programs {
     public static final ResourceLocation SETTINGS =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "settings");
 
-    /** Network Management Studio: an SSMS-style operations console, installed by the player. */
-    public static final ResourceLocation NMS =
-            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nms");
+    /** IQL Server Management Studio: the Midsoft IQL Server's console, installed by the player. */
+    public static final ResourceLocation ISMS =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "isms");
 
     /**
      * The Midsoft IQL Server: the Network Operations Engine every Mainframe ships with (the network's "SQL Server").

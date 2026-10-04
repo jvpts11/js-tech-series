@@ -552,13 +552,13 @@ public final class OsFilesystemGameTests {
     }
 
     /**
-     * A program runs only on an OS that meets its declared capability and era: the NMS needs a full desktop
+     * A program runs only on an OS that meets its declared capability and era: the ISMS needs a full desktop
      * (Frames), the IQL Engine service runs anywhere, an unregistered program is unrestricted, and a gated
      * program is refused when no OS is installed.
      */
     @GameTest(template = ARENA)
     public static void os_programGatingHonorsCapability(final GameTestHelper helper) {
-        final ResourceLocation nms = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nms");
+        final ResourceLocation isms = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "isms");
         final ResourceLocation iql = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "iqlengine");
         final ResourceLocation frames95 = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_95");
         final ResourceLocation framesXp = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp");
@@ -569,15 +569,15 @@ public final class OsFilesystemGameTests {
         // Ample hardware, so only the platform and OS-version gates decide the outcome here.
         final int cpu = 9999;
         final int vram = 9999;
-        helper.assertFalse(OsRegistry.canRunProgram(frames95, nms, cpu, vram),
-                "the NMS needs Frames XP or newer, so Frames 95 must refuse it");
-        helper.assertTrue(OsRegistry.canRunProgram(framesXp, nms, cpu, vram),
-                "the NMS must run on Frames XP");
-        helper.assertFalse(OsRegistry.canRunProgram(mcDos, nms, cpu, vram),
-                "the NMS must be refused on MC-DOS (wrong platform)");
+        helper.assertFalse(OsRegistry.canRunProgram(frames95, isms, cpu, vram),
+                "the ISMS needs Frames XP or newer, so Frames 95 must refuse it");
+        helper.assertTrue(OsRegistry.canRunProgram(framesXp, isms, cpu, vram),
+                "the ISMS must run on Frames XP");
+        helper.assertFalse(OsRegistry.canRunProgram(mcDos, isms, cpu, vram),
+                "the ISMS must be refused on MC-DOS (wrong platform)");
         helper.assertTrue(OsRegistry.canRunProgram(mcDos, iql, cpu, vram),
                 "the IQL Engine (a headless service) still runs on a non-Frames Mainframe");
-        helper.assertFalse(OsRegistry.canRunProgram(null, nms, cpu, vram),
+        helper.assertFalse(OsRegistry.canRunProgram(null, isms, cpu, vram),
                 "a gated program must be refused when no OS is installed");
         helper.assertTrue(OsRegistry.canRunProgram(mcDos, unknown, cpu, vram),
                 "an unregistered program declares no requirement and must pass");
@@ -611,10 +611,12 @@ public final class OsFilesystemGameTests {
             helper.assertTrue(!spec.platforms().isEmpty(), "program " + spec.id() + " needs a platform");
         }
         // A known program resolves, and its title key follows the vanilla convention.
-        final ResourceLocation nms = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nms");
-        helper.assertTrue(OsRegistry.getProgram(nms) != null, "the NMS must be registered");
-        helper.assertTrue(OsRegistry.getProgram(nms).titleKey().equals("program.jsc.nms"),
-                "the title key must be program.jsc.nms");
+        final ResourceLocation isms = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "isms");
+        helper.assertTrue(OsRegistry.getProgram(isms) != null, "the ISMS must be registered");
+        helper.assertTrue(OsRegistry.getProgram(isms).titleKey().equals("program.jsc.isms"),
+                "the title key must be program.jsc.isms");
+        helper.assertTrue(OsRegistry.getProgram(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nms"))
+                == null, "the studio's old name is no longer a program of its own");
 
         /*
          * The OS registry is well-formed too: every built-in OS is registered with a display name and a
@@ -706,7 +708,7 @@ public final class OsFilesystemGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     final dev.jstech.computers.program.ComputerConsoleState state =
                             new dev.jstech.computers.program.ComputerConsoleState();
-                    state.install("jsc:nms");
+                    state.install("jsc:isms");
                     state.desktop().setWallpaper("winxp");
                     state.setComputerName("HAL");
                     final net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
@@ -715,7 +717,7 @@ public final class OsFilesystemGameTests {
                     final dev.jstech.computers.program.ComputerConsoleState loaded =
                             new dev.jstech.computers.program.ComputerConsoleState();
                     loaded.load(tag);
-                    helper.assertTrue(loaded.isInstalled("jsc:nms"),
+                    helper.assertTrue(loaded.isInstalled("jsc:isms"),
                             "an installed program must persist across a reload");
                     helper.assertTrue("winxp".equals(loaded.desktop().wallpaper()),
                             "the chosen wallpaper must persist; got " + loaded.desktop().wallpaper());

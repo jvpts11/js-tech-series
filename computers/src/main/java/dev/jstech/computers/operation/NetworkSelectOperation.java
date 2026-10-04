@@ -13,6 +13,7 @@ import dev.jstech.computers.operation.index.ItemLocation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.trace.TracePoints;
 import dev.jstech.core.operation.ILatencyScheduler;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.operation.OperationFailure;
@@ -113,9 +114,17 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
             waiting = true;
         } else {
             buildSources(plan, tiers, ramLatencies);
+            traceLock(plan);
             if (sourcesEmpty()) {
                 finish(); // nothing to serve, settles immediately as FAILED
             }
+        }
+    }
+
+    /* Tells a trace what the SELECT now holds, once it holds anything. */
+    private void traceLock(final Allocation plan) {
+        if (plan.allocated() > 0L) {
+            TracePoints.lockAcquired(level, network, operationId, key, plan.allocated(), plan.perServer().size());
         }
     }
 
@@ -200,6 +209,7 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
              */
             waiting = false;
             buildSources(plan, tiers, ramLatencies);
+            traceLock(plan);
             if (sourcesEmpty()) {
                 finish();
             }

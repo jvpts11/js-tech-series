@@ -19,7 +19,7 @@ class FileOpenersTest {
 
     private static final List<String> NOTHING = List.of();
     private static final List<String> EVERYTHING =
-            List.of("virtual_studio_code", "virtual_studio", "exposure", "nms", "crafting_manager");
+            List.of("virtual_studio_code", "virtual_studio", "exposure", "isms", "crafting_manager");
 
     @Test
     void defaultFor_opensASourceFileInACodeEditorWhenThereIsOne() {
@@ -46,7 +46,7 @@ class FileOpenersTest {
 
     @Test
     void defaultFor_opensAQueryInTheStudioWhenItIsInstalled() {
-        assertEquals("nms", FileOpeners.defaultFor("q.iql", EVERYTHING));
+        assertEquals("isms", FileOpeners.defaultFor("q.iql", EVERYTHING));
         assertEquals(FileOpeners.EDITOR, FileOpeners.defaultFor("q.iql", NOTHING));
     }
 

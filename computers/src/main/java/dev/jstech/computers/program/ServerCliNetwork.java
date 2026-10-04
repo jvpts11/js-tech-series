@@ -11,6 +11,7 @@ import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IqlOperation;
 import dev.jstech.computers.program.iql.IqlRedstoneStatement;
+import dev.jstech.computers.program.iql.IqlTable;
 import dev.jstech.computers.program.iql.IqlVerb;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.operation.OperationPriority;
@@ -111,6 +112,12 @@ abstract class ServerCliNetwork extends ServerCliFiles {
     public List<StoredItem> queryObject(final String object, final IIqlCondition where, final String server,
                                         final int limit) {
         return networkReads().queryObject(object, where, server, limit);
+    }
+
+    @Override
+    public IqlTable queryTable(final String object, final IIqlCondition where, final String server, final int limit,
+                               final String orderBy, final boolean descending) {
+        return networkReads().queryTable(object, where, server, limit, orderBy, descending);
     }
 
     @Override

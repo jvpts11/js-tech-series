@@ -16,6 +16,7 @@ import dev.jstech.computers.operation.NetworkSelectOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.trace.TracePoints;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.tier.HardwareEra;
@@ -116,6 +117,7 @@ public non-sealed class ExportBusPart extends AbstractBusPart {
             }
             activeOp = mainframe.networkOperations().export(key, want, dest, MoveLabels.bus("Export Bus", name()));
             if (activeOp != null) {
+                TracePoints.exported(level, network, name(), key, want);
                 sentKey = key;
                 sentAmount = want;
                 credit -= want;

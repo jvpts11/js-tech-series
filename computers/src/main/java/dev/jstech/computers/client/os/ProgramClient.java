@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.computers.client.NmsApp;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
@@ -95,8 +94,9 @@ public final class ProgramClient {
         register(rl("task_manager"), (host, mon, os) -> new TaskManagerApp(host, os));
         register(rl("device_manager"), (host, mon, os) -> new DeviceManagerApp(host, os));
         // Installable programs.
-        register(rl("nms"), (host, mon, os) ->
-                new NmsApp(host, mon));
+        register(rl("isms"), (host, mon, os) -> new IsmsApp(host, mon));
+        // Its Profiler, which Tools opens in a window of its own and which comes back with the session.
+        register(rl("isms/profiler"), (host, mon, os) -> new IsmsProfilerApp(host, mon));
         register(rl("crafting_manager"), (host, mon, os) -> new CraftingManagerApp(host));
         register(rl("pattern_studio"), (host, mon, os) -> new PatternStudioApp(host, mon));
         register(rl("workshop"), (host, mon, os) -> new WorkshopApp(host, mon));

@@ -29,6 +29,15 @@ public interface IIqlView {
      */
     List<ICliComputer.StoredItem> queryObject(String object, IIqlCondition where, String server, int limit);
 
+    /**
+     * The same read with every column of the table, sorted by {@code orderBy} when there is one: what a studio's
+     * grid shows. {@link IqlTable#NONE} where the machine keeps no tables.
+     */
+    default IqlTable queryTable(final String object, final IIqlCondition where, final String server, final int limit,
+                                final String orderBy, final boolean descending) {
+        return IqlTable.NONE;
+    }
+
     /** Carries out a statement that changes something, and says how it went. */
     ICliComputer.OpResult execute(IqlOperation operation);
 

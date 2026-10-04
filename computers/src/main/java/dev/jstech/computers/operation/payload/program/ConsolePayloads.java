@@ -264,10 +264,10 @@ public final class ConsolePayloads {
             sendConsoleLine(player, unmet, OperationRecord.STATUS_FAILED);
             return;
         }
-        if (program.id().equals(Programs.NMS)) {
-            // The NMS is now a desktop window opened from its Frames desktop icon, not a server-side menu.
-            sendConsoleLine(player, ConsoleTexts.NMS_FROM_ICON.text(), -1);
-            player.displayClientMessage(GameText.component(ConsoleTexts.NMS_FROM_ICON_MESSAGE), false);
+        if (program.id().equals(Programs.ISMS)) {
+            // The studio is a desktop window opened from its icon, not something the prompt opens.
+            sendConsoleLine(player, ConsoleTexts.ISMS_FROM_ICON.text(), -1);
+            player.displayClientMessage(GameText.component(ConsoleTexts.ISMS_FROM_ICON_MESSAGE), false);
         } else {
             sendConsoleLine(player, ConsoleTexts.ALREADY_OPEN.with(program.commandName()), -1);
         }

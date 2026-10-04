@@ -20,6 +20,7 @@ import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.iql.IIqlView;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.trace.TracePoints;
 import dev.jstech.computers.workshop.UpdateRequest;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -27,6 +28,7 @@ import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -134,7 +136,7 @@ public final class NetworkOperationsService {
     @Nullable
     public INetworkOperation craft(final CraftRequest request) {
         final INetworkEngine engine = engine();
-        return engine == null ? null : planned(engine.craft(core, request));
+        return engine == null ? null : chose(planned(engine.craft(core, request)));
     }
 
     /** Runs one machine recipe; refused when no engine is running. */
@@ -142,7 +144,7 @@ public final class NetworkOperationsService {
     public NetworkProcessingOperation process(final ProcessingPattern pattern, final long demand,
                                               final String label) {
         final INetworkEngine engine = engine();
-        return engine == null ? null : planned(engine.process(core, pattern, demand, label));
+        return engine == null ? null : chose(planned(engine.process(core, pattern, demand, label)));
     }
 
     /** Runs one multi-stage recipe; refused when no engine is running. */
@@ -150,7 +152,7 @@ public final class NetworkOperationsService {
     public NetworkMultiStageOperation pipeline(final MultiStagePattern pattern, final long demand,
                                                final String label) {
         final INetworkEngine engine = engine();
-        return engine == null ? null : planned(engine.pipeline(core, pattern, demand, label));
+        return engine == null ? null : chose(planned(engine.pipeline(core, pattern, demand, label)));
     }
 
     /**
@@ -177,7 +179,22 @@ public final class NetworkOperationsService {
             return new IqlEngine.Outcome(false, UNAVAILABLE.text(), List.of());
         }
         core.notePlanned();
-        return engine.query(core, caller, statement, rowLimit);
+        if (!(core.getLevel() instanceof ServerLevel level)) {
+            return engine.query(core, caller, statement, rowLimit);
+        }
+        TracePoints.statementStarting(level, core.networkUuid(), statement);
+        final IqlEngine.Outcome outcome = engine.query(core, caller, statement, rowLimit);
+        TracePoints.statementCompleted(level, core.networkUuid(), statement, outcome.rows().size(), outcome.said());
+        return outcome;
+    }
+
+    /* Tells a trace how the engine chose to make what a craft asks for. */
+    @Nullable
+    private <T extends INetworkOperation> T chose(@Nullable final T operation) {
+        if (operation != null && core.getLevel() instanceof ServerLevel level) {
+            TracePoints.planChosen(level, core.networkUuid(), operation);
+        }
+        return operation;
     }
 
     /** Counts a request the engine took on, for the plans the network's services show for today. */

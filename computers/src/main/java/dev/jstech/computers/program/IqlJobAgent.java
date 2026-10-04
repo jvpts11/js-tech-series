@@ -98,7 +98,7 @@ public final class IqlJobAgent {
         try {
             interval = IqlDuration.toTicks(job.triggerSpec());
         } catch (final IllegalArgumentException e) {
-            return false; // a malformed interval never fires (the NMS surfaces the error on create)
+            return false; // a malformed interval never fires (the ISMS surfaces the error on create)
         }
         if (interval <= 0) {
             return false;

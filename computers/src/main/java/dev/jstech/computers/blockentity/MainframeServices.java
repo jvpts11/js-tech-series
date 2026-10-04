@@ -99,9 +99,6 @@ final class MainframeServices {
     private boolean automationEngineInstalled;
     private boolean mirrorInstalled;
 
-    /** The last script the editor held, kept so it survives closing and reopening the studio. */
-    private String savedScript = "";
-
     /** Each service by the program that installs it, the engines aside: those are looked up as they are asked for. */
     private final Map<ResourceLocation, IMainframeService> byProgram = Map.of(
             Programs.AUTOMATION_ENGINE, new Service(this::automationEngineInstalled, this::automationEngineActive,
@@ -394,14 +391,6 @@ final class MainframeServices {
         mainframe.setChanged();
     }
 
-    String savedScript() {
-        return savedScript;
-    }
-
-    void savedScript(final String script) {
-        this.savedScript = script == null ? "" : script;
-        mainframe.setChanged();
-    }
 
     /**
      * Takes every one off, the engines too, which is what formatting the disk they were on does.
@@ -459,9 +448,6 @@ final class MainframeServices {
             }
             tag.put("PausedJobs", paused);
         }
-        if (!savedScript.isEmpty()) {
-            tag.putString("IqlScript", savedScript);
-        }
     }
 
     void load(final CompoundTag tag) {
@@ -511,7 +497,6 @@ final class MainframeServices {
         for (int i = 0; i < paused.size(); i++) {
             pausedJobs.add(paused.getString(i));
         }
-        savedScript = tag.getString("IqlScript");
     }
 
     /**

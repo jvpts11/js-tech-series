@@ -201,8 +201,8 @@ public final class PortsGameTests {
         final int asPackage = kde.ramMbOn(os);
         helper.assertTrue(kde.ramMbOn(os, true) == SourceAdvantage.of(asPackage) && kde.ramMbOn(os, true) < asPackage,
                 "built here it holds a tenth less; package " + asPackage + ", built " + kde.ramMbOn(os, true));
-        final int window = MachineMemory.windowRamMb("jsc:nms", os, spec -> false);
-        final int builtWindow = MachineMemory.windowRamMb("jsc:nms", os, spec -> true);
+        final int window = MachineMemory.windowRamMb("jsc:isms", os, spec -> false);
+        final int builtWindow = MachineMemory.windowRamMb("jsc:isms", os, spec -> true);
         helper.assertTrue(builtWindow < window, "and so does its window; " + window + " against " + builtWindow);
         helper.succeed();
     }

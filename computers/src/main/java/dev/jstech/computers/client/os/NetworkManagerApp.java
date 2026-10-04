@@ -93,7 +93,6 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     private static final int OPS_REFRESH_FRAMES = 40;
     private static final int DEV_ROW_H = 12;
-    private static final int PROC_ROW_H = 13;
     private static final int LOG_ROW_H = 12;
     /** The row under the log its Print button stands in, and the button's width. */
     private static final int PRINT_ROW_H = 14;
@@ -138,8 +137,6 @@ public final class NetworkManagerApp implements IDesktopApp {
     private NetworkManagerPayload data;
     private List<OperationRecord> activeOps = List.of();
     private List<OperationRecord> logNewestFirst = List.of();
-    private int scSlotsUsed;
-    private int scSlotsTotal;
     private int tab;
     private int frame;
     private int lastX;
@@ -187,11 +184,7 @@ public final class NetworkManagerApp implements IDesktopApp {
     /* The column names when the list is too narrow for the TYPE column. */
     private final ColumnHeader devColumnsNarrow;
     private final ListView<NetworkNodeInfo> devList;
-    private final Label slotsLabel;
-    private final Label liveLabel;
-    private final Label noProcLabel;
-    private final ListView<OperationRecord> procList;
-    private final ScrollBar procBar;
+    private final ProcessList processes;
     private final List<HardwareRow> hardwareRows = new ArrayList<>();
     private final ListView<HardwareRow> hwList;
     private final ScrollBar hwBar;
@@ -238,15 +231,7 @@ public final class NetworkManagerApp implements IDesktopApp {
                 NetworkLinkTexts.LINK_COLUMN, NetworkManagerTexts.STATUS_COLUMN)).setSortable(false));
         devList = root.add(new ListView<NetworkNodeInfo>(this::nodes, DEV_ROW_H, this::renderDeviceRow));
 
-        slotsLabel = root.add(new Label(() -> GameText.resolve(NetworkManagerTexts.CRAFT_SLOTS.with(scSlotsUsed,
-                scSlotsTotal)), Label.Tone.DIM));
-        liveLabel = root.add(new Label(() -> GameText.resolve(NetworkManagerTexts.RUNNING_COUNT.with(activeOps.size())),
-                Label.Tone.DIM).setAlign(Label.Align.RIGHT));
-        noProcLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.NO_OPERATIONS), Label.Tone.DIM));
-        procList = root.add(new ListView<OperationRecord>(() -> activeOps, PROC_ROW_H, this::renderProcessRow)
-                .setOnClick(this::processClicked));
-        procBar = root.add(new ScrollBar(() -> Math.max(0, activeOps.size() - procList.visibleRows()), procList::scroll,
-                v -> procList.setScroll(v)));
+        processes = root.add(new ProcessList().setOnPick(this::processPicked));
 
         hardwareRows.add(new HardwareRow(NetworkManagerTexts.ORCHESTRATION,
                 () -> GameText.resolve(NetworkManagerTexts.PER_TICK.with(JsTechTheme.fmt(hardware().capacity())))));
@@ -410,8 +395,7 @@ public final class NetworkManagerApp implements IDesktopApp {
     public static void acceptActiveOps(final List<OperationRecord> ops, final int slotsUsed, final int slotsTotal) {
         if (active != null) {
             active.activeOps = ops;
-            active.scSlotsUsed = slotsUsed;
-            active.scSlotsTotal = slotsTotal;
+            active.processes.show(ops, slotsUsed, slotsTotal);
             active.refreshLiveDetail();
         }
     }
@@ -704,19 +688,10 @@ public final class NetworkManagerApp implements IDesktopApp {
             footerW = pw;
         }
 
-        final boolean processes = ready && tab == TAB_PROCESSES;
-        slotsLabel.setVisible(processes);
-        liveLabel.setVisible(processes);
-        noProcLabel.setVisible(processes && activeOps.isEmpty());
-        procList.setVisible(processes && !activeOps.isEmpty());
-        procBar.setVisible(procList.visible() && activeOps.size() > procList.visibleRows());
-        if (processes) {
-            slotsLabel.setBounds(px + 2, top, pw / 2, 8);
-            liveLabel.setBounds(px + pw / 2, top, pw / 2, 8);
-            noProcLabel.setBounds(px + 2, top + 14, pw, 8);
-            final int listW = pw - BAR_W;
-            procList.setBounds(px, top + 12, listW, Math.max(PROC_ROW_H, h - 12));
-            procBar.setBounds(px + pw - BAR_W, top + 12, BAR_W, procList.visibleRows() * PROC_ROW_H);
+        final boolean processesShown = ready && tab == TAB_PROCESSES;
+        processes.setVisible(processesShown);
+        if (processesShown) {
+            processes.place(px, top, pw, h);
         }
 
         final boolean hardware = ready && tab == TAB_HARDWARE;
@@ -821,32 +796,6 @@ public final class NetworkManagerApp implements IDesktopApp {
                 !link.up() ? colours().warn() : n.online() ? colours().good() : ctx.skin().dim());
     }
 
-    private void renderProcessRow(final GuiGraphics g, final UiContext ctx, final OperationRecord op, final int index,
-                                  final int x, final int y, final int w, final int h, final boolean hovered,
-                                  final boolean selected) {
-        final Font font = ctx.font();
-        ctx.skin().listRow(g, x, y, w, h, hovered, false);
-        final String type = OperationPalette.labelFor(op.type());
-        g.drawString(font, type, x + 4, y + 3, OperationPalette.colorFor(op.type()), false);
-        int nameX = x + 4 + font.width(type) + 4;
-        // A level other than the default is worth a tag: raised in amber, lowered dimmed.
-        if (op.priority() != OperationPriority.DEFAULT) {
-            final String tag = GameText.resolve(op.priority().text());
-            g.drawString(font, tag, nameX, y + 3,
-                    op.priority().compareTo(OperationPriority.DEFAULT) > 0 ? colours().warn() : ctx.skin().dim(),
-                    false);
-            nameX += font.width(tag) + 4;
-        }
-        final int barX = x + w / 2 + 4;
-        g.drawString(font, Texts.clip(font, op.name().getString(), barX - nameX - 4), nameX, y + 3, ctx.skin().text(), false);
-        final int barLen = w / 2 - 40;
-        final double frac = op.requested() > 0 ? Math.min(1.0, (double) op.moved() / op.requested()) : 0.0;
-        g.fill(barX, y + 4, barX + barLen, y + h - 3, ctx.skin().fieldBg());
-        g.fill(barX, y + 4, barX + (int) (barLen * frac), y + h - 3, statusColor(op.status()));
-        final String st = statusLabel(op.status());
-        g.drawString(font, st, x + w - font.width(st), y + 3, statusColor(op.status()), false);
-    }
-
     private void renderLogRow(final GuiGraphics g, final UiContext ctx, final OperationRecord op, final int index,
                               final int x, final int y, final int w, final int h, final boolean hovered,
                               final boolean selected) {
@@ -878,11 +827,10 @@ public final class NetworkManagerApp implements IDesktopApp {
         openDetail(logNewestFirst.get(index));
     }
 
-    private void processClicked(final int index, final int button, final double mx, final double my) {
-        if (button != 0 || index < 0 || index >= activeOps.size()) {
-            return;
+    private void processPicked(final OperationRecord operation, final int button) {
+        if (button == 0) {
+            openDetail(operation);
         }
-        openDetail(activeOps.get(index));
     }
 
     /** Whether the detail shows an Operation still in flight (its level can be changed). */
@@ -1362,29 +1310,11 @@ public final class NetworkManagerApp implements IDesktopApp {
     }
 
     private static String statusLabel(final byte status) {
-        final TextKey word = switch (status) {
-            case OperationRecord.STATUS_COMPLETED -> NetworkManagerTexts.DONE;
-            case OperationRecord.STATUS_PARTIAL -> NetworkManagerTexts.PARTIAL;
-            case OperationRecord.STATUS_FAILED -> NetworkManagerTexts.FAILED;
-            case OperationRecord.STATUS_PROCESSING -> NetworkManagerTexts.RUNNING;
-            case OperationRecord.STATUS_WAITING -> NetworkManagerTexts.WAITING;
-            case OperationRecord.STATUS_RESOURCE_LOCKED -> NetworkManagerTexts.LOCKED;
-            case OperationRecord.STATUS_PENDING -> NetworkManagerTexts.QUEUED;
-            case OperationRecord.STATUS_DISCARDED -> NetworkManagerTexts.DISCARDED;
-            default -> null;
-        };
-        return word == null ? "" : GameText.resolve(word);
+        return ProcessList.statusLabel(status);
     }
 
     private int statusColor(final byte status) {
-        return switch (status) {
-            case OperationRecord.STATUS_PROCESSING, OperationRecord.STATUS_COMPLETED -> colours().good();
-            case OperationRecord.STATUS_PARTIAL, OperationRecord.STATUS_WAITING, OperationRecord.STATUS_PENDING ->
-                    colours().warn();
-            case OperationRecord.STATUS_FAILED, OperationRecord.STATUS_RESOURCE_LOCKED,
-                    OperationRecord.STATUS_DISCARDED -> colours().bad();
-            default -> skin.text();
-        };
+        return ProcessList.statusColour(status, skin);
     }
 
     private static int kindColor(final int kind) {
@@ -1447,7 +1377,7 @@ public final class NetworkManagerApp implements IDesktopApp {
             return true;
         }
         if (tab == TAB_PROCESSES) {
-            procList.setScroll(procList.scroll() + step);
+            processes.scrollBy(step);
             return true;
         }
         if (tab == TAB_HARDWARE) {

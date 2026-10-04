@@ -22,6 +22,7 @@ import dev.jstech.computers.program.iql.IqlParseResult;
 import dev.jstech.computers.program.iql.IqlParser;
 import dev.jstech.computers.program.iql.IqlRedstoneStatement;
 import dev.jstech.computers.program.iql.IqlSavedObject;
+import dev.jstech.computers.program.iql.IqlTable;
 import dev.jstech.computers.program.iql.IqlVerb;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -98,6 +99,12 @@ public final class IqlEngine {
             }
 
             @Override
+            public IqlTable queryTable(final String object, final IIqlCondition where, final String server,
+                                       final int limit, final String orderBy, final boolean descending) {
+                return computer.queryTable(object, where, server, limit, orderBy, descending);
+            }
+
+            @Override
             public ICliComputer.OpResult execute(final IqlOperation operation) {
                 return computer.execute(operation);
             }
@@ -110,11 +117,17 @@ public final class IqlEngine {
     }
 
     /**
-     * The result of running a statement: a status, what it says, and (for a read) the result rows.
+     * The result of running a statement: a status, what it says, and (for a read) the result rows, both as the
+     * prompt lists them and as the table's columns, which is what a studio's grid shows.
      *
-     * @param said what it says, in whatever language its reader reads
+     * @param said  what it says, in whatever language its reader reads
+     * @param table the read with every column of its table, or {@link IqlTable#NONE} for a statement that read none
      */
-    public record Outcome(boolean ok, Text said, List<ICliComputer.StoredItem> rows) {
+    public record Outcome(boolean ok, Text said, List<ICliComputer.StoredItem> rows, IqlTable table) {
+
+        public Outcome(final boolean ok, final Text said, final List<ICliComputer.StoredItem> rows) {
+            this(ok, said, rows, IqlTable.NONE);
+        }
 
         /** What it says in English, the machine's language: what a program is handed and a log keeps. */
         public String message() {
@@ -131,6 +144,10 @@ public final class IqlEngine {
 
         static Outcome rows(final List<ICliComputer.StoredItem> rows) {
             return new Outcome(true, (rows.size() == 1 ? ROWS_ONE : ROWS_MANY).with(rows.size()), rows);
+        }
+
+        static Outcome read(final List<ICliComputer.StoredItem> rows, final IqlTable table) {
+            return new Outcome(true, (rows.size() == 1 ? ROWS_ONE : ROWS_MANY).with(rows.size()), rows, table);
         }
     }
 
@@ -280,7 +297,10 @@ public final class IqlEngine {
              */
             final List<ICliComputer.StoredItem> rows =
                     computer.queryObject(operation.item(), operation.where(), "", ordered ? queryRowLimit : limit);
-            return Outcome.rows(ordered ? ordered(rows, operation).stream().limit(limit).toList() : rows);
+            // The same read with every column, sorted by any of them, for whoever shows a table.
+            final IqlTable table = computer.queryTable(operation.item(), operation.where(), "", limit,
+                    operation.orderBy(), operation.orderByDescending());
+            return Outcome.read(ordered ? ordered(rows, operation).stream().limit(limit).toList() : rows, table);
         }
         // The IF guard decides whether the action runs at all, read against the network's holding of its item.
         if (operation.guard() != null && !operation.guard().matches(guardRow(operation))) {
@@ -296,6 +316,7 @@ public final class IqlEngine {
         final Comparator<ICliComputer.StoredItem> order = switch (operation.orderBy().toLowerCase(Locale.ROOT)) {
             case "qty", "count", "amount", "quantity" -> Comparator.comparingLong(ICliComputer.StoredItem::quantity);
             case "name", "item" -> Comparator.comparing(row -> row.name().english().toLowerCase(Locale.ROOT));
+            case "server" -> Comparator.comparing(row -> row.detail().english().toLowerCase(Locale.ROOT));
             default -> null;
         };
         if (order == null) {

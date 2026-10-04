@@ -27,10 +27,10 @@ final class ConsoleTexts {
             TextKey.of("jsc.console.cannot_run", "%s cannot run on this computer's OS or hardware");
     static final TextKey CANNOT_RUN_MESSAGE =
             TextKey.of("jsc.console.cannot_run_message", "The %s cannot run on this computer's OS or hardware.");
-    static final TextKey NMS_FROM_ICON =
-            TextKey.of("jsc.console.nms_from_icon", "open the NMS from its desktop icon on a Frames computer");
-    static final TextKey NMS_FROM_ICON_MESSAGE =
-            TextKey.of("jsc.console.nms_from_icon_message", "Open the NMS from its desktop icon.");
+    static final TextKey ISMS_FROM_ICON =
+            TextKey.of("jsc.console.isms_from_icon", "open the ISMS from its desktop icon");
+    static final TextKey ISMS_FROM_ICON_MESSAGE =
+            TextKey.of("jsc.console.isms_from_icon_message", "Open the ISMS from its desktop icon.");
     static final TextKey ALREADY_OPEN = TextKey.of("jsc.console.already_open", "the %s is already open");
     // How far a program's setup has got, on the line that stands in for the prompt while it runs.
     static final TextKey SETTING_UP =

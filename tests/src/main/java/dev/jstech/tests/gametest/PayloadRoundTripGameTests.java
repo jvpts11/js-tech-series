@@ -16,7 +16,16 @@ import dev.jstech.computers.operation.payload.EngineActionPayload;
 import dev.jstech.computers.operation.payload.FileSavedPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
+import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.operation.payload.IqlResultPayload;
+import dev.jstech.computers.operation.payload.IsmsActionPayload;
+import dev.jstech.computers.operation.payload.IsmsPlanPayload;
+import dev.jstech.computers.operation.payload.IsmsSchemaPayload;
+import dev.jstech.computers.operation.payload.IsmsTracePayload;
+import dev.jstech.computers.operation.payload.RequestIsmsSchemaPayload;
+import dev.jstech.computers.operation.payload.RunIqlPayload;
+import dev.jstech.computers.trace.TraceEvent;
+import dev.jstech.computers.trace.TraceEventClass;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.NetworkManagerPayload;
 import dev.jstech.computers.operation.payload.NetworkNodeInfo;
@@ -95,7 +104,7 @@ public final class PayloadRoundTripGameTests {
                 "OS", "FRAMES", true, "Frames 11", 2021, "jsc:frames_11",
                 List.of(Text.literal("Standard era or later"), Text.literal("64 it of memory")), 0L, 2);
         roundTrip(helper, ThisPcPayload.STREAM_CODEC,
-                new ThisPcPayload(HOST, machine, List.of(disk), List.of(media), List.of("jsc:nms")));
+                new ThisPcPayload(HOST, machine, List.of(disk), List.of(media), List.of("jsc:isms")));
         helper.succeed();
     }
 
@@ -175,9 +184,50 @@ public final class PayloadRoundTripGameTests {
 
     @GameTest(template = ARENA)
     public static void iql_resultRoundTrips(final GameTestHelper helper) {
-        roundTrip(helper, IqlResultPayload.STREAM_CODEC, new IqlResultPayload(true, Text.literal("2 rows"),
-                List.of(new IqlResultPayload.Row(Text.literal("Oak Log"), 640L),
-                        new IqlResultPayload.Row(Text.literal("Iron Ingot"), 12L))));
+        roundTrip(helper, IqlResultPayload.STREAM_CODEC, new IqlResultPayload(3, 2, 1, true, Text.literal("2 rows"),
+                List.of("item", "qty", "server"),
+                List.of(List.of(Text.literal("oak_log"), Text.literal("640"), Text.literal("Server A")),
+                        List.of(Text.literal("iron_ingot"), Text.literal("12"), Text.literal("2 servers"))),
+                List.of("1a2b3c4d")));
+        roundTrip(helper, IqlResultPayload.STREAM_CODEC, IqlResultPayload.said(3, -1, 0, false,
+                Text.literal("no such job")));
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void isms_requestsRoundTrip(final GameTestHelper helper) {
+        roundTrip(helper, RunIqlPayload.STREAM_CODEC, new RunIqlPayload(HOST, HOST.above(), 4, 7, 2,
+                "QUERY items WHERE qty < 64"));
+        roundTrip(helper, RequestIsmsSchemaPayload.STREAM_CODEC, new RequestIsmsSchemaPayload(HOST, 4));
+        roundTrip(helper, IsmsActionPayload.STREAM_CODEC, new IsmsActionPayload(HOST, HOST.above(), 4,
+                IsmsActionPayload.PLAN, "iron_ingot", 64));
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void isms_schemaRoundTrips(final GameTestHelper helper) {
+        roundTrip(helper, IsmsSchemaPayload.STREAM_CODEC, new IsmsSchemaPayload(4, Text.literal("jsc-net-1a2b"),
+                "desk", new IsmsSchemaPayload.Engine(IsmsSchemaPayload.EngineState.RUNNING, "Midsoft IQL Server",
+                        "2012", true, ""), List.of(1284, 4, 11, 418, 37, 9),
+                List.of(new IsmsSchemaPayload.Saved("low_stock", "QUERY items WHERE qty < 64")),
+                List.of(new IsmsSchemaPayload.Saved("restock", "{ CRAFT 64 torch; CRAFT 8 chest }")),
+                List.of(new IsmsSchemaPayload.Job("nightly_vacuum", true, "EVERY 20m", "VACUUM")),
+                List.of("Server A", "Server B"),
+                new IsmsSchemaPayload.Index(IndexHealth.State.STALE, 120, 2),
+                List.of(new IsmsSchemaPayload.Lock("minecraft:diamond", Text.literal("Diamond"), 64L))));
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void isms_planAndTraceRoundTrip(final GameTestHelper helper) {
+        roundTrip(helper, IsmsPlanPayload.STREAM_CODEC, new IsmsPlanPayload(4, true,
+                List.of(Text.literal("CRAFT 64 piston"), Text.literal("Bench Craft: piston x64, 64 runs")),
+                List.of(0, 1)));
+        roundTrip(helper, IsmsTracePayload.STREAM_CODEC, new IsmsTracePayload(5, List.of(
+                new TraceEvent(TraceEventClass.OPERATION_SETTLED, Text.literal("#418 CRAFT 64 iron_ingot"),
+                        "steve", "desk", 64L, 312L, 9000L, List.of(Text.literal("took 312 ticks"))),
+                new TraceEvent(TraceEventClass.STATEMENT_STARTING, Text.literal("QUERY items"), "steve", "desk",
+                        TraceEvent.NONE, TraceEvent.NONE, 9001L, List.of()))));
         helper.succeed();
     }
 

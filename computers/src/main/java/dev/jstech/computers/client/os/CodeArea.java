@@ -120,6 +120,8 @@ public final class CodeArea extends UiComponent {
     private String colouredText;
     /** How many spaces the Tab key puts down; four unless an editor's settings say otherwise. */
     private int tabSize = 4;
+    /** Whether the rows are numbered in the gutter, as every editor does but the oldest. */
+    private boolean numbered = true;
 
     /** The document being edited, so an owner can read it or put a file in it. */
     public TextDocument document() {
@@ -158,6 +160,11 @@ public final class CodeArea extends UiComponent {
     }
 
     /** What the compiler said, to show in the margin and under the words. */
+    /** What the compiler said that is marked now. */
+    public List<Mark> marks() {
+        return this.marks;
+    }
+
     public CodeArea setMarks(final List<Mark> value) {
         this.marks = value == null ? List.of() : List.copyOf(value);
         return this;
@@ -170,6 +177,12 @@ public final class CodeArea extends UiComponent {
     }
 
     /** Sets how many spaces the Tab key puts down, between two and eight. */
+    /** Numbers the rows in the gutter, or leaves only the room for marks there. */
+    public CodeArea setNumbered(final boolean value) {
+        this.numbered = value;
+        return this;
+    }
+
     public CodeArea setTabSize(final int value) {
         this.tabSize = Math.max(2, Math.min(8, value));
         return this;
@@ -223,6 +236,9 @@ public final class CodeArea extends UiComponent {
 
     /** The width the numbers take, which is what the code is indented past, in unscaled units. */
     private int gutterWidth(final Font font) {
+        if (!this.numbered) {
+            return MARK_W + GUTTER_PAD;
+        }
         final int widest = font.width(String.valueOf(Math.max(1, this.doc.lineCount())));
         return MARK_W + GUTTER_PAD + widest + GUTTER_PAD;
     }
@@ -345,9 +361,11 @@ public final class CodeArea extends UiComponent {
         ry = 1;
         for (int i = this.scroll; i < this.doc.lineCount() && i - this.scroll < visible; i++) {
             drawMark(g, i, ry);
-            final String number = String.valueOf(i + 1);
-            g.drawString(font, number, gutter - GUTTER_PAD - font.width(number), ry + 1,
-                    ink.gutterText(), false);
+            if (this.numbered) {
+                final String number = String.valueOf(i + 1);
+                g.drawString(font, number, gutter - GUTTER_PAD - font.width(number), ry + 1,
+                        ink.gutterText(), false);
+            }
             ry += LINE_H;
         }
         g.pose().popPose();

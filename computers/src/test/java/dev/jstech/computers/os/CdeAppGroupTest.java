@@ -26,7 +26,7 @@ class CdeAppGroupTest {
 
     @Test
     void of_putsWhatSpeaksToTheNetworkUnderNetwork() {
-        for (final String path : new String[] {"network", "network_manager", "nms", "gateway_manager",
+        for (final String path : new String[] {"network", "network_manager", "isms", "gateway_manager",
             "remote_control", "storage_insights", "crafting_manager"}) {
             assertEquals(CdeAppGroup.NETWORK, CdeAppGroup.of(path), path);
         }

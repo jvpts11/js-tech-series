@@ -154,7 +154,7 @@ public final class OsMemoryGameTests {
                      */
                     final List<OpenWindow> asked = new ArrayList<>();
                     for (int i = 0; i < 20; i++) {
-                        asked.add(new OpenWindow("jsc:nms", 10 + i, 10, 200, 140, false, false));
+                        asked.add(new OpenWindow("jsc:isms", 10 + i, 10, 200, 140, false, false));
                     }
                     final List<OpenWindow> kept = mainframe.windowsWithinBudget(asked);
                     helper.assertTrue(kept.size() == 15, "fifteen studios fit in 1960 MB; kept " + kept.size());
@@ -220,8 +220,8 @@ public final class OsMemoryGameTests {
         helper.assertTrue(files.ramMbOn(framesXp) == 16, "Files is 16 MB on Frames XP; got " + files.ramMbOn(framesXp));
         helper.assertTrue(files.ramMbOn(frames11) == 192, "Files is 192 MB on Frames 11; got " + files.ramMbOn(frames11));
 
-        final ProgramSpec nms = OsRegistry.getProgram(id("nms"));
-        helper.assertTrue(nms != null && nms.ramMbOn(framesXp) == 128,
+        final ProgramSpec isms = OsRegistry.getProgram(id("isms"));
+        helper.assertTrue(isms != null && isms.ramMbOn(framesXp) == 128,
                 "an installable weighs what it declared wherever it runs");
 
         final ProgramSpec unstated = ProgramSpec.of(id("addon_tool"), "tool", false,

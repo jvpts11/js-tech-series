@@ -66,7 +66,7 @@ public final class SoftwareHouseGameTests {
     @GameTest(template = ARENA)
     public static void programs_nameTheirMakersAndBundledOnesTheirShipper(final GameTestHelper helper) {
         final Map<String, SoftwareHouse> programs = Map.ofEntries(
-                Map.entry("nms", SoftwareHouse.MIDSOFT), Map.entry("iqlengine", SoftwareHouse.MIDSOFT),
+                Map.entry("isms", SoftwareHouse.MIDSOFT), Map.entry("iqlengine", SoftwareHouse.MIDSOFT),
                 Map.entry("crafting_manager", SoftwareHouse.AUTODECK),
                 Map.entry("craft_planner", SoftwareHouse.AUTODECK),
                 Map.entry("automation_engine", SoftwareHouse.RED_CAP),

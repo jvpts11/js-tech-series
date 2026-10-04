@@ -7,7 +7,6 @@
 48 computers/src/main/java/dev/jstech/computers/client/FirmwareScreen.java
 15 computers/src/main/java/dev/jstech/computers/client/InstallerFrames.java
 16 computers/src/main/java/dev/jstech/computers/client/InstallerScreen.java
-1 computers/src/main/java/dev/jstech/computers/client/IqlEditor.java
 7 computers/src/main/java/dev/jstech/computers/client/LocalTerminalTab.java
 5 computers/src/main/java/dev/jstech/computers/client/MaintenanceTerminalTab.java
 1 computers/src/main/java/dev/jstech/computers/client/MonitorFrame.java
@@ -63,7 +62,7 @@
 2 computers/src/main/java/dev/jstech/computers/client/os/MinesweeperApp.java
 1 computers/src/main/java/dev/jstech/computers/client/os/MotifMenu.java
 6 computers/src/main/java/dev/jstech/computers/client/os/NetworkInteractorApp.java
-14 computers/src/main/java/dev/jstech/computers/client/os/NetworkManagerApp.java
+10 computers/src/main/java/dev/jstech/computers/client/os/NetworkManagerApp.java
 2 computers/src/main/java/dev/jstech/computers/client/os/OccupyWorkspaceDialog.java
 1 computers/src/main/java/dev/jstech/computers/client/os/OpenWithPopup.java
 4 computers/src/main/java/dev/jstech/computers/client/os/PaintApp.java

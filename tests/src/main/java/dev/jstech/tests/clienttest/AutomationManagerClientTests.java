@@ -55,12 +55,12 @@ public final class AutomationManagerClientTests {
                 .then(SETTLE, () -> DesktopScreen.requestOpen(AutomationManagerApp.TITLE))
                 .thenWaitUntil(() -> manager(ctx) != null && manager(ctx).hasState(), SCREEN_WAIT,
                         "the Automation Manager to hear from the Mainframe")
+                // The form is laid out when the window draws, and a loaded client can run several ticks between two
+                // frames, so the answer can be in before the window has drawn it.
+                .thenWaitUntil(() -> manager(ctx).restockNoteShown(), SCREEN_WAIT,
+                        "Restock below to say it does not count what is on its way")
                 .thenScreenshot(4, "restock-below")
-                .then(0, () -> {
-                    ctx.assertTrue(manager(ctx).engineOnline(), "the Automation Engine shows online");
-                    ctx.assertTrue(manager(ctx).restockNoteShown(),
-                            "Restock below says it does not count what is on its way");
-                });
+                .then(0, () -> ctx.assertTrue(manager(ctx).engineOnline(), "the Automation Engine shows online"));
     }
 
     @Nullable

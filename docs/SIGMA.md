@@ -341,7 +341,7 @@ Iql.Exec(string procedure[, List<string> args]) -> IqlResult
 Iql.RunFile(string path) -> IqlResult                         one statement a line
 ```
 
-A statement goes to the Mainframe as it would from the prompt or the Network Management Studio, under
+A statement goes to the Mainframe as it would from the prompt or the IQL Server Management Studio, under
 the program's name. Rows are maps keyed by their columns (`name`, `quantity`, `detail`). Plain
 statements need only a Mainframe; views, procedures and jobs need the IQL Engine installed on it.
 `SET BUS` sets one of the network's buses, as the `Bus` calls below do, and `SET REDSTONE` one of the Redstone

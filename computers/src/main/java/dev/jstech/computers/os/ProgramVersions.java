@@ -35,7 +35,7 @@ public final class ProgramVersions {
             Map.entry("messenger_service", "7.5"),
             Map.entry("knot", "2.4"),
             Map.entry("knothub", "2.4"),
-            Map.entry("nms", "19.3"),
+            Map.entry("isms", "19.3"),
             Map.entry("iqlengine", "16.0"),
             Map.entry("crafting_manager", "3.2"),
             Map.entry("pattern_studio", "2.0"),

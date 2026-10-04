@@ -262,7 +262,7 @@ public final class NetworkEngineGameTests {
                 .requiring(ProgramRequirement.capabilities(Set.of(EngineCapability.EXPLAIN)));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final ProgramSpec studio = Programs.get(Programs.NMS);
+                    final ProgramSpec studio = Programs.get(Programs.ISMS);
                     helper.assertTrue(Programs.get(MIDSOFT).kind() == ProgramKind.NETWORK_ENGINE,
                             "an engine is a package of the engine kind");
                     helper.assertTrue(EngineRequirements.unmet(studio, mainframe) == null,

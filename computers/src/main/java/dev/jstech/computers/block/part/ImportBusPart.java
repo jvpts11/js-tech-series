@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.trace.TracePoints;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.persistence.SavedValue;
@@ -146,6 +147,8 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
             bufferAmount = payloadAmount;
             flushedKey = null;
             flushedAmount = 0L;
+        } else {
+            TracePoints.imported(level, network, name(), payloadKey, payloadAmount);
         }
         host.setChanged();
     }

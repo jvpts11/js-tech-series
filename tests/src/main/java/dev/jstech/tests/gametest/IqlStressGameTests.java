@@ -26,7 +26,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * IQL run against the network through the same server-side CLI the Command Prompt and NMS use, checking the
+ * IQL run against the network through the same server-side CLI the Command Prompt and ISMS use, checking the
  * parts that must never misbehave under a storm of statements: QUERY reflects the real network, a manual LOCK
  * takes and releases hold of a stock type and accounts for the amount, and malformed or unknown-target
  * statements are rejected without crashing. None of these verbs moves items, so the network's counts must be

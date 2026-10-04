@@ -31,7 +31,7 @@ public enum CdeAppGroup {
 
     private static final Set<String> EVERYDAY = Set.of("files", "editor", "command_prompt", "calculator", "settings");
 
-    private static final Set<String> ON_THE_NETWORK = Set.of("network", "network_manager", "nms", "gateway_manager",
+    private static final Set<String> ON_THE_NETWORK = Set.of("network", "network_manager", "isms", "gateway_manager",
             "remote_control", "cluster_manager", "crafting_manager", "storage_insights", "craft_planner",
             "automation_manager", "pattern_studio");
 

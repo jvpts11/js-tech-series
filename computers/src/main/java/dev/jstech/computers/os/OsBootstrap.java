@@ -406,7 +406,7 @@ public final class OsBootstrap {
             /*
              * Installables. The OS rank only gates the Frames editions (a Linux distribution ranks 0, so any
              * desktop program the Mirror serves installs on it once a desktop environment is present).
-             * Network Management Studio: a professional network tool -> Frames XP or newer (rank 2).
+             * IQL Server Management Studio: a professional network tool -> Frames XP or newer (rank 2).
              * Every installable also says the generation it was WRITTEN in (withEra): that decides the
              * medium it ships on and the year on its banner, and never where it may install. The OS rank
              * stays the gate. A modern tool that still runs on XP is Standard-era software on a DVD.
@@ -414,20 +414,25 @@ public final class OsBootstrap {
              * And each says the RAM it holds while it runs (withRam): the balancing estimates follow the
              * generation the tool was written in, so a modern tool is the heavier one.
              */
-            // The Midsoft IQL Server's studio: it opens on a network running that engine, from its 2000 version on.
-            ProgramSpec.of(rl("nms"), "nms", false, DESKTOPS, 128, ProgramKind.APP, 2, HostScope.ANY)
-                    .named("Network Management Studio")
-                    .described("Query the network in IQL, inspect the index and run maintenance from one console.")
-                    .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(128)
+            /*
+             * The Midsoft IQL Server's studio: it opens on a network running that engine, from its 2000 version on.
+             * A Vintage machine has no studio; its Midsoft is worked from the prompt's iql, as the command line of
+             * the time was.
+             */
+            ProgramSpec.of(rl("isms"), "isms", false, DESKTOPS, 128, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("IQL Server Management Studio")
+                    .described("Query the network in IQL, trace its work, look after the index and the locks, and"
+                            + " run its jobs from one console.")
+                    .withMinEra(LEGACY).withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(128)
                     .requiring(ProgramRequirement.engine(rl("iqlengine"), "2000")),
             /*
-             * The Midsoft IQL Server is the Network Operations Engine every Mainframe ships with (the NMS is its
+             * The Midsoft IQL Server is the Network Operations Engine every Mainframe ships with (the ISMS is its
              * studio): every platform and every system, lives on the Mainframe, in a version for each age.
              */
             ProgramSpec.of(rl("iqlengine"), "iqlengine", false, ALL_PLATFORMS, 32, ProgramKind.NETWORK_ENGINE, 0,
                             HostScope.MAINFRAME)
                     .named("Midsoft IQL Server")
-                    .described("The engine that plans the network's work and answers it in IQL. The NMS is its"
+                    .described("The engine that plans the network's work and answers it in IQL. The ISMS is its"
                             + " studio.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.MIDSOFT).withRam(24),
             // The Crafting Manager installs only on a Crafting Computer -> Frames XP or newer.

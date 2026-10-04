@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliRemote;
 import dev.jstech.computers.program.iql.IIqlCondition;
+import dev.jstech.computers.program.iql.IqlTable;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
@@ -228,8 +229,8 @@ public final class NetworkReadService {
     }
 
     /**
-     * The fields a WHERE can test on an item row: item id, name, qty, server (scoped), damaged, durability. A read and
-     * an action read the same row, so a filter means the same thing in both.
+     * The fields a WHERE can test on an item row: item id, name, qty, server (scoped), damaged, durability, its first
+     * tag and its enchantments. A read and an action read the same row, so a filter means the same thing in both.
      */
     static Function<String, String> rowOf(final StorageKey key, final long qty, final String scopedServer) {
         return field -> switch (field.toLowerCase(Locale.ROOT)) {
@@ -239,6 +240,8 @@ public final class NetworkReadService {
             case "server" -> scopedServer;
             case "damaged" -> Boolean.toString(key.stack(1).isDamaged());
             case "durability" -> durabilityPercent(key);
+            case "tag" -> IqlTables.firstTag(key.stack(1));
+            case "enchant" -> IqlTables.enchantments(key.stack(1)).english();
             default -> null; // an unknown field makes its comparison false, so the row is excluded
         };
     }
@@ -257,8 +260,19 @@ public final class NetworkReadService {
     }
 
     /**
+     * The rows of {@code object} with every column of the table, the WHERE kept to on any of them, sorted by
+     * {@code orderBy} when there is one and at most {@code limit}: what a studio's grid shows.
+     */
+    public IqlTable queryTable(final String object, @Nullable final IIqlCondition where, final String server,
+                               final int limit, final String orderBy, final boolean descending) {
+        return IqlTables.read(this.level, this.terminal.networkUuid(), this.operations, object, where, server, limit,
+                orderBy, descending);
+    }
+
+    /**
      * The rows a {@code QUERY <object>} asks of the network: {@code items} (what it holds), {@code servers},
-     * {@code operations}, {@code computers} and {@code recipes}. An object nothing answers yet reads as no rows.
+     * {@code disks}, {@code operations}, {@code computers} and {@code recipes}. An object nothing answers reads as no
+     * rows.
      *
      * @param object the name of what is being asked about
      * @param where  the condition a row has to meet, or null for every row
@@ -273,7 +287,7 @@ public final class NetworkReadService {
             case "operations" -> this.queryOperations(limit);
             case "computers" -> this.queryComputers(limit);
             case "recipes" -> this.queryRecipes(limit);
-            // disks: the schema object exists, the per-disk live data is not wired yet.
+            case "disks" -> this.queryDisks(where, limit);
             default -> List.of();
         };
     }
@@ -310,6 +324,25 @@ public final class NetworkReadService {
                     A_CRAFTING_COMPUTER.with("CC-" + ShortId.of(cc.nodeUuid().asString())), 1L));
         }
         return out;
+    }
+
+    /** One row per disk in the network's servers: the disk, how many items it holds, and its server. */
+    private List<ICliComputer.StoredItem> queryDisks(@Nullable final IIqlCondition where, final int limit) {
+        final IqlTable table = this.queryTable("disks", where, "", limit, "", false);
+        final List<ICliComputer.StoredItem> out = new ArrayList<>(table.rows().size());
+        for (int i = 0; i < table.rows().size(); i++) {
+            out.add(new ICliComputer.StoredItem(table.cell(i, "disk"),
+                    parseCount(table.cell(i, "used").english()), table.cell(i, "server")));
+        }
+        return out;
+    }
+
+    private static long parseCount(final String text) {
+        try {
+            return Long.parseLong(text);
+        } catch (final NumberFormatException notACount) {
+            return 0L;
+        }
     }
 
     /** One row per craftable recipe known to the network: the result item and its output count. */

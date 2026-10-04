@@ -24,18 +24,30 @@ public final class ContextMenu extends UiComponent {
 
     /**
      * One entry: a label with an action, greyed out when it cannot apply; {@link #separator()} is a line,
-     * and one with {@code children} opens them beside itself instead of running anything.
+     * and one with {@code children} opens them beside itself instead of running anything. The keys that do
+     * the same from the keyboard, when it has any, stand at the right of its row.
      */
-    public record Item(String label, boolean enabled, Runnable action, List<Item> children) {
+    public record Item(String label, String keys, boolean enabled, Runnable action, List<Item> children) {
 
         private static final String SEPARATOR = "-";
 
         public Item(final String label, final boolean enabled, final Runnable action) {
-            this(label, enabled, action, List.of());
+            this(label, "", enabled, action, List.of());
+        }
+
+        public Item(final String label, final boolean enabled, final Runnable action, final List<Item> children) {
+            this(label, "", enabled, action, children);
         }
 
         public Item {
+            keys = keys == null ? "" : keys;
             children = children == null ? List.of() : List.copyOf(children);
+        }
+
+        /** An entry whose keys, {@code Ctrl+S} say, are written at the right of its row. */
+        public static Item keyed(final String label, final String keys, final boolean enabled,
+                                 final Runnable action) {
+            return new Item(label, keys, enabled, action, List.of());
         }
 
         public static Item separator() {
@@ -57,6 +69,8 @@ public final class ContextMenu extends UiComponent {
     }
 
     private static final int ARROW_W = 8;
+    /** The room kept between an item's label and its keys. */
+    private static final int KEYS_GAP = 14;
 
     private final int itemWidth;
     private final int itemHeight;
@@ -213,7 +227,9 @@ public final class ContextMenu extends UiComponent {
             int widest = itemWidth;
             for (final Item item : items) {
                 if (!item.isSeparator()) {
-                    widest = Math.max(widest, ctx.font().width(item.label()) + 10 + (item.hasChildren() ? ARROW_W : 0));
+                    final int keys = item.keys().isEmpty() ? 0 : KEYS_GAP + ctx.font().width(item.keys());
+                    widest = Math.max(widest, ctx.font().width(item.label()) + 10 + keys
+                            + (item.hasChildren() ? ARROW_W : 0));
                 }
             }
             place(widest);
@@ -248,6 +264,10 @@ public final class ContextMenu extends UiComponent {
                 final int colour = lit ? ComponentPalette.get().litText()
                         : item.enabled() ? ctx.skin().text() : ctx.skin().dim();
                 Draw.text(g, ctx.font(), item.label(), x() + 4, iy + 2, colour, ground);
+                if (!item.keys().isEmpty()) {
+                    Draw.text(g, ctx.font(), item.keys(), right() - 4 - ctx.font().width(item.keys()), iy + 2,
+                            lit ? colour : ctx.skin().dim(), ground);
+                }
                 if (item.hasChildren()) {
                     Draw.text(g, ctx.font(), ">", right() - 7, iy + 2, colour, ground);
                 }

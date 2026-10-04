@@ -55,7 +55,7 @@ public final class FileOpeners {
         BY_TYPE.put(FileType.SLN, List.of("virtual_studio", EDITOR));
         BY_TYPE.put(FileType.SGSPROJ, List.of("virtual_studio", EDITOR));
         BY_TYPE.put(FileType.SGPROJ, List.of("virtual_studio", EDITOR));
-        BY_TYPE.put(FileType.IQL, List.of("nms", EDITOR));
+        BY_TYPE.put(FileType.IQL, List.of("isms", EDITOR));
         BY_TYPE.put(FileType.CRAFT, List.of("crafting_manager"));
         /*
          * An archive opens in the archiver and a picture in the paint program, the way the file each of

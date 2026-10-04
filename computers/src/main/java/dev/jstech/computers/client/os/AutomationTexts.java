@@ -48,7 +48,7 @@ final class AutomationTexts {
     static final TextKey TO = TextKey.of("jsc.automation.form.to", "To");
     static final TextKey SCRIPT = TextKey.of("jsc.automation.form.script", "Script (on Mainframe disk):");
     static final TextKey NO_SCRIPTS =
-            TextKey.of("jsc.automation.form.no_scripts", "no .iql files - save one in the NMS");
+            TextKey.of("jsc.automation.form.no_scripts", "no .iql files on the Mainframe's system disk");
     static final TextKey CREATE = TextKey.of("jsc.automation.form.create", "Create job");
 
     private AutomationTexts() {

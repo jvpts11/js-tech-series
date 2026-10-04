@@ -216,9 +216,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - An engine is the Mainframe's choice: a Subframe that runs another engine lends its Mainframe neither capacity nor
   queues until the two run the same one. Changing or stopping the engine hands only new work to the new one (or to
   none): every Operation already made carries on, a craft on the plan it was made with, after a reload too.
-- A software house's tools are written for its own engine. The Network Management Studio opens only on a network
-  running the Midsoft IQL Server, from its 2000 version on; anywhere else it stays installed and says "No compatible
-  Midsoft IQL Server was found on this network." An engine is a package of its own kind.
+- A software house's tools are written for its own engine. The IQL Server Management Studio opens only on a
+  network running the Midsoft IQL Server, from its 2000 version on; anywhere else it stays installed and says "No
+  compatible Midsoft IQL Server was found on this network." An engine is a package of its own kind.
 - The jobs are the Automation Engine's alone: "at this time, or when this happens, do that", the same whichever
   engine plans the network's work. A job is made only where the Automation Engine is installed (IQL's CREATE JOB says
   so where it is not) and fires only while it runs. The Automation Engine and its Manager now reach back to Frames
@@ -379,6 +379,36 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   how many the network holds and where, the card and the computer, the three offers with their clue and price, the
   amount to smelt with the wait behind the Workshop's own smelting, and the repair of the most worn of the item with
   its material from the network, its name and its price beside an anvil's.
+- The IQL Server Management Studio (the command and id `isms`), which takes over from the Network Management
+  Studio, complete: a menu bar where every item does something, with its keys (File with Recent Files, Save All and
+  Print; Edit with undo, find and replace, go to line, comments, capitals and IntelliSense; View; Query; Tools;
+  Window; Help); a toolbar; query tabs, each with its text, its results, its messages and its plan; a script run a
+  statement at a time, each in its own packet, its tables stacked one under another with each table's real
+  columns, to a grid, to text or to a file; Execute Selection, Cancel Executing Query (which stops the Operations
+  the run set going) and Parse, which underlines the word the language cannot read; the status bar with the engine,
+  its version, the computer, the rows read and the time taken. The Object Explorer lists the tables with their
+  columns and row counts, the views, the stored procedures, the servers, the Management folder (the index and its
+  health, the items held by hand, the Operations log) and the Automation Agent's jobs, each node with a menu of its
+  own: a table's first rows or its script, a view or a procedure scripted as CREATE or DROP, a procedure run or
+  modified, a server's items, the index analysed, rebuilt or vacuumed, an item let go, a job started, paused or
+  deleted, the engine started, stopped or restarted. Display Estimated Plan shows how a CRAFT would be made, without
+  making it; the Activity Monitor shows the network's Operations with the Network Manager's own list; the Object
+  Explorer Details (F7) list what the node picked holds, with its columns and a search; the Template Explorer,
+  template parameters filled in a dialog, the Properties Window, the IQL Reference and the Keyboard Shortcuts.
+  Scripts, results and the studio's settings are files on the disk of the computer that opens it, through the
+  system's file window. A statement that cannot be undone (items dropped, everything of an item sent out, a saved
+  object dropped) is asked about first, with "Don't ask again". The studio wears the look of its computer's age: the
+  IQL Query Analyzer of the Midsoft IQL Server 2000, grey, with its Object Browser and Maintenance, on a Legacy
+  computer, and the studios of 2008, 2012 and 2022 after; on a Vintage network the engine is used from the prompt.
+- The IQL Server Profiler, from the studio's Tools, in a window of its own: it records what the network's work does
+  as it happens, the statements that come through the network's door, the Operations taken on and settled, the
+  locks taken, the plans chosen for a craft and what the buses moved, each with who asked, on which computer, how
+  many items and how long it took, a row's detail below the grid. A trace starts, pauses and stops, picks the groups
+  of events it records, finds a row, replays a statement in the studio, and is saved to and opened from the
+  computer's disk.
+- The menus of J's Core write an item's keys at the right of its row.
+- A shared list of the network's Operations in flight, which the Network Manager's Processes tab and the studio's
+  Activity Monitor both show.
 - A menu's player inventory can be shown on some pages of a screen and hidden on the others, in J's Core.
 - The External Storage Bus, of every era: it moves nothing itself, the network uses the inventory it faces as
   storage of its own, ten times slower than its servers. The Vintage one shows the network all of it; from the
@@ -995,6 +1025,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- The Network Management Studio is now the IQL Server Management Studio: its program, its command and its id are
+  `isms`, with no `nms` left. It installs from the Legacy age on. Its scripts are kept on the disk of the computer
+  that opens it, as the prompt's `iql` and Σ's `Iql.RunFile` keep theirs, rather than on the Mainframe's.
+- Every table of the network's language reads every column it has: a WHERE tests any of them, and an ORDER BY sorts
+  by any of them.
 - A machine recipe no longer names a machine: it lives in the Crafting Interface of the machine that makes it, so
   the Pattern Studio's machine draft has only its inputs, its outputs, their chances and its timeout, and loading
   one puts it in the first interface the Crafting Computer drives with room for it. A bench recipe goes into the ROM
@@ -1278,8 +1313,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the Crafting Input Router puts each input in through its face.
 - The machine picker of the Pattern Studio, and with it, in J's Core, a block's list of the recipe types it is the
   machine for and the data files that gathered them: a machine recipe belongs to the interface of its machine.
+- The script a Mainframe kept for the Network Management Studio's editor: a studio's scripts are files on its
+  computer's disk.
 
 ### Fixed
+- Opening a large `.iql` in the studio and running it no longer drops the connection: a script goes a statement at
+  a time, and a statement longer than a packet carries is refused before it is sent, its line named.
+- The disks table answers, with each server's disks, and the columns the studio's explorer lists are the ones a
+  query reads, rather than names that read nothing.
+- A second studio window no longer takes the answers meant for the first: every answer names the window and the
+  tab that asked.
 - What a machine gives back after its last job settled reaches the network. Nothing collected it once no job was
   running, so a job given up on, or one whose machine was slower than its timeout, left its late outputs in the
   machine.

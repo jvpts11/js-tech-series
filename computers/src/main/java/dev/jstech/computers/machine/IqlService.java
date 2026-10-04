@@ -28,6 +28,7 @@ import dev.jstech.computers.program.iql.IqlOperation;
 import dev.jstech.computers.program.iql.IqlParseResult;
 import dev.jstech.computers.program.iql.IqlParser;
 import dev.jstech.computers.program.iql.IqlRedstoneStatement;
+import dev.jstech.computers.program.iql.IqlTable;
 import dev.jstech.computers.program.iql.IqlUpdate;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.IDataSink;
@@ -728,6 +729,12 @@ public final class IqlService {
             public List<ICliComputer.StoredItem> queryObject(final String object, final IIqlCondition where,
                                                              final String server, final int limit) {
                 return IqlService.this.network.queryObject(object, where, server, limit);
+            }
+
+            @Override
+            public IqlTable queryTable(final String object, final IIqlCondition where, final String server,
+                                       final int limit, final String orderBy, final boolean descending) {
+                return IqlService.this.network.queryTable(object, where, server, limit, orderBy, descending);
             }
 
             @Override

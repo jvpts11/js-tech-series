@@ -24,6 +24,8 @@ import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.iql.IqlDefinition;
+import dev.jstech.computers.program.iql.IqlSavedObject;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -34,7 +36,7 @@ import dev.jstech.computers.datacenter.LoadBalancer;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.NetworkStorage;
-import dev.jstech.computers.operation.payload.NmsSchemaPayload;
+import dev.jstech.computers.operation.payload.IsmsSchemaPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
@@ -1338,7 +1340,7 @@ public final class NetworkGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void nms_runsParsedIqlAgainstTheNetwork(final GameTestHelper helper) {
+    public static void isms_runsParsedIqlAgainstTheNetwork(final GameTestHelper helper) {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos hbw = new BlockPos(2, 2, 2);
         final BlockPos router = new BlockPos(3, 2, 2);
@@ -1385,14 +1387,14 @@ public final class NetworkGameTests {
 
                     // The Object Explorer snapshot must mirror the real network, not a static example tree.
                     final var schema = dev.jstech.computers.operation.payload.iql.IqlPayloads
-                            .nmsSchema(helper.getLevel(),
-                                    (dev.jstech.computers.terminal.IComputerTerminalHost) computer);
-                    helper.assertTrue(schema.networkLabel().english().startsWith("jsc-net-"),
+                            .ismsSchema(helper.getLevel(),
+                                    (dev.jstech.computers.terminal.IComputerTerminalHost) computer, 1);
+                    helper.assertTrue(schema.network().english().startsWith("jsc-net-"),
                             "the Object Explorer must show the real network label");
                     helper.assertFalse(schema.servers().isEmpty(),
                             "the Object Explorer must list the rack's real server");
-                    helper.assertTrue(schema.itemTypes() >= 1,
-                            "the Object Explorer must count the network's item types");
+                    helper.assertTrue(schema.tableRows().get(0) >= 1,
+                            "the Object Explorer must count the rows of the items table");
                 })
                 .thenSucceed();
     }
@@ -1441,14 +1443,14 @@ public final class NetworkGameTests {
                     helper.assertTrue(mainframe.iqlCatalog().contains(viewType, "stock"),
                             "the catalog must hold the created view");
 
-                    // The NMS Object Explorer snapshot must reflect the real catalog, not mock examples.
+                    // The studio's Object Explorer snapshot must reflect the real catalog, not mock examples.
                     final var schema = dev.jstech.computers.operation.payload.iql.IqlPayloads
-                            .nmsSchema(helper.getLevel(),
-                                    (dev.jstech.computers.terminal.IComputerTerminalHost) computer);
-                    helper.assertTrue(schema.engine().views().contains("stock"),
-                            "the NMS Object Explorer must list the created view");
-                    helper.assertTrue(schema.engine().state() == NmsSchemaPayload.EngineState.RUNNING,
-                            "the NMS must show the Engine as running");
+                            .ismsSchema(helper.getLevel(),
+                                    (dev.jstech.computers.terminal.IComputerTerminalHost) computer, 1);
+                    helper.assertTrue(schema.views().stream().anyMatch(view -> view.name().equals("stock")),
+                            "the studio's Object Explorer must list the created view");
+                    helper.assertTrue(schema.engine().state() == IsmsSchemaPayload.EngineState.RUNNING,
+                            "the studio must show the Engine as running");
 
                     final var query = runIql(mainframe, cli, "QUERY stock");
                     helper.assertTrue(query.ok(), "QUERY <view> must run the saved query: " + query.message());
@@ -2074,16 +2076,19 @@ public final class NetworkGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void nmsScript_travelsInSchemaSnapshot(final GameTestHelper helper) {
+    public static void ismsSchema_carriesWhatAViewRuns(final GameTestHelper helper) {
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, new BlockPos(1, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> {
-                    mainframe.setSavedScript("QUERY items WHERE qty > 10");
+                    mainframe.iqlCatalog().put(new IqlSavedObject(IqlDefinition.ObjectType.VIEW, "low",
+                            "QUERY items WHERE qty < 5", IqlDefinition.TriggerKind.NONE, ""));
                     final var schema = dev.jstech.computers.operation.payload.iql.IqlPayloads
-                            .nmsSchema(helper.getLevel(), mainframe);
-                    helper.assertTrue("QUERY items WHERE qty > 10".equals(schema.engine().script()),
-                            "the saved script must travel in the schema snapshot; got: '"
-                                    + schema.engine().script() + "'");
+                            .ismsSchema(helper.getLevel(), mainframe, 7);
+                    helper.assertTrue(schema.window() == 7, "the schema answers the window that asked");
+                    helper.assertTrue(schema.views().contains(new IsmsSchemaPayload.Saved("low",
+                                    "QUERY items WHERE qty < 5")),
+                            "the view travels with what it runs, so the studio can script it again; got: "
+                                    + schema.views());
                 })
                 .thenSucceed();
     }
