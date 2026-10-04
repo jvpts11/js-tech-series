@@ -411,6 +411,11 @@ interface DesktopInspection {
         return out;
     }
 
+    /** The heading of the balloon the notification area is showing, or empty while it shows none. */
+    default String balloonTitle() {
+        return desktop().notices().balloonTitle();
+    }
+
     /** The labels of the program windows this desktop has open (dialogs aside), back to front. */
     default List<String> openWindowLabels() {
         final List<String> out = new ArrayList<>();

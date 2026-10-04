@@ -28,6 +28,9 @@ public record ComputerBuild(MotherboardSpec motherboard,
                             List<DiskSpec> disks) {
 
     /* What keeps a build from being a working computer. */
+    /** What one of a graphics card's threads adds to what a server sends out, in items per tick. */
+    public static final double SERVER_GPU_BONUS_PER_THREAD = 0.05;
+
     private static final TextKey NO_CPU = TextKey.of("jsc.build.no_cpu", "no CPU installed");
     private static final TextKey NO_RAM = TextKey.of("jsc.build.no_ram", "no RAM installed");
     private static final TextKey TOO_MANY_CPUS =
@@ -129,6 +132,25 @@ public record ComputerBuild(MotherboardSpec motherboard,
             sum += cpu.orchestrationCapacity();
         }
         return sum;
+    }
+
+    /**
+     * What a server's graphics cards add to what it sends out, in items per tick: each card's threads times
+     * {@value #SERVER_GPU_BONUS_PER_THREAD}. It adds to the processor's capacity and never rules it: a card's threads
+     * are many, and each is worth a twentieth of an item.
+     */
+    public long serverGpuBonus() {
+        double sum = 0.0;
+        for (final GpuSpec gpu : gpus()) {
+            sum += gpu.threads() * SERVER_GPU_BONUS_PER_THREAD;
+        }
+        return Math.round(sum);
+    }
+
+    /** The share of the processor's capacity a server's cards add, in whole percent, for its assembly to show. */
+    public int serverGpuBonusPercent() {
+        final long cpu = totalCapacity();
+        return cpu <= 0 ? 0 : (int) Math.round(serverGpuBonus() * 100.0 / cpu);
     }
 
     public int parallelQueues() {

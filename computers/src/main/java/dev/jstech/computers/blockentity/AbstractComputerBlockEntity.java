@@ -36,6 +36,7 @@ import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.machine.NetworkReadService;
+import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
@@ -43,6 +44,7 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootRunner;
@@ -68,6 +70,7 @@ import dev.jstech.core.audio.IAudioHost;
 import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.audio.StereoSide;
 import dev.jstech.core.blockentity.IFieldPart;
+import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.text.Text;
@@ -158,6 +161,12 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      */
     private final PatternWorkbench studio =
             new PatternWorkbench();
+    /*
+     * The video memory the machine has, and what its lit monitors hold of it, sent to the players who see the machine
+     * so its desktop can weigh a graphics window against what is left before opening it.
+     */
+    private final LongField vramTotalKb = fields().longInteger("VramTotalKb", 0L).toClient();
+    private final LongField vramMonitorsKb = fields().longInteger("VramMonitorsKb", 0L).toClient();
 
     /*
      * Each part is saved in turn, in the order declared here: the hardware first, because the console rides on the
@@ -1197,6 +1206,19 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         Acting.asOperatorOf(this, sigmaTick);
         SetupRunner.tick(this, level, worldPosition);
         attachment.tick(level);
+        final VramLedger video = VideoMemory.of(level, this).ledger();
+        vramTotalKb.set(video.totalKb());
+        vramMonitorsKb.set(video.usedKb(VramLedger.Kind.MONITOR));
+    }
+
+    /** The video memory this machine has, in kilobytes, as its players were last told. */
+    public long vramTotalKb() {
+        return vramTotalKb.get();
+    }
+
+    /** What its lit monitors hold of its video memory, in kilobytes, as its players were last told. */
+    public long vramMonitorsKb() {
+        return vramMonitorsKb.get();
     }
 
     public void onBroken(final ServerLevel level) {

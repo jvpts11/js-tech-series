@@ -29,6 +29,9 @@ final class DesktopTexts {
     static final TextKey LOW_MEMORY = TextKey.of("jsc.desktop.low_memory", "Low on memory");
     static final TextKey LOW_MEMORY_BODY = TextKey.of("jsc.desktop.low_memory_body",
             "This computer is running out of RAM for programs. %s needs %s MB and only %s MB are free.");
+    static final TextKey LOW_VIDEO_MEMORY = TextKey.of("jsc.desktop.low_video_memory", "Not enough video memory");
+    static final TextKey LOW_VIDEO_MEMORY_BODY = TextKey.of("jsc.desktop.low_video_memory_body",
+            "%s needs %s of video memory, and %s are free. Turn off a monitor or close a graphics program.");
     static final TextKey CANNOT_OPEN = TextKey.of("jsc.desktop.cannot_open", "Cannot open");
     static final TextKey NO_PROGRAM_OPENS =
             TextKey.of("jsc.desktop.no_program_opens", "No program on this computer opens %s");

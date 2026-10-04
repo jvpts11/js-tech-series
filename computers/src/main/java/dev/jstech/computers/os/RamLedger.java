@@ -39,7 +39,9 @@ public final class RamLedger {
         DESKTOP("desktop"),
         SERVICE("service"),
         WINDOW("window"),
-        PROCESS("process");
+        PROCESS("process"),
+        /** The system's memory lent to graphics on the processor's die, as video memory, for what it is showing. */
+        GRAPHICS("graphics");
 
         private static final StableNames<Kind> NAMES = StableNames.of(Kind.class);
 

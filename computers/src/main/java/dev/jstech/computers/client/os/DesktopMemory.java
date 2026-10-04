@@ -7,17 +7,22 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.os.GraphicsPrograms;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.MachineMemory;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.SchedulerKind;
+import dev.jstech.computers.os.VramLedger;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -93,7 +98,7 @@ final class DesktopMemory {
      * memory; otherwise a preemptive system refuses with the figures and a cooperative one crashes.
      */
     boolean allowOpen(final String key) {
-        if (crashing) {
+        if (crashing || !videoMemoryAllows(key)) {
             return false;
         }
         final int need = windowRamMb(key);
@@ -113,6 +118,38 @@ final class DesktopMemory {
                     GameText.resolve(DesktopTexts.LOW_MEMORY_BODY.with(desktop.nameOf(key), need,
                             Math.max(0, free))));
         }
+        return false;
+    }
+
+    /**
+     * Whether a window of {@code key} fits in the machine's video memory: only a graphics program's window holds any,
+     * a quarter of a monitor block of the machine's era, beside what the lit monitors and the other graphics windows
+     * already hold. One that does not fit does not open, and the notification area says why.
+     */
+    boolean videoMemoryAllows(final String key) {
+        if (!GraphicsPrograms.isGraphical(key)) {
+            return true;
+        }
+        final Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null
+                || !(minecraft.level.getBlockEntity(desktop.host()) instanceof AbstractComputerBlockEntity machine)) {
+            return true;
+        }
+        final HardwareEra era = machine.displayEra() == null ? HardwareEra.STANDARD : machine.displayEra();
+        long held = machine.vramMonitorsKb();
+        for (final DesktopWindow w : windows) {
+            if (!w.dialog() && GraphicsPrograms.isGraphical(w.appKey())) {
+                held += VramLedger.windowKb(era, w.maximized());
+            }
+        }
+        final long need = VramLedger.windowKb(era, false);
+        final long free = machine.vramTotalKb() - held;
+        if (need <= free) {
+            return true;
+        }
+        desktop.notices().showBalloon(GameText.resolve(DesktopTexts.LOW_VIDEO_MEMORY),
+                GameText.resolve(DesktopTexts.LOW_VIDEO_MEMORY_BODY.with(desktop.nameOf(key), VramLedger.label(need),
+                        VramLedger.label(Math.max(0L, free)))));
         return false;
     }
 

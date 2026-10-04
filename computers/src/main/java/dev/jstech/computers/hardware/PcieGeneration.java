@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.core.text.Text;
+
 /**
  * Expansion-bus generations for graphics/expansion cards, oldest to newest (the legacy ISA/PCI/AGP buses precede the PCIe line).
  */
@@ -29,6 +31,23 @@ public enum PcieGeneration {
 
     PcieGeneration(final int generation) {
         this.generation = generation;
+    }
+
+    /** The slot as its specifications name it, the same in every language: "AGP 4x", "PCI Express 3.0 x16". */
+    public Text slotName() {
+        return switch (this) {
+            case ISA -> Text.literal("ISA");
+            case PCI -> Text.literal("PCI");
+            case AGP_2X -> Text.literal("AGP 2x");
+            case AGP_4X -> Text.literal("AGP 4x");
+            case AGP_8X -> Text.literal("AGP 8x");
+            case PCIE_1_0 -> Text.literal("PCI Express 1.0 x16");
+            case PCIE_2_0 -> Text.literal("PCI Express 2.0 x16");
+            case PCIE_3_0 -> Text.literal("PCI Express 3.0 x16");
+            case PCIE_4_0 -> Text.literal("PCI Express 4.0 x16");
+            case PCIE_5_0 -> Text.literal("PCI Express 5.0 x16");
+            case PCIE_6_0 -> Text.literal("PCI Express 6.0 x16");
+        };
     }
 
     /** The physical bus family this generation belongs to. */

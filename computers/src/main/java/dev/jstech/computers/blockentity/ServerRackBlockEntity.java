@@ -2096,10 +2096,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return networkUuid() != null ? 1 : 0; // a rack server reads its network from the rack cable
     }
 
+    /** Its processor's capacity, with what its graphics cards add to what a server sends out, under the throttle. */
     @Override
     public long orchestrationCapacity() {
         final ComputerBuild build = soleBuild();
-        return build == null ? 0L : throttled(build.totalCapacity());
+        return build == null ? 0L : throttled(build.totalCapacity() + build.serverGpuBonus());
     }
 
     /** Applies the cabinet's thermal throttle to a machine's capacity. */

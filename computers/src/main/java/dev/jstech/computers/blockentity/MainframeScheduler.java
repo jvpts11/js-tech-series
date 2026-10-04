@@ -375,9 +375,20 @@ final class MainframeScheduler {
                         operation, operation.priority(), deferredTicks.getOrDefault(operation, 0)));
             }
         }
+        final List<INetworkOperation> grantedInOrder = QueueArbiter.grant(ready, slots,
+                OperationBalance.priorityAgingTicks());
         final Set<INetworkOperation> granted = Collections.newSetFromMap(new IdentityHashMap<>());
-        granted.addAll(QueueArbiter.grant(ready, slots, OperationBalance.priorityAgingTicks()));
+        granted.addAll(grantedInOrder);
         lastGranted = granted;
+        /*
+         * Each granted Operation runs on a queue of its own, the fastest queues to the Operations granted first: the
+         * processor's queue at its full capacity, a graphics card's no faster than the card can run it.
+         */
+        final Map<INetworkOperation, Long> queueOf = new IdentityHashMap<>();
+        final long[] speeds = mainframe.pooledQueueSpeeds(effectiveCapacity);
+        for (int i = 0; i < grantedInOrder.size(); i++) {
+            queueOf.put(grantedInOrder.get(i), i < speeds.length ? speeds[i] : effectiveCapacity);
+        }
         for (final INetworkOperation operation : snapshot) {
             if (operation.isDone()) {
                 continue;
@@ -394,7 +405,8 @@ final class MainframeScheduler {
                 operation.tick(machineFeedBudget(operation, effectiveCapacity, stepsPerComputer));
             } else if (granted.contains(operation)) {
                 countTick(operation, RAN);
-                operation.tick(machineFeedBudget(operation, effectiveCapacity, stepsPerComputer));
+                final long queue = Math.min(effectiveCapacity, queueOf.getOrDefault(operation, effectiveCapacity));
+                operation.tick(machineFeedBudget(operation, queue, stepsPerComputer));
             } else {
                 /*
                  * Ready Operations beyond the queue count stay PENDING this tick: no progress, no latency

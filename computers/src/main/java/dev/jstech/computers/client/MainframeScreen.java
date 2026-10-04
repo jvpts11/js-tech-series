@@ -14,9 +14,13 @@ import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.network.FailoverRole;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Screen for the Mainframe: a flat-dark "computer OS" hardware-assembly surface.
@@ -137,8 +141,10 @@ public class MainframeScreen extends AbstractComputerScreen<MainframeMenu> {
         JsTechTheme.tileText(g, font, MainframeLayout.COL_R, MainframeLayout.TILE_Y_CAPACITY,
                 GameText.resolve(AssemblyTexts.CAPACITY), JsTechTheme.fmt(menu.capacity()),
                 GameText.resolve(AssemblyTexts.ITEMS_PER_TICK), JsTechTheme.text());
+        // In amber while a weak card holds its queue below the processor's speed; the tooltip says which.
         JsTechTheme.tileText(g, font, MainframeLayout.COL_R, MainframeLayout.TILE_Y_QUEUES,
-                GameText.resolve(AssemblyTexts.QUEUES), String.valueOf(menu.parallelQueues()), "", JsTechTheme.text());
+                GameText.resolve(AssemblyTexts.QUEUES), String.valueOf(menu.parallelQueues()), "",
+                anyQueueHeld() ? JsTechTheme.amber() : JsTechTheme.text());
         JsTechTheme.tileText(g, font, MainframeLayout.COL_R, MainframeLayout.TILE_Y_RAM_BUFFER,
                 GameText.resolve(AssemblyTexts.RAM_BUFFER), JsTechTheme.fmt(menu.ramBuffer()),
                 GameText.resolve(AssemblyTexts.ITEMS), JsTechTheme.text());
@@ -178,6 +184,47 @@ public class MainframeScreen extends AbstractComputerScreen<MainframeMenu> {
                 GameText.resolve(failover ? AssemblyTexts.FAILOVER_ON : AssemblyTexts.FAILOVER_OFF),
                 MainframeLayout.FAILOVER_X + MainframeLayout.BTN_W / 2, MainframeLayout.BTN_Y + 4,
                 failover ? JsTechTheme.accent() : JsTechTheme.dim());
+    }
+
+    /** Over the queues tile, each queue's speed: the processor's, then each card's, a card that holds its in amber. */
+    @Override
+    protected void renderTooltip(final GuiGraphics g, final int mouseX, final int mouseY) {
+        super.renderTooltip(g, mouseX, mouseY);
+        if (!hover(mouseX, mouseY, MainframeLayout.COL_R, MainframeLayout.TILE_Y_QUEUES, MainframeLayout.COL_R_W,
+                MainframeLayout.TILE_H_QUEUES) || menu.parallelQueues() <= 0) {
+            return;
+        }
+        final List<Component> lines = new ArrayList<>();
+        final int cpu = menu.queueSpeed(0);
+        lines.add(GameText.component(AssemblyTexts.QUEUE_CPU.with(JsTechTheme.fmt(cpu))));
+        int queue = 1;
+        for (int i = 0; i < MainframeBlockEntity.GPU_SLOTS; i++) {
+            final ItemStack card = menu.getSlot(MainframeBlockEntity.GPU_SLOTS_START + i).getItem();
+            if (card.isEmpty()) {
+                continue;
+            }
+            final int speed = menu.queueSpeed(queue);
+            lines.add(GameText.component(AssemblyTexts.QUEUE_GPU.with(queue, GameText.of(card.getHoverName()),
+                            JsTechTheme.fmt(speed)))
+                    .withStyle(style -> style.withColor(speed < cpu ? JsTechTheme.amber() : JsTechTheme.text())));
+            queue++;
+        }
+        if (anyQueueHeld()) {
+            lines.add(GameText.component(AssemblyTexts.QUEUE_HELD).withStyle(ChatFormatting.GRAY));
+        }
+        g.renderComponentTooltip(font, lines, mouseX, mouseY);
+    }
+
+    /* Whether a card holds any queue below the processor's speed. */
+    private boolean anyQueueHeld() {
+        final int cpu = menu.queueSpeed(0);
+        for (int i = 1; i < menu.parallelQueues(); i++) {
+            final int speed = menu.queueSpeed(i);
+            if (speed > 0 && speed < cpu) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void opRow(final GuiGraphics g, final String key, final String value, final int y, final int valueColor) {

@@ -17,6 +17,7 @@ import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.RamUse;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.RamLedger;
+import dev.jstech.computers.os.VramLedger;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
@@ -63,6 +64,8 @@ public final class TaskManagerApp implements IDesktopApp {
     private static final int ROW_H = 10;
     private static final int MENU_H = 11;
     private static final int STATUS_H = 11;
+    /** A box of three facts under the performance page's graphs. */
+    private static final int FACTS_H = 3 * 9 + 4;
 
     private final BlockPos host;
     private final Form form;
@@ -84,6 +87,9 @@ public final class TaskManagerApp implements IDesktopApp {
     private final Load load = new Load();
     private final int[] cpuHistory = new int[HISTORY];
     private final int[] memHistory = new int[HISTORY];
+    /* The video memory held, in megabytes, and how busy the card was, a sample a second. */
+    private final int[] vramHistory = new int[HISTORY];
+    private final int[] gpuHistory = new int[HISTORY];
     private int samples;
     private long lastSampleAt;
 
@@ -116,6 +122,50 @@ public final class TaskManagerApp implements IDesktopApp {
         if (active != null && active.host.equals(payload.hostPos())) {
             active.data = payload;
         }
+    }
+
+    /**
+     * The desktop-local centre of the page picker's entry for {@code index} as the last frame drew it (a tab, a row of
+     * the rail, a segment), the place a player clicks to turn to that page; null before the first frame.
+     */
+    @Nullable
+    public int[] pageCentre(final int index) {
+        final String[] names = pages();
+        if (cw <= 0 || index < 0 || index >= names.length) {
+            return null;
+        }
+        return switch (form) {
+            case LUNA -> {
+                int tx = cx + 3;
+                for (int i = 0; i < index; i++) {
+                    tx += Texts.smallWidth(font(), names[i]) + 9;
+                }
+                yield new int[] {tx + (Texts.smallWidth(font(), names[index]) + 8) / 2, cy + MENU_H + 6};
+            }
+            case MODERN, PLASMA -> new int[] {cx + 20, cy + 4 + index * 13 + 6};
+            case GNOME -> {
+                int segW = 0;
+                for (final String name : names) {
+                    segW += Texts.smallWidth(font(), name) + 10;
+                }
+                int sx = cx + (cw - segW) / 2;
+                for (int i = 0; i < index; i++) {
+                    sx += Texts.smallWidth(font(), names[i]) + 10;
+                }
+                yield new int[] {sx + (Texts.smallWidth(font(), names[index]) + 10) / 2, cy + 6};
+            }
+            case CLOSE_BOX -> null;
+        };
+    }
+
+    /** The page in front, counted from the first of the picker. */
+    public int page() {
+        return page;
+    }
+
+    /** Whether the last snapshot gave the window any graphics to show. */
+    public boolean showsGraphics() {
+        return gpu().present();
     }
 
     // the machine, as this window reads it
@@ -264,7 +314,19 @@ public final class TaskManagerApp implements IDesktopApp {
         cpuHistory[at] = load.percent();
         // The graph follows what is held, so a program filling memory draws a rising line.
         memHistory[at] = heldMb();
+        vramHistory[at] = (int) (gpu().usedKb() / VramLedger.KB_PER_MB);
+        gpuHistory[at] = gpu().load();
         samples++;
+    }
+
+    /** The machine's graphics as the last snapshot gave them; none before the first. */
+    private SettingsSnapshotPayload.Gpu gpu() {
+        return data == null ? SettingsSnapshotPayload.Gpu.NONE : data.gpu();
+    }
+
+    /** The video memory in whole megabytes, the scale the graphs are drawn against. */
+    private int vramTotalMb() {
+        return (int) Math.max(1L, gpu().totalKb() / VramLedger.KB_PER_MB);
     }
 
     // window
@@ -310,7 +372,7 @@ public final class TaskManagerApp implements IDesktopApp {
             case LUNA -> new TextKey[] {TaskManagerTexts.APPLICATIONS, TaskManagerTexts.PROCESSES,
                 TaskManagerTexts.PERFORMANCE, TaskManagerTexts.NETWORKING};
             case MODERN -> new TextKey[] {TaskManagerTexts.PROCESSES, TaskManagerTexts.PERFORMANCE,
-                TaskManagerTexts.SERVICES, TaskManagerTexts.STORAGE, TaskManagerTexts.NETWORK};
+                TaskManagerTexts.SERVICES, TaskManagerTexts.STORAGE, TaskManagerTexts.NETWORK, TaskManagerTexts.GPU};
             case PLASMA -> new TextKey[] {TaskManagerTexts.OVERVIEW, TaskManagerTexts.APPLICATIONS,
                 TaskManagerTexts.PROCESSES, TaskManagerTexts.HISTORY};
             case GNOME -> new TextKey[] {TaskManagerTexts.PROCESSES, TaskManagerTexts.RESOURCES,
@@ -435,33 +497,107 @@ public final class TaskManagerApp implements IDesktopApp {
                 x + 2 * third + 4, sy + 2, skin.text());
     }
 
-    /** The XP performance page: the two meters on the left, their histories on the right, facts underneath. */
+    /**
+     * The XP performance page: the meters on the left, their histories on the right, facts underneath; a machine with
+     * graphics gets a third row, its video memory, and a third box of facts about it.
+     */
     private void renderPerformance(final GuiGraphics g, final Font font, final int x, final int y,
                                    final int w, final int h) {
+        final SettingsSnapshotPayload.Gpu gpu = gpu();
+        final int rows = gpu.present() ? 3 : 2;
         final int meterW = 68;
-        final int graphH = (h - 34) / 2;
-        gauge(g, font, x + 2, y + 8, meterW, graphH - 10,
-                GameText.resolve(TaskManagerTexts.PERCENT.with(load.percent())));
-        Texts.small(g, font, GameText.resolve(TaskManagerTexts.CPU_USAGE), x + 2, y, skin.dim());
-        gauge(g, font, x + 2, y + graphH + 16, meterW, graphH - 10,
-                GameText.resolve(TaskManagerTexts.MEGABYTES.with(heldMb())));
-        Texts.small(g, font, GameText.resolve(TaskManagerTexts.MEMORY_USAGE), x + 2, y + graphH + 8, skin.dim());
+        final int pitch = (h - FACTS_H - 4) / rows;
+        final int graphH = pitch - 8;
         final int gx = x + meterW + 8;
         final int gw = w - meterW - 10;
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.CPU_USAGE), x + 2, y, skin.dim());
+        gauge(g, font, x + 2, y + 8, meterW, graphH - 2,
+                GameText.resolve(TaskManagerTexts.PERCENT.with(load.percent())), load.percent() / 100.0);
         Texts.small(g, font, GameText.resolve(TaskManagerTexts.CPU_HISTORY), gx, y, skin.dim());
-        history(g, gx, y + 8, gw, graphH - 10, cpuHistory, 100);
-        Texts.small(g, font, GameText.resolve(TaskManagerTexts.MEMORY_HISTORY), gx, y + graphH + 8, skin.dim());
-        history(g, gx, y + graphH + 16, gw, graphH - 10, memHistory, totalMb());
-        final int fy = y + 2 * graphH + 12;
-        final int half = w / 2;
-        facts(g, font, x + 2, fy, half - 4, new String[][] {
+        history(g, gx, y + 8, gw, graphH - 2, cpuHistory, 100);
+        final int my = y + pitch;
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.MEMORY_USAGE), x + 2, my, skin.dim());
+        gauge(g, font, x + 2, my + 8, meterW, graphH - 2, GameText.resolve(TaskManagerTexts.MEGABYTES.with(heldMb())),
+                (double) heldMb() / totalMb());
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.MEMORY_HISTORY), gx, my, skin.dim());
+        history(g, gx, my + 8, gw, graphH - 2, memHistory, totalMb());
+        if (gpu.present()) {
+            final int vy = y + 2 * pitch;
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.VIDEO_MEMORY), x + 2, vy, skin.dim());
+            gauge(g, font, x + 2, vy + 8, meterW, graphH - 2, VramLedger.label(gpu.usedKb()),
+                    (double) gpu.usedKb() / Math.max(1L, gpu.totalKb()));
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.VIDEO_MEMORY_HISTORY), gx, vy, skin.dim());
+            history(g, gx, vy + 8, gw, graphH - 2, vramHistory, vramTotalMb());
+        }
+        final int fy = y + rows * pitch;
+        final int box = w / rows;
+        facts(g, font, x + 2, fy, box - 4, new String[][] {
             {GameText.resolve(TaskManagerTexts.PROCESSES), String.valueOf(processes().size())},
             {GameText.resolve(TaskManagerTexts.PROGRAMS), String.valueOf(tasks().size())},
             {GameText.resolve(TaskManagerTexts.SERVICES), String.valueOf(services().size())}});
-        facts(g, font, x + half + 2, fy, half - 4, new String[][] {
+        facts(g, font, x + box + 2, fy, box - 4, new String[][] {
             {GameText.resolve(TaskManagerTexts.IN_USE), RamLedger.heldLabel(heldBytes())},
             {GameText.resolve(TaskManagerTexts.FREE_MB), JsTechTheme.fmt(Math.max(0, totalMb() - usedMb()))},
             {GameText.resolve(TaskManagerTexts.PROCESSOR), clock()}});
+        if (gpu.present()) {
+            facts(g, font, x + 2 * box + 2, fy, box - 4, new String[][] {
+                {GameText.resolve(TaskManagerTexts.VIDEO_TOTAL), VramLedger.label(gpu.totalKb())},
+                {GameText.resolve(TaskManagerTexts.VIDEO_MONITORS), VramLedger.label(gpu.monitorsKb())},
+                {GameText.resolve(TaskManagerTexts.VIDEO_FREE),
+                    VramLedger.label(Math.max(0L, gpu.totalKb() - gpu.usedKb()))}});
+        }
+    }
+
+    /**
+     * Frames 11's GPU page: the card, how busy it is and how full its memory, its figures, and what holds its memory,
+     * each monitor and graphics window with its share.
+     */
+    private void renderGpu(final GuiGraphics g, final Font font, final int x, final int y, final int w, final int h) {
+        final SettingsSnapshotPayload.Gpu gpu = gpu();
+        if (!gpu.present()) {
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.NO_GPU), x, y + 2, skin.dim());
+            return;
+        }
+        Draw.text(g, font, GameText.resolve(TaskManagerTexts.GPU), x, y, skin.text(), skin.windowBg());
+        final String card = Texts.clip(font, GameText.resolve(gpu.card()), w - 30);
+        Texts.small(g, font, card, x + w - Texts.smallWidth(font, card), y + 1, skin.dim());
+        final int graphH = 22;
+        int row = y + 11;
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.GPU_3D), x, row, skin.dim());
+        history(g, x, row + 8, w, graphH, gpuHistory, 100);
+        row += graphH + 10;
+        Texts.small(g, font, GameText.resolve(gpu.shared() ? TaskManagerTexts.SHARED_MEMORY_USAGE
+                : TaskManagerTexts.DEDICATED_MEMORY_USAGE), x, row, skin.dim());
+        history(g, x, row + 8, w, graphH, vramHistory, vramTotalMb());
+        row += graphH + 11;
+        final String memory = VramLedger.label(gpu.usedKb()) + "/" + VramLedger.label(gpu.totalKb());
+        final String cores = GameText.resolve(TaskManagerTexts.CORES_AT.with(gpu.cores(), mhzLabel(gpu.mhz())));
+        final String slot = gpu.slot().isEmpty() ? GameText.resolve(TaskManagerTexts.ON_THE_PROCESSOR) : gpu.slot();
+        // The card's figures, each on a line of its own across the page, so a long slot name never meets its label.
+        facts(g, font, x, row, w, new String[][] {
+            {GameText.resolve(TaskManagerTexts.UTILIZATION), GameText.resolve(TaskManagerTexts.PERCENT
+                    .with(gpu.load()))},
+            {GameText.resolve(gpu.shared() ? TaskManagerTexts.SHARED_MEMORY : TaskManagerTexts.DEDICATED_MEMORY),
+                memory},
+            {GameText.resolve(TaskManagerTexts.CORES), cores},
+            {GameText.resolve(TaskManagerTexts.SLOT), Texts.clip(font, slot, w - 50)}});
+        row += 4 * 9 + 8;
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.USED_BY), x, row, skin.dim());
+        row += 9;
+        for (final SettingsSnapshotPayload.VramRow use : gpu.usedBy()) {
+            if (row + 8 > y + h) {
+                break;
+            }
+            final String size = VramLedger.label(use.kb());
+            Texts.small(g, font, Texts.clip(font, GameText.resolve(use.name()), w - 40), x + 2, row, skin.text());
+            Texts.small(g, font, size, x + w - Texts.smallWidth(font, size), row, skin.dim());
+            row += 9;
+        }
+    }
+
+    /* A clock as a person reads it: megahertz below a gigahertz, gigahertz with a decimal above. */
+    private static String mhzLabel(final int mhz) {
+        return mhz >= 1000 ? String.format(Locale.ROOT, "%.1f GHz", mhz / 1000.0) : mhz + " MHz";
     }
 
     /** The XP networking page: the link, and what the network is doing through it. */
@@ -487,6 +623,7 @@ public final class TaskManagerApp implements IDesktopApp {
             case 1 -> renderPerformance(g, font, px, y + 4, pw, height - 8);
             case 3 -> renderDisks(g, font, px, y + 4, pw, height - 8);
             case 4 -> renderNetworking(g, font, px, y + 4, pw, height - 8);
+            case 5 -> renderGpu(g, font, px, y + 4, pw, height - 8);
             default -> {
                 button(g, font, x + width - 48, y + 3, 44, 12, TaskManagerTexts.END_TASK_LOWER, canEnd());
                 columns(g, font, px, y + 18, pw, listColumns(TaskManagerTexts.NAME),
@@ -527,10 +664,19 @@ public final class TaskManagerApp implements IDesktopApp {
         }
         final int cardH = 22;
         if (page == 0) {
-            card(g, font, px, y + 4, pw / 2 - 2, cardH, GameText.resolve(TaskManagerTexts.MEMORY),
+            // A machine with graphics shows a third card: its video memory, as the Plasma monitor's GPU tile does.
+            final SettingsSnapshotPayload.Gpu gpu = gpu();
+            final int cards = gpu.present() ? 3 : 2;
+            final int cw = pw / cards;
+            card(g, font, px, y + 4, cw - 2, cardH, GameText.resolve(TaskManagerTexts.MEMORY),
                     GameText.resolve(TaskManagerTexts.MEMORY_OF.with(heldMb(), totalMb())));
-            card(g, font, px + pw / 2 + 2, y + 4, pw / 2 - 2, cardH, GameText.resolve(TaskManagerTexts.PROCESSOR),
+            card(g, font, px + cw + 2, y + 4, cw - 2, cardH, GameText.resolve(TaskManagerTexts.PROCESSOR),
                     GameText.resolve(TaskManagerTexts.LOAD_AND_CLOCK.with(load.percent(), clock())));
+            if (gpu.present()) {
+                card(g, font, px + 2 * cw + 4, y + 4, cw - 4, cardH, GameText.resolve(TaskManagerTexts.GPU),
+                        GameText.resolve(TaskManagerTexts.VIDEO_OF.with(VramLedger.label(gpu.usedKb()),
+                                VramLedger.label(gpu.totalKb()))));
+            }
         }
         final int ty = page == 0 ? y + cardH + 8 : y + 4;
         button(g, font, x + width - 46, ty - 1, 42, 11, TaskManagerTexts.END, canEnd());
@@ -617,14 +763,17 @@ public final class TaskManagerApp implements IDesktopApp {
         }
     }
 
-    /** One of the boxed meters: a dark face with the figure over a filled foot, as those managers drew them. */
+    /**
+     * One of the boxed meters: a dark face with the figure over a foot filled to {@code fraction}, as those managers
+     * drew them.
+     */
     private void gauge(final GuiGraphics g, final Font font, final int x, final int y, final int w,
-                       final int h, final String figure) {
+                       final int h, final String figure, final double fraction) {
         final Colours c = PALETTE.get();
         g.fill(x, y, x + w, y + h, c.meterFace());
         Draw.outline(g, x, y, w, h, skin.edge());
         grid(g, x, y, w, h);
-        final int fill = (int) ((h - 2) * Math.min(1.0, load.percent() / 100.0));
+        final int fill = (int) ((h - 2) * Math.max(0.0, Math.min(1.0, fraction)));
         g.fill(x + 1, y + h - 1 - fill, x + w - 1, y + h - 1, c.meterFill());
         Texts.small(g, font, figure, x + (w - Texts.smallWidth(font, figure)) / 2, y + h / 2 - 4, c.trace());
     }
@@ -759,9 +908,16 @@ public final class TaskManagerApp implements IDesktopApp {
         return RamLedger.Kind.find(use.kind());
     }
 
-    /** What a row reads as: a window by the name the desktop gives its program, anything else as the ledger has it. */
+    /**
+     * What a row reads as: a window by the name the desktop gives its program, the graphics' share by what it is,
+     * anything else as the ledger has it.
+     */
     private static String shownName(final RamUse use) {
-        return kindOf(use) == RamLedger.Kind.WINDOW ? ActiveDesktop.windowName(use.label()) : use.label();
+        final RamLedger.Kind kind = kindOf(use);
+        if (kind == RamLedger.Kind.WINDOW) {
+            return ActiveDesktop.windowName(use.label());
+        }
+        return kind == RamLedger.Kind.GRAPHICS ? GameText.resolve(TaskManagerTexts.SHARED_GRAPHICS) : use.label();
     }
 
     private static String kindLabel(final String kind) {
@@ -772,6 +928,7 @@ public final class TaskManagerApp implements IDesktopApp {
             case SERVICE -> TaskManagerTexts.KIND_SERVICE;
             case WINDOW -> TaskManagerTexts.KIND_PROGRAM;
             case PROCESS -> TaskManagerTexts.KIND_SCRIPT;
+            case GRAPHICS -> TaskManagerTexts.KIND_GRAPHICS;
         });
     }
 

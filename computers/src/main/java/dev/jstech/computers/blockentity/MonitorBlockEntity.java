@@ -17,10 +17,12 @@ import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.monitor.IMonitorPicture;
 import dev.jstech.computers.monitor.MonitorPicturePayload;
 import dev.jstech.computers.monitor.MonitorPictures;
+import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.core.audio.Audio;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.IntField;
+import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.live.LiveFeed;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
@@ -53,6 +55,12 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
     private final BoolField lit = fields().flag("Lit", false).save();
     /** The terminal tab the player last used on this screen, which it reopens on. */
     private final IntField lastTab = fields().integer("LastTab", ComputerTerminalMenu.TAB_NETWORK).save();
+    /*
+     * While its computer runs but its video memory has no room for this monitor: what the monitor needs and what was
+     * free, both 0 while it fits. The monitor stays dark and its own menu says so on the glass.
+     */
+    private final LongField starvedNeedKb = fields().longInteger("StarvedNeedKb", 0L).toClient();
+    private final LongField starvedFreeKb = fields().longInteger("StarvedFreeKb", 0L).toClient();
     /* What the face shows, sent to whoever is near and only when it changes. */
     private final LiveFeed<IMonitorPicture> feed = new LiveFeed<>();
     private int bootTicks;
@@ -120,6 +128,21 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
     /** Whether the screen is lit: its computer runs and drives it. */
     public boolean lit() {
         return lit.get();
+    }
+
+    /** Whether its computer runs but has no video memory left for it, which keeps it dark. */
+    public boolean starved() {
+        return starvedNeedKb.get() > 0L;
+    }
+
+    /** What it needs of its computer's video memory while starved, in kilobytes. */
+    public long starvedNeedKb() {
+        return starvedNeedKb.get();
+    }
+
+    /** What was free of it when it was refused, in kilobytes. */
+    public long starvedFreeKb() {
+        return starvedFreeKb.get();
     }
 
     /** Starts (or ends, with {@code null}) a remote session showing {@code machine} on this screen. */
@@ -259,10 +282,16 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
         if (owner != null && !level.isLoaded(owner)) {
             return; // a computer whose chunk is away is not asked, nor loaded back; the screen stays as it is
         }
-        final boolean computerRunning = owner != null
-                && level.getBlockEntity(owner) instanceof IOsHost host
+        final IOsHost host = owner != null && level.getBlockEntity(owner) instanceof IOsHost running ? running : null;
+        final boolean computerRunning = host != null
                 && host.isRunning() && !host.isDisabled(worldPosition.asLong());
-        if (!computerRunning) {
+        // A running computer lights this screen only while its video memory has room for it.
+        final VideoMemory.Screen share = computerRunning
+                ? VideoMemory.of(level, host).screen(worldPosition.asLong()) : null;
+        final boolean starvedNow = share != null && !share.fits();
+        starvedNeedKb.set(starvedNow ? share.needKb() : 0L);
+        starvedFreeKb.set(starvedNow ? share.freeKb() : 0L);
+        if (!computerRunning || starvedNow) {
             bootTicks = 0;
             if (lit.get()) {
                 lit.set(false);

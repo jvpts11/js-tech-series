@@ -134,7 +134,9 @@ final class WindowLayouts {
         wm.setWorkspace(desktop.hasWorkspaces() ? workspace : 0);
         final DesktopViewport view = desktop.view();
         for (final OpenWindow ow : windows) {
-            final IDesktopApp app = new MirroredWindowApp(desktop.nameOf(ow.key()), ow.w(), ow.h());
+            // A window no launcher or program names (the machine's own welcome) shows no title rather than its key.
+            final String name = desktop.nameOf(ow.key());
+            final IDesktopApp app = new MirroredWindowApp(name.equals(ow.key()) ? "" : name, ow.w(), ow.h());
             app.applySkin(desktop.prefs().skin());
             final DesktopWindow w = new DesktopWindow(app, ow.key(), ow.x(), ow.y(), ow.w(), ow.h());
             w.moveTo(ow.x(), ow.y(), view.workAreaTop(), view.width(), view.workAreaBottom());

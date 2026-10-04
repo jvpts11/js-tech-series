@@ -26,6 +26,7 @@ import dev.jstech.computers.engine.INetworkEngine;
 import dev.jstech.computers.engine.NetworkOperationsService;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.QueueSpeeds;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.NetworkIndex;
@@ -61,6 +62,7 @@ import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -393,6 +395,43 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     public int parallelQueues() {
         return buildValid() ? currentBuild().parallelQueues() : 0;
+    }
+
+    /**
+     * How fast each of this Mainframe's own queues runs, in items per tick: its processor's first, then one for each
+     * graphics card, which no card runs faster than it can. Empty while the build does not stand.
+     */
+    public long[] queueSpeeds() {
+        return buildValid() ? QueueSpeeds.of(currentBuild()) : new long[0];
+    }
+
+    /**
+     * Every queue the scheduler grants, fastest first: this Mainframe's own, and those its Subframes lend, which run at
+     * the pooled rate, never above {@code effective}.
+     */
+    public long[] pooledQueueSpeeds(final long effective) {
+        final long[] own = queueSpeeds();
+        final int lent = pooledQueues() - own.length;
+        final long[] all = new long[own.length + Math.max(0, lent)];
+        for (int i = 0; i < own.length; i++) {
+            all[i] = Math.min(effective, own[i]);
+        }
+        for (int i = own.length; i < all.length; i++) {
+            all[i] = effective;
+        }
+        Arrays.sort(all);
+        for (int i = 0, j = all.length - 1; i < j; i++, j--) {
+            final long swap = all[i];
+            all[i] = all[j];
+            all[j] = swap;
+        }
+        return all;
+    }
+
+    /** The speed of one of its own queues for its screen, 0 for a queue it does not have. */
+    private int queueSpeed(final int queue) {
+        final long[] speeds = queueSpeeds();
+        return queue < speeds.length ? (int) Math.min(Integer.MAX_VALUE, speeds[queue]) : 0;
     }
 
     // Network connection
@@ -1428,6 +1467,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             () -> networking.failoverEnabled()).toMenu();
     private final DerivedInt assemblyFailoverRole = fields().derived("AssemblyFailoverRole",
             () -> networking.failoverRole().id()).toMenu();
+    /* The speed of each of its own queues, the processor's first, for the screen to show. */
+    private final DerivedInt[] assemblyQueueSpeeds = queueSpeedFields();
 
     public boolean assemblyRunning() {
         return assemblyRunning.isSet();
@@ -1447,6 +1488,21 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     public long assemblyRamBuffer() {
         return assemblyRamBuffer.getAsInt();
+    }
+
+    /** The speed of one of its own queues as the screen reads it: 0 is the processor's, then a card's each. */
+    public int assemblyQueueSpeed(final int queue) {
+        return queue >= 0 && queue < assemblyQueueSpeeds.length ? assemblyQueueSpeeds[queue].getAsInt() : 0;
+    }
+
+    /* One field for the processor's queue and one for each graphics card a Mainframe can seat. */
+    private DerivedInt[] queueSpeedFields() {
+        final DerivedInt[] out = new DerivedInt[1 + GPU_SLOTS];
+        for (int i = 0; i < out.length; i++) {
+            final int queue = i;
+            out[i] = fields().derived("AssemblyQueueSpeed" + i, () -> queueSpeed(queue)).toMenu();
+        }
+        return out;
     }
 
     public boolean assemblyAutoStart() {

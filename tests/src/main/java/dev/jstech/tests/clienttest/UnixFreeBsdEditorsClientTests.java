@@ -351,7 +351,8 @@ public final class UnixFreeBsdEditorsClientTests {
                     buildVintage(computer);
                     computer.installOs(MC_DOS);
                     computer.togglePower();
-                    world.placeMonitor(DOS_MONITOR, Direction.EAST);
+                    // A monitor of its own era: a Standard screen wants more than its VGA card's memory.
+                    world.placeMonitor(DOS_MONITOR, Direction.EAST, ComputingModule.VINTAGE_MONITOR.get());
                 })
                 .thenTeleport(SETTLE, PLAYER_AT_DOS_MONITOR, Direction.WEST)
                 .thenRightClick(SETTLE, DOS_MONITOR)

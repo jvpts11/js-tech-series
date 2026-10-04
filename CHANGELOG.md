@@ -441,6 +441,22 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - J's Core can show a picture in the world drawn from anything a screen can draw, into a texture of its own, as
   often as the viewer's distance calls for, and paint it, or the player's own screen, as a monitor's tube would; and
   it sends what a thing in the world shows only to the players near enough to see it, only when it changes.
+- The graphics card is a resource. Each lit monitor holds video memory by its size in blocks and its era's colours
+  (64 KB for a Vintage monochrome tube up to 256 MB for an Advanced panel, a big screen its every monitor), and a
+  graphics program's window holds a quarter of a block, a whole one while it fills the screen. A monitor the card has
+  no room for stays dark and says why on its own menu, and lights the moment there is room; a graphics program that
+  does not fit does not open, and the notification area says how much it needs and how much is free.
+- The graphics on a Haswell processor's die borrow the system's memory, up to a quarter of it and 1792 MB at most,
+  and hold of the RAM what the screens they drive need.
+- A Mainframe's graphics card queues run at most at the processor's speed and no faster than the card can (its
+  cores, their clock and its design, cut by a slot older than the card). The queues tile turns amber while a card
+  holds its queue back, and its tooltip lists each queue's speed.
+- A server's graphics cards add a twentieth of an item a tick for each of their threads to what it sends out; its
+  assembly shows the bonus beside its processor's capacity.
+- The Task Manager of every system shows the card: Frames XP a Video Memory meter, its history and a box of its
+  figures; Frames 11 a GPU page with how busy it is, how full its memory is, its cores and slot, and what holds its
+  memory; the Plasma monitor a GPU card beside memory and processor; GNOME its video memory history; the System
+  Monitor the card's name, its memory and its load.
 - A sound system for the whole series and its addons, in J's Core. A mod declares a sound once (where it is heard
   from, whether it loops, its channel, its files, how far it carries, its subtitle) and its registration,
   `sounds.json` entry and translatable subtitle follow from that one line. Sounds are mixed in channels (machines,

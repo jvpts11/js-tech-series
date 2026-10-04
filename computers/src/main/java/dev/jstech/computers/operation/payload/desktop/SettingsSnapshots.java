@@ -8,17 +8,25 @@
 package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.item.HardwareTooltip;
+import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.machine.MachineLabels;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.RamLedger;
+import dev.jstech.computers.os.VramLedger;
+import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ComputerSettings;
@@ -26,10 +34,12 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -79,7 +89,78 @@ final class SettingsSnapshots {
                 netshare, cpuLabel, computer.maxCpuMhz(), isaOf(computer),
                 computer.ramTotalMb(), computer.totalVramMb(),
                 osLabel, platform, installed, disks, ledger.usedMb(), ramUses, shares, st.remoteAllowed(),
-                soundOf(computer, st));
+                soundOf(computer, st), gpuOf(computer));
+    }
+
+    /**
+     * The machine's graphics: its first card (or the graphics on its processor's die), and what its video memory goes
+     * to. How busy the card is is a reading of what it drives: half of it by how full its memory is, a fifth more for
+     * each graphics window open on it.
+     */
+    static SettingsSnapshotPayload.Gpu gpuOf(final IOsHost computer) {
+        if (!(computer instanceof AbstractComputerBlockEntity machine)
+                || !(machine.getLevel() instanceof ServerLevel level) || machine.currentBuild() == null) {
+            return SettingsSnapshotPayload.Gpu.NONE;
+        }
+        final ComputerBuild build = machine.currentBuild();
+        final VideoMemory.State state = VideoMemory.of(level, computer);
+        final VramLedger ledger = state.ledger();
+        Text card = Text.EMPTY;
+        int cores = 0;
+        int mhz = 0;
+        String slot = "";
+        if (!build.gpus().isEmpty()) {
+            final GpuSpec gpu = build.gpus().getFirst();
+            cores = gpu.cores();
+            mhz = gpu.clockMhz();
+            slot = build.motherboard().pcieGeneration().slotName().english();
+            for (final ItemStack stack : computer.hardwareStacks()) {
+                if (stack.getItem() instanceof GpuItem) {
+                    card = GameText.of(stack.getHoverName());
+                    break;
+                }
+            }
+        } else if (state.shared()) {
+            for (final CpuSpec cpu : build.cpus()) {
+                if (cpu.hasIntegratedGraphics()) {
+                    card = Text.literal(cpu.design().graphics().model());
+                    cores = cpu.design().graphics().units();
+                    mhz = cpu.design().graphics().mhz();
+                    break;
+                }
+            }
+        }
+        final List<SettingsSnapshotPayload.VramRow> usedBy = new ArrayList<>();
+        int windows = 0;
+        for (final VramLedger.Entry entry : ledger.entries()) {
+            final boolean monitor = entry.kind() == VramLedger.Kind.MONITOR;
+            if (!monitor) {
+                windows++;
+            }
+            usedBy.add(new SettingsSnapshotPayload.VramRow(monitor ? monitorName(level, entry.name())
+                    : windowName(entry.name()), entry.kb(), monitor));
+        }
+        final double full = ledger.totalKb() <= 0 ? 0.0 : (double) ledger.usedKb() / ledger.totalKb();
+        final int load = ledger.usedKb() <= 0 ? 0 : (int) Math.min(100L, Math.round(full * 50.0 + windows * 20.0));
+        return new SettingsSnapshotPayload.Gpu(card, cores, mhz, slot, ledger.totalKb(),
+                ledger.usedKb(VramLedger.Kind.MONITOR), ledger.usedKb(VramLedger.Kind.WINDOW), state.shared(), load,
+                usedBy);
+    }
+
+    /* A monitor holding video memory, by its name, and its size when it is a big screen. */
+    private static Text monitorName(final ServerLevel level, final String entry) {
+        final BlockPos at = BlockPos.of(Long.parseLong(entry.substring(entry.indexOf(':') + 1)));
+        final Text name = GameText.of(level.getBlockState(at).getBlock().getName());
+        if (Loaded.blockEntity(level, at) instanceof MonitorBlockEntity monitor && monitor.panel() != null) {
+            return SettingsSnapshotsTexts.BIG_SCREEN.with(name, monitor.panel().width(), monitor.panel().height());
+        }
+        return name;
+    }
+
+    /* A graphics window holding video memory, by the name of its program. */
+    private static Text windowName(final String key) {
+        final ProgramSpec spec = WindowKeys.program(key);
+        return spec == null ? Text.literal(key) : spec.name().text();
     }
 
     /** The system's sound: its settings, and what plays it on a machine that has sound hardware of its own. */

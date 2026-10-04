@@ -87,16 +87,25 @@ public final class MonitorScreenRenderer implements BlockEntityRenderer<MonitorB
             LiveScreens.draw(pose, buffers, frame, 0, 0, wide * FRONT, tall * FRONT, light);
             pose.translate(0.0F, 0.0F, -LIFT / 2);
         }
+        final MonitorBlockEntity screen = monitor.screen();
+        final float[] glass = glass(kind, wide, tall);
+        final int scale = Math.min(MOST_SCALE, Math.max(SCALE, wide));
         if (state.getValue(MonitorBlock.LIT)) {
             // A lit screen shines by itself, whatever light falls on it.
-            final BlockPos shownFor = monitor.screen().getBlockPos();
+            final BlockPos shownFor = screen.getBlockPos();
             final IMonitorPicture picture = MonitorPictureCache.of(shownFor);
-            final float[] glass = glass(kind, wide, tall);
-            final int scale = Math.min(MOST_SCALE, Math.max(SCALE, wide));
             final LiveScreen live = LiveScreens.ask(shownFor, (g, w, h, partial) -> MonitorPainter.paint(g, w, h,
                             picture, shownFor, partial), MonitorGlass.WIDTH, MonitorGlass.HEIGHT, scale, kind.tube(),
                     distance);
             LiveScreens.draw(pose, buffers, live, glass[0], glass[1], glass[2], glass[3], LightTexture.FULL_BRIGHT);
+        } else if (screen.starved()) {
+            // Dark for want of video memory: the monitor's own menu says so on the glass.
+            final long need = screen.starvedNeedKb();
+            final long free = screen.starvedFreeKb();
+            final LiveScreen osd = LiveScreens.ask(new OsdKey(screen.getBlockPos()), (g, w, h, partial) ->
+                            MonitorPainter.outOfVideoMemory(g, w, h, need, free), MonitorGlass.WIDTH,
+                    MonitorGlass.HEIGHT, scale, kind.tube(), distance);
+            LiveScreens.draw(pose, buffers, osd, glass[0], glass[1], glass[2], glass[3], LightTexture.FULL_BRIGHT);
         }
         pose.popPose();
     }
@@ -177,6 +186,10 @@ public final class MonitorScreenRenderer implements BlockEntityRenderer<MonitorB
 
     /** The key a big screen's front is kept under, apart from the picture of the monitor at the same place. */
     private record FrameKey(BlockPos origin) {
+    }
+
+    /** The key a monitor's own menu is kept under while it says the monitor has no video memory. */
+    private record OsdKey(BlockPos monitor) {
     }
 
     private record Bezels(int transition, int transitionStrip, int standard, int standardChin, int color,

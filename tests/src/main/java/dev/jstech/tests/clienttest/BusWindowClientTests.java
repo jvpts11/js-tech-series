@@ -62,9 +62,13 @@ public final class BusWindowClientTests {
         for (int i = 0; i < BUSES.size(); i++) {
             final BlockPos cable = cableOf(i);
             final String name = names[i];
+            /*
+             * Waited for, not asserted at once: the first window opens just after the world loads, while the server
+             * may still be catching up and the cable not yet on the Mainframe's network; the window hears the change.
+             */
             open(ctx, cable)
-                    .thenAssert(0, () -> screen(ctx).getMenu().state().linked(),
-                            "the " + name + " bus's lamp tells it reaches the network")
+                    .thenWaitUntil(() -> screen(ctx).getMenu().state().linked(), SCREEN_WAIT,
+                            "the " + name + " bus's lamp to tell it reaches the network")
                     .thenScreenshot(SETTLE, name + "-configure")
                     .then(SETTLE, () -> clickTab(ctx, BusLayout.TAB_ACTIVITY))
                     .thenAssert(SETTLE, () -> screen(ctx).tab() == BusLayout.TAB_ACTIVITY, "the Activity tab opens")

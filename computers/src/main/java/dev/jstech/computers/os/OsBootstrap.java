@@ -742,6 +742,8 @@ public final class OsBootstrap {
         for (final ProgramSpec program : BUILTIN_PROGRAMS) {
             JsComputersApi.registerProgram(program);
         }
+        // Paint draws a picture and holds video memory while its window is open.
+        GraphicsPrograms.register(rl("paint"));
     }
 
     private static ResourceLocation rl(String path) {

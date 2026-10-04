@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.os.RamLedger;
+import dev.jstech.computers.os.VramLedger;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
@@ -93,10 +94,12 @@ public final class SystemMonitorApp implements IDesktopApp {
         spec(2, SystemMonitorTexts.MEMORY, () -> GameText.resolve(SystemMonitorTexts.RAM), () -> data == null ? "-"
                 : GameText.resolve(SystemMonitorTexts.HELD_OF.with(RamLedger.heldLabel(heldBytes()),
                         JsTechTheme.fmt(data.ramMb()))));
-        spec(3, SystemMonitorTexts.GRAPHICS, () -> GameText.resolve(data != null && data.vramMb() > 0
-                        ? SystemMonitorTexts.VRAM : SystemMonitorTexts.NO_GPU),
-                () -> data != null && data.vramMb() > 0
-                        ? GameText.resolve(SystemMonitorTexts.MEGABYTES.with(JsTechTheme.fmt(data.vramMb()))) : "-");
+        // The card by its name, and its video memory held of what it has with how busy it is; a bar under them.
+        spec(3, SystemMonitorTexts.GRAPHICS, () -> data == null || !data.gpu().present()
+                        ? GameText.resolve(SystemMonitorTexts.NO_GPU) : GameText.resolve(data.gpu().card()),
+                () -> data == null || !data.gpu().present() ? "-"
+                        : GameText.resolve(SystemMonitorTexts.VIDEO_HELD.with(VramLedger.label(data.gpu().usedKb()),
+                                VramLedger.label(data.gpu().totalKb()), data.gpu().load())));
         memoryHeader = root.add(new Label(GameText.resolve(SystemMonitorTexts.MEMORY_HEADER), Label.Tone.DIM));
         memoryFree = root.add(new Label(() -> data == null ? "" : GameText.resolve(SystemMonitorTexts.FREE.with(
                 JsTechTheme.fmt(Math.max(0, data.ramMb() - data.ramUsedMb())))), Label.Tone.DIM)
@@ -204,6 +207,12 @@ public final class SystemMonitorApp implements IDesktopApp {
             specValues[i].setBounds(px + pw / 2, row, pw / 2, 8);
             row += 12;
         }
+        if (ready && data.gpu().present()) {
+            // Under the graphics line, how full the card's memory is.
+            final double full = (double) data.gpu().usedKb() / Math.max(1L, data.gpu().totalKb());
+            g.fill(px + 62, row - 3, px + pw, row - 1, skin.fieldBg());
+            g.fill(px + 62, row - 3, px + 62 + (int) ((pw - 62) * Math.min(1.0, full)), row - 1, skin.accent());
+        }
         row += 4;
         memoryHeader.setBounds(px, row, pw / 2, 8);
         memoryFree.setBounds(px + pw / 2, row, pw / 2, 8);
@@ -227,8 +236,9 @@ public final class SystemMonitorApp implements IDesktopApp {
         final String amount = RamLedger.heldLabel(use.heldBytes());
         final int amountW = font.width(amount);
         // A window is listed by the name the desktop gives its program, not by the key the machine keeps it under.
-        final String label = RamLedger.Kind.find(use.kind()) == RamLedger.Kind.WINDOW
-                ? ActiveDesktop.windowName(use.label()) : use.label();
+        final RamLedger.Kind kind = RamLedger.Kind.find(use.kind());
+        final String label = kind == RamLedger.Kind.WINDOW ? ActiveDesktop.windowName(use.label())
+                : kind == RamLedger.Kind.GRAPHICS ? GameText.resolve(SystemMonitorTexts.SHARED_GRAPHICS) : use.label();
         final String name = font.plainSubstrByWidth(label, w - amountW - 6);
         g.drawString(font, name, x, y + 1, ctx.skin().text(), false);
         g.drawString(font, amount, x + w - amountW, y + 1, ctx.skin().dim(), false);

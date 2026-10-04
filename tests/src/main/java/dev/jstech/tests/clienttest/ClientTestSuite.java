@@ -47,6 +47,7 @@ public final class ClientTestSuite {
             FreeBsdClientTests.class,
             FullJourneyClientTests.class,
             GatewayManagerClientTests.class,
+            GpuClientTests.class,
             GuidedInstallerClientTests.class,
             IndustrialScreensClientTests.class,
             InfoCenterClientTests.class,

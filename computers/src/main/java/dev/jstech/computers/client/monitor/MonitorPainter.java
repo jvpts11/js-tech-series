@@ -15,6 +15,7 @@ import dev.jstech.computers.monitor.IMonitorPicture;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.OpenWindow;
+import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.live.LiveGraphics;
@@ -81,6 +82,30 @@ public final class MonitorPainter {
             case IMonitorPicture.Console console -> console(g, height, console, inks);
             case IMonitorPicture.Desktop desktop -> desktop(g, desktop, monitor, partialTick);
         }
+    }
+
+    /**
+     * The monitor's own menu, on dark glass, saying it has no signal for want of video memory: what it needs, what is
+     * free, and that it lights when the card has room.
+     */
+    public static void outOfVideoMemory(final GuiGraphics g, final int width, final int height, final long needKb,
+                                        final long freeKb) {
+        final Inks inks = INKS.get();
+        final Font font = Minecraft.getInstance().font;
+        g.fill(0, 0, width, height, inks.ground());
+        final String title = GameText.resolve(MonitorPaintTexts.NO_VRAM_TITLE);
+        final String need = GameText.resolve(MonitorPaintTexts.NO_VRAM_NEED.with(VramLedger.label(needKb),
+                VramLedger.label(freeKb)));
+        final String wait = GameText.resolve(MonitorPaintTexts.NO_VRAM_WAIT);
+        final int boxW = Math.min(width - 2 * MARGIN, Math.max(font.width(need), font.width(wait)) + 4 * MARGIN);
+        final int boxH = ROW * 4;
+        final int bx = (width - boxW) / 2;
+        final int by = (height - boxH) / 2;
+        g.fill(bx, by, bx + boxW, by + boxH, inks.pickedText());
+        Draw.outline(g, bx, by, boxW, boxH, inks.dim());
+        Draw.textCentered(g, font, title, width / 2, by + MARGIN, inks.title());
+        Draw.textCentered(g, font, need, width / 2, by + MARGIN + ROW + 2, inks.plain());
+        Draw.textCentered(g, font, wait, width / 2, by + MARGIN + 2 * ROW + 2, inks.dim());
     }
 
     @SubscribeEvent

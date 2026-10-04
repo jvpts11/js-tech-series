@@ -8,10 +8,13 @@
 package dev.jstech.computers.os;
 
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.program.ComputerConsoleState;
 import java.util.List;
 import java.util.function.Predicate;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -69,6 +72,10 @@ public final class MachineMemory {
             for (final var one : scripts.view()) {
                 ledger.add(one.name(), one.heapMb(), one.heldBytes(), RamLedger.Kind.PROCESS, one.id());
             }
+        }
+        // Graphics on the processor's die borrow the system's memory for what they show.
+        if (host instanceof BlockEntity be && be.getLevel() instanceof ServerLevel level) {
+            ledger.add("graphics", VideoMemory.sharedHeldMb(level, host), RamLedger.Kind.GRAPHICS);
         }
         for (final OpenWindow window : host.openWindows()) {
             ledger.add(window.key(), windowRamMb(window.key(), os, spec -> builtHere(console, spec)),

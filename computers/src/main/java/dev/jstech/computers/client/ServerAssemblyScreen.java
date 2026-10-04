@@ -178,10 +178,19 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
          * Drives live in the rack's hotswap bays since the racks rework, so the assembly has no
          * storage of its own to report, so point the player at the right place instead.
          */
-        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.STORAGE), ServerAssemblyLayout.STAT_LABEL_X,
-                ServerAssemblyLayout.STAT_ROW_STORAGE_Y, JsTechTheme.text());
-        JsTechTheme.textSRight(g, font, GameText.resolve(AssemblyTexts.DRIVES_IN_BAYS),
-                ServerAssemblyLayout.STAT_VALUE_X, ServerAssemblyLayout.STAT_ROW_STORAGE_Y, JsTechTheme.dim());
+        if (build != null && build.serverGpuBonus() > 0) {
+            // A server's graphics cards add to what it sends out: what they add, against its processor's capacity.
+            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.GPU_BONUS), ServerAssemblyLayout.STAT_LABEL_X,
+                    ServerAssemblyLayout.STAT_ROW_STORAGE_Y, JsTechTheme.text());
+            JsTechTheme.textSRight(g, font, GameText.resolve(AssemblyTexts.GPU_BONUS_VALUE.with(
+                            build.serverGpuBonusPercent(), fmt.compact(build.serverGpuBonus(), Unit.IT_PER_TICK))),
+                    ServerAssemblyLayout.STAT_VALUE_X, ServerAssemblyLayout.STAT_ROW_STORAGE_Y, JsTechTheme.accent());
+        } else {
+            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.STORAGE), ServerAssemblyLayout.STAT_LABEL_X,
+                    ServerAssemblyLayout.STAT_ROW_STORAGE_Y, JsTechTheme.text());
+            JsTechTheme.textSRight(g, font, GameText.resolve(AssemblyTexts.DRIVES_IN_BAYS),
+                    ServerAssemblyLayout.STAT_VALUE_X, ServerAssemblyLayout.STAT_ROW_STORAGE_Y, JsTechTheme.dim());
+        }
 
         // Problems strip.
         renderProblems(g, build);

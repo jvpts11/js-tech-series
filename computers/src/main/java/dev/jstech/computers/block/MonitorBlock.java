@@ -45,6 +45,7 @@ import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootLines;
@@ -822,6 +823,12 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
             if (Loaded.blockEntity(level, owner) instanceof IPeripheralOwner linkedTo
                     && linkedTo.isDisabled(pos.asLong())) {
                 serverPlayer.displayClientMessage(GameText.component(MonitorTexts.DISABLED), true);
+                return InteractionResult.SUCCESS;
+            }
+            // A monitor its computer's video memory has no room for stays dark, and says why.
+            if (monitor.starved()) {
+                serverPlayer.displayClientMessage(GameText.component(MonitorTexts.NO_VRAM.with(
+                        VramLedger.label(monitor.starvedNeedKb()), VramLedger.label(monitor.starvedFreeKb()))), true);
                 return InteractionResult.SUCCESS;
             }
             /*

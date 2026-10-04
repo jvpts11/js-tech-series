@@ -160,6 +160,11 @@ final class DesktopNotices {
         showBalloon(title, body, "");
     }
 
+    /** The heading of the balloon up now, or empty when there is none or it has gone. */
+    String balloonTitle() {
+        return balloon == null || System.currentTimeMillis() > balloon.until() ? "" : balloon.title();
+    }
+
     /**
      * The same, for a notice that is also an invitation: clicking it opens the program it is about. Which is how a
      * machine of one edition said hello on its first start: one sentence from the corner, and the offer left open for

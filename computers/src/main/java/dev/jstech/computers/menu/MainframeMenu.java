@@ -138,6 +138,11 @@ public class MainframeMenu extends CoreMenu {
         return blockEntity.assemblyParallelQueues();
     }
 
+    /** How fast one of its queues runs, in items per tick: 0 the processor's, then a graphics card's each. */
+    public int queueSpeed(final int queue) {
+        return blockEntity.assemblyQueueSpeed(queue);
+    }
+
     public long ramBuffer() {
         return blockEntity.assemblyRamBuffer();
     }

@@ -98,6 +98,31 @@ final class TaskManagerTexts {
     static final TextKey KIND_SERVICE = TextKey.of("jsc.task_manager.kind_service", "service");
     static final TextKey KIND_PROGRAM = TextKey.of("jsc.task_manager.kind_program", "program");
     static final TextKey KIND_SCRIPT = TextKey.of("jsc.task_manager.kind_script", "script");
+    static final TextKey KIND_GRAPHICS = TextKey.of("jsc.task_manager.kind_graphics", "graphics");
+    static final TextKey SHARED_GRAPHICS = TextKey.of("jsc.task_manager.shared_graphics", "Graphics (shared memory)");
+    // The graphics card: its page and its part of the performance page.
+    static final TextKey GPU = TextKey.of("jsc.task_manager.gpu", "GPU");
+    static final TextKey NO_GPU = TextKey.of("jsc.task_manager.no_gpu", "This computer has no graphics.");
+    static final TextKey GPU_3D = TextKey.of("jsc.task_manager.gpu_3d", "3D");
+    static final TextKey DEDICATED_MEMORY_USAGE = TextKey.of("jsc.task_manager.dedicated_memory_usage",
+            "Dedicated GPU memory usage");
+    static final TextKey SHARED_MEMORY_USAGE = TextKey.of("jsc.task_manager.shared_memory_usage",
+            "Shared GPU memory usage");
+    static final TextKey UTILIZATION = TextKey.of("jsc.task_manager.utilization", "Utilization");
+    static final TextKey DEDICATED_MEMORY = TextKey.of("jsc.task_manager.dedicated_memory", "Dedicated memory");
+    static final TextKey SHARED_MEMORY = TextKey.of("jsc.task_manager.shared_memory", "Shared memory");
+    static final TextKey CORES = TextKey.of("jsc.task_manager.cores", "Cores");
+    static final TextKey CORES_AT = TextKey.of("jsc.task_manager.cores_at", "%s at %s");
+    static final TextKey SLOT = TextKey.of("jsc.task_manager.slot", "Slot");
+    static final TextKey ON_THE_PROCESSOR = TextKey.of("jsc.task_manager.on_the_processor", "On the processor");
+    static final TextKey USED_BY = TextKey.of("jsc.task_manager.used_by", "Used by");
+    static final TextKey VIDEO_MEMORY = TextKey.of("jsc.task_manager.video_memory", "Video Memory");
+    static final TextKey VIDEO_MEMORY_HISTORY = TextKey.of("jsc.task_manager.video_memory_history",
+            "Video Memory History");
+    static final TextKey VIDEO_TOTAL = TextKey.of("jsc.task_manager.video_total", "Video total");
+    static final TextKey VIDEO_MONITORS = TextKey.of("jsc.task_manager.video_monitors", "Monitors");
+    static final TextKey VIDEO_FREE = TextKey.of("jsc.task_manager.video_free", "Video free");
+    static final TextKey VIDEO_OF = TextKey.of("jsc.task_manager.video_of", "%s of %s");
 
     private TaskManagerTexts() {
     }

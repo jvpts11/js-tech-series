@@ -52,7 +52,8 @@ public final class MsdClientTests {
                     buildVintage(pc[0]);
                     pc[0].installOs(MC_DOS);
                     pc[0].togglePower();
-                    world.placeMonitor(MONITOR, Direction.EAST);
+                    // A monitor of its own era: a Standard screen wants more than its VGA card's memory.
+                    world.placeMonitor(MONITOR, Direction.EAST, ComputingModule.VINTAGE_MONITOR.get());
                     world.setBlock(DRIVE, ComputingModule.FLOPPY_DRIVE.get());
                 })
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)

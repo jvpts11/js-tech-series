@@ -55,6 +55,12 @@ final class AssemblyTexts {
     static final TextKey CAPACITY = TextKey.of("jsc.assembly.capacity", "CAPACITY");
     static final TextKey RAM_BUFFER = TextKey.of("jsc.assembly.ram_buffer", "RAM BUFFER");
     static final TextKey QUEUES = TextKey.of("jsc.assembly.queues", "QUEUES");
+    static final TextKey GPU_BONUS = TextKey.of("jsc.assembly.gpu_bonus", "GPU BONUS");
+    static final TextKey GPU_BONUS_VALUE = TextKey.of("jsc.assembly.gpu_bonus_value", "+%s%% (%s)");
+    static final TextKey QUEUE_CPU = TextKey.of("jsc.assembly.queue_cpu", "CPU: %s it/t");
+    static final TextKey QUEUE_GPU = TextKey.of("jsc.assembly.queue_gpu", "GPU %s - %s: %s it/t");
+    static final TextKey QUEUE_HELD = TextKey.of("jsc.assembly.queue_held",
+            "A card's queue runs at most at the CPU's speed, and no faster than the card");
     static final TextKey ITEMS_PER_TICK = TextKey.of("jsc.assembly.items_per_tick", "it/t");
     static final TextKey ITEMS = TextKey.of("jsc.assembly.items", "it");
     static final TextKey NETWORK = TextKey.of("jsc.assembly.network", "NETWORK");

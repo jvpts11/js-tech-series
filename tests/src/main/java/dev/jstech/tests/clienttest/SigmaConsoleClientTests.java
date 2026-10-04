@@ -120,7 +120,8 @@ public final class SigmaConsoleClientTests {
                     DiskFilesystem.write(computer.systemDisk(), "progs/ask.sg", FileType.SG, ASK,
                             Long.MAX_VALUE, FilesystemKind.HIERARCHICAL);
                     computer.togglePower();
-                    world.placeMonitor(MONITOR, Direction.EAST);
+                    // A monitor of its own era: a Standard screen wants more than its VGA card's memory.
+                    world.placeMonitor(MONITOR, Direction.EAST, ComputingModule.VINTAGE_MONITOR.get());
                 })
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
                 .thenRightClick(SETTLE, MONITOR)

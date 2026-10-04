@@ -63,8 +63,39 @@ public record SettingsSnapshotPayload(
         List<RamUse> ramUses,
         List<ShareRow> shares,
         boolean remoteAllowed,
-        Sound sound
+        Sound sound,
+        Gpu gpu
 ) implements CustomPacketPayload {
+
+    /**
+     * The machine's graphics, for the Task Manager and the System Monitor: the card (or the graphics on the processor's
+     * die), its cores and clock, the slot it sits in, its video memory and what holds it, whether that memory is the
+     * system's own lent to it, how busy the card is, and each monitor and graphics window holding memory.
+     */
+    public record Gpu(Text card, int cores, int mhz, String slot, long totalKb, long monitorsKb, long windowsKb,
+                      boolean shared, int load, List<VramRow> usedBy) {
+
+        /** A machine with no graphics to speak of. */
+        public static final Gpu NONE = new Gpu(Text.EMPTY, 0, 0, "", 0L, 0L, 0L, false, 0, List.of());
+
+        public Gpu {
+            usedBy = List.copyOf(usedBy);
+        }
+
+        /** Whether the machine has graphics at all. */
+        public boolean present() {
+            return totalKb > 0L || cores > 0;
+        }
+
+        /** What is held of its video memory. */
+        public long usedKb() {
+            return monitorsKb + windowsKb;
+        }
+    }
+
+    /** One thing holding video memory: what it is called, how much it holds, and whether it is a monitor. */
+    public record VramRow(Text name, long kb, boolean monitor) {
+    }
 
     /**
      * The system's sound, for the Sound page and the panel's volume control: how loud it plays, whether it is muted,
@@ -124,6 +155,7 @@ public record SettingsSnapshotPayload(
         ramUses = List.copyOf(ramUses);
         shares = List.copyOf(shares);
         sound = sound == null ? Sound.NONE : sound;
+        gpu = gpu == null ? Gpu.NONE : gpu;
     }
 
     @Override
@@ -204,6 +236,7 @@ public record SettingsSnapshotPayload(
             buf.writeUtf(clip(speaker.name(), SPEAKER_NAME_MAX), SPEAKER_NAME_MAX);
             buf.writeVarInt(speaker.side().id());
         }
+        writeGpu(buf, p.gpu);
     }
 
     private static String clip(final String text, final int max) {
@@ -269,6 +302,43 @@ public record SettingsSnapshotPayload(
         return new SettingsSnapshotPayload(pos, wallpaper, computerName, accent, clock12h, guiScale, brightness,
                 saveDrive, removableAutoOpen, themePreset, taskbarCentered, darkMode, netshare, cpuLabel, cpuMhz,
                 cpuArch, ramMb, vramMb, osLabel, platform, installed, disks, ramUsedMb, ramUses, shares,
-                remoteAllowed, new Sound(volume, muted, output, hardware, plays, speakers));
+                remoteAllowed, new Sound(volume, muted, output, hardware, plays, speakers), readGpu(buf));
+    }
+
+    private static void writeGpu(final RegistryFriendlyByteBuf buf, final Gpu gpu) {
+        TextCodecs.STREAM_CODEC.encode(buf, gpu.card());
+        buf.writeVarInt(gpu.cores());
+        buf.writeVarInt(gpu.mhz());
+        buf.writeUtf(clip(gpu.slot(), LABEL_MAX), LABEL_MAX);
+        buf.writeVarLong(gpu.totalKb());
+        buf.writeVarLong(gpu.monitorsKb());
+        buf.writeVarLong(gpu.windowsKb());
+        buf.writeBoolean(gpu.shared());
+        buf.writeVarInt(gpu.load());
+        buf.writeVarInt(Math.min(gpu.usedBy().size(), MAX));
+        for (int i = 0; i < gpu.usedBy().size() && i < MAX; i++) {
+            final VramRow row = gpu.usedBy().get(i);
+            TextCodecs.STREAM_CODEC.encode(buf, row.name());
+            buf.writeVarLong(row.kb());
+            buf.writeBoolean(row.monitor());
+        }
+    }
+
+    private static Gpu readGpu(final RegistryFriendlyByteBuf buf) {
+        final Text card = TextCodecs.STREAM_CODEC.decode(buf);
+        final int cores = buf.readVarInt();
+        final int mhz = buf.readVarInt();
+        final String slot = buf.readUtf(LABEL_MAX);
+        final long totalKb = buf.readVarLong();
+        final long monitorsKb = buf.readVarLong();
+        final long windowsKb = buf.readVarLong();
+        final boolean shared = buf.readBoolean();
+        final int load = buf.readVarInt();
+        final int rows = Math.min(buf.readVarInt(), MAX);
+        final List<VramRow> usedBy = new ArrayList<>(rows);
+        for (int i = 0; i < rows; i++) {
+            usedBy.add(new VramRow(TextCodecs.STREAM_CODEC.decode(buf), buf.readVarLong(), buf.readBoolean()));
+        }
+        return new Gpu(card, cores, mhz, slot, totalKb, monitorsKb, windowsKb, shared, load, usedBy);
     }
 }
