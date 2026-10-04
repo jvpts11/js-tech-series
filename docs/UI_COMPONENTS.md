@@ -53,7 +53,7 @@ button on Frames 11 is flat, with no change to the program.
 | `TextField` | One line of text: shows the committed value, edits on focus, commits on blur, Escape reverts; a placeholder, a suffix that is not edited. |
 | `SearchField` | A field whose text filters something as it is typed. |
 | `TextArea` | Multi-line text with a caret: Enter and Backspace split and join lines, the arrows and a click move the caret. |
-| `CommandLine` | A terminal line: a prompt, Enter submits, the arrows recall history, an idle line shows the last output. |
+| `CommandLine` | A terminal line: a prompt, Enter submits, the arrows recall history, an idle line shows the last output; `setCellFont` writes it in a font of cells, as the terminal above it. |
 | `TabStrip` | Tabs of equal width or fitted to their labels. |
 | `ListView<T>` | A scrolling list of rows of one height, drawn by a renderer from a live supplier; a click reports the row or the empty space. |
 | `ColumnHeader` | The header over a table: sortable columns with the direction, or fixed names. |

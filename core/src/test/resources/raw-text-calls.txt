@@ -82,7 +82,6 @@
 3 computers/src/main/java/dev/jstech/computers/client/os/TaskManagerApp.java
 3 computers/src/main/java/dev/jstech/computers/client/os/TaskPopup.java
 8 computers/src/main/java/dev/jstech/computers/client/os/ThisPcApp.java
-7 computers/src/main/java/dev/jstech/computers/client/os/TtyChrome.java
 33 computers/src/main/java/dev/jstech/computers/client/os/VirtualStudioApp.java
 22 computers/src/main/java/dev/jstech/computers/client/os/VirtualStudioCodeApp.java
 14 computers/src/main/java/dev/jstech/computers/client/os/WelcomeApp.java

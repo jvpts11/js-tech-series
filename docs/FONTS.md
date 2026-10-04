@@ -88,9 +88,22 @@ The pure parts are separate from the game and tested on their own: `BdfReader` r
 `CellGlyphs` gives the rectangles of a box line or a block for any cell, and `GridLayout` turns a row into the pieces
 the painter draws.
 
-## The Core's font
+## The Core's fonts
 
-`CoreFonts.FIXED_6X10` is Misc Fixed 6x10, the X Window System's small fixed font, from Markus Kuhn's ucs-fonts as the
-X.Org Foundation ships it: a cell six pixels wide and ten tall with eight rows above the baseline, nearly sixteen
-hundred characters across Latin, Greek, Cyrillic, Hebrew, runes, Braille, the symbols and the box and block
-characters, in the public domain. Any mod can draw its terminal-like views in it.
+`CoreFonts` carries Misc Fixed, the X Window System's fixed font, from Markus Kuhn's ucs-fonts as the X.Org
+Foundation ships it, in the public domain, in three sizes of one design:
+
+| Font | Cell | Above the baseline | Characters |
+| --- | --- | --- | --- |
+| `FIXED_6X10` | 6 x 10 | 8 | nearly 1,600: Latin, Greek, Cyrillic, Hebrew, runes, Braille, symbols, boxes and blocks |
+| `FIXED_9X15` | 9 x 15 | 12 | nearly 4,800 |
+| `FIXED_10X20` | 10 x 20 | 16 | over 5,200 |
+
+Any mod can draw its terminal-like views in them, and J's Computers draws every one of its terminals in them: the
+consoles, the terminal windows, the console editors and the text-mode installers. A bitmap font drawn at a scale where
+one of its pixels is not a whole number of the screen's comes out smeared, so a terminal picks, for the screen it is
+on, the size and the whole number of screen pixels to each font pixel that draw the widest cell its eighty columns
+still fit: on a monitor's glass, the 9x15 at one pixel each at GUI scale 2, the 6x10 at two at GUI scale 3, the 9x15
+at two at GUI scale 4. A terminal window on a desktop draws in the 6x10, one GUI pixel to each of its own.
+
+A `CommandLine` of the Core's toolkit writes the line being typed in such a font too, with `setCellFont`.

@@ -453,8 +453,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Fonts of their own for every mod built on J's Core. A mod declares a font once, with its source, its cell, its
   baseline, its licence and who made it; the data generation reads the source, a BDF bitmap font (the first format
   read), and writes the picture and the font file the game draws from, with the game's font for every character the
-  font lacks. J's Core carries Misc Fixed 6x10, the small fixed font of the old Unix terminals, in the public
-  domain: a six by ten cell and nearly sixteen hundred characters, for any mod's terminal-like views.
+  font lacks. J's Core carries Misc Fixed, the fixed font of the old Unix terminals, in the public domain, in three
+  sizes: 6x10 with nearly sixteen hundred characters, and 9x15 and 10x20 with several thousand, for any mod's
+  terminal-like views.
 - A grid painter in J's Core puts text on a monospace grid, every character in a cell of its own, in a declared font
   or the game's: characters the font lacks are drawn in the game's font in the middle of their cells, and the box
   lines and blocks are drawn by the painter to fill their cells, so frames and bars join from cell to cell and from
@@ -1078,6 +1079,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- The terminals are drawn in the terminal font, Misc Fixed: MC-DOS and the UNIX, FreeBSD and Linux consoles, the
+  terminal windows of every desktop with the line typed in them, the console editors and the text-mode installers.
+  Every character takes a cell of its own, the rows are as far apart as the font is tall, the box lines and blocks
+  join from cell to cell and row to row, and a line is measured and cut in cells. A terminal window draws in the
+  6x10 at one GUI pixel to each of its own; a monitor's whole glass picks the size and the scale that draw the largest
+  letters its eighty columns leave room for, always a whole number of the screen's pixels to each of the font's, so
+  no letter comes out smeared: the 9x15 at GUI scale 2, as large as the game's small text, the 6x10 doubled at 3, the
+  9x15 doubled at 4. The desktops' windows keep the game's font. The mods list credits the font on J's Core's page
+  and on J's Computers'.
 - The Network Management Studio is now the IQL Server Management Studio: its program, its command and its id are
   `isms`, with no `nms` left. It installs from the Legacy age on. Its scripts are kept on the disk of the computer
   that opens it, as the prompt's `iql` and Σ's `Iql.RunFile` keep theirs, rather than on the Mainframe's.

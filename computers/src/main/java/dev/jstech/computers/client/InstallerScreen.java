@@ -118,6 +118,8 @@ import static dev.jstech.computers.client.InstallerScreenTexts.TO_SET_UP;
 import static dev.jstech.computers.client.InstallerScreenTexts.WILL_BE_DELETED;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.client.term.TermFace;
+import dev.jstech.computers.client.term.TermText;
 import dev.jstech.computers.gui.layout.InstallerLayout;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
@@ -835,10 +837,14 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                 || this.flow.chrome() == InstallerChrome.BOXED_TEXT;
     }
 
-    /** Writes one line of a page in whichever size that page is written at. */
+    /**
+     * Writes one line of a page in whichever way that page is written: a text-mode page in the terminal font, one
+     * character to a cell, the others in the game's font.
+     */
     private void say(final GuiGraphics g, final String text, final int x, final int y, final int colour) {
         if (this.textMode()) {
-            wall(g, text, x, y, colour);
+            final TermFace.Fitted wall = InstallerFrames.wall();
+            TermText.draw(wall.face(), g, font, text, x, y, wall.scale(), colour);
         } else {
             g.drawString(font, text, x, y, colour, false);
         }
@@ -852,7 +858,11 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
     /** How wide that line comes out in the size this page is written at. */
     private int width(final String text) {
-        return this.textMode() ? wallWidth(text) : font.width(text);
+        if (!this.textMode()) {
+            return font.width(text);
+        }
+        final TermFace.Fitted wall = InstallerFrames.wall();
+        return TermText.width(wall.face(), text, wall.scale());
     }
 
     /** How far apart this page's rows sit, which the mouse also has to know to find the one under it. */
@@ -862,7 +872,11 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
     /** A label cut to the room it has, measured in the size this page is written at. */
     private String fit(final String text, final int room) {
-        return InstallerFrames.clip(font, text, this.textMode() ? TextWall.room(room) : room);
+        if (!this.textMode()) {
+            return InstallerFrames.clip(font, text, room);
+        }
+        final TermFace.Fitted wall = InstallerFrames.wall();
+        return TermText.clip(wall.face(), text, room, wall.scale());
     }
 
     private void drawWelcome(final GuiGraphics g, final InstallerFrames.Frame f) {

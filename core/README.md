@@ -82,8 +82,9 @@ What a technology mod needs, whichever mod it is.
   [components](../docs/UI_COMPONENTS.md) desktop programs are composed from.
 - [Fonts](../docs/FONTS.md): a mod declares a font with its licence and credit, the data generation turns its
   free source (a BDF bitmap font) into the font the game draws from, and a grid painter puts text on a
-  monospace grid in it, drawing the box lines and blocks itself so frames and bars join. The Core carries one,
-  Misc Fixed 6x10, the small fixed font of the old Unix terminals, for any mod's terminal-like views.
+  monospace grid in it, drawing the box lines and blocks itself so frames and bars join. The Core carries Misc
+  Fixed, the fixed font of the old Unix terminals, in three sizes (6x10, 9x15, 10x20), for any mod's terminal-like
+  views.
 - The registry of programming languages a machine can run, the configuration system (with ranges every value
   is clamped into), the series' internal event bus, persistence helpers, the payload framework and the unit
   formatter.

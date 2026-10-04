@@ -8,7 +8,10 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.client.term.TermFace;
+import dev.jstech.computers.client.term.TermText;
 import dev.jstech.computers.gui.layout.InstallerLayout;
+import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -40,6 +43,9 @@ final class InstallerFrames {
 
     /** How tall a title bar is in the frames that have one. */
     private static final int TITLE_BAR = 14;
+
+    /** The margins a console keeps either side of its columns, which a text-mode page keeps too. */
+    private static final int WALL_MARGINS = 20;
 
     /** How tall a button is, and how far one sits from the next. */
     private static final int BUTTON = 14;
@@ -149,6 +155,14 @@ final class InstallerFrames {
         };
     }
 
+    /**
+     * The size of the terminal font a text-mode page is written in, and its scale: those of a console on the same
+     * glass, since such an installer ran in the machine's terminal and fitted its eighty columns.
+     */
+    static TermFace.Fitted wall() {
+        return TermFace.forGlass(InstallerLayout.WIDTH - WALL_MARGINS, TermBuffer.MONITOR_COLUMNS);
+    }
+
     /** A label cut to the room it has, so a long step name never runs out of its panel. */
     static String clip(final Font font, final String text, final int room) {
         if (font.width(text) <= room) {
@@ -178,14 +192,17 @@ final class InstallerFrames {
         if (flow.style() == InstallerStyle.SYSTEM_V) {
             return sysVConsole(g, font, flow, ink, sx, sy, sw, sh);
         }
-        TextWall.draw(g, font, GameText.resolve(flow.style().title(flow.systemName())), sx + 8, sy + 8,
+        final TermFace.Fitted wall = wall();
+        final TermFace face = wall.face();
+        final float scale = wall.scale();
+        TermText.draw(face, g, font, GameText.resolve(flow.style().title(flow.systemName())), sx + 8, sy + 8, scale,
                 ink.bright());
-        TextWall.draw(g, font, GameText.resolve(flow.style().heading(flow.page(), flow.systemName())), sx + 8,
-                sy + 20, ink.text());
+        TermText.draw(face, g, font, GameText.resolve(flow.style().heading(flow.page(), flow.systemName())), sx + 8,
+                sy + 20, scale, ink.text());
         final String hint = GameText.resolve(flow.style().hint(flow.page()));
         if (!hint.isEmpty()) {
             g.fill(sx, sy + sh - TITLE_BAR, sx + sw, sy + sh, ink.bar());
-            TextWall.draw(g, font, hint, sx + 6, sy + sh - TITLE_BAR + 4, ink.barText());
+            TermText.draw(face, g, font, hint, sx + 6, sy + sh - TITLE_BAR + 3, scale, ink.barText());
         }
         return new Frame(sx + 16, sy + 36, sw - 32, sh - 54, ink.paint(), null, null, null, null);
     }
@@ -198,9 +215,13 @@ final class InstallerFrames {
                                 final int sx, final int sy, final int sw, final int sh) {
         final int band = 19;
         g.fill(sx, sy, sx + sw, sy + band, ink.bar());
-        TextWall.draw(g, font, GameText.resolve(flow.style().heading(flow.page(), flow.systemName())), sx + 10,
-                sy + 6, ink.barText());
-        TextWall.right(g, font, GameText.resolve(InstallerScreenTexts.FRAME_HELP), sx + sw - 10, sy + 6, ink.barText());
+        final TermFace.Fitted wall = wall();
+        final TermFace face = wall.face();
+        final float scale = wall.scale();
+        TermText.draw(face, g, font, GameText.resolve(flow.style().heading(flow.page(), flow.systemName())), sx + 10,
+                sy + 6, scale, ink.barText());
+        TermText.right(face, g, font, GameText.resolve(InstallerScreenTexts.FRAME_HELP), sx + sw - 10, sy + 6, scale,
+                ink.barText());
         /*
          * The buttons of that installer are written out rather than drawn: it ran in a terminal, and the
          * brackets around a word were the whole of what a button looked like there.
@@ -208,10 +229,10 @@ final class InstallerFrames {
         final boolean finishing = flow.page() == InstallerPage.COPY || flow.page() == InstallerPage.DONE;
         final String first = GameText.resolve(finishing ? InstallerScreenTexts.FRAME_REBOOT_NOW
                 : InstallerScreenTexts.FRAME_DONE);
-        TextWall.centered(g, font, first, sx + sw / 2, sy + sh - 22, ink.accent());
+        TermText.centred(face, g, font, first, sx + sw / 2, sy + sh - 22, scale, ink.accent());
         if (!finishing) {
-            TextWall.centered(g, font, GameText.resolve(InstallerScreenTexts.FRAME_BACK), sx + sw / 2, sy + sh - 12,
-                    ink.text());
+            TermText.centred(face, g, font, GameText.resolve(InstallerScreenTexts.FRAME_BACK), sx + sw / 2,
+                    sy + sh - 12, scale, ink.text());
         }
         return new Frame(sx + 12, sy + band + 10, sw - 24, sh - band - 40, ink.paint(), null, null, null, null);
     }
@@ -227,17 +248,20 @@ final class InstallerFrames {
         final int barTop = sy + InstallerLayout.SYSV_BANNER_TOP;
         final int barH = InstallerLayout.SYSV_BANNER_H;
         g.fill(sx, barTop, sx + sw, barTop + barH, ink.panel());
-        TextWall.centered(g, font, banner, sx + sw / 2, barTop + 1, ink.panelText());
+        final TermFace.Fitted wall = wall();
+        final TermFace face = wall.face();
+        final float scale = wall.scale();
+        TermText.centred(face, g, font, banner, sx + sw / 2, barTop + 1, scale, ink.panelText());
         final boolean done = flow.page() == InstallerPage.DONE;
         final int footTop = sy + sh - InstallerLayout.SYSV_FOOT_H;
         if (done) {
             final String reboot = " " + GameText.resolve(InstallerScreenTexts.FRAME_REBOOT) + " ";
-            final int rw = TextWall.width(font, reboot);
+            final int rw = TermText.width(face, reboot, scale);
             g.fill(sx + (sw - rw) / 2, footTop, sx + (sw + rw) / 2, sy + sh - 3, ink.panel());
-            TextWall.draw(g, font, reboot, sx + (sw - rw) / 2, footTop + 1, ink.panelText());
+            TermText.draw(face, g, font, reboot, sx + (sw - rw) / 2, footTop + 1, scale, ink.panelText());
         } else {
-            TextWall.draw(g, font, GameText.resolve(flow.style().hint(flow.page())),
-                    sx + InstallerLayout.SYSV_CONTENT_INSET, sy + sh - 9, ink.dim());
+            TermText.draw(face, g, font, GameText.resolve(flow.style().hint(flow.page())),
+                    sx + InstallerLayout.SYSV_CONTENT_INSET, sy + sh - 9, scale, ink.dim());
         }
         final int contentTop = barTop + barH + InstallerLayout.SYSV_CONTENT_GAP;
         final int inset = InstallerLayout.SYSV_CONTENT_INSET;
@@ -257,14 +281,17 @@ final class InstallerFrames {
         final int wh = sh - 34;
         g.fill(wx + 3, wy + 3, wx + ww + 3, wy + wh + 3, c.shadow());
         g.fill(wx, wy, wx + ww, wy + wh, ink.panel());
+        final TermFace.Fitted wall = wall();
+        final TermFace face = wall.face();
+        final float scale = wall.scale();
         final String tab = " " + GameText.resolve(flow.style().heading(flow.page(), flow.systemName())) + " ";
-        final int tabW = TextWall.width(font, tab);
+        final int tabW = TermText.width(face, tab, scale);
         final int tabX = wx + (ww - tabW) / 2;
         g.fill(tabX, wy - 5, tabX + tabW, wy + 5, ink.panel());
-        TextWall.draw(g, font, tab, tabX, wy - 4, ink.panelText());
+        TermText.draw(face, g, font, tab, tabX, wy - 4, scale, ink.panelText());
         final String hint = GameText.resolve(flow.style().hint(flow.page()));
         if (!hint.isEmpty()) {
-            TextWall.draw(g, font, hint, sx + 8, sy + sh - 11, c.hint());
+            TermText.draw(face, g, font, hint, sx + 8, sy + sh - 11, scale, c.hint());
         }
         final Paint paint = ink.paint();
         return new Frame(wx + 8, wy + 12, ww - 16, wh - 20,

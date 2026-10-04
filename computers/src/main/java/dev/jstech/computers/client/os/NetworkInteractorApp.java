@@ -3255,6 +3255,20 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         return tab;
     }
 
+    /**
+     * Forgets the view the last window was left in, its tab, search, filters, sort and widths, as a game that has
+     * opened none has none to remember.
+     */
+    public static void forgetView() {
+        lastTab = TAB_NETWORK;
+        lastSearch = "";
+        lastMod = "";
+        lastCategory = "";
+        lastSort = 0;
+        lastExtraCols = 0;
+        lastInvRows = INV_ROWS;
+    }
+
     public boolean isCraftPopupOpen() {
         return craftPopup.isOpen();
     }

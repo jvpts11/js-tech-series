@@ -49,6 +49,7 @@ public final class ClientTestSuite {
             GatewayManagerClientTests.class,
             GpuClientTests.class,
             GridPainterClientTests.class,
+            TerminalFontClientTests.class,
             GuidedInstallerClientTests.class,
             IndustrialScreensClientTests.class,
             InfoCenterClientTests.class,

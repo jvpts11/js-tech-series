@@ -14,8 +14,8 @@ import dev.jstech.core.gui.layout.GuiLayout;
  * below it, and the input strip at the foot. A bare terminal (MC-DOS, the Linux TTY, MC-NET with nothing
  * installed) draws none of that chrome and is the glass alone, so it carries its own, narrower top margin.
  * The window is resizable, so every position is worked out from the size it opens at rather than fixed; what
- * is recorded here is the glass, its margins on every side, and {@link #LINE_STEP}, the step from one row of
- * it to the next, not the scrollback itself, which is the machine's own output and not this screen's geometry.
+ * is recorded here is the glass and its margins on every side, not the scrollback itself, which is the machine's
+ * own output on the terminal grid and not this screen's geometry.
  */
 public final class CommandPromptLayout {
 
@@ -61,9 +61,6 @@ public final class CommandPromptLayout {
 
     /** The margin an editor that has taken the glass over is drawn at, on every side. */
     public static final int EDITOR_MARGIN = 8;
-
-    /** The step from one row of the glass to the next, at the text's normal size. */
-    public static final int LINE_STEP = 9;
 
     private CommandPromptLayout() {
     }

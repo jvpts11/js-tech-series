@@ -30,6 +30,7 @@ import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.font.CoreFonts;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -57,10 +58,10 @@ import org.lwjgl.glfw.GLFW;
 public final class ShellView extends Panel {
 
     /*
-     * How far apart the rows are: twice a cell's width, as at the full-screen terminal and at any real one. A
-     * shorter pitch squashed everything drawn in characters, a round logo into a flat one.
+     * How far apart the rows are: the terminal font's own height, as at the full-screen terminal, so the box lines
+     * and blocks of one row meet those of the next and a logo drawn in characters keeps its shape.
      */
-    private static final int LINE_H = 2 * TermPainter.CELL;
+    private static final int LINE_H = TermPainter.ROW;
     private static final int PAD = 3;
     private static final int MAX_SCROLLBACK = 256;
     /**
@@ -203,7 +204,8 @@ public final class ShellView extends Panel {
         this.console = add(new CommandLine(DesktopShellRunPayload.MAX_LEN - 1, this::submit)
                 .setPrompt(this::promptNow)
                 .setUnseen(() -> this.keyboard.asking() && this.keyboard.unseen())
-                .setTakesNothing(() -> this.keyboard.asking()));
+                .setTakesNothing(() -> this.keyboard.asking())
+                .setCellFont(CoreFonts.FIXED_6X10));
         focus(this.console);
         ShellViews.register(this);
         // Sync the real prompt (and any pending build notices) before the player types anything.
@@ -483,8 +485,8 @@ public final class ShellView extends Panel {
                             final boolean hovered, final boolean selected) {
         final int ground = ground();
         TermPainter.highlight(g, List.of(row), x, y, LINE_H, index, this.selector.selection(),
-                TermPalette.selectionOn(ground));
-        this.painter.drawRow(g, ctx.font(), row, x, y, TermPalette.inksFor(ground), ground);
+                TermPalette.selectionOn(ground), TermPainter.CELL);
+        this.painter.drawRow(g, ctx.font(), row, x, y, LINE_H, TermPalette.inksFor(ground), ground);
     }
 
     @Override

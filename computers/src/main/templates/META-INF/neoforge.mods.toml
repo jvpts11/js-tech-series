@@ -13,6 +13,8 @@ authors = "${mod_authors}"
 description = '''
 ${mod_description}
 '''
+# The work of others the mod draws on, shown on its page in the mods list; THIRD_PARTY_NOTICES.md has the notices.
+credits = "Terminal font: Misc Fixed 6x10, 9x15 and 10x20, from Markus Kuhn's ucs-fonts as the X.Org Foundation ships them, public domain, carried by J's Core. Logos in screenfetch: neofetch, MIT. Sounds: their makers on Freesound and Pixabay and the desktops' own sound themes, named in THIRD_PARTY_NOTICES.md."
 # The mark the mods list shows at the head of this mod's page: its own logo over the series logo.
 logoFile = "${mod_id}_logo.png"
 logoBlur = true

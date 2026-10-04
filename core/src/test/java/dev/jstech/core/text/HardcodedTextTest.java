@@ -52,6 +52,9 @@ class HardcodedTextTest {
             "showBalloon", "raise", "displayClientMessage", "sendSystemMessage", "broadcastSystemMessage",
             "sendConsoleLine", "setTooltip", "withTooltip", "setPlaceholder", "submenu");
 
+    /** The terminal font's own ways of writing a line, which put it in front of a player like any other sink. */
+    private static final Set<String> TERMINAL_SINKS = Set.of("draw", "centred", "right");
+
     /** What a declaration chains on to say its English: a thing's name, what it does, a sound's subtitle. */
     private static final Set<String> DECLARATIONS = Set.of("named", "described", "subtitle", "sectionNamed");
 
@@ -161,7 +164,7 @@ class HardcodedTextTest {
             data("core/src/main/java/dev/jstech/core/config/ConfigValidator.java", 11,
                     "why a configuration value was set aside, written to the log"),
             data("core/src/main/java/dev/jstech/core/config/ConfigKey.java", 1, SETTINGS_FILE),
-            data("core/src/main/java/dev/jstech/core/font/CoreFonts.java", 2,
+            data("core/src/main/java/dev/jstech/core/font/CoreFonts.java", 4,
                     "a font's licence and who made it, named as its makers name them"),
             data(INDUSTRIAL + "client/CoalGeneratorScreen.java", 1, "the energy unit's symbol"),
             data(INDUSTRIAL + "client/ProcessingMachineScreen.java", 1, "the energy unit's symbol"));
@@ -246,6 +249,8 @@ class HardcodedTextTest {
                         twice = add(new Button("x2", this::twice));
                         g.drawString(font, "x", 1, 2, INK, false);
                         field.setPlaceholder("Search");
+                        TermText.draw(g, font, "Disk full", 1, 2, INK, GROUND);
+                        icons.draw(g, "folder", 1, 2);
                         read = add(new Button(GameText.resolve(READ), () -> set("share", path + " read")));
                         items = SavedValue.written(fresh, LOGGER, "what a server was storing here");
                         return DataResult.error(() -> "an empty key cannot be read back");
@@ -260,8 +265,8 @@ class HardcodedTextTest {
                 }
                 """;
         final List<String> read = scan(source).stream().map(Hit::text).toList();
-        assertTrue(read.equals(List.of("Shown to the player", "Low on memory", "Power", "OK", "Search", "Calculator",
-                "after a bare annotation")), () -> "read " + read);
+        assertTrue(read.equals(List.of("Shown to the player", "Low on memory", "Power", "OK", "Search", "Disk full",
+                "Calculator", "after a bare annotation")), () -> "read " + read);
     }
 
     /** One fixed piece of text: the line it is on and what it says. */
@@ -331,6 +336,10 @@ class HardcodedTextTest {
             }
             if ("literal".equals(this.name)) {
                 return "Component".equals(this.receiver);
+            }
+            // A line written in the terminal font, whose drawing calls have names too plain to list on their own.
+            if ("TermText".equals(this.receiver)) {
+                return TERMINAL_SINKS.contains(this.name);
             }
             // Map.entry builds a table, not a line on a terminal, whatever the two share in name.
             return SINKS.contains(this.name) && !("entry".equals(this.name) && "Map".equals(this.receiver));

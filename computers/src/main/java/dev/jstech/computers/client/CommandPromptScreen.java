@@ -22,6 +22,7 @@ import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.RunCommandPayload;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.edit.InkPalette;
+import dev.jstech.computers.client.term.TermFace;
 import dev.jstech.computers.client.term.TermPainter;
 import dev.jstech.computers.client.term.TermPalette;
 import dev.jstech.computers.client.term.TermSelector;
@@ -85,12 +86,6 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     private static final String NET_PROMPT = "SYSTEM:>";
     private static final int MAX_SCROLLBACK = 512;
 
-    /**
-     * The largest the text is drawn, which is the three quarters a desktop is drawn at unless told otherwise;
-     * a glass too narrow for its columns at this size draws it smaller.
-     */
-    private static final float TEXT_SCALE = 0.75f;
-
     /** How long the cursor is there for, and then not there for, in milliseconds. */
     private static final long CURSOR_BLINK_MS = 500L;
 
@@ -131,8 +126,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     /** What is picked out on the glass with the pointer, and what copying it puts on the clipboard. */
     private final TermSelector selector = new TermSelector();
 
-    /** How much smaller than the game's own the text is drawn, worked out from the room the glass has. */
-    private float textScale = TEXT_SCALE;
+    /** The scale the terminal font is drawn at, worked out from the room the glass has and the screen's pixels. */
+    private float textScale = 1.0f;
 
     /** Who has the keyboard: the prompt, or a tool the machine is running in front of it. */
     private TerminalKeyboard keyboard = TerminalKeyboard.PROMPT;
@@ -215,13 +210,15 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         this.imageWidth = MonitorGlass.width(this.width);
         this.imageHeight = MonitorGlass.height(this.height);
         /*
-         * The glass always has the same columns, so on a window too small to hold them at the usual size the
-         * text is drawn smaller instead of the glass losing columns: what the machine laid out for that many
-         * cells stays laid out.
+         * The glass always has the same columns, so the text is drawn in the size of the terminal font and at the
+         * scale that hold them with the largest letters, and at a whole number of the screen's pixels to each of the
+         * font's so no letter comes out smeared: what the machine laid out for that many cells stays laid out.
          */
-        this.textScale = Math.min(TEXT_SCALE,
-                (this.imageWidth - CommandPromptLayout.GLASS_LEFT - CommandPromptLayout.GLASS_RIGHT_MARGIN)
-                        / (float) (TermBuffer.MONITOR_COLUMNS * TermPainter.CELL));
+        final TermFace.Fitted fitted = TermFace.forGlass(
+                this.imageWidth - CommandPromptLayout.GLASS_LEFT - CommandPromptLayout.GLASS_RIGHT_MARGIN,
+                TermBuffer.MONITOR_COLUMNS);
+        this.textScale = fitted.scale();
+        this.painter.use(fitted.face());
         super.init();
         /*
          * The box holds what is being typed and takes the keys that edit it, and that is all it does. It is
@@ -398,6 +395,16 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         return before().text(GameText.LOADED);
     }
 
+    /** The scale the terminal font is drawn at on this screen, against the font's own size. */
+    public float textScale() {
+        return textScale;
+    }
+
+    /** The size of the terminal font this screen draws in. */
+    public TermFace face() {
+        return painter.face();
+    }
+
     /** The console's scrollback, oldest first, what the player can read on the prompt right now. */
     public List<String> scrollbackText() {
         final List<String> lines = new ArrayList<>(scrollback.rows().size());
@@ -512,7 +519,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         g.pose().translate(CommandPromptLayout.GLASS_LEFT, top, 0);
         g.pose().scale(textScale, textScale, 1.0f);
         TermPainter.highlight(g, all.subList(start, end), 0, 0, rowPitch(), start, selector.selection(),
-                TermPalette.selectionOn(glass()));
+                TermPalette.selectionOn(glass()), cellWidth());
         painter.draw(g, font, all.subList(start, end), 0, 0, rowPitch(), this::colorOf, glass());
         g.pose().popPose();
         if (scrollOffset > 0) {
@@ -537,7 +544,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
              * The hint shares the input line: it gets the room to the right of what is typed, and is cut
              * short rather than drawn over the prompt when a long usage does not fit.
              */
-            final int used = Math.round((typing.rows().get(0).length() + 2) * TermPainter.CELL * textScale);
+            final int used = Math.round((typing.rows().get(0).length() + 2) * cellWidth() * textScale);
             final int room = imageWidth - CommandPromptLayout.GLASS_RIGHT_MARGIN
                     - (CommandPromptLayout.GLASS_LEFT + used);
             if (room >= 40) {
@@ -601,25 +608,28 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
                     CommandPromptLayout.usageY(imageHeight) - (last - i) * rowHeight, 0);
             g.pose().scale(textScale, textScale, 1.0f);
             TermPainter.highlight(g, typing.rows().subList(i, i + 1), 0, 0, rowPitch(), i, typing.selection(),
-                    TermPalette.selectionOn(typingGround()));
-            painter.drawOnce(g, font, typing.rows().get(i), 0, 0, this::colorOf, typingGround());
+                    TermPalette.selectionOn(typingGround()), cellWidth());
+            painter.drawOnce(g, font, typing.rows().get(i), 0, 0, rowPitch(), this::colorOf, typingGround());
             if (i == typing.cursorRow() && (Util.getMillis() / CURSOR_BLINK_MS) % 2 == 0) {
-                final int at = typing.cursorColumn() * TermPainter.CELL;
-                g.fill(at, CommandPromptLayout.LINE_STEP - 1, at + TermPainter.CELL - 1,
-                        CommandPromptLayout.LINE_STEP, colorOf(CliStyle.PROMPT));
+                // The underline cursor of a text console, on the cell's last row.
+                final int at = typing.cursorColumn() * cellWidth();
+                g.fill(at, rowPitch() - 1, at + cellWidth(), rowPitch(), colorOf(CliStyle.PROMPT));
             }
             g.pose().popPose();
         }
     }
 
     /**
-     * How far apart the rows are, in the glass's own scaled units.
-     *
-     * <p>A whole number of them, so every row lands on a whole unit and no row's text is drawn between two
-     * pixels of the scaled grid, which is what makes small text look smeared.
+     * How far apart the rows are, in the glass's own scaled units: the terminal font's height, so the box lines and
+     * blocks of one row meet those of the next, and with the scale a whole number of screen pixels.
      */
     private int rowPitch() {
-        return Math.round(CommandPromptLayout.LINE_STEP / textScale);
+        return painter.face().height();
+    }
+
+    /** How wide a cell is, in the glass's own scaled units: the width of the size of the font it draws in. */
+    private int cellWidth() {
+        return painter.face().width();
     }
 
     /** What the scrollback is written on, which is what the shadow under it is worked out against. */
@@ -851,7 +861,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     }
 
     private int columnUnder(final double mx) {
-        return TermPainter.columnAt(mx - leftPos - CommandPromptLayout.GLASS_LEFT, textScale);
+        return TermPainter.columnAt(mx - leftPos - CommandPromptLayout.GLASS_LEFT, cellWidth(), textScale);
     }
 
     /** The row of the buffer the top of the glass is showing, which is where what is drawn starts. */
@@ -915,6 +925,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
              * At the size the terminal's own text is, with its rows the same distance apart, so taking the
              * glass over does not change how big anything on it is.
              */
+            this.editor.setFace(painter.face());
             this.editor.setRowPitch(rowPitch());
             g.pose().pushPose();
             g.pose().translate(leftPos + CommandPromptLayout.EDITOR_MARGIN, topPos + CommandPromptLayout.EDITOR_MARGIN,

@@ -8,6 +8,7 @@
 package dev.jstech.tests.clienttest;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.computers.client.os.NetworkInteractorApp;
 import dev.jstech.tests.JsTests;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.AccessibilityOnboardingScreen;
@@ -282,6 +283,11 @@ public final class ClientTestRunner {
             return;
         }
         pendingMove = null;
+        /*
+         * Every test starts from what a fresh game remembers. The Network Interactor keeps the view a player left it
+         * in, which is what it is for, and a search one test typed hid from the next one what it waited to see.
+         */
+        NetworkInteractorApp.forgetView();
         LOGGER.info("[JSC-CT] running {} at {}", current.name(), context.origin());
         try {
             current.method().invoke(null, context);
