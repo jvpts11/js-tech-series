@@ -11,12 +11,14 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.term.TermFace;
 import dev.jstech.computers.client.term.TermPainter;
 import dev.jstech.computers.client.term.TermText;
+import dev.jstech.computers.client.term.TextScreenPainter;
 import dev.jstech.computers.gui.term.TermGrid;
 import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.TtyLook;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.logic.TextDocument;
+import dev.jstech.core.gui.TextScreen;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -26,6 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.BlockPos;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * An editor that has taken over a terminal.
@@ -100,6 +105,27 @@ public final class TtyEditor {
          */
         default void resized(final TtyEditor editor, final int columns, final int rows) {
         }
+
+        /**
+         * The whole glass, cell by cell, for a program that draws its own screen in colours (a menu shell) rather
+         * than showing a file; null for an editor, which keeps its text and what it draws round it.
+         *
+         * <p>Asked every frame with the cells the glass holds now, so the program lays its screen out to them. A
+         * click on such a screen is handed over as the cell it landed on, counted from the screen's top left.
+         */
+        @Nullable
+        default TextScreen screen(final TtyEditor editor, final int columns, final int rows) {
+            return null;
+        }
+
+        /**
+         * Another program this one started that has the glass now, drawn in its place, or null. Keys go to whatever
+         * this one decides; the drawing and the wheel go to the program it names.
+         */
+        @Nullable
+        default TtyEditor inner(final TtyEditor editor) {
+            return null;
+        }
     }
 
     /** What an editor asked the terminal to do for it. */
@@ -113,6 +139,12 @@ public final class TtyEditor {
 
         /** Give the terminal back; the editor is finished with it. */
         void quit();
+
+        /** Where the machine is, for a program that talks to it on its own; null when the terminal does not say. */
+        @Nullable
+        default BlockPos machine() {
+            return null;
+        }
     }
 
     /** Whoever asked for another file, told what was in it, or that it is not there. */
@@ -153,6 +185,11 @@ public final class TtyEditor {
     /** How many rows of text it holds, worked out the same way. */
     private int rows = DEFAULT_ROWS;
     private boolean dirty;
+    /** Whether the last drawing was a program's own screen of cells rather than a file. */
+    private boolean drewScreen;
+    /** The screen of cells last drawn, or null when the glass last showed a file. */
+    @Nullable
+    private TextScreen lastScreen;
     private String message = "";
 
     /** Whatever the flavour of editor wants to remember between keys, such as a pending command. */
@@ -318,6 +355,31 @@ public final class TtyEditor {
         this.host = terminal;
     }
 
+    /** Where the machine this editor runs on is, as its terminal says, or null when it does not. */
+    @Nullable
+    public BlockPos machine() {
+        return this.host.machine();
+    }
+
+    /**
+     * Whether the glass shows a program's own screen of cells, so a click on it is to be handed over as the cell it
+     * landed on, counted from the screen's top left.
+     */
+    public boolean drawsScreen() {
+        return this.drewScreen;
+    }
+
+    /** The screen of cells last drawn, for a test that reads what a program showed; null after a file. */
+    @Nullable
+    public TextScreen lastScreen() {
+        return this.lastScreen;
+    }
+
+    /** How this editor reads the keyboard: the flavour that took the glass. */
+    public IKeys keys() {
+        return this.keys;
+    }
+
     /** Tells the flavour the file is open, so it can say what an editor of its kind says then. */
     public void opened(final boolean existed) {
         this.keys.opened(this, existed);
@@ -355,6 +417,26 @@ public final class TtyEditor {
      */
     public void render(final GuiGraphics g, final Font font, final int x, final int y,
                        final int width, final int height, final InkPalette palette) {
+        // A program this one started has the glass: drawn in its place, at the same size.
+        final TtyEditor inner = this.keys.inner(this);
+        if (inner != null) {
+            this.drewScreen = false;
+            inner.setFace(this.face);
+            inner.setRowPitch(this.lineH);
+            inner.render(g, font, x, y, width, height, palette);
+            return;
+        }
+        final int cellColumns = Math.max(LEAST_COLUMNS, width / this.face.width());
+        final int cellRows = Math.max(1, height / this.lineH);
+        final TextScreen screen = this.keys.screen(this, cellColumns, cellRows);
+        this.drewScreen = screen != null;
+        this.lastScreen = screen;
+        if (screen != null) {
+            // What the cells do not reach is the colour the screen's body stands on, not the editor's glass.
+            g.fill(x, y, x + width, y + height, screen.ground(screen.columns() - 1, Math.max(0, screen.rows() - 2)));
+            TextScreenPainter.paint(g, font, this.face, screen, x, y, this.lineH);
+            return;
+        }
         g.fill(x, y, x + width, y + height, palette.ground());
         final TtyLook look = this.keys.look(this);
         /*
@@ -601,8 +683,18 @@ public final class TtyEditor {
         return true;
     }
 
-    /** Moves the view without moving the caret, which is what a wheel does: the page's when one is up. */
+    /**
+     * Moves the view without moving the caret, which is what a wheel does: the page's when one is up. On a program's
+     * own screen the wheel is the arrow keys, which is what such a program scrolled its lists with.
+     */
     public boolean scrolled(final double delta) {
+        final TtyEditor inner = this.keys.inner(this);
+        if (inner != null) {
+            return inner.scrolled(delta);
+        }
+        if (this.drewScreen) {
+            return this.keys.key(this, delta > 0 ? GLFW.GLFW_KEY_UP : GLFW.GLFW_KEY_DOWN, 0);
+        }
         final int by = (int) Math.signum(delta) * 3;
         if (!this.keys.look(this).page().isEmpty()) {
             this.pageScroll = Math.max(0, this.pageScroll - by);

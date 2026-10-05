@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.program.cli.menushell.PaceCommand;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -17,7 +18,8 @@ import java.util.List;
  * The commands that are System V's own and no other family's.
  *
  * <p>UNIX takes its programs from media and from nowhere else, so where the others have a manager that asks a
- * network, it has the tool of its day: put the medium in the drive and say {@code installpkg}.
+ * network, it has the tool of its day: put the medium in the drive and say {@code installpkg}. And where the others
+ * have a desktop, it has PACE, its menus in frames.
  */
 public final class SystemVCommands {
 
@@ -25,7 +27,7 @@ public final class SystemVCommands {
     }
 
     public static List<ICliCommand> all() {
-        return List.of(new InstallPkg());
+        return List.of(new InstallPkg(), new PaceCommand());
     }
 
     /**

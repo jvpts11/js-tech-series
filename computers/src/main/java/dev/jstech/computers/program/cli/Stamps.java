@@ -16,7 +16,7 @@ import java.util.Locale;
  * for the listing. It lives on its own so that stays true: a stamp written by one shell and read at another
  * is the same stamp, not two spellings of one.
  */
-final class Stamps {
+public final class Stamps {
 
     /** How many ticks a day is here. */
     private static final long DAY = 24_000L;
@@ -36,7 +36,7 @@ final class Stamps {
      * <p>A stamp of nought is a file whose hour nobody knows: one the system itself put there, or one
      * written before any of them were stamped. It says so rather than claiming the first morning.
      */
-    static String of(final long ticks) {
+    public static String of(final long ticks) {
         if (ticks <= 0L) {
             return "  --  ";
         }

@@ -34,6 +34,8 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.interac.InteracState;
 import dev.jstech.computers.program.cli.interac.InteracView;
+import dev.jstech.computers.program.cli.menushell.MenuShellListing;
+import dev.jstech.computers.program.cli.menushell.MenuShellView;
 import dev.jstech.computers.program.cli.msd.MsdState;
 import dev.jstech.computers.program.cli.msd.MsdView;
 import dev.jstech.computers.storage.DriveVolumes;
@@ -314,8 +316,10 @@ public final class FilePayloads {
         boolean exists = false;
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
             final Optional<String> interac = interacScreen(level, computer, player, payload.path());
-            final Optional<String> drawn = interac.isPresent() ? interac
+            final Optional<String> msd = interac.isPresent() ? interac
                     : msdScreen(level, computer, player, payload.path());
+            final Optional<String> drawn = msd.isPresent() ? msd
+                    : menuShellListing(level, computer, player, payload.path());
             final Optional<String> read = drawn.isPresent() ? drawn
                     : readDiskFile(level, computer, payload.path());
             if (read.isPresent()) {
@@ -363,6 +367,18 @@ public final class FilePayloads {
         }
         final ServerCliComputer shell = new ServerCliComputer(terminal, level, player);
         return Optional.of(String.join("\n", MsdView.screen(shell, MsdState.of(path))));
+    }
+
+    /**
+     * What a text-mode shell of the Vintage systems asked the machine, when that is what was asked for: a folder and
+     * what is round it, or a search, read by the machine's own commands and handed back as lines.
+     */
+    private static Optional<String> menuShellListing(final ServerLevel level, final IOsHost computer,
+                                                     final ServerPlayer player, final String path) {
+        if (!MenuShellListing.names(path) || !(computer instanceof IComputerTerminalHost terminal)) {
+            return Optional.empty();
+        }
+        return Optional.of(MenuShellView.answer(new ServerCliComputer(terminal, level, player), path));
     }
 
     /**

@@ -55,4 +55,9 @@ public final class TtyEditorWire implements TtyEditor.IHost {
     public void quit() {
         this.done.run();
     }
+
+    @Override
+    public BlockPos machine() {
+        return this.machine.get();
+    }
 }

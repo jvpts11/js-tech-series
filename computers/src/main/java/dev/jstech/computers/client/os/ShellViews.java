@@ -17,11 +17,12 @@ import java.util.List;
  * <p>A computer has one console and the server answers it, not a window, so what it says goes to all of
  * them: the terminal window and the terminal panel inside an editor show the same session, which is
  * what having one console means. A view says here that it exists while it is open, and stops when it
- * closes, so nothing is drawn into a window that is gone.
+ * closes, so nothing is drawn into a window that is gone. A prompt a text-mode shell opened as one of its
+ * tasks listens here the same way.
  */
 public final class ShellViews {
 
-    private static final List<ShellView> OPEN = new ArrayList<>();
+    private static final List<IListener> OPEN = new ArrayList<>();
 
     /** Where session numbers come from; a number is never handed out twice while the game runs. */
     private static int nextSession = 1;
@@ -35,14 +36,14 @@ public final class ShellViews {
     }
 
     /** Says a view is open and wants what the console says. */
-    static void register(final ShellView view) {
+    static void register(final IListener view) {
         if (!OPEN.contains(view)) {
             OPEN.add(view);
         }
     }
 
     /** Says a view is gone. */
-    static void forget(final ShellView view) {
+    static void forget(final IListener view) {
         OPEN.remove(view);
     }
 
@@ -60,7 +61,7 @@ public final class ShellViews {
          * A reply belongs to the window that asked; only what the machine says on its own, with no
          * session on it, is for every window looking at the console.
          */
-        for (final ShellView view : List.copyOf(OPEN)) {
+        for (final IListener view : List.copyOf(OPEN)) {
             if (payload.session() == 0 || payload.session() == view.session()) {
                 view.accept(payload);
             }
@@ -75,5 +76,15 @@ public final class ShellViews {
             FilesApps.refreshAll();
         }
         ActiveDesktop.refreshActive();
+    }
+
+    /** Something with a shell session of its own on the machine, told what the console says to it. */
+    interface IListener {
+
+        /** The shell session it is on the machine. */
+        int session();
+
+        /** Takes what the machine's console said to it, or said on its own. */
+        void accept(DesktopShellOutputPayload payload);
     }
 }

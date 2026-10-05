@@ -45,6 +45,7 @@ import dev.jstech.computers.program.cli.ConsoleGreeting;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.gui.LineHistory;
+import dev.jstech.core.gui.TextScreen;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -529,6 +530,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
         if (this.editor != null) {
             // An editor has the glass, its own keys listed on it, and nothing of the prompt's is under it.
+            drawEditor(g);
             return;
         }
         drawTyping(g, typing);
@@ -830,6 +832,13 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          * to a program that asked for the mouse. Which line of the file that is depends on the program's own
          * view, so only the cell travels.
          */
+        if (this.editor != null && button == 0 && this.editor.drawsScreen()) {
+            // A program's own screen of cells starts where the editor's glass does, so the cell is counted from there.
+            final int row = TermPainter.rowAt(my - topPos - CommandPromptLayout.EDITOR_MARGIN, rowPitch(), textScale);
+            final int column = TermPainter.columnAt(mx - leftPos - CommandPromptLayout.EDITOR_MARGIN, cellWidth(),
+                    textScale);
+            return row >= 0 && column >= 0 && this.editor.clicked(row, column);
+        }
         if (this.editor != null && button == 0 && overGlass(mx, my)) {
             return this.editor.clicked(TermPainter.rowAt(my - topPos - scrollbackTop(), rowPitch(), textScale),
                     columnUnder(mx));
@@ -922,30 +931,24 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         super.removed();
     }
 
-    @Override
-    public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
-        super.render(g, mouseX, mouseY, partialTick);
-        if (this.editor != null) {
-            /*
-             * The editor has the glass: over everything, because it is what the terminal is showing
-             * now, not something drawn on top of a console that is still there.
-             */
-            /*
-             * At the size the terminal's own text is, with its rows the same distance apart, so taking the
-             * glass over does not change how big anything on it is.
-             */
-            this.editor.setFace(painter.face());
-            this.editor.setRowPitch(rowPitch());
-            g.pose().pushPose();
-            g.pose().translate(leftPos + CommandPromptLayout.EDITOR_MARGIN, topPos + CommandPromptLayout.EDITOR_MARGIN,
-                    0);
-            g.pose().scale(textScale, textScale, 1.0f);
-            this.editor.render(g, font, 0, 0,
-                    Math.round((imageWidth - 2 * CommandPromptLayout.EDITOR_MARGIN) / textScale),
-                    Math.round((imageHeight - 2 * CommandPromptLayout.EDITOR_MARGIN) / textScale),
-                    InkPalette.GLASS.get());
-            g.pose().popPose();
-        }
+    /*
+     * The editor has the glass: over the console, because it is what the terminal is showing now, not something
+     * drawn on top of a console that is still there. At the size the terminal's own text is, with its rows the same
+     * distance apart, so taking the glass over does not change how big anything on it is. Drawn in the screen's own
+     * pass, in the window's coordinates, so it reaches the player through the monitor's tube as the console does: a
+     * green monitor shows an editor in green too.
+     */
+    private void drawEditor(final GuiGraphics g) {
+        this.editor.setFace(painter.face());
+        this.editor.setRowPitch(rowPitch());
+        g.pose().pushPose();
+        g.pose().translate(CommandPromptLayout.EDITOR_MARGIN, CommandPromptLayout.EDITOR_MARGIN, 0);
+        g.pose().scale(textScale, textScale, 1.0f);
+        this.editor.render(g, font, 0, 0,
+                Math.round((imageWidth - 2 * CommandPromptLayout.EDITOR_MARGIN) / textScale),
+                Math.round((imageHeight - 2 * CommandPromptLayout.EDITOR_MARGIN) / textScale),
+                InkPalette.GLASS.get());
+        g.pose().popPose();
     }
 
     /**
@@ -996,6 +999,18 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     /** The text the editor holding this terminal has, or empty when none has it. */
     public String editorText() {
         return this.editor == null ? "" : this.editor.document().text();
+    }
+
+    /** The screen of cells a program holding this terminal last drew, or null when none draws one. */
+    @Nullable
+    public TextScreen editorScreen() {
+        return this.editor == null ? null : this.editor.lastScreen();
+    }
+
+    /** How the program holding this terminal reads the keyboard, or null when the prompt has it. */
+    @Nullable
+    public TtyEditor.IKeys editorKeys() {
+        return this.editor == null ? null : this.editor.keys();
     }
 
     /** What the editor holding this terminal says on its status line, or empty when none has it. */

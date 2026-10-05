@@ -519,6 +519,22 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   left, and the pause button of Frames 11's window, Plasma's notification and Cinnamon's File Operations holds the
   copies where they are until it is pressed again. The numbers are first estimates.
 - The speakers have a power light on their front, lit while their computer runs.
+- The Vintage systems get their text-mode shells, drawn in the sixteen colours of the colour adapter in the terminal
+  font, which a phosphor monitor shows in its own tones. MC-DOS has the MC-DOS Shell (`DOSSHELL`), Midsoft's menu
+  shell in the manner of the DOS 4 and 5 Shell: the title, the menus File, Options, View, Tree and Help with each
+  one's letter lit, the path and the drives, the directory tree and the file list over the Main group and the Active
+  Task List, and the key line with the clock. Every action of its menus is one of MC-DOS's own commands (TYPE to view
+  a file, COPY, MOVE, DEL, REN, MKDIR, PRINT, FORMAT from the Disk Utilities), what the machine lacks is greyed (Print
+  with no printer linked), and its menus and dialogs throw the DOS shadow. Its task switcher keeps the command
+  prompts (Shift+F9) and programs it started, each with its own screen: Alt+Tab, with Alt held, names the next task
+  in a banner, and EXIT ends a prompt. UNIX System V has PACE (`pace`), Bellwether Labs' Panelled Access Command
+  Environment: numbered frames in cascade, the Office of the player with its Filecabinet listing each file's type, the
+  Programs, the System Administration, and the UNIX System, a shell of its own that exit brings back to PACE, with
+  the `-->` command line and the function-key labels along the bottom.
+- A program that takes a terminal's whole glass (an editor, the diagnostics, the shells) now reaches the player
+  through the monitor's tube as the console does: on a green or amber monitor it is green or amber too.
+- In J's Core: `TextScreen`, a text-mode screen of cells, each a character with an ink and a ground, in the colour
+  adapter's sixteen colours or any other, with boxes in line characters and the shadow a dialog of that age threw.
 - Each system's own page for its visual effects, in the Settings window, kept by the machine: Frames 95's Effects
   from the Display page, Frames XP's Performance Options from the System page (its presets, and a box for each effect,
   the shadows under the icons' names among them), Frames 11's Visual effects, Plasma's animation speed and desktop

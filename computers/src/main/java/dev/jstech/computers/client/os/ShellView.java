@@ -55,7 +55,7 @@ import org.lwjgl.glfw.GLFW;
  * one of them types the other watches happen, which is what having a single console means.
  */
 @PaletteHolder
-public final class ShellView extends Panel {
+public final class ShellView extends Panel implements ShellViews.IListener {
 
     /*
      * How far apart the rows are: the terminal font's own height, as at the full-screen terminal, so the box lines
@@ -223,6 +223,7 @@ public final class ShellView extends Panel {
     }
 
     /** The shell session this window is on the machine. */
+    @Override
     public int session() {
         return this.session;
     }
@@ -349,7 +350,8 @@ public final class ShellView extends Panel {
     }
 
     /** Takes what the machine's console said. */
-    void accept(final DesktopShellOutputPayload payload) {
+    @Override
+    public void accept(final DesktopShellOutputPayload payload) {
         if (payload.clear()) {
             this.scrollback.clear();
         }

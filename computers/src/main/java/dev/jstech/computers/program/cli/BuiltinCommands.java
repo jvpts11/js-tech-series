@@ -10,6 +10,7 @@ package dev.jstech.computers.program.cli;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.program.cli.interac.InteracCommand;
 import dev.jstech.computers.program.cli.man.ManCommands;
+import dev.jstech.computers.program.cli.menushell.DosShellCommand;
 import dev.jstech.computers.program.cli.msd.MsdCommand;
 import dev.jstech.computers.program.iql.IqlVerb;
 import java.util.ArrayList;
@@ -104,6 +105,8 @@ public final class BuiltinCommands {
                 new MachineCommands.Devices(),
                 // The Vintage systems' diagnostics, where they disable a device, having no Device Manager.
                 new MsdCommand(),
+                // MC-DOS's menu shell, the desktop a machine of its age had none of.
+                new DosShellCommand(),
                 new NetworkCommands.Ssh(),
                 new ShellCommands.Exit(),
                 new SoftwareCommands.Pckmgr("pckmgr", Set.of(Platform.FRAMES)),
