@@ -85,4 +85,24 @@ public record Motion(MotionSpec spec, double startMs) {
     public boolean outward() {
         return spec.param("out", 0.0) > 0.0;
     }
+
+    /**
+     * How solid the thing is drawn at {@code nowMs}, from 0 clear to 1 solid: an {@link MotionStyles#APPEAR} motion
+     * grows solid, or clears with {@code out}; any other goes from its {@code opacity_from} to its {@code opacity_to},
+     * solid where it does not say.
+     */
+    public double opacity(final double nowMs) {
+        if (is(MotionStyles.APPEAR)) {
+            final double along = progress(nowMs);
+            return outward() ? 1.0 - along : along;
+        }
+        final double from = spec.param("opacity_from", 1.0);
+        return from + (spec.param("opacity_to", 1.0) - from) * progress(nowMs);
+    }
+
+    /** Whether it draws the thing less than solid at any time, which needs the thing drawn off the screen first. */
+    public boolean fades() {
+        return is(MotionStyles.APPEAR) || spec.param("opacity_from", 1.0) < 1.0
+                || spec.param("opacity_to", 1.0) < 1.0;
+    }
 }

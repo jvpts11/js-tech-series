@@ -504,6 +504,38 @@ public final class DesktopWindow {
         render(g, font, skin, mouseX, mouseY, partialTick, screenW, screenH, taskbarH, 0);
     }
 
+    /**
+     * The title bar alone at that place and size, the way a window flying to its button or back drew it on the
+     * systems of the nineties: lit, with the program's icon and as much of the title as fits, and no buttons.
+     */
+    public void renderCaption(final GuiGraphics g, final Font font, final OsSkin skin, final int x, final int y,
+                              final int w, final int h) {
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+        skin.titleBar(g, x, y, w, h, true, 0, 0);
+        if (h < ICON) {
+            return;
+        }
+        final Matrix4f mat = g.pose().last().pose();
+        final WindowGeometry.Rect clip = WindowGeometry.scissor(mat.m30(), mat.m31(), mat.m00(), mat.m11(), x, y,
+                x + w, y + h);
+        g.enableScissor(clip.x(), clip.y(), clip.x() + clip.w(), clip.y() + clip.h());
+        final ProgramSpec program = WindowKeys.program(appKey);
+        final ResourceLocation icon = program != null ? program.iconId() : app.iconId();
+        final int textLeft;
+        if (icon != null) {
+            ProgramIcons.draw(g, x + 3, y + 2, ICON, ICON, icon, skin.iconSet());
+            textLeft = x + 3 + ICON + 3;
+        } else {
+            textLeft = x + 4;
+        }
+        final DesktopEnvironmentDef desktop = OsRegistry.getDesktop(
+                ResourceLocation.fromNamespaceAndPath("jsc", skin.osPath()));
+        Draw.text(g, font, titleOn(desktop), textLeft, y + 3, skin.titleText());
+        g.disableScissor();
+    }
+
     /** As {@link #render(GuiGraphics, Font, OsSkin, int, int, float, int, int, int)}, with a top panel reserve. */
     public void render(final GuiGraphics g, final Font font, final OsSkin skin,
                        final int mouseX, final int mouseY, final float partialTick,

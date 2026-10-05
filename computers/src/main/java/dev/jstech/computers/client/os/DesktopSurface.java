@@ -39,4 +39,12 @@ interface DesktopSurface {
     default boolean moves() {
         return true;
     }
+
+    /**
+     * Whether the desktop draws the player's pointer over the glass in its own system's cursors: on the player's
+     * screen when the player has not switched that off; never on a monitor's face, where nobody is pointing.
+     */
+    default boolean ownPointer() {
+        return false;
+    }
 }

@@ -13,8 +13,36 @@
     "easing": "ease-out-quad",
     "from": 0.97,
     "group": "animations",
+    "opacity_from": 0.0,
     "style": "scale",
     "to": 1.0
+  },
+  "pointer_busy": {
+    "duration": 960,
+    "easing": "linear",
+    "frames": 16.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "pointer_working": {
+    "duration": 960,
+    "easing": "linear",
+    "frames": 16.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "progress_fill": {
+    "duration": 250,
+    "easing": "ease-out-quad",
+    "group": "animations",
+    "style": "ease"
+  },
+  "progress_wait": {
+    "duration": 1000,
+    "easing": "ease-in-out",
+    "length": 0.2,
+    "steady": 1.0,
+    "style": "bounce"
   },
   "scene_fade": {
     "duration": 250,
@@ -26,6 +54,7 @@
     "easing": "ease-out-quad",
     "from": 1.0,
     "group": "animations",
+    "opacity_to": 0.0,
     "style": "scale",
     "to": 0.8
   },
@@ -42,6 +71,7 @@
     "from": 0.01,
     "from_y": 0.05,
     "group": "animations",
+    "opacity_from": 0.0,
     "pivot_y": 1.0,
     "style": "scale",
     "to": 1.0

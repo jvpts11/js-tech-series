@@ -190,6 +190,14 @@ public interface IDesktopApp {
     }
 
     /**
+     * Whether the program is waiting on the machine and can do nothing until it answers, which the desktop's
+     * pointer shows as busy over the glass while the program is in front.
+     */
+    default boolean waiting() {
+        return false;
+    }
+
+    /**
      * Draws this app's modal dialog. The desktop calls this in a late pass, above every item icon and window,
      * only while {@link #modalActive()} and this is the focused window, so the dialog (and its own dim) sits
      * IN FRONT of the item icons instead of being pierced by their blit depth. The rectangle is the same

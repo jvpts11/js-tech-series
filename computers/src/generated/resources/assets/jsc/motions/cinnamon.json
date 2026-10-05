@@ -4,6 +4,7 @@
     "easing": "ease-out-quad",
     "from": 0.5,
     "group": "effects dialogs",
+    "opacity_from": 0.0,
     "style": "scale",
     "to": 1.0
   },
@@ -12,7 +13,35 @@
     "duration": 150,
     "easing": "ease-out-quad",
     "group": "menus",
+    "opacity_from": 0.0,
     "style": "slide"
+  },
+  "pointer_busy": {
+    "duration": 800,
+    "easing": "linear",
+    "frames": 8.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "pointer_working": {
+    "duration": 800,
+    "easing": "linear",
+    "frames": 8.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "progress_fill": {
+    "duration": 120,
+    "easing": "ease-out-quad",
+    "group": "effects",
+    "style": "ease"
+  },
+  "progress_wait": {
+    "duration": 2000,
+    "easing": "linear",
+    "length": 0.27,
+    "steady": 1.0,
+    "style": "segment"
   },
   "scene_fade": {
     "duration": 400,
@@ -24,6 +53,7 @@
     "easing": "ease-out-quad",
     "from": 1.0,
     "group": "effects close",
+    "opacity_to": 0.0,
     "style": "scale",
     "to": 0.5
   },
@@ -39,6 +69,7 @@
     "easing": "ease-out-quad",
     "from": 0.5,
     "group": "effects map",
+    "opacity_from": 0.0,
     "style": "scale",
     "to": 1.0
   },

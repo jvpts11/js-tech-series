@@ -32,6 +32,10 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.motion.MotionKinds;
+import dev.jstech.core.motion.MotionScope;
+import dev.jstech.core.motion.Rhythm;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
@@ -131,6 +135,10 @@ final class DesktopState {
     private final DesktopPainter painter = new DesktopPainter(this);
     /** How this desktop moves: its system's profile, less what its owner switched off. */
     private final DesktopMotion motion = new DesktopMotion(this);
+    /** The pointer it draws over the glass, in its system's cursors. */
+    private final DesktopPointers pointers = new DesktopPointers(this);
+    /** Its machine's copies under way, as a copy window or what its system showed instead. */
+    private final CopyWindows copies = new CopyWindows(this);
     /**
      * The boot picture's colour giving way to this desktop when it came straight up out of one, or none; a monitor
      * the player walked up to later shows its desktop at once.
@@ -147,6 +155,18 @@ final class DesktopState {
     /** The pointer, desktop-local, as the frame being drawn has it, so a menu drawn late in it lights its row. */
     private int hoverX;
     private int hoverY;
+    /**
+     * When a program was last started from this desktop, on the motion clock: what CDE's busy light blinks for and
+     * what the working pointer shows while it lasts.
+     */
+    private double startedAt = Double.NEGATIVE_INFINITY;
+
+    /**
+     * How long a program's start counts as under way. A window here comes up the moment it is asked for, where the
+     * real systems took a while to load the program, so a start is answered for this long: one blink of CDE's busy
+     * light, a moment of the working pointer.
+     */
+    private static final double STARTING_MS = 500.0;
 
     DesktopState(final DesktopSurface surface, final BlockPos host, final BlockPos monitorPos,
                  final ResourceLocation osId, final ResourceLocation desktopId, final int ramTotalMb,
@@ -205,9 +225,13 @@ final class DesktopState {
          * leave its slots a tick behind).
          */
         band.sync();
+        copies.sync();
         this.hoverX = lmx;
         this.hoverY = lmy;
-        return painter.paint(g, lmx, lmy, partialTick);
+        // Everything inside the windows (a progress bar, a terminal's cursor) moves the way this system moves.
+        final boolean[] painted = new boolean[1];
+        MotionScope.within(motion::ongoing, () -> painted[0] = painter.paint(g, lmx, lmy, partialTick));
+        return painted[0];
     }
 
     /** The inventory slot under the pointer as the last frame found it, or null. */
@@ -241,6 +265,50 @@ final class DesktopState {
     /** How this desktop moves: its system's motion profile, less what its owner switched off. */
     DesktopMotion motion() {
         return motion;
+    }
+
+    /** The pointer this desktop draws over the glass. */
+    DesktopPointers pointers() {
+        return pointers;
+    }
+
+    /** Its machine's copies under way, as this desktop shows them. */
+    CopyWindows copies() {
+        return copies;
+    }
+
+    /** Whether a copy is under way on this desktop's machine. */
+    boolean copying() {
+        return DesktopCopies.copying(host);
+    }
+
+    /** Whether the program in front waits on the machine, which the pointer shows as busy. */
+    boolean frontWaiting() {
+        final DesktopWindow front = wm.front();
+        return front != null && front.app().waiting();
+    }
+
+    /** A program is being started from this desktop: its start is under way for a moment. */
+    void programStarting() {
+        this.startedAt = MotionClock.now();
+    }
+
+    /** Whether a program's start is still under way. */
+    boolean starting() {
+        return MotionClock.now() - startedAt < STARTING_MS;
+    }
+
+    /** Whether CDE's busy light is lit this frame: blinking while a start is under way, dark the rest of the time. */
+    boolean busyLit() {
+        final double since = MotionClock.now() - startedAt;
+        // A copy keeps it blinking for as long as it runs, CDE having no copy window to say so.
+        final boolean busy = since < STARTING_MS || copying();
+        if (!busy) {
+            return false;
+        }
+        // Held lit rather than blinking while motion is reduced.
+        return MotionClock.reduced() || Rhythm.on(motion.ongoing(MotionKinds.BUSY), copying() ? MotionClock.now()
+                : since);
     }
 
     /** The boot picture's colour still giving way to this desktop, or none. */

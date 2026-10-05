@@ -78,6 +78,25 @@ public final class SpeakerGameTests {
                 .thenSucceed();
     }
 
+    /** A speaker's power light is on while its computer runs, off when it stops, and off on one with no computer. */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void powerLight_followsItsComputerRunning(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = computerWithMonitor(helper);
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        world.setBlock(NORTH_SPEAKER, ComputingModule.SPEAKER.get());
+        world.setBlock(new BlockPos(1, 2, 1), ComputingModule.ADVANCED_SPEAKER.get());
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(helper.getBlockState(NORTH_SPEAKER).getValue(SpeakerBlock.LIT),
+                        "the speaker's light comes on with its computer running"))
+                .thenExecute(() -> helper.assertTrue(
+                        !helper.getBlockState(new BlockPos(1, 2, 1)).getValue(SpeakerBlock.LIT),
+                        "a speaker linked to no computer stays dark"))
+                .thenExecute(pc::togglePower)
+                .thenWaitUntil(() -> helper.assertTrue(!helper.getBlockState(NORTH_SPEAKER).getValue(SpeakerBlock.LIT),
+                        "and goes out when the computer stops"))
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void speakerAlone_playsBothSidesAndALegacyOnePlaysCoarser(final GameTestHelper helper) {
         final PersonalComputerBlockEntity pc = computerWithMonitor(helper);

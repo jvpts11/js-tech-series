@@ -1,4 +1,18 @@
 {
+  "busy": {
+    "duration": 800,
+    "easing": "linear",
+    "frames": 8.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "progress_wait": {
+    "duration": 1000,
+    "easing": "linear",
+    "length": 0.25,
+    "steady": 1.0,
+    "style": "bounce"
+  },
   "window_minimize": {
     "duration": 320,
     "easing": "steps(16)",

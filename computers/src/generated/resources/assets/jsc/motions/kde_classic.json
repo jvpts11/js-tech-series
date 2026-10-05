@@ -1,4 +1,11 @@
 {
+  "busy": {
+    "duration": 720,
+    "easing": "linear",
+    "frames": 12.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
   "menu_show": {
     "distance": 1.0,
     "duration": 150,
@@ -6,6 +13,20 @@
     "group": "gui_effects menus",
     "steady": 1.0,
     "style": "slide"
+  },
+  "pointer_launch": {
+    "duration": 600,
+    "easing": "linear",
+    "frames": 12.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "progress_wait": {
+    "duration": 1000,
+    "easing": "linear",
+    "length": 0.25,
+    "steady": 1.0,
+    "style": "bounce"
   },
   "window_minimize": {
     "duration": 250,

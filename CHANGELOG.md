@@ -469,12 +469,52 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   `assets/<mod>/motions/<system>.json`, where a resource pack puts its own to slow a system down, speed it up or keep
   it still.
 - The desktops move, each with the timings of the system it imitates. Frames 11, Plasma, GNOME and Cinnamon grow a
-  window in as it opens, shrink it away as it closes (the window is gone from the desktop at once, and drawn going
-  away for as long as that takes), and carry it down to its button and back when it is minimized and restored; Frames
-  95 and Frames XP carry it down and back and open it at once, as they did; KDE 2 and 3 and GNOME 1 send its outline
-  to the button. The launchers slide out of their panels (KDE 3's menus roll, Frames XP's Start menu rises out of the
-  taskbar) and GNOME's overview grows in. A desktop that comes straight up from its boot picture comes up under that
-  picture's colour, which gives way to it. A monitor's face in the world shows everything where it ends.
+  window in out of clear as it opens and shrink it away fading as it closes (the window is gone from the desktop at
+  once, and drawn going away for as long as that takes), each window fading as one picture, and carry it down to its
+  button and back when it is minimized and restored; on Frames 95 and Frames XP only the title bar flies down to the
+  taskbar and back, and windows open at once, as they did; KDE 2 and 3 and GNOME 1 send its outline to the button. The
+  launchers slide out of their panels, fading in on the modern desktops (KDE 3's menus roll), Frames XP's menus and
+  tooltips fade in, and GNOME's overview grows in. A desktop that comes straight up from its boot picture comes up
+  under that picture's colour, which gives way to it. A monitor's face in the world shows everything where it ends.
+- More of each system's own motion. Frames XP's balloons fade in and out, and the desktop behind its Turn Off dialog
+  drains to grey over a second and a half (a veil deepens instead where the graphics card cannot grey it). CDE's
+  Front Panel has its busy light, which blinks while a program starts and while a copy runs. A wait with no known end
+  (looking for printers, getting through to the Mainframe or a gateway, loading the network) has each system's bar:
+  Frames XP's three green blocks crossing it, Frames 11's segment growing and shrinking, GTK 1's and KDE 2's block
+  going end to end, Breeze's and Cinnamon's sliding segment and Adwaita's bouncing one; Frames 95 and CDE had none and
+  show the empty trough. The file managers of the period have their throbber in the toolbar's corner, Frames 95's mark
+  rippling like a flag, XP's with a light crossing it, Konqueror's gear and Nautilus's ring of dots, turning only
+  while a place is slow to answer. Each console blinks its cursor to its own hardware's beat, on its screen and on the
+  monitor's face alike: a VGA card's every 229 milliseconds (MC-DOS, MC-NET, UNIX and FreeBSD's syscons), Linux's
+  framebuffer console every 200, the Frames console every 530 and CDE's dtterm every 250. The progress bars of the
+  modern desktops glide to each new amount. Frames XP's Performance Options gains "Fade or slide ToolTips into view".
+- In J's Core, for any mod's screens: a thing can fade in or out as one picture (`FadeLayer`), a region of the screen
+  can lose its colour part of the way or all of it (`GreyFilter`), the motions that go round and round (a cursor
+  blinking, a throbber turning, a bar with no known end) are read by `Rhythm`, a screen can draw everything inside it
+  within one system's motions (`MotionScope`), a `WaitBar` runs the bar of whichever system it is drawn on, a
+  `ProgressBar` glides on a system whose bars do, and a skin can give its progress bars a colour of their own. New
+  styles of motion (appear, caption, blink, loop, blocks, segment, grow, bounce, ease, grey) and new kinds (tooltips,
+  notices, the dim behind a dialog, the text cursor, a progress bar's fill and wait, the busy sign, the pointer's busy,
+  working and launch states, and a copy's animation).
+- The desktops draw the player's pointer over the monitor's glass in their own system's cursors, as big as the
+  computer's own pointer however large the desktop is drawn: Frames 95's arrow and hourglass, Frames XP's with the sand
+  falling, the Aero ring of Frames 11, the X core cursors of CDE, GNOME 1 and KDE 2 and 3, Plasma's Breeze, GNOME's
+  Adwaita and Cinnamon's DMZ-White, the later ones with their soft shadow. It turns
+  busy while the program in front waits on the machine, and to its working pointer while a program starts or a copy
+  runs (busy on a system that had no working pointer, and KDE bounces the program's icon beside the arrow as it
+  starts); each turns at its system's pace, and stands in its first picture with motion reduced. Off the glass the
+  game's own pointer is back, and the Desktop cursors setting turns the desktops' pointers off.
+- A file copy takes time: its size read at the pace of the slower of the two volumes (a hard disk, a solid-state or
+  NVMe disk, a floppy, a CD, a DVD, a stick), or to another machine at the slowest cable on the way, and the file
+  arrives when that time is up. A machine copies one file after another; a move to another volume takes as long, and
+  putting a big file in the trash takes its disk's time. A copy that outlasts a moment shows each system's copy window:
+  Frames 95's and XP's "Copying..." with the paper flying from folder to folder over a bar of blocks and the seconds
+  remaining ("Deleting..." with the paper flying into the Recycle Bin), Frames 11's window with its speed graph and
+  details, KDE 2 and 3's KIO progress dialog (which can be kept open), GNOME 1's gmc dialog and Cinnamon's File
+  Operations; Plasma shows a notification over the panel and a ring filling at the tray, GNOME its operations pie
+  and its popover, and CDE no window, only its busy pointer and busy light. Cancel calls off whatever of the copy is
+  left. The numbers are first estimates.
+- The speakers have a power light on their front, lit while their computer runs.
 - Each system's own page for its visual effects, in the Settings window, kept by the machine: Frames 95's Effects
   from the Display page, Frames XP's Performance Options from the System page (its presets, and a box for each effect,
   the shadows under the icons' names among them), Frames 11's Visual effects, Plasma's animation speed and desktop
@@ -484,7 +524,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the text consoles have none. `config effect <name> on|off` and `config effectspeed <percent>` set the same from a
   prompt.
 - J's Computers' own client settings, beside the game's options: Reduce motion, off by default, which draws every
-  desktop's windows, menus and boots where they end; and Desktop cursors, on by default, for the desktops' own pointer.
+  desktop's windows, menus and boots where they end and holds every blinking and turning thing still; and Desktop
+  cursors, on by default, for the desktops' own pointer.
 - The menus of J's Core write an item's keys at the right of its row.
 - A shared list of the network's Operations in flight, which the Network Manager's Processes tab and the studio's
   Activity Monitor both show.

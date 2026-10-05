@@ -58,6 +58,8 @@ public final class EffectsPages {
             "Animate windows when minimizing and maximizing");
     static final TextKey FADE_SLIDE_MENUS = TextKey.of("jsc.settings.effects.fade_slide_menus",
             "Fade or slide menus into view");
+    static final TextKey FADE_SLIDE_TOOLTIPS = TextKey.of("jsc.settings.effects.fade_slide_tooltips",
+            "Fade or slide ToolTips into view");
     static final TextKey ICON_SHADOWS = TextKey.of("jsc.settings.effects.icon_shadows",
             "Use drop shadows for icon labels on the desktop");
 
@@ -131,9 +133,9 @@ public final class EffectsPages {
     public static final Page FRAMES_XP = new Page(FROM_SYSTEM, PERFORMANCE_OPTIONS, PERFORMANCE_OPTIONS,
             Footer.OK_CANCEL_APPLY, List.of(new Heading(VISUAL_EFFECTS), new Note(XP_NOTE),
             new Presets(List.of(LET_CHOOSE, BEST_APPEARANCE, BEST_PERFORMANCE, CUSTOM),
-                    List.of(OsMotions.MINIMIZE, OsMotions.MENUS, OsMotions.ICON_SHADOWS)),
+                    List.of(OsMotions.MINIMIZE, OsMotions.MENUS, OsMotions.TOOLTIPS, OsMotions.ICON_SHADOWS)),
             new Check(ANIMATE_MIN_MAX, OsMotions.MINIMIZE), new Check(FADE_SLIDE_MENUS, OsMotions.MENUS),
-            new Check(ICON_SHADOWS, OsMotions.ICON_SHADOWS)));
+            new Check(FADE_SLIDE_TOOLTIPS, OsMotions.TOOLTIPS), new Check(ICON_SHADOWS, OsMotions.ICON_SHADOWS)));
 
     public static final Page FRAMES_11 = new Page(FROM_PERSONALIZE, VISUAL_EFFECTS, VISUAL_EFFECTS_11, Footer.NONE,
             List.of(new Toggle(ANIMATION_EFFECTS, ANIMATION_EFFECTS_NOTE, OsMotions.ANIMATIONS, false)));

@@ -36,6 +36,9 @@ import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
 import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.os.ConsoleIdentity;
+import dev.jstech.computers.os.OsMotions;
+import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.motion.MotionKinds;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.ConsoleGreeting;
@@ -50,7 +53,6 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.HashMap;
 import com.mojang.blaze3d.platform.InputConstants;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -85,9 +87,6 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     /** Where a network system stands before it has said so itself: at the machine, since it has no path. */
     private static final String NET_PROMPT = "SYSTEM:>";
     private static final int MAX_SCROLLBACK = 512;
-
-    /** How long the cursor is there for, and then not there for, in milliseconds. */
-    private static final long CURSOR_BLINK_MS = 500L;
 
     /**
      * How much of a paste a terminal takes: enough for a handful of commands or a wrapped path, and no more.
@@ -592,6 +591,16 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     }
 
     /**
+     * Whether the cursor is lit this frame. Each console blinks it to its own hardware's beat: a VGA card's every
+     * sixteen frames (MC-DOS, UNIX), Linux's framebuffer console every fifth of a second, FreeBSD's syscons with the
+     * VGA card's own, the Frames console at its caret blink time.
+     */
+    public boolean cursorLit() {
+        return MotionClock.blinkOn(OsMotions.console(menu.console().platform()).get()
+                .spec(MotionKinds.CARET_BLINK));
+    }
+
+    /**
      * Paints the line being typed as the last rows of the glass, in the same cells at the same size as what is
      * above it, with the cursor under the cell the next character goes in.
      */
@@ -610,7 +619,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             TermPainter.highlight(g, typing.rows().subList(i, i + 1), 0, 0, rowPitch(), i, typing.selection(),
                     TermPalette.selectionOn(typingGround()), cellWidth());
             painter.drawOnce(g, font, typing.rows().get(i), 0, 0, rowPitch(), this::colorOf, typingGround());
-            if (i == typing.cursorRow() && (Util.getMillis() / CURSOR_BLINK_MS) % 2 == 0) {
+            if (i == typing.cursorRow() && cursorLit()) {
                 // The underline cursor of a text console, on the cell's last row.
                 final int at = typing.cursorColumn() * cellWidth();
                 g.fill(at, rowPitch() - 1, at + cellWidth(), rowPitch(), colorOf(CliStyle.PROMPT));

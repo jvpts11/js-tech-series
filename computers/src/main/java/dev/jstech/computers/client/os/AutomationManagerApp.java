@@ -21,6 +21,7 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.client.gui.component.WaitBar;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -49,6 +50,8 @@ public final class AutomationManagerApp implements IDesktopApp {
     public static final String TITLE = AutomationManagerTexts.TITLE.english();
 
     private static final int REFRESH_FRAMES = 40;
+    /** How wide the bar for the wait for the Mainframe runs at most. */
+    private static final int WAIT_W = 100;
     /**
      * The manager's own colours, {@code jsc:app/automation_manager}: what is running, what wants the eye, the
      * delete action, and the engine's band when it is on and when it is off.
@@ -104,6 +107,8 @@ public final class AutomationManagerApp implements IDesktopApp {
     // components
     private final Panel root = new Panel();
     private final Label loadingLabel;
+    /** The bar for the wait until the Mainframe answers, under the line that says it is being asked. */
+    private final WaitBar waiting;
     private final Label engineLabel;
     private final Label jobsLabel;
     private final ColumnHeader jobColumns;
@@ -135,6 +140,7 @@ public final class AutomationManagerApp implements IDesktopApp {
         this.monitorPos = monitorPos;
 
         loadingLabel = root.add(new Label(GameText.resolve(AutomationTexts.CONTACTING), Label.Tone.DIM));
+        waiting = root.add(new WaitBar());
         engineLabel = root.add(new Label(this::engineText)
                 .setColor(() -> data != null && data.engineOnline() ? 0 : PALETTE.get().warn()));
         jobsLabel = root.add(new Label(() -> data == null ? ""
@@ -238,6 +244,12 @@ public final class AutomationManagerApp implements IDesktopApp {
 
     // rendering
 
+    /** Until the Mainframe answers, the program can do nothing, which the pointer shows. */
+    @Override
+    public boolean waiting() {
+        return data == null;
+    }
+
     @Override
     public void renderContent(final GuiGraphics g, final Font font, final int x, final int y,
                               final int width, final int height, final int mouseX, final int mouseY,
@@ -267,6 +279,8 @@ public final class AutomationManagerApp implements IDesktopApp {
         final boolean ready = data != null;
         loadingLabel.setVisible(!ready);
         loadingLabel.setBounds(x, y + 8, w, 8);
+        waiting.setVisible(!ready);
+        waiting.setBounds(x, y + 19, Math.min(w, WAIT_W), 7);
         engineLabel.setVisible(ready);
         engineLabel.setBounds(x + 12, y + 9, w - 60, 8);
         jobsLabel.setVisible(ready);

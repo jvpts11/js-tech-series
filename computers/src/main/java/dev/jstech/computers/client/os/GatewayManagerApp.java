@@ -31,6 +31,7 @@ import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.client.gui.component.WaitBar;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -70,6 +71,8 @@ public final class GatewayManagerApp implements IDesktopApp {
     private static final String[] CAP_LABELS = {"4", "8", "16"};
 
     private static final int TAB_H = 13;
+    /** How wide the bar for the wait for the gateway's answer runs at most. */
+    private static final int WAIT_W = 100;
     private static final int RAIL_W = 104;
     private static final int ROW_H = 11;
     /** A rail row: the name, where the Gateway stands, how it is linked. */
@@ -126,6 +129,8 @@ public final class GatewayManagerApp implements IDesktopApp {
     private final Button identifyButton;
     private final TabStrip tabs;
     private final Label loadingLabel;
+    /** The bar for the wait until the machine answers, under the line that says it is being asked. */
+    private final WaitBar waiting;
     private final Label placeholder;
     // Status
     private final Label jsTitle;
@@ -206,6 +211,7 @@ public final class GatewayManagerApp implements IDesktopApp {
         }
         tabs = root.add(new TabStrip(tabLabels).fitToLabels(6).setOnSelect(this::selectTab));
         loadingLabel = root.add(new Label(GameText.resolve(GatewayManagerTexts.ASKING), Label.Tone.DIM));
+        waiting = root.add(new WaitBar());
         placeholder = root.add(new Label(GameText.resolve(GatewayManagerTexts.SELECT_ONE), Label.Tone.DIM));
 
         jsTitle = root.add(new Label(GameText.resolve(GatewayManagerTexts.THIS_SIDE), Label.Tone.DIM)
@@ -507,6 +513,12 @@ public final class GatewayManagerApp implements IDesktopApp {
 
     // rendering
 
+    /** Until the machine answers, the program can do nothing, which the pointer shows. */
+    @Override
+    public boolean waiting() {
+        return state == null;
+    }
+
     @Override
     public void renderContent(final GuiGraphics g, final Font font, final int x, final int y, final int width,
                               final int height, final int mouseX, final int mouseY, final float partialTick) {
@@ -592,6 +604,8 @@ public final class GatewayManagerApp implements IDesktopApp {
         final int top = y + TAB_H + 2;
         loadingLabel.setVisible(!ready);
         loadingLabel.setBounds(dx + PAD, top + PAD, dw - PAD * 2, 8);
+        waiting.setVisible(!ready);
+        waiting.setBounds(dx + PAD, top + PAD + 11, Math.min(dw - PAD * 2, WAIT_W), 7);
         placeholder.setVisible(ready && d == null);
         placeholder.setBounds(dx + PAD, top + PAD, dw - PAD * 2, 8);
 

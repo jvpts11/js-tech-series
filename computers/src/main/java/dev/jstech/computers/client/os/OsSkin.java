@@ -252,6 +252,12 @@ public final class OsSkin implements ISkin {
         return accentOverride != 0 ? accentOverride : colours.get().accent();
     }
 
+    /** Frames XP's bars fill green whatever its accent; every other look fills them with its accent. */
+    @Override
+    public int progressFill() {
+        return form() == Form.LUNA ? DesktopShellPalette.get().lunaProgress() : accent();
+    }
+
     @Override
     public int text() {
         return colours.get().text();

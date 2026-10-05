@@ -9,9 +9,12 @@ package dev.jstech.core.client.gui.component;
 
 import dev.jstech.core.client.font.GridPainter;
 import dev.jstech.core.client.gui.logic.TextEditState;
+import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.core.font.CellFont;
 import dev.jstech.core.font.GridSpan;
 import dev.jstech.core.gui.LineHistory;
+import dev.jstech.core.motion.MotionKinds;
+import dev.jstech.core.motion.MotionScope;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -146,7 +149,8 @@ public final class CommandLine extends UiComponent {
                     y() + 11, ComponentPalette.get().consolePicked());
         }
         write(g, font, shown, x() + 3, textColor);
-        if (isFocused()) {
+        // The cursor blinks to the beat of the system's terminal, and stands lit on one that never blinked it.
+        if (isFocused() && MotionClock.blinkOn(MotionScope.spec(MotionKinds.CARET_BLINK))) {
             final int visibleCaret = Math.max(0, Math.min(shown.length(), caretAt - dropped));
             write(g, font, "_", x() + 3 + width(font, shown.substring(0, visibleCaret)), textColor);
         }

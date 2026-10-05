@@ -18,6 +18,7 @@ import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.SshTerminal;
@@ -134,6 +135,10 @@ public final class MonitorPictures {
         }
         final HardwareEra era = host.displayEra() == null ? HardwareEra.STANDARD : host.displayEra();
         final ServerCliComputer here = new ServerCliComputer(terminal, level);
-        return new IMonitorPicture.Console(era, terminal.console().glass(), SshTerminal.prompt(here, here));
+        // A booted live medium is a Linux console, whatever is or is not installed under it.
+        final Platform platform = terminal.console().liveInstall() != null ? Platform.LINUX
+                : host.installedOs() == null ? null : host.installedOs().platform();
+        return new IMonitorPicture.Console(era, terminal.console().glass(), SshTerminal.prompt(here, here),
+                platform);
     }
 }

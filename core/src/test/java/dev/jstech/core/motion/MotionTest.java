@@ -78,6 +78,27 @@ class MotionTest {
     }
 
     @Test
+    void opacity_appearsFromClearOrClearsAway() {
+        final Motion in = new Motion(spec(MotionStyles.APPEAR), 0.0);
+        assertEquals(0.0, in.opacity(0.0), CLOSE);
+        assertEquals(1.0, in.opacity(200.0), CLOSE);
+        final Motion out = new Motion(spec(MotionStyles.APPEAR).with("out", 1), 0.0);
+        assertEquals(1.0, out.opacity(0.0), CLOSE);
+        assertEquals(0.0, out.opacity(200.0), CLOSE);
+        assertTrue(in.fades());
+    }
+
+    @Test
+    void opacity_ofAScaleFollowsItsOwnNumbersAndIsSolidWithoutThem() {
+        final Motion growing = new Motion(spec(MotionStyles.SCALE).with("opacity_from", 0.0), 0.0);
+        assertEquals(0.5, growing.opacity(100.0), CLOSE);
+        assertTrue(growing.fades());
+        final Motion plain = new Motion(spec(MotionStyles.SCALE).with("from", 0.8), 0.0);
+        assertEquals(1.0, plain.opacity(50.0), CLOSE);
+        assertFalse(plain.fades());
+    }
+
+    @Test
     void is_tellsTheStyle() {
         assertTrue(new Motion(spec(MotionStyles.OUTLINE), 0.0).is(MotionStyles.OUTLINE));
         assertFalse(new Motion(spec(MotionStyles.OUTLINE), 0.0).is(MotionStyles.ZOOM));

@@ -84,6 +84,8 @@ public final class CdeFrontPanelLayout {
     private static final int GAP = 2;
     private static final int WORKSPACE_W = 38;
     private static final int EXIT_W = 28;
+    private static final int BUSY_W = 14;
+    private static final int BUSY_H = 8;
     private static final int SWITCH_W = PAD + WORKSPACE_W + GAP + WORKSPACE_W + GAP + EXIT_W + PAD;
     private static final int LEFT_CONTROLS = 4;
     private static final int PANEL_W = PAD * 2 + Control.values().length * CONTROL_W + SWITCH_W
@@ -120,10 +122,17 @@ public final class CdeFrontPanelLayout {
                 well.y() + PAD + (index / 2) * (rowH + GAP), WORKSPACE_W, rowH);
     }
 
-    /** The way out, as tall as the two rows of workspaces beside it. */
+    /** The way out, under the busy light, the two filling the height of the two rows of workspaces beside them. */
     public static Rect exit(final int sw, final int sh) {
         final Rect well = switchWell(sw, sh);
-        return new Rect(well.x() + well.w() - PAD - EXIT_W, well.y() + PAD, EXIT_W, well.h() - PAD * 2);
+        final int top = well.y() + PAD + BUSY_H + GAP;
+        return new Rect(well.x() + well.w() - PAD - EXIT_W, top, EXIT_W, well.y() + well.h() - PAD - top);
+    }
+
+    /** The front panel's busy light, a small lamp over the way out, which blinks while an action starts. */
+    public static Rect busyLight(final int sw, final int sh) {
+        final Rect well = switchWell(sw, sh);
+        return new Rect(well.x() + well.w() - PAD - EXIT_W + (EXIT_W - BUSY_W) / 2, well.y() + PAD, BUSY_W, BUSY_H);
     }
 
     /** The control under that point, or null when the point is on no control. */
@@ -159,6 +168,8 @@ public final class CdeFrontPanelLayout {
         }
         final Rect exit = exit(sw, sh);
         l.box("exit", exit.x(), exit.y(), exit.w(), exit.h());
+        final Rect busy = busyLight(sw, sh);
+        l.box("busy_light", busy.x(), busy.y(), busy.w(), busy.h());
         return l;
     }
 }

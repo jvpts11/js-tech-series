@@ -46,6 +46,11 @@ import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.motion.MotionKinds;
+import dev.jstech.core.motion.MotionScope;
+import dev.jstech.core.motion.MotionSpec;
+import dev.jstech.core.motion.Rhythm;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -99,6 +104,8 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final int VOLUME_LABEL_MAX = 32;
     private static final int SEARCH_MAX = 40;
     private static final int PROPERTY_ROWS = 5;
+    /** How long a place may take to answer before the throbber starts turning, in milliseconds. */
+    private static final double SLOW_ANSWER_MS = 250.0;
     /**
      * The explorer's own colours, {@code jsc:app/files}: the folder a drop would land in, the band a drag selects
      * with, what dims the window behind Properties, and the label that follows a dragged row with its words.
@@ -121,6 +128,8 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private List<Row> rows = new ArrayList<>();
     private int selected = -1;
     private List<DiskFilesPayload.WireVolume> volumes = new ArrayList<>();
+    /** When the place being waited for was asked for, on the motion clock, or NaN while nothing is awaited. */
+    private double awaitingSince = Double.NaN;
 
     private int lastClickRow = -1;
     private long lastClickAt;
@@ -344,8 +353,23 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** Takes a listing of the folder this explorer is on. */
     void accept(final DiskFilesPayload payload) {
+        this.awaitingSince = Double.NaN;
         this.volumes = payload.volumes();
         rebuild(payload.files());
+    }
+
+    /**
+     * Whether the throbber turns: a place asked for has been slow to answer. A folder the machine lists at once never
+     * sets it going, as a local folder never set the real ones going.
+     */
+    public boolean throbbing() {
+        return !Double.isNaN(awaitingSince) && MotionClock.now() - awaitingSince >= SLOW_ANSWER_MS;
+    }
+
+    /** A place slow to answer keeps the explorer waiting, which the pointer shows. */
+    @Override
+    public boolean waiting() {
+        return throbbing();
     }
 
     @Override
@@ -452,6 +476,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         // Row indices are about to mean something else, so a sweep selection cannot survive.
         this.bandActive = false;
         this.bandRows.clear();
+        if (Double.isNaN(awaitingSince)) {
+            this.awaitingSince = MotionClock.now();
+        }
         PacketDistributor.sendToServer(new RequestDiskFilesPayload(host, target));
     }
 
@@ -887,6 +914,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
         dropTarget = dragging && !iconView ? folderRowAt(dragMx, dragMy) : -1;
         root.render(g, ctx);
+        drawThrobber(g, x, y, width);
 
         // The rubber band, over the rows it is selecting.
         if (bandActive) {
@@ -905,6 +933,38 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         context.render(g, ctx);
     }
 
+    /**
+     * The throbber this file manager wears at the right end of its toolbar, by the period it belongs to: Frames 95's
+     * and XP's marks, Konqueror's gear, Nautilus's ring of dots. A file manager of any other look has none.
+     */
+    @Nullable
+    private String throbberSet() {
+        return switch (skin.form()) {
+            case BEVEL -> "frames_95";
+            case LUNA -> "frames_xp";
+            case KDE2 -> "kde2";
+            case GNOME1 -> "gnome1";
+            default -> null;
+        };
+    }
+
+    /* The throbber, still at its first picture, turning while a place is slow to answer. */
+    private void drawThrobber(final GuiGraphics g, final int x, final int y, final int width) {
+        final String set = throbberSet();
+        if (set == null) {
+            return;
+        }
+        // The pictures the strip holds, which the system's own rhythm steps through.
+        final int frames = "gnome1".equals(set) ? 8 : 12;
+        final MotionSpec spec = MotionScope.spec(MotionKinds.BUSY);
+        final int frame = throbbing() && !MotionClock.reduced()
+                ? Math.min(frames - 1, Rhythm.frame(spec, MotionClock.now() - awaitingSince)) : 0;
+        final int side = FilesLayout.THROBBER;
+        g.blit(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/throbber/" + set + ".png"),
+                x + FilesLayout.throbberX(width), y + FilesLayout.throbberY(), frame * side, 0, side, side,
+                frames * side, side);
+    }
+
     /** Places every component from the content rectangle; the same layout the next click is read against. */
     private void layout(final int x, final int y, final int width, final int height) {
         final int ny = y + FilesLayout.navY();
@@ -914,10 +974,12 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         forwardButton.setEnabled(!forward.isEmpty());
         upButton.setBounds(x + FilesLayout.navX(2), ny, FilesLayout.NAV_W, FilesLayout.NAV_H);
         upButton.setEnabled(!dir.isEmpty());
-        address.setBounds(x + FilesLayout.addressX(), ny, FilesLayout.addressW(width), FilesLayout.NAV_H);
-        addressEdit.setBounds(x + FilesLayout.addressX(), ny, FilesLayout.addressW(width), FilesLayout.NAV_H);
-        search.setBounds(x + FilesLayout.searchX(width), ny, FilesLayout.SEARCH_W, FilesLayout.NAV_H);
-        viewButton.setBounds(x + FilesLayout.viewX(width), ny, FilesLayout.NAV_W, FilesLayout.NAV_H);
+        final boolean throbber = throbberSet() != null;
+        address.setBounds(x + FilesLayout.addressX(), ny, FilesLayout.addressW(width, throbber), FilesLayout.NAV_H);
+        addressEdit.setBounds(x + FilesLayout.addressX(), ny, FilesLayout.addressW(width, throbber),
+                FilesLayout.NAV_H);
+        search.setBounds(x + FilesLayout.searchX(width, throbber), ny, FilesLayout.SEARCH_W, FilesLayout.NAV_H);
+        viewButton.setBounds(x + FilesLayout.viewX(width, throbber), ny, FilesLayout.NAV_W, FilesLayout.NAV_H);
 
         treeList.setBounds(x, y + FilesLayout.treeY(), FilesLayout.TREE_W, FilesLayout.treeH(height));
 

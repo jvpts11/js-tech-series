@@ -146,6 +146,7 @@ final class DesktopWindows {
         opened.setWorkspaces(WorkspaceSet.only(shown));
         opened.move(desktop.motion().start(MotionKinds.WINDOW_OPEN));
         windows.add(opened);
+        desktop.programStarting();
     }
 
     /**

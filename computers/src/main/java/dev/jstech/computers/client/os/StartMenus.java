@@ -11,6 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.motion.FadeLayer;
 import dev.jstech.core.motion.Motion;
 import dev.jstech.core.motion.MotionKinds;
 import dev.jstech.core.motion.MotionStyles;
@@ -288,7 +289,12 @@ final class StartMenus {
         } else {
             DesktopMotion.pose(g, motion, now, left(), top(tbY), width(), height(), 0, 0, 0, 0);
         }
-        renderLauncher(g, tbY);
+        // A launcher that fades in (Frames XP's, or one that slides and fades) is laid down as one picture.
+        if (motion.fades()) {
+            FadeLayer.draw(g, (float) motion.opacity(now), () -> renderLauncher(g, tbY));
+        } else {
+            renderLauncher(g, tbY);
+        }
         g.pose().popPose();
         Draw.popScissor(g);
     }

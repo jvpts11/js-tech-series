@@ -29,6 +29,11 @@ public interface ISkin {
     /** The accent: selections, marks, the primary button, progress. */
     int accent();
 
+    /** What a progress bar fills with: the accent, unless the look gives its bars a colour of their own. */
+    default int progressFill() {
+        return accent();
+    }
+
     /** A 1px separator or border. */
     int edge();
 

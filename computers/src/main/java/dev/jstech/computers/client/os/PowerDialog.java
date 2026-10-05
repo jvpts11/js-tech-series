@@ -11,10 +11,16 @@ import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.operation.payload.MachinePowerPayload;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.motion.GreyFilter;
+import dev.jstech.core.motion.Motion;
+import dev.jstech.core.motion.MotionKinds;
+import dev.jstech.core.motion.MotionSpec;
+import dev.jstech.core.motion.MotionStyles;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import org.joml.Matrix4f;
 
 /**
  * The dialog that decides the fate of the whole machine: shut it down, restart it, or log off. Each of the three
@@ -25,6 +31,8 @@ final class PowerDialog {
 
     private final DesktopState desktop;
     private boolean open;
+    /** What happens to the desktop behind the dialog since it opened: it greys on Frames XP, at once elsewhere. */
+    private Motion dimming = Motion.FINISHED;
     /* The desktop surface the dialog was centred on, so a click lands where it was drawn. */
     private int surfaceW;
     private int surfaceH;
@@ -44,6 +52,7 @@ final class PowerDialog {
 
     void open() {
         this.open = true;
+        this.dimming = desktop.motion().start(MotionKinds.DIM);
     }
 
     void close() {
@@ -52,6 +61,15 @@ final class PowerDialog {
 
     boolean isOpen() {
         return open;
+    }
+
+    /** How grey the desktop behind the dialog has gone, from 0 to 1, on a system that greys it; 0 on any other. */
+    float greyed() {
+        final MotionSpec system = desktop.motion().profile().spec(MotionKinds.DIM);
+        if (!open || !MotionStyles.GREY.equals(system.style())) {
+            return 0.0F;
+        }
+        return (float) (system.param("amount", 1.0) * dimming.progress(DesktopMotion.now()));
     }
 
     /** Draws the dialog over a desktop {@code surfaceW} by {@code surfaceH}, when it is up. */
@@ -70,7 +88,7 @@ final class PowerDialog {
         final OsSkin skin = desktop.prefs().skin();
         final int x = x();
         final int y = y();
-        g.fill(0, 0, surfaceW, surfaceH, DesktopShellPalette.get().powerShade());
+        shade(g, surfaceW, surfaceH);
         skin.windowShadow(g, x, y, POWER_W, height());
         skin.windowFrame(g, x, y, POWER_W, height());
         skin.titleBar(g, x, y, POWER_W, 14);
@@ -151,5 +169,26 @@ final class PowerDialog {
 
     private int y() {
         return (surfaceH - height()) / 2;
+    }
+
+    /*
+     * What lies behind the dialog. Frames XP drains the desktop to grey over a second and a half; where the graphics
+     * card cannot grey it, a veil deepens over the same time instead. Every other system lays its veil at once.
+     */
+    private void shade(final GuiGraphics g, final int surfaceW, final int surfaceH) {
+        final int veil = DesktopShellPalette.get().powerShade();
+        final MotionSpec system = desktop.motion().profile().spec(MotionKinds.DIM);
+        if (!MotionStyles.GREY.equals(system.style())) {
+            g.fill(0, 0, surfaceW, surfaceH, veil);
+            return;
+        }
+        if (GreyFilter.ready()) {
+            // The filter works in the screen's units, so the glass is carried there through the pose.
+            final Matrix4f at = g.pose().last().pose();
+            GreyFilter.filterScreen(g, at.m30(), at.m31(), surfaceW * at.m00(), surfaceH * at.m11(), greyed());
+            return;
+        }
+        final int alpha = (int) ((veil >>> 24) * dimming.progress(DesktopMotion.now()));
+        g.fill(0, 0, surfaceW, surfaceH, alpha << 24 | veil & 0xFFFFFF);
     }
 }

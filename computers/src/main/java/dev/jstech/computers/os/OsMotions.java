@@ -15,6 +15,7 @@ import dev.jstech.core.motion.MotionProfile;
 import dev.jstech.core.motion.MotionProfiles;
 import dev.jstech.core.motion.MotionSpec;
 import dev.jstech.core.motion.MotionStyles;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * How each desktop of today moves, with the timings of the real system it imitates, each kept in
@@ -22,7 +23,12 @@ import dev.jstech.core.motion.MotionStyles;
  *
  * <p>The names in each motion's group are the boxes of that system's own settings page that switch it off, so the
  * page and the motion agree on what a box does: Frames XP's "Animate windows when minimizing and maximizing" is
- * {@code minimize}, Cinnamon's "Window effects" is {@code effects}. A system that never moved a thing, CDE, is still.
+ * {@code minimize}, Cinnamon's "Window effects" is {@code effects}. CDE moves no window; only its busy light and its
+ * terminal's cursor blink.
+ *
+ * <p>Besides the windows and the menus, each says how its waits look (the bar for a wait with no known end, the
+ * throbber in a file manager's corner), how its progress bars fill and how its terminal's cursor blinks; and the text
+ * consoles each have a profile of their own, since a console blinks to its hardware's beat and not its desktop's.
  */
 public final class OsMotions {
 
@@ -32,6 +38,8 @@ public final class OsMotions {
     public static final String MINIMIZE = "minimize";
     /** The box over menus and the launcher sliding in. */
     public static final String MENUS = "menus";
+    /** Frames XP's "Fade or slide ToolTips into view". */
+    public static final String TOOLTIPS = "tooltips";
     /** Frames XP's "Use drop shadows for icon labels on the desktop", which is a look rather than a motion. */
     public static final String ICON_SHADOWS = "icon_shadows";
     /** Plasma's Scale effect: windows growing in and shrinking away. */
@@ -56,74 +64,158 @@ public final class OsMotions {
     /** A motion its system's speed setting leaves alone, as KDE's minimize slider leaves the toolkit's menus. */
     public static final String STEADY = "steady";
 
+    /** How solid a scaling or sliding thing starts, and how solid it ends. */
+    private static final String OPACITY_FROM = "opacity_from";
+    private static final String OPACITY_TO = "opacity_to";
+    /* A VGA card turns its text cursor over every sixteen frames: about 229 ms at its seventy hertz. */
+    private static final int VGA_CURSOR_MS = 229;
+    /* The caret blink time Frames has always shipped with, in the console and in every text box alike. */
+    private static final int WINDOWS_CARET_MS = 530;
+
     public static final DeclaredMotion FRAMES_95 = declare("frames_95", MotionProfile.builder()
-            // The caption's flight to the taskbar, drawn here as the window going down to its button.
-            .kind(MotionKinds.WINDOW_MINIMIZE, zoomOut(250, "linear", MINIMIZE))
-            .kind(MotionKinds.WINDOW_RESTORE, zoomIn(250, "linear", MINIMIZE))
+            // The caption flies to the taskbar and back, as DrawAnimatedRects drew it; everything else is instant.
+            .kind(MotionKinds.WINDOW_MINIMIZE, caption(250, "linear", MINIMIZE, true))
+            .kind(MotionKinds.WINDOW_RESTORE, caption(250, "linear", MINIMIZE, false))
+            .kind(MotionKinds.BUSY, loop(1080, 12))
+            .kind(MotionKinds.CARET_BLINK, blink(WINDOWS_CARET_MS))
+            // The flying paper of the copy window, sixteen pictures at fifteen a second.
+            .kind(MotionKinds.COPY, loop(1056, 16))
             .build());
 
     public static final DeclaredMotion FRAMES_XP = declare("frames_xp", MotionProfile.builder()
-            .kind(MotionKinds.WINDOW_MINIMIZE, zoomOut(250, "linear", MINIMIZE))
-            .kind(MotionKinds.WINDOW_RESTORE, zoomIn(250, "linear", MINIMIZE))
-            .kind(MotionKinds.MENU_SHOW, slide(200, "ease-out", MENUS, 1.0))
+            .kind(MotionKinds.WINDOW_MINIMIZE, caption(250, "linear", MINIMIZE, true))
+            .kind(MotionKinds.WINDOW_RESTORE, caption(250, "linear", MINIMIZE, false))
+            // Fade, the setting's own default over slide.
+            .kind(MotionKinds.MENU_SHOW, appear(200, "linear", MENUS, false))
+            .kind(MotionKinds.TOOLTIP_SHOW, appear(200, "linear", TOOLTIPS, false))
+            .kind(MotionKinds.NOTICE_SHOW, appear(300, "linear", "", false))
+            .kind(MotionKinds.NOTICE_HIDE, appear(300, "linear", "", true))
+            // The screen behind Turn Off drains to grey over a second and a half.
+            .kind(MotionKinds.DIM, grey(1500, "linear"))
+            .kind(MotionKinds.PROGRESS_WAIT, waiting(MotionStyles.BLOCKS, 2000, "linear").with("blocks", 3))
+            .kind(MotionKinds.BUSY, loop(960, 12))
+            .kind(MotionKinds.CARET_BLINK, blink(WINDOWS_CARET_MS))
+            // The hourglass: twelve steps of falling sand and four of turning over, a tenth of a second each.
+            .kind(MotionKinds.POINTER_BUSY, loop(1600, 16))
+            .kind(MotionKinds.POINTER_WORKING, loop(1600, 16))
+            .kind(MotionKinds.COPY, loop(1056, 16))
             .build());
 
     public static final DeclaredMotion FRAMES_11 = declare("frames_11", MotionProfile.builder()
-            .kind(MotionKinds.WINDOW_OPEN, scale(250, "fluent-entrance", ANIMATIONS, 0.92, 1.0))
-            .kind(MotionKinds.DIALOG_OPEN, scale(167, "fluent-entrance", ANIMATIONS, 0.95, 1.0))
-            .kind(MotionKinds.WINDOW_CLOSE, scale(167, "fluent-exit", ANIMATIONS, 1.0, 0.92))
+            .kind(MotionKinds.WINDOW_OPEN, scale(250, "fluent-entrance", ANIMATIONS, 0.92, 1.0)
+                    .with(OPACITY_FROM, 0.0))
+            .kind(MotionKinds.DIALOG_OPEN, scale(167, "fluent-entrance", ANIMATIONS, 0.95, 1.0)
+                    .with(OPACITY_FROM, 0.0))
+            .kind(MotionKinds.WINDOW_CLOSE, scale(167, "fluent-exit", ANIMATIONS, 1.0, 0.92).with(OPACITY_TO, 0.0))
             .kind(MotionKinds.WINDOW_MINIMIZE, zoomOut(250, "fluent-point", ANIMATIONS))
             .kind(MotionKinds.WINDOW_RESTORE, zoomIn(250, "fluent-point", ANIMATIONS))
-            .kind(MotionKinds.MENU_SHOW, slide(250, "fluent-entrance", ANIMATIONS, 0.2))
+            .kind(MotionKinds.MENU_SHOW, slide(250, "fluent-entrance", ANIMATIONS, 0.2).with(OPACITY_FROM, 0.0))
+            .kind(MotionKinds.TOOLTIP_SHOW, appear(83, "linear", ANIMATIONS, false))
             .kind(MotionKinds.SCENE_FADE, fade(333, "linear"))
+            .kind(MotionKinds.PROGRESS_WAIT, waiting(MotionStyles.GROW, 2000, "linear"))
+            .kind(MotionKinds.PROGRESS_FILL, ease(250, "fluent-point", ANIMATIONS))
+            .kind(MotionKinds.CARET_BLINK, blink(WINDOWS_CARET_MS))
+            // The ring whose light runs round, eighteen pictures of fifty milliseconds.
+            .kind(MotionKinds.POINTER_BUSY, loop(900, 18))
+            .kind(MotionKinds.POINTER_WORKING, loop(900, 18))
             .build());
 
     public static final DeclaredMotion KDE_CLASSIC = declare("kde_classic", MotionProfile.builder()
             .kind(MotionKinds.WINDOW_MINIMIZE, outline(250, "linear", MINIMIZE, true, 3))
             .kind(MotionKinds.WINDOW_RESTORE, outline(250, "linear", MINIMIZE, false, 3))
             .kind(MotionKinds.MENU_SHOW, slide(150, "linear", GUI_EFFECTS + " " + MENUS, 1.0).with(STEADY, 1))
+            .kind(MotionKinds.PROGRESS_WAIT, waiting(MotionStyles.BOUNCE, 1000, "linear").with("length", 0.25))
+            .kind(MotionKinds.BUSY, loop(720, 12))
+            // The launch feedback: the program's icon bouncing beside the arrow while it starts.
+            .kind(MotionKinds.POINTER_LAUNCH, loop(600, 12))
             .build());
 
     public static final DeclaredMotion PLASMA = declare("plasma", MotionProfile.builder()
-            .kind(MotionKinds.WINDOW_OPEN, scale(200, "ease-out-cubic", SCALE, 0.8, 1.0))
-            .kind(MotionKinds.DIALOG_OPEN, scale(200, "ease-out-cubic", SCALE, 0.8, 1.0))
-            .kind(MotionKinds.WINDOW_CLOSE, scale(200, "ease-in-cubic", SCALE, 1.0, 0.8))
+            .kind(MotionKinds.WINDOW_OPEN, scale(200, "ease-out-cubic", SCALE, 0.8, 1.0).with(OPACITY_FROM, 0.0))
+            .kind(MotionKinds.DIALOG_OPEN, scale(200, "ease-out-cubic", SCALE, 0.8, 1.0).with(OPACITY_FROM, 0.0))
+            .kind(MotionKinds.WINDOW_CLOSE, scale(200, "ease-in-cubic", SCALE, 1.0, 0.8).with(OPACITY_TO, 0.0))
             .kind(MotionKinds.WINDOW_MINIMIZE, zoomOut(250, "ease-in-cubic", SQUASH))
             .kind(MotionKinds.WINDOW_RESTORE, zoomIn(250, "ease-out-cubic", SQUASH))
-            .kind(MotionKinds.MENU_SHOW, slide(150, "ease-out-cubic", SLIDING_POPUPS, 1.0))
+            .kind(MotionKinds.MENU_SHOW, slide(150, "ease-out-cubic", SLIDING_POPUPS, 1.0).with(OPACITY_FROM, 0.0))
             .kind(MotionKinds.SCENE_FADE, fade(400, "ease-out"))
+            .kind(MotionKinds.PROGRESS_WAIT, waiting(MotionStyles.SEGMENT, 2000, "linear").with("length", 0.3))
+            .kind(MotionKinds.PROGRESS_FILL, ease(200, "ease-out-cubic", ""))
+            .kind(MotionKinds.POINTER_BUSY, loop(990, 18))
+            .kind(MotionKinds.POINTER_WORKING, loop(990, 18))
+            .kind(MotionKinds.POINTER_LAUNCH, loop(600, 12))
             .build());
 
     public static final DeclaredMotion GNOME_CLASSIC = declare("gnome_classic", MotionProfile.builder()
             // Sawfish drew the outline in sixteen steps of twenty milliseconds.
             .kind(MotionKinds.WINDOW_MINIMIZE, outline(320, "steps(16)", WIREFRAME, true, 0))
             .kind(MotionKinds.WINDOW_RESTORE, outline(320, "steps(16)", WIREFRAME, false, 0))
+            .kind(MotionKinds.PROGRESS_WAIT, waiting(MotionStyles.BOUNCE, 1000, "linear").with("length", 0.25))
+            .kind(MotionKinds.BUSY, loop(800, 8))
             .build());
 
     public static final DeclaredMotion GNOME = declare("gnome", MotionProfile.builder()
             // A window comes up out of a point at the middle of its foot, as the shell's window manager maps one.
             .kind(MotionKinds.WINDOW_OPEN, scale(150, "ease-out-expo", ANIMATIONS, 0.01, 1.0)
-                    .with("from_y", 0.05).with("pivot_y", 1.0))
+                    .with("from_y", 0.05).with("pivot_y", 1.0).with(OPACITY_FROM, 0.0))
             // An attached dialog unfolds downwards from its middle.
             .kind(MotionKinds.DIALOG_OPEN, scale(100, "ease-out-quad", ANIMATIONS, 1.0, 1.0).with("from_y", 0.0))
-            .kind(MotionKinds.WINDOW_CLOSE, scale(150, "ease-out-quad", ANIMATIONS, 1.0, 0.8))
+            .kind(MotionKinds.WINDOW_CLOSE, scale(150, "ease-out-quad", ANIMATIONS, 1.0, 0.8)
+                    .with(OPACITY_TO, 0.0))
             .kind(MotionKinds.WINDOW_MINIMIZE, zoomOut(400, "ease-out-expo", ANIMATIONS))
             .kind(MotionKinds.WINDOW_RESTORE, zoomIn(400, "ease-out-expo", ANIMATIONS))
-            .kind(MotionKinds.MENU_SHOW, scale(250, "ease-out-quad", ANIMATIONS, 0.97, 1.0))
+            .kind(MotionKinds.MENU_SHOW, scale(250, "ease-out-quad", ANIMATIONS, 0.97, 1.0).with(OPACITY_FROM, 0.0))
             .kind(MotionKinds.SCENE_FADE, fade(250, "ease-out-quad"))
+            .kind(MotionKinds.PROGRESS_WAIT, waiting(MotionStyles.BOUNCE, 1000, "ease-in-out").with("length", 0.2))
+            .kind(MotionKinds.PROGRESS_FILL, ease(250, "ease-out-quad", ANIMATIONS))
+            .kind(MotionKinds.POINTER_BUSY, loop(960, 16))
+            .kind(MotionKinds.POINTER_WORKING, loop(960, 16))
             .build());
 
     public static final DeclaredMotion CINNAMON = declare("cinnamon", MotionProfile.builder()
-            .kind(MotionKinds.WINDOW_OPEN, scale(120, "ease-out-quad", EFFECTS + " " + MAP, 0.5, 1.0))
-            .kind(MotionKinds.DIALOG_OPEN, scale(120, "ease-out-quad", EFFECTS + " " + DIALOGS, 0.5, 1.0))
-            .kind(MotionKinds.WINDOW_CLOSE, scale(120, "ease-out-quad", EFFECTS + " " + CLOSE, 1.0, 0.5))
+            .kind(MotionKinds.WINDOW_OPEN, scale(120, "ease-out-quad", EFFECTS + " " + MAP, 0.5, 1.0)
+                    .with(OPACITY_FROM, 0.0))
+            .kind(MotionKinds.DIALOG_OPEN, scale(120, "ease-out-quad", EFFECTS + " " + DIALOGS, 0.5, 1.0)
+                    .with(OPACITY_FROM, 0.0))
+            .kind(MotionKinds.WINDOW_CLOSE, scale(120, "ease-out-quad", EFFECTS + " " + CLOSE, 1.0, 0.5)
+                    .with(OPACITY_TO, 0.0))
             .kind(MotionKinds.WINDOW_MINIMIZE, zoomOut(120, "ease-in-quad", EFFECTS + " " + MINIMIZE))
             .kind(MotionKinds.WINDOW_RESTORE, zoomIn(120, "ease-out-quad", EFFECTS + " " + MINIMIZE))
-            .kind(MotionKinds.MENU_SHOW, slide(150, "ease-out-quad", MENUS, 0.1))
+            .kind(MotionKinds.MENU_SHOW, slide(150, "ease-out-quad", MENUS, 0.1).with(OPACITY_FROM, 0.0))
             .kind(MotionKinds.SCENE_FADE, fade(400, "ease-out-quad"))
+            .kind(MotionKinds.PROGRESS_WAIT, waiting(MotionStyles.SEGMENT, 2000, "linear").with("length", 0.27))
+            .kind(MotionKinds.PROGRESS_FILL, ease(120, "ease-out-quad", EFFECTS))
+            .kind(MotionKinds.POINTER_BUSY, loop(800, 8))
+            .kind(MotionKinds.POINTER_WORKING, loop(800, 8))
             .build());
 
-    public static final DeclaredMotion CDE = declare("cde", MotionProfile.STILL);
+    /*
+     * CDE moved no window. Its front panel's busy light blinks from the click until the window maps, and dtterm's
+     * cursor blinks every quarter of a second.
+     */
+    public static final DeclaredMotion CDE = declare("cde", MotionProfile.builder()
+            .kind(MotionKinds.BUSY, blink(250))
+            .kind(MotionKinds.CARET_BLINK, blink(250))
+            .build());
+
+    /** A text console on a VGA card, MC-DOS's and UNIX's: the hardware cursor turns over every sixteen frames. */
+    public static final DeclaredMotion CONSOLE_VGA = declare("console_vga", MotionProfile.builder()
+            .kind(MotionKinds.CARET_BLINK, blink(VGA_CURSOR_MS))
+            .build());
+
+    /** Linux's framebuffer console, whose cursor timer turns over every fifth of a second. */
+    public static final DeclaredMotion CONSOLE_FBCON = declare("console_fbcon", MotionProfile.builder()
+            .kind(MotionKinds.CARET_BLINK, blink(200))
+            .build());
+
+    /** FreeBSD's syscons, which shows the VGA card's own cursor in text mode. */
+    public static final DeclaredMotion CONSOLE_SYSCONS = declare("console_syscons", MotionProfile.builder()
+            .kind(MotionKinds.CARET_BLINK, blink(VGA_CURSOR_MS))
+            .build());
+
+    /** The Frames console, at the caret's blink time Frames has always set. */
+    public static final DeclaredMotion CONSOLE_FRAMES = declare("console_frames", MotionProfile.builder()
+            .kind(MotionKinds.CARET_BLINK, blink(WINDOWS_CARET_MS))
+            .build());
 
     private OsMotions() {
     }
@@ -143,6 +235,23 @@ public final class OsMotions {
             case GNOME -> period ? GNOME_CLASSIC : GNOME;
             case CINNAMON -> CINNAMON;
             case CDE -> CDE;
+        };
+    }
+
+    /**
+     * The profile the text console of a system of that family moves by, which is only its cursor's blink: the VGA
+     * card's own for MC-DOS, MC-NET and UNIX, the framebuffer console's for Linux, syscons for FreeBSD and the Frames
+     * console for Frames. A console with no system yet (an installer's) blinks as a VGA card does.
+     */
+    public static DeclaredMotion console(@Nullable final Platform platform) {
+        if (platform == null) {
+            return CONSOLE_VGA;
+        }
+        return switch (platform) {
+            case MC_DOS, MC_NET, UNIX -> CONSOLE_VGA;
+            case LINUX -> CONSOLE_FBCON;
+            case FREEBSD -> CONSOLE_SYSCONS;
+            case FRAMES -> CONSOLE_FRAMES;
         };
     }
 
@@ -170,6 +279,39 @@ public final class OsMotions {
     /** The boot picture's colour giving way to the desktop; no box switches it off, the speed alone does. */
     private static MotionSpec fade(final int ms, final String easing) {
         return MotionSpec.of(MotionStyles.FADE, ms, IEasing.named(easing), "");
+    }
+
+    private static MotionSpec caption(final int ms, final String easing, final String group, final boolean out) {
+        final MotionSpec spec = MotionSpec.of(MotionStyles.CAPTION, ms, IEasing.named(easing), group);
+        return out ? spec.with("out", 1) : spec;
+    }
+
+    private static MotionSpec appear(final int ms, final String easing, final String group, final boolean out) {
+        final MotionSpec spec = MotionSpec.of(MotionStyles.APPEAR, ms, IEasing.named(easing), group);
+        return out ? spec.with("out", 1) : spec;
+    }
+
+    /* On and off at that beat; no speed setting changes how fast a cursor or a light blinks. */
+    private static MotionSpec blink(final int ms) {
+        return MotionSpec.of(MotionStyles.BLINK, ms, IEasing.LINEAR, "").with(STEADY, 1);
+    }
+
+    /* A turning picture of that many frames, a pass in that time. */
+    private static MotionSpec loop(final int ms, final int frames) {
+        return MotionSpec.of(MotionStyles.LOOP, ms, IEasing.LINEAR, "").with("frames", frames).with(STEADY, 1);
+    }
+
+    /* A bar for a wait with no known end, a pass in that time; its pace is its own, whatever the speed setting. */
+    private static MotionSpec waiting(final String style, final int ms, final String easing) {
+        return MotionSpec.of(style, ms, IEasing.named(easing), "").with(STEADY, 1);
+    }
+
+    private static MotionSpec ease(final int ms, final String easing, final String group) {
+        return MotionSpec.of(MotionStyles.EASE, ms, IEasing.named(easing), group);
+    }
+
+    private static MotionSpec grey(final int ms, final String easing) {
+        return MotionSpec.of(MotionStyles.GREY, ms, IEasing.named(easing), "").with("amount", 1);
     }
 
     private static MotionSpec outline(final int ms, final String easing, final String group, final boolean out,

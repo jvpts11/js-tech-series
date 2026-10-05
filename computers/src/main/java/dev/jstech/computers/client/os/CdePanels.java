@@ -207,6 +207,20 @@ final class CdePanels {
         final String word = GameText.resolve(CdePanelsTexts.EXIT);
         Draw.text(g, desktop.textFont(), word, exit.x() + (exit.w() - desktop.textFont().width(word)) / 2,
                 exit.y() + (exit.h() - 7) / 2, p.ink());
+        busyLight(g, CdeFrontPanelLayout.busyLight(sw, sh), p);
+    }
+
+    /** The busy light, set into the panel: lit while it blinks for an action starting, dark the rest of the time. */
+    private void busyLight(final GuiGraphics g, final Rect r, final CdePalette p) {
+        MotifChrome.sunken(g, r.x(), r.y(), r.w(), r.h(), p.inset(), p);
+        final DesktopMotion.Colours lamp = DesktopMotion.colours();
+        g.fill(r.x() + 2, r.y() + 2, r.x() + r.w() - 2, r.y() + r.h() - 2,
+                desktop.busyLit() ? lamp.busyLit() : lamp.busyDark());
+    }
+
+    /** Whether the busy light is lit this frame, which is what a player watching the panel sees. */
+    boolean busyLightLit() {
+        return desktop.busyLit();
     }
 
     /** The small raised button at the head of a control that has more behind it, its mark turned when open. */

@@ -7,14 +7,20 @@
  */
 package dev.jstech.computers.operation.payload.files;
 
+import dev.jstech.computers.client.os.DesktopCopies;
+import dev.jstech.computers.machine.FileCopyJobs;
+import dev.jstech.computers.operation.payload.CancelCopyPayload;
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CopyFilePayload;
+import dev.jstech.computers.operation.payload.CopyProgressPayload;
 import dev.jstech.computers.operation.payload.MediumTransferPayload;
 import dev.jstech.computers.operation.payload.MoveFilePayload;
 import dev.jstech.computers.operation.payload.RenameVolumePayload;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.VolumeLabel;
+import dev.jstech.computers.os.fs.CopyTiming;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.media.MediaItem;
@@ -22,6 +28,7 @@ import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.StorageKey;
 import java.util.Locale;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -60,19 +67,46 @@ public final class FileTransferPayloads {
                 ComputerAccess.machine(MediumTransferPayload::hostPos), FileTransferPayloads::handleMediumTransfer);
         ComputerAccess.accept(registrar, RenameVolumePayload.TYPE, RenameVolumePayload.STREAM_CODEC,
                 ComputerAccess.machine(RenameVolumePayload::host), FileTransferPayloads::handleRenameVolume);
+        ComputerAccess.accept(registrar, CancelCopyPayload.TYPE, CancelCopyPayload.STREAM_CODEC,
+                ComputerAccess.machine(CancelCopyPayload::hostPos),
+                (payload, player, level) -> FileCopyJobs.cancel(level, payload.hostPos(), payload.job()));
+        registrar.playToClient(CopyProgressPayload.TYPE, CopyProgressPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread((payload, player) -> DesktopCopies.accept(payload)));
     }
 
     /**
-     * Copies a file within a volume or across to another one; the source stays. A projected file has no
-     * bytes and is refused by the read; a name already taken gets a numbered copy rather than overwriting.
+     * Copies a file within a volume or across to another one; the source stays. The copy takes the time its size
+     * and the slower of the two volumes say, or the slowest cable on the way to another machine, and the file arrives
+     * when that time is up.
      */
     private static void handleCopyFile(final CopyFilePayload payload, final ServerPlayer player,
                                        final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
+        copy(level, player, payload.hostPos(), payload.src(), payload.destDir());
+    }
+
+    /**
+     * Starts copying the file at {@code src} into {@code destDir} on the machine at {@code host} for {@code player},
+     * which is what pasting a copy in the explorer does: the file arrives when the copy's time is up.
+     */
+    public static void copy(final ServerLevel level, final ServerPlayer player, final BlockPos host,
+                            final String src, final String destDir) {
+        if (!(level.getBlockEntity(host) instanceof IOsHost computer)) {
             return;
         }
-        final String src = payload.src();
-        final String destDir = payload.destDir();
+        final FileCopyJobs.Copy copy = CopyPlans.plan(level, computer, CopyProgressPayload.COPY, src, destDir);
+        FileCopyJobs.start(level, host, player, copy, CopyTiming.ticks(copy.sizeMb(), copy.mbPerSecond()),
+                () -> copyNow(level, host, src, destDir));
+    }
+
+    /**
+     * The copy carried out: a projected file has no bytes and is refused by the read; a name already taken gets a
+     * numbered copy rather than overwriting.
+     */
+    private static void copyNow(final ServerLevel level, final BlockPos host, final String src,
+                                final String destDir) {
+        if (!(level.getBlockEntity(host) instanceof IOsHost computer)) {
+            return;
+        }
         if (src.startsWith(NET_ROOT) || destDir.startsWith(NET_ROOT)) {
             /*
              * A copy to or from another machine's share goes through the shell, which reads where
@@ -135,6 +169,10 @@ public final class FileTransferPayloads {
         }
     }
 
+    /**
+     * Moves a file. Within one volume it is only renamed, at once; across to another it is copied there and taken
+     * away here, which takes the time a copy between those two volumes does.
+     */
     private static void handleMoveFile(final MoveFilePayload payload, final ServerPlayer player,
                                        final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
@@ -142,6 +180,20 @@ public final class FileTransferPayloads {
         }
         final String src = payload.srcPath();
         final String destDir = payload.destDir();
+        if (volumeKey(src).equals(volumeKey(destDir)) || src.startsWith(NET_ROOT) || destDir.startsWith(NET_ROOT)) {
+            moveNow(level, payload.hostPos(), src, destDir);
+            return;
+        }
+        final FileCopyJobs.Copy move = CopyPlans.plan(level, computer, CopyProgressPayload.MOVE, src, destDir);
+        FileCopyJobs.start(level, payload.hostPos(), player, move, CopyTiming.ticks(move.sizeMb(),
+                move.mbPerSecond()), () -> moveNow(level, payload.hostPos(), src, destDir));
+    }
+
+    private static void moveNow(final ServerLevel level, final BlockPos host, final String src,
+                                final String destDir) {
+        if (!(level.getBlockEntity(host) instanceof IOsHost computer)) {
+            return;
+        }
         if (src.startsWith(NET_ROOT) || destDir.startsWith(NET_ROOT)) {
             // A file on another machine is copied, not moved: the copy is what the explorer offers.
             return;

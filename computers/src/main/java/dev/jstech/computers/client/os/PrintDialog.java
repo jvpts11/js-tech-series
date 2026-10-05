@@ -25,6 +25,7 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.client.gui.component.WaitBar;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.List;
@@ -50,6 +51,7 @@ public final class PrintDialog implements IDesktopApp {
     private final ListView<PrintersPayload.Row> printerList;
     private final Label status;
     private final Label location;
+    private final WaitBar looking;
     private final Label paper;
     private final Label rangeLabel;
     private final Checkbox all;
@@ -82,6 +84,8 @@ public final class PrintDialog implements IDesktopApp {
     private int previewW;
     private int previewH;
 
+    /** How wide the bar for the wait for printers runs at most. */
+    private static final int LOOKING_W = 100;
     private static final int CLASSIC_W = 272;
     private static final int CLASSIC_H = 166;
     private static final int MODERN_W = 330;
@@ -108,6 +112,7 @@ public final class PrintDialog implements IDesktopApp {
                 .setOnClick((index, button, mx, my) -> choose(index)));
         this.status = root.add(new Label(this::statusLine));
         this.location = root.add(new Label(this::locationLine, Label.Tone.DIM));
+        this.looking = root.add(new WaitBar());
         this.paper = root.add(new Label(this::paperLine, Label.Tone.DIM));
         this.rangeLabel = root.add(new Label(GameText.resolve(PrintTexts.PAGE_RANGE), Label.Tone.DIM));
         this.all = root.add(new Checkbox(() -> GameText.resolve(PrintTexts.ALL), () -> !pagesOnly,
@@ -318,6 +323,7 @@ public final class PrintDialog implements IDesktopApp {
         y += LIST_H + 3;
         status.setBounds(x, y, w, 9);
         location.setBounds(x, y + 10, w, 9);
+        placeLooking(x, y + 11, w);
         paper.setBounds(x, y + 20, w, 9);
         y += 33;
         final int half = w / 2 + 4;
@@ -350,6 +356,7 @@ public final class PrintDialog implements IDesktopApp {
         y += ROW_H * 2 + 3;
         status.setBounds(x, y, w, 9);
         location.setBounds(x, y + 10, w, 9);
+        placeLooking(x, y + 11, w);
         paper.setBounds(x, y + 20, w, 9);
         y += 32;
         rangeLabel.setBounds(x, y + 1, ROW_LABEL_W, 9);
@@ -476,6 +483,15 @@ public final class PrintDialog implements IDesktopApp {
     @Nullable
     private PrintersPayload.Row current() {
         return printers.isEmpty() ? null : printers.get(Math.min(chosen, printers.size() - 1));
+    }
+
+    /*
+     * The bar for the wait while the machine looks for printers, on the line the printer's place takes once one is
+     * found: the search has no known end, so the bar runs rather than fills.
+     */
+    private void placeLooking(final int x, final int y, final int w) {
+        looking.setBounds(x, y, Math.min(w, LOOKING_W), 7);
+        looking.setVisible(current() == null && !listed);
     }
 
     private String statusLine() {

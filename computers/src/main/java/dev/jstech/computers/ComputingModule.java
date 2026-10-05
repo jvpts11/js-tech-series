@@ -658,19 +658,19 @@ public final class ComputingModule {
      * subwoofer of the Transition set, which takes no cable: set against a satellite, it plays the bass they leave out.
      */
     public static final BlockEntry<SpeakerBlock> LEGACY_SPEAKER =
-            speaker("legacy_speaker", "speaker_legacy", HardwareEra.LEGACY, MapColor.COLOR_LIGHT_GRAY)
+            speaker("legacy_speaker", HardwareEra.LEGACY, MapColor.COLOR_LIGHT_GRAY)
                     .named("Artisan ToneWorks").register();
     public static final BlockEntry<SpeakerBlock> TRANSITION_SPEAKER =
-            speaker("transition_speaker", "speaker_transition", HardwareEra.TRANSITION, MapColor.COLOR_BLACK)
+            speaker("transition_speaker", HardwareEra.TRANSITION, MapColor.COLOR_BLACK)
                     .named("Artisan Inspira 2.1").register();
     public static final BlockEntry<SubwooferBlock> TRANSITION_SUBWOOFER =
             subwoofer("transition_subwoofer", "subwoofer_transition").named("Artisan Inspira 2.1 Subwoofer")
                     .register();
     public static final BlockEntry<SpeakerBlock> SPEAKER =
-            speaker("speaker", "speaker_standard", HardwareEra.STANDARD, MapColor.COLOR_BLACK)
+            speaker("speaker", HardwareEra.STANDARD, MapColor.COLOR_BLACK)
                     .named("Artisan WattWorks T20").register();
     public static final BlockEntry<SpeakerBlock> ADVANCED_SPEAKER =
-            speaker("advanced_speaker", "speaker_advanced", HardwareEra.ADVANCED, MapColor.COLOR_BLACK)
+            speaker("advanced_speaker", HardwareEra.ADVANCED, MapColor.COLOR_BLACK)
                     .named("Artisan Cobble").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SpeakerBlockEntity>> SPEAKER_BE =
             CONTENT.blockEntity("speaker", SpeakerBlockEntity::new, LEGACY_SPEAKER, TRANSITION_SPEAKER, SPEAKER,
@@ -1245,13 +1245,17 @@ public final class ComputingModule {
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(DEVICES);
     }
 
-    /** A speaker: its grille in front, its sockets behind, set down facing whoever places it. */
-    private static BlockBuilder<SpeakerBlock> speaker(final String id, final String textures, final HardwareEra era,
-                                                      final MapColor color) {
+    /**
+     * A speaker: its grille in front, its sockets behind, set down facing whoever places it. Its model, written by
+     * hand as {@code block/speaker/<id>}, carries its power light, lit in the {@code _on} model while its computer
+     * runs.
+     */
+    private static BlockBuilder<SpeakerBlock> speaker(final String id, final HardwareEra era, final MapColor color) {
         return CONTENT.block(id, properties -> new SpeakerBlock(properties, era))
                 .properties(properties -> properties.mapColor(color).strength(1.0F).sound(SoundType.METAL))
-                .look(IBlockLook.facing(speakerFaces(id, textures)))
-                .item().tab(DEVICES);
+                .look(IBlockLook.facingByState(state -> new IBlockModel.Handmade(
+                        "speaker/" + id + (state.getValue(SpeakerBlock.LIT) ? "_on" : ""))))
+                .item().itemLook(IItemLook.parent("block/speaker/" + id)).tab(DEVICES);
     }
 
     /** A subwoofer: its bass port in front, its driver on the sides, set down facing whoever places it. */

@@ -1,1 +1,14 @@
-{}
+{
+  "busy": {
+    "duration": 250,
+    "easing": "linear",
+    "steady": 1.0,
+    "style": "blink"
+  },
+  "caret_blink": {
+    "duration": 250,
+    "easing": "linear",
+    "steady": 1.0,
+    "style": "blink"
+  }
+}

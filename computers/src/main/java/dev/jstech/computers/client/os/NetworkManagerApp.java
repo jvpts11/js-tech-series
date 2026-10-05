@@ -38,6 +38,7 @@ import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.client.gui.component.WaitBar;
 import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.network.DataLink;
 import dev.jstech.core.operation.OperationPriority;
@@ -81,6 +82,8 @@ public final class NetworkManagerApp implements IDesktopApp {
     /** The window's title in English, which is also the key a test opens it by. */
     public static final String TITLE = NetworkManagerAppTexts.TITLE.english();
 
+    /** How wide the bar for the wait for the network runs at most. */
+    private static final int WAIT_W = 100;
     private static final int TAB_DEVICES = 0;
     private static final int TAB_PROCESSES = 1;
     private static final int TAB_HARDWARE = 2;
@@ -179,6 +182,8 @@ public final class NetworkManagerApp implements IDesktopApp {
     private final Panel root = new Panel();
     private final TabStrip tabs;
     private final Label loadingLabel;
+    /** The bar for the wait until the network answers, under the line that says it is loading. */
+    private final WaitBar waiting;
     private final Label netLabel;
     private final ColumnHeader devColumns;
     /* The column names when the list is too narrow for the TYPE column. */
@@ -223,6 +228,7 @@ public final class NetworkManagerApp implements IDesktopApp {
         services = new NetworkServicesView(host);
         root.add(services.component());
         loadingLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.LOADING), Label.Tone.DIM));
+        waiting = root.add(new WaitBar());
         netLabel = root.add(new Label(this::networkText, Label.Tone.DIM));
 
         devColumns = root.add(new ColumnHeader(words(NetworkManagerTexts.NODE_COLUMN, NetworkManagerTexts.TYPE_COLUMN,
@@ -572,6 +578,12 @@ public final class NetworkManagerApp implements IDesktopApp {
 
     // rendering
 
+    /** Until the network answers, the program can do nothing, which the pointer shows. */
+    @Override
+    public boolean waiting() {
+        return data == null;
+    }
+
     @Override
     public void renderContent(final GuiGraphics g, final Font font, final int x, final int y,
                               final int width, final int height, final int mouseX, final int mouseY,
@@ -663,6 +675,8 @@ public final class NetworkManagerApp implements IDesktopApp {
         final boolean ready = data != null;
         loadingLabel.setVisible(!ready);
         loadingLabel.setBounds(px, py + 4, pw, 8);
+        waiting.setVisible(!ready);
+        waiting.setBounds(px, py + 15, Math.min(pw, WAIT_W), 7);
         netLabel.setVisible(ready);
         netLabel.setBounds(px, py, pw, 8);
         final int top = py + 12;

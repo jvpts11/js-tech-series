@@ -19,10 +19,13 @@ import dev.jstech.computers.monitor.IMonitorPicture;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.OpenWindow;
+import dev.jstech.computers.os.OsMotions;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.live.LiveGraphics;
+import dev.jstech.core.client.motion.MotionClock;
+import dev.jstech.core.motion.MotionKinds;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -31,7 +34,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -156,10 +158,10 @@ public final class MonitorPainter {
         }
         final int prompt = TermPalette.colorOf(CliStyle.PROMPT);
         TermText.draw(face, g, font, picture.prompt(), CommandPromptLayout.GLASS_LEFT, y, scale, prompt);
-        // The caret blinks where the next letter goes, as a terminal's does.
-        if (Util.getMillis() / 500 % 2 == 0) {
+        // The underline cursor where the next letter goes, blinking to the beat of the system's console.
+        if (MotionClock.blinkOn(OsMotions.console(picture.platform()).get().spec(MotionKinds.CARET_BLINK))) {
             final int at = CommandPromptLayout.GLASS_LEFT + TermText.width(face, picture.prompt(), scale);
-            g.fill(at, y, at + Math.max(1, Math.round(face.width() * scale)), y + pitch - 1, prompt);
+            g.fill(at, y + pitch - 1, at + Math.max(1, Math.round(face.width() * scale)), y + pitch, prompt);
         }
     }
 

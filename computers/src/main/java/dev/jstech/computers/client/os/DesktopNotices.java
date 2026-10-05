@@ -12,7 +12,10 @@ import dev.jstech.computers.operation.payload.MachineSoundPayload;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.client.motion.FadeLayer;
 import dev.jstech.core.gui.layout.DesktopZ;
+import dev.jstech.core.motion.Motion;
+import dev.jstech.core.motion.MotionKinds;
 import dev.jstech.core.text.GameText;
 import java.util.List;
 import net.minecraft.ChatFormatting;
@@ -36,6 +39,12 @@ final class DesktopNotices {
     private Popup popup;
     @Nullable
     private Balloon balloon;
+    /** The balloon up now coming in, on a system whose balloons fade in. */
+    private Motion balloonIn = Motion.FINISHED;
+    /** A balloon put away, still drawn while it fades out, and its fading. */
+    @Nullable
+    private Balloon leaving;
+    private Motion balloonOut = Motion.FINISHED;
 
     /** How long a balloon stays up before it fades away, in milliseconds. */
     private static final long BALLOON_MS = 9_000L;
@@ -175,6 +184,8 @@ final class DesktopNotices {
      */
     void showBalloon(final String title, final String body, final String opens) {
         this.balloon = new Balloon(title, body, System.currentTimeMillis() + BALLOON_MS, opens);
+        this.balloonIn = desktop.motion().start(MotionKinds.NOTICE_SHOW);
+        this.leaving = null;
         PacketDistributor.sendToServer(new MachineSoundPayload(desktop.hostPos(), SystemSound.NOTIFY));
     }
 
@@ -183,20 +194,54 @@ final class DesktopNotices {
         return balloon != null;
     }
 
-    /** Puts the balloon away. */
-    void dismissBalloon() {
-        this.balloon = null;
+    /** Whether a balloon is on the glass: one up, or one still fading out. */
+    boolean balloonDrawn() {
+        return balloon != null || leaving != null;
     }
 
-    /** The classic notification balloon: pale yellow, a blue "i", a title, a line or two, and a close box. */
+    /** Puts the balloon away. */
+    void dismissBalloon() {
+        letGo();
+    }
+
+    /**
+     * The classic notification balloon: pale yellow, a blue "i", a title, a line or two, and a close box; faded in
+     * and out on a system whose balloons fade.
+     */
     void renderBalloon(final GuiGraphics g, final int tbY, final int sw) {
         if (balloon != null && System.currentTimeMillis() > balloon.until()) {
-            balloon = null;
+            letGo();
         }
-        final int[] r = balloonRect(tbY, sw);
-        if (r == null || balloon == null) {
+        final double now = DesktopMotion.now();
+        if (balloon != null) {
+            final Balloon up = balloon;
+            FadeLayer.draw(g, (float) balloonIn.opacity(now), () -> paintBalloon(g, up, tbY, sw));
             return;
         }
+        if (leaving != null) {
+            if (balloonOut.done(now)) {
+                leaving = null;
+                return;
+            }
+            final Balloon going = leaving;
+            FadeLayer.draw(g, (float) balloonOut.opacity(now), () -> paintBalloon(g, going, tbY, sw));
+        }
+    }
+
+    /* The balloon put away: gone at once, or drawn fading out where the system fades its balloons away. */
+    private void letGo() {
+        if (balloon != null) {
+            final Motion going = desktop.motion().start(MotionKinds.NOTICE_HIDE);
+            if (!going.done(DesktopMotion.now())) {
+                leaving = balloon;
+                balloonOut = going;
+            }
+        }
+        balloon = null;
+    }
+
+    private void paintBalloon(final GuiGraphics g, final Balloon shown, final int tbY, final int sw) {
+        final int[] r = balloonRect(shown, tbY, sw);
         final Font font = desktop.textFont();
         final int x = r[0];
         final int y = r[1];
@@ -222,10 +267,10 @@ final class DesktopNotices {
         g.fill(x + 7, y + 4, x + 13, y + 14, c.balloonIcon());
         g.fill(x + 9, y + 6, x + 11, y + 7, c.balloonIconMark());
         g.fill(x + 9, y + 8, x + 11, y + 12, c.balloonIconMark());
-        Draw.text(g, font, Component.literal(balloon.title()).withStyle(ChatFormatting.BOLD),
+        Draw.text(g, font, Component.literal(shown.title()).withStyle(ChatFormatting.BOLD),
                 x + 18, y + 5, c.balloonTitle());
         int ly = y + 16;
-        final List<FormattedCharSequence> lines = font.split(Component.literal(balloon.body()), w - 12);
+        final List<FormattedCharSequence> lines = font.split(Component.literal(shown.body()), w - 12);
         for (final FormattedCharSequence line : lines) {
             Draw.text(g, font, line, x + 6, ly, c.balloonBody());
             ly += 9;
@@ -245,26 +290,23 @@ final class DesktopNotices {
      */
     @Nullable
     String clickBalloon(final double mx, final double my, final int tbY, final int sw) {
-        final int[] r = balloonRect(tbY, sw);
-        if (r == null || balloon == null) {
+        if (balloon == null) {
             return null;
         }
+        final int[] r = balloonRect(balloon, tbY, sw);
         if (mx < r[0] || mx > r[0] + r[2] || my < r[1] || my > r[1] + r[3]) {
             return null;
         }
         final String opens = balloon.opens();
         final boolean onClose = mx >= r[0] + r[2] - 14;
-        balloon = null;
+        letGo();
         return onClose ? "" : opens;
     }
 
     /** The balloon's box in desktop-local coordinates, or null when none is up. Draw and hit-test share it. */
     @Nullable
-    private int[] balloonRect(final int tbY, final int sw) {
-        if (balloon == null) {
-            return null;
-        }
-        final int lines = desktop.textFont().split(Component.literal(balloon.body()), BALLOON_W - 12).size();
+    private int[] balloonRect(final Balloon shown, final int tbY, final int sw) {
+        final int lines = desktop.textFont().split(Component.literal(shown.body()), BALLOON_W - 12).size();
         final int h = 15 + lines * 9 + 5;
         final int x = Math.max(4, sw - BALLOON_W - 6);
         return new int[] {x, tbY - h - 7, BALLOON_W, h};

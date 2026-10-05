@@ -11,11 +11,14 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.computers.client.MachineKeyboard;
 import dev.jstech.computers.client.monitor.PowerStrip;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
+import dev.jstech.computers.config.ComputersClientConfig;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.client.live.TubeFilter;
 import java.util.List;
+import java.util.Locale;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -26,6 +29,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.client.event.ContainerScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * The screen a player opens at a monitor to use a graphical system's desktop (Frames 95 / XP / 11, the Linux
@@ -50,6 +54,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
      */
     @Nullable
     private KeySink keySink;
+    /** Whether the game's own pointer is hidden over the glass, where the desktop draws its own. */
+    private boolean osPointerHidden;
 
     static final int TASKBAR_H = 24;
     // Frames 11 taskbar: each centered item (Start + one per program) occupies this slot.
@@ -191,6 +197,10 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
             return; // the crash screen is all there is until the machine reboots
         }
         hoveredSlot = state.hoveredSlot();
+        // Over the glass the desktop draws the pointer itself, so the game's own is hidden there and only there.
+        final double lx = view.localX(mouseX);
+        final double ly = view.localY(mouseY);
+        showOsPointer(!(ownPointer() && lx >= 0 && ly >= 0 && lx < view.width() && ly < view.height()));
         // The desktop reaches the player through the monitor's tube, over the whole glass once it is drawn.
         TubeFilter.filterScreen(g, view.left(), view.top(), view.glassWidth(), view.glassHeight(),
                 PowerStrip.tubeAt(menu.monitorPos()));
@@ -259,6 +269,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
 
     @Override
     public void removed() {
+        showOsPointer(true);
         state.putAway();
         if (active == state) {
             active = null;
@@ -269,6 +280,32 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    /** The desktop draws the player's pointer over the glass unless the player switched that off. */
+    @Override
+    public boolean ownPointer() {
+        return ComputersClientConfig.desktopCursors();
+    }
+
+    /** Whether the game's own pointer is hidden over the glass right now, which a test reads. */
+    public boolean osPointerHidden() {
+        return osPointerHidden;
+    }
+
+    /** What the desktop's pointer shows right now: arrow, busy, working or launch. */
+    public String pointerState() {
+        return state.pointers().state().name().toLowerCase(Locale.ROOT);
+    }
+
+    /* Shows or hides the game's own pointer, telling the window only when that changes. */
+    private void showOsPointer(final boolean shown) {
+        if (shown == !osPointerHidden) {
+            return;
+        }
+        osPointerHidden = !shown;
+        GLFW.glfwSetInputMode(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_CURSOR,
+                shown ? GLFW.GLFW_CURSOR_NORMAL : GLFW.GLFW_CURSOR_HIDDEN);
     }
 
     @Override

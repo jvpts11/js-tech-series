@@ -52,6 +52,8 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
     private final DerivedInt channel = fields().derived("Channel", () -> workOutChannel()).toMenu();
     /** Whether its computer has a subwoofer against a Transition satellite, as its screen shows it. */
     private final DerivedInt subwoofer = fields().derived("Subwoofer", () -> workOutSubwoofer()).toMenu();
+    /** Whether its power light is on: linked to a computer that is running and plays out of it. */
+    private final BoolField powered = fields().flag("Powered", false).save();
     /** The name being typed on its screen, taken when the screen closes; null while nothing is being typed. */
     @Nullable
     private String asked;
@@ -71,13 +73,20 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
 
     public SpeakerBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.SPEAKER_BE.get(), pos, state);
+        fields().mirror(SpeakerBlock.LIT, powered::get);
     }
 
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
                                   final SpeakerBlockEntity speaker) {
         if (level instanceof ServerLevel server) {
             speaker.link.tick(server, pos);
+            speaker.powered.set(speaker.workOutPowered(server));
         }
+    }
+
+    /** Whether its power light is on. */
+    public boolean powered() {
+        return powered.get();
     }
 
     @Override
@@ -180,6 +189,22 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
     }
 
     /* Which side it plays for its computer, worked out on the server. */
+    /*
+     * The power light: on while the computer it is linked to runs and does not keep it off. A computer whose chunk is
+     * away is not asked, and the light stays as it was.
+     */
+    private boolean workOutPowered(final ServerLevel server) {
+        final BlockPos owner = link.ownerPos();
+        if (owner == null) {
+            return false;
+        }
+        if (!server.isLoaded(owner)) {
+            return powered.get();
+        }
+        return Loaded.blockEntity(server, owner) instanceof AbstractComputerBlockEntity computer
+                && computer.isRunning() && !computer.isDisabled(worldPosition.asLong());
+    }
+
     private int workOutChannel() {
         final BlockPos owner = link.ownerPos();
         if (owner == null || !(level instanceof ServerLevel server)) {

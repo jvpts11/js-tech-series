@@ -17,6 +17,7 @@ import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.operation.payload.WireLine;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,8 +70,12 @@ public sealed interface IMonitorPicture
     record Dark() implements IMonitorPicture {
     }
 
-    /** A machine at its prompt: the last lines its console printed, and the prompt waiting under them. */
-    record Console(HardwareEra era, List<WireLine> lines, String prompt) implements IMonitorPicture {
+    /**
+     * A machine at its prompt: the last lines its console printed, the prompt waiting under them, and the family of
+     * its system, whose console blinks its cursor to its own beat; null where there is no system yet.
+     */
+    record Console(HardwareEra era, List<WireLine> lines, String prompt, @Nullable Platform platform)
+            implements IMonitorPicture {
 
         public Console {
             lines = List.copyOf(lines.size() > MAX_LINES ? lines.subList(lines.size() - MAX_LINES, lines.size())
@@ -123,6 +128,7 @@ public sealed interface IMonitorPicture
                 buf.writeEnum(console.era());
                 WireLine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)).encode(buf, console.lines());
                 buf.writeUtf(clip(console.prompt()), PROMPT_MAX);
+                buf.writeUtf(console.platform() == null ? "" : console.platform().serializedName());
             }
             case Desktop desktop -> {
                 buf.writeByte(3);
@@ -200,7 +206,8 @@ public sealed interface IMonitorPicture
     private static IMonitorPicture read(final RegistryFriendlyByteBuf buf) {
         return switch (buf.readByte()) {
             case 2 -> new Console(buf.readEnum(HardwareEra.class),
-                    WireLine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)).decode(buf), buf.readUtf(PROMPT_MAX));
+                    WireLine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)).decode(buf), buf.readUtf(PROMPT_MAX),
+                    Platform.byName(buf.readUtf()));
             case 3 -> new Desktop(BlockPos.STREAM_CODEC.decode(buf), buf.readResourceLocation(),
                     buf.readResourceLocation(), buf.readVarInt(), buf.readVarInt(),
                     new ArrayList<>(DesktopWindowsPayload.WireWindow.STREAM_CODEC

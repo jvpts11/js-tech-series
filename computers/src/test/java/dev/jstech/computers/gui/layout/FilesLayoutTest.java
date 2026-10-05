@@ -34,6 +34,15 @@ public final class FilesLayoutTest {
     }
 
     @Test
+    public void layout_withAThrobberIsCleanAtEverySize() {
+        for (final int[] size : new int[][]{{FilesLayout.MIN_W, FilesLayout.MIN_H},
+            {FilesLayout.DEFAULT_W, FilesLayout.DEFAULT_H}, {420, 300}}) {
+            final GuiLayout l = FilesLayout.layout(size[0], size[1], true);
+            assertTrue(l.isClean(), size[0] + "x" + size[1] + ": " + l.overlaps() + " " + l.outOfBounds());
+        }
+    }
+
+    @Test
     public void columns_neverRunIntoEachOther() {
         for (final int width : new int[]{FilesLayout.MIN_W, FilesLayout.DEFAULT_W, 420}) {
             final GuiLayout l = FilesLayout.columns(width);

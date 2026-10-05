@@ -32,6 +32,8 @@ public final class FilesLayout {
     public static final int NAV_GAP = 1;
     /** The search box on the toolbar's right. */
     public static final int SEARCH_W = 60;
+    /** The side of the throbber square. */
+    public static final int THROBBER = 12;
     /** The drive tree: wide enough for "Local Disk (C:)" at the desktop font. */
     public static final int TREE_W = 84;
     /** The column header over the list. */
@@ -66,11 +68,29 @@ public final class FilesLayout {
 
     /** The view toggle sits at the right edge of the toolbar. */
     public static int viewX(final int width) {
-        return width - 2 - NAV_W;
+        return viewX(width, false);
+    }
+
+    /** The view toggle, left of the throbber on a file manager that has one at the toolbar's right end. */
+    public static int viewX(final int width, final boolean throbber) {
+        return (throbber ? throbberX(width) - 2 : width - 2) - NAV_W;
+    }
+
+    /** The throbber at the right end of the toolbar, on the file managers of the period that had one. */
+    public static int throbberX(final int width) {
+        return width - 2 - THROBBER;
+    }
+
+    public static int throbberY() {
+        return (TOOL_H - THROBBER) / 2;
     }
 
     public static int searchX(final int width) {
-        return viewX(width) - 2 - SEARCH_W;
+        return searchX(width, false);
+    }
+
+    public static int searchX(final int width, final boolean throbber) {
+        return viewX(width, throbber) - 2 - SEARCH_W;
     }
 
     public static int addressX() {
@@ -78,7 +98,11 @@ public final class FilesLayout {
     }
 
     public static int addressW(final int width) {
-        return Math.max(20, searchX(width) - 2 - addressX());
+        return addressW(width, false);
+    }
+
+    public static int addressW(final int width, final boolean throbber) {
+        return Math.max(20, searchX(width, throbber) - 2 - addressX());
     }
 
     public static int treeY() {
@@ -150,13 +174,21 @@ public final class FilesLayout {
 
     /** The whole window as solid boxes, so a test proves nothing overlaps at a given size. */
     public static GuiLayout layout(final int width, final int height) {
+        return layout(width, height, false);
+    }
+
+    /** The same, for a file manager with a throbber at the toolbar's right end or without one. */
+    public static GuiLayout layout(final int width, final int height, final boolean throbber) {
         final GuiLayout l = new GuiLayout(width, height);
         for (int i = 0; i < 3; i++) {
             l.box("nav" + i, navX(i), navY(), NAV_W, NAV_H);
         }
-        l.box("address", addressX(), navY(), addressW(width), NAV_H);
-        l.box("search", searchX(width), navY(), SEARCH_W, NAV_H);
-        l.box("view", viewX(width), navY(), NAV_W, NAV_H);
+        l.box("address", addressX(), navY(), addressW(width, throbber), NAV_H);
+        l.box("search", searchX(width, throbber), navY(), SEARCH_W, NAV_H);
+        l.box("view", viewX(width, throbber), navY(), NAV_W, NAV_H);
+        if (throbber) {
+            l.box("throbber", throbberX(width), throbberY(), THROBBER, THROBBER);
+        }
         l.box("tree", 0, treeY(), TREE_W, treeH(height));
         l.box("columns", listX(), colsY(), listW(width), COLS_H);
         l.box("list", listX(), listY(), listW(width), listH(height));

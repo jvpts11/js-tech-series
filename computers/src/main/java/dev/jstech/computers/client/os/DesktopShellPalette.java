@@ -26,7 +26,7 @@ final class DesktopShellPalette {
                     0xFF262B36, 0xFFE7E9EF, 0xFF11151E, 0xFF3A4150,
                     0xFFE8E8EC, 0xFF1A2230, 0xFF000000, 0xFFFFFFFF, 0xFFB6BAC4, 0xFFFFFFFF,
                     0xFF000000, 0xFFFFFFE1, 0xFF1C53C9, 0xFFFFFFFF, 0xFF000000, 0xFF303030, 0xFFE8E8CA, 0xFF6A6A55,
-                    0x99000000, 0x80FFFFFF));
+                    0x99000000, 0x80FFFFFF, 0xFF2FB52F));
 
     private DesktopShellPalette() {
     }
@@ -66,6 +66,7 @@ final class DesktopShellPalette {
      * @param balloonCloseEdge the close box's edge
      * @param powerShade       what dims the desktop behind the power dialog
      * @param slotHover        the light over a hovered inventory slot
+     * @param lunaProgress     the green a Frames XP progress bar fills with, and its blocks crossing a wait
      */
     record Colours(int crashGround, int crashBand, int crashInk,
                    int ghostFill, int ghostInk, int bandFill, int bandEdge,
@@ -74,6 +75,6 @@ final class DesktopShellPalette {
                    int menuHoverInk,
                    int balloonBorder, int balloonFill, int balloonIcon, int balloonIconMark, int balloonTitle,
                    int balloonBody, int balloonCloseFill, int balloonCloseEdge,
-                   int powerShade, int slotHover) {
+                   int powerShade, int slotHover, int lunaProgress) {
     }
 }

@@ -20,6 +20,7 @@ import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.core.client.gui.component.ContextMenu;
+import dev.jstech.core.motion.MotionStyles;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
@@ -239,6 +240,59 @@ interface DesktopInspection {
     /** Whether the launcher is still on its way in. */
     default boolean launcherMoving() {
         return desktop().start().moving();
+    }
+
+    /** Whether the window labelled {@code label} is fading in or out right now, drawn off the glass first. */
+    default boolean windowFading(final String label) {
+        final String key = desktop().keyFor(label);
+        for (final DesktopWindow w : desktop().wm().all()) {
+            if (w.appKey().equals(key)) {
+                return w.motion().fades() && !w.motion().done(DesktopMotion.now());
+            }
+        }
+        return false;
+    }
+
+    /** Whether only the title bar of the window labelled {@code label} is flying, to its button or back. */
+    default boolean windowCaptionFlying(final String label) {
+        final String key = desktop().keyFor(label);
+        for (final DesktopWindow w : desktop().wm().all()) {
+            if (w.appKey().equals(key)) {
+                return w.motion().is(MotionStyles.CAPTION) && !w.motion().done(DesktopMotion.now());
+            }
+        }
+        return false;
+    }
+
+    /** Where a desktop-local point is on the game's screen. */
+    default int[] glassPoint(final int localX, final int localY) {
+        final DesktopViewport view = desktop().view();
+        return new int[] {view.screenX(localX), view.screenY(localY)};
+    }
+
+    /** Opens the dialog that asks whether to shut the machine down. */
+    default void openPowerDialog() {
+        desktop().power().open();
+    }
+
+    /** How grey the desktop behind the power dialog has gone, from 0 to 1. */
+    default float powerGreyed() {
+        return desktop().power().greyed();
+    }
+
+    /** Whether CDE's busy light is lit this frame. */
+    default boolean busyLightLit() {
+        return desktop().busyLit();
+    }
+
+    /** Whether a copy window is up. */
+    default boolean copyWindowUp() {
+        return desktop().copies().window() != null;
+    }
+
+    /** Whether a copy is under way on the desktop's machine. */
+    default boolean copyUnderWay() {
+        return desktop().copying();
     }
 
     /** Whether that kind of thing ({@code window_open}, {@code menu_show}...) moves on this desktop as it is now. */

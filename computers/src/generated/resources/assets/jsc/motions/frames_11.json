@@ -1,9 +1,16 @@
 {
+  "caret_blink": {
+    "duration": 530,
+    "easing": "linear",
+    "steady": 1.0,
+    "style": "blink"
+  },
   "dialog_open": {
     "duration": 167,
     "easing": "fluent-entrance",
     "from": 0.95,
     "group": "animations",
+    "opacity_from": 0.0,
     "style": "scale",
     "to": 1.0
   },
@@ -12,18 +19,52 @@
     "duration": 250,
     "easing": "fluent-entrance",
     "group": "animations",
+    "opacity_from": 0.0,
     "style": "slide"
+  },
+  "pointer_busy": {
+    "duration": 900,
+    "easing": "linear",
+    "frames": 18.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "pointer_working": {
+    "duration": 900,
+    "easing": "linear",
+    "frames": 18.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "progress_fill": {
+    "duration": 250,
+    "easing": "fluent-point",
+    "group": "animations",
+    "style": "ease"
+  },
+  "progress_wait": {
+    "duration": 2000,
+    "easing": "linear",
+    "steady": 1.0,
+    "style": "grow"
   },
   "scene_fade": {
     "duration": 333,
     "easing": "linear",
     "style": "fade"
   },
+  "tooltip_show": {
+    "duration": 83,
+    "easing": "linear",
+    "group": "animations",
+    "style": "appear"
+  },
   "window_close": {
     "duration": 167,
     "easing": "fluent-exit",
     "from": 1.0,
     "group": "animations",
+    "opacity_to": 0.0,
     "style": "scale",
     "to": 0.92
   },
@@ -39,6 +80,7 @@
     "easing": "fluent-entrance",
     "from": 0.92,
     "group": "animations",
+    "opacity_from": 0.0,
     "style": "scale",
     "to": 1.0
   },

@@ -1,18 +1,33 @@
 {
   "variants": {
-    "facing=east": {
-      "model": "jsc:block/speaker",
+    "facing=east,lit=false": {
+      "model": "jsc:block/speaker/speaker",
       "y": 90
     },
-    "facing=north": {
-      "model": "jsc:block/speaker"
+    "facing=east,lit=true": {
+      "model": "jsc:block/speaker/speaker_on",
+      "y": 90
     },
-    "facing=south": {
-      "model": "jsc:block/speaker",
+    "facing=north,lit=false": {
+      "model": "jsc:block/speaker/speaker"
+    },
+    "facing=north,lit=true": {
+      "model": "jsc:block/speaker/speaker_on"
+    },
+    "facing=south,lit=false": {
+      "model": "jsc:block/speaker/speaker",
       "y": 180
     },
-    "facing=west": {
-      "model": "jsc:block/speaker",
+    "facing=south,lit=true": {
+      "model": "jsc:block/speaker/speaker_on",
+      "y": 180
+    },
+    "facing=west,lit=false": {
+      "model": "jsc:block/speaker/speaker",
+      "y": 270
+    },
+    "facing=west,lit=true": {
+      "model": "jsc:block/speaker/speaker_on",
       "y": 270
     }
   }

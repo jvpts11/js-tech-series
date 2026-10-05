@@ -10,7 +10,10 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.client.MonitorFrame;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.client.motion.FadeLayer;
 import dev.jstech.core.gui.layout.DesktopZ;
+import dev.jstech.core.motion.Motion;
+import dev.jstech.core.motion.MotionKinds;
 import dev.jstech.core.motion.MotionStyles;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -33,9 +36,17 @@ final class DesktopPainter {
     /** The inventory slot under the pointer this frame, or null. */
     @Nullable
     private Slot hovered;
+    /* Where the pointer came to rest when the hover hints last started coming up, and their coming up. */
+    private int tipX = FAR;
+    private int tipY = FAR;
+    private Motion tipIn = Motion.FINISHED;
 
     /** A pointer far off the glass, for a window drawn going away, which nothing in it should light up for. */
     private static final int FAR = -10000;
+    /** How far the pointer may drift, in desktop pixels, before the hint under it counts as a new one. */
+    private static final int TIP_SLACK = 2;
+    /** How far above the carried stack the pointer is drawn. */
+    private static final int POINTER_LIFT = 50;
     /** No place at all, for a motion that goes nowhere but grows or shrinks where it is. */
     private static final int[] NOWHERE = {0, 0, 0, 0};
 
@@ -100,6 +111,15 @@ final class DesktopPainter {
         g.disableScissor();
         renderOverlays(g, sw, sh, lmx, lmy, partialTick);
         renderVeil(g, sw, sh);
+        // The player's pointer in the system's own cursors, over everything on the glass and kept to it.
+        if (desktop.surface().ownPointer() && lmx >= 0 && lmy >= 0 && lmx < sw && lmy < sh) {
+            g.enableScissor(ox, oy, ox + view.glassWidth(), oy + view.glassHeight());
+            g.pose().pushPose();
+            g.pose().translate(0, 0, DesktopZ.CURSOR + POINTER_LIFT);
+            desktop.pointers().draw(g, lmx, lmy);
+            g.pose().popPose();
+            g.disableScissor();
+        }
         g.pose().popPose();
         return true;
     }
@@ -169,8 +189,8 @@ final class DesktopPainter {
         }
         // The container's own items, over the window that already drew their slots' backgrounds, moving with it.
         final boolean frontMoving = front != null && !front.motion().done(now);
-        if (frontMoving && front.motion().is(MotionStyles.OUTLINE)) {
-            // Only its outline is on the glass, so its items wait for the window to be back.
+        if (frontMoving && (front.motion().is(MotionStyles.OUTLINE) || front.motion().is(MotionStyles.CAPTION))) {
+            // Only its outline or its title bar is on the glass, so its items wait for the window to be back.
             hovered = null;
             return;
         }
@@ -199,12 +219,25 @@ final class DesktopPainter {
             final int[] to = desktop.taskbar().entryRect(w.groupKey());
             DesktopMotion.outline(g, w.motion(), now, w.x(), w.y(), w.width(), w.height(), to[0], to[1], to[2],
                     to[3]);
+        } else if (moving && w.motion().is(MotionStyles.CAPTION)) {
+            final int[] to = desktop.taskbar().entryRect(w.groupKey());
+            final int[] at = DesktopMotion.between(w.motion(), now, w.x(), w.y(), w.width(), DesktopWindow.TITLE_H,
+                    to[0], to[1], to[2], to[3]);
+            w.renderCaption(g, desktop.textFont(), desktop.prefs().skin(), at[0], at[1], at[2], at[3]);
         } else {
-            if (moving) {
-                poseInMotion(g, w, now);
+            final Runnable draw = () -> {
+                if (moving) {
+                    poseInMotion(g, w, now);
+                }
+                w.render(g, desktop.textFont(), desktop.prefs().skin(), lmx, lmy, partialTick, sw, sh,
+                        view.panelReserve(), view.workAreaTop());
+            };
+            // A window fading in or out is drawn whole off the glass first, so it fades as one picture.
+            if (moving && w.motion().fades()) {
+                FadeLayer.draw(g, (float) w.motion().opacity(now), draw);
+            } else {
+                draw.run();
             }
-            w.render(g, desktop.textFont(), desktop.prefs().skin(), lmx, lmy, partialTick, sw, sh,
-                    view.panelReserve(), view.workAreaTop());
         }
         g.pose().popPose();
     }
@@ -240,9 +273,14 @@ final class DesktopPainter {
             desktop.framesPanels().renderClassic(g, tbY, sw, sh, lmx, lmy);
         }
         g.pose().popPose();
+        // Plasma's copy notification and GNOME's copy popover sit above the panel, as the balloon does.
+        g.pose().pushPose();
+        g.pose().translate(0, 0, DesktopZ.TASKBAR + 9);
+        desktop.copies().renderOverlay(g, tbY, sw);
+        g.pose().popPose();
         // A tray balloon sits above the panel and under the menus, so opening the launcher covers it.
         final DesktopNotices notices = desktop.notices();
-        if (notices.balloonUp()) {
+        if (notices.balloonDrawn()) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.TASKBAR + 10);
             notices.renderBalloon(g, tbY, sw);
@@ -322,7 +360,14 @@ final class DesktopPainter {
          */
         final DesktopWindow front = desktop.wm().front();
         if (front != null) {
-            front.renderTooltip(g, font, lmx, lmy);
+            // A hint comes up again wherever the pointer comes to rest: faded in on a system whose hints fade.
+            if (Math.abs(lmx - tipX) > TIP_SLACK || Math.abs(lmy - tipY) > TIP_SLACK) {
+                tipX = lmx;
+                tipY = lmy;
+                tipIn = desktop.motion().start(MotionKinds.TOOLTIP_SHOW);
+            }
+            FadeLayer.draw(g, (float) tipIn.opacity(DesktopMotion.now()), () -> front.renderTooltip(g, font, lmx,
+                    lmy));
         }
         if (hovered != null && desktop.carried().isEmpty() && hovered.hasItem()) {
             g.renderTooltip(font, hovered.getItem(), lmx, lmy);

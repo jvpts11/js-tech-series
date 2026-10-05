@@ -26,8 +26,12 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
 /**
@@ -46,6 +50,9 @@ public class SpeakerBlock extends DeviceBlock implements IFaceConnector, IEraCha
             StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(b -> b.era)
     ).apply(i, SpeakerBlock::new));
 
+    /** Whether its power light is on, which its computer running decides. */
+    public static final BooleanProperty LIT = BlockStateProperties.LIT;
+
     /** What a Legacy speaker reproduces: sampled at 22 kHz, nothing under 150 Hz or over 7 kHz. */
     private static final FrequencyResponse LEGACY_RESPONSE = new FrequencyResponse(22_050, 0, 150, 7_000);
     /** What a Transition satellite reproduces on its own: everything but the bass under 150 Hz. */
@@ -59,6 +66,13 @@ public class SpeakerBlock extends DeviceBlock implements IFaceConnector, IEraCha
         super(properties, DEVICE);
         this.era = era;
         this.ports = PeripheralSockets.back(era);
+        registerDefaultState(defaultBlockState().setValue(LIT, false));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(LIT);
     }
 
     /** The era of this speaker, which decides how well it plays. */

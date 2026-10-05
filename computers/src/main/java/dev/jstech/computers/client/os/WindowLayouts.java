@@ -198,7 +198,7 @@ final class WindowLayouts {
         final DesktopWindows wm = desktop.wm();
         final StringBuilder signature = new StringBuilder().append(wm.workspace()).append('|');
         for (final DesktopWindow w : wm.all()) {
-            if (!w.dialog()) {
+            if (!w.dialog() && !(w.app() instanceof CopyProgressApp)) {
                 signature.append(w.appKey()).append(w.minimized() ? '-' : '+').append(w.workspaces()).append(';');
             }
         }
@@ -235,7 +235,7 @@ final class WindowLayouts {
         for (final DesktopWindow w : wm.all()) {
             if (w.dialog()) {
                 w.app().onClosed();
-            } else if (!(w.app() instanceof SigmaWindowApp)) {
+            } else if (!(w.app() instanceof SigmaWindowApp) && !(w.app() instanceof CopyProgressApp)) {
                 apps.put(w.appKey(), w.app());
             }
         }
@@ -255,7 +255,8 @@ final class WindowLayouts {
         final List<DesktopWindow> windows = desktop.wm().all();
         final List<OpenWindow> out = new ArrayList<>(windows.size());
         for (final DesktopWindow w : windows) {
-            if (!w.dialog() && !(w.app() instanceof SigmaWindowApp)) {
+            // A copy window is the desktop's own, shown while a copy runs, and never part of the machine's layout.
+            if (!w.dialog() && !(w.app() instanceof SigmaWindowApp) && !(w.app() instanceof CopyProgressApp)) {
                 out.add(new OpenWindow(w.appKey(), w.floatX(), w.floatY(), w.floatW(), w.floatH(), w.minimized(),
                         w.maximized(), w.app().saveState(), w.workspaces()));
             }

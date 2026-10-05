@@ -101,13 +101,13 @@ public final class MotionClientTests {
     }
 
     @ClientTest(timeoutTicks = 2400)
-    public static void launcher_slidesOutOfThePanelOnFramesXp(final ClientTestContext ctx) {
+    public static void launcher_fadesInOnFramesXp(final ClientTestContext ctx) {
         booted(ctx, "frames_xp", null, false)
                 .then(0, () -> moving(true))
                 .then(SETTLE, () -> ctx.click(desktop(ctx).startButtonX(), desktop(ctx).startButtonY()))
                 .thenAssert(1, () -> desktop(ctx).isStartOpen() && desktop(ctx).launcherMoving(),
-                        "the Start menu slides up out of the taskbar")
-                .thenScreenshot(2, "motion-start-sliding")
+                        "the Start menu fades in over the taskbar, the setting's own default")
+                .thenScreenshot(2, "motion-start-fading")
                 .thenWaitUntil(() -> !desktop(ctx).launcherMoving(), MOTION_WAIT, "the Start menu to arrive");
     }
 

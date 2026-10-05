@@ -1,22 +1,85 @@
 {
+  "busy": {
+    "duration": 960,
+    "easing": "linear",
+    "frames": 12.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "caret_blink": {
+    "duration": 530,
+    "easing": "linear",
+    "steady": 1.0,
+    "style": "blink"
+  },
+  "copy": {
+    "duration": 1056,
+    "easing": "linear",
+    "frames": 16.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "dim": {
+    "amount": 1.0,
+    "duration": 1500,
+    "easing": "linear",
+    "style": "grey"
+  },
   "menu_show": {
-    "distance": 1.0,
     "duration": 200,
-    "easing": "ease-out",
+    "easing": "linear",
     "group": "menus",
-    "style": "slide"
+    "style": "appear"
+  },
+  "notice_hide": {
+    "duration": 300,
+    "easing": "linear",
+    "out": 1.0,
+    "style": "appear"
+  },
+  "notice_show": {
+    "duration": 300,
+    "easing": "linear",
+    "style": "appear"
+  },
+  "pointer_busy": {
+    "duration": 1600,
+    "easing": "linear",
+    "frames": 16.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "pointer_working": {
+    "duration": 1600,
+    "easing": "linear",
+    "frames": 16.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "progress_wait": {
+    "blocks": 3.0,
+    "duration": 2000,
+    "easing": "linear",
+    "steady": 1.0,
+    "style": "blocks"
+  },
+  "tooltip_show": {
+    "duration": 200,
+    "easing": "linear",
+    "group": "tooltips",
+    "style": "appear"
   },
   "window_minimize": {
     "duration": 250,
     "easing": "linear",
     "group": "minimize",
     "out": 1.0,
-    "style": "zoom"
+    "style": "caption"
   },
   "window_restore": {
     "duration": 250,
     "easing": "linear",
     "group": "minimize",
-    "style": "zoom"
+    "style": "caption"
   }
 }

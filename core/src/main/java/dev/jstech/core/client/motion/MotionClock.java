@@ -10,6 +10,7 @@ package dev.jstech.core.client.motion;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.motion.Motion;
 import dev.jstech.core.motion.MotionSpec;
+import dev.jstech.core.motion.Rhythm;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -53,6 +54,19 @@ public final class MotionClock {
      */
     public static double loopTicks() {
         return reduced ? 0.0 : now() / TICK_MS;
+    }
+
+    /**
+     * The clock in milliseconds for what goes round and round, as {@link #loopTicks}: held at 0 while motion is
+     * reduced, so each is drawn still in its first position.
+     */
+    public static double loopMs() {
+        return loopTicks() * TICK_MS;
+    }
+
+    /** Whether a thing that blinks by {@code spec} is lit now: lit for good while motion is reduced. */
+    public static boolean blinkOn(final MotionSpec spec) {
+        return reduced || Rhythm.on(spec, now());
     }
 
     /** Whether every motion is drawn where it ends, at once. */

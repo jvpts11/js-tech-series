@@ -35,10 +35,10 @@ final class DesktopMotion {
 
     /**
      * The colours of motion itself, {@code jsc:desktop/motion}: the outline a window manager of the oldest kind
-     * carried to a window's button, light so it reads over any wallpaper.
+     * carried to a window's button, light so it reads over any wallpaper; and CDE's busy light, lit amber and dark.
      */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/motion",
-            new Colours(0xFFE8E8E8));
+            new Colours(0xFFE8E8E8, 0xFFFFB02E, 0xFF6A5A3A));
 
     DesktopMotion(final DesktopState desktop) {
         this.desktop = desktop;
@@ -67,6 +67,14 @@ final class DesktopMotion {
     /** A motion of that kind starting now; one already over where nothing moves. */
     Motion start(final String kind) {
         return desktop.surface().moves() ? MotionClock.start(spec(kind)) : Motion.FINISHED;
+    }
+
+    /**
+     * How that kind of thing moves here while it goes on, for what reads it as it is drawn (a progress bar, a
+     * cursor, a bar for a wait): nothing on a monitor's face in the world, where everything stands where it ends.
+     */
+    MotionSpec ongoing(final String kind) {
+        return desktop.surface().moves() ? spec(kind) : MotionSpec.NONE;
     }
 
     /** Whether one of the system's own effects is on, which is every effect its owner did not switch off. */
@@ -109,6 +117,18 @@ final class DesktopMotion {
     }
 
     /**
+     * Where a thing carried between the rectangle ({@code x}, {@code y}, {@code w}, {@code h}) and the place that
+     * stands for it ({@code tx}, {@code ty}, {@code tw}, {@code th}) is this frame, as x, y, width and height: what a
+     * {@link MotionStyles#CAPTION} motion draws its title bar into.
+     */
+    static int[] between(final Motion motion, final double now, final int x, final int y, final int w, final int h,
+                         final int tx, final int ty, final int tw, final int th) {
+        final double t = motion.toward(now);
+        return new int[] {(int) Math.round(x + (tx - x) * t), (int) Math.round(y + (ty - y) * t),
+            Math.max(1, (int) Math.round(w + (tw - w) * t)), Math.max(1, (int) Math.round(h + (th - h) * t))};
+    }
+
+    /**
      * Draws the outline an {@link MotionStyles#OUTLINE} motion carries between a thing and the place that stands for
      * it, with the outlines trailing behind it.
      */
@@ -131,7 +151,12 @@ final class DesktopMotion {
         }
     }
 
+    /** The colours of motion, as a resource pack left them. */
+    static Colours colours() {
+        return PALETTE.get();
+    }
+
     /** The colours of motion, as the palette above names them. */
-    private record Colours(int outline) {
+    record Colours(int outline, int busyLit, int busyDark) {
     }
 }
