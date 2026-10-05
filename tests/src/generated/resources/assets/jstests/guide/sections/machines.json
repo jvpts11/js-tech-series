@@ -1,0 +1,5 @@
+{
+  "icon": "jstests:test_speed_upgrade",
+  "id": "jstests:machines",
+  "title": "jstests.guide.section.machines"
+}

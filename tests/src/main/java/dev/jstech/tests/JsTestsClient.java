@@ -10,6 +10,7 @@ package dev.jstech.tests;
 import dev.jstech.core.client.model.CoreModels;
 import dev.jstech.core.connect.IJoinRule;
 import dev.jstech.tests.clienttest.TestClientParts;
+import dev.jstech.tests.clienttest.TestGuideClient;
 import dev.jstech.tests.clienttest.TestHud;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
@@ -37,5 +38,7 @@ public final class JsTestsClient {
         TestClientParts.register();
         // Two HUD elements in one corner, for the HUD kit's test.
         TestHud.declare();
+        // The manuals' special block of the test mod, registered as another mod registers one.
+        TestGuideClient.register();
     }
 }

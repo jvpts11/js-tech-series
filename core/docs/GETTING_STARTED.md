@@ -224,6 +224,7 @@ data.server(new MyRecipeProvider(data.output(), data.lookup()));
 | [Commands](COMMANDS.md) | Commands under `/jstech`. |
 | [Entities](ENTITIES.md) | Entities, vehicles, robots, projectiles and what a player wears. |
 | [Overlays](OVERLAYS.md) | The HUD, holograms and what Jade shows about a block. |
+| [Manuals](MANUALS.md) | Your mod's chapter in the manuals, and manuals of its own. |
 | [Settings](SETTINGS.md) | Settings files, their ranges, and the settings screen. |
 | [Sound](SOUND.md) | Sounds declared once, channels, cues, synthesis and recordings. |
 | [Screens](SCREENS.md) | Skins, themes, layouts you can test, and drawing text. [UI components](UI_COMPONENTS.md), [fonts](FONTS.md) and [motion](MOTION.md) have pages of their own. |

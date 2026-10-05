@@ -38,7 +38,7 @@ public final class JsCoreApi {
      * }
      * }</pre>
      */
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
 
     /**
      * How long something here lives once it is marked as going.

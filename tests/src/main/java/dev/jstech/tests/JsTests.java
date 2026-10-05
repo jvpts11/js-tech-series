@@ -58,6 +58,8 @@ public final class JsTests {
         TestBigPayloads.declare();
         // A registry datapacks fill and notes read from datapack files, both sent to the players.
         TestData.declare();
+        // A chapter and a manual, with an entry of every kind of block, to prove the Core's manuals.
+        TestGuide.declare();
         TestSounds.CONTENT.register(modEventBus);
         // A cable that never shares a block, to show the shared block refusing it company.
         TestCableTypes.register(modEventBus);

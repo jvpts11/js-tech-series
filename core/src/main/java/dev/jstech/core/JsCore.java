@@ -22,6 +22,7 @@ import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.event.CoreEventDispatcher;
 import dev.jstech.core.font.CoreFonts;
+import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.integration.accessories.AccessoriesIntegration;
 import dev.jstech.core.integration.curios.CuriosIntegration;
@@ -97,6 +98,8 @@ public final class JsCore {
         CoreCables.declare();
         // The fonts every mod can draw in, declared with the licence and credit they come under.
         CoreFonts.declare();
+        // The manuals' binder style, which every manual of the series is drawn in unless it brings its own.
+        CoreGuide.declare();
         CoreItems.register(modEventBus);
         // The units energy is counted in, FE first, and the energy an item holds.
         CoreEnergy.register(modEventBus);

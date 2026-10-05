@@ -7,10 +7,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### API
-- J's Core's API is at version 3 and J's Computers' at version 5. Everything this release adds to either, or
+- J's Core's API is at version 4 and J's Computers' at version 5. Everything this release adds to either, or
   changes, carries `@ApiStatus.Experimental`: it keeps the mark through this release and loses it when the next
   cycle begins. Each mod's API is now kept line by line, every type and member a mod can reach with the version
   that brought it, and the tests fail when the code and that list disagree; `docs/API.md` says how.
+- Added: `GuideBlockRenderers` and `IGuideBlockRenderer` in J's Core's client API: what draws a mod's own kind of
+  block on a manual's page, registered once from its client setup, handed the block's data as a tag.
 - Added: a build can ask a language for an instruction set and a version of the language at once, with
   `IProgrammingLanguage.compile(sources, CompileOptions)`; a language without versions builds as it did for the
   instruction set alone, which is what the method does unless overridden.
@@ -87,6 +89,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   are J's Core's processing recipes.
 
 ### Added
+- Manuals, in J's Core, for every mod to write in: a mod declares its chapter once, as entries of ready blocks
+  (paragraphs, figures, numbered tables whose amounts are read from the code, the recipes the world holds, steps,
+  warnings, problems with their fixes, words explained, links), and they show in its own manual and in any manual
+  holding every chapter. A manual opens at its cover, turns its pages with the arrows, the keys or the wheel, numbers
+  everything as technical manuals do (3.2.6, Figure 3-9, page 3-14), builds its contents and its index, and searches
+  the index as the player types. Holding M over an item in any inventory opens its page, and the item's tooltip says
+  so. Styles are data a resource pack can replace; the Core brings a ring binder with navy covers. Entries follow five
+  parts: what it is, what it is for, how to get it, how to use it, and what can go wrong.
 - Documentation for each mod, in a `docs` folder of its own, written for a reader who knows nothing of the mod
   yet, with what can go wrong at the end of every page. J's Computers' explains to players their first computer and
   network, the hardware and what every number on a part means, the systems and how to install them, the network

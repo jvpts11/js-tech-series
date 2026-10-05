@@ -48,6 +48,7 @@ says what the Core promises and what it does not yet.
 | [Fonts](FONTS.md) | Declaring a font from its free source, and the monospace grid painter. |
 | [Motion](MOTION.md) | Curves, motion profiles, and the clock every motion reads. |
 | [Overlays](OVERLAYS.md) | HUD elements, holograms, and what Jade shows. |
+| [Manuals](MANUALS.md) | Chapters, entries, manuals and styles, special blocks, and the manual key. |
 | [Sound](SOUND.md) | Sounds declared once, channels, cues, sounds made as they play, recordings. |
 
 ## Testing

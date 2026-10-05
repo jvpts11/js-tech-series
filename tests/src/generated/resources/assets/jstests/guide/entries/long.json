@@ -1,0 +1,73 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.long.what"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.long.text1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstests.guide.long.step1",
+        "jstests.guide.long.step2",
+        "jstests.guide.long.step3",
+        "jstests.guide.long.step4",
+        "jstests.guide.long.step5",
+        "jstests.guide.long.step6",
+        "jstests.guide.long.step7",
+        "jstests.guide.long.step8"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.long.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.long.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstests.guide.long.use9"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jstests.guide.long.fix1",
+          "problem": "jstests.guide.long.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:book",
+  "id": "jstests:long",
+  "order": 2,
+  "section": "jstests:ideas",
+  "title": "jstests.guide.long.title"
+}

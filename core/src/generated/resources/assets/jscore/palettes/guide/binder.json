@@ -1,0 +1,19 @@
+{
+  "cover": "#FF1F2B44",
+  "coverEdge": "#FF2E3D5C",
+  "faint": "#FF6E6A5E",
+  "gutter": "#FFD3CCB6",
+  "heading": "#FF1F3F8A",
+  "highlight": "#FFF3E6C8",
+  "ink": "#FF23252A",
+  "label": "#FFF4F1E6",
+  "labelInk": "#FF23252A",
+  "link": "#FF1F3F8A",
+  "paper": "#FFEBE5D3",
+  "ring": "#FFC9CCD1",
+  "rule": "#FFA39C86",
+  "shade": "#FFE1DAC4",
+  "tab": "#FFB8BCC2",
+  "tabInk": "#FF23252A",
+  "warning": "#FF8A4F12"
+}

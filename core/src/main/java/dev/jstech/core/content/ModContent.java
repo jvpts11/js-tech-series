@@ -15,6 +15,7 @@ import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.energy.IEnergyHolder;
 import dev.jstech.core.font.CellFont;
+import dev.jstech.core.guide.ModGuide;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
@@ -26,6 +27,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -101,6 +103,7 @@ public final class ModContent {
     private final List<ProcessingKind> declaredProcessing = new ArrayList<>();
     private @Nullable DeferredRegister<EntityType<?>> entityTypes;
     private final List<EntityEntry<?>> declaredEntities = new ArrayList<>();
+    private @Nullable ModGuide guide;
 
     /* Every mod's content, by mod id, in the order the mods made theirs. */
     private static final Map<String, ModContent> BY_MOD = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -139,6 +142,22 @@ public final class ModContent {
 
     public String modid() {
         return modid;
+    }
+
+    /**
+     * What this mod writes in the manuals: its chapter, sections and entries, and any manual or style of its own,
+     * which the data generation writes out with the rest of its content.
+     */
+    public ModGuide guide() {
+        if (this.guide == null) {
+            this.guide = new ModGuide(this.modid);
+        }
+        return this.guide;
+    }
+
+    /** What this mod declared for the manuals, when it declared anything. */
+    public Optional<ModGuide> declaredGuide() {
+        return this.guide == null || this.guide.isEmpty() ? Optional.empty() : Optional.of(this.guide);
     }
 
     /** Starts declaring a block made from its properties. */

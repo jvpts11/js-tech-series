@@ -445,6 +445,10 @@ public final class CdeClientTests {
         final String drive = "USB 1=CD Drive";
         atCde(ctx)
                 .thenBuild(SETTLE, world -> world.setBlock(DRIVE, ComputingModule.CD_DRIVE.get()))
+                // The dialog asks the machine for its devices once, as it opens: the drive must be linked by then.
+                .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(MACHINE)) instanceof MainframeBlockEntity m
+                                && m.holdsPort(ctx.abs(DRIVE).asLong()), SCREEN_WAIT,
+                        "the drive to link to the machine", level -> "not linked yet")
                 .then(SETTLE * 2, () -> clickAt(ctx,
                         desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.APPLICATIONS)))
                 .thenWaitUntil(() -> desktop(ctx).subpanelLabels().contains("Workstation Info"), SCREEN_WAIT,

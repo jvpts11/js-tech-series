@@ -55,8 +55,14 @@ class HardcodedTextTest {
     /** The terminal font's own ways of writing a line, which put it in front of a player like any other sink. */
     private static final Set<String> TERMINAL_SINKS = Set.of("draw", "centred", "right");
 
-    /** What a declaration chains on to say its English: a thing's name, what it does, a sound's subtitle. */
-    private static final Set<String> DECLARATIONS = Set.of("named", "described", "subtitle", "sectionNamed");
+    /**
+     * What a declaration chains on to say its English: a thing's name, what it does, a sound's subtitle, and what a
+     * manual's chapter, section, entry or manual says, each written to the language file under a key of its own.
+     */
+    private static final Set<String> DECLARATIONS = Set.of("named", "described", "subtitle", "sectionNamed",
+            "titled", "whatItIs", "whatItIsFor", "howToGetIt", "howToUseIt", "whatCanGoWrong", "paragraph",
+            "subheading", "figure", "table", "property", "amount", "fixed", "warning", "define", "steps", "cover",
+            "edition", "about");
 
     /** The toolkit's controls whose first words are the label a player reads on them. */
     private static final Set<String> LABELLED = Set.of("Button", "Label", "Checkbox", "Popup");

@@ -52,6 +52,7 @@ public final class ContentData {
         data.client(new MotionProfileProvider(output, content.modid()));
         data.client(new ContentSoundProvider(output, content, data.existingFiles()));
         data.client(new ContentCueProvider(output, content));
+        content.declaredGuide().ifPresent(guide -> data.client(new GuideProvider(output, guide)));
         if (!content.declaredFonts().isEmpty()) {
             data.client(new FontSheetProvider(output, content, data.existingFiles()));
         }

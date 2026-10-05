@@ -1,0 +1,18 @@
+{
+  "about": [
+    "jstests.guide.manual.test_manual.about1"
+  ],
+  "chapters": [
+    "jstests"
+  ],
+  "cover": [
+    "jstests.guide.manual.test_manual.cover1",
+    "jstests.guide.manual.test_manual.cover2"
+  ],
+  "edition": "jstests.guide.manual.test_manual.edition",
+  "id": "jstests:test_manual",
+  "part_number": "JTS-TEST",
+  "priority": -1,
+  "style": "jscore:binder",
+  "title": "jstests.guide.manual.test_manual.title"
+}

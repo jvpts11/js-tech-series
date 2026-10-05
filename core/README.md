@@ -111,6 +111,9 @@ What a technology mod needs, whichever mod it is.
 - [Overlays](docs/OVERLAYS.md): HUD elements that stack, holograms, and Jade's lines.
 - A [settings screen](docs/SETTINGS.md) in the Core's look for every mod's settings, and a [GameTest
   kit](docs/TESTING.md).
+- [Manuals](docs/MANUALS.md): each mod writes its chapter once, in entries of ready blocks, and it shows in its own
+  manual and in the series' one; styles are data, a binder by default; contents, index and search are built for it,
+  and holding M over an item opens its page.
 
 ## Configuration
 

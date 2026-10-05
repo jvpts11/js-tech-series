@@ -19,6 +19,11 @@ stable 1
 3 dev.jstech.core.api.client.GpuSurface  new(int, int)
 3 dev.jstech.core.api.client.GpuSurface  void blit(GuiGraphics, int, int, int, int)
 3 dev.jstech.core.api.client.GpuSurface  void close()
+4 dev.jstech.core.api.client.GuideBlockRenderers  type final class
+4 dev.jstech.core.api.client.GuideBlockRenderers  static IGuideBlockRenderer get(ResourceLocation)
+4 dev.jstech.core.api.client.GuideBlockRenderers  static boolean register(ResourceLocation, IGuideBlockRenderer)
+4 dev.jstech.core.api.client.IGuideBlockRenderer  type interface
+4 dev.jstech.core.api.client.IGuideBlockRenderer  abstract void draw(GuiGraphics, Font, int, int, int, int, CompoundTag, int, int)
 3 dev.jstech.core.api.client.ISkin  type interface
 3 dev.jstech.core.api.client.ISkin  abstract int accent()
 3 dev.jstech.core.api.client.ISkin  abstract int dim()

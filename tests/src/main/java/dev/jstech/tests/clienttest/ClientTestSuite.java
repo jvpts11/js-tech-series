@@ -51,6 +51,7 @@ public final class ClientTestSuite {
             RecipeViewClientTests.class,
             HudHologramClientTests.class,
             WorldStabilityClientTests.class,
+            ManualClientTests.class,
             FreeBsdClientTests.class,
             FullJourneyClientTests.class,
             GatewayManagerClientTests.class,
