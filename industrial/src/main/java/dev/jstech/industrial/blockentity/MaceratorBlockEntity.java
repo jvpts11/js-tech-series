@@ -7,14 +7,13 @@
  */
 package dev.jstech.industrial.blockentity;
 
+import dev.jstech.core.machine.ProcessingInput;
+import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.industrial.IndustrialModule;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.Optional;
 
 /**
  * The Macerator: grinds its input into the recipe's result, spending {@value #FE_PER_TICK} FE per tick over the
@@ -27,13 +26,12 @@ public class MaceratorBlockEntity extends ProcessingMachineBlockEntity {
     private static final int ENERGY_MAX_RECEIVE = 1_000;
 
     public MaceratorBlockEntity(final BlockPos pos, final BlockState state) {
-        super(IndustrialModule.MACERATOR_BE.get(), pos, state, ENERGY_CAPACITY, ENERGY_MAX_RECEIVE, FE_PER_TICK);
+        super(IndustrialModule.MACERATOR_BE.get(), pos, state, Layout.items(1, 1), ENERGY_CAPACITY,
+                ENERGY_MAX_RECEIVE, FE_PER_TICK);
     }
 
     @Override
-    protected Optional<Processing> process(final Level level, final ItemStack input) {
-        return level.getRecipeManager()
-                .getRecipeFor(IndustrialModule.MACERATING_TYPE.get(), new SingleRecipeInput(input), level)
-                .map(recipe -> new Processing(recipe.value().result(), recipe.value().processingTime()));
+    protected Optional<Processing> process(final Level level, final ProcessingInput input) {
+        return byKind(level, IndustrialModule.MACERATING, input);
     }
 }

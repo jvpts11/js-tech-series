@@ -16,7 +16,7 @@ import net.minecraft.world.item.Items;
  * Programming in Sigma: installing the compiler, the first program, the mistakes every programmer makes once, and
  * the programs that run the network on their own.
  */
-public final class SigmaAdvancements extends AdvancementTab {
+public final class SigmaAdvancements extends JscAdvancementTab {
 
     /* The package of the Sigma# compiler, whose install opens the tab. */
     private static final String COMPILER = "sgsc";

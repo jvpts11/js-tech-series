@@ -2,9 +2,9 @@
   "criteria": {
     "done": {
       "conditions": {
-        "event": "mainframe_network"
+        "event": "jsc:mainframe_network"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     }
   },
   "display": {

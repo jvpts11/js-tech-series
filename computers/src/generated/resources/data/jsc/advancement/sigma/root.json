@@ -3,9 +3,9 @@
     "done": {
       "conditions": {
         "detail": "sgsc",
-        "event": "program_installed"
+        "event": "jsc:program_installed"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     }
   },
   "display": {

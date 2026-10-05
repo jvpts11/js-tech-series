@@ -7,15 +7,15 @@
  */
 package dev.jstech.industrial.blockentity;
 
+import dev.jstech.core.machine.ProcessingInput;
+import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.industrial.IndustrialModule;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.Optional;
 
 /**
  * The Electric Furnace: smelts its input by the game's own smelting recipes, spending {@value #FE_PER_TICK} FE per
@@ -29,13 +29,15 @@ public class ElectricFurnaceBlockEntity extends ProcessingMachineBlockEntity {
     private static final int ENERGY_MAX_RECEIVE = 600;
 
     public ElectricFurnaceBlockEntity(final BlockPos pos, final BlockState state) {
-        super(IndustrialModule.ELECTRIC_FURNACE_BE.get(), pos, state, ENERGY_CAPACITY, ENERGY_MAX_RECEIVE,
-                FE_PER_TICK);
+        super(IndustrialModule.ELECTRIC_FURNACE_BE.get(), pos, state, Layout.items(1, 1), ENERGY_CAPACITY,
+                ENERGY_MAX_RECEIVE, FE_PER_TICK);
     }
 
     @Override
-    protected Optional<Processing> process(final Level level, final ItemStack input) {
-        return level.getRecipeManager().getRecipeFor(RecipeType.SMELTING, new SingleRecipeInput(input), level)
-                .map(recipe -> new Processing(recipe.value().getResultItem(level.registryAccess()), PROCESS_TIME));
+    protected Optional<Processing> process(final Level level, final ProcessingInput input) {
+        return level.getRecipeManager()
+                .getRecipeFor(RecipeType.SMELTING, new SingleRecipeInput(input.getItem(0)), level)
+                .map(recipe -> Processing.single(0, recipe.value().getResultItem(level.registryAccess()),
+                        PROCESS_TIME));
     }
 }

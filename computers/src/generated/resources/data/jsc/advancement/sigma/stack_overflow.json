@@ -4,9 +4,9 @@
     "done": {
       "conditions": {
         "detail": "stack",
-        "event": "sigma_halted"
+        "event": "jsc:sigma_halted"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     }
   },
   "display": {

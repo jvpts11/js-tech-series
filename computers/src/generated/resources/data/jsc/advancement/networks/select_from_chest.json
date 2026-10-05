@@ -3,9 +3,9 @@
   "criteria": {
     "done": {
       "conditions": {
-        "event": "select_done"
+        "event": "jsc:select_done"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     }
   },
   "display": {

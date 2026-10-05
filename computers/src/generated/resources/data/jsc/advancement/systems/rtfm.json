@@ -3,9 +3,9 @@
   "criteria": {
     "done": {
       "conditions": {
-        "event": "man_page"
+        "event": "jsc:man_page"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     }
   },
   "display": {

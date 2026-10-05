@@ -11,6 +11,7 @@ import dev.jstech.core.audio.media.MediaBalance;
 import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.operation.OperationBalance;
+import dev.jstech.core.region.ChunkLoadingBalance;
 import dev.jstech.core.time.WorldCalendar;
 
 /**
@@ -28,6 +29,8 @@ public final class CoreConfigKeys {
     public static final String MEDIA = "media";
     /** The world's calendar: how long its seasons last. */
     public static final String CALENDAR = "calendar";
+    /** What the machines of the series may do to the world: how many chunks an owner keeps loaded. */
+    public static final String WORLD = "world";
 
     private static final int MAX_LATENCY_TICKS = 200;
     private static final int MAX_TIMEOUT_TICKS = 72_000;
@@ -40,6 +43,7 @@ public final class CoreConfigKeys {
     private static final int MAX_MEDIA_RATE = 65_536;
     private static final int MAX_MEDIA_FILE_MEGABYTES = 1024;
     private static final int MAX_MEDIA_QUOTA_MEGABYTES = 1_048_576;
+    private static final int MAX_CHUNKS_PER_OWNER = 4096;
 
     /** The seek latency of a hard disk drive, in ticks. */
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = ConfigKey.whole(
@@ -142,6 +146,14 @@ public final class CoreConfigKeys {
             .comment("How many days a season of the world's year lasts; a year is four seasons.")
             .named("Days per season");
 
+    /** How many chunks one player or team may keep loaded through the series' machines, across the world. */
+    public static final ConfigKey<Integer> WORLD_CHUNKS_PER_OWNER = ConfigKey.whole(
+            WORLD + ".chunks_per_owner", ChunkLoadingBalance.DEFAULT_LIMIT)
+            .range(0, MAX_CHUNKS_PER_OWNER)
+            .comment("How many chunks one player or team may keep loaded through machines, across every dimension; "
+                    + "0 lets nobody keep any.")
+            .named("Loaded chunks per owner");
+
     /** The file, each setting passed into the balance it sets. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-balance", ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("Balance of the Operations engine and of the programs machines run.",
@@ -151,9 +163,11 @@ public final class CoreConfigKeys {
             .sectionComment(MEDIA, "The recordings players hear and bring: how much of the connection they take, "
                     + "and how big one may be.")
             .sectionComment(CALENDAR, "The world's calendar: how long its seasons last.")
+            .sectionComment(WORLD, "What machines may do to the world: how many chunks an owner keeps loaded.")
             .sectionNamed(BALANCE, "Operations and programs")
             .sectionNamed(MEDIA, "Recordings")
             .sectionNamed(CALENDAR, "Calendar")
+            .sectionNamed(WORLD, "World")
             .key(HDD_LATENCY_TICKS, OperationBalance::setHddLatencyTicks)
             .key(SSD_LATENCY_TICKS, OperationBalance::setSsdLatencyTicks)
             .key(NVME_LATENCY_TICKS, OperationBalance::setNvmeLatencyTicks)
@@ -168,6 +182,7 @@ public final class CoreConfigKeys {
             .key(MEDIA_MAX_FILE_MEGABYTES, MediaBalance::setMaxFileMegabytes)
             .key(MEDIA_PLAYER_QUOTA_MEGABYTES, MediaBalance::setPlayerQuotaMegabytes)
             .key(CALENDAR_DAYS_PER_SEASON, WorldCalendar::setDaysPerSeason)
+            .key(WORLD_CHUNKS_PER_OWNER, ChunkLoadingBalance::setLimit)
             .build();
 
     private CoreConfigKeys() {

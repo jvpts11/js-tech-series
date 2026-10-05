@@ -10,7 +10,7 @@ package dev.jstech.tests.testkit;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.Cables;
-import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.gametest.ScenarioBuilder;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
@@ -24,7 +24,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 
 /**
  * Laying cables in a GameTest's arena: a wire of a cable in the Core's cable block, as a player laying it would, into
@@ -49,10 +48,7 @@ public final class TestCables {
 
     /** Lays a wire of {@code type} at {@code pos}, replacing what stands there when it is no cable block. */
     public static boolean lay(final Level level, final BlockPos pos, final CableType type) {
-        if (!(level.getBlockEntity(pos) instanceof CableBlockEntity)) {
-            level.setBlock(pos, CoreCables.BLOCK.get().defaultBlockState(), Block.UPDATE_ALL);
-        }
-        return Cables.lay(level, pos, type);
+        return ScenarioBuilder.layCable(level, pos, type);
     }
 
     /**

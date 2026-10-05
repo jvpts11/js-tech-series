@@ -5,5 +5,7 @@
   "block.jsindustrial.macerator": "Macerator",
   "item.jsindustrial.energy_cable": "Energy Cable",
   "itemGroup.jsindustrial.industrial": "J's Industrial",
-  "jsindustrial.cable.energy": "Energy line: carries power from the generators to the machines, any distance, losing none"
+  "jsindustrial.cable.energy": "Energy line: carries power from the generators to the machines, any distance, losing none",
+  "jsindustrial.recipe_kind.compressing": "Compressing",
+  "jsindustrial.recipe_kind.macerating": "Macerating"
 }

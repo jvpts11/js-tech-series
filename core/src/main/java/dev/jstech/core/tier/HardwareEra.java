@@ -10,6 +10,7 @@ package dev.jstech.core.tier;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableIds;
+import dev.jstech.core.progression.IAxisStep;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * {@link #serializedName()}.
  */
 @TextHolder
-public enum HardwareEra implements IStableId, IStableName {
+public enum HardwareEra implements IStableId, IStableName, IAxisStep {
     VINTAGE(0, "vintage", TextKey.of("jscore.era.vintage", "Vintage")),
     LEGACY(1, "legacy", TextKey.of("jscore.era.legacy", "Legacy")),
     TRANSITION(2, "transition", TextKey.of("jscore.era.transition", "Transition")),
@@ -53,6 +54,7 @@ public enum HardwareEra implements IStableId, IStableName {
     }
 
     /** The era's name: "Legacy". */
+    @Override
     public Text text() {
         return this.name.text();
     }
@@ -131,6 +133,7 @@ public enum HardwareEra implements IStableId, IStableName {
         return this == VINTAGE ? VINTAGE : fromLevel(level - 1);
     }
 
+    @Override
     public int level() {
         return level;
     }

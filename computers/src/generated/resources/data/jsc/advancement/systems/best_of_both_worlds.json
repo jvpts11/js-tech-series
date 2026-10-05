@@ -3,9 +3,9 @@
   "criteria": {
     "done": {
       "conditions": {
-        "event": "dual_boot"
+        "event": "jsc:dual_boot"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     }
   },
   "display": {

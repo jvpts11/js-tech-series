@@ -7,17 +7,19 @@
  */
 package dev.jstech.computers.advancement;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.RackUnitHost;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.core.advancement.Advancements;
 import net.minecraft.core.BlockPos;
 import java.util.UUID;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.neoforge.common.util.FakePlayer;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -104,11 +106,12 @@ public final class JscEvents {
         award(player, event, "");
     }
 
-    /** The same, with the detail that tells apart the criteria of an advancement asking for all of something. */
+    /**
+     * The same, with the detail that tells apart the criteria of an advancement asking for all of something. The
+     * event is reported to the Core's trigger under this mod's namespace, {@code jsc:<event>}.
+     */
     public static void award(@Nullable final Player player, final String event, @Nullable final String detail) {
-        if (player instanceof ServerPlayer server && !(player instanceof FakePlayer)) {
-            JscTriggers.EVENT.get().trigger(server, event, detail == null ? "" : detail);
-        }
+        Advancements.award(player, ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, event), detail);
     }
 
     /** Reports an event a machine caused on its own, crediting whoever works it. */

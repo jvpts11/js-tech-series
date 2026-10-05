@@ -11,9 +11,11 @@ import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.config.ConfigTexts;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ContentTab;
+import dev.jstech.core.content.EntityEntry;
 import dev.jstech.core.content.FluidEntry;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +63,12 @@ public final class ContentLanguageProvider extends LanguageProvider {
         }
         for (final SoundKey sound : content.declaredSounds()) {
             add(sound.subtitle().key(), sound.subtitle().english());
+        }
+        for (final ProcessingKind kind : content.declaredProcessing()) {
+            add(kind.title().key(), kind.title().english());
+        }
+        for (final EntityEntry<?> entity : content.declaredEntities()) {
+            add(entity.get().getDescriptionId(), entity.english());
         }
         // The names and tooltips NeoForge's settings screen shows for the mod's settings files.
         ConfigTexts.english(content.modid()).forEach(this::add);

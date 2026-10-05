@@ -16,7 +16,7 @@ import net.minecraft.world.item.Items;
  * The network and the work it does: machines joining a Mainframe, Operations, IQL, autocrafting, and the ways an
  * Operation or a network goes wrong, which stay hidden until they happen to somebody.
  */
-public final class NetworkAdvancements extends AdvancementTab {
+public final class NetworkAdvancements extends JscAdvancementTab {
 
     private static final String COMPUTERCRAFT = "computercraft";
 

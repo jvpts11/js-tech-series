@@ -8,30 +8,45 @@
 package dev.jstech.core;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.advancement.CoreTriggers;
 import dev.jstech.core.api.CoreRegisterEvent;
 import dev.jstech.core.audio.AudioSettings;
+import dev.jstech.core.audio.media.MediaCommand;
 import dev.jstech.core.audio.media.MediaLedgers;
 import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.command.CoreCommands;
+import dev.jstech.core.dimension.DimensionRulesData;
+import dev.jstech.core.robot.CoreRobotTasks;
 import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.event.CoreEventDispatcher;
 import dev.jstech.core.font.CoreFonts;
 import dev.jstech.core.input.CoreKeys;
+import dev.jstech.core.integration.accessories.AccessoriesIntegration;
+import dev.jstech.core.integration.curios.CuriosIntegration;
+import dev.jstech.core.integration.ftbteams.FtbTeamsIntegration;
 import dev.jstech.core.integration.mekanism.MekanismIntegration;
 import dev.jstech.core.item.ItemStates;
 import dev.jstech.core.language.LanguageRegistry;
+import dev.jstech.core.multiblock.MultiblockPatterns;
 import dev.jstech.core.operation.OperationTypeRegistry;
 import dev.jstech.core.persistence.NetworkRegistry;
+import dev.jstech.core.progression.PlayerProgress;
+import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
 import dev.jstech.core.state.CoreStates;
+import dev.jstech.core.team.CorePermissions;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoader;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.world.chunk.RegisterTicketControllersEvent;
+import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
 import org.slf4j.Logger;
 
 /**
@@ -91,6 +106,11 @@ public final class JsCore {
         CoreKeys.declare();
         // Soft integrations: each one checks for its mod and stays a no-op without it.
         MekanismIntegration.bootstrap();
+        FtbTeamsIntegration.bootstrap();
+        AccessoriesIntegration.bootstrap();
+        CuriosIntegration.bootstrap();
+        // Who may use what others own, asked of the server's permission system.
+        NeoForge.EVENT_BUS.addListener(PermissionGatherEvent.Nodes.class, CorePermissions::onGatherNodes);
         // The balance of the Operations engine is series-wide, so the Core owns the world's balance file.
         ConfigFiles.register(CoreConfigKeys.FILE, modEventBus, modContainer);
         // A player's sound preferences, read on their own game only.
@@ -98,6 +118,20 @@ public final class JsCore {
         // What the Core keeps with a world: each dimension's data networks, and the ledger of its recordings.
         CoreStates.register(NetworkRegistry.NETWORKS);
         MediaLedgers.register();
+        // How far each player has come along each progression axis, and the advancement triggers every mod stands on.
+        PlayerProgress.register();
+        CoreTriggers.register(modEventBus);
+        // The series' commands under /jstech: the Core's own, and the recordings' upkeep.
+        CoreCommands.declare();
+        MediaCommand.declare();
+        // The multiblock patterns of every mod, read from data and declared in code.
+        MultiblockPatterns.register();
+        // What each dimension is like to stand in, read from data.
+        DimensionRulesData.register();
+        // The tasks every robot knows, before a world reads its robots back.
+        CoreRobotTasks.declare();
+        // The chunks machines keep loaded for their owners, under the game's own forced-chunk file.
+        modEventBus.addListener(RegisterTicketControllersEvent.class, ChunkLoaders::onRegisterControllers);
         /*
          * One moment for anything to be added, and one for the door to close. Everything of the series adds
          * itself through the same event an addon does, so the way in is the one that is tested every time

@@ -147,7 +147,8 @@ public abstract sealed class CoreState<T> permits ServerState, DimensionState, P
     }
 
     void send(final ServerPlayer player, final T value) {
-        if (synced()) {
+        // A player whose connection agreed on no payloads, one a test made, is sent nothing.
+        if (synced() && player.connection.hasChannel(StateSyncPayload.TYPE)) {
             PacketDistributor.sendToPlayer(player, new StateSyncPayload(this, value));
         }
     }

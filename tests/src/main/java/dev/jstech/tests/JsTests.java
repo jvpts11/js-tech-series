@@ -42,6 +42,14 @@ public final class JsTests {
         TestBlocks.declare();
         // A kiln and a mixer that work in a few ticks, for the autocraft tests to run real recipes through.
         TestMachines.declare();
+        // A furnace of several blocks whose casing has ports, to prove the Core's multiblocks.
+        TestMultiblocks.declare();
+        // A vein and a structure that generate nowhere, and a small moon, to prove the Core's world generation.
+        TestWorldGen.declare();
+        // A press of two inputs, two outputs, two tanks and an upgrade slot, to prove the Core's machines.
+        TestPress.declare();
+        // A robot, a rover and a bolt, to prove the Core's robots, vehicles and projectiles.
+        TestEntities.declare();
         // Items that hold everything an item can, to prove the Core's items with state.
         TestItems.declare();
         // A corrosive liquid and a hot gas, to prove the Core's fluids and pipes.

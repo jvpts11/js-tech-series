@@ -76,7 +76,7 @@ public final class ConfigTexts {
     }
 
     /** Every section a file's settings sit in, outermost first, each once. */
-    static List<String> sectionsOf(final ConfigFile file) {
+    public static List<String> sectionsOf(final ConfigFile file) {
         final List<String> out = new ArrayList<>();
         for (final ConfigKey<?> setting : file.keys()) {
             for (int depth = 1; depth < setting.path().size(); depth++) {

@@ -3,9 +3,9 @@
   "criteria": {
     "done": {
       "conditions": {
-        "event": "sigma_on_dos"
+        "event": "jsc:sigma_on_dos"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     }
   },
   "display": {

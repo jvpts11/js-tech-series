@@ -1,0 +1,14 @@
+{
+  "name": "test_tower",
+  "layers": [
+    ["S#S"],
+    ["LLL"]
+  ],
+  "key": {
+    "S": {"blocks": ["minecraft:stone_bricks"]},
+    "L": {"tags": ["minecraft:logs"]}
+  },
+  "ports": {
+    "S": "fluid_input"
+  }
+}

@@ -13,8 +13,12 @@ import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.energy.IEnergyHolder;
 import dev.jstech.core.font.CellFont;
 import dev.jstech.core.item.ItemStates;
+import dev.jstech.core.machine.ProcessingKind;
+import dev.jstech.core.machine.ProcessingRecipe;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,8 +37,14 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -42,8 +52,10 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
@@ -84,6 +96,11 @@ public final class ModContent {
     private DeferredRegister.@Nullable DataComponents components;
     private @Nullable DeferredRegister<FluidType> fluidTypes;
     private @Nullable DeferredRegister<Fluid> fluids;
+    private @Nullable DeferredRegister<RecipeType<?>> recipeTypes;
+    private @Nullable DeferredRegister<RecipeSerializer<?>> recipeSerializers;
+    private final List<ProcessingKind> declaredProcessing = new ArrayList<>();
+    private @Nullable DeferredRegister<EntityType<?>> entityTypes;
+    private final List<EntityEntry<?>> declaredEntities = new ArrayList<>();
 
     /* Every mod's content, by mod id, in the order the mods made theirs. */
     private static final Map<String, ModContent> BY_MOD = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -232,6 +249,45 @@ public final class ModContent {
     }
 
     /**
+     * Declares a kind of processing machine: a recipe type of this mod, named {@code id}, whose recipes are
+     * {@link ProcessingRecipe}s read and sent by a serializer of the same name, called that in English and worked by
+     * that machine, which the recipe viewers show beside its recipes.
+     */
+    public ProcessingKind processing(final String id, final String englishName,
+                                     final Supplier<? extends ItemLike> machine) {
+        if (recipeTypes == null) {
+            recipeTypes = DeferredRegister.create(Registries.RECIPE_TYPE, modid);
+            recipeSerializers = DeferredRegister.create(Registries.RECIPE_SERIALIZER, modid);
+        }
+        final ResourceLocation typeId = ResourceLocation.fromNamespaceAndPath(modid, id);
+        final DeferredHolder<RecipeType<?>, RecipeType<ProcessingRecipe>> type =
+                recipeTypes.register(id, () -> RecipeType.simple(typeId));
+        final ProcessingKind[] kind = new ProcessingKind[1];
+        final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<ProcessingRecipe>> serializer =
+                recipeSerializers.register(id, () -> kind[0].newSerializer());
+        kind[0] = new ProcessingKind(typeId, TextKey.of(modid + ".recipe_kind." + id, englishName), type,
+                serializer).alsoWorkedBy(machine);
+        declaredProcessing.add(kind[0]);
+        return kind[0];
+    }
+
+    /** The kinds of processing machine declared so far, in declaration order. */
+    public List<ProcessingKind> declaredProcessing() {
+        return Collections.unmodifiableList(declaredProcessing);
+    }
+
+    /** Starts declaring a kind of entity, made by {@code factory} and counted under {@code category}. */
+    public <E extends Entity> EntityBuilder<E> entity(final String id, final EntityType.EntityFactory<E> factory,
+                                                      final MobCategory category) {
+        return new EntityBuilder<>(this, id, factory, category);
+    }
+
+    /** The kinds of entity declared so far, in declaration order. */
+    public List<EntityEntry<?>> declaredEntities() {
+        return Collections.unmodifiableList(declaredEntities);
+    }
+
+    /**
      * Declares a component the mod's items can carry, saved with {@code codec} and sent to players with
      * {@code streamCodec}; an item starts with it through {@link ItemBuilder#component}.
      */
@@ -269,12 +325,31 @@ public final class ModContent {
             fluidTypes.register(modEventBus);
             fluids.register(modEventBus);
         }
+        if (recipeTypes != null) {
+            recipeTypes.register(modEventBus);
+            recipeSerializers.register(modEventBus);
+        }
+        if (entityTypes != null) {
+            entityTypes.register(modEventBus);
+            modEventBus.addListener(EntityAttributeCreationEvent.class, this::giveEntitiesTheirAttributes);
+        }
         if (!datapackRegistries.isEmpty()) {
             modEventBus.addListener(DataPackRegistryEvent.NewRegistry.class,
                     event -> datapackRegistries.forEach(registry -> registry.accept(event)));
         }
         modEventBus.addListener(RegisterCapabilitiesEvent.class, this::giveItemsTheirCapabilities);
         modEventBus.addListener(ModifyDefaultComponentsEvent.class, this::giveItemsTheirComponents);
+    }
+
+    DeferredRegister<EntityType<?>> entityRegister() {
+        if (entityTypes == null) {
+            entityTypes = DeferredRegister.create(Registries.ENTITY_TYPE, modid);
+        }
+        return entityTypes;
+    }
+
+    void declare(final EntityEntry<?> entry) {
+        declaredEntities.add(entry);
     }
 
     DeferredRegister<CableType> cableRegister() {
@@ -340,11 +415,30 @@ public final class ModContent {
         declaredFonts.add(font);
     }
 
-    /* An item that holds something gets the game's capability for each thing it holds. */
+    /*
+     * An item that holds something gets the game's capability for each thing it holds, and an entity that holds energy
+     * the energy capability.
+     */
     private void giveItemsTheirCapabilities(final RegisterCapabilitiesEvent event) {
         for (final ItemEntry<?> item : declaredItems) {
             if (!item.state().isNothing()) {
                 ItemStates.registerCapabilities(event, item, item.state());
+            }
+        }
+        for (final EntityEntry<?> entity : declaredEntities) {
+            if (entity.holdsEnergy()) {
+                event.registerEntity(Capabilities.EnergyStorage.ENTITY, entity.get(),
+                        (held, context) -> held instanceof IEnergyHolder holder ? holder.energy() : null);
+            }
+        }
+    }
+
+    /* A living entity starts with the attributes it was declared with. */
+    @SuppressWarnings("unchecked")
+    private void giveEntitiesTheirAttributes(final EntityAttributeCreationEvent event) {
+        for (final EntityEntry<?> entity : declaredEntities) {
+            if (entity.attributes() != null) {
+                event.put((EntityType<? extends LivingEntity>) entity.get(), entity.attributes().get().build());
             }
         }
     }

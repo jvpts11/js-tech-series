@@ -12,8 +12,11 @@ import dev.jstech.core.datagen.ContentFluidTagsProvider;
 import dev.jstech.core.datagen.ContentItemModelProvider;
 import dev.jstech.core.datagen.ContentLanguageProvider;
 import dev.jstech.core.datagen.ContentSoundProvider;
+import dev.jstech.core.datagen.MultiblockPatternProvider;
+import dev.jstech.core.datagen.WorldGenProvider;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestSounds;
+import dev.jstech.tests.TestWorldGen;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -36,6 +39,10 @@ public final class JsTestsDataGenerators {
         final DataGenerator generator = event.getGenerator();
         final PackOutput output = generator.getPackOutput();
         generator.addProvider(event.includeServer(), new GameTestStructureProvider(output));
+        generator.addProvider(event.includeServer(), new MultiblockPatternProvider(output, JsTests.MODID));
+        TestWorldGen.declare();
+        generator.addProvider(event.includeServer(),
+                new WorldGenProvider(output, event.getLookupProvider(), JsTests.MODID));
         generator.addProvider(event.includeServer(), new ContentFluidTagsProvider(output,
                 event.getLookupProvider(), TestSounds.CONTENT, event.getExistingFileHelper()));
         generator.addProvider(event.includeClient(),

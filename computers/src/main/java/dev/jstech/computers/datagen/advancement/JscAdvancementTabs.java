@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.datagen.advancement;
 
+import dev.jstech.core.datagen.advancement.AdvancementTab;
 import java.util.List;
 import java.util.function.BiConsumer;
 

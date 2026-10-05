@@ -1569,10 +1569,16 @@ public final class NetworkGameTests {
                             computer.localStorage(), "storage", null);
                     helper.assertTrue(op != null, "Mainframe should dispatch the SELECT-to-storage Operation");
                 })
-                .thenExecuteAfter(8, () -> {
+                /*
+                 * The pull is timed by the disks it moves between, and a busy server runs it a few ticks later than
+                 * an idle one; wait for it to land rather than for a fixed count of ticks.
+                 */
+                .thenWaitUntil(() -> {
                     final long inStorage = computer.localStore().count(StorageKey.of(Items.COBBLESTONE));
                     helper.assertTrue(inStorage == 50,
                             "SELECT must land 50 cobblestone in the PC's local storage; got " + inStorage);
+                })
+                .thenExecute(() -> {
                     // The Operation is logged with provenance for the Operations tab.
                     final var log = mainframe.recentOperations();
                     helper.assertTrue(log.size() == 1, "the SELECT should be logged once; got " + log.size());

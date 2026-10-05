@@ -161,6 +161,12 @@ public final class ConfigFile {
         store(key, this.validator.validate(key, key.plain(value)).value());
     }
 
+    /** What {@code value} becomes held to what {@code key} is held to, as setting it would make it. */
+    public <T> T validated(final ConfigKey<T> key, final T value) {
+        own(key);
+        return this.validator.validate(key, key.plain(value)).value();
+    }
+
     /** Writes the file as its settings are now, unless it came from a newer version of the mod. */
     public void save() {
         if (!this.newer) {

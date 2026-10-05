@@ -37,6 +37,18 @@ sourceSets.main.resources {
  * GameTests are told which of the two worlds they run in.
  */
 def withoutComputerCraft = providers.gradleProperty('withoutComputerCraft').isPresent()
+/*
+ * -PwithFtbTeams runs the development mods with FTB Teams, to prove the Core takes its teams from it; without it the
+ * game's scoreboard teams answer, which is what every other run proves.
+ */
+def withFtbTeams = providers.gradleProperty('withFtbTeams').isPresent()
+/*
+ * -PwithEmi runs the development client with EMI beside JEI, to see the Core's bridge to EMI at work: the processing
+ * machines' recipes and the areas screens keep clear. Off by default, so every other run shows JEI alone.
+ */
+def withEmi = providers.gradleProperty('withEmi').isPresent()
+// -PwithJade runs the development mods with Jade, to see the lines the Core's bridge gives its tooltip.
+def withJade = providers.gradleProperty('withJade').isPresent()
 if (withoutComputerCraft) {
     sourceSets.main.java {
         exclude '**/gametest/ComputerCraftGameTests.java'
@@ -99,6 +111,7 @@ neoForge {
             gameDirectory = rootProject.file('run')
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
             systemProperty 'jsc.gametests.computercraft', withoutComputerCraft ? 'absent' : 'present'
+            systemProperty 'jsc.gametests.ftbteams', withFtbTeams ? 'present' : 'absent'
             // -Pjfr records the run with Java Flight Recorder, for profiling the scale benchmark. Deep stacks,
             // because what is being chased sits well below the tick. Off unless asked for.
             if (providers.gradleProperty('jfr').present) {
@@ -167,6 +180,19 @@ dependencies {
     compileOnly "cc.tweaked:cc-tweaked-${minecraft_version}-forge-api:${cc_tweaked_version}"
     if (!withoutComputerCraft) {
         localRuntime "cc.tweaked:cc-tweaked-${minecraft_version}-forge:${cc_tweaked_version}"
+    }
+    if (withFtbTeams) {
+        localRuntime "dev.ftb.mods:ftb-teams-neoforge:${ftb_teams_version}"
+        localRuntime "dev.ftb.mods:ftb-library-neoforge:${ftb_library_version}"
+        localRuntime "dev.architectury:architectury-neoforge:${architectury_version}"
+    }
+    // EMI's API, for the client test that reads what the Core's bridge gave EMI when EMI is there.
+    compileOnly "dev.emi:emi-neoforge:${emi_version}:api"
+    if (withEmi) {
+        localRuntime "dev.emi:emi-neoforge:${emi_version}"
+    }
+    if (withJade) {
+        localRuntime "maven.modrinth:jade:${jade_version}"
     }
 }
 

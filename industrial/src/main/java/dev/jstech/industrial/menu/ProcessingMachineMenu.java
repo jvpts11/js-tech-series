@@ -13,7 +13,7 @@ import dev.jstech.core.menu.MenuOpening;
 import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.menu.PlayerSlots;
 import dev.jstech.core.menu.SlotGroup;
-import dev.jstech.industrial.blockentity.ProcessingMachineBlockEntity;
+import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.industrial.gui.layout.ProcessingMachineLayout;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -34,9 +34,8 @@ public class ProcessingMachineMenu extends CoreMenu {
         super(type, containerId, inventory, MenuValidity.blockEntity(machine));
         this.machine = machine;
         final GuiLayout layout = ProcessingMachineLayout.layout();
-        final SlotGroup input = slots(slot(machine.getInventory(), ProcessingMachineBlockEntity.INPUT_SLOT,
-                layout.slotAt("input")));
-        final SlotGroup output = slots(outputSlot(machine.getInventory(), ProcessingMachineBlockEntity.OUTPUT_SLOT,
+        final SlotGroup input = slots(slot(machine.getInventory(), 0, layout.slotAt("input")));
+        final SlotGroup output = slots(outputSlot(machine.getInventory(), machine.layout().firstOutput(),
                 layout.slotAt("output")));
         final PlayerSlots player = playerInventory(inventory, layout.playerInventoryAt());
         shiftClick(input, player.all());

@@ -1,10 +1,17 @@
 {
   "type": "jsindustrial:compressing",
-  "ingredient": {
-    "tag": "c:ingots/iron"
-  },
-  "result": {
-    "count": 1,
-    "id": "jscore:iron_plate"
-  }
+  "energy_per_tick": 30,
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:ingots/iron"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:iron_plate"
+    }
+  ],
+  "ticks": 120
 }

@@ -16,7 +16,6 @@ import dev.jstech.core.state.ServerState;
 import dev.jstech.core.state.StateSave;
 import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.team.ITeamSource;
-import dev.jstech.core.team.ScoreboardTeams;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestStates;
 import java.io.IOException;
@@ -116,6 +115,8 @@ public final class CoreStateGameTests {
         final UUID alone = UUID.randomUUID();
         final Set<UUID> crew = Set.of(first, second);
         final ITeamSource source = (on, player) -> crew.contains(player) ? "test:crew" : CoreTeams.solo(player);
+        // The source in use before, the scoreboard's or FTB Teams' in a run with it, is put back afterwards.
+        final ITeamSource before = CoreTeams.source();
         CoreTeams.use(source);
         try {
             TestStates.FUNDS.set(server, CoreTeams.teamOf(server, first), 300);
@@ -125,10 +126,10 @@ public final class CoreStateGameTests {
             same(helper, CoreTeams.solo(alone), CoreTeams.teamOf(server, alone), "the team of a player alone");
             TestStates.FUNDS.set(server, "test:crew", 0);
         } finally {
-            CoreTeams.use(ScoreboardTeams.INSTANCE);
+            CoreTeams.use(before);
         }
         same(helper, CoreTeams.solo(first), CoreTeams.teamOf(server, first),
-                "a player on no scoreboard team, once the game's teams answer again");
+                "a player on no team, once the teams in use answer again");
         helper.succeed();
     }
 

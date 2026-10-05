@@ -8,23 +8,19 @@
 package dev.jstech.computers.integration.jei;
 
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.client.AbstractComputerScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.PatternStudioApp;
-import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.menu.DesktopMenu;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.constants.VanillaTypes;
-import mezz.jei.api.gui.handlers.IGuiContainerHandler;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.registration.IRecipeTransferRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -32,10 +28,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * The recipe viewer plugin. The monitor stays centred and the viewer's ingredient list fits itself into the
- * column beside it (the monitor body is an exclusion area), a recipe transferred from the viewer lands in the
- * Pattern Studio's bench or machine draft, and an ingredient dragged out of the list can be dropped straight
- * onto a Studio cell. All viewer types stay in this package, so the rest of the mod never depends on the
+ * The recipe viewer plugin. A recipe transferred from the viewer lands in the Pattern Studio's bench or machine
+ * draft, and an ingredient dragged out of the list can be dropped straight onto a Studio cell. (The monitor stays
+ * centred with the ingredient list in the column beside it through the Core's bridge, which keeps clear the areas
+ * every computer screen names.) All viewer types stay in this package, so the rest of the mod never depends on the
  * viewer being installed.
  */
 @JeiPlugin
@@ -92,29 +88,8 @@ public final class JscJeiPlugin implements IModPlugin {
 
     @Override
     public void registerGuiHandlers(final IGuiHandlerRegistration registration) {
-        /*
-         * The monitor body (bezel and chin) is an exclusion area, so the ingredient list sits beside the monitor
-         * instead of over its frame. The glass itself is the container's image rectangle, which the viewer
-         * already keeps clear.
-         */
-        registration.addGuiContainerHandler(DesktopScreen.class, new IGuiContainerHandler<DesktopScreen>() {
-            @Override
-            public List<Rect2i> getGuiExtraAreas(final DesktopScreen screen) {
-                return List.of(rect(screen.frameBounds()));
-            }
-        });
-        registration.addGenericGuiContainerHandler(AbstractComputerScreen.class,
-                new IGuiContainerHandler<AbstractComputerScreen<?>>() {
-                    @Override
-                    public List<Rect2i> getGuiExtraAreas(final AbstractComputerScreen<?> screen) {
-                        return List.of(rect(screen.frameBounds()));
-                    }
-                });
+        // The monitor bodies are kept clear by the Core's bridge, which every computer screen names them to.
         registration.addGhostIngredientHandler(DesktopScreen.class, new StudioGhostIngredientHandler());
-    }
-
-    private static Rect2i rect(final MonitorFrameStyle.Geometry geo) {
-        return new Rect2i(geo.x(), geo.y(), geo.w(), geo.h());
     }
 
     /**

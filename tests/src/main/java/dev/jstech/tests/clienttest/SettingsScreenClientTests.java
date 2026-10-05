@@ -8,29 +8,29 @@
 package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.client.config.CoreConfigScreen;
+import dev.jstech.core.config.ConfigDraft;
+import dev.jstech.core.config.ConfigFile;
+import dev.jstech.core.config.ConfigFiles;
+import dev.jstech.core.config.ConfigKey;
 import dev.jstech.core.config.ConfigTexts;
+import dev.jstech.core.config.format.ConfigFormats;
+import dev.jstech.core.gui.layout.ConfigScreenLayout;
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.client.gui.components.AbstractButton;
-import net.minecraft.client.gui.components.AbstractSelectionList;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.events.ContainerEventHandler;
-import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.ClientLanguage;
 import net.minecraft.locale.Language;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * NeoForge's settings screen, reached from the mods list, for the series' mods: each opens it, its world settings are
- * there, and every section and setting is shown under its own name rather than the key it is translated by, a name
- * short enough to be read whole in every language the series ships.
+ * The Core's settings screen, reached from the mods list, for the series' mods: each opens it, its world's and its
+ * player's settings are there, every section and setting under its own name rather than the key it is translated by
+ * and short enough to be read whole in every language the series ships, and a change is kept by Done and dropped by
+ * Cancel.
  */
 public final class SettingsScreenClientTests {
 
@@ -38,8 +38,6 @@ public final class SettingsScreenClientTests {
     private static final String RAW_KEY = ".configuration.";
     /** The languages the series ships its names in, each read on its own beside English. */
     private static final List<String> LANGUAGES = List.of("en_us", "pt_br");
-    /** How the screen writes a section's or a list's name: with three dots after it. */
-    private static final String SECTION = "neoforge.configuration.uitext.section";
 
     private SettingsScreenClientTests() {
     }
@@ -47,17 +45,28 @@ public final class SettingsScreenClientTests {
     @ClientTest(timeoutTicks = 200)
     public static void settingsScreen_everyNameFitsBesideItsSettingInEveryLanguage(final ClientTestContext ctx) {
         ctx.then(0, () -> {
+            final int width = ctx.mc().getWindow().getGuiScaledWidth();
             final List<String> wide = new ArrayList<>();
             for (final String language : LANGUAGES) {
                 final Language names = ClientLanguage.loadFrom(ctx.mc().getResourceManager(),
                         List.of("en_us", language), false);
                 for (final String modId : List.of(JsCore.MODID, JsComputers.MODID)) {
-                    for (final String key : ConfigTexts.english(modId).keySet()) {
-                        // Every name is measured with the dots a section's gets, so a setting can become a list
-                        // or a section without its name outgrowing the room the screen gives it.
-                        final String shown = names.getOrDefault(SECTION).formatted(names.getOrDefault(key));
-                        if (!key.endsWith(".tooltip") && ctx.mc().font.width(shown) > Button.DEFAULT_WIDTH) {
-                            wide.add(language + " " + shown);
+                    for (final ConfigFile file : ConfigFiles.of(modId)) {
+                        if (file.format() != ConfigFormats.TOML) {
+                            continue;
+                        }
+                        for (final String section : ConfigTexts.sectionsOf(file)) {
+                            final String shown = names.getOrDefault(ConfigTexts.key(modId, section));
+                            if (ctx.mc().font.width(shown) > ConfigScreenLayout.railLabelWidth()) {
+                                wide.add(language + " section " + shown);
+                            }
+                        }
+                        for (final ConfigKey<?> key : file.keys()) {
+                            final String shown = names.getOrDefault(ConfigTexts.key(modId, key.dottedPath()));
+                            if (ctx.mc().font.width(shown)
+                                    > ConfigScreenLayout.nameWidth(width, ConfigDraft.controlOf(key))) {
+                                wide.add(language + " setting " + shown);
+                            }
                         }
                     }
                 }
@@ -68,56 +77,65 @@ public final class SettingsScreenClientTests {
         });
     }
 
-    @ClientTest(timeoutTicks = 600)
+    @ClientTest(timeoutTicks = 400)
     public static void settingsScreen_showsTheComputersSettingsByTheirNames(final ClientTestContext ctx) {
-        // The computers have a world's file and a player's, so the screen opens on the list of the two.
         ctx.then(0, () -> open(ctx, JsComputers.MODID))
-                .thenAwaitScreen(ConfigurationScreen.class, 40)
-                .then(1, () -> button(ctx.mc().screen, "Client").onPress())
-                .thenAwaitScreen(ConfigurationScreen.ConfigurationSectionScreen.class, 40)
-                .then(1, () -> sectionButton(ctx.mc().screen, "Client").onPress())
-                .thenWaitUntil(() -> named(labels(ctx.mc().screen), "Reduce motion")
-                                && named(labels(ctx.mc().screen), "Desktop cursors")
-                                && untranslated(labels(ctx.mc().screen)).isEmpty(), 40,
-                        "the player's own settings: Reduce motion and Desktop cursors, under their names")
-                .thenScreenshot(2, "computers-client-settings")
-                .then(0, () -> open(ctx, JsComputers.MODID))
-                .thenAwaitScreen(ConfigurationScreen.class, 40)
-                .then(1, () -> button(ctx.mc().screen, "Server").onPress())
-                .thenAwaitScreen(ConfigurationScreen.ConfigurationSectionScreen.class, 40)
+                .thenAwaitScreen(CoreConfigScreen.class, 40)
                 .thenAssert(1, () -> {
-                    final List<String> labels = labels(ctx.mc().screen);
-                    return named(labels, "Layout version") && named(labels, "Starting up")
-                            && named(labels, "Installing by hand") && named(labels, "The prompt")
-                            && named(labels, "Soundfoundry") && untranslated(labels).isEmpty();
-                }, "the computers' world settings, each section under its name")
-                .thenScreenshot(2, "computers-settings")
-                .then(0, () -> sectionButton(ctx.mc().screen, "Starting up").onPress())
-                .thenWaitUntil(() -> named(labels(ctx.mc().screen), "Show the boot menu")
-                                && untranslated(labels(ctx.mc().screen)).isEmpty(), 40,
-                        "the section to list its setting under its name")
+                    final List<String> rail = screen(ctx).railLabels();
+                    return rail.containsAll(List.of("WORLD", "Starting up", "Installing by hand", "The prompt",
+                            "Soundfoundry", "PLAYER", "Client")) && untranslated(rail).isEmpty();
+                }, "the computers' world and player settings, each section under its name")
+                .then(0, () -> ctx.assertTrue(screen(ctx).openSection("Starting up"), "the boot section opens"))
+                .thenAssert(1, () -> screen(ctx).rowNames().contains("Show the boot menu")
+                        && untranslated(screen(ctx).rowNames()).isEmpty(), "its setting under its name")
                 .thenScreenshot(2, "computers-boot-settings")
+                .then(0, () -> ctx.assertTrue(screen(ctx).openSection("Client"), "the player's section opens"))
+                .thenAssert(1, () -> screen(ctx).rowNames().containsAll(List.of("Reduce motion", "Desktop cursors")),
+                        "the player's own settings: Reduce motion and Desktop cursors")
+                .thenScreenshot(2, "computers-client-settings")
                 .then(0, () -> ctx.mc().setScreen(null));
     }
 
-    @ClientTest(timeoutTicks = 600)
+    @ClientTest(timeoutTicks = 400)
     public static void settingsScreen_showsTheCoresBalanceByItsNames(final ClientTestContext ctx) {
-        // A mod with one settings file on the screen opens straight onto that file, as the Core has.
         ctx.then(0, () -> open(ctx, JsCore.MODID))
-                .thenAwaitScreen(ConfigurationScreen.ConfigurationSectionScreen.class, 40)
+                .thenAwaitScreen(CoreConfigScreen.class, 40)
                 .thenAssert(1, () -> {
-                    final List<String> labels = labels(ctx.mc().screen);
-                    return named(labels, "Layout version") && named(labels, "Operations and programs")
-                            && named(labels, "Recordings") && untranslated(labels).isEmpty();
+                    final List<String> rail = screen(ctx).railLabels();
+                    return rail.containsAll(List.of("Operations and programs", "Recordings"))
+                            && untranslated(rail).isEmpty();
                 }, "the Core's world settings, each section under its name")
-                .thenScreenshot(2, "core-settings")
-                .then(0, () -> sectionButton(ctx.mc().screen, "Recordings").onPress())
-                .thenWaitUntil(() -> named(labels(ctx.mc().screen), "Download speed")
-                                && named(labels(ctx.mc().screen), "Largest recording")
-                                && untranslated(labels(ctx.mc().screen)).isEmpty(), 40,
-                        "the recordings' settings under their names")
+                .then(0, () -> ctx.assertTrue(screen(ctx).openSection("Recordings"), "the recordings open"))
+                .thenAssert(1, () -> screen(ctx).rowNames().containsAll(List.of("Download speed",
+                        "Largest recording")), "the recordings' settings under their names")
                 .thenScreenshot(2, "core-recordings-settings")
                 .then(0, () -> ctx.mc().setScreen(null));
+    }
+
+    @ClientTest(timeoutTicks = 400)
+    public static void settingsScreen_keepsAChangeOnlyWhenDone(final ClientTestContext ctx) {
+        final ConfigFile file = fileOf(ComputersServerConfig.SHOW_BOOT_MENU);
+        final boolean before = file.get(ComputersServerConfig.SHOW_BOOT_MENU);
+        ctx.then(0, () -> open(ctx, JsComputers.MODID))
+                .thenAwaitScreen(CoreConfigScreen.class, 40)
+                .then(1, () -> {
+                    screen(ctx).openSection("Starting up");
+                    screen(ctx).openDraft().toggle(ComputersServerConfig.SHOW_BOOT_MENU);
+                    screen(ctx).onClose();
+                })
+                .thenAssert(1, () -> file.get(ComputersServerConfig.SHOW_BOOT_MENU) == before,
+                        "leaving without Done drops the change")
+                .then(0, () -> open(ctx, JsComputers.MODID))
+                .thenAwaitScreen(CoreConfigScreen.class, 40)
+                .then(1, () -> {
+                    screen(ctx).openSection("Starting up");
+                    screen(ctx).openDraft().toggle(ComputersServerConfig.SHOW_BOOT_MENU);
+                    screen(ctx).done();
+                })
+                .thenAssert(1, () -> file.get(ComputersServerConfig.SHOW_BOOT_MENU) != before,
+                        "Done keeps it in the world's settings")
+                .then(0, () -> file.set(ComputersServerConfig.SHOW_BOOT_MENU, before));
     }
 
     /** Opens a mod's settings screen the way the mods list does. */
@@ -127,75 +145,20 @@ public final class SettingsScreenClientTests {
         ctx.mc().setScreen(factory.createScreen(container, null));
     }
 
-    /** The button beside a section's name, which opens the section. */
-    private static AbstractButton sectionButton(final Screen screen, final String name) {
-        for (final List<AbstractWidget> row : rows(screen)) {
-            if (row.size() == 2 && row.get(0).getMessage().getString().contains(name)
-                    && row.get(1) instanceof AbstractButton button) {
-                return button;
-            }
-        }
-        throw new AssertionError("no section called " + name + " on the screen");
+    private static CoreConfigScreen screen(final ClientTestContext ctx) {
+        return ctx.screen(CoreConfigScreen.class);
     }
 
-    /** The button on the screen, in its list or beside it, whose words hold {@code words}. */
-    private static AbstractButton button(@Nullable final Screen screen, final String words) {
-        final List<GuiEventListener> found = new ArrayList<>();
-        if (screen != null) {
-            found.addAll(screen.children());
-            for (final List<AbstractWidget> row : rows(screen)) {
-                found.addAll(row);
+    private static ConfigFile fileOf(final ConfigKey<?> key) {
+        for (final ConfigFile file : ConfigFiles.of(JsComputers.MODID)) {
+            if (file.keys().contains(key)) {
+                return file;
             }
         }
-        for (final GuiEventListener widget : found) {
-            if (widget instanceof AbstractButton button && button.getMessage().getString().contains(words)) {
-                return button;
-            }
-        }
-        throw new AssertionError("no button saying " + words + " on the screen");
-    }
-
-    /** What every row of the screen's list says on its left, its label. */
-    private static List<String> labels(@Nullable final Screen screen) {
-        final List<String> out = new ArrayList<>();
-        for (final List<AbstractWidget> row : rows(screen)) {
-            if (!row.isEmpty()) {
-                out.add(row.get(0).getMessage().getString());
-            }
-        }
-        return out;
-    }
-
-    private static boolean named(final List<String> labels, final String name) {
-        return labels.stream().anyMatch(label -> label.contains(name));
+        throw new AssertionError("no file holds " + key.dottedPath());
     }
 
     private static List<String> untranslated(final List<String> labels) {
         return labels.stream().filter(label -> label.contains(RAW_KEY)).toList();
-    }
-
-    /** The widgets of each row of the screen's list, left to right. */
-    private static List<List<AbstractWidget>> rows(@Nullable final Screen screen) {
-        final List<List<AbstractWidget>> out = new ArrayList<>();
-        if (screen == null) {
-            return out;
-        }
-        for (final GuiEventListener child : screen.children()) {
-            if (!(child instanceof AbstractSelectionList<?> list)) {
-                continue;
-            }
-            for (final GuiEventListener entry : list.children()) {
-                if (entry instanceof ContainerEventHandler row) {
-                    final List<AbstractWidget> widgets = new ArrayList<>();
-                    for (final GuiEventListener widget : row.children()) {
-                        if (widget instanceof AbstractWidget shown) {
-                            widgets.add(shown);
-                        }
-                    }
-                    out.add(widgets);
-                }
-            }
-        }
-        return out;
     }
 }

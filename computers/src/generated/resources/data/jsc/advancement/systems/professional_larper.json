@@ -4,79 +4,79 @@
     "arch": {
       "conditions": {
         "detail": "arch",
-        "event": "screenfetch"
+        "event": "jsc:screenfetch"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     },
     "debian": {
       "conditions": {
         "detail": "debian",
-        "event": "screenfetch"
+        "event": "jsc:screenfetch"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     },
     "fedora": {
       "conditions": {
         "detail": "fedora",
-        "event": "screenfetch"
+        "event": "jsc:screenfetch"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     },
     "frames_10": {
       "conditions": {
         "detail": "frames_10",
-        "event": "screenfetch"
+        "event": "jsc:screenfetch"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     },
     "frames_11": {
       "conditions": {
         "detail": "frames_11",
-        "event": "screenfetch"
+        "event": "jsc:screenfetch"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     },
     "frames_7": {
       "conditions": {
         "detail": "frames_7",
-        "event": "screenfetch"
+        "event": "jsc:screenfetch"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     },
     "frames_95": {
       "conditions": {
         "detail": "frames_95",
-        "event": "screenfetch"
+        "event": "jsc:screenfetch"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     },
     "frames_xp": {
       "conditions": {
         "detail": "frames_xp",
-        "event": "screenfetch"
+        "event": "jsc:screenfetch"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     },
     "freebsd": {
       "conditions": {
         "detail": "freebsd",
-        "event": "screenfetch"
+        "event": "jsc:screenfetch"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     },
     "gentoo": {
       "conditions": {
         "detail": "gentoo",
-        "event": "screenfetch"
+        "event": "jsc:screenfetch"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     },
     "ubuntu": {
       "conditions": {
         "detail": "ubuntu",
-        "event": "screenfetch"
+        "event": "jsc:screenfetch"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     }
   },
   "display": {

@@ -8,11 +8,11 @@
 package dev.jstech.computers;
 
 import dev.jstech.computers.config.ComputersClientConfig;
+import dev.jstech.core.client.config.CoreConfigScreen;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
 /**
@@ -22,11 +22,8 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 public class JsComputersClient {
 
     public JsComputersClient(IEventBus modEventBus, ModContainer container) {
-        /*
-         * Allow NeoForge to render a generic config screen for this mod.
-         * Accessed via the Mods menu > J's Computers > Config.
-         */
-        container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+        // The mod's settings on the Core's settings screen, reached from the mods list.
+        container.registerExtensionPoint(IConfigScreenFactory.class, CoreConfigScreen::new);
         // The player's own settings, read on their game only: how the desktops move, and their pointer.
         ComputersClientConfig.register(modEventBus, container);
     }

@@ -7,16 +7,17 @@
  */
 package dev.jstech.industrial.datagen;
 
+import dev.jstech.core.machine.ProcessingRecipeBuilder;
 import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
 import dev.jstech.core.material.ModMaterial;
+import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.JsIndustrial;
-import dev.jstech.industrial.recipe.CompressingRecipe;
-import dev.jstech.industrial.recipe.MaceratingRecipe;
+import dev.jstech.industrial.blockentity.CompressorBlockEntity;
+import dev.jstech.industrial.blockentity.MaceratorBlockEntity;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
 import java.util.EnumMap;
@@ -40,27 +41,26 @@ public final class MaterialFormRecipes {
     }
 
     private static final EnumMap<MaterialForm, IFormRecipe> PRODUCTIONS = new EnumMap<>(MaterialForm.class);
+    /** How long pressing and grinding take at Tier 1, in ticks. */
+    private static final int COMPRESSING_TICKS = 120;
+    private static final int MACERATING_TICKS = 200;
 
     static {
         // Compress one ingot into one plate.
         PRODUCTIONS.put(MaterialForm.PLATE, (out, mat, form) ->
-                out.accept(
-                        rl("compressing/" + id(mat, MaterialForm.INGOT, form)),
-                        new CompressingRecipe(
-                                cTag(mat, MaterialForm.INGOT),
-                                new ItemStack(MaterialItems.get(mat, form).get(), 1),
-                                CompressingRecipe.DEFAULT_PROCESSING_TIME),
-                        null));
+                ProcessingRecipeBuilder.of(IndustrialModule.COMPRESSING)
+                        .input(cTag(mat, MaterialForm.INGOT), 1)
+                        .output(MaterialItems.get(mat, form).get(), 1)
+                        .ticks(COMPRESSING_TICKS).energyPerTick(CompressorBlockEntity.FE_PER_TICK)
+                        .save(out, rl("compressing/" + id(mat, MaterialForm.INGOT, form))));
 
         // Macerate one ingot into one dust.
         PRODUCTIONS.put(MaterialForm.DUST, (out, mat, form) ->
-                out.accept(
-                        rl("macerating/" + id(mat, MaterialForm.INGOT, form)),
-                        new MaceratingRecipe(
-                                cTag(mat, MaterialForm.INGOT),
-                                new ItemStack(MaterialItems.get(mat, form).get(), 1),
-                                200),
-                        null));
+                ProcessingRecipeBuilder.of(IndustrialModule.MACERATING)
+                        .input(cTag(mat, MaterialForm.INGOT), 1)
+                        .output(MaterialItems.get(mat, form).get(), 1)
+                        .ticks(MACERATING_TICKS).energyPerTick(MaceratorBlockEntity.FE_PER_TICK)
+                        .save(out, rl("macerating/" + id(mat, MaterialForm.INGOT, form))));
 
         /*
          * BOLT, ROD, GEAR: production routes not yet established.

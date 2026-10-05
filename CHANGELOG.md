@@ -61,8 +61,50 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   `ArchitectureSpec`. They still work, handing what they are given to the instruction set registration, and go
   in the next cycle; `ArchitectureSpec.toIsa()` gives the same values under the new name.
 - Removed: `ArchitectureSpec.runs` (ask the `IsaSpec` from `toIsa()`), and `DesktopEnvironmentDef.programFor`.
+- Added (J's Core, outside the versioned API for now): the parts of a general library for technology mods.
+  Progression axes (`ProgressionAxis`, `ProgressionAxes`, `PlayerProgress`, `ProgressionGate`) that the hardware
+  eras and the industrial tiers are now two of; multiblock patterns from data files or code, with ports on their
+  parts (`MultiblockPattern`, `MultiblockPatterns`, `PortKind`); chunk and region data with a spatial index
+  (`SpatialIndex`, `RegionIndex`) and chunk loading by owner (`ChunkLoaders`); ores, structures and dimensions
+  declared for data generation (`WorldGen`, `WorldGenProvider`); owners, access and teams (`Ownership`, `IOwned`,
+  `CorePermissions`), with FTB Teams answering for the teams when it is installed; processing machines and their
+  recipes (`MachineBlockEntity`, `ProcessingMachineBlockEntity`, `ProcessingRecipe`, `ProcessingKind` declared with
+  `ModContent.processing`, `ProcessingRecipeBuilder`, `IUpgrade`, `UpgradeEffect`); the recipe viewers' bridge
+  (`IKeepsViewersClear`); advancements (`EventTrigger`, `AxisStepTrigger`, `Advancements`, and the data generation's
+  `AdvancementTab` and `ConditionalAdvancementProvider`, moved up from J's Computers); commands under `/jstech`
+  (`SeriesCommands`); a GameTest kit (`ScenarioBuilder`, `GameTestPlayers`); HUD elements (`HudElements`,
+  `IHudElement`, `HudStack`); holograms (`Holograms`); what a block entity says to Jade (`IDescribed`); what an
+  entity wears (`WornItems`, `IWornSource`); dimensions made while the game runs (`RuntimeDimensions`) and the rules
+  of each (`DimensionRules`, `DimensionRulesData`, `DimensionHazardEvent`); declared entities (`ModContent.entity`),
+  vehicles (`VehicleEntity`, `VehicleSpec`, `DriverInput`, `IDriver`), robots (`RobotEntity`, `IRobotTask`,
+  `RobotTasks`, `CoreRobotTasks`) and projectiles (`CoreProjectile`, `ProjectileSpec`, `Projectiles`); and the
+  settings screen (`CoreConfigScreen`, `ConfigDraft`).
+- Changed (J's Computers): its advancements stand on J's Core's event trigger, `jscore:event`, with the events named
+  in the mod's namespace (`jsc:post_passed`); `JscEventTrigger`, `JscTriggers.EVENT` and the mod's own
+  `AdvancementTab`, `AdvancementSpec` and `ConditionalAdvancementProvider` are gone.
+- Changed (J's Industrial): its machines stand on J's Core's; `AbstractMachineBlockEntity`,
+  `ProcessingMachineBlockEntity`, `MaceratingRecipe` and `CompressingRecipe` are gone, and its two kinds of recipe
+  are J's Core's processing recipes.
 
 ### Added
+- J's Core's settings screen, in its own look: a mod's files and their sections down the left, each setting with a
+  switch, a number to type or step, a word to go through or a text to type, Done to keep the changes and Cancel to
+  drop them. J's Core and J's Computers open it from the mods list. A world's settings are changed from inside it.
+- J's Core shows every processing machine's recipes in JEI and in EMI, under the machine's name with the machine
+  beside them, items and fluids, the time and the energy a tick; a computer's monitor keeps both viewers' lists
+  beside it in either.
+- Jade shows what a J's Core machine is doing ("Working: 40%", "Idle") and whose it is.
+- Dimensions: a mod declares one and the world has it; copies of it are made and taken away while the game runs
+  (`/jstech dimension create` and `remove`) and come back each time the server starts. A dimension declared only to
+  be copied adds nothing to the world itself, which the game then opens without its warning about experimental
+  settings. Each dimension has rules,
+  read from a datapack: how hard it pulls, whether its air can be breathed, how hot or cold it is, its weather and
+  its pressure. A player choking, burning or freezing there is spared by whatever another mod makes for it.
+- Commands under `/jstech`: `progress` to see or set where players stand along the hardware eras and the
+  industrial tiers, and `chunks` to see and let go of the chunks their machines keep loaded.
+- Machines can keep chunks loaded for their owners, up to the "Chunks loaded per owner" setting.
+- Holograms, words floating in the world turned towards whoever reads them, and HUD elements that share the
+  corners of the screen, for the series' mods to show things with.
 - Frames 7, the Frames of the Transition, installed from its DVD through its own setup (Install now, the two phases
   and their steps, Set Up Frames). Its windows are tinted glass with a glowing title, a red close button and rounded
   top corners. The superbar keeps programs as icons, pinned and open together, with the round orb that opens a Start
@@ -1272,6 +1314,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- J's Industrial's Macerator and Compressor run on J's Core's processing machines, and their recipe files take a list
+  of inputs, each with its count, a list of outputs, and the time and the energy a tick.
+- J's Computers' advancements are earned through J's Core's event trigger; what a world's players earned before
+  stays earned.
 - Frames 11 installs from the Advanced era on, and the Standard era has Frames 10. The family now runs Frames 95, XP,
   7, 10 and 11, and a program asking for a newer Frames reads it in that order. "More like, Bloat 11" follows
   "What Happened to Frames 9?" in the Operating Systems tab, as "Never Upgrading" follows "The goat".
@@ -1593,6 +1639,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- A player made by a test, or by another mod, on a connection that agreed on nothing no longer has J's Core's data
+  sent to it as it joins, which failed it.
+- A machine stacked with a great many slowing upgrades no longer takes a negative time to work.
 - A folder being typed into the Settings' sharing field is no longer lost when the page refreshes before it is
   shared, and the field keeps the keyboard through the refresh, so what is typed after it lands there too.
 - A made sound (a tone, a tune, a recording off a disk) told to stop before the game had opened it no longer starts

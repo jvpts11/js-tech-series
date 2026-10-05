@@ -4,9 +4,9 @@
     "done": {
       "conditions": {
         "detail": "vintage",
-        "event": "era_built"
+        "event": "jsc:era_built"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     }
   },
   "display": {

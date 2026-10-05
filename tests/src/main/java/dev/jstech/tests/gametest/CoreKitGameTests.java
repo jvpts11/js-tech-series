@@ -20,7 +20,7 @@ import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
-import dev.jstech.industrial.blockentity.ProcessingMachineBlockEntity;
+import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.industrial.menu.ProcessingMachineMenu;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
@@ -61,6 +61,9 @@ import java.util.List;
 public final class CoreKitGameTests {
 
     private static final String ARENA = "empty";
+    /** The input and the output slot of the one-in, one-out machines of J's Industrial. */
+    private static final int INPUT_SLOT = 0;
+    private static final int OUTPUT_SLOT = 1;
     private static final BlockPos MACHINE = new BlockPos(2, 2, 2);
     /** Where a peripheral's owner stands, beside the machine. */
     private static final BlockPos OWNER = new BlockPos(4, 2, 2);
@@ -73,7 +76,7 @@ public final class CoreKitGameTests {
     @GameTest(template = ARENA)
     public static void fields_saveAndLoadWhatIsDeclaredSaved(final GameTestHelper helper) {
         final CompressorBlockEntity machine = compressor(helper);
-        machine.getInventory().setStackInSlot(ProcessingMachineBlockEntity.INPUT_SLOT,
+        machine.getInventory().setStackInSlot(INPUT_SLOT,
                 new ItemStack(Items.IRON_INGOT, 3));
         machine.getEnergy().setEnergyStored(5_000);
         final HolderLookup.Provider registries = helper.getLevel().registryAccess();
@@ -84,7 +87,7 @@ public final class CoreKitGameTests {
 
         helper.assertTrue(loaded instanceof CompressorBlockEntity, "the save loads back into a Compressor");
         final CompressorBlockEntity copy = (CompressorBlockEntity) loaded;
-        helper.assertTrue(copy.getInventory().getStackInSlot(ProcessingMachineBlockEntity.INPUT_SLOT).getCount() == 3,
+        helper.assertTrue(copy.getInventory().getStackInSlot(INPUT_SLOT).getCount() == 3,
                 "the inventory is saved");
         helper.assertTrue(copy.getEnergy().getEnergyStored() == 5_000, "the stored energy is saved");
         helper.succeed();
@@ -93,7 +96,7 @@ public final class CoreKitGameTests {
     @GameTest(template = ARENA)
     public static void fields_sendThePlayersOnlyWhatIsDeclaredForThem(final GameTestHelper helper) {
         final CompressorBlockEntity machine = compressor(helper);
-        machine.getInventory().setStackInSlot(ProcessingMachineBlockEntity.INPUT_SLOT,
+        machine.getInventory().setStackInSlot(INPUT_SLOT,
                 new ItemStack(Items.IRON_INGOT, 3));
 
         final CompoundTag update = machine.getUpdateTag(helper.getLevel().registryAccess());
@@ -134,7 +137,7 @@ public final class CoreKitGameTests {
     public static void deviceBlock_spillsTheInventoryWhenBroken(final GameTestHelper helper) {
         helper.setBlock(MACHINE, IndustrialModule.MACERATOR.get());
         final ProcessingMachineBlockEntity machine = machine(helper, ProcessingMachineBlockEntity.class);
-        machine.getInventory().setStackInSlot(ProcessingMachineBlockEntity.INPUT_SLOT,
+        machine.getInventory().setStackInSlot(INPUT_SLOT,
                 new ItemStack(Items.COBBLESTONE, 5));
 
         helper.setBlock(MACHINE, Blocks.AIR);
@@ -154,13 +157,13 @@ public final class CoreKitGameTests {
         final int firstHotbarSlot = 29;
 
         menu.quickMoveStack(player, firstHotbarSlot);
-        helper.assertTrue(machine.getInventory().getStackInSlot(ProcessingMachineBlockEntity.INPUT_SLOT)
+        helper.assertTrue(machine.getInventory().getStackInSlot(INPUT_SLOT)
                 .getCount() == 5, "a shift-click in the player's inventory sends the stack to the input");
 
-        machine.getInventory().setStackInSlot(ProcessingMachineBlockEntity.OUTPUT_SLOT,
+        machine.getInventory().setStackInSlot(OUTPUT_SLOT,
                 new ItemStack(Items.STONE, 2));
-        menu.quickMoveStack(player, ProcessingMachineBlockEntity.OUTPUT_SLOT);
-        helper.assertTrue(machine.getInventory().getStackInSlot(ProcessingMachineBlockEntity.OUTPUT_SLOT).isEmpty()
+        menu.quickMoveStack(player, OUTPUT_SLOT);
+        helper.assertTrue(machine.getInventory().getStackInSlot(OUTPUT_SLOT).isEmpty()
                 && player.getInventory().countItem(Items.STONE) == 2,
                 "a shift-click on the output sends it to the player");
         helper.succeed();
@@ -266,12 +269,12 @@ public final class CoreKitGameTests {
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void processingMachine_pressesAnIngotIntoAPlate(final GameTestHelper helper) {
         final CompressorBlockEntity machine = compressor(helper);
-        machine.getInventory().setStackInSlot(ProcessingMachineBlockEntity.INPUT_SLOT,
+        machine.getInventory().setStackInSlot(INPUT_SLOT,
                 new ItemStack(Items.IRON_INGOT));
         machine.getEnergy().setEnergyStored(machine.getEnergy().getMaxEnergyStored());
 
         helper.succeedWhen(() -> helper.assertTrue(machine.getInventory()
-                .getStackInSlot(ProcessingMachineBlockEntity.OUTPUT_SLOT)
+                .getStackInSlot(OUTPUT_SLOT)
                 .is(MaterialItems.get(ModMaterial.IRON, MaterialForm.PLATE).get()),
                 "the ingot comes out a plate"));
     }

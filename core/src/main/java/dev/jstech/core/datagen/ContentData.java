@@ -8,6 +8,7 @@
 package dev.jstech.core.datagen;
 
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.worldgen.WorldGen;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -58,6 +59,10 @@ public final class ContentData {
         data.server(new ContentBlockTagsProvider(output, data.lookup(), content, data.existingFiles()));
         if (!content.declaredFluids().isEmpty()) {
             data.server(new ContentFluidTagsProvider(output, data.lookup(), content, data.existingFiles()));
+        }
+        data.server(new MultiblockPatternProvider(output, content.modid()));
+        if (WorldGen.declares(content.modid())) {
+            data.server(new WorldGenProvider(output, data.lookup(), content.modid()));
         }
         return data;
     }

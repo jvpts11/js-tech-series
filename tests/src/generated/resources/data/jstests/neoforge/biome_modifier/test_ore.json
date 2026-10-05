@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#jstests:nowhere",
+  "features": "jstests:test_ore",
+  "step": "underground_ores"
+}

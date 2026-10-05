@@ -19,6 +19,8 @@ import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.machine.ProcessingKind;
+import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
 import dev.jstech.core.material.ModMaterial;
@@ -26,17 +28,12 @@ import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
 import dev.jstech.industrial.blockentity.ElectricFurnaceBlockEntity;
 import dev.jstech.industrial.blockentity.MaceratorBlockEntity;
-import dev.jstech.industrial.blockentity.ProcessingMachineBlockEntity;
 import dev.jstech.industrial.menu.CoalGeneratorMenu;
 import dev.jstech.industrial.menu.ProcessingMachineMenu;
-import dev.jstech.industrial.recipe.CompressingRecipe;
-import dev.jstech.industrial.recipe.MaceratingRecipe;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
@@ -51,12 +48,6 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class IndustrialModule {
 
     public static final ModContent CONTENT = new ModContent(JsIndustrial.MODID);
-
-    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES =
-            DeferredRegister.create(Registries.RECIPE_TYPE, JsIndustrial.MODID);
-
-    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
-            DeferredRegister.create(Registries.RECIPE_SERIALIZER, JsIndustrial.MODID);
 
     public static final DeferredRegister<MenuType<?>> MENUS =
             DeferredRegister.create(Registries.MENU, JsIndustrial.MODID);
@@ -75,29 +66,14 @@ public final class IndustrialModule {
     });
     private static final ContentTab.Section CABLES = INDUSTRIAL_TAB.section();
 
-    // Recipes
+    // Recipes: the kinds of the processing machines, each a recipe type of its own, read the Core's way.
 
-    public static final DeferredHolder<RecipeType<?>, RecipeType<MaceratingRecipe>> MACERATING_TYPE =
-            RECIPE_TYPES.register("macerating", () -> new RecipeType<MaceratingRecipe>() {
-                @Override
-                public String toString() {
-                    return "macerating";
-                }
-            });
-
-    public static final DeferredHolder<RecipeSerializer<?>, MaceratingRecipe.Serializer> MACERATING_SERIALIZER =
-            RECIPE_SERIALIZERS.register("macerating", MaceratingRecipe.Serializer::new);
-
-    public static final DeferredHolder<RecipeType<?>, RecipeType<CompressingRecipe>> COMPRESSING_TYPE =
-            RECIPE_TYPES.register("compressing", () -> new RecipeType<CompressingRecipe>() {
-                @Override
-                public String toString() {
-                    return "compressing";
-                }
-            });
-
-    public static final DeferredHolder<RecipeSerializer<?>, CompressingRecipe.Serializer> COMPRESSING_SERIALIZER =
-            RECIPE_SERIALIZERS.register("compressing", CompressingRecipe.Serializer::new);
+    /** Grinding: an ore or a block into its dusts. */
+    public static final ProcessingKind MACERATING =
+            CONTENT.processing("macerating", "Macerating", () -> IndustrialModule.MACERATOR);
+    /** Pressing: an ingot into a plate. */
+    public static final ProcessingKind COMPRESSING =
+            CONTENT.processing("compressing", "Compressing", () -> IndustrialModule.COMPRESSOR);
 
     // Machines, in the order the tab shows them: each ticks its block entity and opens its menu when used
 
@@ -179,8 +155,6 @@ public final class IndustrialModule {
 
     public static void register(final IEventBus modEventBus) {
         CONTENT.register(modEventBus);
-        RECIPE_TYPES.register(modEventBus);
-        RECIPE_SERIALIZERS.register(modEventBus);
         MENUS.register(modEventBus);
     }
 

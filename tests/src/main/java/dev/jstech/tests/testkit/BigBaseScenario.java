@@ -28,7 +28,7 @@ import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.industrial.IndustrialModule;
-import dev.jstech.industrial.blockentity.AbstractMachineBlockEntity;
+import dev.jstech.core.machine.MachineBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -158,7 +158,7 @@ public final class BigBaseScenario {
                         List<ServerRackBlockEntity> nodeRacks, List<HbwInterfaceBlockEntity> hubs,
                         List<PersonalComputerBlockEntity> personalComputers,
                         List<CraftingComputerBlockEntity> craftingComputers,
-                        List<AbstractMachineBlockEntity> machines, @Nullable ProcessingPattern processing,
+                        List<MachineBlockEntity> machines, @Nullable ProcessingPattern processing,
                         List<StorageKey> catalog) {
 
         /**
@@ -179,7 +179,7 @@ public final class BigBaseScenario {
             final List<Runnable> hooks = new ArrayList<>();
             if (!machines.isEmpty()) {
                 hooks.add(() -> {
-                    for (final AbstractMachineBlockEntity machine : machines) {
+                    for (final MachineBlockEntity machine : machines) {
                         machine.getEnergy().setEnergyStored(machine.getEnergy().getMaxEnergyStored());
                     }
                 });
@@ -289,7 +289,7 @@ public final class BigBaseScenario {
             pcs.add(world.placeRunningPersonalComputer(placeDesk(world, W_PC_X0 + p * PITCH, W_NORTH_ROW_Z, Direction.NORTH)));
         }
         final List<CraftingComputerBlockEntity> crafting = new ArrayList<>();
-        final List<AbstractMachineBlockEntity> machines = new ArrayList<>();
+        final List<MachineBlockEntity> machines = new ArrayList<>();
         if (params.machineDesks() > 0) {
             final BlockPos desk = placeDesk(world, W_CRAFTING_X, W_NORTH_ROW_Z, Direction.NORTH);
             crafting.add(placeCraftingComputer(world, desk));
@@ -349,7 +349,7 @@ public final class BigBaseScenario {
                     placeDesk(world, D_CONNECTOR_X + 1, D_DESK_Z0 + p * D_DESK_PITCH, Direction.EAST)));
         }
         final List<CraftingComputerBlockEntity> crafting = new ArrayList<>();
-        final List<AbstractMachineBlockEntity> machines = new ArrayList<>();
+        final List<MachineBlockEntity> machines = new ArrayList<>();
         for (int m = 0; m < params.machineDesks(); m++) {
             final BlockPos desk = placeDesk(world, D_CONNECTOR_X - 1, D_DESK_Z0 + m * D_MACHINE_DESK_PITCH, Direction.WEST);
             crafting.add(placeCraftingComputer(world, desk));
@@ -362,7 +362,7 @@ public final class BigBaseScenario {
                                 final List<ServerRackBlockEntity> serverRacks, final List<ServerRackBlockEntity> nodeRacks,
                                 final List<HbwInterfaceBlockEntity> hubs, final List<PersonalComputerBlockEntity> pcs,
                                 final List<CraftingComputerBlockEntity> crafting,
-                                final List<AbstractMachineBlockEntity> machines) {
+                                final List<MachineBlockEntity> machines) {
         final ProcessingPattern processing = machines.isEmpty() ? null : copperPlatePattern();
         final List<StorageKey> catalog = catalog(params.types(), params.variantPercent());
         final Built built = new Built(params, mainframe, List.copyOf(serverRacks), List.copyOf(nodeRacks), List.copyOf(hubs),
@@ -475,7 +475,7 @@ public final class BigBaseScenario {
      * Interface on the second against a Compressor, and a Crafting Receiving Bus beside the Compressor on cable that
      * runs round the side. The interface holds the copper plate recipe when the plate is registered.
      */
-    private static AbstractMachineBlockEntity placeMachineLine(final TestWorldBuilder world, final BlockPos computer,
+    private static MachineBlockEntity placeMachineLine(final TestWorldBuilder world, final BlockPos computer,
                                                                final Direction away) {
         final Direction side = away.getClockWise();
         final BlockPos second = computer.relative(away, 2);
@@ -490,7 +490,7 @@ public final class BigBaseScenario {
         if (plates != null) {
             part.place(NetworkRecipe.ofProcessing(plates));
         }
-        return world.blockEntity(machine, AbstractMachineBlockEntity.class);
+        return world.blockEntity(machine, MachineBlockEntity.class);
     }
 
     private static CraftingPattern planksPattern() {

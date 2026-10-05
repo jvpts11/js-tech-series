@@ -8,13 +8,13 @@
 package dev.jstech.computers.datagen;
 
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.datagen.advancement.ConditionalAdvancementProvider;
 import dev.jstech.computers.datagen.advancement.JscAdvancementTabs;
 import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.core.datagen.ContentData;
+import dev.jstech.core.datagen.advancement.ConditionalAdvancementProvider;
 import java.util.function.BiConsumer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -36,7 +36,7 @@ public final class JscDataGenerators {
                 .alsoNaming(JscDataGenerators::systemsAndPrograms)
                 .alsoNaming(JscAdvancementTabs::translations);
         data.server(new JscAdvancementProvider(data.output(), data.lookup(), data.existingFiles()));
-        data.server(new ConditionalAdvancementProvider(data.output(), data.lookup()));
+        data.server(new ConditionalAdvancementProvider(data.output(), data.lookup(), JscAdvancementTabs::all));
     }
 
     /**

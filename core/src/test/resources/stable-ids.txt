@@ -1,3 +1,6 @@
+Access.Access PRIVATE (0, "private", TextKey.of("jscore.access.private", "Only its owner"))
+Access.Access PUBLIC (2, "public", TextKey.of("jscore.access.public", "Everyone"))
+Access.Access TEAM (1, "team", TextKey.of("jscore.access.team", "Its owner's team"))
 BusCondition.Kind AFTER (2)
 BusCondition.Kind HOURS (1)
 BusCondition.Kind STOCK (0)

@@ -4,23 +4,23 @@
     "legacy": {
       "conditions": {
         "detail": "legacy",
-        "event": "era_built"
+        "event": "jsc:era_built"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     },
     "standard": {
       "conditions": {
         "detail": "standard",
-        "event": "era_built"
+        "event": "jsc:era_built"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     },
     "vintage": {
       "conditions": {
         "detail": "vintage",
-        "event": "era_built"
+        "event": "jsc:era_built"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     }
   },
   "display": {

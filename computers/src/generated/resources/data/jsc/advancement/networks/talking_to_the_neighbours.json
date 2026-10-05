@@ -9,9 +9,9 @@
   "criteria": {
     "done": {
       "conditions": {
-        "event": "computercraft_message"
+        "event": "jsc:computercraft_message"
       },
-      "trigger": "jsc:event"
+      "trigger": "jscore:event"
     }
   },
   "display": {

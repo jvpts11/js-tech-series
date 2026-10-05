@@ -45,7 +45,8 @@ public final class TestItems {
             TestSounds.CONTENT.component("mark", Codec.INT, ByteBufCodecs.VAR_INT);
 
     public static final ContentTab TAB = TestSounds.CONTENT.tab("tests", "Test Items", () -> TestItems.FULL);
-    private static final ContentTab.Section ITEMS = TAB.section();
+    /** The tab's one shelf, which the other test items join. */
+    static final ContentTab.Section ITEMS = TAB.section();
 
     /** Everything an item can hold. */
     public static final ItemEntry<Item> FULL = TestSounds.CONTENT.item("full_tool", Item::new)

@@ -24,7 +24,7 @@ import java.util.function.Supplier;
  * challenges of the hard ways in. A first install is the first time an installed system comes up in front of
  * somebody, which is marked on the disk, so erasing it and installing again counts again.
  */
-public final class SystemAdvancements extends AdvancementTab {
+public final class SystemAdvancements extends JscAdvancementTab {
 
     private static final List<String> DISTRIBUTIONS = List.of("ubuntu", "debian", "fedora", "arch", "gentoo");
     /* Where screenfetch installs: every distribution, FreeBSD and the five Frames. UNIX has no package for it. */

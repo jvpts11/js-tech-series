@@ -17,7 +17,7 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.core.cable.CableBlock;
-import dev.jstech.core.cable.CableEntry;
+import dev.jstech.core.gametest.ScenarioBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -27,7 +27,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
@@ -39,9 +38,11 @@ import java.util.function.UnaryOperator;
  * Builds the standard test scenarios (a booted Mainframe, running computers, a seeded Server Rack, the
  * crafting network) directly in a {@link ServerLevel}, so the same fixtures serve both the headless
  * GameTests and the client-driven tests. Positions handed to this builder are relative: a GameTest maps
- * them through its arena, a client test through the origin of the area it owns.
+ * them through its arena, a client test through the origin of the area it owns. What any mod's tests need
+ * (blocks, cables, placing as a player does) is the Core's {@link ScenarioBuilder}; this adds the series'
+ * machines.
  */
-public final class TestWorldBuilder {
+public final class TestWorldBuilder extends ScenarioBuilder {
 
     /** The Network OS id installed on every test Mainframe: the minimal OS that enables orchestration. */
     public static final ResourceLocation NETWORK_OS = ResourceLocation.fromNamespaceAndPath("jsc", "mc_net");
@@ -56,30 +57,8 @@ public final class TestWorldBuilder {
     /** The system a Standard machine's installer offers, for the tests that hold a machine to its own age. */
     public static final ResourceLocation STANDARD_OS = ResourceLocation.fromNamespaceAndPath("jsc", "frames_10");
 
-    private final ServerLevel level;
-    private final UnaryOperator<BlockPos> toAbsolute;
-    /**
-     * Every block this builder wrote. A GameTest builds into an empty arena, but the same scenario built in
-     * a real world lands inside terrain: the caller needs to know exactly which blocks are the base's own so
-     * it can clear the rock from between them and leave a room a player can walk into.
-     */
-    private final java.util.Set<Long> written = new java.util.HashSet<>();
-    private net.minecraft.world.level.levelgen.structure.BoundingBox box;
-
     private TestWorldBuilder(final ServerLevel level, final UnaryOperator<BlockPos> toAbsolute) {
-        this.level = level;
-        this.toAbsolute = toAbsolute;
-    }
-
-    /** Whether this builder placed the block at the given absolute position. */
-    public boolean wrote(final BlockPos absolute) {
-        return written.contains(absolute.asLong());
-    }
-
-    /** The box every block written so far fits in, or {@code null} when nothing has been placed. */
-    @org.jetbrains.annotations.Nullable
-    public net.minecraft.world.level.levelgen.structure.BoundingBox writtenBox() {
-        return box;
+        super(level, toAbsolute);
     }
 
     /** A builder whose relative positions are the GameTest arena's, exactly like {@code helper.setBlock}. */
@@ -90,90 +69,6 @@ public final class TestWorldBuilder {
     /** A builder whose relative positions are offsets from {@code origin}. */
     public static TestWorldBuilder at(final ServerLevel level, final BlockPos origin) {
         return new TestWorldBuilder(level, origin::offset);
-    }
-
-    public ServerLevel level() {
-        return level;
-    }
-
-    public BlockPos absolute(final BlockPos relative) {
-        return toAbsolute.apply(relative);
-    }
-
-    public void setBlock(final BlockPos relative, final Block block) {
-        setBlock(relative, block.defaultBlockState());
-    }
-
-    public void setBlock(final BlockPos relative, final BlockState state) {
-        // Flag 3 (update neighbours + send to clients) matches what GameTestHelper.setBlock does.
-        final BlockPos pos = absolute(relative);
-        level.setBlock(pos, state, 3);
-        note(pos);
-    }
-
-    /** Lays a wire of {@code cable} at {@code relative}: into the cable block there, or into a new one. */
-    public void setBlock(final BlockPos relative, final CableEntry cable) {
-        final BlockPos pos = absolute(relative);
-        if (!TestCables.lay(level, pos, cable.get())) {
-            throw new IllegalStateException("could not lay " + cable.id() + " at " + relative);
-        }
-        note(pos);
-    }
-
-    /** Records a position as part of the base, growing the written box to hold it. */
-    public void note(final BlockPos absolute) {
-        written.add(absolute.asLong());
-        final net.minecraft.world.level.levelgen.structure.BoundingBox one =
-                new net.minecraft.world.level.levelgen.structure.BoundingBox(absolute);
-        box = box == null ? one : net.minecraft.world.level.levelgen.structure.BoundingBox.encapsulatingBoxes(
-                java.util.List.of(box, one)).orElse(box);
-    }
-
-    /**
-     * Clears the volume a multiblock is about to claim. In an empty arena this does nothing; in a world it
-     * is the difference between a cabinet forming and a bare controller block sitting in the rock, because
-     * a multiblock refuses to raise its parts into occupied space.
-     */
-    public void clearFor(final Iterable<BlockPos> relativePositions) {
-        for (final BlockPos relative : relativePositions) {
-            final BlockPos pos = absolute(relative);
-            if (!level.getBlockState(pos).isAir()) {
-                level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
-            }
-            note(pos);
-        }
-    }
-
-    /**
-     * Places a block the way a player placing its item does: the block entity receives the item's default
-     * data components. Third-party machines keep their factory settings (side configuration, upgrades, ...)
-     * in those components, so a raw {@link #setBlock} would leave them with every face disabled.
-     */
-    public BlockEntity placeFromItem(final BlockPos relative, final Block block) {
-        setBlock(relative, block.defaultBlockState());
-        final BlockEntity entity = level.getBlockEntity(absolute(relative));
-        if (entity != null) {
-            entity.applyComponentsFromItemStack(new ItemStack(block));
-            entity.setChanged();
-        }
-        return entity;
-    }
-
-    public BlockState getBlockState(final BlockPos relative) {
-        return level.getBlockState(absolute(relative));
-    }
-
-    public BlockEntity getBlockEntity(final BlockPos relative) {
-        return level.getBlockEntity(absolute(relative));
-    }
-
-    /** The block entity at {@code relative}, or an {@link IllegalStateException} naming what was expected. */
-    public <T extends BlockEntity> T blockEntity(final BlockPos relative, final Class<T> type) {
-        final BlockEntity be = getBlockEntity(relative);
-        if (type.isInstance(be)) {
-            return type.cast(be);
-        }
-        throw new IllegalStateException("no " + type.getSimpleName() + " at " + relative);
     }
 
     // Hardware builds

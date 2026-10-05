@@ -24,7 +24,8 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 /**
- * The mods the series works with but does not need (Mekanism, JEI, EMI, FTB, ComputerCraft) must never be needed by
+ * The mods the series works with but does not need (Mekanism, JEI, EMI, FTB, ComputerCraft, Curios, Accessories,
+ * Jade) must never be needed by
  * accident: a class of theirs is named only by a source under an {@code integration} package, and the class the rest
  * of a mod calls to start an integration names none of them, so the integration's classes load only after its guard
  * found the mod. The development-only test mod is not held to it.
@@ -32,7 +33,8 @@ import org.junit.jupiter.api.Test;
 class SoftDependencyRulesTest {
 
     private static final List<String> OPTIONAL = List.of("mekanism.", "mezz.jei.", "dev.emi.", "dev.ftb.",
-            "dan200.computercraft.");
+            "dev.architectury.", "dan200.computercraft.", "top.theillusivec4.curios.", "io.wispforest.",
+            "snownee.jade.");
     private static final Pattern IMPORT = Pattern.compile("^import\\s+(?:static\\s+)?([\\w.]+)\\s*;",
             Pattern.MULTILINE);
     private static final Pattern INTEGRATION_CLASS =

@@ -9,7 +9,7 @@ package dev.jstech.industrial.client;
 
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.gui.layout.GuiLayout;
-import dev.jstech.industrial.blockentity.ProcessingMachineBlockEntity;
+import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.industrial.gui.layout.ProcessingMachineLayout;
 import dev.jstech.industrial.menu.ProcessingMachineMenu;
 import net.minecraft.client.gui.GuiGraphics;

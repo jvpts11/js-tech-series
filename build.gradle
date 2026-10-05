@@ -67,6 +67,40 @@ subprojects {
             name = 'Tterrag'
             url = 'https://maven.tterrag.com/'
         }
+        // FTB Teams and the libraries it stands on: the Core's teams come from it when it is installed.
+        maven {
+            name = 'FTB'
+            url = 'https://maven.ftb.dev/releases'
+            content { includeGroup 'dev.ftb.mods' }
+        }
+        maven {
+            name = 'Architectury'
+            url = 'https://maven.architectury.dev'
+            content { includeGroup 'dev.architectury' }
+        }
+        // EMI: the second recipe viewer the Core's recipe pages are shown in.
+        maven {
+            name = 'TerraformersMC'
+            url = 'https://maven.terraformersmc.com/releases'
+            content { includeGroup 'dev.emi' }
+        }
+        // Curios and Accessories: the two equipment-slot mods the Core reads worn items from.
+        maven {
+            name = 'TheIllusiveC4'
+            url = 'https://maven.theillusivec4.top'
+            content { includeGroup 'top.theillusivec4.curios' }
+        }
+        maven {
+            name = 'WispForest'
+            url = 'https://maven.wispforest.io/releases'
+            content { includeGroup 'io.wispforest' }
+        }
+        // Jade, through Modrinth's Maven: the block tooltip the Core's probe lines show in.
+        maven {
+            name = 'Modrinth'
+            url = 'https://api.modrinth.com/maven'
+            content { includeGroup 'maven.modrinth' }
+        }
         // GeckoLib: shipped dependency of the computing mod, for the large block models with bones and animation.
         maven {
             name = 'GeckoLib'

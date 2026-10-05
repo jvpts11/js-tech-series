@@ -8,6 +8,7 @@
 package dev.jstech.industrial.blockentity;
 
 import dev.jstech.core.blockentity.IntField;
+import dev.jstech.core.machine.MachineBlockEntity;
 import dev.jstech.industrial.IndustrialModule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -22,7 +23,7 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
  * {@value #FE_PER_TICK} FE per tick while it has burn time left, and pushes what it stores into the energy consumers
  * beside it each tick.
  */
-public class CoalGeneratorBlockEntity extends AbstractMachineBlockEntity {
+public class CoalGeneratorBlockEntity extends MachineBlockEntity {
 
     private final IntField burnTime;
     private final IntField maxBurnTime;

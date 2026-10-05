@@ -7,12 +7,10 @@
  */
 package dev.jstech.tests.gametest;
 
-import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.advancement.Acting;
-import dev.jstech.computers.advancement.JscEventTrigger;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.JscTriggers;
 import dev.jstech.computers.advancement.MachineOperators;
@@ -26,6 +24,8 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.advancement.EventTrigger;
+import dev.jstech.core.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestMachines;
 import dev.jstech.tests.testkit.CraftingRig;
@@ -37,10 +37,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ClientInformation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.common.util.FakePlayer;
@@ -55,7 +52,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -340,8 +336,9 @@ public final class AdvancementGameTests {
                 continue;
             }
             for (final Criterion<?> criterion : holder.value().criteria().values()) {
-                if (criterion.triggerInstance() instanceof JscEventTrigger.Instance instance) {
-                    helper.assertTrue(reported.contains(instance.event()),
+                if (criterion.triggerInstance() instanceof EventTrigger.Instance instance) {
+                    helper.assertTrue(instance.event().getNamespace().equals(JsComputers.MODID)
+                                    && reported.contains(instance.event().getPath()),
                             holder.id() + " waits for " + instance.event() + ", which nothing reports");
                     checked++;
                 }
@@ -360,37 +357,17 @@ public final class AdvancementGameTests {
         return player.getAdvancements().getOrStartProgress(holder).isDone();
     }
 
-    /*
-     * A server player of the test's own. It is never put on the server's player list the way a login does: a
-     * listed player is announced to every mod, and a mod that greets players sends them data a test connection
-     * cannot carry. It is only placed where the server looks a player up by id, which is all the advancements
-     * need to find whoever works a machine, and taken out again by leave.
-     */
+    /* A server player of the test's own, online only where the server looks a player up by id. */
     private static ServerPlayer join(final GameTestHelper helper) {
-        return join(helper, UUID.randomUUID());
+        return GameTestPlayers.join(helper, "advancer");
     }
 
     private static ServerPlayer join(final GameTestHelper helper, final UUID id) {
-        final ServerLevel level = helper.getLevel();
-        final ServerPlayer player = new ServerPlayer(level.getServer(), level,
-                new GameProfile(id, "advancer"), ClientInformation.createDefault());
-        lookup(level.getServer().getPlayerList()).put(player.getUUID(), player);
-        return player;
+        return GameTestPlayers.join(helper.getLevel(), id, "advancer");
     }
 
     private static void leave(final ServerPlayer player) {
-        lookup(player.server.getPlayerList()).remove(player.getUUID());
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<UUID, ServerPlayer> lookup(final PlayerList players) {
-        try {
-            final Field byId = PlayerList.class.getDeclaredField("playersByUUID");
-            byId.setAccessible(true);
-            return (Map<UUID, ServerPlayer>) byId.get(players);
-        } catch (final ReflectiveOperationException missing) {
-            throw new IllegalStateException("the server's player lookup is not where it was", missing);
-        }
+        GameTestPlayers.leave(player);
     }
 
     private static Set<String> declaredEvents() {

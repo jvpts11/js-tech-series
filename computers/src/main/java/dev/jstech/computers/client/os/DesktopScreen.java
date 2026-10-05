@@ -16,6 +16,7 @@ import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
 import dev.jstech.core.client.live.TubeFilter;
+import dev.jstech.core.client.recipeview.IKeepsViewersClear;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
@@ -41,7 +42,7 @@ import org.lwjgl.glfw.GLFW;
  * inventory, and which desktop is up, the one the rest of the client reaches through {@link ActiveDesktop}.
  */
 public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
-        implements MachineKeyboard.ITakesKeysFirst, DesktopInspection, DesktopSurface {
+        implements MachineKeyboard.ITakesKeysFirst, DesktopInspection, DesktopSurface, IKeepsViewersClear {
 
     private final DesktopState state;
     /** Where the pointer and the keyboard go, layer by layer. */
@@ -154,6 +155,16 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** Outer bounds of the framed monitor window (the bezel plus its chin), for a side panel placed beside it. */
     public MonitorFrameStyle.Geometry frameBounds() {
         return state.frameBounds();
+    }
+
+    /*
+     * The monitor body, so the recipe viewers' lists sit beside the monitor instead of over its bezel. The glass is
+     * the container's own rectangle, which the viewers already keep clear.
+     */
+    @Override
+    public List<Rect2i> areasKeptClear() {
+        final MonitorFrameStyle.Geometry body = frameBounds();
+        return List.of(new Rect2i(body.x(), body.y(), body.w(), body.h()));
     }
 
     @Override

@@ -10,7 +10,6 @@ package dev.jstech.tests.clienttest;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
-import dev.jstech.industrial.blockentity.ProcessingMachineBlockEntity;
 import dev.jstech.industrial.client.CoalGeneratorScreen;
 import dev.jstech.industrial.client.ProcessingMachineScreen;
 import net.minecraft.core.BlockPos;
@@ -43,8 +42,8 @@ public final class IndustrialScreensClientTests {
                     world.setBlock(GENERATOR, IndustrialModule.COAL_GENERATOR.get().defaultBlockState()
                             .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
                     final CompressorBlockEntity compressor = world.blockEntity(COMPRESSOR, CompressorBlockEntity.class);
-                    compressor.getInventory().setStackInSlot(ProcessingMachineBlockEntity.INPUT_SLOT,
-                            new ItemStack(Items.IRON_INGOT, 8));
+                    // Its one input is the first slot.
+                    compressor.getInventory().setStackInSlot(0, new ItemStack(Items.IRON_INGOT, 8));
                     compressor.getEnergy().setEnergyStored(compressor.getEnergy().getMaxEnergyStored() / 2);
                     world.blockEntity(GENERATOR, CoalGeneratorBlockEntity.class).getInventory()
                             .setStackInSlot(CoalGeneratorBlockEntity.FUEL_SLOT, new ItemStack(Items.COAL, 16));

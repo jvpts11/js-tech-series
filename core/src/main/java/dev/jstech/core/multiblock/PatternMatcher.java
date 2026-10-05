@@ -8,7 +8,9 @@
 package dev.jstech.core.multiblock;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Algorithm for matching a {@link MultiblockPattern} against a world (abstracted as an {@link IBlockProvider}) at a candidate controller position.
@@ -49,6 +51,7 @@ public final class PatternMatcher {
         int cwX = cWorld[0], cwY = cWorld[1], cwZ = cWorld[2];
 
         List<Long> slavePositions = new ArrayList<>();
+        Map<Long, PortKind> ports = new HashMap<>();
 
         for (int py = 0; py < pattern.sizeY(); py++) {
             for (int pz = 0; pz < pattern.sizeZ(); pz++) {
@@ -91,7 +94,7 @@ public final class PatternMatcher {
                      * Builder validation guarantees mapping is present, but
                      * be defensive in case of ill-constructed patterns.
                      */
-                    if (matcher == null || !matcher.matches(actualBlockId)) {
+                    if (matcher == null || !matcher.matchesAt(provider, worldEncoded, actualBlockId)) {
                         return new IMatchResult.Failure(
                                 relX, relY, relZ,
                                 c,
@@ -99,11 +102,15 @@ public final class PatternMatcher {
                         );
                     }
                     slavePositions.add(worldEncoded);
+                    final PortKind port = pattern.ports().get(c);
+                    if (port != null) {
+                        ports.put(worldEncoded, port);
+                    }
                 }
             }
         }
 
-        return new IMatchResult.Success(rotation, slavePositions);
+        return new IMatchResult.Success(rotation, slavePositions, ports);
     }
 
     // Position encoding (Phase 0 only)

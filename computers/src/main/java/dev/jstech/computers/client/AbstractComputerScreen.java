@@ -14,12 +14,15 @@ import dev.jstech.core.client.live.TubeFilter;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.client.recipeview.IKeepsViewersClear;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.client.gui.screen.CoreContainerScreen;
+import java.util.List;
 import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Inventory;
@@ -34,7 +37,8 @@ import org.jetbrains.annotations.Nullable;
  * writes a machine's own words as a text wall. The mouse test against a rectangle and the menu buttons come from
  * J's Core's container screen.
  */
-public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> extends CoreContainerScreen<T> {
+public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> extends CoreContainerScreen<T>
+        implements IKeepsViewersClear {
 
     /** The skin this screen paints with for the current render pass; STANDARD until {@link #init} resolves it. */
     protected EraTheme theme = EraThemes.STANDARD;
@@ -187,6 +191,13 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
         return MonitorFrameStyle
                 .forEra(era == null ? HardwareEra.STANDARD : era)
                 .geometry(leftPos, topPos, imageWidth, imageHeight);
+    }
+
+    /** The monitor body: the recipe viewers' lists sit beside it rather than over its bezel. */
+    @Override
+    public List<Rect2i> areasKeptClear() {
+        final MonitorFrameStyle.Geometry body = frameBounds();
+        return List.of(new Rect2i(body.x(), body.y(), body.w(), body.h()));
     }
 
     @Override

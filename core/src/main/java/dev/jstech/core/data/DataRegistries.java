@@ -61,7 +61,12 @@ public final class DataRegistries {
             if (registry.synced()) {
                 final DataRegistryPayload payload = new DataRegistryPayload(registry.id(),
                         registry.encode(server.registryAccess()));
-                event.getRelevantPlayers().forEach(player -> PacketDistributor.sendToPlayer(player, payload));
+                /*
+                 * Only to a game that took the payload when it joined: a player made by a test, or by another mod,
+                 * stands on a connection that agreed on nothing, and sending it what it does not know is an error.
+                 */
+                event.getRelevantPlayers().filter(player -> player.connection.hasChannel(DataRegistryPayload.TYPE))
+                        .forEach(player -> PacketDistributor.sendToPlayer(player, payload));
             }
         }
     }

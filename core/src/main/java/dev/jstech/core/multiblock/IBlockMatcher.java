@@ -18,6 +18,14 @@ public interface IBlockMatcher {
 
     boolean matches(String blockId);
 
+    /**
+     * Whether the block at that place of the world fits: by its id alone unless the matcher also asks what the world
+     * knows about the block there, its tags.
+     */
+    default boolean matchesAt(IBlockProvider provider, long encodedPos, String blockId) {
+        return matches(blockId);
+    }
+
     static IBlockMatcher exact(String requiredId) {
         Objects.requireNonNull(requiredId, "requiredId must not be null");
         return blockId -> requiredId.equals(blockId);

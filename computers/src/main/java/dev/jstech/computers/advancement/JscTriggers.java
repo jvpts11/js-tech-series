@@ -15,8 +15,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * The advancement criteria the mod pays out: a computer booting into a system for the first time, and every other
- * event by its id.
+ * The advancement criterion only this mod pays out: a computer booting into a system for the first time. Every other
+ * advancement of the mod stands on the Core's event trigger, by the ids in {@link JscEvents}.
  */
 public final class JscTriggers {
 
@@ -26,10 +26,6 @@ public final class JscTriggers {
     /** Booting a computer into a system (the Arch and Gentoo challenges use it). */
     public static final DeferredHolder<CriterionTrigger<?>, OsFirstBootTrigger> OS_FIRST_BOOT =
             TRIGGERS.register("os_first_boot", OsFirstBootTrigger::new);
-
-    /** Every other advancement's event: see {@link JscEventTrigger} and the ids in {@link JscEvents}. */
-    public static final DeferredHolder<CriterionTrigger<?>, JscEventTrigger> EVENT =
-            TRIGGERS.register("event", JscEventTrigger::new);
 
     private JscTriggers() {
     }

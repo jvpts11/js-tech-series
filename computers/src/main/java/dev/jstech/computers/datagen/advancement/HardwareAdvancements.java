@@ -30,7 +30,7 @@ import java.util.function.Supplier;
  * The machines themselves: putting one together, the eras it can be built in, and the racks, datacenters, clusters
  * and supercomputers they grow into. The Advanced, Exa and Singularity builds join once those eras have hardware.
  */
-public final class HardwareAdvancements extends AdvancementTab {
+public final class HardwareAdvancements extends JscAdvancementTab {
 
     public HardwareAdvancements() {
         super("hardware", ResourceLocation.withDefaultNamespace("textures/block/iron_block.png"));
@@ -75,7 +75,7 @@ public final class HardwareAdvancements extends AdvancementTab {
                 on(JscEvents.SUPERCOMPUTER_ONLINE));
     }
 
-    private static Supplier<Criterion<?>> built(final HardwareEra era) {
+    private Supplier<Criterion<?>> built(final HardwareEra era) {
         return on(JscEvents.ERA_BUILT, HardwareMilestones.eraDetail(era));
     }
 

@@ -1,0 +1,16 @@
+{
+  "criteria": {
+    "done": {
+      "trigger": "jscore:axis_step",
+      "conditions": {
+        "axis": "jscore:hardware_era",
+        "step": "transition"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ]
+}

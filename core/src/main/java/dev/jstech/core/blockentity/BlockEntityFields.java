@@ -23,6 +23,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -63,7 +64,7 @@ public final class BlockEntityFields {
     /* What the block offers to pipes and cables, found once when the declarations close: asked on every lookup. */
     private @Nullable FieldItemHandler exposedItems;
     private @Nullable FieldEnergyStorage exposedEnergy;
-    private @Nullable FieldFluidTank exposedFluid;
+    private @Nullable IFluidHandler exposedFluid;
 
     /** The first layout of each kind of block entity that declares none, made once a kind, named by its id. */
     private static final Map<BlockEntityType<?>, SaveLayout> FIRST_LAYOUTS = new ConcurrentHashMap<>();
@@ -354,6 +355,7 @@ public final class BlockEntityFields {
             return;
         }
         closed = true;
+        final List<FieldFluidTank> exposedTanks = new ArrayList<>();
         for (final IField field : fields) {
             if (field instanceof DerivedInt && field.flags().client()) {
                 polled.add(field);
@@ -364,10 +366,13 @@ public final class BlockEntityFields {
             if (exposedEnergy == null && field instanceof FieldEnergyStorage energy && energy.isExposed()) {
                 exposedEnergy = energy;
             }
-            if (exposedFluid == null && field instanceof FieldFluidTank tank && tank.isExposed()) {
-                exposedFluid = tank;
+            if (field instanceof FieldFluidTank tank && tank.isExposed()) {
+                exposedTanks.add(tank);
             }
         }
+        // One tank is offered as it is; several are offered together, as a machine's inputs and outputs are.
+        exposedFluid = exposedTanks.isEmpty() ? null
+                : exposedTanks.size() == 1 ? exposedTanks.getFirst() : new CombinedTanks(exposedTanks);
     }
 
     /**

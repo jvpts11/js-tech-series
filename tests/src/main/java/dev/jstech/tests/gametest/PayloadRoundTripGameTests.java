@@ -50,10 +50,13 @@ import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.hologram.HologramPayload;
+import dev.jstech.core.look.LookTexts;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLink;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
@@ -70,6 +73,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -90,6 +94,17 @@ public final class PayloadRoundTripGameTests {
     private static final String ARENA = "empty";
     private static final BlockPos HOST = new BlockPos(12, -40, 900);
     private static final BlockPos MONITOR = new BlockPos(13, -40, 900);
+
+    @GameTest(template = ARENA)
+    public static void hologram_roundTrips(final GameTestHelper helper) {
+        roundTrip(helper, HologramPayload.STREAM_CODEC, new HologramPayload(
+                ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "sign"), 1.5, 70.25, -3.0,
+                List.of(GameText.component(LookTexts.WORKING.with(42)), GameText.component(Text.literal("plain"))),
+                200));
+        roundTrip(helper, HologramPayload.STREAM_CODEC, new HologramPayload(
+                ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "sign"), 0, 0, 0, List.of(), 0));
+        helper.succeed();
+    }
 
     @GameTest(template = ARENA)
     public static void program_uiEventRoundTrips(final GameTestHelper helper) {
