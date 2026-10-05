@@ -224,6 +224,28 @@ GuideBlockRenderers.register(ResourceLocation.fromNamespaceAndPath("mymod", "str
 The page keeps the room and hands your renderer the JSON as a tag. A game without your mod leaves the room blank, and
 the manual still opens.
 
+## Reading a manual as text
+
+*Added 2026-10-06.*
+
+A help program, or a viewer at a terminal, shows a manual as text rather than as pages. `ManualReader` reads one
+that way, from the same declarations, so nothing is written twice:
+
+```java
+ManualReader reader = new ManualReader(manual, library.contentsOf(manual), words);
+reader.tree();                        // chapters, sections and entries, numbered as on paper ("3.2.6")
+reader.article("mymod:press");        // the entry: headings, paragraphs, steps, tables, links
+reader.find("press");                 // an entry by its id's last part, its number or its title
+reader.search("steam pressure");      // the entries holding every word
+reader.index();                       // titles and explained words, alphabetically
+```
+
+`words` is the `IGuideText` that puts the keys in the reader's language, as the binder's screen does. An article's
+pieces are a sealed set (`Heading`, `Paragraph`, `Item`, `Term`, `Table`, `Picture`, `Recipes`, `Links`), so a
+viewer handles each one and the compiler says when a new one comes. Figures and tables keep their chapter's numbers
+("Table 3-7"); a block seen from three sides becomes its picture and its legend, a plan its parts, and a page break
+or a special block is left out. J's Computers reads the manuals this way in its help programs.
+
 ## What a player does with it
 
 - Using the manual item opens it at its cover; a click opens it to its contents.
@@ -234,6 +256,7 @@ the manual still opens.
 - Holding **M** (the player can change it, "Open Its Page in the Manual") over an item in any inventory for a moment
   opens the manual at its page; pressing it with the item in hand does the same. An item with a page says so at the
   foot of its tooltip: "Hold [M] to open its page in the manual".
+- On a computer of J's Computers, every system's help reads the same manuals beside its own commands.
 
 ## What can go wrong
 

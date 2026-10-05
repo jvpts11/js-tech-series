@@ -15,6 +15,7 @@ import dev.jstech.computers.gui.CdeBackdrop;
 import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.EffectsPages;
 import dev.jstech.computers.gui.MonitorGlass;
+import dev.jstech.computers.gui.help.HelpForm;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.core.gui.layout.GuiLayout;
@@ -340,7 +341,11 @@ class LayoutAuditTest {
                 CdeStyleLayout.backdropLayout(CdeBackdrop.values().length), true));
         c.add(new AuditCase("WorkstationInfoLayout", WorkstationInfoLayout.layout(), true));
         c.add(new AuditCase("WorkstationDevicesLayout", WorkstationDevicesLayout.layout(), true));
-        c.add(new AuditCase("HelpViewerLayout", HelpViewerLayout.layout(), true));
+        // Help in every form a desktop gives it.
+        for (final HelpForm form : HelpForm.values()) {
+            c.add(new AuditCase("HelpViewerLayout(" + form + ")", HelpViewerLayout.layout(form),
+                    true));
+        }
         // The Network Manager's Services tab scrolls, so it is held to being clean at its widest and its narrowest.
         c.add(new AuditCase("NetworkServicesLayout(default)", NetworkServicesLayout.layout(
                 NetworkServicesLayout.DEFAULT_CONTENT_W, 16, 32, true, 2, new int[] {84, 44, 72}, 64), false));

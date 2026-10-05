@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload.files;
 import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.CodeFileReplies;
 import dev.jstech.computers.client.os.FilesApps;
+import dev.jstech.computers.gui.help.HelpViews;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -320,7 +321,10 @@ public final class FilePayloads {
                     : msdScreen(level, computer, player, payload.path());
             final Optional<String> drawn = msd.isPresent() ? msd
                     : menuShellListing(level, computer, player, payload.path());
-            final Optional<String> read = drawn.isPresent() ? drawn
+            // A help viewer draws from the player's manuals; what it was opened on is all it needs, and no disk has it.
+            final Optional<String> help = drawn.isPresent() ? drawn
+                    : HelpViews.names(payload.path()) ? Optional.of("") : Optional.empty();
+            final Optional<String> read = help.isPresent() ? help
                     : readDiskFile(level, computer, payload.path());
             if (read.isPresent()) {
                 content = read.get();

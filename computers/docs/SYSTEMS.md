@@ -40,8 +40,33 @@ FreeBSD and UNIX a desktop is a package you add: **KDE Plasma**, **GNOME** and *
 looks like its era: KDE in the Transition is the KDE of that time, not of today.
 
 Every desktop has the same programs under the names its system gives them: Network, This PC, Settings, Files,
-Editor, Command Prompt, System Monitor, Calculator and Network Manager. Frames adds the Device Manager; CDE adds
-Workstation Info and the Help Viewer.
+Editor, Command Prompt, System Monitor, Calculator, Network Manager and Help ([Help on a computer](#help-on-a-computer)).
+Frames adds the Device Manager; CDE adds Workstation Info.
+
+## Help on a computer
+
+*Added 2026-10-06.*
+
+Every computer can read the series' manuals (the Technical Reference, the Guide to Operations and the Plant
+Drawings: the same entries the binders print, in your language) beside the manual pages of its own commands. How it
+reads them is its system's own:
+
+| System | Where | How |
+| --- | --- | --- |
+| Frames 95 | Help, on the Start menu | Help Topics: Contents (the books), Index and Find; Display shows a topic in a window of its own, with Help Topics and Back. |
+| Frames XP | Help and Support | The Help and Support Center: Search in the blue band; Back, Home, Index, Favorites and History; the books on the left. |
+| Frames 7 | Help and Support | Back and forward, Search Help and Browse Help over the books and the page. |
+| Frames 10 and 11 | Get Help | One search across the top, the books, and the page. |
+| KDE Plasma | Help Center | The books on the left, the page on the right. |
+| GNOME, Cinnamon | Help | No tree: each page lists what it holds, and the line above it says where it is. |
+| CDE | Help Viewer | The topic hierarchy above the page; Backtrack, History..., Index... and Top Level. |
+| MC-DOS, MC-NET | `help`, `help <topic>` | The whole screen in the sixteen colours: Tab picks a link and Enter follows it; Alt+C the contents, Alt+N the next topic, Alt+B back, Alt+I the index; Alt+S finds, Escape leaves. |
+| Linux (a shell) | `info`, `info <topic>` | info: every chapter, section and entry is a node; n, p and u move, Tab and Enter follow a link, m goes to a menu item, s searches, l goes back, q leaves. |
+| UNIX, FreeBSD (a shell) | `man <topic>` | A manual's entry as a page of section 7 in the pager, when no command has that name: `man graphics-cards`. |
+
+A topic is named by the last part of its id (`graphics-cards`, with hyphens or underscores) or by its title. A
+search finds every entry holding all the words typed, and every command whose name or summary holds them. Every
+system but FreeBSD still has `help` for its commands at the prompt; on Frames it prints, as it always did.
 
 ## Installing a system
 
@@ -118,3 +143,7 @@ their own packages (Σ# programs packed with `sgpack`) for the others to install
   from media only.
 - **The computer starts into the wrong system.** Change the boot order in the firmware, or pick at the boot
   manager.
+- **Help says "Asking the machine..." under Commands.** The machine has not answered yet, or the terminal is not
+  joined to one; the manuals still read, since they are in your game.
+- **`man` says "No manual entry" for a topic.** On Linux the manuals are read with `info`; elsewhere, check the
+  topic's name (`man graphics-cards`, not `man graphics`), or search for it in a desktop's Help.

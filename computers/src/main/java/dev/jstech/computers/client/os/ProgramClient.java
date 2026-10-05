@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.gui.help.HelpForm;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
@@ -84,7 +85,9 @@ public final class ProgramClient {
         register(rl("workstation_info"), (host, mon, os) -> new WorkstationInfoApp(host));
         // Its Devices dialog, which Devices... opens and which comes back with the session.
         register(rl("workstation_info/devices"), (host, mon, os) -> new WorkstationDevicesApp(host));
-        register(rl("help_viewer"), (host, mon, os) -> new HelpViewerApp(host));
+        // Help, in the form the desktop it opens on had it; Frames 95's topic window is a second window of its own.
+        register(rl("help_viewer"), (host, mon, os) -> new HelpViewerApp(host, HelpViewerApp.formOf(os)));
+        register(rl("help_viewer/topic"), (host, mon, os) -> new HelpViewerApp(host, HelpForm.FRAMES_95_TOPIC));
         register(rl("files"), (host, mon, os) -> new FilesApp(host, os.getPath(), "", mon));
         register(rl("editor"), (host, mon, os) -> new EditorApp(host));
         register(rl("command_prompt"), (host, mon, os) -> new ShellApp(host, os));

@@ -25,6 +25,7 @@ import dev.jstech.computers.operation.payload.TerminalMaintenancePayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.gui.TextScreen;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -493,6 +494,13 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     public String consoleText() {
         return tabs != null && tabs[ComputerTerminalMenu.TAB_CONSOLE] instanceof ConsoleTerminalTab console
                 ? console.glassText() : "";
+    }
+
+    /** The screen a program holding this machine's prompt last drew, for a test to read; null when none is. */
+    @Nullable
+    public TextScreen consoleScreen() {
+        return tabs != null && tabs[ComputerTerminalMenu.TAB_CONSOLE] instanceof ConsoleTerminalTab console
+                ? console.editorScreen() : null;
     }
 
     /** Where the glass starts, for a heading that draws in world coordinates of its own. */

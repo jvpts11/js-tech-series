@@ -53,6 +53,8 @@ public final class ClientTestSuite {
             WorldStabilityClientTests.class,
             ManualClientTests.class,
             SeriesManualsClientTests.class,
+            HelpWindowClientTests.class,
+            HelpTerminalClientTests.class,
             FreeBsdClientTests.class,
             FullJourneyClientTests.class,
             GatewayManagerClientTests.class,

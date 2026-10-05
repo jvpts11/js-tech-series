@@ -8,7 +8,7 @@
 package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.advancement.JscEvents;
-import dev.jstech.computers.client.os.HelpViewerApp;
+import dev.jstech.computers.client.os.HelpAnswers;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.HelpPayload;
@@ -47,12 +47,13 @@ public final class HelpPayloads {
         ComputerAccess.accept(registrar, RequestHelpPayload.TYPE, RequestHelpPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestHelpPayload::hostPos), HelpPayloads::handle);
         registrar.playToClient(HelpPayload.TYPE, HelpPayload.STREAM_CODEC,
-                ClientPayloadHandlers.onMainThread((payload, player) -> HelpViewerApp.accept(payload)));
+                ClientPayloadHandlers.onMainThread((payload, player) -> HelpAnswers.accept(payload)));
     }
 
     /**
      * The list, filed under what each command says it is for, the groups in the order a person meets them, and the
-     * page asked for, or the first there is.
+     * page asked for. Asked with no name, the list comes alone: a help program opens on its manuals, and only shows a
+     * command's page when one is picked.
      */
     private static void handle(final RequestHelpPayload payload, final ServerPlayer player,
                                final ServerLevel level) {
@@ -68,7 +69,7 @@ public final class HelpPayloads {
             }
             byGroup.computeIfAbsent(command.group(), group -> new ArrayList<>())
                     .add(new HelpPayload.Entry(command.group().title().text(), command.name(), command.summary()));
-            if (opening == null || command.name().equalsIgnoreCase(payload.name())) {
+            if (opening == null && command.name().equalsIgnoreCase(payload.name())) {
                 opening = command;
             }
         }

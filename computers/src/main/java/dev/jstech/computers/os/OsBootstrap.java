@@ -234,20 +234,21 @@ public final class OsBootstrap {
      */
     private static final Set<Platform> THIS_PC_SYSTEMS = Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD);
 
-    /** The nine built-in desktop apps every desktop environment can bundle, in rail order. */
+    /** The ten built-in desktop apps every desktop environment can bundle, in rail order. */
     private static final List<ResourceLocation> BUILTIN_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
-            rl("system_monitor"), rl("calculator"), rl("network_manager"));
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("help_viewer"));
 
     /** What the Frames editions bundle: the same, and their Device Manager. */
     private static final List<ResourceLocation> FRAMES_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
-            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("device_manager"));
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("device_manager"), rl("help_viewer"));
 
     /** What CDE bundles: the same, and its Workstation Info, which no other desktop has. */
     private static final List<ResourceLocation> CDE_APPS = List.of(
             rl("network"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
-            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("workstation_info"));
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("workstation_info"),
+            rl("help_viewer"));
 
     /**
      * The built-in desktop environments. The Frames editions bundle their own (the id equals the OS id, so the
@@ -255,25 +256,31 @@ public final class OsBootstrap {
      * with its chrome and the native names its bundled apps show.
      */
     private static final List<DesktopEnvironmentDef> BUILTIN_DESKTOPS = List.of(
-            // Frames 95 keeps its Device Manager in System Properties, which its Control Panel calls System.
+            /*
+             * Frames 95 keeps its Device Manager in System Properties, which its Control Panel calls System, and
+             * its help is plain Help on the Start menu.
+             */
             new DesktopEnvironmentDef(rl("frames_95"), "Frames 95", PanelStyle.FRAMES_95, FRAMES_APPS,
-                    Map.of(rl("device_manager"), DesktopNames.FRAMES_95_SYSTEM), SoftwareHouse.MIDSOFT),
-            new DesktopEnvironmentDef(rl("frames_xp"), "Frames XP", PanelStyle.FRAMES_XP, FRAMES_APPS, Map.of(),
-                    SoftwareHouse.MIDSOFT),
+                    Map.of(rl("device_manager"), DesktopNames.FRAMES_95_SYSTEM, rl("help_viewer"),
+                            DesktopNames.FRAMES_95_HELP), SoftwareHouse.MIDSOFT),
+            new DesktopEnvironmentDef(rl("frames_xp"), "Frames XP", PanelStyle.FRAMES_XP, FRAMES_APPS, Map.of(
+                    rl("help_viewer"), DesktopNames.FRAMES_XP_HELP), SoftwareHouse.MIDSOFT),
             // Frames 7 calls the machine Computer, and keeps its settings in a Control Panel of categories.
             new DesktopEnvironmentDef(rl("frames_7"), "Frames 7", PanelStyle.FRAMES_7, FRAMES_APPS, Map.of(
-                    rl("this_pc"), DesktopNames.FRAMES_7_COMPUTER, rl("settings"), DesktopNames.FRAMES_7_CONTROL_PANEL),
-                    SoftwareHouse.MIDSOFT),
+                    rl("this_pc"), DesktopNames.FRAMES_7_COMPUTER, rl("settings"), DesktopNames.FRAMES_7_CONTROL_PANEL,
+                    rl("help_viewer"), DesktopNames.FRAMES_7_HELP), SoftwareHouse.MIDSOFT),
             // Frames 10 named its file manager after what it explores, and the machine This PC, as 11 still does.
             new DesktopEnvironmentDef(rl("frames_10"), "Frames 10", PanelStyle.FRAMES_10, FRAMES_APPS, Map.of(
-                    rl("files"), DesktopNames.FRAMES_10_FILE_EXPLORER), SoftwareHouse.MIDSOFT),
-            new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, FRAMES_APPS, Map.of(),
+                    rl("files"), DesktopNames.FRAMES_10_FILE_EXPLORER, rl("help_viewer"), DesktopNames.GET_HELP),
                     SoftwareHouse.MIDSOFT),
+            new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, FRAMES_APPS, Map.of(
+                    rl("help_viewer"), DesktopNames.GET_HELP), SoftwareHouse.MIDSOFT),
             new DesktopEnvironmentDef(rl("kde_plasma"), "KDE Plasma", PanelStyle.KDE, BUILTIN_APPS, Map.of(
                     rl("files"), DesktopNames.KDE_FILES, rl("editor"), DesktopNames.KDE_EDITOR,
                     rl("command_prompt"), DesktopNames.KDE_TERMINAL, rl("calculator"), DesktopNames.KDE_CALCULATOR,
                     rl("system_monitor"), DesktopNames.KDE_MONITOR, rl("settings"), DesktopNames.KDE_SETTINGS,
-                    rl("this_pc"), DesktopNames.KDE_THIS_PC), SoftwareHouse.KDE_GUILD),
+                    rl("this_pc"), DesktopNames.KDE_THIS_PC, rl("help_viewer"), DesktopNames.KDE_HELP),
+                    SoftwareHouse.KDE_GUILD),
             new DesktopEnvironmentDef(rl("gnome"), "GNOME", PanelStyle.GNOME, BUILTIN_APPS, Map.of(
                     rl("files"), DesktopNames.GNOME_FILES, rl("editor"), DesktopNames.GNOME_EDITOR,
                     rl("command_prompt"), DesktopNames.GNOME_TERMINAL, rl("calculator"), DesktopNames.GNOME_CALCULATOR,
@@ -288,13 +295,14 @@ public final class OsBootstrap {
                     SoftwareHouse.SPEARMINT),
             /*
              * CDE keeps its own names for what it bundles, which are plainer than anybody else's: it called a
-             * file manager the File Manager. Its settings are the Style Manager, as they were.
+             * file manager the File Manager. Its settings are the Style Manager, as they were, and its help the
+             * Help Viewer.
              */
             new DesktopEnvironmentDef(rl("cde"), "CDE", PanelStyle.CDE, CDE_APPS, Map.of(
                     rl("files"), DesktopNames.CDE_FILES, rl("editor"), DesktopNames.CDE_EDITOR,
                     rl("command_prompt"), DesktopNames.CDE_TERMINAL, rl("calculator"), DesktopNames.CDE_CALCULATOR,
-                    rl("system_monitor"), DesktopNames.CDE_MONITOR, rl("settings"), DesktopNames.CDE_SETTINGS),
-                    SoftwareHouse.OPEN_DESK_CONSORTIUM)
+                    rl("system_monitor"), DesktopNames.CDE_MONITOR, rl("settings"), DesktopNames.CDE_SETTINGS,
+                    rl("help_viewer"), DesktopNames.CDE_HELP), SoftwareHouse.OPEN_DESK_CONSORTIUM)
     );
 
     /** The built-in desktop environments, so tooling reads them from one source. */
@@ -382,12 +390,14 @@ public final class OsBootstrap {
                     .described("Who is at this workstation, the system it runs and the hardware it runs on.")
                     .withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM),
             /*
-             * The Help Viewer, which is CDE's own and is named the way CDE named it. What it shows is the
-             * machine's manual pages, so it ships with the desktop rather than being installed.
+             * Help, which every desktop has in its own form and under its own name: Frames 95's Help Topics, the
+             * Help and Support of XP and 7, Get Help on 10 and 11, KDE's Help Center, GNOME's and Cinnamon's Help,
+             * and CDE's Help Viewer. What it shows is the manuals of the series and the machine's own manual
+             * pages beside them, so it ships with the desktop rather than being installed.
              */
-            ProgramSpec.of(rl("help_viewer"), "dthelpview", true, CDE_SYSTEMS, 0, ProgramKind.APP, 0, HostScope.ANY)
-                    .named("Help Viewer").described("The machine's manual pages, read in a window.")
-                    .withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM),
+            ProgramSpec.of(rl("help_viewer"), "helpview", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Help")
+                    .described("The manuals of the series and this machine's own manual pages, read in a window."),
             ProgramSpec.of(rl("settings"), "settings", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)
                     .named("Settings").described("Change how this computer looks and behaves."),
             ProgramSpec.of(rl("files"), "files", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)

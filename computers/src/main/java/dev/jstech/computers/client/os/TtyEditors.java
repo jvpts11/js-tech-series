@@ -53,6 +53,14 @@ public final class TtyEditors {
         register("vi-freebsd", () -> new VimKeys(ViDialect.NVI));
         register("vi-unix", () -> new VimKeys(ViDialect.SYSTEM_V));
         register("ee", EeKeys::new);
+        /*
+         * The help readers that take the glass to show the manuals of the player's game beside the machine's
+         * commands: the DOS family's HELP in its sixteen colours, Linux's info, and man reading a manual's entry on
+         * UNIX and FreeBSD, as their pager.
+         */
+        register("help", DosHelpKeys::new);
+        register("info", InfoKeys::new);
+        register("man", ManualPageKeys::new);
     }
 
     private TtyEditors() {

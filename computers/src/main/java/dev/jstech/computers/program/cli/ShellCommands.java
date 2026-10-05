@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.gui.help.HelpViews;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.program.cli.man.ManPage;
@@ -27,11 +28,21 @@ final class ShellCommands {
     }
 
     @TextHolder
-    static final class Help implements ICliCommand {
+    static final class Help implements ICliCommand, CliShell.IHandOver {
 
         private static final TextKey SUMMARY =
                 TextKey.of("jsc.cli.shell.help.summary", "list commands, or show how one is used");
         private static final TextKey USAGE = TextKey.of("jsc.cli.shell.help.usage", "[command]");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.shell.help.about", "Lists the commands of this"
+                + " machine, or prints how one is used. On MC-DOS and MC-NET it takes the whole screen instead: the"
+                + " manuals of the series beside the commands, each topic with its links, opened on the command or"
+                + " the entry named after it.");
+        private static final TextKey KEYS = TextKey.of("jsc.cli.shell.help.keys", "In the full-screen help, Tab"
+                + " picks a button or a link and Enter follows it; Alt+C shows the contents, Alt+N the next topic,"
+                + " Alt+B the one before and Alt+I the index. Alt+S finds a word, F3 finds it again, and Escape"
+                + " leaves.");
+        private static final TextKey DOS_EXAMPLE = TextKey.of("jsc.cli.shell.help.example.dos",
+                "MC-DOS's help, opened on the page of dir");
         private static final TextKey NO_SUCH = TextKey.of("jsc.cli.shell.help.no_such", "no such command: %s");
         private static final TextKey ALSO = TextKey.of("jsc.cli.shell.help.also", "  also: %s");
         private static final TextKey COMMANDS = TextKey.of("jsc.cli.shell.help.commands", "commands");
@@ -63,7 +74,25 @@ final class ShellCommands {
             return USAGE.text();
         }
 
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text(), KEYS.text());
+        }
+
+        @Override public List<Example> examples() {
+            return List.of(new Example("help dir", DOS_EXAMPLE));
+        }
+
+        /** The DOS family's two systems give the terminal to their full-screen help; the others print. */
+        @Override public String fileOf(final ICliComputer computer, final List<String> args) {
+            return fullScreen(computer) ? HelpViews.dos(computer.platform().serializedName(), String.join(" ", args))
+                    : null;
+        }
+
         @Override public void run(final CliContext ctx) {
+            if (fullScreen(ctx.computer())) {
+                // The terminal has been given to the help; there is nothing to print behind it.
+                return;
+            }
             if (ctx.hasArgs()) {
                 final ICliCommand command = ctx.shell().find(ctx.arg(0));
                 if (command == null || !command.available(ctx.computer())) {
@@ -102,6 +131,10 @@ final class ShellCommands {
             }
             ctx.out().blank();
             ctx.out().dim(DETAILS);
+        }
+
+        private static boolean fullScreen(final ICliComputer computer) {
+            return computer.platform() == Platform.MC_DOS || computer.platform() == Platform.MC_NET;
         }
     }
 

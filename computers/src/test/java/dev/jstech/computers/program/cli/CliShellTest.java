@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.gui.help.HelpViews;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
@@ -158,8 +159,10 @@ class CliShellTest {
         assertFalse(anyStyle("hello", CliStyle.ERROR), "hello: not found must not be the shell's error style");
     }
 
+    /** Frames' prompt prints its help; the two systems of the DOS family before it give theirs the whole screen. */
     @Test
     void run_helpListsEveryRegisteredCommand() {
+        computer.platform = Platform.FRAMES;
         final String out = joined("help");
         assertTrue(out.contains("iql"));
         assertTrue(out.contains("interac"));
@@ -168,7 +171,17 @@ class CliShellTest {
 
     @Test
     void run_helpForOneCommandShowsItsUsage() {
+        computer.platform = Platform.FRAMES;
         assertTrue(joined("help operation").contains("<statement>"));
+    }
+
+    @Test
+    void run_helpOnMcDosHandsTheTerminalToTheFullScreenHelp() {
+        final CliShell.Response response = shell.run("help operation", computer);
+
+        assertTrue(response.lines().isEmpty(), "nothing printed behind it; got " + response.lines());
+        assertEquals("help", response.handOver().editor());
+        assertEquals(HelpViews.dos("mc_dos", "operation"), response.handOver().path());
     }
 
     @Test

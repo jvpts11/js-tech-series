@@ -9,8 +9,11 @@ package dev.jstech.computers.program.cli;
 
 
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.gui.help.HelpViews;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.program.cli.man.ManPage;
 import dev.jstech.computers.program.cli.man.ManTopics;
+import dev.jstech.computers.program.cli.man.ManualEntries;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -475,11 +478,16 @@ final class PosixFileCommands {
     }
 
     @TextHolder
-    static final class Man implements ICliCommand {
+    static final class Man implements ICliCommand, CliShell.IHandOver {
 
         private static final TextKey SUMMARY =
                 TextKey.of("jsc.cli.posix.man.summary", "show the manual entry for a command");
         private static final TextKey USAGE = TextKey.of("jsc.cli.posix.man.usage", "<command>");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.posix.man.about", "Prints a command's manual page."
+                + " On UNIX and FreeBSD it also reads the manuals of the series: an entry named by the last part of"
+                + " its id or by its title, such as graphics-cards, opens as a page of section 7 in the pager.");
+        private static final TextKey ENTRY_EXAMPLE = TextKey.of("jsc.cli.posix.man.example.entry",
+                "the manual's entry on graphics cards, on UNIX and FreeBSD");
         private static final TextKey WHICH_PAGE =
                 TextKey.of("jsc.cli.posix.man.which_page", "What manual page do you want?");
         private static final TextKey TRY_INTRO =
@@ -499,10 +507,29 @@ final class PosixFileCommands {
 
         @Override public Text usage() { return USAGE.text(); }
 
+        @Override public List<Text> description() { return List.of(ABOUT.text()); }
+
+        @Override public List<Example> examples() {
+            return List.of(new Example("man graphics-cards", ENTRY_EXAMPLE));
+        }
+
+        /**
+         * The terminal goes to the pager when what was asked for is no command and no topic but an entry of the
+         * manuals, on the two systems whose man reads them; the page is laid out on the player's side.
+         */
+        @Override public String fileOf(final ICliComputer computer, final List<String> args) {
+            return args.isEmpty() ? null : manualEntry(computer, args.getFirst()).map(HelpViews::manual).orElse(null);
+        }
+
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
                 ctx.out().error(WHICH_PAGE);
                 ctx.out().dim(TRY_INTRO);
+                return;
+            }
+            if (manualEntry(ctx.computer(), ctx.arg(0)).isPresent()) {
+                // The pager has the terminal; the page is the manual's, read there.
+                ctx.computer().report(JscEvents.MAN_PAGE, ctx.arg(0));
                 return;
             }
             final ICliCommand command = ctx.shell().find(ctx.arg(0));
@@ -526,6 +553,27 @@ final class PosixFileCommands {
                 return;
             }
             ctx.out().error(NO_ENTRY.with(ctx.arg(0)));
+        }
+
+        /**
+         * The manual's entry a word names, on UNIX and FreeBSD, when it names no command and no topic: a command's
+         * page is always the one man shows first, as a section 1 page comes before a section 7 one.
+         */
+        private static Optional<String> manualEntry(final ICliComputer computer, final String word) {
+            final Platform platform = computer.platform();
+            if (platform != Platform.UNIX && platform != Platform.FREEBSD) {
+                return Optional.empty();
+            }
+            for (final ICliCommand command : CliCommands.commandsFor(computer.shellFamily())) {
+                if (command.available(computer) && (command.name().equalsIgnoreCase(word)
+                        || command.aliases().stream().anyMatch(alias -> alias.equalsIgnoreCase(word)))) {
+                    return Optional.empty();
+                }
+            }
+            if (ManTopics.find(word, platform).isPresent()) {
+                return Optional.empty();
+            }
+            return ManualEntries.find(word);
         }
     }
 

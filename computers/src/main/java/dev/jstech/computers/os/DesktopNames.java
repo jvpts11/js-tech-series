@@ -23,6 +23,12 @@ final class DesktopNames {
     static final TextKey FRAMES_7_COMPUTER = TextKey.of("jsc.desktop.frames_7.this_pc", "Computer");
     static final TextKey FRAMES_7_CONTROL_PANEL = TextKey.of("jsc.desktop.frames_7.settings", "Control Panel");
     static final TextKey FRAMES_10_FILE_EXPLORER = TextKey.of("jsc.desktop.frames_10.files", "File Explorer");
+    static final TextKey FRAMES_95_HELP = TextKey.of("jsc.desktop.frames_95.help_viewer", "Help");
+    static final TextKey FRAMES_XP_HELP = TextKey.of("jsc.desktop.frames_xp.help_viewer", "Help and Support");
+    static final TextKey FRAMES_7_HELP = TextKey.of("jsc.desktop.frames_7.help_viewer", "Help and Support");
+    static final TextKey GET_HELP = TextKey.of("jsc.desktop.frames_10.help_viewer", "Get Help");
+    static final TextKey KDE_HELP = TextKey.of("jsc.desktop.kde_plasma.help_viewer", "Help Center");
+    static final TextKey CDE_HELP = TextKey.of("jsc.desktop.cde.help_viewer", "Help Viewer");
 
     static final TextKey KDE_FILES = TextKey.of("jsc.desktop.kde_plasma.files", "Dolphin");
     static final TextKey KDE_EDITOR = TextKey.of("jsc.desktop.kde_plasma.editor", "Kate");

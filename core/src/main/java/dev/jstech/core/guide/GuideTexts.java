@@ -71,6 +71,11 @@ public final class GuideTexts {
     public static final TextKey VIEW_SIDE = TextKey.of("jscore.guide.view_side", "Side");
     public static final TextKey ONE_BLOCK = TextKey.of("jscore.guide.one_block", "1 block");
 
+    /** A manual read as text, in a help program or at a terminal: links, warnings and optional parts in words. */
+    public static final TextKey SEE_ALSO = TextKey.of("jscore.guide.see_also", "See also:");
+    public static final TextKey WARNING_LINE = TextKey.of("jscore.guide.warning_line", "Warning: %s");
+    public static final TextKey OPTIONAL_PART = TextKey.of("jscore.guide.optional_part", "%s (optional)");
+
     private GuideTexts() {
     }
 }

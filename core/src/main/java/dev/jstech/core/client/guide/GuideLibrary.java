@@ -136,4 +136,11 @@ public final class GuideLibrary {
     public int manualCount() {
         return this.manuals.size();
     }
+
+    /** Every manual the packs hold, the highest priority first, and of two alike the one whose id sorts first. */
+    public List<GuideManual> manuals() {
+        final List<GuideManual> sorted = new ArrayList<>(this.manuals.values());
+        sorted.sort(Comparator.comparingInt((GuideManual manual) -> -manual.priority()).thenComparing(GuideManual::id));
+        return sorted;
+    }
 }

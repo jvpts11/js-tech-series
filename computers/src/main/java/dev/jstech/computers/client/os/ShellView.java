@@ -31,6 +31,7 @@ import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.font.CoreFonts;
+import dev.jstech.core.gui.TextScreen;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -44,6 +45,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -309,6 +311,12 @@ public final class ShellView extends Panel implements ShellViews.IListener {
     /** What the editor's second buffer shows, one line after another, or empty when there is none. */
     public String editorLowerText() {
         return this.editor == null ? "" : this.editor.lowerText();
+    }
+
+    /** The screen of cells the program holding this terminal last drew, or null when none is drawing one. */
+    @Nullable
+    public TextScreen editorScreen() {
+        return this.editor == null ? null : this.editor.lastScreen();
     }
 
     /** Told each time a command finishes and the prompt is back, so a window can run lines in turn. */

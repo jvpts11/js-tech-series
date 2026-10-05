@@ -12,6 +12,7 @@ import dev.jstech.computers.client.os.ShellView;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.gui.TextScreen;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
 import org.jetbrains.annotations.Nullable;
@@ -116,6 +117,12 @@ final class ConsoleTerminalTab extends AbstractTerminalTab {
     /** Everything the prompt has printed here, one line after another, for a test to read. */
     String glassText() {
         return this.view == null ? "" : this.view.scrollbackText();
+    }
+
+    /** The screen the program holding this console last drew, for a test to read, or null when none is. */
+    @Nullable
+    TextScreen editorScreen() {
+        return this.view == null ? null : this.view.editorScreen();
     }
 
     @Override

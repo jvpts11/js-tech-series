@@ -112,6 +112,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   of blocks seen from above, and breaks to the next column or page; can make one entry the page of a whole family of
   items; can print a mark on a manual's cover and hand a manual to every player once; and can draw its manual as a
   binder or as a folder of drawings, in two columns, with its own palette.
+- The manuals inside the computers, beside the manual pages of each machine's commands, in each system's own help.
+  Every desktop has Help: Frames 95's Help Topics with its Contents, Index and Find and a topic window of its own,
+  XP's Help and Support Center, 7's Help and Support, Get Help on 10 and 11, KDE's Help Center, the Help of GNOME and
+  Cinnamon, and CDE's Help Viewer, each with the books of the Technical Reference, the Guide to Operations and the
+  Plant Drawings, a search over the entries and the commands, links between pages, and Back. At a prompt, `help` on
+  MC-DOS and MC-NET takes the whole screen in the sixteen colours, with its contents, index, links and Find; `info`
+  on a Linux distribution reads every chapter, section and entry as a node with its menu; and `man` on UNIX and
+  FreeBSD pages an entry as a page of section 7 (`man graphics-cards`). A mod reads its manual as text the same way.
 - Documentation for each mod, in a `docs` folder of its own, written for a reader who knows nothing of the mod
   yet, with what can go wrong at the end of every page. J's Computers' explains to players their first computer and
   network, the hardware and what every number on a part means, the systems and how to install them, the network
@@ -1350,6 +1358,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- CDE's Help Viewer is now every desktop's Help, under the name its system gives it, and opens on the manuals rather
+  than on the first command's page. `help` on MC-DOS and MC-NET opens the full-screen help instead of printing; on
+  Frames it prints as before.
 - J's Industrial's Macerator and Compressor run on J's Core's processing machines, and their recipe files take a list
   of inputs, each with its count, a list of outputs, and the time and the energy a tick.
 - J's Computers' advancements are earned through J's Core's event trigger; what a world's players earned before

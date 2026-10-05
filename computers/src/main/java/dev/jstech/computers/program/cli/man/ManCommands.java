@@ -7,7 +7,10 @@
  */
 package dev.jstech.computers.program.cli.man;
 
+import dev.jstech.computers.gui.help.HelpViews;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.program.cli.CliContext;
+import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.CommandGroup;
 import dev.jstech.computers.program.cli.CommandScope;
 import dev.jstech.computers.program.cli.ICliCommand;
@@ -36,7 +39,7 @@ public final class ManCommands {
 
     /** The Unix family's, which is where these names come from. */
     public static List<ICliCommand> posix() {
-        return List.of(new Whatis(), new Apropos(), new ListCommands());
+        return List.of(new Whatis(), new Apropos(), new Info(), new ListCommands());
     }
 
     /** The one the DOS family has, under the name it uses. */
@@ -170,6 +173,68 @@ public final class ManCommands {
             if (found == 0) {
                 ctx.out().error(NOTHING_APPROPRIATE.with(wanted));
             }
+        }
+    }
+
+    /**
+     * {@code info}: the manuals of the series and the machine's commands as info files, on the Linux distributions,
+     * read node by node on a terminal it takes whole. What is typed after it names the node it opens on.
+     */
+    @TextHolder
+    static final class Info implements ICliCommand, CliShell.IHandOver {
+
+        private static final TextKey SUMMARY =
+                TextKey.of("jsc.cli.man.info.summary", "read the manuals and the commands, node by node");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.man.info.usage", "[node]");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.man.info.about", "Takes the whole terminal and"
+                + " shows the manuals of the series as info files, every chapter, section and entry a node, with the"
+                + " commands of this machine beside them. With nothing after it, it opens on the directory of every"
+                + " manual; with a name, on the entry, the manual or the command of that name.");
+        private static final TextKey ABOUT_KEYS = TextKey.of("jsc.cli.man.info.about.keys", "n, p and u go to the"
+                + " next node, the previous one and the one above it; l goes back. Tab picks a link and Enter follows"
+                + " it. m goes to a menu item by name and s searches the manual. h shows the keys and q leaves.");
+        private static final TextKey EXAMPLE = TextKey.of("jsc.cli.man.info.example",
+                "the manual's entry on graphics cards");
+
+        @Override public CommandScope scope() {
+            return CommandScope.on(Platform.LINUX);
+        }
+
+        @Override public String name() {
+            return "info";
+        }
+
+        @Override public CommandGroup group() {
+            return CommandGroup.HELP;
+        }
+
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public Text usage() {
+            return USAGE.text();
+        }
+
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text(), ABOUT_KEYS.text());
+        }
+
+        @Override public List<ICliCommand.Example> examples() {
+            return List.of(new ICliCommand.Example("info graphics-cards", EXAMPLE));
+        }
+
+        @Override public List<String> seeAlso() {
+            return List.of("man", "apropos");
+        }
+
+        /** The terminal is always given to info; what was typed after it is the node it opens on. */
+        @Override public String fileOf(final ICliComputer computer, final List<String> args) {
+            return HelpViews.info(String.join(" ", args));
+        }
+
+        @Override public void run(final CliContext ctx) {
+            // The terminal has been given away; there is nothing to print behind it.
         }
     }
 
