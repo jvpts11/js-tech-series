@@ -159,8 +159,9 @@ project cannot reference a Σ# one.
 Σ and Σ# have versions, one number for both, since Σ N is the subset of Σ# N. Version 1 is the language as it
 first shipped under these names; version 2 brings `Sound` and `Speaker`, `Bus` and `BusItem`, `Redstone`,
 `CraftInterface` and `CraftRouter`, `Operations.Update`, the old names above with the calls
-they gained, the rest of `printf`'s holes, `int Main` and `Main(string[] args)`, and `Random` in Σ's
-`Standard`. A version only ever adds: whatever
+they gained, the rest of `printf`'s holes, `int Main` and `Main(string[] args)`, `Random` in Σ's
+`Standard`, and the widgets of `System.UI` listed below as the second version's, `GenericComponent` and
+`ComponentAction` among them. A version only ever adds: whatever
 version 1 takes, version 2 takes too and compiles to the same listing, so a newer compiler never breaks an
 older program.
 
@@ -462,20 +463,72 @@ runs on, and the machine's own system draws it, so the same program looks like a
 Frames 95 machine and like a KDE one on Linux.
 
 ```
-Window made = new Window("Reactor");
+Window made = new Window("Reactor", 240, 150);
 Label heat = new Label("holding at 900");
-made.Content = new Column(new Row(heat, new Button("Scram", Scram)), new ProgressBar(0.62));
+Button scram = new Button("Scram");
+scram.OnClick += Scram;
+Row top = new Row();
+top.Add(heat, 1);
+top.Add(scram);
+Column page = new Column();
+page.Add(top);
+page.Add(new ProgressBar(0, 100), 1);
+made.Content = page;
 made.Show();
 ```
 
 Every widget is an object the program holds, on the program's own heap, and is saved with it: a machine
-that is loaded back opens the same windows with the same words in them. `Window`, `Row`, `Column`,
-`Label`, `Button`, `TextBox`, `CheckBox`, `ProgressBar`, `ListBox`, `Canvas` and `MessageBox` are what
-there is. What a player does reaches the program as a handler, on the program's own thread and in turn
+that is loaded back opens the same windows with the same words in them. The first version has `Window`,
+`Row`, `Column`, `Label`, `Button`, `TextBox`, `CheckBox`, `ProgressBar`, `ListBox`, `Canvas` and
+`MessageBox`. What a player does reaches the program as a handler, on the program's own thread and in turn
 with everything else it does. At most 256 calls wait their turn at once, holding at most 64 KB between
 them: a click that finds no room is dropped and counted in `Program.DroppedEvents`, while closing a window
-always gets in, ahead of the rest. A window is a thing of the machine, not of the screen: closing the desktop
-does not close it, and a program that ends with a window open ends.
+always gets in, ahead of the rest. A box typed into tells its handler at most once a tick, holding every
+letter typed by then. A window is a thing of the machine, not of the screen: closing the desktop does not
+close it, and a program that ends with a window open ends.
+
+The second version brings the rest of what a window has:
+
+| Widget | What it is |
+|---|---|
+| `TextArea` | a box of several lines, up to 4096 letters; `OnChange` |
+| `NumberBox`, `Slider` | a whole number between `Least` and `Most`, moved by `Step`; `OnChange` |
+| `RadioGroup`, `ComboBox` | choices added with `Add`, the picked one in `Selected`, counted from one; `OnSelect`. A radio group lies `Across` until told otherwise |
+| `TabView` | pages added with `Add(title, widget)`, the first one showing; `OnSelect` |
+| `GroupBox` | a frame with a caption round its `Content` |
+| `ScrollView` | its `Content` as tall as it likes, scrolled by the player |
+| `Table` | `AddColumn(header)`, `AddRow(...)` with one to four cells or a `List<string>`, `Cell(row, column)`; `OnSelect` |
+| `TreeView` | `Add(text)` and `Add(text, parent)` hand back the node's number; `NodeText(node)`; `OnSelect` |
+| `MenuBar` | `Add(menu, entry)`; `Picked` and `PickedMenu`; `OnPick` |
+| `ContextMenu` | made for a widget, `new ContextMenu(table)`, opened by the other button on it; `OnPick` |
+| `StatusBar` | a line along the bottom and a few sections at its right |
+| `Image` | a Pix picture from the machine's disk, by its `Path` |
+| `Chart` | numbers added with `Add`, the newest 120 drawn as a line between `Least` and `Most` |
+| `LogView` | lines added with `Add`, the newest 256 kept; a line saying WARN or ERROR stands out |
+| `OpenFileDialog`, `SaveFileDialog` | the system's own dialog, shown over an open window with `Show(window)`; `OnChoose` with the answer in `Path`, or `OnCancel` |
+| `ItemSlot`, `ItemPicker` | an item by its id, as the game draws it; a grid of items with a search line, `OnSelect` |
+| `OperationView` | one operation of the network: `Show(Operations.Get(id))`, or `Text`, `State`, `Done`, `Total` and `Computer` set by hand |
+| `GenericComponent` | a component of a kind another mod adds, below |
+
+Each system draws them in its own look: a radio button is round on Frames and the Linux desktops and a diamond
+on CDE, a tree opens with a boxed plus on the older systems and a chevron on the flat ones. A window carries at
+most 128 KB to the screens showing it; past that, what the last widgets hold is left out and they say so.
+
+A machine that only has its terminal, as the Vintage systems do, draws a program's windows there in letters, as
+the full-screen programs of the age drew their dialogs: a menu bar along the top line, the window in a double
+frame in the middle, the status line along the bottom. Tab moves between the widgets, the arrows move inside
+one, Enter or Space presses, Escape shuts what is open and then the window, and F10 opens the menu bar. A
+picture, a chart, an item, an operation, a canvas and a generic component have no letters to be drawn in, and a
+program making one there stops, saying so.
+
+A `GenericComponent` is named by its kind, `new GenericComponent("somemod:dial")`, and holds any value of the
+language in `Data`: a number, a text, a list, a map, an object of the program's own. Not a handler, a file, a
+thread, a window or a widget, nothing that holds itself, and at most 32 KB, sixteen levels deep and 4096 parts;
+what it holds is a copy, made when it is handed over and charged by its size, and saved with the program. What
+a player does to it comes back to the handler given to `OnAction` as a `ComponentAction`, with a `Name` and a
+`Value`. The mod that adds the kind draws it, and says what it takes; a game without that mod shows a
+placeholder naming the kind. A kind that reaches outside the game, such as one showing a web address, is off
+unless the server's settings turn it on, and even then each player sees it only if their own settings do.
 
 ## Sound: `System.Sound`
 

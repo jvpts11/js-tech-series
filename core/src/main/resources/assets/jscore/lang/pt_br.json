@@ -154,6 +154,8 @@
   "jscore.sound_mixer.title": "Mixer de Som",
   "jscore.sound_mixer.turn_all_back_on": "Religar Todos",
   "jscore.sound_mixer.turned_off_count": "%s de %s desligados",
+  "jscore.surface.failed": "Não foi possível desenhar esta imagem",
+  "jscore.surface.only_opener": "Visível só para quem abriu",
   "jscore.text.joined": "%s%s%s",
   "key.categories.jstech": "J's Tech Series",
   "key.jscore.item_mode": "Trocar o Modo do Item",

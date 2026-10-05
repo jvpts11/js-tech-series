@@ -43,6 +43,19 @@ public interface IHost {
     }
 
     /**
+     * Whether the machine shows only its terminal, a screen of letters, and draws a program's windows there in text:
+     * a machine with no desktop whose system still has a screen, as the Vintage systems do.
+     */
+    default boolean textMode() {
+        return false;
+    }
+
+    /** Whether this server lets a program use components that reach outside the game; off unless turned on. */
+    default boolean outsideComponents() {
+        return false;
+    }
+
+    /**
      * Whether the program the machine lists under that number is still going: on this machine when {@code host} is
      * empty, or on the computer of the network it names. Asked for nothing, between slices, by a program waiting on
      * it; a host with no programs to speak of knows of none.

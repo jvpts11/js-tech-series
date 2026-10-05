@@ -9,6 +9,7 @@ package dev.jstech.tests;
 
 import dev.jstech.core.client.model.CoreModels;
 import dev.jstech.core.connect.IJoinRule;
+import dev.jstech.tests.clienttest.TestClientParts;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
@@ -31,5 +32,7 @@ public final class JsTestsClient {
 
     public JsTestsClient() {
         CoreModels.connected(TestBlocks.CONNECTED_PANEL, IJoinRule.sameBlock(), PANEL_TILES);
+        // The dial's renderer and the picture program's window, as another mod registers them.
+        TestClientParts.register();
     }
 }

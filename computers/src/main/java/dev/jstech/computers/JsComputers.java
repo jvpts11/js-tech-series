@@ -21,6 +21,7 @@ import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.os.OsMotions;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ComponentKinds;
 import dev.jstech.core.api.CoreRegisterEvent;
 import dev.jstech.core.audio.media.MediaKeepers;
 import dev.jstech.core.state.CoreStates;
@@ -61,7 +62,12 @@ public class JsComputers {
          */
         modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(
                 () -> ModLoader.postEvent(new ComputersRegisterEvent())));
-        modEventBus.addListener(FMLLoadCompleteEvent.class, event -> event.enqueueWork(OsRegistry::freeze));
+        // The programs' runtime finds the mods' kinds of component through the list kept outside it.
+        ComponentKinds.install();
+        modEventBus.addListener(FMLLoadCompleteEvent.class, event -> event.enqueueWork(() -> {
+            OsRegistry.freeze();
+            ComponentKinds.freeze();
+        }));
 
         ComputingModule.register(modEventBus);
         // The buses mounted on cables, registered with the Core's parts.

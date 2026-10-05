@@ -10,6 +10,8 @@ package dev.jstech.tests;
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.JsCore;
 import dev.jstech.tests.testkit.ChunkLoadWatch;
+import dev.jstech.tests.testkit.TestComponents;
+import dev.jstech.tests.testkit.TestDesktopPrograms;
 import dev.jstech.tests.testkit.TestEngines;
 import dev.jstech.tests.testkit.TestPlanner;
 import dev.jstech.tests.testkit.TestSettings;
@@ -53,6 +55,8 @@ public final class JsTests {
         TestCableTypes.register(modEventBus);
         // A state of every scope, on both sides, since the client tests watch them arrive.
         TestStates.register();
+        // Two kinds of component for programs' windows, the way another mod adds them, on both sides.
+        TestComponents.register(modEventBus);
         if (GameTestHooks.isGametestServer()) {
             /*
              * The language API's tests need a language that is not the series' own, and languages are only taken
@@ -70,6 +74,8 @@ public final class JsTests {
             TestEngines.register(modEventBus);
             // A rule, a hint, a statistic and a note added to NextgreIQL's planner the way another mod adds them.
             TestPlanner.register(modEventBus);
+            // A program with a window of its own that draws a picture, the way another mod adds one.
+            TestDesktopPrograms.register(modEventBus);
             // Any chunk the series' code loads by reading it is reported with the line that read it.
             ChunkLoadWatch.register();
         }

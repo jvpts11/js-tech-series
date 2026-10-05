@@ -130,4 +130,15 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
     public void explainNode(final IExplainNode node) {
         JsComputersApi.registerExplainNode(node);
     }
+
+    /**
+     * Adds a kind of component for Σ# programs to put in their windows, named in your mod's namespace.
+     *
+     * <p>Register what draws it from your client setup, through {@code ComponentRenderers}; a player without your
+     * mod sees a placeholder in its place.
+     */
+    @ApiStatus.Experimental
+    public void componentKind(final ComponentKind kind) {
+        JsComputersApi.registerComponentKind(kind);
+    }
 }

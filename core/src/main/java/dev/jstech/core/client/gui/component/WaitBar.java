@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.client.gui.component;
 
-import dev.jstech.core.client.gui.skin.ISkin;
+import dev.jstech.core.api.client.ISkin;
 import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.core.motion.MotionKinds;
 import dev.jstech.core.motion.MotionScope;

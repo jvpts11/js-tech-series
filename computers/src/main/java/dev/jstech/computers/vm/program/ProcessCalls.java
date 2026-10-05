@@ -297,6 +297,47 @@ final class ProcessCalls {
             open(process, UiWidgets.message(String.valueOf(arguments[0]), String.valueOf(arguments[1]), line), line);
             return null;
         }, STRING, STRING);
+        // What the second version brought: runs of choices, entries and lines, and the widgets that hold others.
+        for (final String entries : List.of("RadioGroup", "ComboBox", "ContextMenu", "StatusBar", "LogView",
+                "ItemPicker")) {
+            drawn(bindings, entries, "Add", STRING);
+            drawn(bindings, entries, "Clear");
+        }
+        drawn(bindings, "TabView", "Add", STRING, "Widget");
+        drawn(bindings, "TabView", "Clear");
+        drawn(bindings, "Table", "AddColumn", STRING);
+        drawn(bindings, "Table", "AddRow", "List<string>");
+        drawn(bindings, "Table", "AddRow", STRING);
+        drawn(bindings, "Table", "AddRow", STRING, STRING);
+        drawn(bindings, "Table", "AddRow", STRING, STRING, STRING);
+        drawn(bindings, "Table", "AddRow", STRING, STRING, STRING, STRING);
+        drawn(bindings, "Table", "Clear");
+        read(bindings, "Table", "Cell", "int", "int");
+        drawn(bindings, "TreeView", "Add", STRING);
+        drawn(bindings, "TreeView", "Add", STRING, "int");
+        drawn(bindings, "TreeView", "Clear");
+        read(bindings, "TreeView", "NodeText", "int");
+        drawn(bindings, "MenuBar", "Add", STRING, STRING);
+        drawn(bindings, "MenuBar", "Clear");
+        drawn(bindings, "Chart", "Add", "double");
+        drawn(bindings, "Chart", "Clear");
+        drawn(bindings, "OperationView", "Show", "OperationInfo");
+        // A dialog goes up over a window as a window does, so it costs what opening one does.
+        for (final String dialog : List.of("OpenFileDialog", "SaveFileDialog")) {
+            bind(bindings, dialog, "Show", null, (process, target, arguments, line) -> {
+                final Values.Obj widget = widget(target, dialog, "Show", line);
+                process.charge(SigmaCosts.WRITE);
+                return process.windows0().mutator().call(widget, "Show", Arrays.asList(arguments), line);
+            }, "Window");
+        }
+        read(bindings, "GenericComponent", "OnAction", "Action<ComponentAction>");
+    }
+
+    /** Binds a call on a widget that only reads what it holds, or only says who is to hear it: it costs nothing. */
+    private static void read(final Map<MemberId, Binding> bindings, final String owner, final String name,
+                             final String... parameters) {
+        bind(bindings, owner, name, null, (process, target, arguments, line) -> process.windows0().mutator()
+                .call(widget(target, owner, name, line), name, Arrays.asList(arguments), line), parameters);
     }
 
     /** Binds a call on a widget that changes what it shows, charged a draw and made through the windows' one door. */

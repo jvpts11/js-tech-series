@@ -10,6 +10,7 @@ package dev.jstech.computers.machine;
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IHost;
@@ -148,6 +149,19 @@ public final class MachineServices implements IHost {
     public boolean hasDesktop() {
         final ComputerInfoService info = this.computer();
         return info != null && info.hasDesktop();
+    }
+
+    /** Whether the machine boots to its terminal alone, and so draws a program's windows there in text. */
+    @Override
+    public boolean textMode() {
+        final ComputerInfoService info = this.computer();
+        return info != null && info.textMode();
+    }
+
+    /** Whether this server's settings let a program use components that reach outside the game. */
+    @Override
+    public boolean outsideComponents() {
+        return ComputersServerConfig.outsideComponents();
     }
 
     /** Whether a program this machine, or a computer of its network, lists under that number is still going. */

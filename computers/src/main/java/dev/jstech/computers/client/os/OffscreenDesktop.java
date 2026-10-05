@@ -30,6 +30,9 @@ public final class OffscreenDesktop implements DesktopSurface {
     private int width;
     private int height;
 
+    /** Set while any desktop is being drawn on a monitor's face, which happens on the render thread alone. */
+    private static boolean drawingFace;
+
     public OffscreenDesktop(final BlockPos host, final BlockPos monitorPos, final ResourceLocation osId,
                             final ResourceLocation desktopId, final int ramTotalMb, final int ramReservedMb) {
         this.state = new DesktopState(this, host, monitorPos, osId, desktopId, ramTotalMb, ramReservedMb);
@@ -52,12 +55,22 @@ public final class OffscreenDesktop implements DesktopSurface {
          * them as its own.
          */
         Grounds.clear();
+        drawingFace = true;
         try {
             return state.paint(g, (int) Math.floor(view.localX(mouseX)), (int) Math.floor(view.localY(mouseY)),
                     partialTick);
         } finally {
+            drawingFace = false;
             Grounds.clear();
         }
+    }
+
+    /**
+     * Whether a desktop is being drawn on a monitor's face in the world right now, which a window showing what only its
+     * opener may see asks so it shows its placeholder there.
+     */
+    public static boolean drawingFace() {
+        return drawingFace;
     }
 
     /**

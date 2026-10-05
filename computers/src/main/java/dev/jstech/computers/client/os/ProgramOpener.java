@@ -106,7 +106,8 @@ final class ProgramOpener {
             case OpenRequest.Program program -> {
                 // By its window key, or by the name a player typed for it at a shell.
                 final String key = desktop.keyFor(program.key());
-                final IDesktopApp app = factoryFor(key);
+                // Asked for on this game, by the player or a program they run, so it runs for this player.
+                final IDesktopApp app = AddonDesktopApp.byHand(() -> factoryFor(key));
                 if (app != null && desktop.memory().allowOpen(key)) {
                     desktop.wm().open(key, app);
                 }
@@ -198,7 +199,8 @@ final class ProgramOpener {
             desktop.wm().focus(open);
             return;
         }
-        final IDesktopApp app = make.get();
+        // Opened by the player's own hand, so a program a mod wrote runs for this player.
+        final IDesktopApp app = AddonDesktopApp.byHand(make);
         app.applySkin(desktop.prefs().skin());
         desktop.wm().open(key, app);
     }

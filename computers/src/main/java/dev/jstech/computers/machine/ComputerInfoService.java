@@ -103,6 +103,11 @@ public final class ComputerInfoService {
         return BootController.targetForComputer(this.machine) == BootController.BootTarget.FULL_DESKTOP;
     }
 
+    /** Whether the machine boots to its terminal alone, which is where it draws a program's windows, in text. */
+    public boolean textMode() {
+        return BootController.targetForComputer(this.machine) == BootController.BootTarget.TERMINAL_ONLY;
+    }
+
     /** The machine's drives, each measured the way the shell measures it. */
     public List<Disk> disks() {
         final List<Disk> all = new ArrayList<>();

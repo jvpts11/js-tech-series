@@ -96,6 +96,14 @@ public final class ComputersServerConfig {
             .comment("The same over the high-performance fabric of a supercomputer.")
             .named("Songs over HPC");
 
+    public static final ConfigKey<Boolean> OUTSIDE_COMPONENTS = ConfigKey.flag("programs.outside_components", false)
+            .comment("Whether a program may put in its windows a component of a kind that reaches outside the game, "
+                            + "such as one showing a web address or a file on the player's own computer.",
+                    "Such kinds come only from other mods, which say so when they add them. Off, a program making "
+                            + "one is stopped and told; on, each player still sees them only if their own settings "
+                            + "turn them on as well.")
+            .named("Components reaching outside the game");
+
     public static final ConfigFile FILE = ConfigFile.builder("jscomputers-server", ConfigSide.SERVER,
                     ConfigFormats.TOML)
             .comment("How the computers of J's Computers behave. Balance of the Operations engine lives in the "
@@ -104,6 +112,7 @@ public final class ComputersServerConfig {
             .sectionNamed("install_by_hand", "Installing by hand")
             .sectionNamed("prompt", "The prompt")
             .sectionNamed("soundfoundry", "Soundfoundry")
+            .sectionNamed("programs", "Programs")
             .key(SHOW_BOOT_MENU)
             .key(GENTOO_EVERY_STEP)
             .key(ARCH_EVERY_STEP)
@@ -112,6 +121,7 @@ public final class ComputersServerConfig {
             .key(ETHERNET_KILOBYTES_PER_SECOND)
             .key(HBW_KILOBYTES_PER_SECOND)
             .key(HPC_KILOBYTES_PER_SECOND)
+            .key(OUTSIDE_COMPONENTS)
             .build();
 
     private ComputersServerConfig() {
@@ -140,6 +150,11 @@ public final class ComputersServerConfig {
     /** Whether every computer has {@code listcmd}, the one word that lists all it can run. */
     public static boolean listCommands() {
         return FILE.get(LIST_COMMANDS);
+    }
+
+    /** Whether a program may use a component of a kind that reaches outside the game. */
+    public static boolean outsideComponents() {
+        return FILE.get(OUTSIDE_COMPONENTS);
     }
 
     /** Whether the server offers its music catalogue. */

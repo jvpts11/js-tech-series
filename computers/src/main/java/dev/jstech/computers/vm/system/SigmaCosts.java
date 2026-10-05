@@ -38,6 +38,8 @@ public final class SigmaCosts {
     public static final int WRITE_PER_BLOCK = 2;
     /** Changing what a window shows, which the machine has to draw again for whoever is looking at it. */
     public static final int DRAW = 50;
+    /** What every kilobyte of a value handed to a generic component adds to the draw, since every viewer is sent it. */
+    public static final int DRAW_PER_KB = 10;
     /** Asking the network to do something, which becomes work for the whole base. */
     public static final int SUBMIT = 200;
     /** Starting a thread, beside the call itself: a stack of its own is not a small thing. */

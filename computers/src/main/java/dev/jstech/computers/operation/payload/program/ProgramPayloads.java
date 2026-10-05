@@ -14,7 +14,6 @@ import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.machine.ProgramLauncher;
 import dev.jstech.computers.machine.ProgramService;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
-import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
@@ -23,6 +22,7 @@ import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.operation.payload.ProcessActionPayload;
 import dev.jstech.computers.operation.payload.ProcessListPayload;
 import dev.jstech.computers.operation.payload.RunProgramPayload;
+import dev.jstech.computers.client.os.SigmaTextWindows;
 import dev.jstech.computers.operation.payload.UiEventPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
@@ -68,8 +68,8 @@ public final class ProgramPayloads {
                 ComputerAccess.machine(RunProgramPayload::hostPos), ProgramPayloads::handleRunProgram);
         registrar.playToClient(UiWindowPayload.TYPE, UiWindowPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ProgramPayloads::handleUiWindow));
-        ComputerAccess.onMenu(registrar, UiEventPayload.TYPE, UiEventPayload.STREAM_CODEC,
-                DesktopMenu.class, DesktopMenu::hostPos, UiEventPayload::hostPos, ProgramPayloads::handleUiEvent);
+        ComputerAccess.accept(registrar, UiEventPayload.TYPE, UiEventPayload.STREAM_CODEC,
+                ComputerAccess.machine(UiEventPayload::hostPos), ProgramPayloads::handleUiEvent);
         registrar.playToClient(ProcessListPayload.TYPE, ProcessListPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ProgramPayloads::handleProcessList));
         ComputerAccess.onMenu(registrar, ProcessActionPayload.TYPE, ProcessActionPayload.STREAM_CODEC,
@@ -161,17 +161,21 @@ public final class ProgramPayloads {
     }
 
     private static void handleUiWindow(final UiWindowPayload payload, final Player player) {
-        ActiveDesktop.acceptWindow(payload);
+        // A terminal of a machine that draws its windows in text takes them; a desktop takes the rest.
+        if (!SigmaTextWindows.take(payload)) {
+            ActiveDesktop.acceptWindow(payload);
+        }
     }
 
     /**
      * What a player did to a widget of a program's window, handed to the program that owns it. Only what a
-     * keyboard and a mouse can do is taken, and only from a player at that machine's desktop.
+     * keyboard and a mouse can do is taken, and only from a player at that machine's screen: its desktop, or the
+     * terminal of a machine that draws its windows in text.
      */
-    private static void handleUiEvent(final UiEventPayload payload, final DesktopMenu menu,
-                                      final ServerPlayer player, final ServerLevel level) {
+    private static void handleUiEvent(final UiEventPayload payload, final ServerPlayer player,
+                                      final ServerLevel level) {
         if (!UiEventPayload.KINDS.contains(payload.kind())
-                || !(level.getBlockEntity(menu.hostPos()) instanceof AbstractComputerBlockEntity computer)) {
+                || !(level.getBlockEntity(payload.hostPos()) instanceof AbstractComputerBlockEntity computer)) {
             return;
         }
         computer.programs().deliverUiEvent(payload.program(), payload.window(), payload.widget(),

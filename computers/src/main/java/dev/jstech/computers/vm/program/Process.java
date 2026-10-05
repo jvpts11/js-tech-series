@@ -870,13 +870,13 @@ public final class Process {
     // windows
 
     /**
-     * Opens a window on the machine's desktop.
+     * Opens a window on the machine's desktop, or on its terminal when the machine draws its windows in text.
      *
-     * <p>A machine with no desktop has nowhere to put it and says so, which is the whole of what a
-     * program needs to be told: a window is a thing a system with a desktop has.
+     * <p>A machine with neither has nowhere to put it and says so, which is the whole of what a
+     * program needs to be told: a window is a thing a system with a screen has.
      */
     void openWindow(final Values.Obj window, final int line) {
-        if (!this.host.hasDesktop()) {
+        if (!this.host.hasDesktop() && !this.host.textMode()) {
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NO_DESKTOP.text());
         }
         this.windows.open(window, line);

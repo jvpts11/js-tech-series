@@ -11,6 +11,7 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.gui.layout.CommandPromptLayout;
 import dev.jstech.computers.client.os.CodeFileReplies;
 import dev.jstech.computers.client.os.ParkedEditors;
+import dev.jstech.computers.client.os.SigmaTextWindows;
 import dev.jstech.computers.client.os.TtyEditor;
 import dev.jstech.computers.client.os.TtyEditorWire;
 import dev.jstech.computers.client.os.TtyEditors;
@@ -26,6 +27,7 @@ import dev.jstech.computers.client.term.TermFace;
 import dev.jstech.computers.client.term.TermPainter;
 import dev.jstech.computers.client.term.TermPalette;
 import dev.jstech.computers.client.term.TermSelector;
+import dev.jstech.computers.client.term.TextScreenPainter;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.gui.term.TermCompletion;
@@ -219,6 +221,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
                 TermBuffer.MONITOR_COLUMNS);
         this.textScale = fitted.scale();
         this.painter.use(fitted.face());
+        // A machine with only its terminal draws its programs' windows here, in letters.
+        SigmaTextWindows.showing(menu.hostPos());
         super.init();
         /*
          * The box holds what is being typed and takes the keys that edit it, and that is all it does. It is
@@ -533,6 +537,12 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             drawEditor(g);
             return;
         }
+        final SigmaTextWindows windows = SigmaTextWindows.active(menu.hostPos());
+        if (windows != null) {
+            // A program with a window open has the glass while it is open, as the full-screen programs did.
+            drawWindows(g, windows);
+            return;
+        }
         drawTyping(g, typing);
 
         // Usage hint: once the verb is recognised, show how it is used, dimmed on the right.
@@ -685,6 +695,10 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             }
             return true;
         }
+        final SigmaTextWindows windows = SigmaTextWindows.active(menu.hostPos());
+        if (windows != null && windows.keyPressed(key, mods)) {
+            return true;
+        }
         /*
          * Copying and pasting come before everything else a key means here, at a prompt and in front of a tool
          * alike. Ctrl+C with something picked out copies it, which is the one thing it can mean then; with
@@ -751,6 +765,10 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     public boolean charTyped(final char c, final int mods) {
         if (this.editor != null) {
             return this.editor.charTyped(c);
+        }
+        final SigmaTextWindows windows = SigmaTextWindows.active(menu.hostPos());
+        if (windows != null) {
+            return windows.charTyped(c);
         }
         // A tool that is working and has asked nothing is not reading the keyboard.
         if (keyboard.busy() && !keyboard.asking()) {
@@ -843,6 +861,14 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             return this.editor.clicked(TermPainter.rowAt(my - topPos - scrollbackTop(), rowPitch(), textScale),
                     columnUnder(mx));
         }
+        final SigmaTextWindows windows = this.editor == null ? SigmaTextWindows.active(menu.hostPos()) : null;
+        if (windows != null && button == 0) {
+            // A program's windows are drawn over the whole glass, from where an editor's glass starts.
+            final int row = TermPainter.rowAt(my - topPos - CommandPromptLayout.EDITOR_MARGIN, rowPitch(), textScale);
+            final int column = TermPainter.columnAt(mx - leftPos - CommandPromptLayout.EDITOR_MARGIN, cellWidth(),
+                    textScale);
+            return windows.mouseClicked(column, row);
+        }
         if (this.editor == null && button == 0 && overGlass(mx, my)) {
             selector.pressed(scrollback.rows(), rowUnder(my), columnUnder(mx));
             return true;
@@ -926,10 +952,39 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     public void removed() {
         /*
          * Nothing to remember: a terminal that is closed is over, and the next one opens fresh with
-         * its own banner. The command history lives on the machine and comes back with the session.
+         * its own banner. The command history lives on the machine and comes back with the session, and
+         * the programs' windows are sent again whole to whoever opens it next.
          */
+        SigmaTextWindows.showing(null);
         super.removed();
     }
+
+    /*
+     * The programs' windows have the glass: drawn as a screen of cells over all of it, at the terminal's own size and
+     * in its font, in the screen's own pass so the monitor's tube tints it as it does the console.
+     */
+    private void drawWindows(final GuiGraphics g, final SigmaTextWindows windows) {
+        final int areaW = Math.round((imageWidth - 2 * CommandPromptLayout.EDITOR_MARGIN) / textScale);
+        final int areaH = Math.round((imageHeight - 2 * CommandPromptLayout.EDITOR_MARGIN) / textScale);
+        final TextScreen screen = new TextScreen(areaW / cellWidth(), areaH / rowPitch(),
+                TextScreen.cga(TextScreen.WHITE), TextScreen.cga(TextScreen.BLUE));
+        windows.paint(screen);
+        g.pose().pushPose();
+        g.pose().translate(CommandPromptLayout.EDITOR_MARGIN, CommandPromptLayout.EDITOR_MARGIN, 0);
+        g.pose().scale(textScale, textScale, 1.0f);
+        TextScreenPainter.paint(g, font, painter.face(), screen, 0, 0, rowPitch());
+        g.pose().popPose();
+        this.lastWindows = screen;
+    }
+
+    /** The screen of cells the programs' windows were last drawn as, or null when none has been; for tests. */
+    @Nullable
+    public TextScreen windowsScreen() {
+        return SigmaTextWindows.active(menu.hostPos()) == null ? null : this.lastWindows;
+    }
+
+    /** The programs' windows last drawn on this terminal. */
+    private TextScreen lastWindows;
 
     /*
      * The editor has the glass: over the console, because it is what the terminal is showing now, not something

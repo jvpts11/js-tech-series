@@ -104,4 +104,66 @@ class UiLayoutTest {
         assertEquals(50, where.get(1L).w());
         assertEquals(20, where.get(1L).h());
     }
+
+    @Test
+    void tabView_placesOnlyThePickedPageUnderItsStrip() {
+        final UiLayout.Box tabs = new UiLayout.Box(1, 0, "TabView", 0, 0, 0, 0, 0, 0, UiLayout.LAID_OUT,
+                UiLayout.LAID_OUT, 2);
+        final Map<Long, UiLayout.Rect> where = places(List.of(tabs, leaf(2, 1, 0, 30, 9), leaf(3, 1, 0, 30, 9)),
+                200, 100);
+
+        assertTrue(!where.containsKey(2L), "the first page is not the picked one, so it is not placed");
+        assertEquals(where.get(1L).y() + UiLayout.TAB_H + 2, where.get(3L).y());
+    }
+
+    @Test
+    void groupBox_placesItsWidgetInsideItsFrameUnderItsCaption() {
+        final Map<Long, UiLayout.Rect> where = places(List.of(box(1, 0, "GroupBox", 0), leaf(2, 1, 0, 30, 9)),
+                200, 100);
+
+        assertEquals(where.get(1L).x() + UiLayout.PAD, where.get(2L).x());
+        assertEquals(where.get(1L).y() + UiLayout.CAPTION_H + 2, where.get(2L).y());
+        assertEquals(where.get(1L).w() - UiLayout.PAD * 2, where.get(2L).w());
+    }
+
+    @Test
+    void scrollView_givesItsWidgetItsHeightAndMovesItByTheScroll() {
+        final UiLayout.Box view = new UiLayout.Box(1, 0, "ScrollView", 0, 60, 40, 0, 40, 0, UiLayout.LAID_OUT,
+                UiLayout.LAID_OUT);
+        final List<UiLayout.Box> boxes = List.of(view, leaf(2, 1, 0, 30, 120));
+        final Map<Long, UiLayout.Rect> still = new HashMap<>();
+        for (final UiLayout.Rect rect : UiLayout.lay(boxes, 0, 0, 200, 100, Map.of())) {
+            still.put(rect.id(), rect);
+        }
+        final Map<Long, UiLayout.Rect> moved = new HashMap<>();
+        for (final UiLayout.Rect rect : UiLayout.lay(boxes, 0, 0, 200, 100, Map.of(1L, 30))) {
+            moved.put(rect.id(), rect);
+        }
+
+        assertEquals(120, still.get(2L).h(), "the widget is as tall as it asks, however short the view");
+        assertEquals(still.get(2L).y() - 30, moved.get(2L).y());
+        assertEquals(120 - (40 - 2), UiLayout.scrollRoom(view, boxes, 40));
+    }
+
+    @Test
+    void floating_menusAndDialogsTakeNoPlace() {
+        final Map<Long, UiLayout.Rect> where = places(List.of(box(1, 0, "Column", 0), leaf(2, 1, 0, 30, 9),
+                box(3, 2, "ContextMenu", 0), box(4, 0, "OpenFileDialog", 0)), 200, 100);
+
+        assertTrue(!where.containsKey(3L) && !where.containsKey(4L));
+        assertEquals(2, where.size());
+    }
+
+    @Test
+    void cells_layAWindowInLettersWithACellBetweenWidgets() {
+        final List<UiLayout.Box> boxes = List.of(box(1, 0, "Column", 0), leaf(2, 1, 0, 10, 1),
+                leaf(3, 1, 0, 8, 1));
+        final Map<Long, UiLayout.Rect> where = new HashMap<>();
+        for (final UiLayout.Rect rect : UiLayout.lay(boxes, 0, 0, 40, 10, Map.of(), UiLayout.CELLS)) {
+            where.put(rect.id(), rect);
+        }
+
+        assertEquals(1, where.get(2L).y(), "one cell round the window");
+        assertEquals(3, where.get(3L).y(), "one row between two widgets");
+    }
 }

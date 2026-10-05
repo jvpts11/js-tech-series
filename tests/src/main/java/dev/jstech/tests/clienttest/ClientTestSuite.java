@@ -101,6 +101,7 @@ public final class ClientTestSuite {
             SettingsSharingClientTests.class,
             SourceBuildClientTests.class,
             SystemUiClientTests.class,
+            SigmaWidgetsClientTests.class,
             TerminalSelectionClientTests.class,
             TerminalWidthClientTests.class,
             TrashClientTests.class,

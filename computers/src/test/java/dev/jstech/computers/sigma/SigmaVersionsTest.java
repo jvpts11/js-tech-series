@@ -59,6 +59,17 @@ class SigmaVersionsTest {
     }
 
     @Test
+    void sinceType_givesTheSecondVersionsWidgetsTheSecondVersion() {
+        for (final String widget : List.of("TextArea", "NumberBox", "Slider", "RadioGroup", "ComboBox", "TabView",
+                "GroupBox", "ScrollView", "Table", "TreeView", "MenuBar", "ContextMenu", "StatusBar", "Image", "Chart",
+                "LogView", "OpenFileDialog", "SaveFileDialog", "ItemSlot", "ItemPicker", "OperationView",
+                "GenericComponent", "ComponentAction")) {
+            assertEquals(2, SigmaVersions.sinceType(LanguageLevel.SIGMA_SHARP, widget), widget);
+        }
+        assertEquals(SigmaVersions.FIRST, SigmaVersions.sinceType(LanguageLevel.SIGMA_SHARP, "ListBox"));
+    }
+
+    @Test
     void sinceType_givesSoundAndSpeakerTheSecondVersion() {
         for (final LanguageLevel level : LanguageLevel.values()) {
             assertEquals(2, SigmaVersions.sinceType(level, "Sound"));

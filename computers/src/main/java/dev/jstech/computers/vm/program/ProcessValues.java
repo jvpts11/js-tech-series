@@ -114,6 +114,10 @@ final class ProcessValues {
             return nothing(name, line);
         }
         final Object held = widget.get(name);
+        // What a generic component holds is its own: the program reads a copy, as it handed one over.
+        if (UiWidgets.DATA.equals(name) && UiWidgets.GENERIC.equals(widget.type())) {
+            return ComponentValues.copy(held, process.heap0(), line).value();
+        }
         return held instanceof String said ? process.heap().text(said, line) : held;
     }
 
@@ -123,7 +127,10 @@ final class ProcessValues {
             throw new Halt(Halt.Reason.NO_OBJECT, line, FieldAccess.NOTHING_TO_WRITE_ON.with(name));
         }
         process.charge(SigmaCosts.DRAW);
-        process.windows0().mutator().write(widget, name, value, line);
+        final long kilobytes = process.windows0().mutator().write(widget, name, value, line);
+        if (kilobytes > 0) {
+            process.charge((int) Math.min(Integer.MAX_VALUE, kilobytes * SigmaCosts.DRAW_PER_KB));
+        }
     }
 
     /** Binds a value the system declares as the process's, read from the type. */

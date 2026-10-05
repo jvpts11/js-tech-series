@@ -1,0 +1,9 @@
+{
+  "chartGrid": "#FF8A8A8A",
+  "logError": "#FFC0302A",
+  "logTime": "#FF2A5AA0",
+  "logWarn": "#FFB86E00",
+  "placeholder": "#FF3A3F4A",
+  "placeholderHatch": "#FF2E333D",
+  "placeholderText": "#FFD8DCE4"
+}

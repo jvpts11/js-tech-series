@@ -26,8 +26,8 @@ import java.util.Map;
  * and the launcher rail, taskbar and This PC all resolve the window through this one lookup instead of a
  * hardcoded {@code switch}.
  *
- * <p>An add-on registers its own factory the same way from its client setup, keeping the desktop open to
- * third-party programs.
+ * <p>This is the mod's own wiring, not a way in: an add-on registers its program's window through the API's
+ * {@code DesktopApps}, which lands here with the program wrapped in a window the desktop knows how to hold.
  */
 public final class ProgramClient {
 
@@ -46,8 +46,8 @@ public final class ProgramClient {
     private ProgramClient() {
     }
 
-    /** Registers the window factory for {@code id}. Safe to call from any mod's client setup. */
-    public static void register(final ResourceLocation id, final IDesktopAppFactory factory) {
+    /** Registers the window factory for {@code id}; a second one for the same program replaces the first. */
+    public static synchronized void register(final ResourceLocation id, final IDesktopAppFactory factory) {
         FACTORIES.put(id, factory);
     }
 

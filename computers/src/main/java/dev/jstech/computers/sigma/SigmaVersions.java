@@ -26,8 +26,16 @@ public final class SigmaVersions {
     public static final int NEWEST = 2;
 
     /** The types of the library that came after the first version, with the version each came in. */
-    private static final Map<String, Integer> LIBRARY_TYPES = Map.of("Sound", 2, "Speaker", 2, "char", 2, "FILE", 2,
-            "Bus", 2, "BusItem", 2, "Redstone", 2, "CraftInterface", 2, "CraftRouter", 2);
+    private static final Map<String, Integer> LIBRARY_TYPES = Map.ofEntries(Map.entry("Sound", 2),
+            Map.entry("Speaker", 2), Map.entry("char", 2), Map.entry("FILE", 2), Map.entry("Bus", 2),
+            Map.entry("BusItem", 2), Map.entry("Redstone", 2), Map.entry("CraftInterface", 2),
+            Map.entry("CraftRouter", 2), Map.entry("TextArea", 2), Map.entry("NumberBox", 2), Map.entry("Slider", 2),
+            Map.entry("RadioGroup", 2), Map.entry("ComboBox", 2), Map.entry("TabView", 2), Map.entry("GroupBox", 2),
+            Map.entry("ScrollView", 2), Map.entry("Table", 2), Map.entry("TreeView", 2), Map.entry("MenuBar", 2),
+            Map.entry("ContextMenu", 2), Map.entry("StatusBar", 2), Map.entry("Image", 2), Map.entry("Chart", 2),
+            Map.entry("LogView", 2), Map.entry("OpenFileDialog", 2), Map.entry("SaveFileDialog", 2),
+            Map.entry("ItemSlot", 2), Map.entry("ItemPicker", 2), Map.entry("OperationView", 2),
+            Map.entry("ComponentAction", 2), Map.entry("GenericComponent", 2));
     /**
      * The members that came after the first version on a type that was already there, each written as its owner,
      * its name and the types it takes, with the version it came in.

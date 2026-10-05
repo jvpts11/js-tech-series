@@ -5,17 +5,23 @@
  *
  * This file is part of J's Core.
  */
-package dev.jstech.core.client.gui.skin;
+package dev.jstech.core.api.client;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The look every component draws through: the colours of a surface and the primitives a control is made of.
  * A skin is a design, not a palette: the computing mod's desktops each implement one in their own shape
  * language, and a component never paints a pixel of chrome itself, so the same button, field or list looks
  * like a Frames 95 control on one machine and like a flat one on another.
+ *
+ * <p>A mod is handed one wherever it draws inside a machine's screen, a desktop program or a component of a
+ * program's window among them, and drawing through it is what makes what it draws look like the system the machine
+ * runs. Coordinates are the screen's pixels, and colours opaque {@code 0xAARRGGBB}.
  */
+@ApiStatus.Experimental
 public interface ISkin {
 
     // colours

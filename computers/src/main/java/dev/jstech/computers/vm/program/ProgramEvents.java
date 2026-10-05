@@ -9,6 +9,7 @@ package dev.jstech.computers.vm.program;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -42,6 +43,8 @@ final class ProgramEvents {
     private final ProgramWindows windows;
     private final ProgramWatches watches;
     private final ProgramIdentity identity;
+    /** The tick each box was last typed into, so a box tells its handler once a tick however fast it is typed in. */
+    private final Map<Long, Long> typedAt = new HashMap<>();
 
     ProgramEvents(final Process process) {
         this.process = process;
@@ -126,17 +129,38 @@ final class ProgramEvents {
                 || !Boolean.TRUE.equals(found.get(UiWidgets.VISIBLE))) {
             return false;
         }
-        final String handler;
+        final UiMutator.Heard heard;
         try {
-            handler = this.windows.mutator().accept(found, kind, values);
+            heard = this.windows.mutator().accept(found, kind, values);
         } catch (final Halt halt) {
             this.process.halt(halt);
             return false;
         }
-        if (handler == null) {
+        if (heard == null) {
             return false;
         }
-        this.post(handlerOf(found, handler), List.of());
+        /*
+         * A box typed into fast says so once a tick at most: the box already holds every letter, so the one handler
+         * that runs reads all of them, and a player typing cannot fill the program's queue with a call a key.
+         */
+        if ("text".equals(kind)) {
+            final long tick = this.process.host().tick();
+            final Long last = this.typedAt.put(widget, tick);
+            if (last != null && last == tick) {
+                return true;
+            }
+        }
+        final Values.DelegateValue handler = handlerOf(found, heard.handler());
+        if (heard.action() == null) {
+            this.post(handler, List.of());
+            return true;
+        }
+        final String name = String.valueOf(heard.action().get(0));
+        final Object value = heard.action().get(1);
+        if (!this.offer(handler, EVENT_BYTES + Heap.sizeOfText(name) + ComponentValues.encodePlain(value).length(),
+                () -> List.of(this.actionOf(name, value)))) {
+            this.callbacks.drop();
+        }
         return true;
     }
 
@@ -194,6 +218,15 @@ final class ProgramEvents {
         made.set("Text", this.heap.text(text == null ? "" : text, 0));
         made.set("Tick", tick);
         this.heap.allocate(made, EVENT_BYTES, 0);
+        return made;
+    }
+
+    /** What a player did to a generic component, as the value its handler is handed: a name and what came with it. */
+    private Values.Obj actionOf(final String name, final Object value) {
+        final Values.Obj made = new Values.Obj(UiWidgets.COMPONENT_ACTION);
+        made.set("Name", this.heap.text(name, 0));
+        made.set("Value", this.heap.adopt(ComponentValues.toSigma(value), 0));
+        this.heap.allocate(made, Heap.HEADER + 2L * Heap.REFERENCE, 0);
         return made;
     }
 

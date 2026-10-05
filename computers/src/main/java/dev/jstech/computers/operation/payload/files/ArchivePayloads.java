@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.files;
 
 import dev.jstech.computers.client.os.PixWallpaper;
+import dev.jstech.computers.client.os.SigmaImages;
 import dev.jstech.computers.operation.payload.ArchiveFilesPayload;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -84,6 +85,8 @@ public final class ArchivePayloads {
 
     private static void handleWallpaperImage(final WallpaperImagePayload payload, final Player player) {
         PixWallpaper.accept(payload.path(), payload.content());
+        // A program's image widget asks for its picture the same way, and is handed it the same way.
+        SigmaImages.accept(payload.path(), payload.content());
     }
 
     private static void handleArchive(final ArchiveFilesPayload payload, final ServerPlayer player,

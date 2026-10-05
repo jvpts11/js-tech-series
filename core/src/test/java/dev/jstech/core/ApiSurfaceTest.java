@@ -69,13 +69,7 @@ class ApiSurfaceTest {
             // the engines a Mainframe can run to plan its network's work, and what they may offer
             "EngineDef", "EngineCapability",
             // the former name of IsaSpec, deprecated for one cycle before it goes
-            "ArchitectureSpec",
-            /*
-             * What a client-side addition is handed. An operating space is given the machine's own menu,
-             * because the items in it are the server's and every space needs the same ones, so the menu is
-             * as much a part of the promise as the descriptors above.
-             */
-            "ComputerTerminalMenu");
+            "ArchitectureSpec");
 
     /** What java.lang brings in, which a signature may name with no import at all. */
     private static final Set<String> JAVA_LANG = Set.of("String", "Object", "Integer", "Long", "Double", "Float",

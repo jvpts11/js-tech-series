@@ -24,6 +24,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.FileOpeners;
+import dev.jstech.computers.os.ComponentKinds;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
@@ -44,7 +45,7 @@ public final class JsComputersApi {
      * <p>How settled it is, and how long something lives once it is marked as going, are the series'
      * answers rather than this mod's: see the Core's.
      */
-    public static final int VERSION = 4;
+    public static final int VERSION = 5;
 
     private JsComputersApi() {
     }
@@ -148,5 +149,16 @@ public final class JsComputersApi {
     @ApiStatus.Experimental
     public static void registerExplainNode(final IExplainNode node) {
         NextgreExtensions.addExplainNode(node);
+    }
+
+    /**
+     * Adds a kind of component for Σ# programs to put in their windows: {@code new GenericComponent("yourmod:dial")}.
+     *
+     * <p>The kind is named in the namespace of the mod adding it, and a name already taken stops the load. What draws
+     * it is registered on the client, through {@code ComponentRenderers}.
+     */
+    @ApiStatus.Experimental
+    public static void registerComponentKind(final ComponentKind kind) {
+        ComponentKinds.register(kind);
     }
 }

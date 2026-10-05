@@ -38,11 +38,13 @@ import dev.jstech.computers.client.bus.CraftingRouterScreen;
 import dev.jstech.computers.client.bus.ReceivingBusScreen;
 import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.SigmaImages;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.registry.ComputingMenus;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -76,6 +78,7 @@ public final class ComputingClientSetup {
         SoundfoundryPages.clear();
         SoundfoundryCoverArt.clear();
         PrintedPictureTextures.forgetAll();
+        SigmaImages.clear();
     }
 
     /** A printed picture in an item frame shows on it, as a map does. */
@@ -172,15 +175,9 @@ public final class ComputingClientSetup {
          * addon uses, so it is the API's first client rather than a special case behind it; a machine whose
          * space nobody draws falls back to the Interactor, never to a blank screen.
          */
-        OperatingSpaceScreens.register(INTERACTOR, ComputerTerminalScreen::new);
-        event.register(ComputingMenus.COMPUTER_TERMINAL_MENU.get(),
-                (final ComputerTerminalMenu menu,
-                 final Inventory inv,
-                 final Component title) -> {
-                    final IOperatingSpaceScreen space = OperatingSpaceScreens.get(menu.spaceId());
-                    return space != null ? space.open(menu, inv, title)
-                            : new ComputerTerminalScreen(menu, inv, title);
-                });
+        OperatingSpaceScreens.register(INTERACTOR, (space, inv, title) ->
+                new ComputerTerminalScreen(((TerminalSpaceOpening) space).terminal(), inv, title));
+        event.register(ComputingMenus.COMPUTER_TERMINAL_MENU.get(), ComputingClientSetup::spaceScreen);
         event.register(ComputingMenus.EXPORT_BUS_MENU.get(), ExportBusScreen::new);
         event.register(ComputingMenus.IMPORT_BUS_MENU.get(), ImportBusScreen::new);
         event.register(ComputingMenus.EXTERNAL_STORAGE_BUS_MENU.get(), ExternalStorageBusScreen::new);
@@ -211,5 +208,21 @@ public final class ComputingClientSetup {
         event.registerBlockEntityRenderer(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get(), ComputerRenderer::new);
         // The monitors: what the machine shows, live on the glass, and a big screen drawn whole.
         event.registerBlockEntityRenderer(ComputingModule.MONITOR_BE.get(), MonitorScreenRenderer::new);
+    }
+
+    /*
+     * The screen of a machine's operating space: the one its space registered, handed the opening behind the API's
+     * narrow face, or the Interactor's when nobody draws that space. A space builds its screen on the menu the opening
+     * hands it, so whatever type it says, the screen is this menu's.
+     */
+    @SuppressWarnings("unchecked")
+    private static AbstractContainerScreen<ComputerTerminalMenu> spaceScreen(final ComputerTerminalMenu menu,
+                                                                             final Inventory inv,
+                                                                             final Component title) {
+        final IOperatingSpaceScreen space = OperatingSpaceScreens.get(menu.spaceId());
+        final AbstractContainerScreen<?> screen = space == null ? null
+                : space.open(new TerminalSpaceOpening(menu), inv, title);
+        return screen != null ? (AbstractContainerScreen<ComputerTerminalMenu>) screen
+                : new ComputerTerminalScreen(menu, inv, title);
     }
 }

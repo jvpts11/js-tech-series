@@ -51,8 +51,12 @@ public final class SystemApi {
             computer(), holdingInfo(), serverInfo(), network(), stockEvent(), subscription(), remoteComputer(),
             iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations(), ccComputer(),
             ccPeripheral(), gatewayMessage(), gateway(), widget(), window(), box("Row"), box("Column"), label(),
-            button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox(), sound(), speaker(),
-            bus(), busItem(), redstone(), craftInterface(), craftRouter());
+            button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox(), textArea(),
+            ranged("NumberBox"), ranged("Slider"), choices("RadioGroup"), choices("ComboBox"), tabView(),
+            groupBox(), scrollView(), table(), treeView(), menuBar(), contextMenu(), statusBar(), image(), chart(),
+            logView(), fileDialog("OpenFileDialog"), fileDialog("SaveFileDialog"), itemSlot(), itemPicker(),
+            operationView(), componentAction(), genericComponent(), sound(), speaker(), bus(), busItem(), redstone(),
+            craftInterface(), craftRouter());
 
     private static final Map<String, TypeSpec> BY_TYPE = new HashMap<>();
     /** Every way of writing a call, under its owner and name, so a lookup does not walk the whole system. */
@@ -743,6 +747,255 @@ public final class SystemApi {
         final Members messageBox = new Members("MessageBox");
         messageBox.onType(VOID, "Show", MemberKind.PROCESS, CallCost.of(SigmaCosts.WRITE), STRING, STRING);
         return new TypeSpec(UI, "MessageBox", messageBox.members);
+    }
+
+    /*
+     * The widgets the second version brought. A machine with only its terminal draws them in letters, but a picture,
+     * a chart, an item and a component that draws itself have no letters to be drawn in, and making one there stops
+     * the program saying so.
+     */
+
+    /** A box of several lines, which tells its handler at every change as a one-line box does. */
+    private static TypeSpec textArea() {
+        final Members area = new Members("TextArea");
+        area.made();
+        area.made(STRING);
+        area.drawnValue(STRING, "Text");
+        area.told("OnChange");
+        return new TypeSpec(UI, "TextArea", WIDGET, area.members);
+    }
+
+    /** A number box or a slider: a whole number between a least and a most, moved a step at a time. */
+    private static TypeSpec ranged(final String name) {
+        final Members ranged = new Members(name);
+        ranged.made();
+        ranged.made(INT, INT);
+        ranged.drawnValue(INT, "Value");
+        ranged.drawnValue(INT, "Least");
+        ranged.drawnValue(INT, "Most");
+        ranged.drawnValue(INT, "Step");
+        ranged.told("OnChange");
+        return new TypeSpec(UI, name, WIDGET, ranged.members);
+    }
+
+    /** A radio group or a combo box: choices added one by one, the picked one counted from one, none being zero. */
+    private static TypeSpec choices(final String name) {
+        final Members choices = new Members(name);
+        choices.made();
+        choices.drawn("Add", STRING);
+        choices.drawn("Clear");
+        choices.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        choices.drawnValue(INT, "Selected");
+        if ("RadioGroup".equals(name)) {
+            choices.drawnValue(BOOL, "Across");
+        }
+        choices.told("OnSelect");
+        return new TypeSpec(UI, name, WIDGET, choices.members);
+    }
+
+    /** Pages behind tabs, each a widget under the title of its tab; the first one added is the one showing. */
+    private static TypeSpec tabView() {
+        final Members tabs = new Members("TabView");
+        tabs.made();
+        tabs.drawn("Add", STRING, WIDGET);
+        tabs.drawn("Clear");
+        tabs.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        tabs.drawnValue(INT, "Selected");
+        tabs.told("OnSelect");
+        return new TypeSpec(UI, "TabView", WIDGET, tabs.members);
+    }
+
+    /** A frame with a caption round one widget. */
+    private static TypeSpec groupBox() {
+        final Members group = new Members("GroupBox");
+        group.made();
+        group.made(STRING);
+        group.drawnValue(STRING, "Text");
+        group.drawnValue(WIDGET, "Content");
+        return new TypeSpec(UI, "GroupBox", WIDGET, group.members);
+    }
+
+    /** A widget taller than the room it is given, scrolled by the player. */
+    private static TypeSpec scrollView() {
+        final Members scroll = new Members("ScrollView");
+        scroll.made();
+        scroll.drawnValue(WIDGET, "Content");
+        return new TypeSpec(UI, "ScrollView", WIDGET, scroll.members);
+    }
+
+    /** Rows under column headers; a row is given its cells one text each or as a list. */
+    private static TypeSpec table() {
+        final Members table = new Members("Table");
+        table.made();
+        table.drawn("AddColumn", STRING);
+        table.drawn("AddRow", STRINGS);
+        table.drawn("AddRow", STRING);
+        table.drawn("AddRow", STRING, STRING);
+        table.drawn("AddRow", STRING, STRING, STRING);
+        table.drawn("AddRow", STRING, STRING, STRING, STRING);
+        table.drawn("Clear");
+        table.onObject(STRING, "Cell", MemberKind.PROCESS, CallCost.FREE, INT, INT);
+        table.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        table.drawnValue(INT, "Selected");
+        table.told("OnSelect");
+        return new TypeSpec(UI, "Table", WIDGET, table.members);
+    }
+
+    /** Nodes under nodes; adding one hands back its number, which is what a node is hung from. */
+    private static TypeSpec treeView() {
+        final Members tree = new Members("TreeView");
+        tree.made();
+        tree.onObject(INT, "Add", MemberKind.PROCESS, CallCost.of(SigmaCosts.DRAW), STRING);
+        tree.onObject(INT, "Add", MemberKind.PROCESS, CallCost.of(SigmaCosts.DRAW), STRING, INT);
+        tree.drawn("Clear");
+        tree.onObject(STRING, "NodeText", MemberKind.PROCESS, CallCost.FREE, INT);
+        tree.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        tree.drawnValue(INT, "Selected");
+        tree.told("OnSelect");
+        return new TypeSpec(UI, "TreeView", WIDGET, tree.members);
+    }
+
+    /** The menus along the top of a window, each entry added under the menu it belongs to. */
+    private static TypeSpec menuBar() {
+        final Members bar = new Members("MenuBar");
+        bar.made();
+        bar.drawn("Add", STRING, STRING);
+        bar.drawn("Clear");
+        bar.valueOnObject(STRING, "Picked", MemberKind.PROCESS, CallCost.FREE);
+        bar.valueOnObject(STRING, "PickedMenu", MemberKind.PROCESS, CallCost.FREE);
+        bar.told("OnPick");
+        return new TypeSpec(UI, "MenuBar", WIDGET, bar.members);
+    }
+
+    /** The menu a widget opens when it is clicked with the other button, made for that widget. */
+    private static TypeSpec contextMenu() {
+        final Members menu = new Members("ContextMenu");
+        menu.made(WIDGET);
+        menu.drawn("Add", STRING);
+        menu.drawn("Clear");
+        menu.valueOnObject(STRING, "Picked", MemberKind.PROCESS, CallCost.FREE);
+        menu.told("OnPick");
+        return new TypeSpec(UI, "ContextMenu", WIDGET, menu.members);
+    }
+
+    /** The bar along the bottom of a window: a line, and a few sections at its right. */
+    private static TypeSpec statusBar() {
+        final Members bar = new Members("StatusBar");
+        bar.made();
+        bar.made(STRING);
+        bar.drawnValue(STRING, "Text");
+        bar.drawn("Add", STRING);
+        bar.drawn("Clear");
+        return new TypeSpec(UI, "StatusBar", WIDGET, bar.members);
+    }
+
+    /** A picture read from the machine's disk, a Pix image as the paint program saves them. */
+    private static TypeSpec image() {
+        final Members image = new Members("Image");
+        image.made();
+        image.made(STRING);
+        image.drawnValue(STRING, "Path");
+        return new TypeSpec(UI, "Image", WIDGET, image.members);
+    }
+
+    /** A line drawn through the numbers added to it, the newest at the right, between a least and a most. */
+    private static TypeSpec chart() {
+        final Members chart = new Members("Chart");
+        chart.made();
+        chart.made(INT, INT);
+        chart.drawnValue(STRING, "Text");
+        chart.drawnValue(INT, "Least");
+        chart.drawnValue(INT, "Most");
+        chart.drawn("Add", DOUBLE);
+        chart.drawn("Clear");
+        chart.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        return new TypeSpec(UI, "Chart", WIDGET, chart.members);
+    }
+
+    /** Lines one under another, the newest at the bottom, a line saying WARN or ERROR picked out as such. */
+    private static TypeSpec logView() {
+        final Members log = new Members("LogView");
+        log.made();
+        log.drawn("Add", STRING);
+        log.drawn("Clear");
+        log.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        return new TypeSpec(UI, "LogView", WIDGET, log.members);
+    }
+
+    /** The system's own dialog for picking a file to open, or a place and a name to save one under. */
+    private static TypeSpec fileDialog(final String name) {
+        final Members dialog = new Members(name);
+        dialog.made();
+        dialog.made(STRING);
+        dialog.drawnValue(STRING, "Title");
+        dialog.drawnValue(STRING, "Path");
+        dialog.drawnValue(STRING, "Filter");
+        if ("SaveFileDialog".equals(name)) {
+            dialog.drawnValue(STRING, "Name");
+        }
+        dialog.onObject(VOID, "Show", MemberKind.PROCESS, CallCost.of(SigmaCosts.WRITE), "Window");
+        dialog.told("OnChoose");
+        dialog.told("OnCancel");
+        return new TypeSpec(UI, name, WIDGET, dialog.members);
+    }
+
+    /** One slot holding an item, shown as the game shows it, by the item's id and how many. */
+    private static TypeSpec itemSlot() {
+        final Members slot = new Members("ItemSlot");
+        slot.made();
+        slot.made(STRING);
+        slot.made(STRING, INT);
+        slot.drawnValue(STRING, "Item");
+        slot.drawnValue(INT, "Amount");
+        slot.told("OnClick");
+        return new TypeSpec(UI, "ItemSlot", WIDGET, slot.members);
+    }
+
+    /** A grid of items with a search line above it, the player picking one. */
+    private static TypeSpec itemPicker() {
+        final Members picker = new Members("ItemPicker");
+        picker.made();
+        picker.drawn("Add", STRING);
+        picker.drawn("Clear");
+        picker.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        picker.drawnValue(INT, "Selected");
+        picker.valueOnObject(STRING, "Picked", MemberKind.PROCESS, CallCost.FREE);
+        picker.told("OnSelect");
+        return new TypeSpec(UI, "ItemPicker", WIDGET, picker.members);
+    }
+
+    /** One operation of the network as it stands: what was asked, how it stands, how far it has gone and where. */
+    private static TypeSpec operationView() {
+        final Members view = new Members("OperationView");
+        view.made();
+        view.drawn("Show", "OperationInfo");
+        view.drawnValue(STRING, "Text");
+        view.drawnValue(STRING, "State");
+        view.drawnValue(LONG, "Done");
+        view.drawnValue(LONG, "Total");
+        view.drawnValue(STRING, "Computer");
+        return new TypeSpec(UI, "OperationView", WIDGET, view.members);
+    }
+
+    private static TypeSpec componentAction() {
+        final Members action = new Members("ComponentAction");
+        action.recordValue(STRING, "Name");
+        action.recordValue(OBJECT, "Value");
+        return new TypeSpec(UI, "ComponentAction", action.members);
+    }
+
+    /**
+     * A component of a kind a mod adds, named by its id: it holds any value the program hands it, as a copy, and
+     * tells the program what a player did to it as a name and a value. Handing it a value costs a draw and more for
+     * every kilobyte of it, since every viewer of the window is sent it.
+     */
+    private static TypeSpec genericComponent() {
+        final Members component = new Members("GenericComponent");
+        component.made(STRING);
+        component.valueOnObject(STRING, "Kind", MemberKind.PROCESS, CallCost.FREE);
+        component.drawnValue(OBJECT, "Data");
+        component.onObject(VOID, "OnAction", MemberKind.PROCESS, CallCost.FREE, "Action<ComponentAction>");
+        return new TypeSpec(UI, "GenericComponent", WIDGET, component.members);
     }
 
     /**

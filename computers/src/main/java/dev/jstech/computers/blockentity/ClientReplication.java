@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
@@ -96,7 +97,10 @@ final class ClientReplication {
         final Map<WindowId, Values.Obj> open = openNow();
         final Map<WindowId, UiWindowPayload> made = new HashMap<>();
         for (final ServerPlayer viewer : viewers) {
-            if (!(viewer.containerMenu instanceof DesktopMenu)) {
+            // A desktop draws the windows as windows; a terminal of a machine that only has one draws them in text.
+            final boolean screen = viewer.containerMenu instanceof DesktopMenu
+                    || viewer.containerMenu instanceof CommandPromptMenu;
+            if (!screen) {
                 continue;
             }
             for (final UiWindowPayload payload : takeOwed(viewer, open, made)) {

@@ -5,12 +5,14 @@ working from one release to the next.
 
 ## What the API is
 
-Two packages, and nothing else:
+Two packages and what lies under them, and nothing else:
 
-- `dev.jstech.core.api`, for what every mod of the series shares.
-- `dev.jstech.computers.api`, for the computers.
+- `dev.jstech.core.api`, for what every mod of the series shares, and `dev.jstech.core.api.client` for what it
+  shares on the side of the game that has screens.
+- `dev.jstech.computers.api`, for the computers, `dev.jstech.computers.api.planner` for their planners and
+  `dev.jstech.computers.api.client` for what a mod draws on a player's game.
 
-Everything reachable from those two packages is the API. Everything else in either mod is that mod's own
+Everything reachable from those packages is the API. Everything else in either mod is that mod's own
 business and may change in any release with no warning and no note. A mod that reaches into it is a mod
 that will break, and no release will be held back to avoid breaking it.
 
@@ -24,10 +26,35 @@ because a mod cannot add anything without holding them:
   for one more cycle.
 - What a Mainframe can run to plan its network's work: `EngineDef`, a Network Operations Engine, and the
   `EngineCapability` values it may offer.
-- What a screen of a mod's own is handed: `ComputerTerminalMenu`, the machine's menu, which an operating
-  space is given because the items in it are the server's.
 
-Everything public in one of these is part of the promise, as it is in the two packages.
+Everything public in one of these is part of the promise, as it is in the packages.
+
+An operating space's screen is handed the machine through `IOperatingSpace`, a narrow face of the machine's menu:
+the menu itself as the game's own kind of menu, holding the player's inventory as real slots, and which machine,
+monitor, space and era it is. The menu behind it is the mod's own, and changes without a word.
+
+## What a mod draws on a player's game
+
+Three ways in, all in `dev.jstech.computers.api.client` and the Core's `dev.jstech.core.api.client`, all
+registered from client setup:
+
+- **A kind of component for Σ# programs' windows.** Name it with `ComputersRegisterEvent.componentKind`, on both
+  sides, in your mod's namespace, saying what it takes (`IComponentValidator`) and whether it reaches outside the
+  game; register what draws it with `ComponentRenderers.register`. A program makes one with
+  `new GenericComponent("yourmod:dial")`, hands it any value of the language, and hears through `OnAction` what a
+  player did. Your renderer is handed the value as plain Java values and the system's `ISkin`, so it draws in the
+  machine's look, and reports what the player did through `IComponentActions`. A game without your mod shows a
+  placeholder naming the kind. A kind that reaches outside the game is off unless the server turns it on, and
+  each player sees it only if their own settings do too.
+- **A program with a window of its own, written in Java.** Name the program with `ComputersRegisterEvent.program`
+  as any program is named, and register its window with `DesktopApps.register`: a `DesktopProgram` that draws
+  itself, through the system's `ISkin`, or through a `SurfaceRenderer`. It runs on the client of whoever opened
+  it; other players at the same machine and the monitor's face in the world see a placeholder, unless the program
+  says what it draws is safe to show anywhere. A window with a surface holds video memory on the machine.
+- **A surface.** A `SurfaceRenderer` asks for a `PixelSurface`, an array of colours it writes, or a `GpuSurface`,
+  a render target it draws into with the game's rendering, of the size it says. It is asked for frames no faster
+  than its frame cap and only while its window is drawn; one that throws shows the placeholder from then on, with
+  one line in the log.
 
 ## How to add something
 
@@ -35,7 +62,7 @@ Each mod opens its registries once, while the game loads, by firing one event on
 
 - `CoreRegisterEvent`, for languages and kinds of Operation.
 - `ComputersRegisterEvent`, for instruction set architectures (ISAs), kernels, operating systems, programs,
-  desktops and Network Operations Engines, and for what the engines that take extensions (NextgreIQL among
+  desktops, Network Operations Engines and kinds of component for programs' windows, and for what the engines that take extensions (NextgreIQL among
   them) add to their planner: rules (`IPlannerRule`), hints (`IPlannerOperator`), statistics
   (`IPlannerStatistic`) and notes under a plan's steps (`IExplainNode`), all in `dev.jstech.computers.api.planner`.
   A rule weighs every plan the planner considers for a craft, a `PlanCandidate` made of `PlanStep`s, and may add

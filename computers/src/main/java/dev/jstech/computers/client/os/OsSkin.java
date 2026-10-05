@@ -14,7 +14,7 @@ import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Grounds;
-import dev.jstech.core.client.gui.skin.ISkin;
+import dev.jstech.core.api.client.ISkin;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.tier.HardwareEra;

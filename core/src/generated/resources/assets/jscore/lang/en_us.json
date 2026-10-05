@@ -154,6 +154,8 @@
   "jscore.sound_mixer.title": "Sound Mixer",
   "jscore.sound_mixer.turn_all_back_on": "Turn All Back On",
   "jscore.sound_mixer.turned_off_count": "%s of %s turned off",
+  "jscore.surface.failed": "This picture could not be drawn",
+  "jscore.surface.only_opener": "Shown only to whoever opened it",
   "jscore.text.joined": "%s%s%s",
   "key.categories.jstech": "J's Tech Series",
   "key.jscore.item_mode": "Change Item Mode",

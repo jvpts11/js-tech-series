@@ -7,7 +7,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### API
-- J's Core's API is at version 2 and J's Computers' at version 4. Everything this release adds to either, or
+- J's Core's API is at version 3 and J's Computers' at version 5. Everything this release adds to either, or
   changes, carries `@ApiStatus.Experimental`: it keeps the mark through this release and loses it when the next
   cycle begins. Each mod's API is now kept line by line, every type and member a mod can reach with the version
   that brought it, and the tests fail when the code and that list disagree; `docs/API.md` says how.
@@ -41,12 +41,51 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   stood on before. Its layout constants (`INV_X`, `INV_Y`, `HOTBAR_Y` and the `STORAGE_` ones) and
   `storageSlotCount()` are gone: `invY()` and `hotbarY()`, with the new `invX()`, give where the inventory is
   drawn. `openingTab` says which tab a terminal opens on.
+- Added: J's Core's client API, `dev.jstech.core.api.client`: `ISkin`, the look a mod draws through inside a
+  machine's screen (moved here from the Core's own GUI package); `SurfaceRenderer`, what draws frames onto a
+  surface of its size, asked no faster than its frame cap and only while it is shown; and the two surfaces,
+  `PixelSurface`, an array of colours uploaded when it changed, and `GpuSurface`, a render target drawn into with
+  the game's rendering.
+- Added: kinds of component for Σ# programs' windows: `ComponentKind` and `IComponentValidator`, registered with
+  `ComputersRegisterEvent.componentKind` (or `JsComputersApi.registerComponentKind`) in the adding mod's namespace;
+  on the client, `ComponentRenderers.register` with an `IComponentRenderer`, which reports what a player did
+  through `IComponentActions`.
+- Added: programs with windows written in Java: `DesktopApps.register` with an `IDesktopProgramFactory` making a
+  `DesktopProgram`, which draws itself or through a `SurfaceRenderer`, for whoever opened it; this replaces
+  registering a window factory with the mod's own desktop code.
+- Changed: an operating space's screen is handed an `IOperatingSpace`, a narrow face of the machine (its menu as
+  the game's kind of menu, the machine, the monitor, the space and the era), in place of `ComputerTerminalMenu`,
+  which is no longer part of the API. `IOperatingSpaceScreen.open` takes it and gives back the screen built on its
+  menu.
 - Deprecated: `ComputersRegisterEvent.architecture`, `JsComputersApi.registerArchitecture` and
   `ArchitectureSpec`. They still work, handing what they are given to the instruction set registration, and go
   in the next cycle; `ArchitectureSpec.toIsa()` gives the same values under the new name.
 - Removed: `ArchitectureSpec.runs` (ask the `IsaSpec` from `toIsa()`), and `DesktopEnvironmentDef.programFor`.
 
 ### Added
+- The widgets of Σ# 2 for programs' windows: `TextArea`, `NumberBox`, `Slider`, `RadioGroup`, `ComboBox`,
+  `TabView`, `GroupBox`, `ScrollView`, `Table`, `TreeView`, `MenuBar`, `ContextMenu`, `StatusBar`, `Image`, `Chart`,
+  `LogView`, the system's own `OpenFileDialog` and `SaveFileDialog`, and the computers' own `ItemSlot`,
+  `ItemPicker` and `OperationView`. Each system draws them in its own look, Frames 95, XP and 11, KDE 2 and Plasma,
+  GNOME 1 and GNOME, Cinnamon and CDE: a radio button is round or a diamond, a tree opens with a boxed plus or a
+  chevron, a slider's thumb is a raised block or a dot of the accent. Each is saved with its program like the
+  widgets before it.
+- A machine that only has its terminal, as the Vintage systems do, draws a program's windows there in letters, as
+  the full-screen programs of the age drew their dialogs: the machine's ground in blue, a menu bar along the top, the
+  window in a double frame with its shadow, the status line along the bottom. Tab moves between the widgets, the
+  arrows move inside one, Enter or Space presses, Escape shuts what is open, F10 opens the menu bar, and a click
+  lands where it is. A picture, a chart, an item, an operation, a canvas or a component that draws itself has no
+  letters to be drawn in, and a program making one there stops, saying so.
+- `GenericComponent`, a component of a kind another mod adds: it holds any value of the language, copied when it is
+  handed over and charged by its size, and tells the program what a player did as a `ComponentAction`, a name and a
+  value, through `OnAction`. What it holds is checked against the bounds every component shares (no handlers,
+  files, threads, windows or widgets, nothing that holds itself, at most 32 KB, sixteen levels deep and 4096 parts)
+  and against what its kind takes. A game without the mod shows a placeholder naming the kind. A kind that reaches
+  outside the game is off unless the server's settings and the player's own both turn it on.
+- A program a mod writes in Java can open a window of its own on a desktop, drawing itself or a surface of pixels or
+  of the graphics card, for whoever opened it; another player at the machine and the monitor's face in the world see
+  a placeholder in its window, and one whose drawing fails shows the placeholder from then on. A window with a
+  surface holds video memory on the machine, as a paint program's does.
 - One way to write a settings file, in J's Core, for any mod built on it. A mod declares a file once (its name,
   whether it is a player's, common to every game or a world's, its format and the version of its layout) and each
   setting in it: a flag, a number held to a range, a word held to a list, or anything with a codec, with the comment
@@ -1167,6 +1206,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- A box typed into tells its program's handler at most once a tick, holding every letter typed by then, so a player
+  typing fast no longer fills the program's queue with a call a key. A window carries at most 128 KB to the screens
+  showing it, whatever its program holds; past that, what its last widgets hold is left out and they say so.
+- A Σ# program on a machine that boots to its terminal, MC-DOS among them, now opens its windows there in letters
+  instead of stopping for want of a desktop; a machine with neither still stops it, saying so.
+- A widget asking for a width or a height gets it down to 8 pixels; anything under 60 used to be raised to 60, the
+  least a window may be, so a short widget pushed what came after it out of its window.
 - What moves while a machine comes up and goes down (Frames 95's running bar, Frames XP's blocks, the rings and
   running dots of Frames 11, GNOME and Cinnamon) moves smoothly between ticks, on the clock every motion is read
   against, and stands still in its first position for a player who reduced motion.
