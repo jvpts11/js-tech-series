@@ -12,6 +12,7 @@ import dev.jstech.core.audio.pcm.PcmFormat;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
+import java.util.function.BooleanSupplier;
 import javax.sound.sampled.AudioFormat;
 import net.minecraft.client.sounds.AudioStream;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,8 @@ public final class PcmAudioStream implements AudioStream {
     private final IPcmSource source;
     private final boolean downmix;
     private final AudioFormat format;
+    /** Whether the sound was told to stop, which ends the stream wherever it is. */
+    private final BooleanSupplier stopped;
     private short[] samples = new short[0];
     private boolean ended;
 
@@ -36,10 +39,16 @@ public final class PcmAudioStream implements AudioStream {
 
     /** Reads that source, made mono when {@code mono} asks for it and it is not already. */
     public PcmAudioStream(final IPcmSource source, final boolean mono) {
+        this(source, mono, () -> false);
+    }
+
+    /** The same, ending as soon as {@code stopped} says the sound was told to stop. */
+    public PcmAudioStream(final IPcmSource source, final boolean mono, final BooleanSupplier stopped) {
         final PcmFormat in = source.format();
         this.source = source;
         this.downmix = mono && in.channels() == 2;
         this.format = new AudioFormat(in.sampleRate(), Short.SIZE, downmix ? 1 : in.channels(), true, false);
+        this.stopped = stopped;
     }
 
     @Override
@@ -54,7 +63,7 @@ public final class PcmAudioStream implements AudioStream {
     @Nullable
     @Override
     public ByteBuffer read(final int size) throws IOException {
-        if (ended) {
+        if (ended || stopped.getAsBoolean()) {
             return null;
         }
         final int channels = source.format().channels();

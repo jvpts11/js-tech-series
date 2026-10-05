@@ -235,6 +235,13 @@ final class VolumePopup {
         if (form == OsSkin.Form.KDE2 || form == OsSkin.Form.GNOME1) {
             return Look.PERIOD;
         }
+        // KDE 4's KMix was already Plasma's applet; GNOME 2's volume control was the small upright slider of its age.
+        if (form == OsSkin.Form.OXYGEN) {
+            return Look.PLASMA;
+        }
+        if (form == OsSkin.Form.CLEARLOOKS) {
+            return Look.CLASSIC;
+        }
         final PanelStyle style = desktop.panelStyle();
         return switch (style) {
             case FRAMES_95, FRAMES_XP -> Look.CLASSIC;

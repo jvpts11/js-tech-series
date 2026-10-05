@@ -232,6 +232,16 @@ final class PanelTray {
         }
     }
 
+    /** How far into the status group the speaker stands, for a panel that places the group itself. */
+    static int speakerOffset() {
+        return ICON + GAP;
+    }
+
+    /** How wide the speaker is. */
+    static int speakerWidth() {
+        return ICON;
+    }
+
     /** Where the speaker stands on a panel {@code sw} wide: in the notification area, or at the top bar's end. */
     int speakerX(final int sw, final boolean topBar) {
         return (topBar ? sw - PAD - statusWidth() : left(sw) + PAD + lead()) + ICON + GAP;

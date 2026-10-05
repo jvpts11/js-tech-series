@@ -93,6 +93,43 @@ final class ChromeShapes {
         Grounds.declare(g, x, y, x + w, y + h, OPAQUE | middle(left, right));
     }
 
+    /**
+     * A round face {@code d} pixels across at {@code (x, y)}, lit from {@code top} at its crown to {@code bottom} at
+     * its foot, cut row by row, with a rim of {@code rim} round it: the round buttons of the desktops that had them.
+     */
+    static void disc(final GuiGraphics g, final int x, final int y, final int d, final int top, final int bottom,
+                     final int rim) {
+        final double r = d / 2.0;
+        for (int row = 0; row < d; row++) {
+            final double dy = row + 0.5 - r;
+            final int half = (int) Math.round(Math.sqrt(Math.max(0.0, r * r - dy * dy)));
+            if (half <= 0) {
+                continue;
+            }
+            final int left = x + (int) Math.round(r) - half;
+            final int right = x + (int) Math.round(r) + half;
+            g.fill(left, y + row, right, y + row + 1, rim);
+            if (right - left > 2) {
+                final float t = d <= 1 ? 0f : row / (float) (d - 1);
+                g.fill(left + 1, y + row, right - 1, y + row + 1, blend(top, bottom, t));
+            }
+        }
+        // The rim's top and foot rows over the face, so the disc reads as a ring with a lit inside.
+        g.fill(x + d / 2 - 1, y, x + d / 2 + 1, y + 1, rim);
+        g.fill(x + d / 2 - 1, y + d - 1, x + d / 2 + 1, y + d, rim);
+    }
+
+    /** {@code a} carried toward {@code b} by {@code t}, from nought to one, channel by channel. */
+    static int blend(final int a, final int b, final float t) {
+        int out = 0;
+        for (int shift = 0; shift <= 24; shift += 8) {
+            final int from = a >>> shift & 0xFF;
+            final int to = b >>> shift & 0xFF;
+            out |= Math.round(from + (to - from) * t) << shift;
+        }
+        return out;
+    }
+
     /** A 1px outline of a single colour. */
     static void outline(final GuiGraphics g, final int x, final int y, final int w, final int h, final int color) {
         g.fill(x, y, x + w, y + 1, color);

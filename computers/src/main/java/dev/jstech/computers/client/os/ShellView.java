@@ -454,8 +454,8 @@ public final class ShellView extends Panel implements ShellViews.IListener {
              * The period Unix terminals were not pure black: xterm-era consoles carried a slight cast
              * from the desktop they ran on.
              */
-            case KDE2 -> c.kdeGround();
-            case GNOME1 -> c.gnomeGround();
+            case KDE2, OXYGEN -> c.kdeGround();
+            case GNOME1, CLEARLOOKS -> c.gnomeGround();
             // A slate with the cast of CDE's own backdrop, for a panel inside another program.
             case MOTIF -> c.motifGround();
         };

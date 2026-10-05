@@ -96,6 +96,10 @@ final class DesktopPainter {
         final int perCol = grid.perColumn();
         g.pose().pushPose();
         g.pose().translate(0, 0, DesktopZ.ICONS);
+        // KDE 4 stands its icons in a Folder View, with the cashew in the corner of its desktop.
+        if (desktop.kde4()) {
+            desktop.transitionPanels().renderKde4Desktop(g, sw, lmx, lmy);
+        }
         grid.render(g, lmx, lmy);
         // CDE stands a window that was put away on its workspace as an icon, having no panel to list it on.
         if (cde) {
@@ -267,6 +271,10 @@ final class DesktopPainter {
             desktop.aeroSuperbar().render(g, tbY, sw, lmx, lmy);
         } else if (style == PanelStyle.FRAMES_10) {
             desktop.metroTaskbar().render(g, tbY, sw, lmx, lmy);
+        } else if (desktop.kde4()) {
+            desktop.transitionPanels().renderKde4(g, tbY, sw, sh, lmx, lmy);
+        } else if (desktop.gnome2()) {
+            desktop.transitionPanels().renderGnome2(g, tbY, sw, sh, lmx, lmy);
         } else if (desktop.periodPanel()) {
             // A Legacy-era Unix desktop's panel, drawn out of the skin's own relief.
             desktop.linuxPanels().renderPeriod(g, tbY, sw, sh, lmx, lmy);
@@ -292,7 +300,7 @@ final class DesktopPainter {
             g.pose().popPose();
         }
         // The figures behind the notification area, while the pointer rests on it. CDE has no such area.
-        if (!desktop.view().panelOnTop() && style != PanelStyle.CDE) {
+        if (!desktop.view().barOnTop() && style != PanelStyle.CDE) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.TASKBAR + 8);
             desktop.tray().drawTip(g, tbY, sw);
@@ -329,7 +337,7 @@ final class DesktopPainter {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.MENU);
             volume.render(g, new UiContext(prefs.skin(), font, lmx, lmy, partialTick), view.width(), tbY,
-                    view.panelOnTop());
+                    view.barOnTop());
             g.pose().popPose();
         }
         // Frames 10's Task View over the windows, and its Action Center down the edge.

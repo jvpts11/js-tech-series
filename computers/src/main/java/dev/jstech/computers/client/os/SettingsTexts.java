@@ -90,6 +90,13 @@ final class SettingsTexts {
     static final TextKey VRAM = TextKey.of("jsc.settings.vram", "%s MB VRAM");
     static final TextKey PLATFORM = TextKey.of("jsc.settings.platform", "Platform");
     static final TextKey RESTART_TO_FIRMWARE = TextKey.of("jsc.settings.restart_to_firmware", "Restart to firmware");
+    // Frames 7's rating of the machine, its base score and the five it is the lowest of.
+    static final TextKey RATING = TextKey.of("jsc.settings.rating", "Rating");
+    static final TextKey PROCESSOR_SCORE = TextKey.of("jsc.settings.processor_score", "Processor %s");
+    static final TextKey MEMORY_SCORE = TextKey.of("jsc.settings.memory_score", "Memory %s");
+    static final TextKey DISK_SCORE = TextKey.of("jsc.settings.disk_score", "Disk %s");
+    static final TextKey GRAPHICS_SCORE = TextKey.of("jsc.settings.graphics_score", "Graphics %s");
+    static final TextKey GAMING_SCORE = TextKey.of("jsc.settings.gaming_score", "Gaming %s");
 
     // Network.
     static final TextKey PUBLIC_SHARE = TextKey.of("jsc.settings.public_share", "System disk public share");

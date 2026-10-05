@@ -97,8 +97,10 @@ final class EffectsPage {
     }
 
     /** Builds the page into {@code target} over the area {@code x}, {@code y}, {@code w} by {@code h}. */
-    void build(final Panel target, final EffectsPages.Page page, final int x, final int y, final int w,
+    void build(final Panel target, final EffectsPages.Page defined, final int x, final int y, final int w,
                final int h, final Font font, final DesktopEffects now) {
+        // On graphics too weak for the effects the page still keeps the choices, and says why none of them shows.
+        final EffectsPages.Page page = now.basic() ? withBasicNote(defined) : defined;
         controls.clear();
         footer.clear();
         backButton = null;
@@ -169,11 +171,11 @@ final class EffectsPage {
                 yield null;
             }
             case EffectsPages.Check check -> scroll.add(new CheckRow(GameText.resolve(check.label()),
-                    () -> check.inverted() == now.isOff(check.effect()), () -> flip(check.effect(), now)))
+                    () -> check.inverted() == now.switchedOff(check.effect()), () -> flip(check.effect(), now)))
                     .setBounds(x, top, w, rowH);
             case EffectsPages.Toggle toggle -> scroll.add(new ToggleRow(GameText.resolve(toggle.label()),
                     toggle.description() == null ? "" : GameText.resolve(toggle.description()),
-                    () -> toggle.inverted() == now.isOff(toggle.effect()), () -> flip(toggle.effect(), now)))
+                    () -> toggle.inverted() == now.switchedOff(toggle.effect()), () -> flip(toggle.effect(), now)))
                     .setBounds(x, top, w, rowH);
             case EffectsPages.Slider slider -> scroll.add(new SliderRow(GameText.resolve(slider.label()),
                     GameText.resolve(slider.low()), GameText.resolve(slider.high()), slider.speeds().size(),
@@ -183,7 +185,7 @@ final class EffectsPage {
             case EffectsPages.Choice choice -> {
                 scroll.add(new Label(GameText.resolve(choice.label())).setScale(SMALL))
                         .setBounds(x, top + 3, w - EffectsPageLayout.CHOICE_W - 4, 8);
-                final boolean on = !now.isOff(choice.effect());
+                final boolean on = !now.switchedOff(choice.effect());
                 yield scroll.add(new Button(GameText.resolve(on ? choice.on() : choice.off()),
                         () -> flip(choice.effect(), now)).setLabelScale(SMALL))
                         .setBounds(x + w - EffectsPageLayout.CHOICE_W, top, EffectsPageLayout.CHOICE_W,
@@ -229,7 +231,7 @@ final class EffectsPage {
         }
         final boolean on = choice != EffectsPages.PRESET_PERFORMANCE;
         for (final String effect : presets.effects()) {
-            if (now.isOff(effect) == on) {
+            if (now.switchedOff(effect) == on) {
                 set.accept("effect", effect + (on ? " on" : " off"));
             }
         }
@@ -239,7 +241,7 @@ final class EffectsPage {
     private static int presetOf(final EffectsPages.Presets presets, final DesktopEffects now) {
         int off = 0;
         for (final String effect : presets.effects()) {
-            if (now.isOff(effect)) {
+            if (now.switchedOff(effect)) {
                 off++;
             }
         }
@@ -252,7 +254,7 @@ final class EffectsPage {
         if (preset >= 0) {
             preset = EffectsPages.PRESET_CUSTOM;
         }
-        set.accept("effect", effect + (now.isOff(effect) ? " on" : " off"));
+        set.accept("effect", effect + (now.switchedOff(effect) ? " on" : " off"));
     }
 
     /** A button of the dialog's foot. */
@@ -263,8 +265,8 @@ final class EffectsPage {
         }
         if (word == EffectsPageTexts.CANCEL) {
             for (final String effect : effectsOf(page)) {
-                if (now.isOff(effect) != kept.isOff(effect)) {
-                    set.accept("effect", effect + (kept.isOff(effect) ? " off" : " on"));
+                if (now.switchedOff(effect) != kept.switchedOff(effect)) {
+                    set.accept("effect", effect + (kept.switchedOff(effect) ? " off" : " on"));
                 }
             }
             if (now.speed() != kept.speed()) {
@@ -272,6 +274,14 @@ final class EffectsPage {
             }
         }
         back.run();
+    }
+
+    /** The page with the note of the basic look over its first row. */
+    private static EffectsPages.Page withBasicNote(final EffectsPages.Page page) {
+        final List<EffectsPages.IRow> rows = new ArrayList<>(page.rows().size() + 1);
+        rows.add(new EffectsPages.Note(EffectsPageTexts.BASIC_NOTE));
+        rows.addAll(page.rows());
+        return new EffectsPages.Page(page.parent(), page.entry(), page.title(), page.footer(), rows);
     }
 
     /** Every effect a page switches. */

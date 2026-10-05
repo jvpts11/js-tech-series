@@ -32,6 +32,10 @@ final class DesktopTexts {
     static final TextKey LOW_VIDEO_MEMORY = TextKey.of("jsc.desktop.low_video_memory", "Not enough video memory");
     static final TextKey LOW_VIDEO_MEMORY_BODY = TextKey.of("jsc.desktop.low_video_memory_body",
             "%s needs %s of video memory, and %s are free. Turn off a monitor or close a graphics program.");
+    static final TextKey BASIC_SCHEME = TextKey.of("jsc.desktop.basic_scheme", "Frames 7 Basic");
+    static final TextKey BASIC_SCHEME_BODY = TextKey.of("jsc.desktop.basic_scheme_body",
+            "The color scheme has changed: this computer's graphics are too weak for the glass and the animations. "
+                    + "A stronger graphics card brings them back.");
     static final TextKey CANNOT_OPEN = TextKey.of("jsc.desktop.cannot_open", "Cannot open");
     static final TextKey NO_PROGRAM_OPENS =
             TextKey.of("jsc.desktop.no_program_opens", "No program on this computer opens %s");

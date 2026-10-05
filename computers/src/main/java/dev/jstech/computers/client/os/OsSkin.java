@@ -67,6 +67,10 @@ public final class OsSkin implements ISkin {
         KDE2,
         /** GNOME of the late 1990s: thick frame, centred title, warm greys, chunky bevelled studs. */
         GNOME1,
+        /** KDE 4 of the Transition: Oxygen windows, a soft grey title centred, round buttons, top corners rounded. */
+        OXYGEN,
+        /** GNOME 2 of the Transition: Clearlooks, a blue title with white words, glossy studs, warm grey bodies. */
+        CLEARLOOKS,
         /** Motif, which is CDE: one grey, light and shade for relief, and a palette everything is read from. */
         MOTIF
     }
@@ -86,6 +90,9 @@ public final class OsSkin implements ISkin {
     /** The desktop environment id path this skin belongs to (the icon set and wallpaper key). */
     private final String desktopPath;
 
+    /** The icon set the Transition Unix desktops draw with: Frames XP's, glossy as theirs were. */
+    private static final String TRANSITION_ICONS = "frames_xp";
+
     // Frames 95: classic grey bevel, navy title, square corners.
     static final OsSkin FRAMES_95 = new OsSkin(BevelChrome.INSTANCE, 0, 0, false, "frames_95",
             Palettes.declare(JsComputers.MODID, "skin/frames_95", new SkinColours(
@@ -102,6 +109,12 @@ public final class OsSkin implements ISkin {
     static final OsSkin FRAMES_7 = new OsSkin(AeroChrome.INSTANCE, 3, 0, false, "frames_7",
             Palettes.declare(JsComputers.MODID, "skin/frames_7", new SkinColours(
                     0xFF000000, 0xFFF0F0F0, 0xFF283C5A, 0xFF3399FF, 0xFF000000, 0xFF6B6B6B, 0xFFFFFFFF,
+                    0xFFCCE8FF, 0xFF000000, 0xFFE5F3FB)));
+
+    // Frames 7 Basic: the same frames on a card that cannot run the glass, opaque, as the system fell back to them.
+    private static final OsSkin FRAMES_7_BASIC = new OsSkin(AeroChrome.BASIC, 3, 0, false, "frames_7",
+            Palettes.declare(JsComputers.MODID, "skin/frames_7_basic", new SkinColours(
+                    0xFF000000, 0xFFF0F0F0, 0xFF6D84A3, 0xFF3399FF, 0xFF000000, 0xFF6B6B6B, 0xFFFFFFFF,
                     0xFFCCE8FF, 0xFF000000, 0xFFE5F3FB)));
 
     // Frames 10: white square windows with a thin accent border and black titles; nothing rounded.
@@ -168,6 +181,21 @@ public final class OsSkin implements ISkin {
             Palettes.declare(JsComputers.MODID, "skin/gnome_legacy", new SkinColours(
                     0xFFFFFFFF, 0xFFD6D2C8, 0xFFB0AA9C, 0xFF6D5A78, 0xFF1A1A1A, 0xFF5C574E, 0xFFFFFFFF,
                     0xFF6D5A78, 0xFFFFFFFF, 0xFFC4BFB2)));
+
+    /*
+     * The same desktops on Transition hardware, as they looked at the end of the 2000s: KDE 4 with Plasma's Air and
+     * Oxygen's grey windows, GNOME 2 with Clearlooks' blue titles. Their icons are the glossy ones of the period.
+     */
+
+    static final OsSkin KDE_PLASMA_TRANSITION = new OsSkin(OxygenChrome.INSTANCE, 4, 0, false, "kde_plasma",
+            Palettes.declare(JsComputers.MODID, "skin/kde_plasma_transition", new SkinColours(
+                    0xFF232323, 0xFFE0DFDE, 0xFF9D9B99, 0xFF4C93DC, 0xFF232323, 0xFF6E6C6A, 0xFFFFFFFF,
+                    0xFF7CB7EF, 0xFFFFFFFF, 0xFFD3E4F5)));
+
+    static final OsSkin GNOME_TRANSITION = new OsSkin(ClearlooksChrome.INSTANCE, 3, 0, false, "gnome",
+            Palettes.declare(JsComputers.MODID, "skin/gnome_transition", new SkinColours(
+                    0xFFFFFFFF, 0xFFEDEDED, 0xFF6D8FB8, 0xFF6A96CF, 0xFF1A1A1A, 0xFF6B6964, 0xFFFFFFFF,
+                    0xFF86ABD9, 0xFFFFFFFF, 0xFFDCE5F2)));
 
     /** CDE in each of its schemes, made once, so choosing one in the Style Manager builds nothing. */
     private static final Map<CdeScheme, OsSkin> MOTIF = motifSkins();
@@ -244,6 +272,14 @@ public final class OsSkin implements ISkin {
     }
 
     /**
+     * This skin as it falls back on a graphics card too weak for its effects: Frames 7 Basic in place of its glass.
+     * The flat desktops look the same in their basic mode, their transparency and animations simply off.
+     */
+    public OsSkin basicVariant() {
+        return form() == Form.AERO ? FRAMES_7_BASIC : this;
+    }
+
+    /**
      * Whether this skin draws in one of the two flat forms, Frames 10's square one or the rounded one of Frames 11
      * and the modern Linux desktops: what a control asks when it only has to know whether to draw relief.
      */
@@ -281,13 +317,21 @@ public final class OsSkin implements ISkin {
     }
 
     /**
-     * The program-icon set this skin draws with: its own desktop's, and the period set for the two Legacy
-     * Unix desktops, which have artwork of their own age.
+     * The program-icon set this skin draws with: its own desktop's, the period set for the two Legacy Unix desktops,
+     * which have artwork of their own age, and Frames XP's glossy set for the two Transition ones, whose Oxygen and
+     * Tango icons stood closest to that treatment.
      */
     public String iconSet() {
-        return form() == Form.KDE2 || form() == Form.GNOME1
-                ? desktopPath + ProgramIcons.PERIOD_SUFFIX
-                : desktopPath;
+        return switch (form()) {
+            case KDE2, GNOME1 -> desktopPath + ProgramIcons.PERIOD_SUFFIX;
+            case OXYGEN, CLEARLOOKS -> TRANSITION_ICONS;
+            default -> desktopPath;
+        };
+    }
+
+    /** Whether this skin is one the Unix desktops wore on Transition hardware, KDE 4's or GNOME 2's. */
+    public boolean transitionForm() {
+        return form() == Form.OXYGEN || form() == Form.CLEARLOOKS;
     }
 
     public Form form() {

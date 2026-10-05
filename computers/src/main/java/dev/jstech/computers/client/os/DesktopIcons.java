@@ -84,6 +84,9 @@ final class DesktopIcons {
     private static final int LABEL_LINES = 2;
     private static final int LABEL_LINE_H = 8;
 
+    /** The title KDE 4's Folder View writes over the icons it holds. */
+    static final int FOLDER_TITLE = 12;
+
     /** The icons' own colours, {@code jsc:desktop/icons}. */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/icons",
             new Colours(0x804C84F0, 0x66000080, 0x28FFFFFF, 0xFF49E07A, 0xE0000080, 0xFFFFFFFF, 0xFF000000));
@@ -124,7 +127,38 @@ final class DesktopIcons {
 
     /** How many icons a column holds: the work area, which is the screen minus the panel wherever it sits. */
     int perColumn() {
-        return Math.max(1, (desktop.view().workAreaBottom() - desktop.view().workAreaTop() - 12) / PITCH_Y);
+        return Math.max(1, (desktop.view().workAreaBottom() - desktop.view().workAreaTop() - topInset() - 2)
+                / PITCH_Y);
+    }
+
+    /**
+     * KDE 4's Folder View round the icons: the box they stand in, with its title over them, as x, y, width and
+     * height; the icons themselves stand where they always do, a title's height lower.
+     */
+    int[] folderView() {
+        final int[] cells = cells(perColumn());
+        int left = Integer.MAX_VALUE;
+        int top = Integer.MAX_VALUE;
+        int right = 0;
+        int bottom = 0;
+        for (final int cell : cells) {
+            left = Math.min(left, xOf(cell) + CELL_DX);
+            top = Math.min(top, yOf(cell) + CELL_DY);
+            right = Math.max(right, xOf(cell) + CELL_DX + CELL_W);
+            bottom = Math.max(bottom, yOf(cell) + CELL_DY + CELL_H);
+        }
+        if (cells.length == 0) {
+            left = ORIGIN_X + CELL_DX;
+            top = desktop.view().workAreaTop() + topInset() + CELL_DY;
+            right = left + CELL_W;
+            bottom = top + CELL_H;
+        }
+        return new int[] {left - 3, top - FOLDER_TITLE - 3, right - left + 6, bottom - top + FOLDER_TITLE + 6};
+    }
+
+    /* How far under the work area's top the first row stands: a title's height lower under KDE 4's Folder View. */
+    private int topInset() {
+        return desktop.kde4() ? 10 + FOLDER_TITLE : 10;
     }
 
     /**
@@ -163,7 +197,7 @@ final class DesktopIcons {
     }
 
     int yOf(final int packedCell) {
-        return desktop.view().workAreaTop() + 10 + DesktopIconLayout.row(packedCell) * PITCH_Y;
+        return desktop.view().workAreaTop() + topInset() + DesktopIconLayout.row(packedCell) * PITCH_Y;
     }
 
     /** The desktop-local middle of the picture in slot {@code slot}, where a click on it lands. */
@@ -192,7 +226,7 @@ final class DesktopIcons {
         final double across = desktop.objectsStandRight() ? desktop.view().width() - mx : mx;
         final int col = Math.max(0, (int) Math.floor((across - (ORIGIN_X - PITCH_X / 2.0)) / PITCH_X));
         final int row = Math.max(0, Math.min(perCol - 1,
-                (int) Math.floor((my - desktop.view().workAreaTop() - (10 - PITCH_Y / 2.0)) / PITCH_Y)));
+                (int) Math.floor((my - desktop.view().workAreaTop() - (topInset() - PITCH_Y / 2.0)) / PITCH_Y)));
         return DesktopIconLayout.pack(col, row);
     }
 

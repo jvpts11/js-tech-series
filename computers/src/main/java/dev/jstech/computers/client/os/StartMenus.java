@@ -110,12 +110,18 @@ final class StartMenus {
 
     /** Opens the launcher, or closes it when it is open; it always opens with an empty search box. */
     void toggle() {
+        // GNOME 2 has no launcher of this kind: what opens its programs is its Applications menu along the top.
+        if (desktop.gnome2()) {
+            desktop.transitionPanels().openApplications();
+            return;
+        }
         if (open) {
             close();
         } else {
             open = true;
             search.setLength(0);
             metro.reset();
+            desktop.kickoff4().reset();
             motion = desktop.motion().start(MotionKinds.MENU_SHOW);
         }
     }
@@ -152,6 +158,9 @@ final class StartMenus {
         if (desktop.periodPanel()) {
             return FramesLaunchers.MENU_W; // the period launcher is a narrow list, whatever its desktop does today
         }
+        if (desktop.kde4()) {
+            return Kickoff4Menu.W;
+        }
         return switch (desktop.panelStyle()) {
             case FRAMES_XP -> FramesLaunchers.XP_MENU_W;
             case FRAMES_7 -> AeroStartMenu.MENU_W;
@@ -173,6 +182,9 @@ final class StartMenus {
              * sized by its own contents, like the classic launcher it is.
              */
             return Math.max(4, count) * FramesLaunchers.MENU_ITEM_H + 8;
+        }
+        if (desktop.kde4()) {
+            return Kickoff4Menu.H;
         }
         return switch (desktop.panelStyle()) {
             case KDE -> LinuxLaunchers.KDE_HEADER_H + Math.max(6, count) * LinuxLaunchers.KDE_ROW_H
@@ -349,6 +361,10 @@ final class StartMenus {
             frames.renderPeriod(g, tbY);
             return;
         }
+        if (desktop.kde4()) {
+            desktop.kickoff4().render(g, tbY);
+            return;
+        }
         switch (desktop.panelStyle()) {
             case FRAMES_XP -> frames.renderXp(g, tbY);
             case FRAMES_7 -> aero.render(g, tbY);
@@ -465,7 +481,7 @@ final class StartMenus {
         // A period launcher is a plain list with no search box, even on the GNOME whose modern shell has one.
         final PanelStyle style = desktop.panelStyle();
         return style == PanelStyle.FRAMES_11 || style == PanelStyle.FRAMES_7 || style == PanelStyle.FRAMES_10
-                || (style == PanelStyle.GNOME && !desktop.periodPanel());
+                || desktop.kde4() || (style == PanelStyle.GNOME && !desktop.periodPanel() && !desktop.gnome2());
     }
 
     /**
@@ -478,6 +494,9 @@ final class StartMenus {
             return null;
         }
         final int tbY = desktop.view().height() - DesktopScreen.TASKBAR_H;
+        if (desktop.kde4()) {
+            return desktop.kickoff4().rowPoint(all.get(index).label(), tbY);
+        }
         return switch (desktop.panelStyle()) {
             case FRAMES_7 -> aero.pointOf(all.get(index), tbY);
             case FRAMES_10 -> {
@@ -497,6 +516,9 @@ final class StartMenus {
     private boolean hit(final int mx, final int my, final int tbY) {
         if (desktop.periodPanel()) {
             return frames.clickPeriod(mx, my, tbY);
+        }
+        if (desktop.kde4()) {
+            return desktop.kickoff4().click(mx, my, tbY);
         }
         return switch (desktop.panelStyle()) {
             case FRAMES_XP -> frames.clickXp(mx, my, tbY);

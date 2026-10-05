@@ -29,6 +29,7 @@ import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.item.SoundCardItem;
 import dev.jstech.computers.registry.ComputingContent;
+import dev.jstech.computers.registry.ComputingContent.Shelf;
 import dev.jstech.core.content.ItemBuilder;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.world.item.Item;
@@ -181,9 +182,9 @@ public final class HardwareItems {
             .named("Envya Prism TNT").register();
 
     public static final DeferredItem<PsuItem> PSU_200 =
-            psu("psu_200", new PsuSpec(200, 80)).named("MF PowerBasic 200").register();
+            psu("psu_200", HardwareEra.VINTAGE, new PsuSpec(200, 80)).named("MF PowerBasic 200").register();
     public static final DeferredItem<PsuItem> PSU_300 =
-            psu("psu_300", new PsuSpec(300, 80)).named("MF PowerBasic 300").register();
+            psu("psu_300", HardwareEra.VINTAGE, new PsuSpec(300, 80)).named("MF PowerBasic 300").register();
 
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_BABYAT_VINTAGE = board("motherboard_babyat_vintage",
             new MotherboardSpec(FormFactor.BABY_AT, HardwareEra.VINTAGE,
@@ -443,9 +444,9 @@ public final class HardwareItems {
             .named("Atrion Radiance X800 XT").register();
 
     public static final DeferredItem<PsuItem> PSU_350 =
-            psu("psu_350", new PsuSpec(350, 80)).named("MF PowerBasic 350").register();
+            psu("psu_350", HardwareEra.LEGACY, new PsuSpec(350, 80)).named("MF PowerBasic 350").register();
     public static final DeferredItem<PsuItem> PSU_500B =
-            psu("psu_500b", new PsuSpec(500, 80)).named("MF PowerBasic 500B").register();
+            psu("psu_500b", HardwareEra.LEGACY, new PsuSpec(500, 80)).named("MF PowerBasic 500B").register();
 
     /*
      * The Legacy ATX boards, one per socket, since a board spec carries a single socket and a single bus: each has
@@ -759,7 +760,7 @@ public final class HardwareItems {
             .named("Atrion Radiance HD 5870").register();
 
     public static final DeferredItem<PsuItem> PSU_450B =
-            psu("psu_450b", new PsuSpec(450, 85)).named("MF PowerBasic 450B").register();
+            psu("psu_450b", HardwareEra.TRANSITION, new PsuSpec(450, 85)).named("MF PowerBasic 450B").register();
 
     /*
      * The Transition ATX boards, one per socket, all on PCIe 2.0: the LGA 775 board of the Centro 2 with DDR2 and
@@ -1032,7 +1033,7 @@ public final class HardwareItems {
             .named("Envya Tessera K40").register();
 
     public static final DeferredItem<PsuItem> PSU_850G =
-            psu("psu_850g", new PsuSpec(850, 90)).named("MF PowerGold 850G").register();
+            psu("psu_850g", HardwareEra.STANDARD, new PsuSpec(850, 90)).named("MF PowerGold 850G").register();
 
     /*
      * The Standard ATX boards, one per socket: LGA 1155 and LGA 1150 on PCIe 3.0, the AM3+ board on the PCIe 2.0 its
@@ -1471,15 +1472,15 @@ public final class HardwareItems {
 
     // The Advanced power supplies: the desktop PowerGold and PowerPlat, and the hot-swap server modules.
     public static final DeferredItem<PsuItem> PSU_1000G =
-            psu("psu_1000g", new PsuSpec(1000, 90)).named("MF PowerGold 1000G").register();
+            psu("psu_1000g", HardwareEra.ADVANCED, new PsuSpec(1000, 90)).named("MF PowerGold 1000G").register();
     public static final DeferredItem<PsuItem> PSU_1200P =
-            psu("psu_1200p", new PsuSpec(1200, 92)).named("MF PowerPlat 1200P").register();
+            psu("psu_1200p", HardwareEra.ADVANCED, new PsuSpec(1200, 92)).named("MF PowerPlat 1200P").register();
     public static final DeferredItem<PsuItem> PSU_1600P =
-            psu("psu_1600p", new PsuSpec(1600, 92)).named("MF PowerPlat 1600P").register();
+            psu("psu_1600p", HardwareEra.ADVANCED, new PsuSpec(1600, 92)).named("MF PowerPlat 1600P").register();
     public static final DeferredItem<PsuItem> PSU_2000P =
-            psu("psu_2000p", new PsuSpec(2000, 94)).named("MF ServerPSU 2000P").register();
-    public static final DeferredItem<PsuItem> PSU_3000P =
-            psu("psu_3000p", new PsuSpec(3000, 94)).named("MF ServerPSU 3000P (Redundant)").register();
+            psu("psu_2000p", HardwareEra.ADVANCED, new PsuSpec(2000, 94)).named("MF ServerPSU 2000P").register();
+    public static final DeferredItem<PsuItem> PSU_3000P = psu("psu_3000p", HardwareEra.ADVANCED,
+            new PsuSpec(3000, 94)).named("MF ServerPSU 3000P (Redundant)").register();
 
     /*
      * The Advanced ATX boards, one per socket, on the bus of their chipsets: PCIe 3.0 on LGA 1151 and 1200, 4.0 on
@@ -1611,37 +1612,40 @@ public final class HardwareItems {
          */
     }
 
-    private static <T extends Item> ItemBuilder<T> declare(final String id,
+    /* A part of {@code era}, on the components shelf of that era's tab. */
+    private static <T extends Item> ItemBuilder<T> declare(final String id, final HardwareEra era,
                                                           final Function<Item.Properties, T> factory) {
-        return ComputingContent.CONTENT.item(id, factory).tab(ComputingContent.CATALOGUE);
+        return ComputingContent.CONTENT.item(id, factory)
+                .tab(ComputingContent.shelf(Shelf.COMPONENTS, era));
     }
 
     private static ItemBuilder<CpuItem> cpu(final String id, final CpuSpec spec) {
-        return declare(id, properties -> new CpuItem(properties, spec));
+        return declare(id, spec.era(), properties -> new CpuItem(properties, spec));
     }
 
     private static ItemBuilder<RamItem> ram(final String id, final RamSpec spec) {
-        return declare(id, properties -> new RamItem(properties, spec));
+        return declare(id, spec.era(), properties -> new RamItem(properties, spec));
     }
 
     private static ItemBuilder<GpuItem> gpu(final String id, final GpuSpec spec) {
-        return declare(id, properties -> new GpuItem(properties, spec));
+        return declare(id, spec.era(), properties -> new GpuItem(properties, spec));
     }
 
     private static ItemBuilder<SoundCardItem> soundCard(final String id, final SoundCardSpec spec) {
-        return declare(id, properties -> new SoundCardItem(properties, spec));
+        return declare(id, spec.era(), properties -> new SoundCardItem(properties, spec));
     }
 
-    private static ItemBuilder<PsuItem> psu(final String id, final PsuSpec spec) {
-        return declare(id, properties -> new PsuItem(properties, spec));
+    /* A supply, which carries no era of its own: it is shown with the machines of the age it sold in. */
+    private static ItemBuilder<PsuItem> psu(final String id, final HardwareEra era, final PsuSpec spec) {
+        return declare(id, era, properties -> new PsuItem(properties, spec));
     }
 
     private static ItemBuilder<MotherboardItem> board(final String id, final MotherboardSpec spec) {
-        return declare(id, properties -> new MotherboardItem(properties, spec));
+        return declare(id, spec.era(), properties -> new MotherboardItem(properties, spec));
     }
 
     private static ItemBuilder<DiskItem> disk(final String id, final DiskSpec spec) {
-        return declare(id, properties -> new DiskItem(properties, spec));
+        return declare(id, spec.era(), properties -> new DiskItem(properties, spec));
     }
 
     /** The eras' parts first, then the supplies, then the disks: the last two carry no era worth sorting by. */

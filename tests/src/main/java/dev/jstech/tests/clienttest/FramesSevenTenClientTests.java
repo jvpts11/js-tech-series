@@ -16,6 +16,7 @@ import dev.jstech.computers.client.os.SettingsApp;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -82,6 +83,32 @@ public final class FramesSevenTenClientTests {
                 .then(SETTLE, () -> ctx.clickDesktop(files(ctx, FILES).commandPoint("Organize")))
                 .thenAssert(2, () -> files(ctx, FILES).contextOpen(), "Organize opens the folder's menu")
                 .thenScreenshot(2, "frames7-explorer");
+    }
+
+    @ClientTest(timeoutTicks = 2400)
+    public static void frames7_onTheProcessorsGraphicsRunsBasicAndSaysSo(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    final CraftingComputerBlockEntity computer = world.placeRunningCraftingComputer(COMPUTER);
+                    // Without its card the machine draws on the graphics of its processor, which Aero never ran on.
+                    computer.getHardware().setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1,
+                            ItemStack.EMPTY);
+                    computer.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_7"));
+                    world.placeMonitor(MONITOR, Direction.EAST);
+                })
+                .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
+                .thenRightClick(SETTLE, MONITOR)
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .thenWaitUntil(() -> desktop(ctx).basicLook(), SCREEN_WAIT, "the desktop to drop to its basic look")
+                .then(2, () -> ctx.assertTrue(desktop(ctx).balloonTitle().equals("Frames 7 Basic"),
+                        "the notification area says the scheme changed; got " + desktop(ctx).balloonTitle()))
+                .thenScreenshot(2, "frames7-basic")
+                .then(0, () -> DesktopScreen.requestOpen(CONTROL_PANEL))
+                .thenWaitUntil(() -> settings(ctx, CONTROL_PANEL) != null, SCREEN_WAIT, "the Control Panel window")
+                .then(0, () -> settings(ctx, CONTROL_PANEL).showPage(SettingsApp.PAGE_SYSTEM))
+                .thenScreenshot(4, "frames7-basic-rating")
+                .then(SETTLE, () -> ctx.clickDesktop(settings(ctx, CONTROL_PANEL).effectsEntryCenter()))
+                .thenAssert(2, () -> settings(ctx, CONTROL_PANEL).effectsOpen(), "Performance Options opens")
+                .thenScreenshot(2, "frames7-basic-effects");
     }
 
     @ClientTest(timeoutTicks = 2400)

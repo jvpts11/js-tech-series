@@ -35,6 +35,8 @@ final class MadeSoundInstance extends AbstractSoundInstance {
     private final SoundKey key;
     private final IPcmOpener samples;
     private final boolean onScreen;
+    /** Whether the sound was told to stop, read by its stream on the sound thread. */
+    private volatile boolean stopped;
 
     MadeSoundInstance(final SoundKey key, final IPcmOpener samples, final float volume, final boolean onScreen,
                       final double x, final double y, final double z) {
@@ -61,12 +63,21 @@ final class MadeSoundInstance extends AbstractSoundInstance {
         return new WeighedSoundEvents(location, key.subtitle().key());
     }
 
+    /*
+     * The game opens a streamed sound's file off its thread and then attaches and starts it, so a stop that comes
+     * before the file is open is undone by the start that follows: the stream itself ends instead, at whatever point
+     * the game asks it for more.
+     */
+    void stop() {
+        stopped = true;
+    }
+
     @Override
     public CompletableFuture<AudioStream> getStream(final SoundBufferLibrary buffers, final Sound played,
                                                     final boolean looping) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return new PcmAudioStream(samples.open(), !onScreen);
+                return new PcmAudioStream(samples.open(), !onScreen, () -> stopped);
             } catch (final IOException unreadable) {
                 throw new CompletionException(unreadable);
             }

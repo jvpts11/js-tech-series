@@ -46,7 +46,9 @@ final class CopyWindows {
 
     /** Opens the copy window when a run has outlasted a moment, and takes it away when the run has ended. */
     void sync() {
-        final CopyProgressApp.Style style = CopyProgressApp.styleOf(desktop.panelStyle(), desktop.periodPanel());
+        // GNOME 2 still showed a copy in a window of its own, as GNOME 1 had; the popover came with the later shell.
+        final CopyProgressApp.Style style = CopyProgressApp.styleOf(desktop.panelStyle(),
+                desktop.periodPanel() || desktop.gnome2());
         if (window != null && desktop.wm().all().stream().noneMatch(w -> w.app() == window)) {
             window = null;
         }
@@ -83,7 +85,7 @@ final class CopyWindows {
         }
         if (desktop.panelStyle() == PanelStyle.KDE && !desktop.periodPanel()) {
             plasma(g, run, tbY, sw);
-        } else if (desktop.panelStyle() == PanelStyle.GNOME && !desktop.periodPanel()) {
+        } else if (desktop.panelStyle() == PanelStyle.GNOME && !desktop.periodPanel() && !desktop.gnome2()) {
             gnome(g, run, sw);
         }
     }

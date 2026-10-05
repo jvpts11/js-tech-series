@@ -110,6 +110,10 @@ final class DesktopState {
     /** Frames 7's superbar and Frames 10's taskbar, each a design of its own. */
     private final AeroSuperbar aeroSuperbar = new AeroSuperbar(this);
     private final MetroTaskbar metroTaskbar = new MetroTaskbar(this);
+    /** KDE 4's Plasma panel and GNOME 2's two, the faces those desktops had on Transition hardware. */
+    private final TransitionPanels transitionPanels = new TransitionPanels(this);
+    /** KDE 4's Kickoff, with its tabs. */
+    private final Kickoff4Menu kickoff4 = new Kickoff4Menu(this);
     /** Frames 10's Action Center down the right edge, and its Task View over the desktop. */
     private final ActionCenter actionCenter = new ActionCenter(this);
     private final TaskView taskView = new TaskView(this);
@@ -349,10 +353,32 @@ final class DesktopState {
     }
 
     /**
+     * Whether this desktop wears the face KDE and GNOME had on Transition hardware, KDE 4's or GNOME 2's, which the
+     * era decided through the skin as it does the period one.
+     */
+    boolean transitionPanel() {
+        return prefs.skin().transitionForm();
+    }
+
+    /** Whether this is GNOME 2, whose two panels put its menus along the top and its windows along the foot. */
+    boolean gnome2() {
+        return prefs.skin().form() == OsSkin.Form.CLEARLOOKS;
+    }
+
+    /** Whether this is KDE 4, with its Plasma panel, its Kickoff and its Folder View. */
+    boolean kde4() {
+        return prefs.skin().form() == OsSkin.Form.OXYGEN;
+    }
+
+    /**
      * The icon set to draw programs with. A period desktop asks for its own artwork first and falls back to that
-     * desktop's modern icons, so a Legacy KDE still looks like KDE even before period icons are drawn for it.
+     * desktop's modern icons, so a Legacy KDE still looks like KDE even before period icons are drawn for it; a
+     * Transition one draws the glossy set of its time.
      */
     String icons() {
+        if (transitionPanel()) {
+            return prefs.skin().iconSet();
+        }
         return periodPanel() ? desktopId.getPath() + ProgramIcons.PERIOD_SUFFIX : desktopId.getPath();
     }
 
@@ -484,9 +510,12 @@ final class DesktopState {
         start.close();
     }
 
-    /** Whether this desktop has workspaces at all; one that does not keeps everything on the first. */
+    /**
+     * Whether this desktop has workspaces at all; one that does not keeps everything on the first. CDE has its four
+     * in the Front Panel, KDE 4 its pager and GNOME 2 its switcher on the foot panel.
+     */
     boolean hasWorkspaces() {
-        return is(PanelStyle.CDE);
+        return is(PanelStyle.CDE) || transitionPanel();
     }
 
     /** The arrow at the head of a Front Panel control was pressed: its subpanel comes up, or goes back down. */
@@ -677,6 +706,14 @@ final class DesktopState {
 
     LinuxPanels linuxPanels() {
         return linuxPanels;
+    }
+
+    TransitionPanels transitionPanels() {
+        return transitionPanels;
+    }
+
+    Kickoff4Menu kickoff4() {
+        return kickoff4;
     }
 
     /** The icons on the wallpaper: where each one sits, what it looks like, and which ones are picked. */
@@ -1059,6 +1096,10 @@ final class DesktopState {
 
     /** Whether a desktop-local point is on the bottom panel's Start button. */
     boolean startButtonHit(final double mx, final double my, final int tbY) {
+        // KDE 4's launcher is its round orb; GNOME 2 opens its menus from the top panel and has none at the foot.
+        if (transitionPanel()) {
+            return transitionPanels.startHit(mx, my, tbY);
+        }
         return switch (panel) {
             case FRAMES_7 -> aeroSuperbar.startHit(mx, my, tbY);
             case FRAMES_10 -> metroTaskbar.startHit(mx, my, tbY);

@@ -1,0 +1,19 @@
+{
+  "barBottom": "#FFDCDAD5",
+  "barTop": "#FFF4F3F1",
+  "dim": "#FF6B6964",
+  "foot": "#FF3A3A3A",
+  "ink": "#FF000000",
+  "listBottom": "#FFE4E2DE",
+  "listRim": "#FFB5B2AC",
+  "listTop": "#FFFBFBFA",
+  "menuBottom": "#FF6A96CF",
+  "menuInk": "#FFFFFFFF",
+  "menuTop": "#FF86ABD9",
+  "pressedBottom": "#FFC5C2BC",
+  "pressedTop": "#FFD8D6D1",
+  "rule": "#FFA7A49E",
+  "switcherCell": "#FFFFFFFF",
+  "switcherOn": "#FF86ABD9",
+  "switcherRim": "#FF8F8C86"
+}

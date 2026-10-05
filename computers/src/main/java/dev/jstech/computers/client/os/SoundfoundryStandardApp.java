@@ -115,7 +115,9 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
             return false;
         }
         final OsSkin.Form form = desktop.prefs().skin().form();
-        if (form == OsSkin.Form.KDE2 || form == OsSkin.Form.GNOME1) {
+        // The Unix desktops of the Legacy and the Transition run the player of their time; the Standard one is newer.
+        if (form == OsSkin.Form.KDE2 || form == OsSkin.Form.GNOME1 || form == OsSkin.Form.OXYGEN
+                || form == OsSkin.Form.CLEARLOOKS) {
             return false;
         }
         final PanelStyle style = desktop.panelStyle();

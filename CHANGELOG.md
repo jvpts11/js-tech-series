@@ -103,6 +103,31 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   an Effects section in Personalize (transparency, and animations, off with which windows open at once and the
   tiles stop turning). Soundfoundry wears its Standard form there. It starts with its own chime, goes down with the
   same one, and shares Frames 11's error sound. Installing it and booting it earns "What Happened to Frames 9?".
+- KDE and GNOME have the faces they had on Transition hardware. KDE is KDE 4's Plasma: a light, see-through panel
+  with the orb that opens Kickoff (Favorites, Applications with each program's description, Computer, Recently Used
+  and Leave, which shuts down or restarts), the pager of four desktops, the window list, the tray and the clock; the
+  Folder View on the desktop holding its files, the cashew in the corner offering the desktop's settings, and Oxygen
+  windows with rounded top corners. GNOME is GNOME 2 with Clearlooks: Applications (the programs by what they are
+  for), Places and System along a top panel with the launchers, the clock, the user and the power; a bottom panel
+  with the show-desktop button, the window list, the switcher of four workspaces and the trash; and blue titles.
+  Both keep the desktop's wallpaper and the icons with Frames XP's gloss, and Soundfoundry wears its Legacy form on
+  them, as on FreeBSD there.
+- The Experience Index of Frames 7: five scores from 1.0 to 7.9 read off the machine's parts (the processor, the
+  memory, the desktop's graphics, the graphics of games and the main disk), each growing by about a point when the
+  part doubles, and the base score, the lowest of the five. The System page of the Control Panel shows them under
+  the machine's parts.
+- The basic look. A desktop that drew its effects on the graphics card (Frames 7, 10 and 11, Cinnamon, KDE from its
+  Transition face and GNOME from its Standard one) needs a graphics score of 3.0 for them; under that, and always on
+  graphics that are part of the processor, it runs with every effect off whatever its settings say. Frames 7 drops
+  to Frames 7 Basic, opaque windows in its own colours, and says so in its notification area; every effects page
+  keeps the choices and says why none of them shows.
+- J's Computers shows its things in six creative tabs: one for what every era shares, then one for each era from the
+  Vintage to the Advanced, side by side in that order, with the era's own icon (a floppy, a CD, a GeForce 8800 GT, a
+  Haswell board and the RTX 5090). Each tab has the same shelves: Personal Computers, Crafting Computers, Cluster
+  Management Computers, Mainframes, the server rack with its servers, the rack's bays, the peripherals, the network,
+  the components, and the programs (blank media, then the installer of every system and program of that era). A
+  thing is in the tab of the era it carries (a machine's chassis, a part's specification, a cable's generation, a
+  medium's format), and in one tab only.
 - The widgets of Σ# 2 for programs' windows: `TextArea`, `NumberBox`, `Slider`, `RadioGroup`, `ComboBox`,
   `TabView`, `GroupBox`, `ScrollView`, `Table`, `TreeView`, `MenuBar`, `ContextMenu`, `StatusBar`, `Image`, `Chart`,
   `LogView`, the system's own `OpenFileDialog` and `SaveFileDialog`, and the computers' own `ItemSlot`,
@@ -1250,6 +1275,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Frames 11 installs from the Advanced era on, and the Standard era has Frames 10. The family now runs Frames 95, XP,
   7, 10 and 11, and a program asking for a newer Frames reads it in that order. "More like, Bloat 11" follows
   "What Happened to Frames 9?" in the Operating Systems tab, as "Never Upgrading" follows "The goat".
+- A mod built on J's Core has its creative tabs side by side in the order it declares them.
 - A volume control's foot and its rows grow with their words, so a long Mixer link or a speaker's long name stays
   inside it.
 - A box typed into tells its program's handler at most once a tick, holding every letter typed by then, so a player
@@ -1568,7 +1594,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 
 ### Fixed
 - A folder being typed into the Settings' sharing field is no longer lost when the page refreshes before it is
-  shared.
+  shared, and the field keeps the keyboard through the refresh, so what is typed after it lands there too.
+- A made sound (a tone, a tune, a recording off a disk) told to stop before the game had opened it no longer starts
+  again a moment later and plays to its end.
 - Opening a large `.iql` in the studio and running it no longer drops the connection: a script goes a statement at
   a time, and a statement longer than a packet carries is refused before it is sent, its line named.
 - The disks table answers, with each server's disks, and the columns the studio's explorer lists are the ones a

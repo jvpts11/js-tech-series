@@ -1,0 +1,19 @@
+{
+  "border": "#FFB8D6F5",
+  "bottom": "#F7E9EFF6",
+  "headerBottom": "#FFDEE9F5",
+  "headerInk": "#FF34495E",
+  "headerTop": "#FFFFFFFF",
+  "hint": "#FF8A9AAC",
+  "ink": "#FF1D2B3A",
+  "leave": "#FFC0392B",
+  "line": "#FF6B7A8A",
+  "rowBottom": "#4D5A96DC",
+  "rowTop": "#808CBEF0",
+  "search": "#FFFFFFFF",
+  "searchRim": "#FF9FB0C4",
+  "shadow": "#40001E46",
+  "star": "#FFE3A21A",
+  "tabRule": "#FFC5D3E2",
+  "top": "#F7FAFCFF"
+}

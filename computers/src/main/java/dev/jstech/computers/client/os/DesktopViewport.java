@@ -122,9 +122,17 @@ final class DesktopViewport {
         return desktop.panelStyle() == PanelStyle.CDE ? CdeFrontPanelLayout.BAND_H : DesktopScreen.TASKBAR_H;
     }
 
+    /**
+     * Whether a bar runs along the top: the modern GNOME's only panel, or GNOME 2's upper one, which carries its menus
+     * and its notification area while its windows are listed along the foot.
+     */
+    boolean barOnTop() {
+        return panelOnTop() || desktop.gnome2();
+    }
+
     /** The first desktop-local row of the work area. */
     int workAreaTop() {
-        return panelOnTop() ? DesktopScreen.TASKBAR_H : 0;
+        return barOnTop() ? DesktopScreen.TASKBAR_H : 0;
     }
 
     /** One past the last desktop-local row of the work area: the bottom panel's top, or the screen's bottom. */

@@ -210,6 +210,10 @@ public final class AudioEngine {
 
     /** Stops a sound this engine started. */
     public static void stop(final SoundInstance sound) {
+        // A made sound whose stream is still being opened would start again once it is; its stream ends instead.
+        if (sound instanceof MadeSoundInstance made) {
+            made.stop();
+        }
         sink.stop(sound);
     }
 

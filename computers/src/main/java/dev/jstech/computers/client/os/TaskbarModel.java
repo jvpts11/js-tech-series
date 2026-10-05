@@ -81,7 +81,8 @@ final class TaskbarModel {
      * for them, and the GNOME top bar lists no programs at all.
      */
     boolean pinsOnPanel() {
-        if (desktop.periodPanel()) {
+        // KDE 4's task manager and GNOME 2's window list show what is open, nothing else.
+        if (desktop.periodPanel() || desktop.transitionPanel()) {
             return false;
         }
         final PanelStyle style = desktop.panelStyle();
@@ -179,7 +180,9 @@ final class TaskbarModel {
         final int n = entries.size();
         final int[] x = new int[n];
         final int[] w = new int[n];
-        final int right = desktop.tray().taskStripRight(sw);
+        // KDE 4 runs its task manager up to its notification area, GNOME 2 its window list up to its switcher.
+        final boolean transition = desktop.transitionPanel();
+        final int right = transition ? desktop.transitionPanels().tasksRight(sw) : desktop.tray().taskStripRight(sw);
         final PanelStyle style = desktop.panelStyle();
         if (style == PanelStyle.FRAMES_11) {
             final int appsX = modernStartLeft(sw) + DesktopScreen.WIN11_SLOT;
@@ -200,7 +203,7 @@ final class TaskbarModel {
             }
             return new TaskStrip(entries, x, w, 0, 0, right);
         }
-        int left = TASK_X;
+        int left = transition ? desktop.transitionPanels().tasksLeft() : TASK_X;
         int quickX = 0;
         int quickCount = 0;
         if (style == PanelStyle.FRAMES_XP) {
@@ -212,7 +215,7 @@ final class TaskbarModel {
             }
             left = quickCount > 0 ? quickX + quickCount * TaskStrip.QL_W + 6 : TASK_X;
         }
-        final boolean launcherCells = desktop.linuxDesktop() && !desktop.periodPanel();
+        final boolean launcherCells = desktop.linuxDesktop() && !desktop.periodPanel() && !transition;
         int openCount = 0;
         int launcherCount = 0;
         for (final TaskbarGroups.Entry entry : entries) {

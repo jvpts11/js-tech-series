@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -27,13 +28,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ContentTab {
 
+    private final ResourceLocation id;
     private final TextKey title;
     private final Supplier<? extends ItemLike> icon;
     private final List<Section> sections = new ArrayList<>();
+    /** The tab of the same mod this one stands right after, or null for a mod's first tab. */
+    private final @Nullable ContentTab after;
 
-    ContentTab(final String modid, final String id, final String englishTitle, final Supplier<? extends ItemLike> icon) {
+    ContentTab(final String modid, final String id, final String englishTitle, final Supplier<? extends ItemLike> icon,
+               final @Nullable ContentTab after) {
+        this.id = ResourceLocation.fromNamespaceAndPath(modid, id);
         this.title = new TextKey("itemGroup." + modid + "." + id, englishTitle);
         this.icon = icon;
+        this.after = after;
     }
 
     /** A new section, shown after every section made before it. */
@@ -48,12 +55,21 @@ public final class ContentTab {
         return title;
     }
 
+    /** The tab's registry name, the mod's namespace and the id it was declared with. */
+    public ResourceLocation id() {
+        return id;
+    }
+
     CreativeModeTab build() {
-        return CreativeModeTab.builder()
+        final CreativeModeTab.Builder builder = CreativeModeTab.builder()
                 .title(GameText.component(title))
                 .icon(() -> new ItemStack(icon.get()))
-                .displayItems((parameters, output) -> sections.forEach(section -> section.fill(output)))
-                .build();
+                .displayItems((parameters, output) -> sections.forEach(section -> section.fill(output)));
+        // A tab with no order of its own goes anywhere after the game's tabs; a mod's tabs keep the order it gave.
+        if (after != null) {
+            builder.withTabsBefore(after.id);
+        }
+        return builder.build();
     }
 
     /**

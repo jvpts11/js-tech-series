@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.hardware.ExperienceIndex;
 import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.core.audio.StereoSide;
@@ -26,8 +27,8 @@ import java.util.List;
 /**
  * Server to client: the full state the Settings app draws: the editable per-computer knobs, the
  * read-only hardware/OS specs (System &amp; Display pages), the installed programs (Programs page),
- * the per-disk usage (Storage page), the memory ledger (what holds RAM, for the System Monitor) and the system's
- * sound (the Sound page, and the volume control on the panel).
+ * the per-disk usage (Storage page), the memory ledger (what holds RAM, for the System Monitor), the system's
+ * sound (the Sound page, and the volume control on the panel) and how Frames 7 rates the machine's parts.
  * Sent in reply to {@link RequestSettingsPayload} and after every {@link SetSettingPayload}.
  *
  * <p>The stream codec is written by hand because the payload has more fields than
@@ -66,7 +67,8 @@ public record SettingsSnapshotPayload(
         boolean remoteAllowed,
         Sound sound,
         Gpu gpu,
-        DesktopEffects effects
+        DesktopEffects effects,
+        ExperienceIndex experience
 ) implements CustomPacketPayload {
 
     /**
@@ -158,6 +160,7 @@ public record SettingsSnapshotPayload(
         shares = List.copyOf(shares);
         sound = sound == null ? Sound.NONE : sound;
         gpu = gpu == null ? Gpu.NONE : gpu;
+        experience = experience == null ? ExperienceIndex.NONE : experience;
     }
 
     @Override
@@ -240,6 +243,12 @@ public record SettingsSnapshotPayload(
         }
         writeGpu(buf, p.gpu);
         DesktopEffects.STREAM_CODEC.encode(buf, p.effects);
+        final ExperienceIndex index = p.experience;
+        buf.writeVarInt(index.processor());
+        buf.writeVarInt(index.memory());
+        buf.writeVarInt(index.graphics());
+        buf.writeVarInt(index.gaming());
+        buf.writeVarInt(index.disk());
     }
 
     private static String clip(final String text, final int max) {
@@ -306,7 +315,8 @@ public record SettingsSnapshotPayload(
                 saveDrive, removableAutoOpen, themePreset, taskbarCentered, darkMode, netshare, cpuLabel, cpuMhz,
                 cpuArch, ramMb, vramMb, osLabel, platform, installed, disks, ramUsedMb, ramUses, shares,
                 remoteAllowed, new Sound(volume, muted, output, hardware, plays, speakers), readGpu(buf),
-                DesktopEffects.STREAM_CODEC.decode(buf));
+                DesktopEffects.STREAM_CODEC.decode(buf), new ExperienceIndex(buf.readVarInt(), buf.readVarInt(),
+                        buf.readVarInt(), buf.readVarInt(), buf.readVarInt()));
     }
 
     private static void writeGpu(final RegistryFriendlyByteBuf buf, final Gpu gpu) {

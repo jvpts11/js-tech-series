@@ -80,7 +80,7 @@ final class DesktopListings {
                 console.computerName(), installedApps(computer), sourceBuilt(console), iconCells(computer, files),
                 new DesktopFilesPayload.Prefs(settings.accent(), settings.brightness(), settings.clock12h(),
                         settings.taskbarCentered(), settings.darkMode(), settings.guiScale(),
-                        new DesktopEffects(List.copyOf(settings.effectsOff()), settings.effectSpeed())),
+                        MachineEffects.of(computer, settings)),
                 community, settings.pinned(), settings.startTiles().encoded(), settings.defaultApps(), trashFull,
                 versions(console),
                 (float) loadRate(computer, disk));

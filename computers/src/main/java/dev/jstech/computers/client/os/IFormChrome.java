@@ -19,7 +19,7 @@ import net.minecraft.client.gui.GuiGraphics;
  * what most of them do.
  */
 sealed interface IFormChrome permits BevelChrome, LunaChrome, AeroChrome, MetroChrome, FlatChrome, Kde2Chrome,
-        Gnome1Chrome, MotifFormChrome {
+        Gnome1Chrome, OxygenChrome, ClearlooksChrome, MotifFormChrome {
 
     /** The form this chrome draws. */
     OsSkin.Form form();

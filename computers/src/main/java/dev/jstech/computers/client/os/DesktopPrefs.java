@@ -13,6 +13,7 @@ import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.time.GameCalendar;
 import java.util.Locale;
@@ -84,6 +85,10 @@ final class DesktopPrefs {
         if (darkMode) {
             base = base.darkVariant();
         }
+        // A card too weak for the system's effects: Frames 7 falls back to Basic, the others keep their look.
+        if (effects.basic()) {
+            base = base.basicVariant();
+        }
         this.skin = base.withAccent(accent);
     }
 
@@ -111,7 +116,16 @@ final class DesktopPrefs {
 
     /** Takes the visual effects the machine keeps, as its listing or the Settings program brings them. */
     void takeEffects(final DesktopEffects choice) {
+        final boolean wasBasic = effects.basic();
         this.effects = choice == null ? DesktopEffects.ALL_ON : choice;
+        if (effects.basic() != wasBasic) {
+            rebuildSkin();
+            // Frames 7 said so in its notification area when it dropped to Basic, once, when it happened.
+            if (effects.basic() && skin.form() == OsSkin.Form.AERO) {
+                desktop.notices().showBalloon(GameText.resolve(DesktopTexts.BASIC_SCHEME),
+                        GameText.resolve(DesktopTexts.BASIC_SCHEME_BODY));
+            }
+        }
     }
 
     /** The wallpaper the owner chose, or empty for the system's own. */

@@ -40,6 +40,20 @@ final class AeroChrome implements IFormChrome {
                     0xFF3C7FB1, 0xFFABADB3, 0xFF3D7BAD, 0xFFFFFFFF, 0xFFE3EDF8, 0xFFCDDDEE, 0xFF8CA5C2,
                     0xFFF0F0F0, 0xFFDDE3EA, 0xFFB5B5B5, 0x40FFFFFF)));
 
+    /**
+     * Frames 7 Basic, what the system fell back to on a card that could not run its glass: the same frames and buttons,
+     * the frame and the title opaque in a pale blue, nothing behind them showing through. Its colours are
+     * {@code jsc:chrome/aero_basic}.
+     */
+    static final AeroChrome BASIC = new AeroChrome(Palettes.declare(JsComputers.MODID, "chrome/aero_basic",
+            new Colours(0xFF9FB3CF, 0xFFF4F7FB,
+                    0xFFC7D9EF, 0xFFAFC6E3, 0xFFDCE4EE, 0xFFC9D3DF, 0xFF6D84A3, 0x59FFFFFF, 0xFFBACDE6,
+                    0x8CFFFFFF, 0x73FFFFFF, 0x26FFFFFF, 0xB3283C5A, 0xFFE9A28E, 0xFFC7422A, 0xFF8E2010, 0xFF1A2A40,
+                    0xFFFFFFFF,
+                    0xFFF2F2F2, 0xFFDDDDDD, 0xFFEAF6FD, 0xFFA7D9F5, 0xFFDAEEF9, 0xFFC2E4F6, 0xFF707070,
+                    0xFF3C7FB1, 0xFFABADB3, 0xFF3D7BAD, 0xFFFFFFFF, 0xFFE3EDF8, 0xFFCDDDEE, 0xFF8CA5C2,
+                    0xFFF0F0F0, 0xFFDDE3EA, 0xFFB5B5B5, 0x00FFFFFF)));
+
     private AeroChrome(final Palette<Colours> palette) {
         this.palette = palette;
     }

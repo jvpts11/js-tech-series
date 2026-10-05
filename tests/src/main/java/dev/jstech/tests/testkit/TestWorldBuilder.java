@@ -329,6 +329,35 @@ public final class TestWorldBuilder {
         return be;
     }
 
+    /**
+     * A Transition-era crafting computer, switched on with {@code os} installed: what the Unix desktops wear their
+     * Transition faces on, KDE 4 and GNOME 2.
+     */
+    public CraftingComputerBlockEntity placeRunningTransitionCraftingComputer(final BlockPos relative,
+                                                                              final ResourceLocation os) {
+        setBlock(relative, ComputingModule.TRANSITION_CRAFTING_COMPUTER.get());
+        faceRearTowardCable(relative);
+        final CraftingComputerBlockEntity be = blockEntity(relative, CraftingComputerBlockEntity.class);
+        final ItemStackHandler hw = be.getHardware();
+        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_TRANSITION_775.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
+                new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
+                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
+                new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1,
+                new ItemStack(HardwareItems.GPU_VERTEX_8600_GT.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
+                new ItemStack(HardwareItems.PSU_450B.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
+                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        be.installOs(os);
+        be.togglePower();
+        return be;
+    }
+
     /** Seeds slot 0 of the rack at {@code relative} with the default server and its bay drives. */
     public ServerRackBlockEntity seedServer(final BlockPos relative) {
         final ServerRackBlockEntity rack = blockEntity(relative, ServerRackBlockEntity.class);

@@ -57,7 +57,7 @@ class LayoutAuditTest {
             "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
             "NetworkServicesLayout", "NetworkLinksLayout", "PrinterLayout", "DockLayout", "PrintedPaperLayout",
             "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout",
-            "EffectsPageLayout");
+            "EffectsPageLayout", "TransitionPanelLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -268,6 +268,11 @@ class LayoutAuditTest {
                         false));
             }
         }
+        // KDE 4's and GNOME 2's panels across the desktop as the glass draws it, at three quarters of its size.
+        c.add(new AuditCase("TransitionPanelLayout.kde4", TransitionPanelLayout.kde4(512, 402), false));
+        c.add(new AuditCase("TransitionPanelLayout.gnome2Foot", TransitionPanelLayout.gnome2Foot(512), false));
+        c.add(new AuditCase("TransitionPanelLayout.gnome2Top",
+                TransitionPanelLayout.gnome2Top(512, 60, 40, 40, 2, 220), false));
         c.add(new AuditCase("SpeakerLayout", SpeakerLayout.layout(), true));
         c.add(new AuditCase("RedstoneInterfaceLayout", RedstoneInterfaceLayout.layout(), true));
         c.add(new AuditCase("DeviceManagerLayout(Frames 95)", DeviceManagerLayout.frames95(), true));

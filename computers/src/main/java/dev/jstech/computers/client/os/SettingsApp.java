@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.ExperienceIndex;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
@@ -30,6 +31,7 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.ProgressBar;
 import dev.jstech.core.client.gui.component.ScrollPanel;
 import dev.jstech.core.client.gui.component.TextField;
+import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.text.GameText;
@@ -71,6 +73,9 @@ public final class SettingsApp implements IDesktopApp {
     private static final int NAV_ROW_H = 15;
     private static final int BTN_H = 13;
     private static final int NAME_MAX = 24;
+    /** The rows the five scores of Frames 7's rating take in their two columns, and the step between them. */
+    private static final int SCORE_ROWS = 3;
+    private static final int SCORE_PITCH = 8;
 
     private final BlockPos host;
     private OsSkin skin = OsSkin.fallback();
@@ -111,6 +116,8 @@ public final class SettingsApp implements IDesktopApp {
     private final List<Button> shareRowRemove = new ArrayList<>();
     @Nullable
     private TextField shareField;
+    /** Whether the share field had the keyboard when the page was last taken down to be rebuilt. */
+    private boolean shareTyping;
     @Nullable
     private Button shareReadOnly;
     @Nullable
@@ -435,6 +442,8 @@ public final class SettingsApp implements IDesktopApp {
             }
         }
         builtFor = key;
+        // Read before the page lets go of its fields, which takes the keyboard from the one being typed into.
+        shareTyping = shareField != null && shareField.isFocused();
         pagePanel.clear();
         nameField = null;
         effectsEntry = null;
@@ -448,7 +457,7 @@ public final class SettingsApp implements IDesktopApp {
         switch (page) {
             case PAGE_HOME -> home(px, py, pw, font);
             case 0 -> personalize(px, py, pw, ph, font);
-            case 1 -> system(px, py, pw, font);
+            case PAGE_SYSTEM -> system(px, py, pw, font);
             case 2 -> network(px, py, pw, font);
             case 3 -> storage(px, py, pw, font);
             case 4 -> display(px, py, pw, font);
@@ -642,6 +651,9 @@ public final class SettingsApp implements IDesktopApp {
         }
         y = specRow(x, y, w, SettingsTexts.SYSTEM, Text.literal(d.osLabel()));
         y = specRow(x, y, w, SettingsTexts.PLATFORM, Text.literal(d.platform()));
+        if (skin.form() == OsSkin.Form.AERO) {
+            y = experience(x, y, w, d.experience());
+        }
         // Restart into the firmware setup (the boot manager): the way to reach it once an OS is installed.
         final BlockPos monitor = monitorPos;
         if (monitor != null) {
@@ -711,7 +723,7 @@ public final class SettingsApp implements IDesktopApp {
          * for one at any moment, and a page rebuilt under the player's fingers dropped what they had typed.
          */
         final String typed = shareField == null ? "" : shareField.edit();
-        final boolean typing = shareField != null && shareField.isFocused();
+        final boolean typing = shareTyping;
         final TextField field = pagePanel.add(new TextField(SHARE_PATH_MAX)
                 .setPlaceholder(GameText.resolve(SettingsTexts.SHARE_HINT)));
         field.setBounds(x, y, w, 13);
@@ -937,6 +949,7 @@ public final class SettingsApp implements IDesktopApp {
 
     /** The pages, by the index the navigation lists them at, for a menu that opens one directly. */
     public static final int PAGE_PERSONALIZE = 0;
+    public static final int PAGE_SYSTEM = 1;
     public static final int PAGE_DISPLAY = 4;
     public static final int PAGE_SOUND = 6;
     /** The system's effects page, which the list does not show: it is reached from its own page. */
@@ -1139,6 +1152,24 @@ public final class SettingsApp implements IDesktopApp {
     }
 
     // small controls
+
+    /**
+     * Frames 7's rating of the machine: its base score, and under it the five scores it is the lowest of, in two
+     * columns of small text.
+     */
+    private int experience(final int x, final int top, final int w, final ExperienceIndex index) {
+        final int y = specRow(x, top, w, SettingsTexts.RATING, Text.literal(ExperienceIndex.shown(index.base())));
+        final TextKey[] names = {SettingsTexts.PROCESSOR_SCORE, SettingsTexts.MEMORY_SCORE, SettingsTexts.DISK_SCORE,
+                SettingsTexts.GRAPHICS_SCORE, SettingsTexts.GAMING_SCORE};
+        final int[] scores = {index.processor(), index.memory(), index.disk(), index.graphics(), index.gaming()};
+        final int column = w / 2;
+        for (int i = 0; i < names.length; i++) {
+            pagePanel.add(new Label(GameText.resolve(names[i].with(ExperienceIndex.shown(scores[i]))), Label.Tone.DIM)
+                    .setScale(Texts.SMALL)).setBounds(x + i / SCORE_ROWS * column, y + i % SCORE_ROWS * SCORE_PITCH,
+                    column - 4, SCORE_PITCH - 1);
+        }
+        return y + SCORE_ROWS * SCORE_PITCH + 3;
+    }
 
     private int specRow(final int x, final int y, final int w, final TextKey label, final Text value) {
         pagePanel.add(new Label(GameText.resolve(label), Label.Tone.DIM)).setBounds(x, y, w / 2, 8);

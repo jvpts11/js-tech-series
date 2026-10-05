@@ -12,6 +12,7 @@ import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeWindowIconLayout;
+import dev.jstech.computers.gui.layout.TransitionPanelLayout;
 import dev.jstech.computers.gui.layout.VolumePopupLayout;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.os.OsMotions;
@@ -198,9 +199,16 @@ interface DesktopInspection {
                 view.screenY(r.y() + CdeFrontPanelLayout.ARROW_H + (r.h() - CdeFrontPanelLayout.ARROW_H) / 2)};
     }
 
-    /** Screen position of the middle of the Front Panel's button for workspace {@code index}, from nought. */
+    /**
+     * Screen position of the middle of the button for workspace {@code index}, from nought: the Front Panel's on CDE,
+     * the pager's cell on KDE 4, the switcher's on GNOME 2.
+     */
     default int[] workspacePoint(final int index) {
         final DesktopViewport view = desktop().view();
+        if (desktop().transitionPanel()) {
+            final int[] local = desktop().transitionPanels().workspacePoint(index);
+            return new int[] {view.screenX(local[0]), view.screenY(local[1])};
+        }
         final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.workspace(index, view.width(), view.height());
         return new int[] {view.screenX(r.x() + r.w() / 2), view.screenY(r.y() + r.h() / 2)};
     }
@@ -599,6 +607,13 @@ interface DesktopInspection {
     /** Screen coordinates of the Start button's centre. */
     default int startButtonX() {
         final PanelStyle style = desktop().panelStyle();
+        // KDE 4's orb, and GNOME 2's Applications menu along its top.
+        if (desktop().kde4()) {
+            return desktop().view().screenX(TransitionPanelLayout.ORB_X + TransitionPanelLayout.ORB / 2);
+        }
+        if (desktop().gnome2()) {
+            return desktop().view().screenX(desktop().transitionPanels().menuPoint(0)[0]);
+        }
         if (style == PanelStyle.FRAMES_7) {
             return desktop().view().screenX(AeroSuperbar.START_W / 2);
         }
@@ -654,10 +669,63 @@ interface DesktopInspection {
     }
 
     default int startButtonY() {
-        // GNOME's Activities corner lives in the top bar; every other panel sits at the bottom.
+        // GNOME's Activities corner and GNOME 2's menus live in the top bar; every other panel sits at the bottom.
         final DesktopViewport view = desktop().view();
         final int half = DesktopScreen.TASKBAR_H / 2;
-        return view.screenY(view.panelOnTop() ? half : view.height() - half);
+        return view.screenY(view.barOnTop() ? half : view.height() - half);
+    }
+
+    /** Screen coordinates of GNOME 2's menu {@code index} along the top: Applications, Places, System. */
+    default int[] gnome2MenuPoint(final int index) {
+        final int[] local = desktop().transitionPanels().menuPoint(index);
+        return new int[] {desktop().view().screenX(local[0]), desktop().view().screenY(local[1])};
+    }
+
+    /** Screen coordinates of KDE 4's cashew. */
+    default int[] cashewPoint() {
+        final int[] local = desktop().transitionPanels().cashewPoint();
+        return new int[] {desktop().view().screenX(local[0]), desktop().view().screenY(local[1])};
+    }
+
+    /** Which workspace is up, counted from nought. */
+    default int workspaceShown() {
+        return desktop().workspace();
+    }
+
+    /** The face this desktop wears by its skin's form: BEVEL, LUNA, OXYGEN, CLEARLOOKS and so on. */
+    default String formShown() {
+        return desktop().prefs().skin().form().name();
+    }
+
+    /** Whether the desktop runs its basic look because the machine's graphics cannot run its effects. */
+    default boolean basicLook() {
+        return desktop().prefs().effects().basic();
+    }
+
+    /** The labels on KDE 4's Kickoff list as it stands, and the tab that is up. */
+    default List<String> kickoffRows() {
+        final List<String> out = new ArrayList<>();
+        for (final Kickoff4Menu.Row row : desktop().kickoff4().rows()) {
+            out.add(row.name());
+        }
+        return out;
+    }
+
+    default String kickoffTab() {
+        return desktop().kickoff4().tab().name();
+    }
+
+    /** Screen coordinates of Kickoff's tab of that name: FAVORITES, APPLICATIONS, COMPUTER, RECENTLY_USED, LEAVE. */
+    default int[] kickoffTabPoint(final String tab) {
+        final DesktopViewport view = desktop().view();
+        Kickoff4Menu.Tab which = Kickoff4Menu.Tab.FAVORITES;
+        for (final Kickoff4Menu.Tab each : Kickoff4Menu.Tab.values()) {
+            if (each.name().equals(tab)) {
+                which = each;
+            }
+        }
+        final int[] local = desktop().kickoff4().tabPoint(which, view.height() - view.panelBand());
+        return new int[] {view.screenX(local[0]), view.screenY(local[1])};
     }
 
     /** Screen x of the middle of the launcher's entries, while it is open. */

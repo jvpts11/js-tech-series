@@ -165,9 +165,13 @@ public final class ModContent {
         return declaredBlockEntities.stream().<BlockEntityType<?>>map(DeferredHolder::get).toList();
     }
 
-    /** Declares a creative tab, called that in English, showing that icon. */
+    /**
+     * Declares a creative tab, called that in English, showing that icon. A mod's tabs stand side by side in the
+     * order it declares them.
+     */
     public ContentTab tab(final String id, final String englishTitle, final Supplier<? extends ItemLike> icon) {
-        final ContentTab tab = new ContentTab(modid, id, englishTitle, icon);
+        final ContentTab tab = new ContentTab(modid, id, englishTitle, icon,
+                declaredTabs.isEmpty() ? null : declaredTabs.getLast());
         tabs.register(id, tab::build);
         declaredTabs.add(tab);
         return tab;

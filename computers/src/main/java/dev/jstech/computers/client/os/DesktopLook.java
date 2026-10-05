@@ -25,14 +25,15 @@ import org.jetbrains.annotations.Nullable;
  *
  * @param skin           the skin its windows are drawn in
  * @param periodSkin     the skin it wore on Legacy-era hardware, or null when it looked the same or never ran there
+ * @param transitionSkin the skin it wore on Transition-era hardware, or null when it looked as it does today
  * @param theme          the colours of its panel, launcher and windows
  * @param wallpaper      the wallpaper it ships with
  * @param freeBsdWallpaper the wallpaper it hangs when it comes from FreeBSD instead, or null when this desktop
  *                         hangs the same one everywhere (a Frames edition, which is never on FreeBSD; CDE, which
  *                         hangs no picture at all)
  */
-public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, DesktopTheme theme, WallpaperStyle wallpaper,
-                          @Nullable WallpaperStyle freeBsdWallpaper) {
+public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, @Nullable OsSkin transitionSkin,
+                          DesktopTheme theme, WallpaperStyle wallpaper, @Nullable WallpaperStyle freeBsdWallpaper) {
 
     /** What a desktop nobody registered a look for is drawn as: the first Frames edition, the plainest. */
     private static final DesktopLook FALLBACK =
@@ -47,23 +48,24 @@ public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, DesktopTheme
         register("frames_10", new DesktopLook(OsSkin.FRAMES_10, null, DesktopTheme.TEN, WallpaperStyle.HERO));
         register("frames_11", new DesktopLook(OsSkin.FRAMES_11, null, DesktopTheme.WIN11, WallpaperStyle.BLOOM));
         /*
-         * Of the Unix desktops only KDE and GNOME wore another face on Legacy hardware, because only those two
-         * install there at all: Cinnamon is a later desktop that needs a Standard machine. Each also carries
-         * FreeBSD's own wallpaper for it, which a machine installed on FreeBSD hangs instead of the Linux one.
+         * Of the Unix desktops only KDE and GNOME wore other faces on older hardware, because only those two
+         * install there at all: Cinnamon is a later desktop that needs a Standard machine. On the Legacy they are
+         * KDE 2 and GNOME 1, on the Transition KDE 4 and GNOME 2. Each also carries FreeBSD's own wallpaper for
+         * it, which a machine installed on FreeBSD hangs instead of the Linux one; the era never changes it.
          */
-        register("kde_plasma", new DesktopLook(OsSkin.KDE_PLASMA, OsSkin.KDE_PLASMA_LEGACY, DesktopTheme.KDE,
-                WallpaperStyle.BREEZE, WallpaperStyle.FREEBSD_PLASMA));
-        register("gnome", new DesktopLook(OsSkin.GNOME, OsSkin.GNOME_LEGACY, DesktopTheme.GNOME,
-                WallpaperStyle.ADWAITA, WallpaperStyle.FREEBSD_GNOME));
-        register("cinnamon", new DesktopLook(OsSkin.CINNAMON, null, DesktopTheme.CINNAMON, WallpaperStyle.MINT_Y,
-                WallpaperStyle.FREEBSD_CINNAMON));
+        register("kde_plasma", new DesktopLook(OsSkin.KDE_PLASMA, OsSkin.KDE_PLASMA_LEGACY,
+                OsSkin.KDE_PLASMA_TRANSITION, DesktopTheme.KDE, WallpaperStyle.BREEZE, WallpaperStyle.FREEBSD_PLASMA));
+        register("gnome", new DesktopLook(OsSkin.GNOME, OsSkin.GNOME_LEGACY, OsSkin.GNOME_TRANSITION,
+                DesktopTheme.GNOME, WallpaperStyle.ADWAITA, WallpaperStyle.FREEBSD_GNOME));
+        register("cinnamon", new DesktopLook(OsSkin.CINNAMON, null, null, DesktopTheme.CINNAMON,
+                WallpaperStyle.MINT_Y, WallpaperStyle.FREEBSD_CINNAMON));
         register("cde", new DesktopLook(OsSkin.CDE, null, DesktopTheme.CDE_DEFAULT, WallpaperStyle.MOTIF));
     }
 
-    /** The same look, with no FreeBSD wallpaper of its own (a Frames edition, or CDE). */
+    /** The same look, with no FreeBSD wallpaper of its own and no Transition face (a Frames edition, or CDE). */
     public DesktopLook(final OsSkin skin, @Nullable final OsSkin periodSkin, final DesktopTheme theme,
                        final WallpaperStyle wallpaper) {
-        this(skin, periodSkin, theme, wallpaper, null);
+        this(skin, periodSkin, null, theme, wallpaper, null);
     }
 
     /** The look of the desktop under that id, or the plainest one when none was registered for it. */
@@ -78,10 +80,17 @@ public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, DesktopTheme
 
     /**
      * The skin for hardware of {@code era}. The Frames editions already are their era (95 is Legacy, 7 is
-     * Transition, 11 is Advanced), so only a desktop that outlived its first face has a second to wear.
+     * Transition, 11 is Advanced), so only a desktop that outlived its first faces has others to wear: its period
+     * one up to the Legacy, its Transition one there, and today's from the Standard on.
      */
     public OsSkin skinOn(@Nullable final HardwareEra era) {
-        return this.periodSkin != null && era != null && era.isAtMost(HardwareEra.LEGACY) ? this.periodSkin : this.skin;
+        if (era == null) {
+            return this.skin;
+        }
+        if (this.periodSkin != null && era.isAtMost(HardwareEra.LEGACY)) {
+            return this.periodSkin;
+        }
+        return this.transitionSkin != null && era == HardwareEra.TRANSITION ? this.transitionSkin : this.skin;
     }
 
     /**

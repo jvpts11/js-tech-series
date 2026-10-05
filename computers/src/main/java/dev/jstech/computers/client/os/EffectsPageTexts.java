@@ -11,8 +11,9 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 
 /**
- * What an effects page says around its rows: the way back to the page it is reached from, and the buttons of the
- * systems whose page was a dialog. Kept apart from the page so the language generator can read it on a server too.
+ * What an effects page says around its rows: the way back to the page it is reached from, the buttons of the
+ * systems whose page was a dialog, and the note a machine whose graphics cannot run the effects shows over them.
+ * Kept apart from the page so the language generator can read it on a server too.
  */
 @TextHolder
 final class EffectsPageTexts {
@@ -22,6 +23,9 @@ final class EffectsPageTexts {
     static final TextKey CANCEL = TextKey.of("jsc.settings.effects.cancel", "Cancel");
     static final TextKey APPLY = TextKey.of("jsc.settings.effects.apply", "Apply");
     static final TextKey CLOSE = TextKey.of("jsc.settings.effects.close", "Close");
+    static final TextKey BASIC_NOTE = TextKey.of("jsc.settings.effects.basic_note",
+            "The graphics are too weak for these effects, so all are off. A stronger card brings back what is "
+                    + "chosen here.");
 
     private EffectsPageTexts() {
     }

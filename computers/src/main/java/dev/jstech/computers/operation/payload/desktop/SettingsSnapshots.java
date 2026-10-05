@@ -19,7 +19,6 @@ import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.machine.MachineLabels;
-import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
@@ -91,7 +90,7 @@ final class SettingsSnapshots {
                 computer.ramTotalMb(), computer.totalVramMb(),
                 osLabel, platform, installed, disks, ledger.usedMb(), ramUses, shares, st.remoteAllowed(),
                 soundOf(computer, st), gpuOf(computer),
-                new DesktopEffects(List.copyOf(st.effectsOff()), st.effectSpeed()));
+                MachineEffects.of(computer, st), MachineEffects.indexOf(computer));
     }
 
     /**

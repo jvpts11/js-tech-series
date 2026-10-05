@@ -46,6 +46,8 @@ public final class ClientTestSuite {
             ExposureClientTests.class,
             FilesSyncClientTests.class,
             FramesSevenTenClientTests.class,
+            TransitionDesktopsClientTests.class,
+            CreativeTabsClientTests.class,
             FreeBsdClientTests.class,
             FullJourneyClientTests.class,
             GatewayManagerClientTests.class,

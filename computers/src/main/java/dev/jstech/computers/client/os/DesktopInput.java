@@ -287,8 +287,8 @@ final class DesktopInput {
         final double y = view.localY(absY);
         final VolumePopup volume = desktop.volume();
         final int panelY = view.panelOnTop() ? 0 : view.height() - view.panelBand();
-        if (dy != 0 && desktop.panelStyle() != PanelStyle.CDE && (volume.over(x, y)
-                || desktop.tray().onSpeaker(x, y, view.width(), panelY, view.panelOnTop()))) {
+        if (dy != 0 && desktop.panelStyle() != PanelStyle.CDE && (volume.over(x, y) || !desktop.gnome2()
+                && desktop.tray().onSpeaker(x, y, view.width(), panelY, view.panelOnTop()))) {
             volume.nudge(dy > 0 ? 1 : -1);
             return true;
         }
@@ -375,9 +375,17 @@ final class DesktopInput {
             return true;
         }
         final boolean cde = desktop.panelStyle() == PanelStyle.CDE;
+        /*
+         * KDE 4's pager and GNOME 2's two panels answer for their own parts; the task buttons and KDE 4's notification
+         * area are the common ones below.
+         */
+        if (desktop.transitionPanel() && !desktop.transitionPanels().onCashew(mouseX, mouseY)
+                && desktop.transitionPanels().click(mouseX, mouseY, button, tbY)) {
+            return true;
+        }
         // The speaker on the panel: the left button opens the volume control, the right one its menu.
-        if (!cde && desktop.tray().onSpeaker(mouseX, mouseY, view.width(), view.panelOnTop() ? 0 : tbY,
-                view.panelOnTop())) {
+        if (!cde && !desktop.gnome2() && desktop.tray().onSpeaker(mouseX, mouseY, view.width(),
+                view.panelOnTop() ? 0 : tbY, view.panelOnTop())) {
             if (button == 1) {
                 desktop.volume().openMenu((int) mouseX, tbY, view.panelOnTop());
             } else if (button == 0) {
@@ -631,6 +639,11 @@ final class DesktopInput {
         // A click on the desktop keeps the name an icon was being given.
         if (desktop.fileActions().isRenaming()) {
             desktop.fileActions().commitRename();
+        }
+        // KDE 4's cashew, in the desktop's top corner, offers the desktop's settings and the way out.
+        if (desktop.transitionPanels().onCashew(mouseX, mouseY)) {
+            desktop.transitionPanels().click(mouseX, mouseY, button, view.height() - view.panelBand());
+            return Click.TAKEN;
         }
         if (desktop.panelStyle() == PanelStyle.CDE) {
             final CdeWindowIcons putAwayIcons = desktop.cdeWindowIcons();
