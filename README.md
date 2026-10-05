@@ -37,6 +37,12 @@ Every mod carries the same version and they are released together. Put J's Core 
 Industrial do not need each other: the computing mod drives any machine that exposes the usual item and
 energy capabilities, and the industrial mod's machines work with any FE generator.
 
+All the current obligatory dependencies are set to be replaced in the future for a native implementation of what
+the dependency adds, the objective is to ease the process of porting by controlling the entire source code on the
+main version, this way, it allows the J's Tech Series to not worry about any specific detail of a dependency in a
+certain version of the game or of the dependency, it also allows us to better generalize anything that can be
+generalized in an older or newer version and improve world conversion.
+
 ## Repository layout
 
 Until the entire series hit v1.0.0r, all mods of the J's Tech Series live here in this monorepo, with the ones:
