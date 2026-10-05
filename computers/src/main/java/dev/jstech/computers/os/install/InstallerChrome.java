@@ -33,5 +33,17 @@ public enum InstallerChrome {
     CARD,
 
     /** A plain ground with a small grey dialog box centred on it, its title flush in the top of its own border. */
-    DIALOG_BOX
+    DIALOG_BOX,
+
+    /**
+     * A window of tinted glass over a picture, the page on white inside it, and a strip along the foot of the screen
+     * naming the two phases of the whole install.
+     */
+    GLASS,
+
+    /** A white window with a thin blue border over the dark, square, its buttons flat and grey. */
+    METRO,
+
+    /** The whole screen in one blue, the question large in the middle and one button under it. */
+    FIRST_SETUP
 }

@@ -1,0 +1,11 @@
+{
+  "card": "#FF2B2B2B",
+  "cardHot": "#FF3A3A3A",
+  "dim": "#FFA6A6A6",
+  "ground": "#F21F1F1F",
+  "groundSolid": "#FF1F1F1F",
+  "ink": "#FFFFFFFF",
+  "link": "#FF76B9ED",
+  "quick": "#FF3A3A3A",
+  "quickHot": "#FF4A4A4A"
+}

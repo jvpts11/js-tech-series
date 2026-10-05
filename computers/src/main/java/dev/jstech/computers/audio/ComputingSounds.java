@@ -155,11 +155,18 @@ public final class ComputingSounds {
             .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames XP chimes").register();
     public static final SoundKey FRAMES_XP_ERROR = CONTENT.sound("os/frames_xp/error")
             .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames XP error").register();
+    public static final SoundKey FRAMES_7_STARTUP = CONTENT.sound("os/frames_7/startup")
+            .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames 7 chimes").register();
+    public static final SoundKey FRAMES_10_STARTUP = CONTENT.sound("os/frames_10/startup")
+            .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames 10 chimes").register();
     public static final SoundKey FRAMES_11_STARTUP = CONTENT.sound("os/frames_11/startup")
             .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames 11 chimes").register();
     public static final SoundKey FRAMES_11_ERROR = CONTENT.sound("os/frames_11/error")
             .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames 11 error").register();
-    /* The three Frames editions share their notice, their bell and their device sounds. */
+    /*
+     * The Frames editions share their notice, their bell and their device sounds. Frames 7 and 10 have no error sound
+     * of their own here: 7 raises its error with XP's and 10 with 11's, the family's sounds either side of them.
+     */
     public static final SoundKey FRAMES_NOTIFY = CONTENT.sound("os/frames/notify")
             .stereo().channel(AudioChannels.INTERFACE).subtitle("Frames chimes a notice").register();
     public static final SoundKey FRAMES_BEEP = CONTENT.sound("os/frames/beep")
@@ -251,6 +258,8 @@ public final class ComputingSounds {
             .channel(AudioChannels.INTERFACE)
             .when(SYSTEM, "jsc:frames_95", FRAMES_95_STARTUP)
             .when(SYSTEM, "jsc:frames_xp", FRAMES_XP_STARTUP)
+            .when(SYSTEM, "jsc:frames_7", FRAMES_7_STARTUP)
+            .when(SYSTEM, "jsc:frames_10", FRAMES_10_STARTUP)
             .when(SYSTEM, "jsc:frames_11", FRAMES_11_STARTUP)
             .when(legacy(KDE), KDE_LEGACY_STARTUP.id())
             .when(DESKTOP, KDE, KDE_STARTUP)
@@ -261,6 +270,8 @@ public final class ComputingSounds {
             .channel(AudioChannels.INTERFACE)
             .when(SYSTEM, "jsc:frames_95", FRAMES_95_STARTUP)
             .when(SYSTEM, "jsc:frames_xp", FRAMES_XP_STARTUP)
+            .when(SYSTEM, "jsc:frames_7", FRAMES_7_STARTUP)
+            .when(SYSTEM, "jsc:frames_10", FRAMES_10_STARTUP)
             .when(SYSTEM, "jsc:frames_11", FRAMES_11_STARTUP)
             .when(legacy(KDE), KDE_LEGACY_SHUTDOWN.id())
             .when(DESKTOP, KDE, KDE_SHUTDOWN)
@@ -271,6 +282,8 @@ public final class ComputingSounds {
             .channel(AudioChannels.INTERFACE)
             .when(SYSTEM, "jsc:frames_95", FRAMES_95_ERROR)
             .when(SYSTEM, "jsc:frames_xp", FRAMES_XP_ERROR)
+            .when(SYSTEM, "jsc:frames_7", FRAMES_XP_ERROR)
+            .when(SYSTEM, "jsc:frames_10", FRAMES_11_ERROR)
             .when(SYSTEM, "jsc:frames_11", FRAMES_11_ERROR)
             .when(legacy(KDE), KDE_LEGACY_ERROR.id())
             .when(DESKTOP, KDE, KDE_ERROR)
@@ -283,6 +296,8 @@ public final class ComputingSounds {
             .channel(AudioChannels.INTERFACE)
             .when(SYSTEM, "jsc:frames_95", FRAMES_NOTIFY)
             .when(SYSTEM, "jsc:frames_xp", FRAMES_NOTIFY)
+            .when(SYSTEM, "jsc:frames_7", FRAMES_NOTIFY)
+            .when(SYSTEM, "jsc:frames_10", FRAMES_NOTIFY)
             .when(SYSTEM, "jsc:frames_11", FRAMES_NOTIFY)
             .when(legacy(KDE), KDE_LEGACY_NOTIFY.id())
             .when(DESKTOP, KDE, KDE_NOTIFY)
@@ -298,6 +313,8 @@ public final class ComputingSounds {
             .channel(AudioChannels.INTERFACE)
             .when(SYSTEM, "jsc:frames_95", FRAMES_BEEP)
             .when(SYSTEM, "jsc:frames_xp", FRAMES_BEEP)
+            .when(SYSTEM, "jsc:frames_7", FRAMES_BEEP)
+            .when(SYSTEM, "jsc:frames_10", FRAMES_BEEP)
             .when(SYSTEM, "jsc:frames_11", FRAMES_BEEP)
             .when(legacy(KDE), KDE_LEGACY_BELL.id())
             .when(DESKTOP, KDE, KDE_BELL)
@@ -308,6 +325,8 @@ public final class ComputingSounds {
     public static final SoundCue SYSTEM_DEVICE_CONNECT = CONTENT.cue("system/device_connect").world()
             .channel(AudioChannels.INTERFACE)
             .when(SYSTEM, "jsc:frames_xp", FRAMES_DEVICE_CONNECT)
+            .when(SYSTEM, "jsc:frames_7", FRAMES_DEVICE_CONNECT)
+            .when(SYSTEM, "jsc:frames_10", FRAMES_DEVICE_CONNECT)
             .when(SYSTEM, "jsc:frames_11", FRAMES_DEVICE_CONNECT)
             .when(current(KDE), KDE_DEVICE_CONNECT.id())
             .when(current(GNOME), GNOME_DEVICE_CONNECT.id())
@@ -317,6 +336,8 @@ public final class ComputingSounds {
     public static final SoundCue SYSTEM_DEVICE_DISCONNECT = CONTENT.cue("system/device_disconnect").world()
             .channel(AudioChannels.INTERFACE)
             .when(SYSTEM, "jsc:frames_xp", FRAMES_DEVICE_DISCONNECT)
+            .when(SYSTEM, "jsc:frames_7", FRAMES_DEVICE_DISCONNECT)
+            .when(SYSTEM, "jsc:frames_10", FRAMES_DEVICE_DISCONNECT)
             .when(SYSTEM, "jsc:frames_11", FRAMES_DEVICE_DISCONNECT)
             .when(current(KDE), KDE_DEVICE_DISCONNECT.id())
             .when(current(GNOME), GNOME_DEVICE_DISCONNECT.id())

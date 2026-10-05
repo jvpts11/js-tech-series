@@ -110,10 +110,11 @@ public final class TaskManagerApp implements IDesktopApp {
         }
         return switch (desktop.panelStyle()) {
             case FRAMES_95 -> Form.CLOSE_BOX;
-            case FRAMES_11 -> Form.MODERN;
+            // Frames 10's Task Manager was already the one 11 kept, with its graphs; 7's was still XP's tabs.
+            case FRAMES_10, FRAMES_11 -> Form.MODERN;
             case KDE -> Form.PLASMA;
             case GNOME, CINNAMON -> Form.GNOME;
-            case FRAMES_XP, CDE -> Form.LUNA;
+            case FRAMES_XP, FRAMES_7, CDE -> Form.LUNA;
         };
     }
 

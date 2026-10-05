@@ -29,6 +29,38 @@ final class SettingsTexts {
     static final TextKey SOUND = TextKey.of("jsc.settings.sound", "Sound");
     static final TextKey USERS = TextKey.of("jsc.settings.users", "Users");
     static final TextKey LOADING = TextKey.of("jsc.settings.loading", "Loading...");
+    // The home Frames 7 and 10 open on: 7's Control Panel by category, 10's grid of pages.
+    static final TextKey HOME = TextKey.of("jsc.settings.home", "Home");
+    static final TextKey ADJUST_SETTINGS = TextKey.of("jsc.settings.adjust_settings",
+            "Adjust your computer's settings");
+    static final TextKey SYSTEM_AND_SECURITY = TextKey.of("jsc.settings.system_and_security", "System and Security");
+    static final TextKey SYSTEM_LINE = TextKey.of("jsc.settings.system_line", "Look after the disks");
+    static final TextKey USER_ACCOUNTS = TextKey.of("jsc.settings.user_accounts", "User Accounts");
+    static final TextKey USERS_LINE = TextKey.of("jsc.settings.users_line", "The accounts on this computer");
+    static final TextKey NETWORK_AND_INTERNET = TextKey.of("jsc.settings.network_and_internet",
+            "Network and Internet");
+    static final TextKey NETWORK_LINE = TextKey.of("jsc.settings.network_line", "Share folders, allow remote programs");
+    static final TextKey APPEARANCE_AND_PERSONALIZATION = TextKey.of("jsc.settings.appearance_and_personalization",
+            "Appearance and Personalization");
+    static final TextKey APPEARANCE_LINE = TextKey.of("jsc.settings.appearance_line", "Change the theme");
+    static final TextKey HARDWARE_AND_SOUND = TextKey.of("jsc.settings.hardware_and_sound", "Hardware and Sound");
+    static final TextKey HARDWARE_LINE = TextKey.of("jsc.settings.hardware_line", "Adjust the display");
+    static final TextKey PROGRAMS_LINE = TextKey.of("jsc.settings.programs_line", "Uninstall a program");
+    static final TextKey EASE_OF_ACCESS = TextKey.of("jsc.settings.ease_of_access", "Ease of Access");
+    static final TextKey EASE_LINE = TextKey.of("jsc.settings.ease_line", "Optimize visual display");
+    static final TextKey FRAMES_SETTINGS = TextKey.of("jsc.settings.frames_settings", "Frames Settings");
+    static final TextKey SYSTEM_ABOUT = TextKey.of("jsc.settings.system_about",
+            "Computer name, processor, memory, graphics");
+    static final TextKey DISPLAY_ABOUT = TextKey.of("jsc.settings.display_about",
+            "Brightness, scale, the linked monitor");
+    static final TextKey SOUND_ABOUT = TextKey.of("jsc.settings.sound_about", "Volume and the system sounds");
+    static final TextKey NETWORK_ABOUT = TextKey.of("jsc.settings.network_about",
+            "Public share, shared folders, remote programs");
+    static final TextKey PERSONALIZE_ABOUT = TextKey.of("jsc.settings.personalize_about",
+            "Wallpaper, accent, theme, clock, dark mode");
+    static final TextKey STORAGE_ABOUT = TextKey.of("jsc.settings.storage_about", "Disks and the system disk");
+    static final TextKey PROGRAMS_ABOUT = TextKey.of("jsc.settings.programs_about", "Installed programs, uninstall");
+    static final TextKey USERS_ABOUT = TextKey.of("jsc.settings.users_about", "The accounts on this computer");
     static final TextKey COMING_SOON = TextKey.of("jsc.settings.coming_soon", "Coming in a future update");
 
     // Personalize.

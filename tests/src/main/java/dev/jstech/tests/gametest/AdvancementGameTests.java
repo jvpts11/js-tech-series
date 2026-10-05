@@ -14,6 +14,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.advancement.JscEventTrigger;
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.advancement.JscTriggers;
 import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.advancement.OperationMilestones;
 import dev.jstech.computers.advancement.PendingAwards;
@@ -85,6 +86,26 @@ public final class AdvancementGameTests {
             JscEvents.award(player, JscEvents.POST_PASSED);
             helper.assertTrue(done(player, "hardware/pc_master_race"), "passing POST earns PC Master Race");
             helper.assertFalse(done(player, "hardware/off_and_on_again"), "and nothing else in the tab");
+        } finally {
+            leave(player);
+        }
+        helper.succeed();
+    }
+
+    /** Frames 7 and Frames 10 each earn their own first boot, and one never earns the other's. */
+    @GameTest(template = ARENA)
+    public static void firstBoot_ofFrames7And10_earnsEachItsOwn(final GameTestHelper helper) {
+        final ServerPlayer player = join(helper);
+        try {
+            JscTriggers.OS_FIRST_BOOT.get().trigger(player,
+                    ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_7"));
+            helper.assertTrue(done(player, "systems/never_upgrading"), "booting Frames 7 earns Never Upgrading");
+            helper.assertFalse(done(player, "systems/what_happened_to_frames_9"), "but not Frames 10's");
+            JscTriggers.OS_FIRST_BOOT.get().trigger(player,
+                    ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_10"));
+            helper.assertTrue(done(player, "systems/what_happened_to_frames_9"),
+                    "booting Frames 10 earns What Happened to Frames 9?");
+            helper.assertFalse(done(player, "systems/bloat_11"), "and Frames 11's stays to be earned");
         } finally {
             leave(player);
         }

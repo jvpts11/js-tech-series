@@ -116,7 +116,7 @@ public final class SetupApp implements IDesktopApp {
             case SetupProgressPayload.STATE_REFUSED ->
                     GameText.resolve((removing ? SetupTexts.CANNOT_REMOVE : SetupTexts.CANNOT_INSTALL).with(name));
             case SetupProgressPayload.STATE_CANCELLED -> GameText.resolve(SetupTexts.CANCELLED);
-            default -> this.skin.form() == OsSkin.Form.LUNA
+            default -> this.skin.glossForm()
                     ? GameText.resolve((removing ? SetupTexts.REMOVING : SetupTexts.INSTALLING).with(name)) : name;
         };
     }
@@ -227,7 +227,7 @@ public final class SetupApp implements IDesktopApp {
                 textX = x + STRIP_W + 6;
                 rowY = y + 6;
             }
-            case LUNA -> {
+            case LUNA, AERO -> {
                 // The white header band of a wizard page, the icon at its left and the name beside it.
                 g.fill(x, y, x + width, y + HEADER_H, PALETTE.get().header());
                 g.fill(x, y + HEADER_H, x + width, y + HEADER_H + 1, PALETTE.get().headerRule());
@@ -247,7 +247,7 @@ public final class SetupApp implements IDesktopApp {
         }
         final int right = x + width - 6;
         final int textW = right - textX;
-        if (this.skin.form() == OsSkin.Form.LUNA) {
+        if (this.skin.glossForm()) {
             // The header carries the headline and the publisher; the body starts below it.
             this.headline.setBounds(x + 26, y + 4, width - 32, 10);
             Draw.text(g, font, font.plainSubstrByWidth(subtitle(), width - 32), x + 26, y + 14,

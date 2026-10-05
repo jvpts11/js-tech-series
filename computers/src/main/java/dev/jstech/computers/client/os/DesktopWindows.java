@@ -12,7 +12,9 @@ import dev.jstech.core.motion.Motion;
 import dev.jstech.core.motion.MotionKinds;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,6 +32,8 @@ final class DesktopWindows {
     private final List<DesktopWindow> closing = new ArrayList<>();
     /** Which workspace is up, counted from nought; always the first on a desktop that has only one. */
     private int shown;
+    /** How many windows each program has opened since the desktop came up, which is what "Most used" ranks by. */
+    private final Map<String, Integer> opened = new HashMap<>();
 
     DesktopWindows(final DesktopState desktop) {
         this.desktop = desktop;
@@ -146,10 +150,16 @@ final class DesktopWindows {
         opened.setWorkspaces(WorkspaceSet.only(shown));
         opened.move(desktop.motion().start(MotionKinds.WINDOW_OPEN));
         windows.add(opened);
+        this.opened.merge(key, 1, Integer::sum);
         // A copy's window is the system telling of a copy, not a program being loaded.
         if (!CopyWindows.KEY.equals(key)) {
             desktop.programStarting(key);
         }
+    }
+
+    /** How many windows the program under {@code key} has opened since the desktop came up. */
+    int openedCount(final String key) {
+        return opened.getOrDefault(key, 0);
     }
 
     /**

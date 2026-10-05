@@ -112,6 +112,32 @@ final class DesktopTexts {
     static final TextKey UTILITIES = TextKey.of("jsc.desktop.start.utilities", "Utilities");
     static final TextKey ALL = TextKey.of("jsc.desktop.start.all", "All");
     static final TextKey ACCESSORIES = TextKey.of("jsc.desktop.start.accessories", "Accessories");
+    // Frames 7's Start menu.
+    static final TextKey SEARCH_PROGRAMS_AND_FILES = TextKey.of("jsc.desktop.start.search_programs_and_files",
+            "Search programs and files");
+    // Frames 10's Start menu: its list, its tiles and what the right button offers on them.
+    static final TextKey MOST_USED = TextKey.of("jsc.desktop.start.most_used", "Most used");
+    static final TextKey LIFE_AT_A_GLANCE = TextKey.of("jsc.desktop.start.life_at_a_glance", "Life at a glance");
+    static final TextKey PIN_TO_START = TextKey.of("jsc.desktop.start.pin_to_start", "Pin to Start");
+    static final TextKey UNPIN_FROM_START = TextKey.of("jsc.desktop.start.unpin_from_start", "Unpin from Start");
+    static final TextKey TILE_SMALL = TextKey.of("jsc.desktop.start.tile_small", "Resize: Small");
+    static final TextKey TILE_MEDIUM = TextKey.of("jsc.desktop.start.tile_medium", "Resize: Medium");
+    static final TextKey TILE_WIDE = TextKey.of("jsc.desktop.start.tile_wide", "Resize: Wide");
+    static final TextKey TILE_ONLINE = TextKey.of("jsc.desktop.start.tile_online", "Connected to a network");
+    static final TextKey TILE_OFFLINE = TextKey.of("jsc.desktop.start.tile_offline", "No network");
+    static final TextKey TILE_CPU = TextKey.of("jsc.desktop.start.tile_cpu", "CPU %s%%");
+    static final TextKey TILE_MEMORY = TextKey.of("jsc.desktop.start.tile_memory", "Memory %s");
+    // Frames 10's Action Center and its quick actions.
+    static final TextKey NOTIFICATIONS = TextKey.of("jsc.desktop.action_center.notifications", "Notifications");
+    static final TextKey CLEAR_ALL = TextKey.of("jsc.desktop.action_center.clear_all", "Clear all");
+    static final TextKey NO_NOTIFICATIONS = TextKey.of("jsc.desktop.action_center.no_notifications",
+            "No new notifications");
+    static final TextKey ALL_SETTINGS = TextKey.of("jsc.desktop.action_center.all_settings", "All settings");
+    static final TextKey QUICK_NETWORK = TextKey.of("jsc.desktop.action_center.network", "Network");
+    static final TextKey QUIET_HOURS = TextKey.of("jsc.desktop.action_center.quiet_hours", "Quiet hours");
+    static final TextKey QUICK_SOUND = TextKey.of("jsc.desktop.action_center.sound", "Sound");
+    // Frames 10's Task View.
+    static final TextKey NO_WINDOWS = TextKey.of("jsc.desktop.task_view.no_windows", "No windows are open");
     static final TextKey OFFICE = TextKey.of("jsc.desktop.start.office", "Office");
     static final TextKey PREFERENCES = TextKey.of("jsc.desktop.start.preferences", "Preferences");
 

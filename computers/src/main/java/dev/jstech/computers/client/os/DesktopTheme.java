@@ -19,7 +19,7 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * The chrome of a desktop OS around its programs: the panel, the launcher and the captions of the desktop icons.
  * Each desktop names its theme in its {@link DesktopLook}, so the shared {@link DesktopScreen} engine renders a
- * distinct look per desktop (Frames 95 grey, Frames XP blue Luna, Frames 11 light).
+ * distinct look per desktop (Frames 95 grey, Frames XP blue Luna, Frames 7 glass, Frames 10 dark, Frames 11 light).
  *
  * <p>The colours are a declared palette, {@code jsc:desktop/<desktop>}, which a resource pack can recolour, and are
  * asked for each time the chrome is painted. Whether the desktop's captions cast a shadow is its design.
@@ -39,6 +39,18 @@ public final class DesktopTheme {
             new DesktopColours(
                     0xFF295FBE, 0xFF6E9BE0, 0xFF3FA13F, 0xFFFFFFFF, 0xFF4F7FCB,
                     0xFFFFFFFF, 0xFFECECF6, 0xFF101030, 0xFF295FBE)), true);
+
+    // Frames 7: the glass superbar over a night blue, white captions, a white Start menu written in black.
+    static final DesktopTheme SEVEN = new DesktopTheme(Palettes.declare(JsComputers.MODID, "desktop/frames_7",
+            new DesktopColours(
+                    0xFF22395A, 0xFF9FC4EB, 0xFF12284A, 0xFFFFFFFF, 0xFF3C5A82,
+                    0xFFFFFFFF, 0xFFFFFFFF, 0xFF000000, 0xFF3399FF)), false);
+
+    // Frames 10: the near-black taskbar and Start menu, white captions and text, the blue accent.
+    static final DesktopTheme TEN = new DesktopTheme(Palettes.declare(JsComputers.MODID, "desktop/frames_10",
+            new DesktopColours(
+                    0xFF101010, 0xFF2B2B2B, 0xFF101010, 0xFFFFFFFF, 0xFF1F1F1F,
+                    0xFFFFFFFF, 0xFF1F1F1F, 0xFFFFFFFF, 0xFF0078D7)), false);
 
     static final DesktopTheme WIN11 = new DesktopTheme(Palettes.declare(JsComputers.MODID, "desktop/frames_11",
             new DesktopColours(

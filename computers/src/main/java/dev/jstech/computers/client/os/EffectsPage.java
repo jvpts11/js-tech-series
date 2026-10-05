@@ -169,7 +169,8 @@ final class EffectsPage {
                 yield null;
             }
             case EffectsPages.Check check -> scroll.add(new CheckRow(GameText.resolve(check.label()),
-                    () -> !now.isOff(check.effect()), () -> flip(check.effect(), now))).setBounds(x, top, w, rowH);
+                    () -> check.inverted() == now.isOff(check.effect()), () -> flip(check.effect(), now)))
+                    .setBounds(x, top, w, rowH);
             case EffectsPages.Toggle toggle -> scroll.add(new ToggleRow(GameText.resolve(toggle.label()),
                     toggle.description() == null ? "" : GameText.resolve(toggle.description()),
                     () -> toggle.inverted() == now.isOff(toggle.effect()), () -> flip(toggle.effect(), now)))

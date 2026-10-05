@@ -27,9 +27,9 @@ import java.util.function.Supplier;
 public final class SystemAdvancements extends AdvancementTab {
 
     private static final List<String> DISTRIBUTIONS = List.of("ubuntu", "debian", "fedora", "arch", "gentoo");
-    /* Where screenfetch installs: every distribution, FreeBSD and the three Frames. UNIX has no package for it. */
+    /* Where screenfetch installs: every distribution, FreeBSD and the five Frames. UNIX has no package for it. */
     private static final List<String> SCREENFETCH_SYSTEMS = List.of("ubuntu", "debian", "fedora", "arch", "gentoo",
-            "freebsd", "frames_95", "frames_xp", "frames_11");
+            "freebsd", "frames_95", "frames_xp", "frames_7", "frames_10", "frames_11");
 
     public SystemAdvancements() {
         super("systems", ResourceLocation.withDefaultNamespace("textures/block/deepslate_tiles.png"));
@@ -45,8 +45,13 @@ public final class SystemAdvancements extends AdvancementTab {
                 "Install Frames 95 and boot it", booted("frames_95"));
         this.task("the_goat", "start_me_up", ComputingModule.DVD_ROM.get(), "The goat",
                 "Install Frames XP and boot it", booted("frames_xp"));
-        this.task("bloat_11", "the_goat", ComputingModule.USB_FLASH_DRIVE.get(), "More like, Bloat 11",
-                "Install Frames 11 and boot it", booted("frames_11"));
+        // The editions follow one another in the order they came, each install opening the next.
+        this.task("never_upgrading", "the_goat", ComputingModule.DVD_ROM.get(), "Never Upgrading",
+                "Install Frames 7 and boot it", booted("frames_7"));
+        this.task("what_happened_to_frames_9", "never_upgrading", ComputingModule.USB_FLASH_DRIVE.get(),
+                "What Happened to Frames 9?", "Install Frames 10 and boot it", booted("frames_10"));
+        this.task("bloat_11", "what_happened_to_frames_9", ComputingModule.USB_FLASH_DRIVE.get(),
+                "More like, Bloat 11", "Install Frames 11 and boot it", booted("frames_11"));
 
         this.task("where_it_all_started", "root", ComputingModule.VINTAGE_PERSONAL_COMPUTER.item(),
                 "Where it all started long ago...", "Install UNIX and boot it", booted("unix"));

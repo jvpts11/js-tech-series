@@ -38,7 +38,7 @@ public final class ComputersClientConfig {
             .comment("Whether this game draws the components of programs' windows that reach outside the game, such "
                             + "as one showing a web address or a file on this computer.",
                     "Off, each shows a placeholder naming it, whatever the server allows.")
-            .named("Components reaching outside the game");
+            .named("Outside components");
 
     public static final ConfigFile FILE = ConfigFile.builder("jscomputers-client", ConfigSide.CLIENT,
                     ConfigFormats.TOML)

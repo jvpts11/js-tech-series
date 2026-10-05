@@ -35,6 +35,8 @@ public final class FramesEmblem {
         final String id = switch (edition) {
             case FRAMES_95 -> "frames_95";
             case FRAMES_XP -> "frames_xp";
+            case FRAMES_7 -> "frames_7";
+            case FRAMES_10 -> "frames_10";
             default -> "frames_11";
         };
         return ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/emblem/" + id + ".png");

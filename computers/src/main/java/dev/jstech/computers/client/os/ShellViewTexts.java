@@ -18,6 +18,7 @@ import dev.jstech.core.text.TextKey;
 final class ShellViewTexts {
 
     static final TextKey START_HINT = TextKey.of("jsc.shell.start_hint", "Type %s for a list of commands");
+    static final TextKey VERSION_BANNER = TextKey.of("jsc.shell.version_banner", "%s [Version %s]");
     static final TextKey SCROLLED = TextKey.of("jsc.shell.scrolled", "scrolled +%s");
     static final TextKey PROGRAMS = TextKey.of("jsc.shell.programs", "Programs: %s");
     static final TextKey RUN_USAGE = TextKey.of("jsc.shell.run_usage", "Usage: %s <program>");

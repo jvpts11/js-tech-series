@@ -598,8 +598,59 @@ interface DesktopInspection {
 
     /** Screen coordinates of the Start button's centre. */
     default int startButtonX() {
-        final boolean modern = desktop().panelStyle() == PanelStyle.FRAMES_11;
+        final PanelStyle style = desktop().panelStyle();
+        if (style == PanelStyle.FRAMES_7) {
+            return desktop().view().screenX(AeroSuperbar.START_W / 2);
+        }
+        if (style == PanelStyle.FRAMES_10) {
+            return desktop().view().screenX(MetroTaskbar.START_W / 2);
+        }
+        final boolean modern = style == PanelStyle.FRAMES_11;
         return desktop().view().screenX(modern ? 4 + DesktopScreen.WIN11_SLOT / 2 : 30);
+    }
+
+    /** Screen coordinates of a part of Frames 10's taskbar: {@code search}, {@code view} or {@code action}. */
+    default int[] tenBarPoint(final String part) {
+        final DesktopViewport view = desktop().view();
+        final int y = view.screenY(view.height() - DesktopScreen.TASKBAR_H / 2);
+        final int x = switch (part) {
+            case "search" -> MetroTaskbar.searchLeft() + MetroTaskbar.SEARCH_W / 2;
+            case "view" -> MetroTaskbar.viewLeft() + MetroTaskbar.VIEW_W / 2;
+            default -> view.width() - 6;
+        };
+        return new int[] {view.screenX(x), y};
+    }
+
+    /** Whether Frames 10's Action Center is up. */
+    default boolean actionCenterOpen() {
+        return desktop().actionCenter().isOpen();
+    }
+
+    /** Whether Frames 10's Task View is up. */
+    default boolean taskViewOpen() {
+        return desktop().taskView().isOpen();
+    }
+
+    /** The tiles of Frames 10's Start as this desktop holds them, each {@code <program>:<size>}. */
+    default List<String> startTiles() {
+        return desktop().start().metro().encodedTiles();
+    }
+
+    /** Screen coordinates of the middle of the tile that starts {@code program} on Frames 10's Start, or null. */
+    @Nullable
+    default int[] tileCenter(final String program) {
+        final int[] local = desktop().start().metro().tilePoint(program);
+        return local == null ? null : new int[] {desktop().view().screenX(local[0]),
+                desktop().view().screenY(local[1])};
+    }
+
+    /** The notices this desktop has raised since it came up, newest first, by their headings. */
+    default List<String> noticeTitles() {
+        final List<String> out = new ArrayList<>();
+        for (final DesktopNotices.Notice notice : desktop().notices().history()) {
+            out.add(notice.title());
+        }
+        return out;
     }
 
     default int startButtonY() {

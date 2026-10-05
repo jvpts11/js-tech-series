@@ -43,6 +43,8 @@ public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, DesktopTheme
     static {
         register("frames_95", FALLBACK);
         register("frames_xp", new DesktopLook(OsSkin.FRAMES_XP, null, DesktopTheme.XP, WallpaperStyle.BLISS));
+        register("frames_7", new DesktopLook(OsSkin.FRAMES_7, null, DesktopTheme.SEVEN, WallpaperStyle.HARMONY));
+        register("frames_10", new DesktopLook(OsSkin.FRAMES_10, null, DesktopTheme.TEN, WallpaperStyle.HERO));
         register("frames_11", new DesktopLook(OsSkin.FRAMES_11, null, DesktopTheme.WIN11, WallpaperStyle.BLOOM));
         /*
          * Of the Unix desktops only KDE and GNOME wore another face on Legacy hardware, because only those two
@@ -75,8 +77,8 @@ public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, DesktopTheme
     }
 
     /**
-     * The skin for hardware of {@code era}. The Frames editions already are their era (95 is Legacy, 11 is
-     * Standard), so only a desktop that outlived its first face has a second to wear.
+     * The skin for hardware of {@code era}. The Frames editions already are their era (95 is Legacy, 7 is
+     * Transition, 11 is Advanced), so only a desktop that outlived its first face has a second to wear.
      */
     public OsSkin skinOn(@Nullable final HardwareEra era) {
         return this.periodSkin != null && era != null && era.isAtMost(HardwareEra.LEGACY) ? this.periodSkin : this.skin;

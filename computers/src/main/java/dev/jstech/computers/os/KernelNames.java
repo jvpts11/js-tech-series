@@ -74,7 +74,9 @@ public final class KernelNames {
         return switch (familyRank) {
             case 1 -> "Frames 4.00.950";
             case 2 -> "Frames NT 5.1";
-            case 3 -> "Frames NT 10.0";
+            case 3 -> "Frames NT 6.1";
+            // Frames 10 and Frames 11 report the same kernel version, as the real pair did.
+            case 4, 5 -> "Frames NT 10.0";
             default -> "Frames";
         };
     }

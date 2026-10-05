@@ -39,14 +39,14 @@ final class SigmaGlyphs {
             diamond(g, x + 1, y + 1, MARK - 2, on ? skin.accent() : skin.fieldBg());
             return;
         }
-        disc(g, x, y, skin.form() == OsSkin.Form.FLAT && on ? skin.accent() : skin.edge());
+        disc(g, x, y, skin.flatForm() && on ? skin.accent() : skin.edge());
         for (int row = 1; row < MARK - 1; row++) {
             final int from = DISC_FROM[row] + 1;
             g.fill(x + from, y + row, x + MARK - from, y + row + 1,
-                    skin.form() == OsSkin.Form.FLAT && on ? skin.accent() : skin.fieldBg());
+                    skin.flatForm() && on ? skin.accent() : skin.fieldBg());
         }
         if (on) {
-            final int dot = skin.form() == OsSkin.Form.FLAT ? skin.fieldBg() : skin.text();
+            final int dot = skin.flatForm() ? skin.fieldBg() : skin.text();
             for (int row = 0; row < DOT_FROM.length; row++) {
                 g.fill(x + 2 + DOT_FROM[row] + 1, y + 2 + row + 1, x + 2 + DOT_FROM[row] + 1 + DOT_LONG[row],
                         y + 3 + row + 1, dot);
@@ -56,7 +56,7 @@ final class SigmaGlyphs {
 
     /** A check box, its tick drawn when it is ticked. */
     static void check(final GuiGraphics g, final OsSkin skin, final int x, final int y, final boolean on) {
-        final boolean filled = on && (skin.form() == OsSkin.Form.FLAT || skin.form() == OsSkin.Form.MOTIF);
+        final boolean filled = on && (skin.flatForm() || skin.form() == OsSkin.Form.MOTIF);
         g.fill(x, y, x + MARK, y + MARK, skin.edge());
         g.fill(x + 1, y + 1, x + MARK - 1, y + MARK - 1, filled ? skin.accent() : skin.fieldBg());
         if (on && skin.form() != OsSkin.Form.MOTIF) {
@@ -74,21 +74,21 @@ final class SigmaGlyphs {
     /** The arrow at the end of a combo box or on a stepper, down or up, in a button where the system has one. */
     static void arrowButton(final GuiGraphics g, final Font font, final OsSkin skin, final int x, final int y,
                             final int w, final int h, final boolean down, final boolean pressed) {
-        if (skin.form() != OsSkin.Form.FLAT) {
+        if (!skin.flatForm()) {
             skin.button(g, font, x, y, w, h, "", false, pressed, false);
         }
         triangle(g, x + w / 2, y + h / 2 + (down ? -1 : 1), down, Math.max(2, Math.min(w, h) / 4),
-                skin.form() == OsSkin.Form.FLAT ? skin.dim() : skin.text());
+                skin.flatForm() ? skin.dim() : skin.text());
     }
 
     /** A slider's track and thumb, the thumb where {@code fraction} of the way along puts it. */
     static void slider(final GuiGraphics g, final Font font, final OsSkin skin, final int x, final int y,
                        final int w, final int h, final double fraction, final boolean ticks) {
         final int middle = y + h / 2;
-        final int thumbW = skin.form() == OsSkin.Form.FLAT ? 8 : 6;
+        final int thumbW = skin.flatForm() ? 8 : 6;
         final int travel = Math.max(1, w - thumbW);
         final int thumbX = x + (int) Math.round(travel * Math.clamp(fraction, 0, 1));
-        if (skin.form() == OsSkin.Form.FLAT) {
+        if (skin.flatForm()) {
             g.fill(x, middle - 1, x + w, middle + 1, skin.edge());
             g.fill(x, middle - 1, thumbX + thumbW / 2, middle + 1, skin.accent());
             g.fill(thumbX, middle - 4, thumbX + thumbW, middle + 4, skin.accent());
@@ -107,7 +107,7 @@ final class SigmaGlyphs {
 
     /** What opens or closes a node of a tree: a boxed plus or minus on older systems, a chevron on the flat ones. */
     static void expander(final GuiGraphics g, final OsSkin skin, final int x, final int y, final boolean open) {
-        if (skin.form() == OsSkin.Form.FLAT) {
+        if (skin.flatForm()) {
             if (open) {
                 triangle(g, x + 4, y + 4, true, 2, skin.dim());
             } else {

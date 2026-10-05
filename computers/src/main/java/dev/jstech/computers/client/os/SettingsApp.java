@@ -38,7 +38,9 @@ import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -129,6 +131,118 @@ public final class SettingsApp implements IDesktopApp {
     /** The button that opens it, on that page, kept so a client test can find it after a rebuild. */
     @Nullable
     private Button effectsEntry;
+    /** Whether the window has chosen its first page yet, and whether whoever opened it asked for one. */
+    private boolean homeDecided;
+    private boolean explicitPage;
+    /** The way back to the home page, above the list, on the systems that open on one. */
+    private final Button homeButton;
+    /** The home's entries as last built, so a client test can find them: a page index and where it is. */
+    private final List<HomeEntry> homeEntries = new ArrayList<>();
+
+    /** The page that is none of the list's: the home Frames 7 and 10 open on, every page one click from it. */
+    private static final int PAGE_HOME = -1;
+    private static final int HOME_ROW_H = 28;
+    /** How wide one column of Frames 7's categories must be for "Appearance and Personalization" beside its icon. */
+    private static final int HOME_COLUMN_W = 204;
+    private static final int TILE_H = 56;
+    private static final int HOME_COLUMNS = 4;
+    private static final int GLYPH = 16;
+    /** The look the white glyphs of Frames 10 are drawn from, tinted in the accent on its home. */
+    private static final String TILE_LOOK = "frames_10_tile";
+
+    /**
+     * One way into a page from the home: on Frames 7 a category, its icon, its title linking to one page and its
+     * line to another (often the same); on Frames 10 a page's glyph in the accent, its name and what it holds.
+     */
+    private final class HomeEntry extends UiComponent {
+
+        private final ResourceLocation icon;
+        private final TextKey title;
+        private final TextKey line;
+        private final int titlePage;
+        private final int linePage;
+
+        HomeEntry(final ResourceLocation icon, final TextKey title, final TextKey line, final int titlePage,
+                  final int linePage) {
+            this.icon = icon;
+            this.title = title;
+            this.line = line;
+            this.titlePage = titlePage;
+            this.linePage = linePage;
+        }
+
+        int titlePage() {
+            return this.titlePage;
+        }
+
+        @Override
+        public void render(final GuiGraphics g, final UiContext ctx) {
+            final OsSkin s = SettingsApp.this.skin;
+            final boolean over = ctx.mouseX() >= x() && ctx.mouseX() < right() && ctx.mouseY() >= y()
+                    && ctx.mouseY() < bottom();
+            if (s.form() == OsSkin.Form.METRO) {
+                if (over) {
+                    g.fill(x(), y(), right(), bottom(), s.listHover());
+                }
+                final int accent = s.accent();
+                g.setColor((accent >> 16 & 0xFF) / 255.0F, (accent >> 8 & 0xFF) / 255.0F, (accent & 0xFF) / 255.0F,
+                        1.0F);
+                if (titlePage == PAGE_SOUND) {
+                    PanelTray.speaker(g, x() + (width() - 9) / 2, y() + 6, 0xFF << 24 | 0xFFFFFF, false);
+                } else {
+                    ProgramIcons.draw(g, x() + (width() - GLYPH) / 2, y() + 3, GLYPH, GLYPH, icon, TILE_LOOK);
+                }
+                g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+                final String name = GameText.resolve(title);
+                if (ctx.font().width(name) <= width() - 2) {
+                    Draw.text(g, ctx.font(), name, x() + (width() - ctx.font().width(name)) / 2, y() + 22, s.text());
+                } else {
+                    // A page's name longer than its cell takes the smaller letters rather than losing its end.
+                    final int smallW = (int) (ctx.font().width(name) * SMALL);
+                    g.pose().pushPose();
+                    g.pose().translate(x() + Math.max(1, (width() - smallW) / 2), y() + 23, 0);
+                    g.pose().scale(SMALL, SMALL, 1.0F);
+                    Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(name, (int) ((width() - 2) / SMALL)), 0,
+                            0, s.text());
+                    g.pose().popPose();
+                }
+                int ly = y() + 32;
+                for (final FormattedCharSequence part : ctx.font().split(Component.literal(GameText.resolve(line)),
+                        (int) ((width() - 2) / SMALL))) {
+                    if (ly > bottom() - 5) {
+                        break;
+                    }
+                    g.pose().pushPose();
+                    g.pose().translate(x() + 1, ly, 0);
+                    g.pose().scale(SMALL, SMALL, 1.0F);
+                    Draw.text(g, ctx.font(), part, 0, 0, s.dim());
+                    g.pose().popPose();
+                    ly += 7;
+                }
+                return;
+            }
+            ProgramIcons.draw(g, x(), y() + 2, GLYPH, GLYPH, icon, s.iconSet());
+            final String name = GameText.resolve(title);
+            final int titleW = Math.min(width() - 22, ctx.font().width(name));
+            Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(name, width() - 22), x() + 20, y() + 2,
+                    s.accent());
+            if (over && ctx.mouseY() < y() + 11) {
+                g.fill(x() + 20, y() + 10, x() + 20 + titleW, y() + 11, s.accent());
+            }
+            Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(line), width() - 22), x() + 20,
+                    y() + 12, linePage == titlePage ? s.dim() : s.accent());
+        }
+
+        @Override
+        public boolean mouseClicked(final double mx, final double my, final int button) {
+            if (button != 0) {
+                return false;
+            }
+            // On Frames 7 the line under a category is a link of its own; Frames 10's entry is one thing.
+            page = SettingsApp.this.skin.form() == OsSkin.Form.AERO && my >= y() + 11 ? linePage : titlePage;
+            return true;
+        }
+    }
 
     /** A wallpaper style or an accent colour as a small square that a click chooses. */
     private final class Swatch extends UiComponent {
@@ -182,6 +296,8 @@ public final class SettingsApp implements IDesktopApp {
     public SettingsApp(final BlockPos host) {
         this.host = host;
         nav = root.add(new ListView<TextKey>(() -> NAV, NAV_ROW_H, this::renderNavRow).setOnClick(this::navClicked));
+        homeButton = root.add(new Button(GameText.resolve(SettingsTexts.HOME), () -> page = PAGE_HOME));
+        homeButton.setVisible(false);
         loadingLabel = root.add(new Label(GameText.resolve(SettingsTexts.LOADING), Label.Tone.DIM));
         root.add(pagePanel);
         active = this;
@@ -268,12 +384,28 @@ public final class SettingsApp implements IDesktopApp {
         lastMouseY = mouseY;
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
-        nav.setBounds(x + 3, y + 4, NAV_W, NAV.size() * NAV_ROW_H);
-        g.fill(x + NAV_W + 5, y + 3, x + NAV_W + 6, y + height - 3, skin.edge());
+        // Frames 7 and 10 open on their home unless whoever opened the window asked for a page.
+        if (!homeDecided) {
+            homeDecided = true;
+            if (hasHome() && !explicitPage) {
+                page = PAGE_HOME;
+            }
+        }
+        if (!hasHome() && page == PAGE_HOME) {
+            page = PAGE_PERSONALIZE;
+        }
+        final boolean home = page == PAGE_HOME;
+        nav.setVisible(!home);
+        homeButton.setVisible(hasHome() && !home);
+        homeButton.setBounds(x + 3, y + 3, NAV_W, 12);
+        nav.setBounds(x + 3, hasHome() ? y + 18 : y + 4, NAV_W, NAV.size() * NAV_ROW_H);
+        if (!home) {
+            g.fill(x + NAV_W + 5, y + 3, x + NAV_W + 6, y + height - 3, skin.edge());
+        }
 
-        final int px = x + NAV_W + 11;
+        final int px = home ? x + 6 : x + NAV_W + 11;
         final int py = y + 6;
-        final int pw = width - NAV_W - 15;
+        final int pw = home ? width - 12 : width - NAV_W - 15;
         final int ph = height - 12;
         loadingLabel.setVisible(data == null);
         loadingLabel.setBounds(px, y + 8, pw, 8);
@@ -306,10 +438,15 @@ public final class SettingsApp implements IDesktopApp {
         pagePanel.clear();
         nameField = null;
         effectsEntry = null;
+        if (page != 2) {
+            shareField = null; // leaving the Network page lets go of what was typed there
+        }
         if (data == null) {
             return;
         }
+        homeEntries.clear();
         switch (page) {
+            case PAGE_HOME -> home(px, py, pw, font);
             case 0 -> personalize(px, py, pw, ph, font);
             case 1 -> system(px, py, pw, font);
             case 2 -> network(px, py, pw, font);
@@ -408,8 +545,10 @@ public final class SettingsApp implements IDesktopApp {
             styles.add(offered.id());
         }
         final boolean richSkin = skin.form() != OsSkin.Form.BEVEL;
-        final boolean flatSkin = skin.form() == OsSkin.Form.FLAT;
-        final SettingsLayout.Offsets o = SettingsLayout.of(w, styles.size(), richSkin, flatSkin);
+        // The centred taskbar is Frames 11's alone; its dark theme Frames 10 had first.
+        final boolean taskbarRow = skin.form() == OsSkin.Form.FLAT;
+        final boolean appearanceRow = skin.flatForm();
+        final SettingsLayout.Offsets o = SettingsLayout.of(w, styles.size(), richSkin, taskbarRow, appearanceRow);
 
         personalizeScroll.clear();
         pagePanel.add(personalizeScroll);
@@ -457,12 +596,14 @@ public final class SettingsApp implements IDesktopApp {
         toggleButtons(personalizeScroll, x, personalizeScroll.contentY(o.clockY()), font, SettingsTexts.HOUR_24,
                 SettingsTexts.HOUR_12, !d.clock12h(), () -> set("clock", "24h"), () -> set("clock", "12h"));
 
-        // Taskbar alignment and dark mode are Frames 11 concepts only, so they appear exclusively on the flat skin.
-        if (flatSkin) {
+        // Taskbar alignment is a Frames 11 concept, and dark mode came with Frames 10.
+        if (taskbarRow) {
             caption(personalizeScroll, SettingsTexts.TASKBAR, x, personalizeScroll.contentY(o.taskbarCaptionY()), w);
             toggleButtons(personalizeScroll, x, personalizeScroll.contentY(o.taskbarY()), font, SettingsTexts.CENTER,
                     SettingsTexts.LEFT, d.taskbarCentered(), () -> set("taskbar", "center"),
                     () -> set("taskbar", "left"));
+        }
+        if (appearanceRow) {
             caption(personalizeScroll, SettingsTexts.APPEARANCE, x,
                     personalizeScroll.contentY(o.appearanceCaptionY()), w);
             appearanceDarkButton = toggleButtons(personalizeScroll, x, personalizeScroll.contentY(o.appearanceY()),
@@ -565,9 +706,22 @@ public final class SettingsApp implements IDesktopApp {
             y += 10;
         }
         y += 3;
+        /*
+         * A folder being typed survives the rebuild a fresh snapshot brings: another of this machine's windows can ask
+         * for one at any moment, and a page rebuilt under the player's fingers dropped what they had typed.
+         */
+        final String typed = shareField == null ? "" : shareField.edit();
+        final boolean typing = shareField != null && shareField.isFocused();
         final TextField field = pagePanel.add(new TextField(SHARE_PATH_MAX)
                 .setPlaceholder(GameText.resolve(SettingsTexts.SHARE_HINT)));
         field.setBounds(x, y, w, 13);
+        if (!typed.isEmpty()) {
+            field.set(typed);
+        }
+        if (typing) {
+            root.focus(pagePanel);
+            pagePanel.focus(field);
+        }
         shareField = field;
         y += 17;
         final String readOnly = GameText.resolve(SettingsTexts.SHARE_READ_ONLY);
@@ -726,6 +880,7 @@ public final class SettingsApp implements IDesktopApp {
         final String path = shareField == null ? "" : shareField.edit().strip();
         if (!path.isEmpty()) {
             set("share", path + " " + mode);
+            shareField.set("");
         }
     }
 
@@ -791,8 +946,88 @@ public final class SettingsApp implements IDesktopApp {
     public SettingsApp showPage(final int index) {
         if (index >= 0 && index < NAV.size()) {
             page = index;
+            explicitPage = true;
         }
         return this;
+    }
+
+    /** Whether this window is on its home, the categories Frames 7 and 10 open on. */
+    public boolean onHome() {
+        return page == PAGE_HOME;
+    }
+
+    /** The home's entry that opens page {@code index}, its centre, or the origin when the home lists none. */
+    public int[] homeEntryCenter(final int index) {
+        for (final HomeEntry entry : homeEntries) {
+            if (entry.titlePage() == index) {
+                return new int[] {entry.x() + Math.min(entry.width() / 2, 30), entry.y() + 5};
+            }
+        }
+        return new int[] {0, 0};
+    }
+
+    /** Whether the system this window draws for opens its settings on a home: Frames 7 and 10. */
+    private boolean hasHome() {
+        return skin.form() == OsSkin.Form.AERO || skin.form() == OsSkin.Form.METRO;
+    }
+
+    /**
+     * The home. Frames 7's Control Panel by category: the heading, and the categories two by two, each its link and
+     * its line, the system's own grouping of the machine's eight pages. Frames 10's: its title, and the eight pages
+     * themselves in a grid of four by two.
+     */
+    private void home(final int x, final int top, final int w, final Font font) {
+        if (skin.form() == OsSkin.Form.AERO) {
+            pagePanel.add(new Label(GameText.resolve(SettingsTexts.ADJUST_SETTINGS))).setBounds(x, top, w, 9);
+            final List<HomeEntry> entries = List.of(
+                    link("jsc:settings", SettingsTexts.SYSTEM_AND_SECURITY, SettingsTexts.SYSTEM_LINE, 1, 3),
+                    link("jsc:welcome", SettingsTexts.USER_ACCOUNTS, SettingsTexts.USERS_LINE, 7, 7),
+                    link("jsc:network", SettingsTexts.NETWORK_AND_INTERNET, SettingsTexts.NETWORK_LINE, 2, 2),
+                    link("jsc:paint", SettingsTexts.APPEARANCE_AND_PERSONALIZATION, SettingsTexts.APPEARANCE_LINE,
+                            PAGE_PERSONALIZE, PAGE_PERSONALIZE),
+                    link("jsc:system_monitor", SettingsTexts.HARDWARE_AND_SOUND, SettingsTexts.HARDWARE_LINE,
+                            PAGE_SOUND, PAGE_DISPLAY),
+                    link("jsc:setup", SettingsTexts.PROGRAMS, SettingsTexts.PROGRAMS_LINE, 5, 5),
+                    link("jsc:remote_control", SettingsTexts.EASE_OF_ACCESS, SettingsTexts.EASE_LINE, PAGE_EFFECTS,
+                            PAGE_EFFECTS));
+            // Two columns as Frames 7 lays them out when the window is wide enough for the longest category.
+            final int columns = w >= 2 * HOME_COLUMN_W + 6 ? 2 : 1;
+            final int colW = (w - (columns - 1) * 6) / columns;
+            final int rowH = columns == 2 ? HOME_ROW_H : HOME_ROW_H - 6;
+            for (int i = 0; i < entries.size(); i++) {
+                final HomeEntry entry = entries.get(i);
+                pagePanel.add(entry).setBounds(x + (i % columns) * (colW + 6), top + 14 + (i / columns) * rowH,
+                        colW, rowH - 2);
+                homeEntries.add(entry);
+            }
+            return;
+        }
+        pagePanel.add(new Label(GameText.resolve(SettingsTexts.FRAMES_SETTINGS)).setAlign(Label.Align.CENTER))
+                .setBounds(x, top + 2, w, 9);
+        final List<HomeEntry> entries = List.of(
+                link("jsc:this_pc", SettingsTexts.SYSTEM, SettingsTexts.SYSTEM_ABOUT, 1, 1),
+                link("jsc:remote_control", SettingsTexts.DISPLAY, SettingsTexts.DISPLAY_ABOUT, PAGE_DISPLAY,
+                        PAGE_DISPLAY),
+                link("jsc:generic", SettingsTexts.SOUND, SettingsTexts.SOUND_ABOUT, PAGE_SOUND, PAGE_SOUND),
+                link("jsc:network", SettingsTexts.NETWORK, SettingsTexts.NETWORK_ABOUT, 2, 2),
+                link("jsc:paint", SettingsTexts.PERSONALIZE, SettingsTexts.PERSONALIZE_ABOUT, PAGE_PERSONALIZE,
+                        PAGE_PERSONALIZE),
+                link("jsc:disks", SettingsTexts.STORAGE, SettingsTexts.STORAGE_ABOUT, 3, 3),
+                link("jsc:setup", SettingsTexts.PROGRAMS, SettingsTexts.PROGRAMS_ABOUT, 5, 5),
+                link("jsc:messenger", SettingsTexts.USERS, SettingsTexts.USERS_ABOUT, 7, 7));
+        final int cellW = w / HOME_COLUMNS;
+        for (int i = 0; i < entries.size(); i++) {
+            final HomeEntry entry = entries.get(i);
+            pagePanel.add(entry).setBounds(x + (i % HOME_COLUMNS) * cellW, top + 18 + (i / HOME_COLUMNS) * TILE_H,
+                    cellW - 2, TILE_H - 4);
+            homeEntries.add(entry);
+        }
+    }
+
+    /** One way into a page from the home, its icon by program id. */
+    private HomeEntry link(final String icon, final TextKey title, final TextKey line, final int titlePage,
+                           final int linePage) {
+        return new HomeEntry(ResourceLocation.parse(icon), title, line, titlePage, linePage);
     }
 
     private void programs(final int x, final int top, final int w, final Font font) {

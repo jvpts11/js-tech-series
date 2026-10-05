@@ -152,6 +152,12 @@
     ],
     "subtitle": "subtitles.jsc.os.frames.notify"
   },
+  "os/frames_10/startup": {
+    "sounds": [
+      "jsc:os/frames_10/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_10.startup"
+  },
   "os/frames_11/error": {
     "sounds": [
       "jsc:os/frames_11/error"
@@ -163,6 +169,12 @@
       "jsc:os/frames_11/startup"
     ],
     "subtitle": "subtitles.jsc.os.frames_11.startup"
+  },
+  "os/frames_7/startup": {
+    "sounds": [
+      "jsc:os/frames_7/startup"
+    ],
+    "subtitle": "subtitles.jsc.os.frames_7.startup"
   },
   "os/frames_95/error": {
     "sounds": [

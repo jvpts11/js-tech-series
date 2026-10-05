@@ -131,7 +131,7 @@ final class ScreenfetchLogos {
             "${c1}`/${c2}ohdmmddhys+++/:${c1}.`",
             "${c1}  `-//////:--."};
 
-    /* The waving four-colour flag of Frames 95 and XP. */
+    /* The waving four-colour flag of Frames 95, XP and 7. */
     private static final String[] FRAMES_FLAG = {
             "${c1}        ,.=:!!t3Z3z.,",
             "${c1}       :tt:::tt333EE3",
@@ -150,7 +150,7 @@ final class ScreenfetchLogos {
             "${c3}             `${c4} :EEEEtttt::::z7",
             "${c4}                 \"VEzjt:;;z>*`"};
 
-    /* Frames 11's four flat panes. */
+    /* The four flat panes of Frames 10 and 11. */
     private static final String[] FRAMES_PANES = {
             "${c1}################  ################",
             "${c1}################  ################",
@@ -194,16 +194,25 @@ final class ScreenfetchLogos {
             "  |  JSC   |  ",
             "  '--------'  "};
 
-    private static final Map<String, Logo> BY_SYSTEM = Map.of(
-            "ubuntu", Logo.drawn(UBUNTU, CliStyle.RED, CliStyle.BRIGHT, CliStyle.YELLOW),
-            "debian", Logo.drawn(DEBIAN, CliStyle.RED, CliStyle.BRIGHT, CliStyle.YELLOW),
-            "fedora", Logo.drawn(FEDORA, CliStyle.BLUE, CliStyle.BRIGHT, CliStyle.RED),
-            "arch", Logo.drawn(ARCH, CliStyle.CYAN, CliStyle.CYAN, CliStyle.BRIGHT, CliStyle.RED),
-            "gentoo", Logo.drawn(GENTOO, CliStyle.MAGENTA, CliStyle.BRIGHT),
-            "freebsd", Logo.plain(FREEBSD, CliStyle.RED),
-            "frames_95", Logo.drawn(FRAMES_FLAG, CliStyle.RED, CliStyle.GREEN, CliStyle.BLUE, CliStyle.YELLOW),
-            "frames_xp", Logo.drawn(FRAMES_FLAG, CliStyle.RED, CliStyle.GREEN, CliStyle.BLUE, CliStyle.YELLOW),
-            "frames_11", Logo.drawn(FRAMES_PANES, CliStyle.CYAN, CliStyle.BRIGHT));
+    /*
+     * Frames 7 waves the same flag in its own four colours, blue, teal, green and amber, as its mark does; Frames 10
+     * stands its four panes in one blue.
+     */
+    private static final Map<String, Logo> BY_SYSTEM = Map.ofEntries(
+            Map.entry("ubuntu", Logo.drawn(UBUNTU, CliStyle.RED, CliStyle.BRIGHT, CliStyle.YELLOW)),
+            Map.entry("debian", Logo.drawn(DEBIAN, CliStyle.RED, CliStyle.BRIGHT, CliStyle.YELLOW)),
+            Map.entry("fedora", Logo.drawn(FEDORA, CliStyle.BLUE, CliStyle.BRIGHT, CliStyle.RED)),
+            Map.entry("arch", Logo.drawn(ARCH, CliStyle.CYAN, CliStyle.CYAN, CliStyle.BRIGHT, CliStyle.RED)),
+            Map.entry("gentoo", Logo.drawn(GENTOO, CliStyle.MAGENTA, CliStyle.BRIGHT)),
+            Map.entry("freebsd", Logo.plain(FREEBSD, CliStyle.RED)),
+            Map.entry("frames_95", Logo.drawn(FRAMES_FLAG, CliStyle.RED, CliStyle.GREEN, CliStyle.BLUE,
+                    CliStyle.YELLOW)),
+            Map.entry("frames_xp", Logo.drawn(FRAMES_FLAG, CliStyle.RED, CliStyle.GREEN, CliStyle.BLUE,
+                    CliStyle.YELLOW)),
+            Map.entry("frames_7", Logo.drawn(FRAMES_FLAG, CliStyle.BLUE, CliStyle.CYAN, CliStyle.GREEN,
+                    CliStyle.YELLOW)),
+            Map.entry("frames_10", Logo.drawn(FRAMES_PANES, CliStyle.BLUE, CliStyle.BRIGHT)),
+            Map.entry("frames_11", Logo.drawn(FRAMES_PANES, CliStyle.CYAN, CliStyle.BRIGHT)));
 
     private static final Logo FALLBACK = Logo.plain(DEFAULT, CliStyle.ACCENT);
 

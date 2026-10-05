@@ -1,0 +1,18 @@
+{
+  "band": "#FFF0F0F0",
+  "button": "#FFE1E1E1",
+  "buttonHover": "#FFE5F1FB",
+  "buttonPressed": "#FFCCE4F7",
+  "buttonRim": "#FFADADAD",
+  "closeGlyph": "#FFFFFFFF",
+  "closeHover": "#FFE81123",
+  "closePressed": "#FFF1707A",
+  "edge": "#FFDADBDC",
+  "fieldRim": "#FF7A7A7A",
+  "glyph": "#FF000000",
+  "hover": "#FFE5E5E5",
+  "panel": "#FFFFFFFF",
+  "pressed": "#FFCCCCCC",
+  "thumb": "#FFC2C2C2",
+  "title": "#FFFFFFFF"
+}

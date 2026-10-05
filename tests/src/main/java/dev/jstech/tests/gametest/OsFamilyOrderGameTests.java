@@ -49,9 +49,22 @@ public final class OsFamilyOrderGameTests {
     public static void familyOrder_putsTheDesktopSystemsInOrder(final GameTestHelper helper) {
         final int ninetyFive = rankOf("frames_95");
         final int xp = rankOf("frames_xp");
+        final int seven = rankOf("frames_7");
+        final int ten = rankOf("frames_10");
         final int eleven = rankOf("frames_11");
-        helper.assertTrue(ninetyFive > 0 && ninetyFive < xp && xp < eleven,
-                "the desktop systems read as " + ninetyFive + ", " + xp + " and " + eleven);
+        helper.assertTrue(ninetyFive > 0 && ninetyFive < xp && xp < seven && seven < ten && ten < eleven,
+                "the desktop systems read as " + ninetyFive + ", " + xp + ", " + seven + ", " + ten + " and "
+                        + eleven);
+        helper.succeed();
+    }
+
+    /* Frames 7 and 10 sit in the middle of the family, and the names of their places are their own. */
+    @GameTest(template = ARENA)
+    public static void systemOfRank_namesFrames7And10AtTheirPlaces(final GameTestHelper helper) {
+        helper.assertTrue("Frames 7".equals(OsRegistry.systemOfRank(rankOf("frames_7")).english()),
+                "the third desktop system read as " + OsRegistry.systemOfRank(rankOf("frames_7")));
+        helper.assertTrue("Frames 10".equals(OsRegistry.systemOfRank(rankOf("frames_10")).english()),
+                "the fourth desktop system read as " + OsRegistry.systemOfRank(rankOf("frames_10")));
         helper.succeed();
     }
 

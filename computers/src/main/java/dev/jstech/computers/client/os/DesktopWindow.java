@@ -561,7 +561,7 @@ public final class DesktopWindow {
         if (!maximized) {
             skin.windowShadow(g, wx, wy, ww, wh);
         }
-        skin.windowFrame(g, wx, wy, ww, wh);
+        skin.windowFrame(g, wx, wy, ww, wh, TITLE_H, CONTENT_INSET);
         skin.titleBar(g, wx, wy, ww, TITLE_H, focused, closeX() - wx + BTN + 2,
                 dialog() ? 3 : wx + ww - minX() + 2);
         /*
@@ -587,6 +587,9 @@ public final class DesktopWindow {
         final int titleX = skin.titleCentered()
                 ? Math.max(titleFloor, Math.min(wx + (ww - font.width(title)) / 2, minX() - font.width(title) - 4))
                 : textLeft;
+        if (focused) {
+            skin.titleGlow(g, titleX, wy + 3, font.width(title));
+        }
         Draw.text(g, font, title, titleX, wy + 3, focused ? skin.titleText() : PALETTE.get().unfocusedTitle());
         /*
          * The focused window also carries an accent outline, so "which one am I typing into" reads

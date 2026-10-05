@@ -44,7 +44,14 @@ public final class VolumePopupLayout {
         /** An applet with the volume written out, a mute switch and the outputs listed: Cinnamon. */
         APPLET,
         /** The classic popup with a button that opens the mixer: the period desktops of the Legacy era. */
-        PERIOD
+        PERIOD,
+        /**
+         * A glass popup: the device button over an upright slider, its figure, a mute button and the Mixer link, the
+         * outputs listed beside it when the device button is pressed: Frames 7.
+         */
+        GLASS,
+        /** A dark flyout: the device row that opens the outputs under it, and a slider lying across: Frames 10. */
+        FLYOUT
     }
 
     /** A rectangle relative to the control's corner; one of no size stands for something the look does not have. */
@@ -131,6 +138,8 @@ public final class VolumePopupLayout {
             case PLASMA -> plasma(labels, width);
             case SYSTEM_MENU -> systemMenu(labels, width, expanded);
             case APPLET -> applet(labels, width);
+            case GLASS -> glass(labels, width, expanded);
+            case FLYOUT -> flyout(labels, width, expanded);
         };
     }
 
@@ -159,6 +168,21 @@ public final class VolumePopupLayout {
             widest = Math.max(widest, width.applyAsInt(output));
         }
         return widest;
+    }
+
+    /** The widest of the three outputs alone, for a look that lists them on one line each. */
+    private static int widestName(final Labels labels, final ToIntFunction<String> width) {
+        int widest = 0;
+        for (final String output : labels.outputs()) {
+            widest = Math.max(widest, width.applyAsInt(output));
+        }
+        return widest;
+    }
+
+    /* The three output rows from {@code top}, {@code x} in and {@code w} wide, one line each. */
+    private static List<Rect> singleRows(final int x, final int top, final int w) {
+        return List.of(new Rect(x, top, w, ROW), new Rect(x, top + ROW + 1, w, ROW),
+                new Rect(x, top + 2 * (ROW + 1), w, ROW));
     }
 
     /* The three output rows from {@code top}, {@code x} in and {@code w} wide, the speakers' row two lines tall. */
@@ -229,6 +253,41 @@ public final class VolumePopupLayout {
                 new Rect(9, wellTop + 3, w - 18, 8), new Rect(4, wellTop, w - 8, 14 + OUTPUTS_TALL + 1),
                 outputRows(4, rowsTop, w - 8), new Rect(9, rule + 5, width.applyAsInt(labels.footer()), 9),
                 List.of(rule));
+    }
+
+    /*
+     * Frames 7's: a column with the device button at its head, the slider standing under it, its figure, the mute
+     * button and the Mixer link; pressed, the device button lists the outputs to the column's left, so the column
+     * keeps its place against the edge.
+     */
+    private static Geometry glass(final Labels labels, final ToIntFunction<String> width, final boolean expanded) {
+        final int names = widestName(labels, width);
+        final int footerW = width.applyAsInt(labels.footer());
+        final int colW = Math.max(Math.max(64, names + 26), footerW + 10);
+        final int listW = expanded ? names + 22 : 0;
+        final int x0 = listW;
+        final Rect device = new Rect(x0 + 5, 5, colW - 10, 18);
+        final Rect track = new Rect(x0 + colW / 2 - 2, 30, 5, 64);
+        final Rect percent = new Rect(x0 + 5, 99, colW - 10, 8);
+        final Rect mute = new Rect(x0 + colW / 2 - 8, 110, 16, 13);
+        final Rect footer = new Rect(x0 + (colW - footerW) / 2, 128, footerW, 9);
+        final List<Rect> rows = expanded ? singleRows(2, 5, listW - 4) : List.of();
+        return new Geometry(Look.GLASS, listW + colW, 142, Rect.NONE, Rect.NONE, track, true, percent, mute, device,
+                Rect.NONE, new Rect(x0, 0, colW, 142), rows, footer, List.of());
+    }
+
+    /*
+     * Frames 10's: the device row across the top, the outputs opening under it, and the slider row with the speaker
+     * (which mutes) at its left and the figure at its right.
+     */
+    private static Geometry flyout(final Labels labels, final ToIntFunction<String> width, final boolean expanded) {
+        final int w = Math.max(170, Math.max(widestName(labels, width) + 30, widestOutput(labels, width) + 18));
+        final Rect device = new Rect(6, 6, w - 12, 14);
+        final List<Rect> rows = expanded ? singleRows(6, 22, w - 12) : List.of();
+        final int sliderY = expanded ? 22 + 3 * (ROW + 1) + 6 : 28;
+        final Rect icon = new Rect(9, sliderY, 9, 9);
+        return new Geometry(Look.FLYOUT, w, sliderY + 19, Rect.NONE, icon, new Rect(24, sliderY, w - 60, 8), false,
+                new Rect(w - 30, sliderY, 22, 8), icon, device, Rect.NONE, Rect.NONE, rows, Rect.NONE, List.of());
     }
 
     private static Geometry applet(final Labels labels, final ToIntFunction<String> width) {

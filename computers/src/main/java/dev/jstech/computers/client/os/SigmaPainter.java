@@ -301,7 +301,7 @@ final class SigmaPainter {
             final int wide = font.width(widget.text());
             g.fill(rect.x() + 5, rect.y(), rect.x() + 9 + wide, rect.y() + UiLayout.CAPTION_H, skin.windowBg());
             Draw.text(g, font, widget.text(), rect.x() + 7, rect.y() + 1,
-                    skin.form() == OsSkin.Form.LUNA ? skin.accent() : skin.text());
+                    skin.glossForm() ? skin.accent() : skin.text());
         }
     }
 
@@ -347,7 +347,7 @@ final class SigmaPainter {
         int at = rect.x() + 2;
         for (int c = 0; c < widths.length; c++) {
             final String header = c < widget.details().size() ? widget.details().get(c) : "";
-            if (skin.form() == OsSkin.Form.FLAT) {
+            if (skin.flatForm()) {
                 Draw.text(g, font, font.plainSubstrByWidth(header, widths[c] - 6), at + 3, rect.y() + 4, skin.dim());
             } else {
                 skin.button(g, font, at, rect.y() + 1, widths[c], HEADER_H, "", false, false, false);
@@ -424,7 +424,7 @@ final class SigmaPainter {
             final int textX = x + SigmaGlyphs.MARK + 3;
             if (picked) {
                 g.fill(textX - 1, top, textX + font.width(said) + 2, top + ROW_H - 1,
-                        this.ui.focused == widget.id() || skin.form() != OsSkin.Form.FLAT ? skin.listSelect()
+                        this.ui.focused == widget.id() || !skin.flatForm() ? skin.listSelect()
                                 : skin.listHover());
             }
             Draw.text(g, font, said, textX, top + 2, skin.listRowText(picked));
@@ -441,7 +441,7 @@ final class SigmaPainter {
                     && this.ui.popupOwner == widget.id() && this.ui.popupMenu.equals(title.name());
             final boolean over = mouseX >= title.x() && mouseX < title.x() + title.w()
                     && mouseY >= rect.y() && mouseY < rect.y() + rect.h();
-            if (open || over && skin.form() == OsSkin.Form.FLAT) {
+            if (open || over && skin.flatForm()) {
                 g.fill(title.x(), rect.y(), title.x() + title.w(), rect.y() + rect.h(),
                         open ? skin.listSelect() : skin.listHover());
             }
@@ -457,7 +457,7 @@ final class SigmaPainter {
         for (int i = widget.rows().size() - 1; i >= 0; i--) {
             final String section = widget.rows().get(i);
             final int wide = font.width(section) + 10;
-            if (skin.form() != OsSkin.Form.FLAT) {
+            if (!skin.flatForm()) {
                 skin.field(g, right - wide, rect.y() + 1, wide, rect.h() - 2, false);
             }
             Draw.text(g, font, section, right - wide + 5, middle, skin.text());

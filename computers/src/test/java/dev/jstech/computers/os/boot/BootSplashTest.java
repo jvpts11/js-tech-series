@@ -20,7 +20,9 @@ class BootSplashTest {
     void of_givesEachFramesEditionItsOwnPicture() {
         assertSame(BootSplash.FRAMES_95, BootSplash.of(Platform.FRAMES, 1));
         assertSame(BootSplash.FRAMES_XP, BootSplash.of(Platform.FRAMES, 2));
-        assertSame(BootSplash.FRAMES_11, BootSplash.of(Platform.FRAMES, 3));
+        assertSame(BootSplash.FRAMES_7, BootSplash.of(Platform.FRAMES, 3));
+        assertSame(BootSplash.FRAMES_10, BootSplash.of(Platform.FRAMES, 4));
+        assertSame(BootSplash.FRAMES_11, BootSplash.of(Platform.FRAMES, 5));
     }
 
     /** Everything else reads out its own start instead, which is what those systems really did. */
@@ -37,12 +39,12 @@ class BootSplashTest {
 
     /**
      * A family the mod does not ship gets the plain one rather than a picture that is not its own. There is no
-     * fourth edition, and an addon that says it is the fourth of the family is not one of these three.
+     * sixth edition, and an addon that says it is the sixth of the family is not one of these five.
      */
     @Test
     void of_aPlaceNoEditionHolds_isThePlainOne() {
         assertSame(BootSplash.PLAIN, BootSplash.of(Platform.FRAMES, 0));
-        assertSame(BootSplash.PLAIN, BootSplash.of(Platform.FRAMES, 4));
+        assertSame(BootSplash.PLAIN, BootSplash.of(Platform.FRAMES, 6));
         assertSame(BootSplash.PLAIN, BootSplash.of(Platform.FRAMES, -1));
     }
 
@@ -68,6 +70,8 @@ class BootSplashTest {
         assertEquals("plain", BootSplash.PLAIN.serializedName());
         assertEquals("frames_95", BootSplash.FRAMES_95.serializedName());
         assertEquals("frames_xp", BootSplash.FRAMES_XP.serializedName());
+        assertEquals("frames_7", BootSplash.FRAMES_7.serializedName());
+        assertEquals("frames_10", BootSplash.FRAMES_10.serializedName());
         assertEquals("frames_11", BootSplash.FRAMES_11.serializedName());
     }
 }

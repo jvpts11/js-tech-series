@@ -126,6 +126,22 @@ public enum SettingKey {
         return !ComputerSettings.normalizeId(v).isEmpty();
     }),
 
+    /**
+     * {@code <program> <size> <place>}: puts the program's tile on Frames 10's Start at that place in the order and
+     * that size ({@code s}, {@code m} or {@code w}), pinning, moving or resizing it.
+     */
+    TILE("tile", (s, v) -> {
+        final String[] parts = v.split("\\s+");
+        final StartTiles.Size size = parts.length == 3 ? StartTiles.Size.byLetter(parts[1]) : null;
+        final Integer place = parts.length == 3 ? parseInt(parts[2]) : null;
+        return size != null && place != null && s.startTiles().place(parts[0], size, place);
+    }),
+
+    UNTILE("untile", (s, v) -> {
+        s.startTiles().remove(v);
+        return !ComputerSettings.normalizeId(v).isEmpty();
+    }),
+
     /** Starring what is starred already asks for the state it wants, and either way it is starred. */
     FAVOURITE("favourite", (s, v) -> !v.isEmpty() && (s.isFavourite(v) || s.favourite(v))),
 

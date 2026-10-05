@@ -102,7 +102,7 @@ public final class ComputersServerConfig {
                     "Such kinds come only from other mods, which say so when they add them. Off, a program making "
                             + "one is stopped and told; on, each player still sees them only if their own settings "
                             + "turn them on as well.")
-            .named("Components reaching outside the game");
+            .named("Outside components");
 
     public static final ConfigFile FILE = ConfigFile.builder("jscomputers-server", ConfigSide.SERVER,
                     ConfigFormats.TOML)

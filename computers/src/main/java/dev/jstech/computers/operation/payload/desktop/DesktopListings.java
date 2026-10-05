@@ -67,7 +67,7 @@ final class DesktopListings {
         if (computer == null) {
             return new DesktopFilesPayload(List.of(), "", "", "", List.of(), List.of(), List.of(),
                     new DesktopFilesPayload.Prefs(0, 100, false, true, false, 0, DesktopEffects.ALL_ON), community,
-                    List.of(), Map.of(),
+                    List.of(), List.of(), Map.of(),
                     false, Map.of(), (float) ProgramLoading.REFERENCE_MB_PER_SECOND);
         }
         final ComputerConsoleState console = computer.console();
@@ -81,7 +81,8 @@ final class DesktopListings {
                 new DesktopFilesPayload.Prefs(settings.accent(), settings.brightness(), settings.clock12h(),
                         settings.taskbarCentered(), settings.darkMode(), settings.guiScale(),
                         new DesktopEffects(List.copyOf(settings.effectsOff()), settings.effectSpeed())),
-                community, settings.pinned(), settings.defaultApps(), trashFull, versions(console),
+                community, settings.pinned(), settings.startTiles().encoded(), settings.defaultApps(), trashFull,
+                versions(console),
                 (float) loadRate(computer, disk));
     }
 

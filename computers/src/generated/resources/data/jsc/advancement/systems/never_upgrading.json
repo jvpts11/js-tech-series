@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/the_goat",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:frames_7"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.never_upgrading.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:dvd_rom"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.never_upgrading.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

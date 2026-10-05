@@ -139,6 +139,17 @@ final class InstallerScreenTexts {
     static final TextKey FRAME_COMPLETE_IN = TextKey.of("jsc.installer.frame.complete_in", "Setup will complete in");
     static final TextKey FRAME_APPROXIMATELY = TextKey.of("jsc.installer.frame.approximately", "approximately:");
     static final TextKey FRAME_SECONDS = TextKey.of("jsc.installer.frame.seconds", "%s seconds");
+    /* The glass and the white setup windows of the later Frames editions. */
+    static final TextKey FRAME_INSTALL_NOW = TextKey.of("jsc.installer.frame.install_now", "Install now");
+    static final TextKey FRAME_SET_UP = TextKey.of("jsc.installer.frame.set_up", "Set Up %s");
+    static final TextKey FRAME_PHASE_COLLECTING = TextKey.of("jsc.installer.frame.phase_collecting",
+            "1  Collecting information");
+    static final TextKey FRAME_PHASE_INSTALLING = TextKey.of("jsc.installer.frame.phase_installing",
+            "2  Installing %s");
+    static final TextKey FRAME_RESTARTS_SEVERAL = TextKey.of("jsc.installer.frame.restarts_several",
+            "Your computer will restart several times. This might take a while.");
+    static final TextKey FRAME_STATUS = TextKey.of("jsc.installer.frame.status", "Status");
+    static final TextKey FRAME_COPYRIGHT = TextKey.of("jsc.installer.frame.copyright", "Copyright (c) %s %s");
 
     // The firmware's own copy of a system that has no installer of its own.
     static final TextKey COPY_PREPARING = TextKey.of("jsc.installer.copy.preparing", "preparing the disk");

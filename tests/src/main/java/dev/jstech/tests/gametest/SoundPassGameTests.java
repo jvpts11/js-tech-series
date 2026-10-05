@@ -109,6 +109,30 @@ public final class SoundPassGameTests {
         helper.succeed();
     }
 
+    /*
+     * Frames 7 and 10 start with their own chimes and go down with the same ones; the rest is the family's, with the
+     * error each one shared: 7 kept XP's, 10 has 11's.
+     */
+    @GameTest(template = ARENA)
+    public static void systemCues_giveFrames7And10TheirOwnChimesAndTheFamilysRest(final GameTestHelper helper) {
+        final SoundContext seven = on("jsc:frames_7", "jsc:frames_7", HardwareEra.TRANSITION);
+        final SoundContext ten = on("jsc:frames_10", "jsc:frames_10", HardwareEra.STANDARD);
+        picks(helper, ComputingSounds.SYSTEM_STARTUP, seven, ComputingSounds.FRAMES_7_STARTUP);
+        picks(helper, ComputingSounds.SYSTEM_SHUTDOWN, seven, ComputingSounds.FRAMES_7_STARTUP);
+        picks(helper, ComputingSounds.SYSTEM_STARTUP, ten, ComputingSounds.FRAMES_10_STARTUP);
+        picks(helper, ComputingSounds.SYSTEM_SHUTDOWN, ten, ComputingSounds.FRAMES_10_STARTUP);
+        picks(helper, ComputingSounds.SYSTEM_ERROR, seven, ComputingSounds.FRAMES_XP_ERROR);
+        picks(helper, ComputingSounds.SYSTEM_ERROR, ten, ComputingSounds.FRAMES_11_ERROR);
+        for (final SoundContext context : List.of(seven, ten)) {
+            picks(helper, ComputingSounds.SYSTEM_NOTIFY, context, ComputingSounds.FRAMES_NOTIFY);
+            picks(helper, ComputingSounds.SYSTEM_BEEP, context, ComputingSounds.FRAMES_BEEP);
+            picks(helper, ComputingSounds.SYSTEM_DEVICE_CONNECT, context, ComputingSounds.FRAMES_DEVICE_CONNECT);
+            picks(helper, ComputingSounds.SYSTEM_DEVICE_DISCONNECT, context,
+                    ComputingSounds.FRAMES_DEVICE_DISCONNECT);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void machineSoundPayload_carriesOnlyWhatAScreenMayRaise(final GameTestHelper helper) {
         final BlockPos host = new BlockPos(1, 2, 3);

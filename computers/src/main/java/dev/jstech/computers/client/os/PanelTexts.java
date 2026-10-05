@@ -25,6 +25,8 @@ final class PanelTexts {
     static final TextKey APPS = TextKey.of("jsc.panel.apps", "Apps");
     static final TextKey MENU = TextKey.of("jsc.panel.menu", "Menu");
     static final TextKey ACTIVITIES = TextKey.of("jsc.panel.activities", "Activities");
+    // The day Frames 7 and 10 write under the time on their clock.
+    static final TextKey DAY = TextKey.of("jsc.panel.day", "Day %s");
 
     private PanelTexts() {
     }

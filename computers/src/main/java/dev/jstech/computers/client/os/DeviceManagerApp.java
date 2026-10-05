@@ -772,7 +772,8 @@ public final class DeviceManagerApp implements IDesktopApp {
         }
         return switch (desktop.panelStyle()) {
             case FRAMES_95 -> Form.CLASSIC;
-            case FRAMES_11 -> Form.MODERN;
+            // Frames 10's Device Manager was already the flat one 11 kept; 7's was XP's console in its glass.
+            case FRAMES_10, FRAMES_11 -> Form.MODERN;
             default -> Form.CONSOLE;
         };
     }

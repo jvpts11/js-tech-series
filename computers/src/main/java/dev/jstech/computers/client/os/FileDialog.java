@@ -353,11 +353,14 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             out.add(new Place(GameText.resolve(FileDialogTexts.DEVICES_HEADING), FileIcons.Kind.HOME, "", true));
             out.add(new Place(GameText.resolve(FileDialogTexts.ROOT), FileIcons.Kind.BIN, "", false));
         } else {
-            out.add(new Place(GameText.resolve(FileDialogTexts.QUICK_ACCESS), FileIcons.Kind.HOME, "", true));
+            final boolean seven = this.skin.form() == OsSkin.Form.AERO;
+            out.add(new Place(GameText.resolve(seven ? FileDialogTexts.FAVORITES : FileDialogTexts.QUICK_ACCESS),
+                    FileIcons.Kind.HOME, "", true));
             out.add(new Place(GameText.resolve(FileDialogTexts.DESKTOP), FileIcons.Kind.FOLDER,
                     SystemLayout.DESKTOP_DIR, false));
             out.add(new Place(CodeWorkspace.HOME, FileIcons.Kind.FOLDER, CodeWorkspace.HOME, false));
-            out.add(new Place(GameText.resolve(FileDialogTexts.THIS_PC_HEADING), FileIcons.Kind.HOME, "", true));
+            out.add(new Place(GameText.resolve(seven ? FileDialogTexts.COMPUTER_HEADING
+                    : FileDialogTexts.THIS_PC_HEADING), FileIcons.Kind.HOME, "", true));
             out.add(new Place(GameText.resolve(FileDialogTexts.LOCAL_DISK), FileIcons.Kind.BIN, "", false));
         }
         for (final DiskFilesPayload.WireVolume volume : this.volumes) {
@@ -746,6 +749,17 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         this.address.setBounds(x + 40, y, w - 40, 11);
         this.addressEdit.setBounds(x + 40, y, w - 40, 11);
         y += 14;
+        final boolean makes = this.mode != Mode.OPEN_FILE;
+        /*
+         * Frames 7 and 10 keep New folder on a command bar of its own under the address, the way their explorer
+         * does; the other desktops keep it beside the kind of file.
+         */
+        final boolean commandBar = makes && (this.skin.form() == OsSkin.Form.AERO
+                || this.skin.form() == OsSkin.Form.METRO);
+        if (commandBar) {
+            this.newFolder.setBounds(x, y, 56, 11);
+            y += 13;
+        }
         final int bottom = cy + ch - 1;
         final int listH = bottom - y - 42;
         this.places.setBounds(x, y, PLACES_W, listH);
@@ -767,12 +781,13 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
          * The kind takes the whole second row: its label is the longest thing here. A window that can
          * make a folder keeps that button at the row's right end instead.
          */
-        final boolean makes = this.mode != Mode.OPEN_FILE;
         this.kindLabel.setBounds(x, y + 2, LABEL_W, 9);
         this.kindLabel.setVisible(this.mode != Mode.OPEN_FOLDER);
-        this.kind.setBounds(x + LABEL_W, y, w - LABEL_W - (makes ? 56 : 0), 11);
+        this.kind.setBounds(x + LABEL_W, y, w - LABEL_W - (makes && !commandBar ? 56 : 0), 11);
         this.kind.setVisible(this.mode != Mode.OPEN_FOLDER);
-        this.newFolder.setBounds(this.mode == Mode.OPEN_FOLDER ? x + LABEL_W : right - 52, y, 52, 11);
+        if (!commandBar) {
+            this.newFolder.setBounds(this.mode == Mode.OPEN_FOLDER ? x + LABEL_W : right - 52, y, 52, 11);
+        }
         this.newFolder.setVisible(makes);
         y += 13;
         this.status.setBounds(x, y, w, 9);

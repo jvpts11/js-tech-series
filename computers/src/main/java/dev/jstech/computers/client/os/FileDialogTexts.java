@@ -26,6 +26,9 @@ final class FileDialogTexts {
     static final TextKey ROOT = TextKey.of("jsc.file_dialog.root", "Root");
     static final TextKey QUICK_ACCESS = TextKey.of("jsc.file_dialog.quick_access", "QUICK ACCESS");
     static final TextKey THIS_PC_HEADING = TextKey.of("jsc.file_dialog.this_pc_heading", "THIS PC");
+    // Frames 7 calls the same two headings by its own names.
+    static final TextKey FAVORITES = TextKey.of("jsc.file_dialog.favorites", "FAVORITES");
+    static final TextKey COMPUTER_HEADING = TextKey.of("jsc.file_dialog.computer_heading", "COMPUTER");
     static final TextKey LOCAL_DISK = TextKey.of("jsc.file_dialog.local_disk", "Local Disk (C:)");
     static final TextKey ON_DRIVE = TextKey.of("jsc.file_dialog.on_drive", "%s (%s)");
     static final TextKey DEVICES = TextKey.of("jsc.file_dialog.devices", "Devices");

@@ -37,6 +37,9 @@ final class StartMenus {
     private final FramesLaunchers frames;
     /** The Linux desktops' own ways of opening a program: Kickoff, the Mint menu, the Activities overview. */
     private final LinuxLaunchers linux;
+    /** Frames 7's two columns in glass, and Frames 10's list and tiles. */
+    private final AeroStartMenu aero;
+    private final MetroStartMenu metro;
     private boolean open;
     /** What has been typed into the launcher's search box; while it is not empty it filters what is listed. */
     private final StringBuilder search = new StringBuilder();
@@ -62,6 +65,38 @@ final class StartMenus {
         this.desktop = desktop;
         this.frames = new FramesLaunchers(desktop);
         this.linux = new LinuxLaunchers(desktop);
+        this.aero = new AeroStartMenu(desktop);
+        this.metro = new MetroStartMenu(desktop);
+    }
+
+    /** Frames 10's Start, whose tiles the machine keeps. */
+    MetroStartMenu metro() {
+        return metro;
+    }
+
+    /** Frames 7's Start. */
+    AeroStartMenu aero() {
+        return aero;
+    }
+
+    /** Takes the tiles of Frames 10's Start, as the machine keeps them. */
+    void takeTiles(final List<String> encoded) {
+        metro.takeTiles(encoded);
+    }
+
+    /** The cursor moved with the button down over an open launcher: Frames 10's tiles are dragged so. */
+    boolean dragged(final double mx, final double my) {
+        return open && desktop.panelStyle() == PanelStyle.FRAMES_10 && metro.dragged(mx, my);
+    }
+
+    /** The button came up over an open launcher: a tile pressed starts its program, a dragged one is placed. */
+    boolean released(final double mx, final double my) {
+        return open && desktop.panelStyle() == PanelStyle.FRAMES_10 && metro.released(mx, my);
+    }
+
+    /** The wheel over an open launcher's list. */
+    boolean scrolled(final double mx, final double my, final double dy) {
+        return open && desktop.panelStyle() == PanelStyle.FRAMES_10 && metro.scrolled(mx, my, dy);
     }
 
     boolean isOpen() {
@@ -80,6 +115,7 @@ final class StartMenus {
         } else {
             open = true;
             search.setLength(0);
+            metro.reset();
             motion = desktop.motion().start(MotionKinds.MENU_SHOW);
         }
     }
@@ -118,6 +154,8 @@ final class StartMenus {
         }
         return switch (desktop.panelStyle()) {
             case FRAMES_XP -> FramesLaunchers.XP_MENU_W;
+            case FRAMES_7 -> AeroStartMenu.MENU_W;
+            case FRAMES_10 -> MetroStartMenu.MENU_W;
             case FRAMES_11 -> FramesLaunchers.W11_MENU_W;
             case KDE -> LinuxLaunchers.KDE_MENU_W;
             case GNOME -> desktop.view().width();
@@ -142,6 +180,8 @@ final class StartMenus {
             // The overview covers the whole desktop below the top bar.
             case GNOME -> desktop.view().height() - DesktopScreen.TASKBAR_H;
             case CINNAMON -> LinuxLaunchers.CIN_HEADER_H + Math.max(5, count) * LinuxLaunchers.CIN_ROW_H + 10;
+            case FRAMES_7 -> aero.height();
+            case FRAMES_10 -> metro.height();
             // Two columns: the taller of the programs (left) and the places (right) sets the body's height.
             case FRAMES_XP -> FramesLaunchers.XP_HEADER_H + FramesLaunchers.XP_ORANGE_H
                     + Math.max(xpLeftColumnHeight(), xpRight().size() * FramesLaunchers.XP_ROW_H)
@@ -169,6 +209,10 @@ final class StartMenus {
         }
         if (view.panelOnTop()) {
             return 0; // the Activities overview spans the desktop
+        }
+        // Frames 7's and 10's menus stand flush in the corner, over their Start buttons.
+        if (desktop.panelStyle() == PanelStyle.FRAMES_7 || desktop.panelStyle() == PanelStyle.FRAMES_10) {
+            return 0;
         }
         return 4;
     }
@@ -307,6 +351,8 @@ final class StartMenus {
         }
         switch (desktop.panelStyle()) {
             case FRAMES_XP -> frames.renderXp(g, tbY);
+            case FRAMES_7 -> aero.render(g, tbY);
+            case FRAMES_10 -> metro.render(g, tbY);
             case FRAMES_11 -> frames.render11(g, tbY);
             case KDE -> linux.renderKde(g, tbY);
             case GNOME -> linux.renderGnomeOverview(g);
@@ -379,6 +425,10 @@ final class StartMenus {
      */
     int itemX(final int index) {
         final List<Launcher> all = desktop.launcherList();
+        final int[] later = laterPoint(index);
+        if (later != null) {
+            return later[0];
+        }
         if (desktop.panelStyle() == PanelStyle.FRAMES_XP && index >= 0 && index < all.size()) {
             final boolean place = XP_PLACES.contains(all.get(index).programId());
             final int colX = left() + (place ? FramesLaunchers.XP_LEFT_W + 3 : 3);
@@ -393,6 +443,10 @@ final class StartMenus {
     int itemY(final int index) {
         final int tbY = desktop.view().height() - DesktopScreen.TASKBAR_H;
         final List<Launcher> all = desktop.launcherList();
+        final int[] later = laterPoint(index);
+        if (later != null) {
+            return later[1];
+        }
         if (desktop.panelStyle() == PanelStyle.FRAMES_XP && index >= 0 && index < all.size()) {
             final Launcher target = all.get(index);
             final boolean place = XP_PLACES.contains(target.programId());
@@ -409,8 +463,29 @@ final class StartMenus {
     /** Whether the launcher has a live search box: Frames 11's Start and GNOME's Activities overview do. */
     private boolean searchable() {
         // A period launcher is a plain list with no search box, even on the GNOME whose modern shell has one.
-        return desktop.panelStyle() == PanelStyle.FRAMES_11
-                || (desktop.panelStyle() == PanelStyle.GNOME && !desktop.periodPanel());
+        final PanelStyle style = desktop.panelStyle();
+        return style == PanelStyle.FRAMES_11 || style == PanelStyle.FRAMES_7 || style == PanelStyle.FRAMES_10
+                || (style == PanelStyle.GNOME && !desktop.periodPanel());
+    }
+
+    /**
+     * Where Frames 7's and Frames 10's menus list entry {@code index}: the row of its column on 7; on 10 its row in the
+     * list, or its tile when the list has scrolled it away. Null on the other menus, or for no such entry.
+     */
+    private int[] laterPoint(final int index) {
+        final List<Launcher> all = desktop.launcherList();
+        if (index < 0 || index >= all.size()) {
+            return null;
+        }
+        final int tbY = desktop.view().height() - DesktopScreen.TASKBAR_H;
+        return switch (desktop.panelStyle()) {
+            case FRAMES_7 -> aero.pointOf(all.get(index), tbY);
+            case FRAMES_10 -> {
+                final int[] row = metro.listPoint(all.get(index));
+                yield row != null ? row : metro.tilePoint(all.get(index).programId().getPath());
+            }
+            default -> null;
+        };
     }
 
     /** How tall the XP left column runs: its rows, its separator, and the "All Programs" row under them. */
@@ -425,6 +500,8 @@ final class StartMenus {
         }
         return switch (desktop.panelStyle()) {
             case FRAMES_XP -> frames.clickXp(mx, my, tbY);
+            case FRAMES_7 -> aero.click(mx, my, tbY);
+            case FRAMES_10 -> metro.click(mx, my, rightButton ? 1 : 0, tbY);
             case FRAMES_11 -> frames.click11(mx, my, tbY);
             case KDE -> linux.clickKde(mx, my, tbY);
             case GNOME -> linux.clickGnomeOverview(mx, my);

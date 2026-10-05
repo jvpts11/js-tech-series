@@ -92,6 +92,9 @@ final class DesktopInput {
         if (desktop.volume().mouseDragged(x, y)) {
             return Click.TAKEN;
         }
+        if (desktop.start().dragged(x, y)) {
+            return Click.TAKEN;
+        }
         if (dragging != null) {
             dragging.moveTo((int) x - dragOffsetX, (int) y - dragOffsetY, view.workAreaTop(), view.width(),
                     view.workAreaBottom());
@@ -127,6 +130,9 @@ final class DesktopInput {
         final double y = view.localY(absY);
         desktop.volume().mouseReleased();
         if (desktop.notices().releasePopup(x, y, button)) {
+            return Click.TAKEN;
+        }
+        if (desktop.start().released(x, y)) {
             return Click.TAKEN;
         }
         // Letting go ends the sweep; whatever it covered stays selected.
@@ -286,6 +292,9 @@ final class DesktopInput {
             volume.nudge(dy > 0 ? 1 : -1);
             return true;
         }
+        if (dy != 0 && desktop.start().scrolled(x, y, dy)) {
+            return true;
+        }
         final DesktopWindow w = desktop.wm().front();
         return w != null && w.app().mouseScrolled(dy);
     }
@@ -311,6 +320,14 @@ final class DesktopInput {
         }
         if (desktop.taskbar().menu().isOpen()) {
             desktop.taskbar().menu().mouseClicked(x, y, button);
+            return true;
+        }
+        // Frames 10's Task View takes the click it is over; its Action Center the clicks on it, and goes on others.
+        final int tbY = view.height() - view.panelBand();
+        if (desktop.taskView().isOpen() && desktop.taskView().click(x, y, view.width(), tbY)) {
+            return true;
+        }
+        if (desktop.actionCenter().isOpen() && desktop.actionCenter().click(x, y, tbY, view.width())) {
             return true;
         }
         // A window's own menu on CDE takes the click too, unless it is on the very button the menu hangs from.
@@ -396,6 +413,29 @@ final class DesktopInput {
                 return true;
             }
             return desktop.cdePanels().click(mouseX, mouseY, view.width(), view.height());
+        }
+        // Frames 7's corner shows the desktop; Frames 10's end opens the Action Center, and its search and Task View.
+        if (desktop.tray().onShowDesktop(mouseX, mouseY, view.width(), tbY)) {
+            desktop.wm().showDesktop();
+            return true;
+        }
+        if (desktop.tray().onActionCenter(mouseX, mouseY, view.width(), tbY)) {
+            desktop.start().close();
+            desktop.actionCenter().toggle();
+            return true;
+        }
+        if (desktop.panelStyle() == PanelStyle.FRAMES_10) {
+            if (desktop.metroTaskbar().searchHit(mouseX, mouseY, tbY)) {
+                if (!desktop.start().isOpen()) {
+                    desktop.start().toggle();
+                }
+                return true;
+            }
+            if (desktop.metroTaskbar().viewHit(mouseX, mouseY, tbY)) {
+                desktop.start().close();
+                desktop.taskView().toggle();
+                return true;
+            }
         }
         // Frames 11 keeps Start with the centred group, so it has a hit test of its own.
         if (desktop.panelStyle() == PanelStyle.FRAMES_11 && mouseY >= tbY) {

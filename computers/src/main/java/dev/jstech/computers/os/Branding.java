@@ -36,9 +36,34 @@ public final class Branding {
             "MC-NET", 1992,
             "Frames 95", 1995,
             "Frames XP", 2001,
+            "Frames 7", 2009,
+            "Frames 10", 2015,
             "Frames 11", 2021);
 
+    /**
+     * The build a system gives for itself where its prompt names one, keyed by the name it prints of itself: the
+     * editions whose console opened on their version, as Frames 7 and 10 did.
+     */
+    private static final Map<String, String> BUILDS = Map.of(
+            "Frames 7", "7.0.7600",
+            "Frames 10", "10.0.10240");
+
     private Branding() {
+    }
+
+    /** The build that system's prompt opens on, or empty for one whose prompt names none. */
+    public static String systemBuild(final String osName) {
+        return BUILDS.getOrDefault(osName == null ? "" : osName.trim(), "");
+    }
+
+    /**
+     * The name a system's prompt says over its build: its house and its family, the edition's number dropped, the way
+     * those prompts named the line rather than the release ({@code Midsoft Frames}).
+     */
+    public static String systemLine(final String osName) {
+        final String name = osName == null ? "" : osName.trim();
+        final int space = name.lastIndexOf(' ');
+        return houseOf(name).name() + " " + (space > 0 ? name.substring(0, space) : name);
     }
 
     /** The year the machines of an era were built, for a firmware banner. */

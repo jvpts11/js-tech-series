@@ -34,6 +34,12 @@ public enum WallpaperStyle {
     /** Frames XP: a green hill under a blue sky. */
     BLISS("winxp", true),
 
+    /** Frames 7: a night blue banded with falling light, the waving flag glowing in its middle. */
+    HARMONY("win7", true),
+
+    /** Frames 10: a dark room with the window of four panes lit in it, its light falling out to the left. */
+    HERO("win10", true),
+
     /** Frames 11: the blue bloom, with a dark picture for the dark theme. */
     BLOOM("win11", true),
 

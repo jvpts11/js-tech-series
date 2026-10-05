@@ -53,6 +53,9 @@ public final class BootLines {
     /** What a machine of the earliest age reserves below the line, in kilobytes, as those machines did. */
     private static final int BASE_MEMORY_KB = 640;
 
+    /** The place in the Frames line of the first edition that greets a new machine with Hi: Frames 10. */
+    private static final int HELLO_FROM_RANK = 4;
+
     /** The kernel the Linux machines run. */
     private static final String KERNEL_VERSION = KernelNames.LINUX_VERSION;
 
@@ -180,9 +183,13 @@ public final class BootLines {
         return BootSequence.NONE;
     }
 
-    /** Whether this is the newest edition coming up for the first time, which is the one start that greets. */
+    /**
+     * Whether this is an edition that greets coming up for the first time. Frames 10 was the first to say Hi to a new
+     * machine, and every edition after it does; the ones before put their own Welcome up instead.
+     */
     private static boolean firstTime(final IOsHost machine, final OsDef system) {
-        return OsRegistry.newestOfFamily(system) && !machine.systemWelcome().seen();
+        return (OsRegistry.newestOfFamily(system) || system.familyRank() >= HELLO_FROM_RANK)
+                && !machine.systemWelcome().seen();
     }
 
     /**

@@ -32,8 +32,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class OsMotions {
 
-    /** Every effect of Frames 11 answers to its one box, "Animation effects". */
+    /**
+     * Every effect of Frames 11 answers to its one box, "Animation effects", and Frames 10's to "Play animations";
+     * on Frames 7 it is Ease of Access's "Turn off all unnecessary animations", which stops them all.
+     */
     public static final String ANIMATIONS = "animations";
+    /** Frames 7's "Enable transparent glass": off, the glass frames turn opaque, as Frames 7 Basic drew them. */
+    public static final String GLASS = "glass";
+    /** Frames 10's "Transparency effects": off, its taskbar, Start menu and Action Center are drawn opaque. */
+    public static final String TRANSPARENCY = "transparency";
     /** The box over minimizing and restoring a window on the systems that have one. */
     public static final String MINIMIZE = "minimize";
     /** The box over menus and the launcher sliding in. */
@@ -99,6 +106,59 @@ public final class OsMotions {
             .kind(MotionKinds.POINTER_BUSY, loop(1600, 16))
             .kind(MotionKinds.POINTER_WORKING, loop(1600, 16))
             .kind(MotionKinds.COPY, loop(1056, 16))
+            .build());
+
+    /*
+     * Frames 7: the window grows out of a smaller one as it fades in and shrinks away as it fades out, minimizing
+     * flies to its button, menus and tooltips fade; each answers to its own box and to Ease of Access's switch over
+     * all of them. The ring of the busy pointer, eighteen pictures of fifty milliseconds, came with it.
+     */
+    public static final DeclaredMotion FRAMES_7 = declare("frames_7", MotionProfile.builder()
+            .kind(MotionKinds.WINDOW_OPEN, scale(250, "ease-out-cubic", MINIMIZE + " " + ANIMATIONS, 0.9, 1.0)
+                    .with(OPACITY_FROM, 0.0))
+            .kind(MotionKinds.DIALOG_OPEN, scale(200, "ease-out-cubic", MINIMIZE + " " + ANIMATIONS, 0.9, 1.0)
+                    .with(OPACITY_FROM, 0.0))
+            .kind(MotionKinds.WINDOW_CLOSE, scale(200, "ease-in-cubic", MINIMIZE + " " + ANIMATIONS, 1.0, 0.9)
+                    .with(OPACITY_TO, 0.0))
+            .kind(MotionKinds.WINDOW_MINIMIZE, zoomOut(250, "ease-in-cubic", MINIMIZE + " " + ANIMATIONS))
+            .kind(MotionKinds.WINDOW_RESTORE, zoomIn(250, "ease-out-cubic", MINIMIZE + " " + ANIMATIONS))
+            .kind(MotionKinds.MENU_SHOW, appear(200, "linear", MENUS + " " + ANIMATIONS, false))
+            .kind(MotionKinds.TOOLTIP_SHOW, appear(200, "linear", TOOLTIPS + " " + ANIMATIONS, false))
+            .kind(MotionKinds.NOTICE_SHOW, appear(300, "linear", ANIMATIONS, false))
+            .kind(MotionKinds.NOTICE_HIDE, appear(300, "linear", ANIMATIONS, true))
+            .kind(MotionKinds.SCENE_FADE, fade(400, "linear"))
+            // The band of light sweeping a bar that has no known end.
+            .kind(MotionKinds.PROGRESS_WAIT, waiting(MotionStyles.SEGMENT, 2000, "linear").with("length", 0.3))
+            .kind(MotionKinds.PROGRESS_FILL, ease(250, "ease-out-cubic", ANIMATIONS))
+            .kind(MotionKinds.CARET_BLINK, blink(WINDOWS_CARET_MS))
+            .kind(MotionKinds.POINTER_BUSY, loop(900, 18))
+            .kind(MotionKinds.POINTER_WORKING, loop(900, 18))
+            .build());
+
+    /*
+     * Frames 10: windows scale and fade, the Start menu slides up out of the taskbar as it fades in, tooltips come
+     * at once; all of it answers to "Play animations", which also stops the live tiles turning.
+     */
+    public static final DeclaredMotion FRAMES_10 = declare("frames_10", MotionProfile.builder()
+            .kind(MotionKinds.WINDOW_OPEN, scale(200, "ease-out-cubic", ANIMATIONS, 0.92, 1.0)
+                    .with(OPACITY_FROM, 0.0))
+            .kind(MotionKinds.DIALOG_OPEN, scale(167, "ease-out-cubic", ANIMATIONS, 0.95, 1.0)
+                    .with(OPACITY_FROM, 0.0))
+            .kind(MotionKinds.WINDOW_CLOSE, scale(167, "ease-in-cubic", ANIMATIONS, 1.0, 0.92)
+                    .with(OPACITY_TO, 0.0))
+            .kind(MotionKinds.WINDOW_MINIMIZE, zoomOut(250, "ease-in-cubic", ANIMATIONS))
+            .kind(MotionKinds.WINDOW_RESTORE, zoomIn(250, "ease-out-cubic", ANIMATIONS))
+            .kind(MotionKinds.MENU_SHOW, slide(250, "ease-out-cubic", ANIMATIONS, 0.2).with(OPACITY_FROM, 0.0))
+            .kind(MotionKinds.TOOLTIP_SHOW, appear(100, "linear", ANIMATIONS, false))
+            .kind(MotionKinds.NOTICE_SHOW, appear(300, "ease-out-cubic", ANIMATIONS, false))
+            .kind(MotionKinds.NOTICE_HIDE, appear(300, "ease-in-cubic", ANIMATIONS, true))
+            .kind(MotionKinds.SCENE_FADE, fade(333, "linear"))
+            // The dots that run along a bar with no known end.
+            .kind(MotionKinds.PROGRESS_WAIT, waiting(MotionStyles.SEGMENT, 2000, "linear").with("length", 0.2))
+            .kind(MotionKinds.PROGRESS_FILL, ease(250, "ease-out-cubic", ANIMATIONS))
+            .kind(MotionKinds.CARET_BLINK, blink(WINDOWS_CARET_MS))
+            .kind(MotionKinds.POINTER_BUSY, loop(900, 18))
+            .kind(MotionKinds.POINTER_WORKING, loop(900, 18))
             .build());
 
     public static final DeclaredMotion FRAMES_11 = declare("frames_11", MotionProfile.builder()
@@ -230,6 +290,8 @@ public final class OsMotions {
         return switch (style) {
             case FRAMES_95 -> FRAMES_95;
             case FRAMES_XP -> FRAMES_XP;
+            case FRAMES_7 -> FRAMES_7;
+            case FRAMES_10 -> FRAMES_10;
             case FRAMES_11 -> FRAMES_11;
             case KDE -> period ? KDE_CLASSIC : PLASMA;
             case GNOME -> period ? GNOME_CLASSIC : GNOME;

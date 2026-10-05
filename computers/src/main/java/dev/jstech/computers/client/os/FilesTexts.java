@@ -72,6 +72,17 @@ final class FilesTexts {
     static final TextKey EXTRACT_HERE = TextKey.of("jsc.files.extract_here", "Extract here");
     static final TextKey COMPRESS_TO = TextKey.of("jsc.files.compress_to", "Compress to %s");
 
+    // Frames 7's command bar and Frames 10's ribbon: its tabs, its commands and the captions of their groups.
+    static final TextKey ORGANIZE = TextKey.of("jsc.files.organize", "Organize");
+    static final TextKey NEW_FOLDER_COMMAND = TextKey.of("jsc.files.new_folder_command", "New folder");
+    static final TextKey FILE_TAB = TextKey.of("jsc.files.file_tab", "File");
+    static final TextKey HOME_TAB = TextKey.of("jsc.files.home_tab", "Home");
+    static final TextKey VIEW_TAB = TextKey.of("jsc.files.view_tab", "View");
+    static final TextKey CLIPBOARD = TextKey.of("jsc.files.clipboard", "Clipboard");
+    static final TextKey LAYOUT = TextKey.of("jsc.files.layout", "Layout");
+    static final TextKey DETAILS = TextKey.of("jsc.files.details", "Details");
+    static final TextKey LARGE_ICONS = TextKey.of("jsc.files.large_icons", "Large icons");
+
     // What packing or unpacking came to, when it did not work.
     static final TextKey COULD_NOT = TextKey.of("jsc.files.could_not", "Could not do that");
 

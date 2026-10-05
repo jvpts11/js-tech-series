@@ -8,12 +8,17 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.time.GameCalendar;
+import java.util.Locale;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -41,8 +46,52 @@ public final class BootSplashArt {
     private static final ResourceLocation FRAMES_XP_BANDS =
             ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/ground/frames_xp_bands.png");
 
+    /** Frames 7's ground for Welcome and for shutting down, the night blue without the mark, and its lights. */
+    private static final ResourceLocation FRAMES_7_GROUND =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/ground/frames_7.png");
+    private static final ResourceLocation FRAMES_7_LIGHTS =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/frames_7_boot.png");
+
+    /** Frames 10's ground for signing in and shutting down, its wallpaper for the lock screen, and its dots. */
+    private static final ResourceLocation FRAMES_10_GROUND =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/ground/frames_10.png");
+    private static final ResourceLocation FRAMES_10_LOCK =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/wallpaper/win10.png");
+    private static final ResourceLocation FRAMES_10_DOTS =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/frames_10_dots.png");
+
+    /** The Aero ring the later editions wait with, the same as their busy pointer. */
+    private static final ResourceLocation AERO_RING =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/cursor/frames_aero_busy.png");
+
     private static final int GROUND_W = 384;
     private static final int GROUND_H = 256;
+
+    /*
+     * Frames 7's lights: sixty pictures of 64 pixels, the first forty the lights sweeping in and closing into the
+     * flag, the last twenty the flag breathing, sixty milliseconds each.
+     */
+    private static final int LIGHTS = 64;
+    private static final int LIGHTS_FRAMES = 60;
+    private static final int LIGHTS_IN = 40;
+    private static final int LIGHTS_MS = 60;
+    private static final int LIGHTS_SCALE = 2;
+    /* Frames 10's dots: sixty pictures of 24 pixels, a turn in two seconds. */
+    private static final int DOTS_SIZE = 24;
+    private static final int DOTS_FRAMES = 60;
+    private static final int DOTS_MS = 33;
+    /* The Aero ring: eighteen pictures of 16 pixels, fifty milliseconds each. */
+    private static final int RING = 16;
+    private static final int RING_FRAMES = 18;
+    private static final int RING_MS = 50;
+    /* Frames 10's mark as it stands on the black of its start. */
+    private static final int TEN_MARK = 48;
+    /* How far into the wait Frames 10 leaves its mark for the lock screen, and the lock screen for signing in. */
+    private static final int LOCK_FROM = 55;
+    private static final int SIGN_IN_FROM = 78;
+    /* The round picture Frames 10 signs in with, a grass block by default. */
+    private static final int AVATAR = 36;
+    private static final int MS_PER_TICK = 50;
 
     /**
      * The oldest edition: the band along the foot of its sky, the colours its bar ran through (darkest at the ends
@@ -59,6 +108,21 @@ public final class BootSplashArt {
     private static final Palette<Luna> LUNA = Palettes.declare(JsComputers.MODID, "boot/frames_xp",
             new Luna(0xFF000000, 0xFF1B1B1B, 0xFF454545, 0xFF5A8CD8, 0xA0FFFFFF, 0xFFFFFFFF, 0xFF9AA4B2,
                     0xFFFFFFFF, 0xFFFFFFFF));
+
+    /**
+     * Frames 7: the black it starts on, the words under its lights, and the ink of its Welcome and its goodbye on the
+     * night blue.
+     */
+    private static final Palette<Seven> SEVEN = Palettes.declare(JsComputers.MODID, "boot/frames_7",
+            new Seven(0xFF000000, 0xFFFFFFFF, 0xFF7A7A7A, 0xFFFFFFFF, 0xFF0A2C66));
+
+    /**
+     * Frames 10: the black of its start, the blue of its first set-up, the ink of the lock screen and the sign-in, and
+     * the colours of the grass block it signs in with.
+     */
+    private static final Palette<Ten> TEN = Palettes.declare(JsComputers.MODID, "boot/frames_10",
+            new Ten(0xFF000000, 0xFF0063B1, 0xFFFFFFFF, 0xFFDDE8F2, 0xFF7FC26B, 0xFF5E9E4C, 0xFF8A6A45,
+                    0xFF6B4A2C, 0xFF0A1830));
 
     /** The newest edition: the ground its firmware posts against, its greeting and the lines under it. */
     private static final Palette<Modern> MODERN = Palettes.declare(JsComputers.MODID, "boot/frames_11",
@@ -96,13 +160,18 @@ public final class BootSplashArt {
      *                 machine being switched off from one starting over
      * @param title    what the system has to say over its picture, which is almost always nothing
      * @param subtitle the line under it, which on the way down is the sentence that system said while it closed
+     * @param who      who is coming up, or going down when it names no desktop: what the pictures that greet by
+     *                 name or sign a machine in read
      */
     public static void draw(final GuiGraphics g, final Font font, final BootSplash splash, final int x,
                             final int y, final int w, final int h, final int ticks, final double loop,
-                            final int total, final boolean endsDark, final String title, final String subtitle) {
+                            final int total, final boolean endsDark, final String title, final String subtitle,
+                            final BootIdentity who) {
         switch (splash) {
             case FRAMES_95 -> frames95(g, font, x, y, w, h, ticks, loop, total, endsDark, subtitle);
             case FRAMES_XP -> framesXp(g, font, x, y, w, h, ticks, loop, total, subtitle);
+            case FRAMES_7 -> frames7(g, font, x, y, w, h, ticks, loop, total, who.desktopId().isEmpty(), subtitle);
+            case FRAMES_10 -> frames10(g, font, x, y, w, h, ticks, loop, total, who, title, subtitle);
             case FRAMES_11 -> frames11(g, font, x, y, w, h, loop, title, subtitle);
             default -> { }
         }
@@ -116,6 +185,8 @@ public final class BootSplashArt {
         return switch (splash) {
             case FRAMES_95 -> CLASSIC.get().runBright();
             case FRAMES_XP -> LUNA.get().block();
+            case FRAMES_7 -> SEVEN.get().night();
+            case FRAMES_10 -> TEN.get().night();
             case FRAMES_11 -> MODERN.get().ground();
             default -> LUNA.get().ground();
         };
@@ -232,8 +303,12 @@ public final class BootSplashArt {
         g.fill(tx, ty, tx + troughW, ty + 6, c.trough());
         final int blockW2 = 6;
         final int span = troughW + BLOCKS * (blockW2 + 2);
+        /*
+         * The blocks start inside the trough at its left end, so a player who reduced motion, for whom the clock
+         * stays at its start, sees them standing in it rather than an empty trough.
+         */
         for (int i = 0; i < BLOCKS; i++) {
-            final int at = (int) (((long) (loop * span / PASS_TICKS) + i * (blockW2 + 2)) % span)
+            final int at = (int) (((long) (loop * span / PASS_TICKS) + (i + BLOCKS) * (blockW2 + 2)) % span)
                     - BLOCKS * (blockW2 + 2);
             final int left = tx + at;
             if (left + blockW2 > tx && left < tx + troughW) {
@@ -243,6 +318,136 @@ public final class BootSplashArt {
 
         Draw.text(g, font, "(C) 2001 Midsoft Corp.", x + 8, y + h - 12, c.smallPrint());
         Draw.text(g, font, "Midsoft", x + w - font.width("Midsoft") - 8, y + h - 12, c.maker());
+    }
+
+    /**
+     * Frames 7: on black, four lights sweep in from the edges, turn round the middle and close into the waving flag,
+     * which then breathes, with the system's words under it; for the last part of the wait the night blue and
+     * Welcome beside the Aero ring. On the way down, the same night blue with the ring and the goodbye.
+     */
+    private static void frames7(final GuiGraphics g, final Font font, final int x, final int y, final int w,
+                                final int h, final int ticks, final double loop, final int total,
+                                final boolean going, final String message) {
+        final Seven c = SEVEN.get();
+        if (going || total > 0 && ticks >= total * WELCOME_FROM / 100) {
+            ground(g, FRAMES_7_GROUND, x, y, w, h);
+            final String words = going && !message.isEmpty() ? message
+                    : GameText.resolve(MonitorScreenTexts.WELCOME_TITLE);
+            final float scale = 2.0f;
+            final int wordsW = (int) (font.width(words) * scale);
+            final int left = x + (w - wordsW - RING - 8) / 2;
+            ring(g, left, y + h / 2 - RING / 2, loop);
+            g.pose().pushPose();
+            g.pose().translate(left + RING + 8, y + h / 2 - 7, 0);
+            g.pose().scale(scale, scale, 1.0f);
+            Draw.text(g, font, words, 0, 0, c.words());
+            g.pose().popPose();
+            return;
+        }
+        g.fill(x, y, x + w, y + h, c.ground());
+        final int ms = ticks * MS_PER_TICK;
+        final int frame = ms / LIGHTS_MS < LIGHTS_IN ? ms / LIGHTS_MS
+                : LIGHTS_IN + (int) ((long) (loop * MS_PER_TICK / LIGHTS_MS) % (LIGHTS_FRAMES - LIGHTS_IN));
+        // Drawn twice its size: the flag fills the middle of each picture, and at its own size it read as a speck.
+        final int side = LIGHTS * LIGHTS_SCALE;
+        final int lx = x + (w - side) / 2;
+        final int ly = y + h / 2 - side / 2 - 14;
+        g.blit(FRAMES_7_LIGHTS, lx, ly, side, side, frame * LIGHTS, 0, LIGHTS, LIGHTS, LIGHTS * LIGHTS_FRAMES,
+                LIGHTS);
+        Draw.textCentered(g, font, GameText.resolve(MonitorScreenTexts.STARTING_SYSTEM.with("Frames")), x + w / 2,
+                ly + side * 3 / 4 + 6, c.words());
+        Draw.textCentered(g, font, "(C) Midsoft Corporation", x + w / 2, y + h - 14, c.smallPrint());
+    }
+
+    /**
+     * Frames 10: on black, its mark with the dots chasing round under it; then the lock screen, its picture with the
+     * time large in its corner and the day under it; then signing in, the round picture and the machine's name over
+     * its own blue, Welcome and the dots. The first start says Hi on the blue of its set-up instead, and the way down
+     * is that blue with the dots and the goodbye.
+     */
+    private static void frames10(final GuiGraphics g, final Font font, final int x, final int y, final int w,
+                                 final int h, final int ticks, final double loop, final int total,
+                                 final BootIdentity who, final String title, final String subtitle) {
+        final Ten c = TEN.get();
+        final boolean going = who.desktopId().isEmpty();
+        final int through = total > 0 ? ticks * 100 / total : 0;
+        if (!going && !title.isEmpty()) {
+            g.fill(x, y, x + w, y + h, c.firstSetup());
+            big(g, font, title, x + w / 2, y + h / 2 - 30, c.ink());
+            Draw.textCentered(g, font, subtitle, x + w / 2, y + h / 2 + 4, c.soft());
+            dots(g, x + w / 2 - DOTS_SIZE / 2, y + h / 2 + 22, loop);
+            return;
+        }
+        if (going) {
+            ground(g, FRAMES_10_GROUND, x, y, w, h);
+            dots(g, x + w / 2 - DOTS_SIZE / 2, y + h / 2 - DOTS_SIZE - 4, loop);
+            final float scale = 1.5f;
+            g.pose().pushPose();
+            g.pose().translate(x + w / 2 - font.width(subtitle) * scale / 2, y + h / 2 + 6, 0);
+            g.pose().scale(scale, scale, 1.0f);
+            Draw.text(g, font, subtitle, 0, 0, c.ink());
+            g.pose().popPose();
+            return;
+        }
+        if (through >= SIGN_IN_FROM) {
+            ground(g, FRAMES_10_GROUND, x, y, w, h);
+            final int cy = y + h / 2 - 34;
+            avatar(g, c, x + w / 2 - AVATAR / 2, cy);
+            final String name = who.hostName();
+            if (!name.isEmpty()) {
+                big(g, font, name, x + w / 2, cy + AVATAR + 8, c.ink(), 1.5f);
+            }
+            Draw.textCentered(g, font, GameText.resolve(MonitorScreenTexts.WELCOME_TITLE), x + w / 2,
+                    cy + AVATAR + 26, c.soft());
+            dots(g, x + w / 2 - DOTS_SIZE / 2, cy + AVATAR + 38, loop);
+            return;
+        }
+        if (through >= LOCK_FROM) {
+            ground(g, FRAMES_10_LOCK, x, y, w, h);
+            final Minecraft mc = Minecraft.getInstance();
+            final long time = mc.level == null ? 0L : mc.level.getDayTime();
+            final String clock = String.format(Locale.ROOT, "%d:%02d", GameCalendar.hourOf(time),
+                    GameCalendar.minuteOf(time));
+            g.pose().pushPose();
+            g.pose().translate(x + 16, y + h - 58, 0);
+            g.pose().scale(4.0f, 4.0f, 1.0f);
+            Draw.text(g, font, clock, 0, 0, c.ink());
+            g.pose().popPose();
+            Draw.text(g, font, GameText.resolve(MonitorScreenTexts.DAY_OF_WORLD.with(GameCalendar.day(time) + 1)),
+                    x + 18, y + h - 20, c.ink());
+            return;
+        }
+        g.fill(x, y, x + w, y + h, c.ground());
+        SplashLogos.mark(g, PanelStyle.FRAMES_10, x + (w - TEN_MARK) / 2, y + h / 2 - TEN_MARK, TEN_MARK);
+        dots(g, x + w / 2 - DOTS_SIZE / 2, y + h / 2 + 22, loop);
+    }
+
+    /** The Aero ring at {@code (x, y)}, turning on the motion clock. */
+    private static void ring(final GuiGraphics g, final int x, final int y, final double loop) {
+        final int frame = (int) ((long) (loop * MS_PER_TICK / RING_MS) % RING_FRAMES);
+        // The ring's pictures stand side by side in one row, as the busy pointer reads them.
+        g.blit(AERO_RING, x, y, frame * RING, 0, RING, RING, RING * RING_FRAMES, RING);
+    }
+
+    /** Frames 10's dots chasing round at {@code (x, y)}, on the motion clock. */
+    private static void dots(final GuiGraphics g, final int x, final int y, final double loop) {
+        final int frame = (int) ((long) (loop * MS_PER_TICK / DOTS_MS) % DOTS_FRAMES);
+        g.blit(FRAMES_10_DOTS, x, y, frame * DOTS_SIZE, 0, DOTS_SIZE, DOTS_SIZE, DOTS_SIZE * DOTS_FRAMES, DOTS_SIZE);
+    }
+
+    /**
+     * The round picture Frames 10 signs in with: a grass block seen from the side, its green top over the dirt,
+     * cut round row by row.
+     */
+    private static void avatar(final GuiGraphics g, final Ten c, final int x, final int y) {
+        final double r = AVATAR / 2.0;
+        for (int row = 0; row < AVATAR; row++) {
+            final double dy = row + 0.5 - r;
+            final int half = (int) Math.round(Math.sqrt(Math.max(0.0, r * r - dy * dy)));
+            final int colour = row < AVATAR * 3 / 10 ? c.grass() : row < AVATAR * 4 / 10 ? c.grassEdge()
+                    : row % 6 < 3 ? c.dirt() : c.dirtDark();
+            g.fill(x + AVATAR / 2 - half, y + row, x + AVATAR / 2 + half, y + row + 1, colour);
+        }
     }
 
     /** The blue ground with one word on it, which is how that edition ended every start. */
@@ -273,7 +478,12 @@ public final class BootSplashArt {
      */
     private static void big(final GuiGraphics g, final Font font, final String text, final int cx, final int top,
                             final int colour) {
-        final float scale = 3.0f;
+        big(g, font, text, cx, top, colour, 3.0f);
+    }
+
+    /** The same at a scale of its own. */
+    private static void big(final GuiGraphics g, final Font font, final String text, final int cx, final int top,
+                            final int colour, final float scale) {
         g.pose().pushPose();
         g.pose().translate(cx - font.width(text) * scale / 2.0f, top, 0);
         g.pose().scale(scale, scale, 1.0f);
@@ -354,5 +564,20 @@ public final class BootSplashArt {
 
     /** The newest edition's colours, as the palette above names them. */
     private record Modern(int ground, int greeting, int subtitle, int goodbye) {
+    }
+
+    /**
+     * Frames 7's colours: the black of its start, its words, its small print, the ink on its night blue, and that
+     * night blue as one colour for what melts out of it.
+     */
+    private record Seven(int ground, int words, int smallPrint, int ink, int night) {
+    }
+
+    /**
+     * Frames 10's colours: the black of its start, the blue of its set-up, its ink and its softer line, the grass
+     * block's top and its edge and its dirt in two shades, and its night as one colour.
+     */
+    private record Ten(int ground, int firstSetup, int ink, int soft, int grass, int grassEdge, int dirt,
+                       int dirtDark, int night) {
     }
 }

@@ -63,6 +63,24 @@ public final class EffectsPages {
     static final TextKey ICON_SHADOWS = TextKey.of("jsc.settings.effects.icon_shadows",
             "Use drop shadows for icon labels on the desktop");
 
+    // Frames 7, Performance Options, and the switch of its Ease of Access Center.
+    static final TextKey ENABLE_GLASS = TextKey.of("jsc.settings.effects.enable_glass", "Enable transparent glass");
+    static final TextKey EASE_OF_ACCESS = TextKey.of("jsc.settings.effects.ease_of_access",
+            "Ease of Access: make the computer easier to see");
+    static final TextKey TURN_OFF_ANIMATIONS = TextKey.of("jsc.settings.effects.turn_off_animations",
+            "Turn off all unnecessary animations (when possible)");
+
+    // Frames 10, Personalize > Effects.
+    static final TextKey EFFECTS_10 = TextKey.of("jsc.settings.effects.effects_10", "Personalize > Effects");
+    static final TextKey EFFECTS_10_NOTE = TextKey.of("jsc.settings.effects.effects_10_note",
+            "How Frames looks and moves. A weak graphics card turns both off by itself.");
+    static final TextKey TRANSPARENCY_EFFECTS = TextKey.of("jsc.settings.effects.transparency_effects",
+            "Transparency effects");
+    static final TextKey PLAY_ANIMATIONS = TextKey.of("jsc.settings.effects.play_animations",
+            "Play animations in Frames");
+    static final TextKey PLAY_ANIMATIONS_NOTE = TextKey.of("jsc.settings.effects.play_animations_note",
+            "Off: windows open, close and minimize at once, the live tiles stop turning");
+
     // Frames 11, Personalize > Visual effects.
     static final TextKey VISUAL_EFFECTS_11 = TextKey.of("jsc.settings.effects.visual_effects_11",
             "Personalize > Visual effects");
@@ -137,6 +155,25 @@ public final class EffectsPages {
             new Check(ANIMATE_MIN_MAX, OsMotions.MINIMIZE), new Check(FADE_SLIDE_MENUS, OsMotions.MENUS),
             new Check(FADE_SLIDE_TOOLTIPS, OsMotions.TOOLTIPS), new Check(ICON_SHADOWS, OsMotions.ICON_SHADOWS)));
 
+    /*
+     * Frames 7's Performance Options, its boxes those of 7's own list that move something here, with the switch
+     * Ease of Access kept over all of them at the foot: ticked, every animation stops.
+     */
+    public static final Page FRAMES_7 = new Page(FROM_SYSTEM, PERFORMANCE_OPTIONS, PERFORMANCE_OPTIONS,
+            Footer.OK_CANCEL_APPLY, List.of(new Heading(VISUAL_EFFECTS), new Note(XP_NOTE),
+            new Presets(List.of(LET_CHOOSE, BEST_APPEARANCE, BEST_PERFORMANCE, CUSTOM),
+                    List.of(OsMotions.MINIMIZE, OsMotions.GLASS, OsMotions.MENUS, OsMotions.TOOLTIPS,
+                            OsMotions.ICON_SHADOWS)),
+            new Check(ANIMATE_MIN_MAX, OsMotions.MINIMIZE), new Check(ENABLE_GLASS, OsMotions.GLASS),
+            new Check(FADE_SLIDE_MENUS, OsMotions.MENUS), new Check(FADE_SLIDE_TOOLTIPS, OsMotions.TOOLTIPS),
+            new Check(ICON_SHADOWS, OsMotions.ICON_SHADOWS), new Heading(EASE_OF_ACCESS),
+            new Check(TURN_OFF_ANIMATIONS, OsMotions.ANIMATIONS, true)));
+
+    /* Frames 10's Effects under Personalize: transparency and animations, a switch each. */
+    public static final Page FRAMES_10 = new Page(FROM_PERSONALIZE, EFFECTS, EFFECTS_10, Footer.NONE,
+            List.of(new Note(EFFECTS_10_NOTE), new Toggle(TRANSPARENCY_EFFECTS, null, OsMotions.TRANSPARENCY, false),
+                    new Toggle(PLAY_ANIMATIONS, PLAY_ANIMATIONS_NOTE, OsMotions.ANIMATIONS, false)));
+
     public static final Page FRAMES_11 = new Page(FROM_PERSONALIZE, VISUAL_EFFECTS, VISUAL_EFFECTS_11, Footer.NONE,
             List.of(new Toggle(ANIMATION_EFFECTS, ANIMATION_EFFECTS_NOTE, OsMotions.ANIMATIONS, false)));
 
@@ -167,8 +204,8 @@ public final class EffectsPages {
                     new Choice(MINIMIZING, OsMotions.MINIMIZE, TRADITIONAL, NONE)));
 
     /** Every page, for whatever checks them all. */
-    public static final List<Page> ALL = List.of(FRAMES_95, FRAMES_XP, FRAMES_11, PLASMA, KDE_CLASSIC, GNOME_CLASSIC,
-            GNOME, CINNAMON);
+    public static final List<Page> ALL = List.of(FRAMES_95, FRAMES_XP, FRAMES_7, FRAMES_10, FRAMES_11, PLASMA,
+            KDE_CLASSIC, GNOME_CLASSIC, GNOME, CINNAMON);
 
     private EffectsPages() {
     }
@@ -179,6 +216,8 @@ public final class EffectsPages {
         return switch (style) {
             case FRAMES_95 -> FRAMES_95;
             case FRAMES_XP -> FRAMES_XP;
+            case FRAMES_7 -> FRAMES_7;
+            case FRAMES_10 -> FRAMES_10;
             case FRAMES_11 -> FRAMES_11;
             case KDE -> period ? KDE_CLASSIC : PLASMA;
             case GNOME -> period ? GNOME_CLASSIC : GNOME;
@@ -220,8 +259,16 @@ public final class EffectsPages {
     public record Note(TextKey text) implements IRow {
     }
 
-    /** A box that switches one effect, lit while the effect is on. */
-    public record Check(TextKey label, String effect) implements IRow {
+    /**
+     * A box that switches one effect, lit while the effect is on; {@code inverted} for a box that is ticked while the
+     * effect is off, which is what Frames 7's "Turn off all unnecessary animations" is.
+     */
+    public record Check(TextKey label, String effect, boolean inverted) implements IRow {
+
+        /** A box lit while its effect is on, as nearly all of them are. */
+        public Check(final TextKey label, final String effect) {
+            this(label, effect, false);
+        }
     }
 
     /**

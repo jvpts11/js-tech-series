@@ -107,6 +107,12 @@ final class DesktopState {
     private final LinuxPanels linuxPanels = new LinuxPanels(this);
     /** The Frames systems' two: the classic bottom taskbar, and Frames 11's centered band of icons. */
     private final FramesPanels framesPanels = new FramesPanels(this);
+    /** Frames 7's superbar and Frames 10's taskbar, each a design of its own. */
+    private final AeroSuperbar aeroSuperbar = new AeroSuperbar(this);
+    private final MetroTaskbar metroTaskbar = new MetroTaskbar(this);
+    /** Frames 10's Action Center down the right edge, and its Task View over the desktop. */
+    private final ActionCenter actionCenter = new ActionCenter(this);
+    private final TaskView taskView = new TaskView(this);
     /** CDE's Front Panel, which stands where the others have a bar, and the subpanel that rises out of it. */
     private final CdePanels cdePanels = new CdePanels(this);
     private final CdeLaunchers cdeLaunchers = new CdeLaunchers(this);
@@ -407,6 +413,22 @@ final class DesktopState {
         return start;
     }
 
+    AeroSuperbar aeroSuperbar() {
+        return aeroSuperbar;
+    }
+
+    MetroTaskbar metroTaskbar() {
+        return metroTaskbar;
+    }
+
+    ActionCenter actionCenter() {
+        return actionCenter;
+    }
+
+    TaskView taskView() {
+        return taskView;
+    }
+
     /** The wallpaper's right-click menu, which a program listed in a launcher also answers the right button with. */
     DeskMenu deskMenu() {
         return deskMenu;
@@ -694,7 +716,8 @@ final class DesktopState {
      */
     boolean menuOrDialogOpen() {
         return start.isOpen() || panelMenu.isOpen() || taskbar.menu().isOpen() || cdeWindowMenu.isOpen()
-                || notices.popupUp() || power.isOpen() || memory.crashing();
+                || actionCenter.isOpen() || taskView.isOpen() || notices.popupUp() || power.isOpen()
+                || memory.crashing();
     }
 
     /** The program whose windows the panel's popup is showing, or null while none is up. */
@@ -991,6 +1014,7 @@ final class DesktopState {
                 payload.wallpaper(), payload.prefs().taskbarCentered(), payload.prefs().darkMode());
         prefs.takeEffects(payload.prefs().effects());
         taskbar.takePinned(payload.pinned());
+        start.takeTiles(payload.startTiles());
         opener.takeDefaults(payload.defaultApps());
         iconGrid.pinnedCells().clear();
         for (final DesktopFilesPayload.WireIconCell cell : payload.iconCells()) {
@@ -1035,7 +1059,11 @@ final class DesktopState {
 
     /** Whether a desktop-local point is on the bottom panel's Start button. */
     boolean startButtonHit(final double mx, final double my, final int tbY) {
-        return framesPanels.startButtonHit(mx, my, tbY);
+        return switch (panel) {
+            case FRAMES_7 -> aeroSuperbar.startHit(mx, my, tbY);
+            case FRAMES_10 -> metroTaskbar.startHit(mx, my, tbY);
+            default -> framesPanels.startButtonHit(mx, my, tbY);
+        };
     }
 
     /**

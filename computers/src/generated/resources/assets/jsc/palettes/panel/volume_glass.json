@@ -1,0 +1,18 @@
+{
+  "dim": "#FF555555",
+  "fill": "#FF3B8AD9",
+  "glassBottom": "#8C96B4DC",
+  "glassRim": "#CC283C5A",
+  "glassTop": "#9EBAD2EE",
+  "hotBottom": "#FFDCEBFA",
+  "hotRim": "#FF7DA2CE",
+  "hotTop": "#FFF2F8FD",
+  "ink": "#FF000000",
+  "paper": "#FFFFFFFF",
+  "paperRim": "#FF9FB3CF",
+  "rowHot": "#FFDCEBFB",
+  "speaker": "#FF5D6B7C",
+  "thumbBottom": "#FF9EC2EA",
+  "thumbRim": "#FF3D6AA3",
+  "thumbTop": "#FFDCEBFB"
+}

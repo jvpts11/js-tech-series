@@ -12,6 +12,7 @@ import dev.jstech.computers.operation.payload.WelcomePayload;
 import dev.jstech.computers.operation.payload.WelcomeStartupPayload;
 import dev.jstech.computers.os.boot.WelcomeFacts;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -48,6 +49,12 @@ public final class WelcomeApp implements IDesktopApp {
 
     private static final int PAD = 8;
 
+    /** Frames 10's band in the accent across the top, and one of its rows: a tile of the program beside its line. */
+    private static final int BAND_H = 28;
+    private static final int TILE_ROW_H = 17;
+    /** The look the white glyphs of Frames 10's tiles are drawn from. */
+    private static final String TILE_LOOK = "frames_10_tile";
+
     /** The welcome's own picture: the lamp of the tips on the older editions, the star on the newest. */
     private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath("jsc", "welcome");
 
@@ -81,8 +88,12 @@ public final class WelcomeApp implements IDesktopApp {
 
     @Override
     public String title() {
-        if (this.skin.form() == OsSkin.Form.FLAT) {
+        if (this.skin.flatForm()) {
             return GameText.resolve(WelcomeTexts.TITLE_GET_STARTED);
+        }
+        // Frames 7 called its first window Getting Started, its list of what to do first with the machine.
+        if (this.skin.form() == OsSkin.Form.AERO) {
+            return GameText.resolve(WelcomeTexts.TITLE_GETTING_STARTED);
         }
         return this.facts == null || this.facts.systemName().isEmpty()
                 ? GameText.resolve(WelcomeTexts.TITLE)
@@ -143,7 +154,8 @@ public final class WelcomeApp implements IDesktopApp {
             return;
         }
         switch (this.skin.form()) {
-            case LUNA -> this.renderPaned(g, font, x, y, width, height);
+            case LUNA, AERO -> this.renderPaned(g, font, x, y, width, height);
+            case METRO -> this.renderTiles(g, font, x, y, width);
             case FLAT -> this.renderCards(g, font, x, y, width, height);
             default -> this.renderTips(g, font, x, y, width, height);
         }
@@ -247,6 +259,36 @@ public final class WelcomeApp implements IDesktopApp {
         this.card(g, font, x + PAD, top + cardH + 4, cardW, cardH, "network", this.networkLine());
         this.card(g, font, x + PAD + cardW + 4, top + cardH + 4, cardW, cardH, "files",
                 GameText.resolve(WelcomeTexts.FOLDERS_ON_DISK.with(this.facts.systemSlot())));
+    }
+
+    /**
+     * Frames 10's shape: its band in the accent with the greeting in white, and under it the doors as rows, each the
+     * program's tile (its white glyph on the accent) beside its name and what is true of this computer.
+     */
+    private void renderTiles(final GuiGraphics g, final Font font, final int x, final int y, final int w) {
+        final int white = 0xFF << 24 | 0xFFFFFF;
+        g.fill(x, y, x + w, y + BAND_H, this.skin.accent());
+        Draw.text(g, font, clip(font, GameText.resolve(WelcomeTexts.IS_READY.with(this.facts.machineName())),
+                w - PAD * 2), x + PAD, y + 5, white);
+        Texts.small(g, font, clip(font, GameText.resolve(WelcomeTexts.WHAT_IT_HAS), Texts.smallFits(w - PAD * 2)),
+                x + PAD, y + 17, white);
+        int ry = y + BAND_H + 4;
+        ry = this.tileRow(g, font, x + PAD, ry, w - PAD * 2, "this_pc", this.hardwareLine());
+        ry = this.tileRow(g, font, x + PAD, ry, w - PAD * 2, "command_prompt", this.softwareLine());
+        ry = this.tileRow(g, font, x + PAD, ry, w - PAD * 2, "network", this.networkLine());
+        this.tileRow(g, font, x + PAD, ry, w - PAD * 2, "files",
+                GameText.resolve(WelcomeTexts.FOLDERS_ON_DISK.with(this.facts.systemSlot())));
+    }
+
+    private int tileRow(final GuiGraphics g, final Font font, final int x, final int y, final int w,
+                        final String program, final String body) {
+        final int side = ProgramIcons.SIZE;
+        g.fill(x, y + 1, x + side, y + 1 + side, this.skin.accent());
+        ProgramIcons.draw(g, x, y + 1, side, side, ResourceLocation.fromNamespaceAndPath("jsc", program), TILE_LOOK);
+        Draw.text(g, font, clip(font, label(program), w - side - 4), x + side + 4, y, this.skin.text());
+        Texts.small(g, font, clip(font, body, Texts.smallFits(w - side - 4)), x + side + 4, y + 9, this.skin.dim());
+        this.doors.add(new Door(program, new int[]{x, y, w, TILE_ROW_H}));
+        return y + TILE_ROW_H;
     }
 
     /** The machine written out as a list of facts, which is the middle shape's way of saying it. */

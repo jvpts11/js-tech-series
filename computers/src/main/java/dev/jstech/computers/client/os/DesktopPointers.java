@@ -124,7 +124,8 @@ final class DesktopPointers {
         return switch (desktop.panelStyle()) {
             case FRAMES_95 -> FRAMES_95;
             case FRAMES_XP -> FRAMES_XP;
-            case FRAMES_11 -> AERO;
+            // The Aero pointers came with 7 and stayed through 10 and 11.
+            case FRAMES_7, FRAMES_10, FRAMES_11 -> AERO;
             case KDE -> period ? KDE2 : PLASMA;
             case GNOME -> period ? GNOME1 : GNOME;
             case CINNAMON -> CINNAMON;

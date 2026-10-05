@@ -106,7 +106,8 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
 
     /**
      * Whether the desktop up now is one of the Standard era's, where Soundfoundry is a streaming player rather than the
-     * one of the Legacy desktops: Frames 11 and the later Linux desktops, not their period forms.
+     * one of the Legacy desktops: Frames 10 and 11 and the later Linux desktops, not their period forms. Frames 7
+     * keeps the Legacy player, which was still what that age listened with.
      */
     static boolean onStandardDesktop() {
         final DesktopState desktop = DesktopScreen.current();
@@ -118,8 +119,8 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
             return false;
         }
         final PanelStyle style = desktop.panelStyle();
-        return style == PanelStyle.FRAMES_11 || style == PanelStyle.KDE || style == PanelStyle.GNOME
-                || style == PanelStyle.CINNAMON;
+        return style == PanelStyle.FRAMES_10 || style == PanelStyle.FRAMES_11 || style == PanelStyle.KDE
+                || style == PanelStyle.GNOME || style == PanelStyle.CINNAMON;
     }
 
     @Override

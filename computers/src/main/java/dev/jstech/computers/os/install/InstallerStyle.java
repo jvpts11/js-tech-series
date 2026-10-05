@@ -57,6 +57,18 @@ public enum InstallerStyle implements IStableName {
     /** A blue text phase that copies, then a graphical phase that asks while it works. */
     FRAMES_XP("frames_xp"),
 
+    /**
+     * A glass window over a ground of night blue: Install now, the table of disks, a checklist of five steps over
+     * the two phases of the whole install, and Set Up Frames for the machine's name.
+     */
+    FRAMES_7("frames_7"),
+
+    /**
+     * A white window with a thin blue border over the dark: Install now, the table of disks and the status of five
+     * steps; then the machine's name asked full-screen in blue, the way the first set-up asked it.
+     */
+    FRAMES_10("frames_10"),
+
     /** Pale cards, a table of disks, one question to a page. */
     FRAMES_11("frames_11"),
 
@@ -116,6 +128,28 @@ public enum InstallerStyle implements IStableName {
             "Where do you want to install %s?");
     private static final TextKey FRAMES_11_NAME = TextKey.of("jsc.install.installer_style.frames_11_name",
             "Name this PC");
+    private static final TextKey TITLE_INSTALL = TextKey.of("jsc.install.installer_style.title_install",
+            "Install %s");
+    private static final TextKey FRAMES_7_INSTALLING = TextKey.of("jsc.install.installer_style.frames_7_installing",
+            "Installing %s...");
+    private static final TextKey FRAMES_7_NAME = TextKey.of("jsc.install.installer_style.frames_7_name",
+            "Choose a name for your computer to distinguish it on the network.");
+    private static final TextKey FRAMES_10_NAME = TextKey.of("jsc.install.installer_style.frames_10_name",
+            "Who's going to use this PC?");
+    private static final TextKey STEP_COPYING_SYSTEM_FILES =
+            TextKey.of("jsc.install.installer_style.step_copying_system_files", "Copying %s files");
+    private static final TextKey STEP_EXPANDING_SYSTEM_FILES =
+            TextKey.of("jsc.install.installer_style.step_expanding_system_files", "Expanding %s files");
+    private static final TextKey STEP_GETTING_FILES_READY =
+            TextKey.of("jsc.install.installer_style.step_getting_files_ready", "Getting files ready for installation");
+    private static final TextKey STEP_INSTALLING_FEATURES =
+            TextKey.of("jsc.install.installer_style.step_installing_features", "Installing features");
+    private static final TextKey STEP_INSTALLING_UPDATES =
+            TextKey.of("jsc.install.installer_style.step_installing_updates", "Installing updates");
+    private static final TextKey STEP_COMPLETING_INSTALLATION =
+            TextKey.of("jsc.install.installer_style.step_completing_installation", "Completing installation");
+    private static final TextKey STEP_FINISHING_UP =
+            TextKey.of("jsc.install.installer_style.step_finishing_up", "Finishing up");
     private static final TextKey UBUNTU_DISK = TextKey.of("jsc.install.installer_style.ubuntu_disk",
             "Guided storage configuration");
     private static final TextKey UBUNTU_NAME = TextKey.of("jsc.install.installer_style.ubuntu_name",
@@ -297,6 +331,30 @@ public enum InstallerStyle implements IStableName {
                             INSTALLING_SYSTEM.with("Frames"), STEP_FINALIZING)),
                     new Stage(InstallerPage.DONE, InstallerChrome.SIDE_PANEL, List.of()));
             /*
+             * The five steps of the copy, and the machine's name asked after them, as Set Up Frames asked it
+             * once the copy had restarted the machine. The family's name in a step is its brand.
+             */
+            case FRAMES_7 -> List.of(
+                    new Stage(InstallerPage.WELCOME, InstallerChrome.GLASS, List.of()),
+                    new Stage(InstallerPage.DISK, InstallerChrome.GLASS, List.of()),
+                    new Stage(InstallerPage.COPY, InstallerChrome.GLASS, steps(
+                            STEP_COPYING_SYSTEM_FILES.with("Frames"), STEP_EXPANDING_SYSTEM_FILES.with("Frames"),
+                            STEP_INSTALLING_FEATURES, STEP_INSTALLING_UPDATES, STEP_COMPLETING_INSTALLATION)),
+                    new Stage(InstallerPage.NAME, InstallerChrome.GLASS, List.of()),
+                    new Stage(InstallerPage.DONE, InstallerChrome.GLASS, List.of()));
+            /*
+             * The setup window for the copy, then the first set-up in blue across the whole screen for the one
+             * question left, which is who uses the machine; here that is the name it answers to.
+             */
+            case FRAMES_10 -> List.of(
+                    new Stage(InstallerPage.WELCOME, InstallerChrome.METRO, List.of()),
+                    new Stage(InstallerPage.DISK, InstallerChrome.METRO, List.of()),
+                    new Stage(InstallerPage.COPY, InstallerChrome.METRO, steps(
+                            STEP_COPYING_SYSTEM_FILES.with("Frames"), STEP_GETTING_FILES_READY,
+                            STEP_INSTALLING_FEATURES, STEP_INSTALLING_UPDATES, STEP_FINISHING_UP)),
+                    new Stage(InstallerPage.NAME, InstallerChrome.FIRST_SETUP, List.of()),
+                    new Stage(InstallerPage.DONE, InstallerChrome.FIRST_SETUP, List.of()));
+            /*
              * The newest one opens on a word before it asks anything. It used to start on the disk table, so
              * the first thing a player saw was a question about erasing something, with nothing having said
              * what was about to happen.
@@ -387,6 +445,9 @@ public enum InstallerStyle implements IStableName {
             case UBUNTU, DEBIAN, FEDORA -> TITLE_INSTALLER.with(systemName);
             case BSD_INSTALL -> TITLE_BSD.with(systemName);
             case SYSTEM_V -> TITLE_SYSTEM_V.with(systemName);
+            // The family's name, not the edition's: that is what the window across the top said.
+            case FRAMES_7 -> TITLE_INSTALL.with("Frames");
+            case FRAMES_10 -> TITLE_SETUP.with("Frames");
             default -> TITLE_SETUP.with(systemName);
         };
     }
@@ -431,6 +492,20 @@ public enum InstallerStyle implements IStableName {
                 case DISK -> FRAMES_11_DISK.with(systemName);
                 case NAME -> FRAMES_11_NAME.text();
                 case COPY -> INSTALLING_SYSTEM.with(systemName);
+                default -> SETUP_FINISHED.text();
+            };
+            case FRAMES_7 -> switch (page) {
+                case WELCOME -> TITLE_INSTALL.with(systemName);
+                case DISK -> FRAMES_11_DISK.with("Frames");
+                case COPY -> FRAMES_7_INSTALLING.with("Frames");
+                case NAME -> FRAMES_7_NAME.text();
+                default -> SETUP_FINISHED.text();
+            };
+            case FRAMES_10 -> switch (page) {
+                case WELCOME -> TITLE_INSTALL.with(systemName);
+                case DISK -> FRAMES_11_DISK.with("Frames");
+                case COPY -> INSTALLING_SYSTEM.with("Frames");
+                case NAME -> FRAMES_10_NAME.text();
                 default -> SETUP_FINISHED.text();
             };
             case UBUNTU -> switch (page) {

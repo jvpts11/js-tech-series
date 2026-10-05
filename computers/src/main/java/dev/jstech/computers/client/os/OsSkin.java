@@ -36,6 +36,10 @@ import net.minecraft.resources.ResourceLocation;
  *   <li>{@link Form#BEVEL} (Frames 95): raised/sunken 3D bevels, a navy title, grey chrome, square.</li>
  *   <li>{@link Form#LUNA} (Frames XP): blue gradients, white title text, green active tab; only the TOP
  *       window corners are rounded (XP kept square bottom corners).</li>
+ *   <li>{@link Form#AERO} (Frames 7): a frame and title of tinted glass the desktop shows through, the title on a
+ *       white glow, a red close button, the top corners rounded.</li>
+ *   <li>{@link Form#METRO} (Frames 10): square, a white window with a thin accent border, caption buttons with no
+ *       face until hovered, flat grey push buttons.</li>
  *   <li>{@link Form#FLAT} (Frames 11 and the modern Linux desktops): light chrome with DARK title text, flat
  *       fills, a thin accent line, all four window corners gently rounded.</li>
  * </ul>
@@ -53,7 +57,12 @@ public final class OsSkin implements ISkin {
      * a form of their own rather than a recolour.
      */
     public enum Form {
-        BEVEL, LUNA, FLAT,
+        BEVEL, LUNA,
+        /** Frames 7: glass frames over the desktop, rounded at the top. */
+        AERO,
+        /** Frames 10: square, white, a thin accent border. */
+        METRO,
+        FLAT,
         /** KDE of the early 2000s: vertical title gradient, single-pixel borders, soft greys. */
         KDE2,
         /** GNOME of the late 1990s: thick frame, centred title, warm greys, chunky bevelled studs. */
@@ -88,6 +97,24 @@ public final class OsSkin implements ISkin {
             Palettes.declare(JsComputers.MODID, "skin/frames_xp", new SkinColours(
                     0xFFFFFFFF, 0xFFECECF6, 0xFF0831D9, 0xFF2C66BD, 0xFF10203A, 0xFF5A6B85, 0xFFFFFFFF,
                     0xFF2C66BD, 0xFFFFFFFF, 0xFFD8E4FB)));
+
+    // Frames 7: glass frames with black titles on a white glow, a pale dialog face; the top corners rounded.
+    static final OsSkin FRAMES_7 = new OsSkin(AeroChrome.INSTANCE, 3, 0, false, "frames_7",
+            Palettes.declare(JsComputers.MODID, "skin/frames_7", new SkinColours(
+                    0xFF000000, 0xFFF0F0F0, 0xFF283C5A, 0xFF3399FF, 0xFF000000, 0xFF6B6B6B, 0xFFFFFFFF,
+                    0xFFCCE8FF, 0xFF000000, 0xFFE5F3FB)));
+
+    // Frames 10: white square windows with a thin accent border and black titles; nothing rounded.
+    static final OsSkin FRAMES_10 = new OsSkin(MetroChrome.LIGHT, 0, 0, false, "frames_10",
+            Palettes.declare(JsComputers.MODID, "skin/frames_10", new SkinColours(
+                    0xFF000000, 0xFFFFFFFF, 0xFF1883D7, 0xFF0078D7, 0xFF000000, 0xFF6D6D6D, 0xFFFFFFFF,
+                    0xFFCCE8FF, 0xFF000000, 0xFFE5F3FF)));
+
+    /* Frames 10 (dark): the same square form on the near black of its dark mode, chosen in Settings. */
+    private static final OsSkin FRAMES_10_DARK = new OsSkin(MetroChrome.DARK, 0, 0, false, "frames_10",
+            Palettes.declare(JsComputers.MODID, "skin/frames_10_dark", new SkinColours(
+                    0xFFFFFFFF, 0xFF2B2B2B, 0xFF3A3A3A, 0xFF2D8FE2, 0xFFFFFFFF, 0xFFA6A6A6, 0xFF1F1F1F,
+                    0xFF0063B1, 0xFFFFFFFF, 0xFF3A3A3A)));
 
     // Frames 11: flat light chrome with DARK title text and a thin accent; all corners rounded.
     static final OsSkin FRAMES_11 = new OsSkin(FlatChrome.LIGHT, 2, 2, false, "frames_11",
@@ -205,11 +232,31 @@ public final class OsSkin implements ISkin {
     }
 
     /**
-     * The dark-theme counterpart of this skin, or {@code this} when the skin has no dark variant. Only the flat
-     * Frames 11 skin defines one; the earlier editions have no historical dark mode, so they are returned as-is.
+     * The dark-theme counterpart of this skin, or {@code this} when the skin has no dark variant. Frames 10 and the
+     * flat Frames 11 define one each; the earlier editions have no historical dark mode, so they are returned as-is.
      */
     public OsSkin darkVariant() {
-        return form() == Form.FLAT ? FRAMES_11_DARK : this;
+        return switch (form()) {
+            case METRO -> FRAMES_10_DARK;
+            case FLAT -> FRAMES_11_DARK;
+            default -> this;
+        };
+    }
+
+    /**
+     * Whether this skin draws in one of the two flat forms, Frames 10's square one or the rounded one of Frames 11
+     * and the modern Linux desktops: what a control asks when it only has to know whether to draw relief.
+     */
+    public boolean flatForm() {
+        return form() == Form.FLAT || form() == Form.METRO;
+    }
+
+    /**
+     * Whether this skin is one of the two glossy Frames forms, XP's Luna or 7's glass, which fill a bar in green and
+     * mark the tab in front with colour rather than a line.
+     */
+    public boolean glossForm() {
+        return form() == Form.LUNA || form() == Form.AERO;
     }
 
     /** Whether this is the dark-theme variant. */
@@ -252,10 +299,10 @@ public final class OsSkin implements ISkin {
         return accentOverride != 0 ? accentOverride : colours.get().accent();
     }
 
-    /** Frames XP's bars fill green whatever its accent; every other look fills them with its accent. */
+    /** Frames XP's and Frames 7's bars fill green whatever their accent; every other look fills with its accent. */
     @Override
     public int progressFill() {
-        return form() == Form.LUNA ? DesktopShellPalette.get().lunaProgress() : accent();
+        return glossForm() ? DesktopShellPalette.get().lunaProgress() : accent();
     }
 
     @Override
@@ -323,6 +370,20 @@ public final class OsSkin implements ISkin {
     @Override
     public void windowFrame(final GuiGraphics g, final int x, final int y, final int w, final int h) {
         chrome.windowFrame(g, this, x, y, w, h);
+    }
+
+    /**
+     * The same for a window with a title bar {@code titleH} tall over content kept {@code inset} in from its edges,
+     * which a glass frame leaves see-through. The title bar is drawn over it afterwards.
+     */
+    public void windowFrame(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                            final int titleH, final int inset) {
+        chrome.windowFrame(g, this, x, y, w, h, titleH, inset);
+    }
+
+    /** Whatever this skin lays behind a title's words before they are written: a glow on glass, else nothing. */
+    public void titleGlow(final GuiGraphics g, final int x, final int y, final int textW) {
+        chrome.titleGlow(g, x, y, textW);
     }
 
     /** The title bar fill (solid navy / Luna gradient / flat light), rounding only the top corners. */

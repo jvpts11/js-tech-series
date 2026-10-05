@@ -23,6 +23,7 @@ public final class ClientTestSuite {
     private static final List<Class<?>> CLASSES = List.of(
             AudioClientTests.class,
             AutomationManagerClientTests.class,
+            BootSplashClientTests.class,
             SoundMixerClientTests.class,
             MachineSoundClientTests.class,
             MainframeClientTests.class,
@@ -44,6 +45,7 @@ public final class ClientTestSuite {
             DeviceIconClientTests.class,
             ExposureClientTests.class,
             FilesSyncClientTests.class,
+            FramesSevenTenClientTests.class,
             FreeBsdClientTests.class,
             FullJourneyClientTests.class,
             GatewayManagerClientTests.class,

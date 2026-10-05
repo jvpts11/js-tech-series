@@ -23,7 +23,13 @@ final class CopyTexts {
     static final TextKey SECONDS_REMAINING = TextKey.of("jsc.copy.seconds_remaining", "%s Seconds Remaining");
     static final TextKey CANCEL = TextKey.of("jsc.copy.cancel", "Cancel");
 
-    // Frames 11.
+    // Frames 7.
+    static final TextKey COPYING_ITEMS_SIZE = TextKey.of("jsc.copy.copying_items_size", "Copying %s items (%s MB)");
+    static final TextKey ABOUT_SECONDS_REMAINING = TextKey.of("jsc.copy.about_seconds_remaining",
+            "About %s seconds remaining");
+    static final TextKey MORE_DETAILS = TextKey.of("jsc.copy.more_details", "More details");
+
+    // Frames 11 (and 10, whose window it kept).
     static final TextKey PERCENT_COMPLETE = TextKey.of("jsc.copy.percent_complete", "%s%% complete");
     static final TextKey PAUSED_PERCENT = TextKey.of("jsc.copy.paused_percent", "Paused - %s%% complete");
     static final TextKey COPYING_ITEMS = TextKey.of("jsc.copy.copying_items", "Copying %s items from %s to %s");

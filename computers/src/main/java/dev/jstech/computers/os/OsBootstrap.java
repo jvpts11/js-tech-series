@@ -60,7 +60,7 @@ public final class OsBootstrap {
 
     /**
      * The built-in kernels. A static list (built eagerly) so both the runtime registration and datagen read
-     * from one source. dos = MS-DOS 2.0+ (real directories); win9x = cooperative; nt = preemptive (XP + 11);
+     * from one source. dos = MS-DOS 2.0+ (real directories); win9x = cooperative; nt = preemptive (XP to 11);
      * net_min = the minimal network kernel with no scheduler or filesystem.
      */
     private static final List<KernelDef> BUILTIN_KERNELS = List.of(
@@ -98,14 +98,15 @@ public final class OsBootstrap {
     /*
      * A system's size is in megabytes, the way its box would print it; what it costs in items depends on the
      * disk it lands on (1 MB an item at 16 bits, 16 MB at 32, 256 MB at 64). MC-DOS fills a fifth of a
-     * 20 MB vintage drive; Frames 11 is 80 items of a standard disk and will not fit a vintage one at all.
+     * 20 MB vintage drive; Frames 11 is 80 items of a 64-bit disk and will not fit a vintage one at all.
      */
     private static final List<OsDef> BUILTIN_OSES = List.of(
             /*
              * MC-DOS: terminal-only CLI shell from the Vintage era.
              * Each system also says the RAM it holds for itself while running (withRam): a fifth of a
              * vintage machine's few megabytes for the DOS family, most of a small Legacy machine for XP,
-             * a good part of a gigabyte for Frames 11. Its bundled programs weigh a quarter of that each.
+             * more with each Frames after it, up to a good part of a gigabyte for Frames 11. Its bundled programs
+             * weigh a quarter of that each.
              */
             OsDef.mediaInstalled(rl("mc_dos"), OsCapability.TERMINAL_ONLY, HardwareEra.VINTAGE, rl("dos"), 4,
                     Platform.MC_DOS, "MC-DOS", Optional.empty(), SoftwareHouse.MIDSOFT).withRam(1)
@@ -117,7 +118,9 @@ public final class OsBootstrap {
             /*
              * The Frames editions bundle their own desktop environment (the id doubles as the DE id), and they
              * are the one family here with an order to it: each says where it sits (withRank), so a program can
-             * ask for XP or newer without anything but these three lines knowing which is newer than which.
+             * ask for XP or newer without anything but these lines knowing which is newer than which. Each comes
+             * from the age it was made for: 95 and XP from Legacy, 7 from Transition, 10 from Standard and 11 from
+             * Advanced, and each runs on every machine after its own.
              */
             OsDef.mediaInstalled(rl("frames_95"), OsCapability.FULL_DESKTOP, HardwareEra.LEGACY, rl("win9x"), 48,
                     Platform.FRAMES, "Frames 95", Optional.of(rl("frames_95")), SoftwareHouse.MIDSOFT).withRam(16)
@@ -125,9 +128,15 @@ public final class OsBootstrap {
             OsDef.mediaInstalled(rl("frames_xp"), OsCapability.FULL_DESKTOP, HardwareEra.LEGACY, rl("nt"), 1_536,
                     Platform.FRAMES, "Frames XP", Optional.of(rl("frames_xp")), SoftwareHouse.MIDSOFT).withRam(64)
                     .withInstaller(InstallerStyle.FRAMES_XP).withRank(2),
-            OsDef.mediaInstalled(rl("frames_11"), OsCapability.FULL_DESKTOP, HardwareEra.STANDARD, rl("nt"), 20_480,
+            OsDef.mediaInstalled(rl("frames_7"), OsCapability.FULL_DESKTOP, HardwareEra.TRANSITION, rl("nt"),
+                    16_384, Platform.FRAMES, "Frames 7", Optional.of(rl("frames_7")), SoftwareHouse.MIDSOFT)
+                    .withRam(384).withInstaller(InstallerStyle.FRAMES_7).withRank(3),
+            OsDef.mediaInstalled(rl("frames_10"), OsCapability.FULL_DESKTOP, HardwareEra.STANDARD, rl("nt"),
+                    16_384, Platform.FRAMES, "Frames 10", Optional.of(rl("frames_10")), SoftwareHouse.MIDSOFT)
+                    .withRam(512).withInstaller(InstallerStyle.FRAMES_10).withRank(4),
+            OsDef.mediaInstalled(rl("frames_11"), OsCapability.FULL_DESKTOP, HardwareEra.ADVANCED, rl("nt"), 20_480,
                     Platform.FRAMES, "Frames 11", Optional.of(rl("frames_11")), SoftwareHouse.MIDSOFT).withRam(768)
-                    .withInstaller(InstallerStyle.FRAMES_11).withRank(3),
+                    .withInstaller(InstallerStyle.FRAMES_11).withRank(5),
 
             /*
              * Linux distributions: all on the Linux kernel, all boot to a bash TTY until a desktop environment
@@ -251,6 +260,13 @@ public final class OsBootstrap {
                     Map.of(rl("device_manager"), DesktopNames.FRAMES_95_SYSTEM), SoftwareHouse.MIDSOFT),
             new DesktopEnvironmentDef(rl("frames_xp"), "Frames XP", PanelStyle.FRAMES_XP, FRAMES_APPS, Map.of(),
                     SoftwareHouse.MIDSOFT),
+            // Frames 7 calls the machine Computer, and keeps its settings in a Control Panel of categories.
+            new DesktopEnvironmentDef(rl("frames_7"), "Frames 7", PanelStyle.FRAMES_7, FRAMES_APPS, Map.of(
+                    rl("this_pc"), DesktopNames.FRAMES_7_COMPUTER, rl("settings"), DesktopNames.FRAMES_7_CONTROL_PANEL),
+                    SoftwareHouse.MIDSOFT),
+            // Frames 10 named its file manager after what it explores, and the machine This PC, as 11 still does.
+            new DesktopEnvironmentDef(rl("frames_10"), "Frames 10", PanelStyle.FRAMES_10, FRAMES_APPS, Map.of(
+                    rl("files"), DesktopNames.FRAMES_10_FILE_EXPLORER), SoftwareHouse.MIDSOFT),
             new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, FRAMES_APPS, Map.of(),
                     SoftwareHouse.MIDSOFT),
             new DesktopEnvironmentDef(rl("kde_plasma"), "KDE Plasma", PanelStyle.KDE, BUILTIN_APPS, Map.of(

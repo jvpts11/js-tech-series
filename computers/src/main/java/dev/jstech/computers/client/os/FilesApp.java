@@ -108,10 +108,12 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final double SLOW_ANSWER_MS = 250.0;
     /**
      * The explorer's own colours, {@code jsc:app/files}: the folder a drop would land in, the band a drag selects
-     * with, what dims the window behind Properties, and the label that follows a dragged row with its words.
+     * with, what dims the window behind Properties, the label that follows a dragged row with its words, and the
+     * pale band of Frames 7's command bar, top to foot.
      */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/files",
-            new Colours(0xFF2E8B2E, 0x334C84F0, 0xCC4C84F0, 0x40000000, 0xD0303848, 0xFFFFFFFF));
+            new Colours(0xFF2E8B2E, 0x334C84F0, 0xCC4C84F0, 0x40000000, 0xD0303848, 0xFFFFFFFF, 0xFFF5F9FD,
+                    0xFFDDE7F3));
 
     private OsSkin skin = OsSkin.fallback();
 
@@ -221,6 +223,18 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private final Label[] propertyKeys = new Label[PROPERTY_ROWS];
     private final Label[] propertyValues = new Label[PROPERTY_ROWS];
     private final Button propertiesClose;
+    /** Frames 7's command bar under the address row: Organize, then what the selection or the folder can do. */
+    private final Button organizeButton;
+    private final Button openButton;
+    private final Button newFolderButton;
+    /** Frames 10's ribbon: the tab dropped down over the window, or null, and the commands it holds. */
+    @Nullable
+    private TextKey ribbonTab;
+    private final Panel ribbonBody = new Panel();
+    private List<RibbonGroup> ribbonGroups = List.of();
+    private final List<Button> ribbonButtons = new ArrayList<>();
+    /** The ribbon's tabs as last drawn, which a click is read against. */
+    private final List<RibbonTabSpan> ribbonTabs = new ArrayList<>();
 
     /*
      * The content rectangle and cursor of the last render: the components are laid out in it, and the
@@ -247,6 +261,18 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** One entry of the drive tree: a section title, a quick-access shortcut, or a volume. */
     private record TreeItem(String label, String target, boolean section, boolean removable, int volumeIndex) {
+    }
+
+    /** A command on the ribbon: what it says, whether it can run now, whether it is the state now, what it does. */
+    private record RibbonCommand(TextKey label, boolean enabled, boolean on, Runnable action) {
+    }
+
+    /** A group of the ribbon's commands with the caption under it. */
+    private record RibbonGroup(TextKey caption, List<RibbonCommand> commands) {
+    }
+
+    /** A ribbon tab as drawn: its name and its left and right edges, in the window's coordinates. */
+    private record RibbonTabSpan(TextKey label, int left, int right) {
     }
 
     /** A text field for a file or volume name: a path separator cannot be typed into it. */
@@ -303,6 +329,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             applyFilterAndSort();
         });
         viewButton = root.add(new Button(() -> iconView ? "=" : "#", this::toggleView));
+        organizeButton = root.add(new Button(GameText.resolve(FilesTexts.ORGANIZE), this::openOrganize));
+        openButton = root.add(new Button(this::openLabel, this::openSelected));
+        newFolderButton = root.add(new Button(GameText.resolve(FilesTexts.NEW_FOLDER_COMMAND), this::newFolder));
 
         treeList = root.add(new ListView<TreeItem>(this::tree, FilesLayout.ROW_H, this::renderTreeRow)
                 .setPadding(1, 2)
@@ -898,16 +927,27 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         lastMouseY = mouseY;
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
-        layout(x, y, width, height);
+        final FilesLayout.Bar bar = bar();
+        layout(x, y, width, height, font);
 
         // The surfaces the components sit on: the toolbar rule, the tree rail, the list well, the status bar.
-        g.fill(x, y + FilesLayout.TOOL_H, x + width, y + FilesLayout.TOOL_H + 1, skin.edge());
+        final int toolBottom = y + FilesLayout.toolY(bar) + FilesLayout.TOOL_H;
+        g.fill(x, toolBottom, x + width, toolBottom + 1, skin.edge());
+        if (bar == FilesLayout.Bar.RIBBON) {
+            drawRibbonTabs(g, font, x, y, width, mouseX, mouseY);
+        } else if (bar == FilesLayout.Bar.COMMAND) {
+            // Frames 7's command bar: a pale band under the address row, its own rule under it.
+            final int cb = toolBottom + FilesLayout.COMMAND_H;
+            g.fillGradient(x, toolBottom + 1, x + width, cb - 1, PALETTE.get().commandTop(),
+                    PALETTE.get().commandBottom());
+            g.fill(x, cb - 1, x + width, cb, skin.edge());
+        }
         g.fill(treeList.x(), treeList.y(), treeList.right(), treeList.bottom(), skin.listHover());
         g.fill(treeList.right() - 1, treeList.y(), treeList.right(), treeList.bottom(), skin.edge());
         final int lx = x + FilesLayout.listX();
         final int lw = FilesLayout.listW(width);
-        final int listY = y + FilesLayout.listY();
-        final int listH = FilesLayout.listH(height);
+        final int listY = y + FilesLayout.listY(bar);
+        final int listH = FilesLayout.listH(height, bar);
         g.fill(lx, listY, lx + lw, listY + listH, skin.panelBg());
         Draw.outline(g, lx, listY, lw, listH, skin.edge());
         skin.statusBar(g, x, y + FilesLayout.statusY(height), width, FilesLayout.STATUS_H);
@@ -930,7 +970,275 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             g.fill(gx, gy, gx + gw, gy + 11, PALETTE.get().ghost());
             Draw.text(g, font, label, gx + 3, gy + 2, PALETTE.get().ghostInk());
         }
+        if (ribbonTab != null) {
+            drawRibbonBody(g, ctx, x, y, width);
+        }
         context.render(g, ctx);
+    }
+
+    /** The bar this file manager wears besides its toolbar: Frames 7's command bar, Frames 10's ribbon, or none. */
+    private FilesLayout.Bar bar() {
+        return switch (skin.form()) {
+            case AERO -> FilesLayout.Bar.COMMAND;
+            case METRO -> FilesLayout.Bar.RIBBON;
+            default -> FilesLayout.Bar.NONE;
+        };
+    }
+
+    /**
+     * Frames 10's ribbon tabs over the address row, kept folded the way it came: File in the accent, then Home and
+     * View, the one dropped down drawn joined to its body. File is there only when it has something to offer.
+     */
+    private void drawRibbonTabs(final GuiGraphics g, final Font font, final int x, final int y, final int width,
+                                final int mouseX, final int mouseY) {
+        g.fill(x, y + FilesLayout.RIBBON_TABS_H - 1, x + width, y + FilesLayout.RIBBON_TABS_H, skin.edge());
+        ribbonTabs.clear();
+        int tx = x + 2;
+        for (final TextKey tab : visibleRibbonTabs()) {
+            final String label = GameText.resolve(tab);
+            final int w = font.width(label) + 12;
+            final boolean file = tab == FilesTexts.FILE_TAB;
+            final boolean open = tab == ribbonTab;
+            final boolean over = mouseX >= tx && mouseX < tx + w && mouseY >= y
+                    && mouseY < y + FilesLayout.RIBBON_TABS_H;
+            if (file) {
+                g.fill(tx, y, tx + w, y + FilesLayout.RIBBON_TABS_H - 1, skin.accent());
+            } else if (open) {
+                g.fill(tx, y + 1, tx + w, y + FilesLayout.RIBBON_TABS_H, skin.panelBg());
+                Draw.outline(g, tx, y + 1, w, FilesLayout.RIBBON_TABS_H, skin.edge());
+            } else if (over) {
+                g.fill(tx, y + 1, tx + w, y + FilesLayout.RIBBON_TABS_H - 1, skin.listHover());
+            }
+            Draw.text(g, font, label, tx + 6, y + 2, file ? PALETTE.get().ghostInk() : skin.text());
+            ribbonTabs.add(new RibbonTabSpan(tab, tx, tx + w));
+            tx += w;
+        }
+    }
+
+    /** The tabs the ribbon shows: File only on a machine with a terminal for it to open, then Home and View. */
+    private List<TextKey> visibleRibbonTabs() {
+        return DesktopScreen.terminalName().isEmpty() ? List.of(FilesTexts.HOME_TAB, FilesTexts.VIEW_TAB)
+                : List.of(FilesTexts.FILE_TAB, FilesTexts.HOME_TAB, FilesTexts.VIEW_TAB);
+    }
+
+    /** The dropped-down tab: its commands in their groups, a caption under each and a rule between them. */
+    private void drawRibbonBody(final GuiGraphics g, final UiContext ctx, final int x, final int y, final int width) {
+        final int top = y + FilesLayout.ribbonBodyY();
+        final int bottom = top + FilesLayout.RIBBON_BODY_H;
+        g.fill(x, top, x + width, bottom, skin.panelBg());
+        g.fill(x, bottom, x + width, bottom + 1, skin.edge());
+        ribbonBody.render(g, ctx);
+        int index = 0;
+        for (final RibbonGroup group : ribbonGroups) {
+            int gx = Integer.MAX_VALUE;
+            int right = 0;
+            for (int i = 0; i < group.commands().size(); i++) {
+                final Button button = ribbonButtons.get(index++);
+                gx = Math.min(gx, button.x());
+                right = Math.max(right, button.right());
+            }
+            final String caption = GameText.resolve(group.caption());
+            final int captionW = Texts.smallWidth(ctx.font(), caption);
+            final int gw = Math.max(right - gx, captionW);
+            Texts.small(g, ctx.font(), caption, gx + (gw - captionW) / 2, bottom - FilesLayout.RIBBON_CAPTION_H,
+                    skin.dim());
+            g.fill(gx + gw + 3, top + 3, gx + gw + 4, bottom - 3, skin.edge());
+        }
+    }
+
+    /**
+     * Places the dropped-down tab's commands: each group's in columns of two, stacked the way the ribbon stacked its
+     * small commands, each column as wide as its longest words, a group at least as wide as its caption.
+     */
+    private void layoutRibbonBody(final Font font, final int x, final int y) {
+        int bx = x + 4;
+        final int top = y + FilesLayout.ribbonBodyY() + 3;
+        int index = 0;
+        for (final RibbonGroup group : ribbonGroups) {
+            final int start = bx;
+            final List<RibbonCommand> commands = group.commands();
+            for (int column = 0; column * 2 < commands.size(); column++) {
+                final int first = column * 2;
+                final int last = Math.min(commands.size(), first + 2);
+                int columnW = 0;
+                for (int i = first; i < last; i++) {
+                    columnW = Math.max(columnW, Texts.smallWidth(font, GameText.resolve(commands.get(i).label())) + 6);
+                }
+                for (int i = first; i < last; i++) {
+                    ribbonButtons.get(index++).setBounds(bx, top + (i - first) * (FilesLayout.RIBBON_BUTTON_H + 1),
+                            columnW, FilesLayout.RIBBON_BUTTON_H);
+                }
+                bx += columnW + 1;
+            }
+            bx = Math.max(bx, start + Texts.smallWidth(font, GameText.resolve(group.caption()))) + 8;
+        }
+    }
+
+    /** Drops a tab down, or folds it back up when it is the one already down. */
+    private void toggleRibbonTab(final TextKey tab) {
+        if (tab == FilesTexts.FILE_TAB) {
+            closeRibbon();
+            final RibbonTabSpan span = ribbonSpan(tab);
+            openContext(List.of(new ContextMenu.Item(GameText.resolve(FilesTexts.OPEN_IN.with(
+                    DesktopScreen.terminalName())), true, this::openInTerminal)),
+                    span == null ? lastX + 2 : span.left(), lastY + FilesLayout.RIBBON_TABS_H);
+            return;
+        }
+        if (tab == ribbonTab) {
+            closeRibbon();
+            return;
+        }
+        ribbonTab = tab;
+        ribbonGroups = ribbonGroupsFor(tab);
+        ribbonBody.clear();
+        ribbonButtons.clear();
+        for (final RibbonGroup group : ribbonGroups) {
+            for (final RibbonCommand command : group.commands()) {
+                final Button button = new Button(GameText.resolve(command.label()), () -> {
+                    closeRibbon();
+                    command.action().run();
+                }).setPrimary(command.on()).setLabelScale(Texts.SMALL);
+                button.setEnabled(command.enabled());
+                ribbonButtons.add(ribbonBody.add(button));
+            }
+        }
+    }
+
+    private void closeRibbon() {
+        ribbonTab = null;
+        ribbonGroups = List.of();
+        ribbonBody.clear();
+        ribbonButtons.clear();
+    }
+
+    @Nullable
+    private RibbonTabSpan ribbonSpan(final TextKey tab) {
+        for (final RibbonTabSpan span : ribbonTabs) {
+            if (span.label() == tab) {
+                return span;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * What a tab holds, read from the selection and the folder when it drops down. Home: the clipboard, organizing,
+     * a new folder and opening. View: the two layouts this explorer draws, the one in use lit.
+     */
+    private List<RibbonGroup> ribbonGroupsFor(final TextKey tab) {
+        if (tab == FilesTexts.VIEW_TAB) {
+            return List.of(new RibbonGroup(FilesTexts.LAYOUT, List.of(
+                    new RibbonCommand(FilesTexts.LARGE_ICONS, true, iconView, () -> showIcons(true)),
+                    new RibbonCommand(FilesTexts.DETAILS, true, !iconView, () -> showIcons(false)))));
+        }
+        final Row sel = selectedFileRow();
+        final boolean ro = readOnlyVolume();
+        final boolean locked = sel != null && sel.file() != null && sel.file().readOnly();
+        final boolean editable = sel != null && !ro && !locked;
+        return List.of(
+                new RibbonGroup(FilesTexts.CLIPBOARD, List.of(
+                        new RibbonCommand(FilesTexts.CUT, editable, false, () -> cut(sel)),
+                        new RibbonCommand(FilesTexts.COPY, sel != null && !locked, false, () -> copy(sel)),
+                        new RibbonCommand(FilesTexts.PASTE, !clipboard.isEmpty() && !ro, false, this::paste))),
+                new RibbonGroup(FilesTexts.ORGANIZE, List.of(
+                        new RibbonCommand(FilesTexts.DELETE, editable, false, this::deleteSelected),
+                        new RibbonCommand(FilesTexts.RENAME, editable, false, () -> startRenameAt(selected)))),
+                new RibbonGroup(FilesTexts.NEW, List.of(
+                        new RibbonCommand(FilesTexts.NEW_FOLDER_COMMAND, !ro, false, this::newFolder))),
+                new RibbonGroup(FilesTexts.OPEN, List.of(
+                        new RibbonCommand(sel != null && opensAsProgram(sel) ? FilesTexts.RUN : FilesTexts.OPEN,
+                                sel != null, false, () -> open(sel)),
+                        new RibbonCommand(FilesTexts.PROPERTIES, sel != null, false, () -> openProperties(sel)))));
+    }
+
+    /** The selected row when it is a file or a folder, or null. */
+    @Nullable
+    private Row selectedFileRow() {
+        return selected >= 0 && selected < rows.size() && rows.get(selected).file() != null ? rows.get(selected)
+                : null;
+    }
+
+    private boolean opensAsProgram(final Row r) {
+        return isSetup(r) || r.kind() == Kind.FILE && r.file() != null && isProgram(r.file());
+    }
+
+    private void showIcons(final boolean icons) {
+        if (iconView != icons) {
+            toggleView();
+        }
+    }
+
+    /** Deletes what is selected, the sweep included, the way the right-button menu's Delete does. */
+    private void deleteSelected() {
+        ctxRow = selected;
+        deleteContextRow();
+    }
+
+    /** Frames 7's Organize: the selection's own menu, or the folder's with nothing selected, under the button. */
+    private void openOrganize() {
+        final Row sel = selectedFileRow();
+        ctxRow = sel == null ? -1 : selected;
+        openContext(buildContext(sel), organizeButton.x(), organizeButton.bottom());
+    }
+
+    /** What the command bar's Open says: Run on a setup or a program. */
+    private String openLabel() {
+        final Row sel = selectedFileRow();
+        return GameText.resolve(sel != null && opensAsProgram(sel) ? FilesTexts.RUN : FilesTexts.OPEN);
+    }
+
+    private void openSelected() {
+        final Row sel = selectedFileRow();
+        if (sel != null) {
+            open(sel);
+        }
+    }
+
+    /** Whether Frames 7's command bar is shown, for a test. */
+    public boolean commandBarShown() {
+        return organizeButton.visible();
+    }
+
+    /** The middle of the command bar's Organize, Open or New folder, by what it says, or null. */
+    @Nullable
+    public int[] commandPoint(final String label) {
+        for (final Button button : List.of(organizeButton, openButton, newFolderButton)) {
+            if (button.visible() && button.label().equals(label)) {
+                return new int[] {button.x() + button.width() / 2, button.y() + button.height() / 2};
+            }
+        }
+        return null;
+    }
+
+    /** The middle of the ribbon tab of that name, or null when the ribbon has none such. */
+    @Nullable
+    public int[] ribbonTabPoint(final String label) {
+        for (final RibbonTabSpan span : ribbonTabs) {
+            if (GameText.resolve(span.label()).equals(label)) {
+                return new int[] {(span.left() + span.right()) / 2, lastY + FilesLayout.RIBBON_TABS_H / 2};
+            }
+        }
+        return null;
+    }
+
+    /** What the dropped-down tab offers, or nothing when every tab is folded. */
+    public List<String> ribbonLabels() {
+        final List<String> out = new ArrayList<>();
+        for (final Button button : ribbonButtons) {
+            out.add(button.label());
+        }
+        return out;
+    }
+
+    /** The middle of the dropped-down tab's command of that name, or null. */
+    @Nullable
+    public int[] ribbonCommandPoint(final String label) {
+        for (final Button button : ribbonButtons) {
+            if (button.label().equals(label)) {
+                return new int[] {button.x() + button.width() / 2, button.y() + button.height() / 2};
+            }
+        }
+        return null;
     }
 
     /**
@@ -966,8 +1274,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     }
 
     /** Places every component from the content rectangle; the same layout the next click is read against. */
-    private void layout(final int x, final int y, final int width, final int height) {
-        final int ny = y + FilesLayout.navY();
+    private void layout(final int x, final int y, final int width, final int height, final Font font) {
+        final FilesLayout.Bar bar = bar();
+        final int ny = y + FilesLayout.navY(bar);
         backButton.setBounds(x + FilesLayout.navX(0), ny, FilesLayout.NAV_W, FilesLayout.NAV_H);
         backButton.setEnabled(!back.isEmpty());
         forwardButton.setBounds(x + FilesLayout.navX(1), ny, FilesLayout.NAV_W, FilesLayout.NAV_H);
@@ -980,17 +1289,21 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
                 FilesLayout.NAV_H);
         search.setBounds(x + FilesLayout.searchX(width, throbber), ny, FilesLayout.SEARCH_W, FilesLayout.NAV_H);
         viewButton.setBounds(x + FilesLayout.viewX(width, throbber), ny, FilesLayout.NAV_W, FilesLayout.NAV_H);
+        layoutCommandBar(x, y, font, bar);
+        if (ribbonTab != null) {
+            layoutRibbonBody(font, x, y);
+        }
 
-        treeList.setBounds(x, y + FilesLayout.treeY(), FilesLayout.TREE_W, FilesLayout.treeH(height));
+        treeList.setBounds(x, y + FilesLayout.treeY(bar), FilesLayout.TREE_W, FilesLayout.treeH(height, bar));
 
         final int lx = x + FilesLayout.listX();
         final int lw = FilesLayout.listW(width);
-        columns.setBounds(lx, y + FilesLayout.colsY(), lw, FilesLayout.COLS_H);
+        columns.setBounds(lx, y + FilesLayout.colsY(bar), lw, FilesLayout.COLS_H);
         columns.setColumnX(lx + 4 + FilesLayout.ICON_W + 3, x + FilesLayout.typeColX(width, typeColW, sizeColW),
                 x + FilesLayout.sizeColX(width, sizeColW));
 
-        final int listY = y + FilesLayout.listY();
-        final int listH = FilesLayout.listH(height);
+        final int listY = y + FilesLayout.listY(bar);
+        final int listH = FilesLayout.listH(height, bar);
         fileList.setBounds(lx, listY, lw, listH);
         fileList.setVisible(!iconView);
         final int cols = Math.max(1, (lw - 4) / ICON_CELL_W);
@@ -1004,6 +1317,31 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         final int sy = y + FilesLayout.statusY(height) + 2;
         statusLeft.setBounds(x + 3, sy, width / 2 - 3, 8);
         statusRight.setBounds(x + width / 2, sy, width / 2 - 3, 8);
+    }
+
+    /**
+     * Frames 7's command bar: Organize first, then Open while a file or folder is selected, then New folder, each as
+     * wide as its words. Hidden on every other system.
+     */
+    private void layoutCommandBar(final int x, final int y, final Font font, final FilesLayout.Bar bar) {
+        final boolean command = bar == FilesLayout.Bar.COMMAND;
+        organizeButton.setVisible(command);
+        openButton.setVisible(command && selectedFileRow() != null);
+        newFolderButton.setVisible(command);
+        if (!command) {
+            return;
+        }
+        final int cy = y + FilesLayout.commandY(bar);
+        int cx = x + 3;
+        for (final Button button : List.of(organizeButton, openButton, newFolderButton)) {
+            if (!button.visible()) {
+                continue;
+            }
+            final int w = font.width(button.label()) + 10;
+            button.setBounds(cx, cy, w, FilesLayout.COMMAND_BUTTON_H);
+            cx += w + 2;
+        }
+        newFolderButton.setEnabled(!readOnlyVolume());
     }
 
     /** Puts the inline rename fields over the rows they edit, hidden while their row is out of view. */
@@ -1218,6 +1556,30 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             properties.mouseClicked(mouseX, mouseY, button);
             return;
         }
+        /*
+         * The ribbon: a click on a tab drops it down or folds it; a click on the dropped-down body is its commands'
+         * alone; a click anywhere else folds it and goes on to whatever it landed on, as the folded ribbon behaved.
+         */
+        if (bar() == FilesLayout.Bar.RIBBON) {
+            if (mouseY >= lastY && mouseY < lastY + FilesLayout.RIBBON_TABS_H) {
+                for (final RibbonTabSpan span : ribbonTabs) {
+                    if (mouseX >= span.left() && mouseX < span.right() && button == 0) {
+                        toggleRibbonTab(span.label());
+                        return;
+                    }
+                }
+                closeRibbon();
+                return;
+            }
+            if (ribbonTab != null) {
+                final int top = lastY + FilesLayout.ribbonBodyY();
+                if (mouseY >= top && mouseY < top + FilesLayout.RIBBON_BODY_H) {
+                    ribbonBody.mouseClicked(mouseX, mouseY, button);
+                    return;
+                }
+                closeRibbon();
+            }
+        }
         clickX = mouseX;
         clickY = mouseY;
         /*
@@ -1238,7 +1600,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** Whether the point is in the list's well: the area the rows or the tiles are shown in. */
     private boolean inListWell(final double mx, final double my) {
-        return mx >= lastX + FilesLayout.listX() && my >= lastY + FilesLayout.listY()
+        return mx >= lastX + FilesLayout.listX() && my >= lastY + FilesLayout.listY(bar())
                 && my < lastY + FilesLayout.statusY(contentH);
     }
 
@@ -1483,7 +1845,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     /** Escape closes the menu, the Properties window or the address being typed before it means anything to the desktop. */
     @Override
     public boolean wantsEscape() {
-        return context.isOpen() || properties.isOpen() || editingAddress();
+        return context.isOpen() || properties.isOpen() || editingAddress() || ribbonTab != null;
     }
 
     /** A point on the address bar past its last crumb, where a click turns the trail into text. */
@@ -2168,6 +2530,10 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         if (properties.isOpen()) {
             return properties.keyPressed(key, scanCode, modifiers);
         }
+        if (ribbonTab != null && key == GLFW.GLFW_KEY_ESCAPE) {
+            closeRibbon();
+            return true;
+        }
         if (root.keyPressed(key, scanCode, modifiers)) {
             return true; // a field being typed in
         }
@@ -2321,6 +2687,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     }
 
     /** The explorer's colours, as the palette above names them. */
-    private record Colours(int dropTarget, int bandFill, int bandEdge, int propertiesDim, int ghost, int ghostInk) {
+    private record Colours(int dropTarget, int bandFill, int bandEdge, int propertiesDim, int ghost, int ghostInk,
+                           int commandTop, int commandBottom) {
     }
 }

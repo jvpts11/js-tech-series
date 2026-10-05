@@ -11,6 +11,7 @@ import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.program.ComputerSettings;
+import dev.jstech.computers.program.StartTiles;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -30,7 +31,8 @@ import java.util.Map;
  * <p>{@code iconCells} carries every free-positioned desktop icon's pinned grid cell, so the client
  * places those icons exactly where the player dropped them; an icon with no entry flows into the next
  * free auto-layout cell. {@code pinned} names the programs pinned to the panel, by program id path, in
- * the order they sit there. {@code defaultApps} holds the program chosen with Always for each extension.
+ * the order they sit there, and {@code startTiles} the tiles of Frames 10's Start, each {@code <program>:<size>} in
+ * the player's order. {@code defaultApps} holds the program chosen with Always for each extension.
  * {@code cdeStyle} is CDE's palette and backdrops as the machine keeps them, which only CDE reads.
  * {@code trashFull} says whether anything is in the desktop's trash, which is the picture its icon wears.
  * {@code sourceBuilt} names, by program id path, the installed programs the machine built from source, whose
@@ -43,7 +45,7 @@ import java.util.Map;
 public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String wallpaper, String cdeStyle,
                                   String computerName, List<String> programs, List<String> sourceBuilt,
                                   List<WireIconCell> iconCells, Prefs prefs,
-                                  List<WireCommunity> community, List<String> pinned,
+                                  List<WireCommunity> community, List<String> pinned, List<String> startTiles,
                                   Map<String, String> defaultApps, boolean trashFull, Map<String, String> versions,
                                   float loadMbPerSecond)
         implements CustomPacketPayload {
@@ -56,6 +58,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
     public static final int MAX_PROGRAMS = 128;
     public static final int MAX_ICON_CELLS = 256;
     public static final int MAX_PINNED = ComputerSettings.MAX_PINNED;
+    public static final int MAX_TILES = StartTiles.MAX;
     public static final int MAX_DEFAULT_APPS = ComputerSettings.MAX_DEFAULT_APPS;
 
     /** How many player-written programs one desktop shows; the same cap the Mirror's shelf has. */
@@ -138,6 +141,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             buf.writeUtf(clip(one.entry(), 128), 128);
         }
         ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PINNED)).encode(buf, payload.pinned);
+        ByteBufCodecs.stringUtf8(40).apply(ByteBufCodecs.list(MAX_TILES)).encode(buf, payload.startTiles);
         buf.writeVarInt(Math.min(payload.defaultApps.size(), MAX_DEFAULT_APPS));
         int written = 0;
         for (final Map.Entry<String, String> one : payload.defaultApps.entrySet()) {
@@ -184,6 +188,8 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             community.add(new WireCommunity(buf.readUtf(32), buf.readUtf(16), buf.readUtf(128)));
         }
         final List<String> pinned = ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PINNED)).decode(buf);
+        final List<String> startTiles =
+                ByteBufCodecs.stringUtf8(40).apply(ByteBufCodecs.list(MAX_TILES)).decode(buf);
         final int apps = Math.min(buf.readVarInt(), MAX_DEFAULT_APPS);
         final Map<String, String> defaultApps = new LinkedHashMap<>();
         for (int i = 0; i < apps; i++) {
@@ -196,7 +202,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             versions.put(buf.readUtf(32), buf.readUtf(16));
         }
         return new DesktopFilesPayload(files, wallpaper, cdeStyle, computerName, programs, sourceBuilt, cells, prefs,
-                community, pinned, defaultApps, trashFull, versions, buf.readFloat());
+                community, pinned, startTiles, defaultApps, trashFull, versions, buf.readFloat());
     }
 
     /* Copied on the way in, so what the desktop is handed cannot change under it after it arrives. */
@@ -207,6 +213,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         iconCells = List.copyOf(iconCells);
         community = List.copyOf(community);
         pinned = List.copyOf(pinned);
+        startTiles = List.copyOf(startTiles);
         defaultApps = Map.copyOf(defaultApps);
         versions = Map.copyOf(versions);
     }

@@ -12,10 +12,12 @@ import dev.jstech.computers.client.term.TermFace;
 import dev.jstech.computers.client.term.TermText;
 import dev.jstech.computers.gui.layout.InstallerLayout;
 import dev.jstech.computers.gui.term.TermBuffer;
+import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.computers.os.install.InstallerChrome;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.InstallerStyle;
@@ -24,6 +26,8 @@ import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -61,6 +65,22 @@ final class InstallerFrames {
     private static final int WIZARD_W = 46;
     private static final int WIZARD_H = 168;
 
+    /** The grounds the later Frames setups stand on, made at the size of the glass. */
+    private static final ResourceLocation SEVEN_GROUND =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/ground/frames_7.png");
+    private static final ResourceLocation TEN_GROUND =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/ground/frames_10.png");
+    private static final int GROUND_W = InstallerLayout.WIDTH;
+    private static final int GROUND_H = InstallerLayout.HEIGHT;
+    /** The mark beside the edition's name on a page that greets, and the big button of a welcome. */
+    private static final int BRAND_MARK = 18;
+    private static final int BIG_BUTTON = 18;
+    /** How tall the strip naming the two phases runs along the foot of Frames 7's screen. */
+    private static final int PHASE_STRIP = 14;
+    private static final int GLASS_RADIUS = 3;
+    /** How much larger the first set-up's question is written than the rest of the page. */
+    private static final float HEADING_SCALE = 1.5F;
+
     private static final Palette<Boxed> BOXED = Palettes.declare(JsComputers.MODID, "installer/boxed",
             new Boxed(0xFF000000, 0xFFFFFFFF));
     private static final Palette<Wizard> WIZARD = Palettes.declare(JsComputers.MODID, "installer/wizard",
@@ -90,6 +110,21 @@ final class InstallerFrames {
                     0xFF3A6AE0, 0xFF2B4FAA, 0xFFCDD1DD, 0xFFFFFFFF,
                     0xFFFFFFFF, 0xFFE7EAF2, 0xFFCDD1DD, 0xFF9AA2B6, 0xFF202434));
 
+    private static final Palette<Glass> GLASS = Palettes.declare(JsComputers.MODID, "installer/glass",
+            new Glass(0x40000000, 0xFFFFFFFF, 0xFFBBCCDD, 0x40FFFFFF, 0xFF6FD0FF,
+                    0xCC283C5A, 0x99BAD2EE, 0x8C96B4DC, 0x80FFFFFF, 0x66FFFFFF, 0xFF000000,
+                    0xFF9FB3CF, 0xFFFFFFFF, 0xFF1E3287, 0xFF1E3287,
+                    0xFF000000, 0xFF6B6B6B, 0xFF3399FF, 0xFFCCE8FF, 0xFF000000,
+                    0xFFF2F2F2, 0xFFDDDDDD, 0xFFDAEEF9, 0xFFC2E4F6, 0xFFEAF6FD, 0xFFA7D9F5, 0xFF707070,
+                    0xFF3A6EA5));
+    private static final Palette<Metro> METRO = Palettes.declare(JsComputers.MODID, "installer/metro",
+            new Metro(0xFF1883D7, 0xFFFFFFFF, 0xFF000000, 0xFF0078D7, 0xFF003399,
+                    0xFF000000, 0xFF6D6D6D, 0xFF0078D7, 0xFFE5F1FB, 0xFF000000,
+                    0xFFE1E1E1, 0xFFCCE4F7, 0xFFADADAD));
+    private static final Palette<FirstSetup> FIRST_SETUP = Palettes.declare(JsComputers.MODID,
+            "installer/first_setup",
+            new FirstSetup(0xFF0063B1, 0xFFFFFFFF, 0xFFCCDDEE, 0xFFFFFFFF, 0x40FFFFFF, 0xFFFFFFFF,
+                    0xFFFFFFFF, 0xFFDDE8F2, 0xFF7FA9CF, 0xFF0063B1));
     private static final Palette<Ink> MC_DOS_INK = Palettes.declare(JsComputers.MODID, "installer/text/mc_dos",
             new Ink(0xFF000000, 0xFF41D862, 0xFFA4FFBC, 0xFF1F8A3F, 0xFF41D862, 0xFF000000,
                     0xFF41D862, 0xFF000000, 0xFFA4FFBC, 0xFF000000, 0xFF41D862));
@@ -153,7 +188,15 @@ final class InstallerFrames {
             case SIDE_PANEL -> sidePanel(g, font, flow, ticksDone, sx, sy, sw, sh, held);
             case CARD -> card(g, font, flow, sx, sy, sw, sh, held);
             case DIALOG_BOX -> dialogBox(g, font, flow, sx, sy, sw, sh, held, asks);
+            case GLASS -> glass(g, font, flow, ticksDone, sx, sy, sw, sh, held);
+            case METRO -> metro(g, font, flow, sx, sy, sw, sh, held);
+            case FIRST_SETUP -> firstSetup(g, font, flow, sx, sy, sw, sh, held);
         };
+    }
+
+    /** Whether a frame of that shape draws the system's brand and its big Install now on its welcome page. */
+    static boolean brandsWelcome(final InstallerChrome chrome) {
+        return chrome == InstallerChrome.GLASS || chrome == InstallerChrome.METRO;
     }
 
     /**
@@ -458,6 +501,227 @@ final class InstallerFrames {
     }
 
     /**
+     * Frames 7's: a window of tinted glass over the night-blue ground, the page on white inside it, the edition's
+     * mark and name on the pages that greet, and a strip along the foot of the screen naming the install's two
+     * phases, the one it is in lit and a bar beside them while it copies. Its welcome is one big Install now.
+     */
+    private static Frame glass(final GuiGraphics g, final Font font, final InstallerFlow flow, final int ticksDone,
+                               final int sx, final int sy, final int sw, final int sh, final Held held) {
+        final Glass c = GLASS.get();
+        g.blit(SEVEN_GROUND, sx, sy, sw, sh, 0.0F, 0.0F, GROUND_W, GROUND_H, GROUND_W, GROUND_H);
+        final int stripY = sy + sh - PHASE_STRIP;
+        g.fill(sx, stripY, sx + sw, sy + sh, c.strip());
+        final boolean second = flow.page() != InstallerPage.WELCOME && flow.page() != InstallerPage.DISK;
+        final String first = GameText.resolve(InstallerScreenTexts.FRAME_PHASE_COLLECTING);
+        final String then = GameText.resolve(InstallerScreenTexts.FRAME_PHASE_INSTALLING.with("Frames"));
+        Draw.text(g, font, first, sx + 8, stripY + 3, second ? c.phaseDone() : c.phaseOn());
+        final int thenX = sx + 8 + font.width(first) + 10;
+        Draw.text(g, font, then, thenX, stripY + 3, second ? c.phaseOn() : c.phaseDone());
+        if (flow.page() == InstallerPage.COPY) {
+            final int barX = thenX + font.width(then) + 10;
+            final int barW = sx + sw - 8 - barX;
+            if (barW > 8) {
+                g.fill(barX, stripY + 5, barX + barW, stripY + 9, c.barTrough());
+                g.fill(barX, stripY + 5, barX + barW * flow.permille(ticksDone) / 1000, stripY + 9, c.barFill());
+            }
+        }
+
+        final int wx = sx + 34;
+        final int wy = sy + 10;
+        final int ww = sw - 68;
+        final int wh = sh - PHASE_STRIP - 18;
+        roundTop(g, wx - 1, wy - 1, ww + 2, wh + 2, c.rim(), GLASS_RADIUS);
+        roundTop(g, wx, wy, ww, wh, c.glassTop(), GLASS_RADIUS);
+        g.fillGradient(wx, wy + GLASS_RADIUS, wx + ww, wy + wh, c.glassTop(), c.glassBottom());
+        g.fill(wx + GLASS_RADIUS, wy, wx + ww - GLASS_RADIUS, wy + 1, c.gloss());
+        final String title = flow.page() == InstallerPage.NAME
+                ? GameText.resolve(InstallerScreenTexts.FRAME_SET_UP.with("Frames"))
+                : GameText.resolve(flow.style().title(flow.systemName()));
+        final int titleW = font.width(title);
+        for (int i = 3; i >= 1; i--) {
+            g.fill(wx + 6 - i - 1, wy + 4 - i, wx + 6 + titleW + i + 1, wy + 11 + i, c.glow());
+        }
+        Draw.text(g, font, title, wx + 6, wy + 4, c.title());
+
+        final int ix = wx + 4;
+        final int iy = wy + TITLE_BAR + 1;
+        final int iw = ww - 8;
+        final int ih = wh - TITLE_BAR - 5;
+        g.fill(ix - 1, iy - 1, ix + iw + 1, iy + ih + 1, c.innerRim());
+        g.fill(ix, iy, ix + iw, iy + ih, c.paper());
+        int top = iy + 8;
+        final boolean greets = flow.page() == InstallerPage.WELCOME || flow.page() == InstallerPage.NAME;
+        if (greets) {
+            SplashLogos.mark(g, PanelStyle.FRAMES_7, ix + 12, top, BRAND_MARK);
+            Draw.text(g, font, flow.systemName(), ix + 14 + BRAND_MARK, top + 6, c.brand());
+            top += BRAND_MARK + 8;
+        }
+        if (flow.page() != InstallerPage.WELCOME) {
+            for (final String line : wrap(font, GameText.resolve(flow.style().heading(flow.page(),
+                    flow.systemName())), iw - 24)) {
+                Draw.text(g, font, line, ix + 12, top, c.heading());
+                top += InstallerLayout.ROW;
+            }
+            top += 4;
+        }
+        final Paint paint = new Paint(c.text(), c.heading(), c.dim(), c.accent(), c.select(), c.selectText());
+        if (flow.page() == InstallerPage.WELCOME) {
+            final int bw = 86;
+            final int[] next = sevenButton(g, font, c, ix + (iw - bw) / 2, top + 4, bw, BIG_BUTTON,
+                    GameText.resolve(InstallerScreenTexts.FRAME_INSTALL_NOW), flow.canContinue(),
+                    held == Held.NEXT, true);
+            final String copyright = GameText.resolve(InstallerScreenTexts.FRAME_COPYRIGHT.with(
+                    Branding.osYear(flow.systemName(), null), Branding.houseOf(flow.systemName()).legalName()));
+            Draw.text(g, font, copyright, ix + (iw - font.width(copyright)) / 2, iy + ih - 12, c.dim());
+            final int contentTop = top + BIG_BUTTON + 14;
+            return new Frame(ix + 12, contentTop, iw - 24, iy + ih - 16 - contentTop, paint, next, null, null, null);
+        }
+        final int by = iy + ih - 8 - BUTTON;
+        final boolean working = flow.page() == InstallerPage.COPY;
+        final int[] next = working ? null : sevenButton(g, font, c, ix + iw - 8 - 56, by, 56, BUTTON,
+                GameText.resolve(flow.page() == InstallerPage.DONE ? InstallerScreenTexts.FRAME_RESTART
+                        : InstallerScreenTexts.FRAME_NEXT),
+                flow.canContinue() || flow.page() == InstallerPage.DONE, held == Held.NEXT, false);
+        return new Frame(ix + 12, top, iw - 24, by - 4 - top, paint, next, null, null, null);
+    }
+
+    /**
+     * Frames 10's setup window: white and square with a thin blue border over the dark ground, the small mark in its
+     * title, flat grey buttons, the edition's name in blue on the welcome with a big Install now.
+     */
+    private static Frame metro(final GuiGraphics g, final Font font, final InstallerFlow flow, final int sx,
+                               final int sy, final int sw, final int sh, final Held held) {
+        final Metro c = METRO.get();
+        g.blit(TEN_GROUND, sx, sy, sw, sh, 0.0F, 0.0F, GROUND_W, GROUND_H, GROUND_W, GROUND_H);
+        final int wx = sx + 40;
+        final int wy = sy + 18;
+        final int ww = sw - 80;
+        final int wh = sh - 36;
+        g.fill(wx - 1, wy - 1, wx + ww + 1, wy + wh + 1, c.border());
+        g.fill(wx, wy, wx + ww, wy + wh, c.window());
+        FramesEmblem.draw(g, wx + 4, wy + 3, PanelStyle.FRAMES_10);
+        Draw.text(g, font, GameText.resolve(flow.style().title(flow.systemName())), wx + 17, wy + 4, c.title());
+        int top = wy + TITLE_BAR + 8;
+        final Paint paint = new Paint(c.text(), c.heading(), c.dim(), c.accent(), c.select(), c.selectText());
+        if (flow.page() == InstallerPage.WELCOME) {
+            SplashLogos.mark(g, PanelStyle.FRAMES_10, wx + 16, top, BRAND_MARK);
+            Draw.text(g, font, flow.systemName(), wx + 18 + BRAND_MARK, top + 6, c.brand());
+            top += BRAND_MARK + 12;
+            final int bw = 86;
+            final int[] next = tenButton(g, font, c, wx + (ww - bw) / 2, top, bw, BIG_BUTTON,
+                    GameText.resolve(InstallerScreenTexts.FRAME_INSTALL_NOW), flow.canContinue(),
+                    held == Held.NEXT);
+            final String copyright = GameText.resolve(InstallerScreenTexts.FRAME_COPYRIGHT.with(
+                    Branding.osYear(flow.systemName(), null), Branding.houseOf(flow.systemName()).legalName()));
+            Draw.text(g, font, copyright, wx + 16, wy + wh - 12, c.dim());
+            final int contentTop = top + BIG_BUTTON + 12;
+            return new Frame(wx + 16, contentTop, ww - 32, wy + wh - 16 - contentTop, paint, next, null, null, null);
+        }
+        for (final String line : wrap(font, GameText.resolve(flow.style().heading(flow.page(), flow.systemName())),
+                ww - 32)) {
+            Draw.text(g, font, line, wx + 16, top, c.heading());
+            top += InstallerLayout.ROW;
+        }
+        top += 4;
+        if (flow.page() == InstallerPage.COPY) {
+            Draw.text(g, font, GameText.resolve(InstallerScreenTexts.FRAME_STATUS), wx + 16, top, c.dim());
+            top += InstallerLayout.ROW;
+            return new Frame(wx + 16, top, ww - 32, wy + wh - 8 - top, paint, null, null, null, null);
+        }
+        final int by = wy + wh - 8 - BUTTON;
+        final int[] next = tenButton(g, font, c, wx + ww - 10 - 56, by, 56, BUTTON,
+                GameText.resolve(InstallerScreenTexts.FRAME_NEXT), flow.canContinue(), held == Held.NEXT);
+        return new Frame(wx + 16, top, ww - 32, by - 4 - top, paint, next, null, null, null);
+    }
+
+    /**
+     * Frames 10's first set-up: the whole glass in one blue, the question large across the top of a column in its
+     * middle, and a white button at the column's foot.
+     */
+    private static Frame firstSetup(final GuiGraphics g, final Font font, final InstallerFlow flow, final int sx,
+                                    final int sy, final int sw, final int sh, final Held held) {
+        final FirstSetup c = FIRST_SETUP.get();
+        g.fill(sx, sy, sx + sw, sy + sh, c.ground());
+        final int colX = sx + 64;
+        final int colW = sw - 128;
+        int top = sy + 36;
+        final String heading = GameText.resolve(flow.style().heading(flow.page(), flow.systemName()));
+        g.pose().pushPose();
+        g.pose().translate(colX, top, 0);
+        g.pose().scale(HEADING_SCALE, HEADING_SCALE, 1.0F);
+        Draw.text(g, font, clip(font, heading, (int) (colW / HEADING_SCALE)), 0, 0, c.text());
+        g.pose().popPose();
+        top += 26;
+        final int by = sy + sh - 34;
+        final int bw = 56;
+        final boolean done = flow.page() == InstallerPage.DONE;
+        final String label = GameText.resolve(done ? InstallerScreenTexts.FRAME_RESTART
+                : InstallerScreenTexts.FRAME_NEXT);
+        final boolean on = flow.canContinue() || done;
+        final int bx = colX + colW - bw;
+        g.fill(bx, by, bx + bw, by + BUTTON, on ? held == Held.NEXT ? c.buttonHeld() : c.button() : c.buttonOff());
+        Draw.text(g, font, label, bx + (bw - font.width(label)) / 2, by + 3, c.buttonInk());
+        final Paint paint = new Paint(c.text(), c.text(), c.dim(), c.accent(), c.select(), c.selectText());
+        return new Frame(colX, top, colW, by - 6 - top, paint, new int[]{bx, by, bw, BUTTON}, null, null, null);
+    }
+
+    /** A rectangle with its top corners rounded by {@code r}, the way the glass window's top was. */
+    private static void roundTop(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                                 final int colour, final int r) {
+        for (int i = 0; i < r; i++) {
+            g.fill(x + r - i, y + i, x + w - r + i, y + i + 1, colour);
+        }
+        g.fill(x, y + r, x + w, y + h, colour);
+    }
+
+    /**
+     * Frames 7's push button: grey, lighter above its middle, a rim that turns blue when it is the way on; the big one
+     * on the welcome page is blue all over, as its Install now was.
+     */
+    private static int[] sevenButton(final GuiGraphics g, final Font font, final Glass c, final int x, final int y,
+                                     final int w, final int h, final String label, final boolean on,
+                                     final boolean held, final boolean big) {
+        final int upper = big ? c.bigTop() : held ? c.heldTop() : c.faceTop();
+        final int lower = big ? c.bigBottom() : held ? c.heldBottom() : c.faceBottom();
+        g.fill(x, y, x + w, y + h / 2, upper);
+        g.fill(x, y + h / 2, x + w, y + h, lower);
+        outline(g, x, y, w, h, on ? c.focusRim() : c.faceRim());
+        Draw.text(g, font, label, x + (w - font.width(label)) / 2, y + (h - 7) / 2, on ? c.text() : c.dim());
+        return new int[]{x, y, w, h};
+    }
+
+    /** Frames 10's push button: flat grey with a grey rim, the rim blue when it is the way on. */
+    private static int[] tenButton(final GuiGraphics g, final Font font, final Metro c, final int x, final int y,
+                                   final int w, final int h, final String label, final boolean on,
+                                   final boolean held) {
+        g.fill(x, y, x + w, y + h, held ? c.buttonHeld() : c.button());
+        outline(g, x, y, w, h, on ? c.accent() : c.buttonRim());
+        Draw.text(g, font, label, x + (w - font.width(label)) / 2, y + (h - 7) / 2, on ? c.text() : c.dim());
+        return new int[]{x, y, w, h};
+    }
+
+    /** A sentence broken into the lines that fit {@code room}, at word boundaries. */
+    private static List<String> wrap(final Font font, final String text, final int room) {
+        final List<String> out = new ArrayList<>();
+        final StringBuilder line = new StringBuilder();
+        for (final String word : text.split(" ")) {
+            final String tried = line.isEmpty() ? word : line + " " + word;
+            if (font.width(tried) > room && !line.isEmpty()) {
+                out.add(line.toString());
+                line.setLength(0);
+                line.append(word);
+            } else {
+                line.setLength(0);
+                line.append(tried);
+            }
+        }
+        if (!line.isEmpty()) {
+            out.add(line.toString());
+        }
+        return out;
+    }
+
+    /**
      * bsdinstall's own look: a navy ground with the installer's name in its top corner, and a grey dialog box
      * centred on it, its own page named in the top of its border the way the real dialogs are, with an OK-style
      * button (named to fit the page) and, until the copy begins, a Cancel beside it. The copy itself draws no
@@ -628,7 +892,8 @@ final class InstallerFrames {
             case MC_DOS -> MC_DOS_INK.get();
             case MC_NET -> MC_NET_INK.get();
             case FRAMES_95, FRAMES_XP -> FRAMES_INK.get();
-            case FRAMES_11 -> FRAMES_11_INK.get();
+            /* The later editions draw no page in text, so they borrow the newest one's ink for the screens that ask. */
+            case FRAMES_7, FRAMES_10, FRAMES_11 -> FRAMES_11_INK.get();
             case UBUNTU -> UBUNTU_INK.get();
             case DEBIAN -> DEBIAN_INK.get();
             case FEDORA -> FEDORA_INK.get();
@@ -781,5 +1046,35 @@ final class InstallerFrames {
 
     /** System V's own console adds one colour to the shared text ink: the green a finished part is named in. */
     private record SystemVOk(int done) {
+    }
+
+    /**
+     * Frames 7's glass setup: the strip of phases along the foot with the ink of a phase done and the one running,
+     * its bar; the window's rim, glass, gloss and the glow behind its title; the white page inside, the edition's
+     * name and the headings in blue, the ink of the page; and the buttons, plain and the big blue one.
+     */
+    private record Glass(int strip, int phaseOn, int phaseDone, int barTrough, int barFill,
+                         int rim, int glassTop, int glassBottom, int gloss, int glow, int title,
+                         int innerRim, int paper, int brand, int heading,
+                         int text, int dim, int accent, int select, int selectText,
+                         int faceTop, int faceBottom, int heldTop, int heldBottom, int bigTop, int bigBottom,
+                         int faceRim, int focusRim) {
+    }
+
+    /**
+     * Frames 10's setup window: its blue border and white ground, the title's ink, the edition's name, the headings,
+     * the ink of the page, and the flat buttons.
+     */
+    private record Metro(int border, int window, int title, int brand, int heading,
+                         int text, int dim, int accent, int select, int selectText,
+                         int button, int buttonHeld, int buttonRim) {
+    }
+
+    /**
+     * Frames 10's first set-up: the blue, the ink of the page and its quieter lines, the accent and a picked row, and
+     * the white button with its states and its blue word.
+     */
+    private record FirstSetup(int ground, int text, int dim, int accent, int select, int selectText,
+                              int button, int buttonHeld, int buttonOff, int buttonInk) {
     }
 }

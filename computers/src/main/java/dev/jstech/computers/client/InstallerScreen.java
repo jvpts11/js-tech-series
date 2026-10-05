@@ -62,6 +62,7 @@ import static dev.jstech.computers.client.InstallerScreenTexts.ERASE_ASK_NAMED;
 import static dev.jstech.computers.client.InstallerScreenTexts.ERASE_KEYS;
 import static dev.jstech.computers.client.InstallerScreenTexts.EVERY_FILE;
 import static dev.jstech.computers.client.InstallerScreenTexts.FOUND_DISK;
+import static dev.jstech.computers.client.InstallerScreenTexts.FRAME_RESTARTS_SEVERAL;
 import static dev.jstech.computers.client.InstallerScreenTexts.FREE;
 import static dev.jstech.computers.client.InstallerScreenTexts.GENERATION;
 import static dev.jstech.computers.client.InstallerScreenTexts.HOLDS_FREE;
@@ -167,7 +168,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     /** The colours the pages draw inside their frame, {@code jsc:installer/page}. */
     private static final Palette<PageColours> PAGE = Palettes.declare(JsComputers.MODID, "installer/page",
             new PageColours(0x30FFFFFF, 0xFFE3E5EE, 0xFFFFFFFF, 0xFF202434, 0xFF000000, 0xFFE3E5EE,
-                    0x99000000, 0xFFFAFAFE, 0xFFC42B1C, 0xFFC0C4D2, 0xFF202434, 0xFF6B7488));
+                    0x99000000, 0xFFFAFAFE, 0xFFC42B1C, 0xFFC0C4D2, 0xFF202434, 0xFF6B7488, 0xFF2E8B2E));
 
     /** How long the caret in a name field spends showing, and then hidden, in ticks. */
     private static final int CARET_TICKS = 10;
@@ -924,12 +925,18 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final InstallerFlow.Disk disk = this.flow.target();
         final int step = this.row();
         int ty = f.y();
-        this.say(g, of(PREPARES.with(this.flow.systemName())), f.x(), ty, p.text());
-        ty += step * 2;
-        this.say(g, of(TO_SET_UP.with(this.flow.systemName())), f.x(), ty, p.text());
-        ty += step;
-        this.say(g, of(TO_QUIT), f.x(), ty, p.text());
-        ty += step * 2;
+        /*
+         * The later editions greet with their name and one big Install now, which the frame has drawn: what is left
+         * to say is only where it found room.
+         */
+        if (!InstallerFrames.brandsWelcome(this.flow.chrome())) {
+            this.say(g, of(PREPARES.with(this.flow.systemName())), f.x(), ty, p.text());
+            ty += step * 2;
+            this.say(g, of(TO_SET_UP.with(this.flow.systemName())), f.x(), ty, p.text());
+            ty += step;
+            this.say(g, of(TO_QUIT), f.x(), ty, p.text());
+            ty += step * 2;
+        }
         if (disk == null) {
             this.say(g, of(NO_ROOM_ANYWHERE), f.x(), ty, p.accent());
             return;
@@ -1003,7 +1010,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             return;
         }
         final InstallerFrames.Paint p = f.paint();
-        final boolean table = this.flow.chrome() == InstallerChrome.CARD;
+        final boolean table = this.flow.chrome() == InstallerChrome.CARD
+                || InstallerFrames.brandsWelcome(this.flow.chrome());
         final int step = this.row();
         int ty = f.y();
         if (this.flow.style() == InstallerStyle.SYSTEM_V) {
@@ -1349,6 +1357,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                 }
             }
             case MC_DOS, FRAMES_95, DEBIAN -> this.drawWorkBar(g, f);
+            case FRAMES_7, FRAMES_10 -> this.drawWorkChecklist(g, f);
             case FRAMES_11 -> this.drawWorkSteps(g, f);
             case BSD_INSTALL -> this.drawWorkBsd(g, f);
             case SYSTEM_V -> this.drawWorkSysV(g, f);
@@ -1545,6 +1554,47 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                 ty + InstallerLayout.CARD_LINE2_DY, p.dim());
     }
 
+    /**
+     * The checklist of Frames 7 and 10: a tick in green against each step done, the running one in the heading's ink
+     * with its share done beside it, the rest greyed, and the warning that the machine restarts on its own.
+     */
+    private void drawWorkChecklist(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final int running = this.flow.stepAt(this.ticksDone);
+        int ty = f.y();
+        for (int i = 0; i < this.flow.steps().size(); i++) {
+            final InstallerFlow.Step line = this.flow.steps().get(i);
+            final boolean done = i < running;
+            final boolean now = i == running;
+            String label = GameText.resolve(line.label());
+            if (now) {
+                label += "  " + this.flow.stepPermille(this.ticksDone) / 10 + "%";
+            }
+            if (done) {
+                tick(g, f.x(), ty + 1, PAGE.get().stepDone());
+            } else if (now) {
+                for (int k = 0; k < 3; k++) {
+                    g.fill(f.x() + 1 + k, ty + 1 + k, f.x() + 2 + k, ty + 6 - k, p.bright());
+                }
+            }
+            Draw.text(g, font, InstallerFrames.clip(font, label, f.w() - InstallerLayout.CHECK_INDENT),
+                    f.x() + InstallerLayout.CHECK_INDENT, ty, done ? PAGE.get().stepDone() : now ? p.bright()
+                            : p.dim());
+            ty += InstallerLayout.ROW;
+        }
+        ty += InstallerLayout.ROW / 2;
+        Draw.text(g, font, InstallerFrames.clip(font, of(FRAME_RESTARTS_SEVERAL), f.w()), f.x(), ty, p.dim());
+    }
+
+    /** A tick five pixels wide, the mark against a step that is done. */
+    private static void tick(final GuiGraphics g, final int x, final int y, final int colour) {
+        g.fill(x, y + 2, x + 1, y + 4, colour);
+        g.fill(x + 1, y + 3, x + 2, y + 5, colour);
+        g.fill(x + 2, y + 2, x + 3, y + 4, colour);
+        g.fill(x + 3, y + 1, x + 4, y + 3, colour);
+        g.fill(x + 4, y, x + 5, y + 2, colour);
+    }
+
     /** The graphical phase, whose frame has already listed the steps down its own side. */
     private void drawWorkBeside(final GuiGraphics g, final InstallerFrames.Frame f) {
         final InstallerFrames.Paint p = f.paint();
@@ -1655,10 +1705,11 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
      * What the pages draw inside their frame: the wash over a hovered choice, the rule under the disk table's
      * heads, the name field and its ink, the trough of a sunken bar and the track of a flat one, and the question
      * before a disk is erased (the veil behind it, its paper, the alarm along its top and on its keys, its edge,
-     * its words and its quieter line).
+     * its words and its quieter line), and the green of a step ticked off in a checklist.
      */
     private record PageColours(int hoverWash, int columnRule, int field, int fieldInk, int barTrough, int cardTrack,
-                               int veil, int dialog, int alarm, int dialogEdge, int dialogInk, int dialogDim) {
+                               int veil, int dialog, int alarm, int dialogEdge, int dialogInk, int dialogDim,
+                               int stepDone) {
     }
 
     private void right(final GuiGraphics g, final String text, final int rightEdge, final int y, final int colour) {

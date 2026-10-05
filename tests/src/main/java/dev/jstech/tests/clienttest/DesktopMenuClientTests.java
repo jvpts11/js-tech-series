@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.FilesApp;
 import dev.jstech.computers.client.os.IDesktopApp;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -107,8 +108,13 @@ public final class DesktopMenuClientTests {
                 .then(SETTLE, () -> ctx.clickDesktop(files(ctx).addressEditPoint()))
                 .thenWaitUntil(() -> files(ctx).editingAddress(), SCREEN_WAIT, "the address bar to turn into text")
                 .thenScreenshot(2, "address-selected")
-                .then(1, () -> ctx.key(GLFW.GLFW_KEY_C, GLFW.GLFW_MOD_CONTROL))
-                .thenAssert(1, () -> "C:\\progs\\".equals(net.minecraft.client.Minecraft.getInstance().keyboardHandler.getClipboard()),
+                /*
+                 * The clipboard is the computer's, shared by every game window: with the suite split across windows
+                 * running side by side, another test's cut can land between a copy and its read, and a copy only
+                 * shows there a tick after it is made. So Ctrl+C is pressed again until the clipboard holds what
+                 * the selection copies.
+                 */
+                .thenWaitUntil(() -> copied(ctx, "C:\\progs\\"), SCREEN_WAIT,
                         "the whole address is selected on the way in, so Ctrl+C copies it")
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_END))
                 .then(1, () -> {
@@ -116,8 +122,7 @@ public final class DesktopMenuClientTests {
                         ctx.key(GLFW.GLFW_KEY_LEFT, GLFW.GLFW_MOD_SHIFT);
                     }
                 })
-                .then(1, () -> ctx.key(GLFW.GLFW_KEY_C, GLFW.GLFW_MOD_CONTROL))
-                .thenAssert(1, () -> "progs\\".equals(net.minecraft.client.Minecraft.getInstance().keyboardHandler.getClipboard()),
+                .thenWaitUntil(() -> copied(ctx, "progs\\"), SCREEN_WAIT,
                         "Shift with the arrows selects part of the address, and Ctrl+C copies that")
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenWaitUntil(() -> !files(ctx).editingAddress(), SCREEN_WAIT, "Escape to leave the address as it was")
@@ -130,6 +135,15 @@ public final class DesktopMenuClientTests {
                 .thenWaitUntil(() -> terminal(ctx) != null && terminal(ctx).prompt().startsWith("C:\\progs"),
                         SCREEN_WAIT * 2, "the terminal to come up with its prompt in the folder")
                 .thenScreenshot(2, "terminal-here");
+    }
+
+    /** Whether the clipboard holds {@code expected}; when it does not, Ctrl+C is pressed again for the next look. */
+    private static boolean copied(final ClientTestContext ctx, final String expected) {
+        if (expected.equals(Minecraft.getInstance().keyboardHandler.getClipboard())) {
+            return true;
+        }
+        ctx.key(GLFW.GLFW_KEY_C, GLFW.GLFW_MOD_CONTROL);
+        return false;
     }
 
     private static dev.jstech.computers.client.os.ShellApp terminal(final ClientTestContext ctx) {

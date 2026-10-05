@@ -60,6 +60,13 @@ public final class SplashLogos {
     public static final ResourceLocation FRAMES_XP_MARK =
             ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/frames_xp_mark.png");
 
+    /** Frames 7's waving flag in the four colours, and Frames 10's window of four panes in one blue. */
+    public static final ResourceLocation FRAMES_7_MARK =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/frames_7_mark.png");
+
+    public static final ResourceLocation FRAMES_10_MARK =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/frames_10_mark.png");
+
     public static final ResourceLocation FRAMES_11_MARK =
             ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/frames_11_mark.png");
 
@@ -89,6 +96,8 @@ public final class SplashLogos {
         return switch (edition) {
             case FRAMES_95 -> FRAMES_95_MARK;
             case FRAMES_XP -> FRAMES_XP_MARK;
+            case FRAMES_7 -> FRAMES_7_MARK;
+            case FRAMES_10 -> FRAMES_10_MARK;
             default -> FRAMES_11_MARK;
         };
     }

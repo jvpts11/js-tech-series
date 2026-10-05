@@ -164,12 +164,19 @@ public record ProgramSpec(
 
     /**
      * The generation a program belongs to when nothing says otherwise, read off the Frames version it
-     * needs: only-on-11 is Standard, XP-or-later is Legacy, anything else is Vintage. The built-in
-     * registrations override this per program; the rule is only the default for a program that never said.
+     * needs: only-on-11 is Advanced, 10-or-later Standard, 7-or-later Transition, XP-or-later Legacy, anything
+     * else Vintage. The built-in registrations override this per program; the rule is only the default for a
+     * program that never said.
      */
     private static HardwareEra eraFromRank(final int minOsRank) {
-        if (minOsRank >= 3) {
+        if (minOsRank >= 5) {
+            return HardwareEra.ADVANCED;
+        }
+        if (minOsRank >= 4) {
             return HardwareEra.STANDARD;
+        }
+        if (minOsRank >= 3) {
+            return HardwareEra.TRANSITION;
         }
         if (minOsRank >= 2) {
             return HardwareEra.LEGACY;

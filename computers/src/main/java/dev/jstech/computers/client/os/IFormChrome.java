@@ -18,7 +18,8 @@ import net.minecraft.client.gui.GuiGraphics;
  * <p>Each form is a design of its own, not a recolour of another, so each is its own class; the defaults here are
  * what most of them do.
  */
-sealed interface IFormChrome permits BevelChrome, LunaChrome, FlatChrome, Kde2Chrome, Gnome1Chrome, MotifFormChrome {
+sealed interface IFormChrome permits BevelChrome, LunaChrome, AeroChrome, MetroChrome, FlatChrome, Kde2Chrome,
+        Gnome1Chrome, MotifFormChrome {
 
     /** The form this chrome draws. */
     OsSkin.Form form();
@@ -62,6 +63,24 @@ sealed interface IFormChrome permits BevelChrome, LunaChrome, FlatChrome, Kde2Ch
         ChromeShapes.roundedRect(g, x - t, y - t, w + t * 2, h + t * 2, skin.windowBorder(), skin.topRadius(),
                 skin.bottomRadius());
         ChromeShapes.roundedRect(g, x, y, w, h, skin.windowBg(), skin.topRadius(), skin.bottomRadius());
+    }
+
+    /**
+     * The same for a window that has a title bar {@code titleH} tall and keeps its content {@code inset} in from its
+     * edges. Only a form whose frame is glass needs to know: it leaves the title and the margins for the glass. Every
+     * other form draws the window as above, and its title bar over it.
+     */
+    default void windowFrame(final GuiGraphics g, final OsSkin skin, final int x, final int y, final int w,
+                             final int h, final int titleH, final int inset) {
+        windowFrame(g, skin, x, y, w, h);
+    }
+
+    /**
+     * Whatever a form lays behind a title's words, {@code textW} wide from {@code x}, on a bar whose words start at
+     * {@code y}: nothing for most, a white glow on glass.
+     */
+    default void titleGlow(final GuiGraphics g, final int x, final int y, final int textW) {
+        // Most forms write the title straight on their bar.
     }
 
     /** Whether this is a dark variant of its form; only the flat form has one. */

@@ -22,6 +22,7 @@ final class WelcomeTexts {
     // The window's name, by the shape it takes.
     static final TextKey TITLE = TextKey.of("jsc.welcome.title", "Welcome");
     static final TextKey TITLE_GET_STARTED = TextKey.of("jsc.welcome.title_get_started", "Get started");
+    static final TextKey TITLE_GETTING_STARTED = TextKey.of("jsc.welcome.title_getting_started", "Getting Started");
 
     static final TextKey GETTING_READY = TextKey.of("jsc.welcome.getting_ready", "Getting ready...");
     static final TextKey WELCOME_TO = TextKey.of("jsc.welcome.welcome_to", "Welcome to %s");

@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.os.OsGating;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.InstallerLayout;
@@ -186,6 +187,27 @@ public final class InstallMediaGameTests {
                     helper.assertTrue(boot.contains("boot/vmlinuz"), "and the kernel inside it: " + boot);
                 })
                 .thenSucceed();
+    }
+
+    /*
+     * Each edition installs from the age it came in: Frames 7 from the Transition on its DVD, Frames 10 from the
+     * Standard on a stick, and Frames 11 only from the Advanced, so a Standard machine is offered Frames 10.
+     */
+    @GameTest(template = ARENA)
+    public static void framesEditions_installFromTheirOwnEras(final GameTestHelper helper) {
+        final HardwareEra seven = OsRegistry.getOs(rl("frames_7")).minEra();
+        final HardwareEra ten = OsRegistry.getOs(rl("frames_10")).minEra();
+        final HardwareEra eleven = OsRegistry.getOs(rl("frames_11")).minEra();
+        helper.assertTrue(seven == HardwareEra.TRANSITION && ten == HardwareEra.STANDARD
+                && eleven == HardwareEra.ADVANCED, "the editions start at " + seven + ", " + ten + " and " + eleven);
+        helper.assertTrue(InstallMedia.forSystem(seven) == MediaFormat.DVD, "Frames 7 comes on a DVD");
+        helper.assertTrue(InstallMedia.forSystem(ten) == MediaFormat.USB, "Frames 10 comes on a stick");
+        helper.assertTrue(OsGating.canInstall(ten, HardwareEra.STANDARD), "a Standard machine takes Frames 10");
+        helper.assertFalse(OsGating.canInstall(eleven, HardwareEra.STANDARD),
+                "a Standard machine is too old for Frames 11");
+        helper.assertTrue(OsGating.canInstall(eleven, HardwareEra.ADVANCED), "an Advanced machine takes Frames 11");
+        helper.assertFalse(OsGating.canInstall(seven, HardwareEra.LEGACY), "a Legacy machine is too old for Frames 7");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

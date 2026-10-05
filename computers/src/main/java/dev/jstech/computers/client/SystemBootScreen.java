@@ -105,6 +105,11 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         this.who = starting.who();
     }
 
+    /** How far through its wait the machine is, in hundredths, for a test that pictures one moment of it. */
+    public int percentThrough() {
+        return this.totalTicks > 0 ? this.ticks * 100 / this.totalTicks : 0;
+    }
+
     /** Whether the desktop's own loading screen has taken the glass from the system's lines, for a test to ask. */
     public boolean desktopSplashUp() {
         final int through = this.totalTicks > 0 ? this.ticks * 100 / this.totalTicks : 0;
@@ -202,7 +207,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         if (BootSplashArt.paintsItsOwnGround(this.splash)) {
             BootSplashArt.draw(g, font, this.splash, x, y, W, H, this.ticks, MotionClock.loopTicks(),
                     this.totalTicks, this.endsDark, GameText.resolve(this.sequence.title()),
-                    GameText.resolve(this.sequence.subtitle()));
+                    GameText.resolve(this.sequence.subtitle()), this.who);
             return;
         }
 

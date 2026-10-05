@@ -63,6 +63,46 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Removed: `ArchitectureSpec.runs` (ask the `IsaSpec` from `toIsa()`), and `DesktopEnvironmentDef.programFor`.
 
 ### Added
+- Frames 7, the Frames of the Transition, installed from its DVD through its own setup (Install now, the two phases
+  and their steps, Set Up Frames). Its windows are tinted glass with a glowing title, a red close button and rounded
+  top corners. The superbar keeps programs as icons, pinned and open together, with the round orb that opens a Start
+  of two columns (the programs, All Programs and the search on the left; the folders, Computer, Control Panel,
+  Devices and Printers and Shut down on the glass on the right), a notification area with the network, the sound and
+  the flag, a clock over the date and the corner that shows the desktop. It comes up with four lights that close into
+  its flag over "Starting Frames", then Welcome beside the ring, and goes down the same way. This PC is Computer, the
+  settings are the Control Panel, which opens on its categories (System and Security, User Accounts, Network and
+  Internet, Appearance and Personalization, Hardware and Sound, Programs, Ease of Access), each a link to its page.
+  The Calculator and Minesweeper are glass, the Command Prompt says "Midsoft Frames [Version 7.0.7600]", the
+  explorer carries a command bar (Organize, which opens the selection's or the folder's menu, Open and New folder),
+  and the file dialogs list Favorites and Computer. It has its own icons for every program, file type and device,
+  its emblem and orb, its wallpaper of blocks, its pointers, the Device Manager in glass, the copy window's
+  "N% complete" over a green bar, its volume popup of glass (the outputs listed beside the slider, the Mixer opening
+  the sound settings), its screenfetch flag, its own way of moving, and Ease of Access with Performance Options,
+  either of which turns the animations off. Soundfoundry wears its Legacy form there. It starts with its own chime,
+  goes down with the same one, and keeps Frames XP's error sound. Installing it and booting it earns "Never
+  Upgrading" in the Operating Systems tab.
+- Frames 10, the Frames of the Standard, whose Command Prompt opens on "Midsoft Frames [Version 10.0.10240]". Its
+  windows are square and white with a line of the accent round them and three wide buttons; the taskbar, Start and
+  the Action Center are dark. The taskbar carries
+  the white mark of Start, a search box that opens Start to be typed into, Task View (every open window side by
+  side, a click bringing one forward), the programs with a line under the open ones, the notification area, the
+  clock and the Action Center's button. Start has its rail, Most used and every program from A to Z beside the
+  tiles, which the machine keeps: the right button on a program pins it, on a tile unpins it or makes it small,
+  medium or wide, and a tile dragged onto another takes its place. The Network Manager's tile turns between its
+  glyph and the state of the network and the System Monitor's shows the processor, while animations are on. The
+  Action Center lists the notices with Clear all, and its quick buttons open the network, the sound and every
+  setting, or keep the notices quiet. Notices also rise in the corner. The settings open on a grid of their eight
+  pages, the File Explorer has the ribbon folded over its address (Home: Cut, Copy, Paste, Delete, Rename, New
+  folder, Open and Properties; View: Large icons and Details; File: the prompt in the folder), the Calculator is
+  dark, and Get started greets on a band of the accent above the machine's programs, each on its tile. It installs
+  from its medium with a blue first setup that asks who will use the PC, comes up with its mark and the dots,
+  shows the lock screen with the time large in its corner, then signs in with a round picture of a
+  grass block and Welcome; the first start says Hi instead. It has the icons with white glyphs for its tiles, its
+  wallpaper, a flat Device Manager, the copy window with its speed graph, a dark volume flyout whose arrow opens the
+  outputs, the classic Print window in flat controls, Save As with Quick access, the screenfetch panes in blue, and
+  an Effects section in Personalize (transparency, and animations, off with which windows open at once and the
+  tiles stop turning). Soundfoundry wears its Standard form there. It starts with its own chime, goes down with the
+  same one, and shares Frames 11's error sound. Installing it and booting it earns "What Happened to Frames 9?".
 - The widgets of Σ# 2 for programs' windows: `TextArea`, `NumberBox`, `Slider`, `RadioGroup`, `ComboBox`,
   `TabView`, `GroupBox`, `ScrollView`, `Table`, `TreeView`, `MenuBar`, `ContextMenu`, `StatusBar`, `Image`, `Chart`,
   `LogView`, the system's own `OpenFileDialog` and `SaveFileDialog`, and the computers' own `ItemSlot`,
@@ -81,7 +121,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   value, through `OnAction`. What it holds is checked against the bounds every component shares (no handlers,
   files, threads, windows or widgets, nothing that holds itself, at most 32 KB, sixteen levels deep and 4096 parts)
   and against what its kind takes. A game without the mod shows a placeholder naming the kind. A kind that reaches
-  outside the game is off unless the server's settings and the player's own both turn it on.
+  outside the game is off unless the server's settings and the player's own both turn it on (Outside components, in
+  each).
 - A program a mod writes in Java can open a window of its own on a desktop, drawing itself or a surface of pixels or
   of the graphics card, for whoever opened it; another player at the machine and the monitor's face in the world see
   a placeholder in its window, and one whose drawing fails shows the placeholder from then on. A window with a
@@ -1206,6 +1247,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- Frames 11 installs from the Advanced era on, and the Standard era has Frames 10. The family now runs Frames 95, XP,
+  7, 10 and 11, and a program asking for a newer Frames reads it in that order. "More like, Bloat 11" follows
+  "What Happened to Frames 9?" in the Operating Systems tab, as "Never Upgrading" follows "The goat".
+- A volume control's foot and its rows grow with their words, so a long Mixer link or a speaker's long name stays
+  inside it.
 - A box typed into tells its program's handler at most once a tick, holding every letter typed by then, so a player
   typing fast no longer fills the program's queue with a call a key. A window carries at most 128 KB to the screens
   showing it, whatever its program holds; past that, what its last widgets hold is left out and they say so.
@@ -1215,7 +1261,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   least a window may be, so a short widget pushed what came after it out of its window.
 - What moves while a machine comes up and goes down (Frames 95's running bar, Frames XP's blocks, the rings and
   running dots of Frames 11, GNOME and Cinnamon) moves smoothly between ticks, on the clock every motion is read
-  against, and stands still in its first position for a player who reduced motion.
+  against, and stands still in its first position for a player who reduced motion, Frames XP's blocks standing at
+  the left end of their trough rather than outside it.
 - The last text drawn with a shadow under it is drawn plain like the rest: Frames XP's window titles, its Start
   button and the name and the Log Off and Turn Off Computer buttons of its Start menu, and the labels and check boxes
   of a window a Σ program opens.
@@ -1520,6 +1567,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- A folder being typed into the Settings' sharing field is no longer lost when the page refreshes before it is
+  shared.
 - Opening a large `.iql` in the studio and running it no longer drops the connection: a script goes a statement at
   a time, and a statement longer than a packet carries is refused before it is sent, its line named.
 - The disks table answers, with each server's disks, and the columns the studio's explorer lists are the ones a

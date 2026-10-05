@@ -24,6 +24,8 @@ public final class InstallerLayout {
 
     /** How far apart the rows of a list sit, which the mouse also has to know to find the one under it. */
     public static final int ROW = 11;
+    /** How far a checklist's words sit in from its ticks. */
+    public static final int CHECK_INDENT = 9;
     /** Where the Size column ends, counted back from the right edge of the table. */
     public static final int SIZE_COLUMN = 120;
     /** The same for the Free column, which sits between Size and Holds. */

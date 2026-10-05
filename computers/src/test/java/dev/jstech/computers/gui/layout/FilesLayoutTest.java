@@ -43,6 +43,43 @@ public final class FilesLayoutTest {
     }
 
     @Test
+    public void layout_underEitherBarIsCleanAtEverySize() {
+        for (final FilesLayout.Bar bar : FilesLayout.Bar.values()) {
+            for (final int[] size : new int[][]{{FilesLayout.MIN_W, FilesLayout.MIN_H},
+                {FilesLayout.DEFAULT_W, FilesLayout.DEFAULT_H}, {420, 300}}) {
+                final GuiLayout l = FilesLayout.layout(size[0], size[1], false, bar);
+                assertTrue(l.isClean(), bar + " " + size[0] + "x" + size[1] + ": " + l.overlaps() + " "
+                        + l.outOfBounds());
+            }
+        }
+    }
+
+    @Test
+    public void bar_movesTheTreeAndTheListDownByWhatItAdds() {
+        for (final FilesLayout.Bar bar : FilesLayout.Bar.values()) {
+            final int added = bar.above() + bar.below();
+            assertEquals(FilesLayout.treeY() + added, FilesLayout.treeY(bar), bar.name());
+            assertEquals(FilesLayout.listY() + added, FilesLayout.listY(bar), bar.name());
+            assertEquals(FilesLayout.navY() + bar.above(), FilesLayout.navY(bar), bar.name());
+        }
+    }
+
+    @Test
+    public void list_showsRowsUnderEitherBarAtTheMinimumHeight() {
+        for (final FilesLayout.Bar bar : FilesLayout.Bar.values()) {
+            assertTrue(FilesLayout.visibleRows(FilesLayout.MIN_H, bar) >= 3, bar.name());
+        }
+    }
+
+    @Test
+    public void ribbonBody_dropsDownUnderItsTabs() {
+        assertEquals(FilesLayout.RIBBON_TABS_H, FilesLayout.ribbonBodyY());
+        // Two commands stacked in a column above the group's caption, a gap round them.
+        assertTrue(3 + 2 * FilesLayout.RIBBON_BUTTON_H + 1 + FilesLayout.RIBBON_CAPTION_H + 1
+                <= FilesLayout.RIBBON_BODY_H);
+    }
+
+    @Test
     public void columns_neverRunIntoEachOther() {
         for (final int width : new int[]{FilesLayout.MIN_W, FilesLayout.DEFAULT_W, 420}) {
             final GuiLayout l = FilesLayout.columns(width);

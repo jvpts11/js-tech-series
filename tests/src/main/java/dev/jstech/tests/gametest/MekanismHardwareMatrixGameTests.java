@@ -289,17 +289,21 @@ public final class MekanismHardwareMatrixGameTests {
                     helper.assertTrue(rig.net().storage(helper.getLevel()).count(Items.COPPER_INGOT) == 0,
                             "the machine step must have taken the copper before the machine breaks");
                     helper.getLevel().destroyBlock(helper.absolutePos(MekanismRig.MACHINE), true);
+                    /*
+                     * The machine's contents leave with the machine, as drops where it stood, not into the void. They
+                     * are looked for in the tick it breaks: by the time the craft settles a drop has had ticks to
+                     * bounce off the cables round it, and the rig reaches past its 9x9 arena towards its neighbours.
+                     */
+                    final List<ItemEntity> drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class,
+                            AABB.encapsulatingFullBlocks(helper.absolutePos(MekanismRig.MACHINE.offset(-2, -1, -2)),
+                                    helper.absolutePos(MekanismRig.MACHINE.offset(2, 2, 2))));
+                    helper.assertTrue(!drops.isEmpty(), "breaking the machine must drop something where it stood");
                 })
                 .thenWaitUntil(() -> helper.assertTrue(op[0].isDone(), "the craft must settle once its machine is gone: "
                         + rig.net().mainframe().activeOperationRecords()))
                 .thenExecute(() -> {
                     helper.assertTrue(op[0].toRecord().status() != OperationRecord.STATUS_COMPLETED,
                             "the craft must settle as a visible failure; status=" + op[0].toRecord().status());
-                    // The machine's contents left with the machine (as drops around it), not into the void.
-                    final List<ItemEntity> drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class,
-                            AABB.encapsulatingFullBlocks(helper.absolutePos(MekanismRig.MACHINE.offset(-2, -1, -2)),
-                                    helper.absolutePos(MekanismRig.MACHINE.offset(2, 2, 2))));
-                    helper.assertTrue(!drops.isEmpty(), "breaking the machine must drop something where it stood");
                     helper.assertTrue(rig.net().storage(helper.getLevel()).count(MekanismRig.itemKey(PELLET_POLONIUM)) == 4,
                             "the bench ingredients must still be in the network");
                 })

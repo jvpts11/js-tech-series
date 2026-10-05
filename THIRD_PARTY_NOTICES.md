@@ -85,7 +85,8 @@ From Freesound, under the Creative Commons CC0 1.0 Universal Public Domain Dedic
 Pixel_Stick (the power button), 607freesound (the old computer starting up and the floppy drive reading), conath
 (the hard drive), griffinjennings (the disc tray), micropolis (the floppy disk going in and being drawn out),
 asiekierka (the floppy disk ejected), soundandmelodies (the server room), Johnmode (Frames 95's chime), Lumineve
-(Frames XP's chime), marlonnnnnn (Frames 11's chime and the Frames notice), Kastenfrosch (Frames 11's error), CZghost
+(Frames XP's chime), pizzaiolo (Frames 7's chime), CogFireStudios (Frames 10's chime), marlonnnnnn (Frames 11's chime
+and the Frames notice), Kastenfrosch (Frames 11's error), CZghost
 (the failed self-test), Klerrp (the hard drive seeking), Sanderboah (the monitor switching off), leocb (a server on
 its rails), SamsterBirdies (the disc drive turning), kyles (the Vintage Mainframe's tapes), dland (a device plugged in
 and pulled out on Frames), Breviceps (the minefield's click), Tony B kksm (the mine exploding), Fupicat (the

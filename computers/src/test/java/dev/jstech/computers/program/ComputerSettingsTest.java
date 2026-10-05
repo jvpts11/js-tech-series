@@ -8,6 +8,7 @@
 package dev.jstech.computers.program;
 
 import dev.jstech.computers.audio.SoundOutput;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,30 @@ class ComputerSettingsTest {
     @BeforeEach
     void setUp() {
         settings = new ComputerSettings();
+    }
+
+    @Test
+    void tileKey_pinsMovesAndResizesAStartTile() {
+        settings.startTiles().setEncoded(List.of("files:m"));
+        assertTrue(SettingKey.apply(settings, "tile", "jsc:paint w 0"));
+        assertEquals(List.of("paint:w", "files:m"), settings.startTiles().encoded());
+        assertTrue(SettingKey.apply(settings, "TILE", "files s 0"));
+        assertEquals(List.of("files:s", "paint:w"), settings.startTiles().encoded());
+    }
+
+    @Test
+    void tileKey_refusesAValueItCannotRead() {
+        assertFalse(SettingKey.apply(settings, "tile", "paint"));
+        assertFalse(SettingKey.apply(settings, "tile", "paint q 0"));
+        assertFalse(SettingKey.apply(settings, "tile", "paint m first"));
+    }
+
+    @Test
+    void untileKey_takesATileOffStart() {
+        settings.startTiles().setEncoded(List.of("files:m", "paint:s"));
+        assertTrue(SettingKey.apply(settings, "untile", "files"));
+        assertEquals(List.of("paint:s"), settings.startTiles().encoded());
+        assertFalse(SettingKey.apply(settings, "untile", ""));
     }
 
     @Test
@@ -225,7 +250,7 @@ class ComputerSettingsTest {
 
     @Test
     void pinned_startsWithTheFileExplorer() {
-        assertEquals(java.util.List.of("files"), settings.pinned());
+        assertEquals(List.of("files"), settings.pinned());
         assertTrue(settings.isPinned("jsc:files"), "a namespaced id names the same program");
     }
 
@@ -234,7 +259,7 @@ class ComputerSettingsTest {
         assertTrue(settings.pin("editor"));
         assertFalse(settings.pin("Editor"), "pinning again changes nothing");
         assertTrue(settings.pin("jsc:command_prompt"));
-        assertEquals(java.util.List.of("files", "editor", "command_prompt"), settings.pinned());
+        assertEquals(List.of("files", "editor", "command_prompt"), settings.pinned());
     }
 
     @Test
@@ -254,9 +279,9 @@ class ComputerSettingsTest {
 
     @Test
     void setPinned_replacesTheListDroppingBlanksAndRepeats() {
-        settings.setPinned(java.util.List.of("editor", "", "editor", "files"));
-        assertEquals(java.util.List.of("editor", "files"), settings.pinned());
-        settings.setPinned(java.util.List.of());
+        settings.setPinned(List.of("editor", "", "editor", "files"));
+        assertEquals(List.of("editor", "files"), settings.pinned());
+        settings.setPinned(List.of());
         assertTrue(settings.pinned().isEmpty(), "an empty list is a choice, not the default");
     }
 
@@ -275,11 +300,11 @@ class ComputerSettingsTest {
         assertTrue(settings.favourite("item|minecraft:iron_ingot"));
         assertFalse(settings.favourite("item|minecraft:iron_ingot"), "starring again changes nothing");
         assertTrue(settings.favourite("fluid|minecraft:water"));
-        assertEquals(java.util.List.of("item|minecraft:iron_ingot", "fluid|minecraft:water"), settings.favourites());
+        assertEquals(List.of("item|minecraft:iron_ingot", "fluid|minecraft:water"), settings.favourites());
         assertTrue(settings.isFavourite("fluid|minecraft:water"));
         assertTrue(settings.unfavourite("item|minecraft:iron_ingot"));
         assertFalse(settings.unfavourite("item|minecraft:iron_ingot"), "already gone");
-        assertEquals(java.util.List.of("fluid|minecraft:water"), settings.favourites());
+        assertEquals(List.of("fluid|minecraft:water"), settings.favourites());
     }
 
     @Test

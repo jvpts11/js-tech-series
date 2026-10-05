@@ -8,6 +8,8 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.client.FramesEmblem;
+import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -58,7 +60,10 @@ final class PanelTray {
 
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "panel/tray",
             new Colours(0xFF101318, 0xFFF2F4F8, 0xFF202430, 0xFF505868, 0xFF2A2F3A, 0xFF11151E, 0xFF5FE07A,
-                    0xFFF0B23A, 0xFFEF6A5A, 0xFFEF6A5A));
+                    0xFFF0B23A, 0xFFEF6A5A, 0xFFEF6A5A, 0x80FFFFFF, 0x1FFFFFFF));
+    /** Frames 7's corner that shows the desktop, and Frames 10's button of the Action Center. */
+    private static final int SHOW_DESKTOP_W = 7;
+    private static final int ACTION_CENTER_W = 16;
     /** How many columns of the speaker picture are its body; the rest are the waves a muted speaker loses. */
     private static final int SPEAKER_BODY = 4;
     private static final int MUTE_MARK = 4;
@@ -79,7 +84,42 @@ final class PanelTray {
 
     /** How wide the whole notification area runs: the status group, the clock, and the padding around them. */
     int width() {
-        return PAD + statusWidth() + GAP + desktop.textFont().width(desktop.prefs().clockText()) + PAD;
+        return PAD + lead() + statusWidth() + GAP + clockWidth() + PAD + trail();
+    }
+
+    /**
+     * What stands before the status group: Frames 7's action-center flag, which is where that system said it had
+     * something to tell; nothing on the others.
+     */
+    int lead() {
+        return desktop.panelStyle() == PanelStyle.FRAMES_7 ? FramesEmblem.SIZE + GAP : 0;
+    }
+
+    /**
+     * What closes the notification area at the panel's end: Frames 7's corner that shows the desktop, Frames 10's
+     * button of the Action Center; nothing on the others.
+     */
+    int trail() {
+        return switch (desktop.panelStyle()) {
+            case FRAMES_7 -> SHOW_DESKTOP_W;
+            case FRAMES_10 -> ACTION_CENTER_W;
+            default -> 0;
+        };
+    }
+
+    /** Whether the clock carries the day under the time, as Frames 7 and 10 wrote it. */
+    boolean dated() {
+        return desktop.panelStyle() == PanelStyle.FRAMES_7 || desktop.panelStyle() == PanelStyle.FRAMES_10;
+    }
+
+    /** Whether a desktop-local point is on Frames 7's corner that shows the desktop. */
+    boolean onShowDesktop(final double mx, final double my, final int sw, final int panelY) {
+        return desktop.panelStyle() == PanelStyle.FRAMES_7 && my >= panelY && mx >= sw - SHOW_DESKTOP_W;
+    }
+
+    /** Whether a desktop-local point is on Frames 10's button of the Action Center. */
+    boolean onActionCenter(final double mx, final double my, final int sw, final int panelY) {
+        return desktop.panelStyle() == PanelStyle.FRAMES_10 && my >= panelY && mx >= sw - ACTION_CENTER_W;
     }
 
     /** The left edge of the notification area on a panel {@code sw} wide. */
@@ -99,10 +139,60 @@ final class PanelTray {
      * whether this panel is a dark band or a light one.
      */
     void draw(final GuiGraphics g, final int panelY, final int sw, final int textColor) {
-        final int x = left(sw) + PAD;
+        int x = left(sw) + PAD;
+        if (desktop.panelStyle() == PanelStyle.FRAMES_7) {
+            FramesEmblem.draw(g, x, panelY + (DesktopScreen.TASKBAR_H - FramesEmblem.SIZE) / 2, PanelStyle.FRAMES_7);
+        }
+        x += lead();
         drawStatus(g, x, panelY, textColor);
-        Draw.text(g, desktop.textFont(), desktop.prefs().clockText(),
-                x + statusWidth() + GAP, panelY + 8, textColor);
+        final int clockX = x + statusWidth() + GAP;
+        final String time = desktop.prefs().clockText();
+        if (dated()) {
+            final String day = dateText();
+            final int w = clockWidth();
+            Draw.text(g, desktop.textFont(), time, clockX + (w - desktop.textFont().width(time)) / 2, panelY + 3,
+                    textColor);
+            Draw.text(g, desktop.textFont(), day, clockX + (w - desktop.textFont().width(day)) / 2, panelY + 13,
+                    textColor);
+        } else {
+            Draw.text(g, desktop.textFont(), time, clockX, panelY + 8, textColor);
+        }
+        drawTrail(g, panelY, sw, textColor);
+    }
+
+    /** The clock's width: the time, or the wider of the time and the day under it. */
+    private int clockWidth() {
+        final int time = desktop.textFont().width(desktop.prefs().clockText());
+        return dated() ? Math.max(time, desktop.textFont().width(dateText())) : time;
+    }
+
+    /** The day the clock writes under the time. */
+    private String dateText() {
+        return GameText.resolve(PanelTexts.DAY.with(desktop.prefs().dayOfWorld()));
+    }
+
+    /**
+     * The end of the area: Frames 7's corner, a pane of its own past a hairline, and Frames 10's button, a speech
+     * bubble that opens the Action Center.
+     */
+    private void drawTrail(final GuiGraphics g, final int panelY, final int sw, final int textColor) {
+        final Colours c = PALETTE.get();
+        final int bottom = panelY + DesktopScreen.TASKBAR_H;
+        if (desktop.panelStyle() == PanelStyle.FRAMES_7) {
+            final int x = sw - SHOW_DESKTOP_W;
+            g.fill(x, panelY + 1, x + 1, bottom, c.cornerLine());
+            g.fill(x + 1, panelY + 1, sw, bottom, c.cornerPane());
+        } else if (desktop.panelStyle() == PanelStyle.FRAMES_10) {
+            final int x = sw - ACTION_CENTER_W + 3;
+            final int y = panelY + (DesktopScreen.TASKBAR_H - 9) / 2;
+            Draw.outline(g, x, y, 10, 7, textColor);
+            g.fill(x + 2, y + 7, x + 4, y + 8, textColor);
+            g.fill(x + 2, y + 8, x + 3, y + 9, textColor);
+            if (desktop.notices().unread() > 0) {
+                g.fill(x + 3, y + 2, x + 7, y + 3, textColor);
+                g.fill(x + 3, y + 4, x + 6, y + 5, textColor);
+            }
+        }
     }
 
     /** The status group alone, for a panel that puts its clock somewhere else of its own. */
@@ -144,7 +234,7 @@ final class PanelTray {
 
     /** Where the speaker stands on a panel {@code sw} wide: in the notification area, or at the top bar's end. */
     int speakerX(final int sw, final boolean topBar) {
-        return (topBar ? sw - PAD - statusWidth() : left(sw) + PAD) + ICON + GAP;
+        return (topBar ? sw - PAD - statusWidth() : left(sw) + PAD + lead()) + ICON + GAP;
     }
 
     /** Whether a desktop-local point is on the speaker of the panel whose band starts at {@code panelY}. */
@@ -245,10 +335,10 @@ final class PanelTray {
 
     /**
      * The tray's own colours: the tip's border, paper and two inks, the memory bar's edge and trough with the
-     * green it starts at, the amber it shades to and the red of a machine that is nearly full, and the cross of a
-     * muted speaker.
+     * green it starts at, the amber it shades to and the red of a machine that is nearly full, the cross of a
+     * muted speaker, and the hairline and pane of Frames 7's corner that shows the desktop.
      */
     private record Colours(int tipBorder, int tip, int tipInk, int tipDim, int barEdge, int barTrough, int barLow,
-                           int barHigh, int barFull, int muted) {
+                           int barHigh, int barFull, int muted, int cornerLine, int cornerPane) {
     }
 }

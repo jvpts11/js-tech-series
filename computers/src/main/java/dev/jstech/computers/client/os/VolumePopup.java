@@ -81,6 +81,12 @@ final class VolumePopup {
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "panel/volume",
             new Colours(0xFF26262B, 0xFF3D3D45, 0xFFEDEDF0, 0xFF9A9AA4, 0xFF303036, 0xFF3A3A42, 0xFF55555E,
                     0xFFFFFFFF));
+    private static final Palette<Glass> GLASS = Palettes.declare(JsComputers.MODID, "panel/volume_glass",
+            new Glass(0x9EBAD2EE, 0x8C96B4DC, 0xCC283C5A, 0xFFFFFFFF, 0xFF9FB3CF, 0xFFF2F8FD, 0xFFDCEBFA,
+                    0xFF7DA2CE, 0xFF5D6B7C, 0xFF000000, 0xFF555555, 0xFF3B8AD9, 0xFFDCEBFB, 0xFF9EC2EA, 0xFF3D6AA3,
+                    0xFFDCEBFB));
+    private static final Palette<Flyout> FLYOUT = Palettes.declare(JsComputers.MODID, "panel/volume_flyout",
+            new Flyout(0xF81F1F1F, 0xFF2B2B2B, 0xFF3A3A3A, 0x1FFFFFFF, 0xFFFFFFFF, 0xFF999999));
 
     VolumePopup(final DesktopState desktop) {
         this.desktop = desktop;
@@ -232,6 +238,8 @@ final class VolumePopup {
         final PanelStyle style = desktop.panelStyle();
         return switch (style) {
             case FRAMES_95, FRAMES_XP -> Look.CLASSIC;
+            case FRAMES_7 -> Look.GLASS;
+            case FRAMES_10 -> Look.FLYOUT;
             case FRAMES_11 -> Look.QUICK;
             case KDE -> Look.PLASMA;
             case GNOME -> Look.SYSTEM_MENU;
@@ -255,9 +263,10 @@ final class VolumePopup {
         final Font font = ctx.font();
         final Geometry geo = VolumePopupLayout.of(look, expanded, labels(look), font::width);
         geometry = geo;
-        final int margin = look == Look.QUICK || look == Look.SYSTEM_MENU ? 4 : 2;
+        final boolean floats = look == Look.QUICK || look == Look.FLYOUT;
+        final int margin = floats || look == Look.SYSTEM_MENU ? 4 : 2;
         originX = Math.max(2, sw - margin - geo.width());
-        originY = topBar ? DesktopScreen.TASKBAR_H + 3 : tbY - (look == Look.QUICK ? 4 : 1) - geo.height();
+        originY = topBar ? DesktopScreen.TASKBAR_H + 3 : tbY - (floats ? 4 : 1) - geo.height();
         final int mx = ctx.mouseX() - originX;
         final int my = ctx.mouseY() - originY;
         g.pose().pushPose();
@@ -266,6 +275,8 @@ final class VolumePopup {
         switch (look) {
             case CLASSIC, PERIOD -> drawUpright(g, font, skin, geo, mx, my);
             case SYSTEM_MENU -> drawSystemMenu(g, font, geo, mx, my);
+            case GLASS -> drawGlass(g, font, skin, geo, mx, my);
+            case FLYOUT -> drawFlyout(g, font, skin, geo, mx, my);
             default -> drawPanelApplet(g, font, skin, geo, mx, my);
         }
         g.pose().popPose();
@@ -360,7 +371,127 @@ final class VolumePopup {
             case APPLET -> new VolumePopupLayout.Labels(GameText.resolve(VolumeTexts.VOLUME_AT.with(100)),
                     words(VolumeTexts.MUTE_OUTPUT), words(VolumeTexts.OUTPUT_DEVICE), outputs, names,
                     words(VolumeTexts.SOUND_SETTINGS_TITLE));
+            case GLASS -> new VolumePopupLayout.Labels("", "", "", outputs, names, words(VolumeTexts.MIXER));
+            case FLYOUT -> new VolumePopupLayout.Labels("", "", "", outputs, names, "");
         };
+    }
+
+    /*
+     * Frames 7's glass popup: the column of glass with the page of white inside it, the device button naming where
+     * the sound goes, the slider standing with its figure under it, the mute button and the Mixer link; the outputs
+     * in a white list to its left while the device button is pressed.
+     */
+    private void drawGlass(final GuiGraphics g, final Font font, final OsSkin skin, final Geometry geo,
+                           final int mx, final int my) {
+        final Glass c = GLASS.get();
+        final Rect col = geo.panel();
+        g.fillGradient(col.x(), col.y(), col.right(), col.bottom(), c.glassTop(), c.glassBottom());
+        Draw.outline(g, col.x(), col.y(), col.w(), col.h(), c.glassRim());
+        g.fill(col.x() + 4, col.y() + 3, col.right() - 4, col.bottom() - 4, c.paper());
+        Draw.outline(g, col.x() + 4, col.y() + 3, col.w() - 8, col.h() - 7, c.paperRim());
+        final Rect d = geo.chevron();
+        if (expanded || d.contains(mx, my)) {
+            g.fillGradient(d.x(), d.y(), d.right(), d.bottom(), c.hotTop(), c.hotBottom());
+            Draw.outline(g, d.x(), d.y(), d.w(), d.h(), c.hotRim());
+        }
+        PanelTray.speaker(g, d.x() + 3, d.y() + 5, c.speaker(), false);
+        final String where = outputWords(LISTED.indexOf(output));
+        Draw.text(g, font, clip(font, where, d.w() - 22), d.x() + 14, d.y() + 6, c.ink(), c.paper());
+        caret(g, d.right() - 6, d.y() + 8, c.ink(), true);
+        final Rect t = geo.track();
+        skin.field(g, t.x(), t.y(), t.w(), t.h(), false);
+        final int at = VolumePopupLayout.thumbAt(geo, volume);
+        g.fill(t.x() + 1, at, t.right() - 1, t.bottom() - 1, c.fill());
+        g.fillGradient(t.x() - 6, at - 4, t.x() + 11, at + 5, c.thumbTop(), c.thumbBottom());
+        Draw.outline(g, t.x() - 6, at - 4, 17, 9, c.thumbRim());
+        final String figure = Integer.toString(volume);
+        final Rect p = geo.percent();
+        Draw.text(g, font, figure, p.x() + (p.w() - font.width(figure)) / 2, p.y(), c.dim(), c.paper());
+        final Rect m = geo.mute();
+        skin.button(g, font, m.x(), m.y(), m.w(), m.h(), "", m.contains(mx, my), muted, false);
+        PanelTray.speaker(g, m.x() + 4, m.y() + 2, c.speaker(), muted);
+        final Rect f = geo.footer();
+        Draw.text(g, font, words(VolumeTexts.MIXER), f.x(), f.y(), skin.accent(), c.paper());
+        if (!geo.outputs().isEmpty()) {
+            final Rect first = geo.outputs().get(0);
+            final Rect last = geo.outputs().get(geo.outputs().size() - 1);
+            g.fill(first.x() - 2, first.y() - 2, first.right() + 2, last.bottom() + 2, c.paper());
+            Draw.outline(g, first.x() - 2, first.y() - 2, first.w() + 4, last.bottom() - first.y() + 4,
+                    c.paperRim());
+            for (int i = 0; i < geo.outputs().size(); i++) {
+                final Rect row = geo.outputs().get(i);
+                final boolean chosen = LISTED.get(i) == output;
+                if (row.contains(mx, my)) {
+                    g.fill(row.x(), row.y(), row.right(), row.bottom(), c.rowHot());
+                    Draw.outline(g, row.x(), row.y(), row.w(), row.h(), c.hotRim());
+                }
+                if (chosen) {
+                    g.fill(row.x() + 4, row.y() + 4, row.x() + 7, row.y() + 7, c.ink());
+                }
+                Draw.text(g, font, outputWords(i), row.x() + 11, row.y() + 2, c.ink(), c.paper());
+            }
+        }
+    }
+
+    /*
+     * Frames 10's dark flyout: the device row, lit while the outputs are open under it, the outputs with a bar of the
+     * accent against the one in use, and the slider row: the speaker that mutes, the groove filled in the accent up
+     * to its thumb, and the figure.
+     */
+    private void drawFlyout(final GuiGraphics g, final Font font, final OsSkin skin, final Geometry geo,
+                            final int mx, final int my) {
+        final Flyout c = FLYOUT.get();
+        final int accent = skin.accent();
+        g.fill(0, 0, geo.width(), geo.height(), c.fill());
+        Draw.outline(g, 0, 0, geo.width(), geo.height(), c.edge());
+        final Rect d = geo.chevron();
+        if (expanded || d.contains(mx, my)) {
+            g.fill(d.x(), d.y(), d.right(), d.bottom(), c.row());
+        }
+        final String where = outputWords(LISTED.indexOf(output));
+        Draw.text(g, font, clip(font, where, d.w() - 16), d.x() + 4, d.y() + 3, c.ink(), c.fill());
+        caret(g, d.right() - 8, d.y() + 6, c.ink(), !expanded);
+        for (int i = 0; i < geo.outputs().size(); i++) {
+            final Rect row = geo.outputs().get(i);
+            final boolean chosen = LISTED.get(i) == output;
+            if (chosen || row.contains(mx, my)) {
+                g.fill(row.x(), row.y(), row.right(), row.bottom(), c.picked());
+            }
+            if (chosen) {
+                g.fill(row.x(), row.y(), row.x() + 2, row.bottom(), accent);
+            }
+            Draw.text(g, font, outputWords(i), row.x() + 6, row.y() + 2, c.ink(), c.fill());
+        }
+        final Rect icon = geo.icon();
+        PanelTray.speaker(g, icon.x(), icon.y(), c.ink(), muted);
+        final Rect t = geo.track();
+        final int at = VolumePopupLayout.thumbAt(geo, volume);
+        g.fill(t.x(), t.y() + 3, t.right(), t.y() + 5, c.trough());
+        g.fill(t.x(), t.y() + 3, at, t.y() + 5, accent);
+        g.fill(at - 2, t.y() - 1, at + 2, t.bottom() + 1, accent);
+        final String figure = Integer.toString(volume);
+        final Rect p = geo.percent();
+        Draw.text(g, font, figure, p.right() - font.width(figure), p.y(), c.ink(), c.fill());
+    }
+
+    /* A small caret, pointing down or up, the mark of something that opens. */
+    private static void caret(final GuiGraphics g, final int cx, final int y, final int colour, final boolean down) {
+        for (int i = 0; i < 3; i++) {
+            final int row = down ? y + i : y + 2 - i;
+            g.fill(cx - 2 + i, row, cx + 3 - i, row + 1, colour);
+        }
+    }
+
+    /* Words cut to the room they have, so a long output name never runs out of its row. */
+    private static String clip(final Font font, final String text, final int room) {
+        if (font.width(text) <= room) {
+            return text;
+        }
+        String cut = text;
+        while (cut.length() > 1 && font.width(cut + "...") > room) {
+            cut = cut.substring(0, cut.length() - 1);
+        }
+        return cut + "...";
     }
 
     /* The speakers' names as the Speakers row lists them, or that there are none. */
@@ -592,5 +723,21 @@ final class VolumePopup {
      */
     private record Colours(int menuFill, int menuEdge, int menuInk, int menuDim, int menuWell, int menuButton,
                            int menuTrough, int menuThumb) {
+    }
+
+    /**
+     * Frames 7's glass popup: the glass and its rim, the white page and its rim, the device button lit, the speaker
+     * and the ink, the figure, the slider's fill below its thumb and the thumb, and a row under the cursor.
+     */
+    private record Glass(int glassTop, int glassBottom, int glassRim, int paper, int paperRim, int hotTop,
+                         int hotBottom, int hotRim, int speaker, int ink, int dim, int fill, int thumbTop,
+                         int thumbBottom, int thumbRim, int rowHot) {
+    }
+
+    /**
+     * Frames 10's dark flyout: its fill and edge, the device row lit, the output in use and the one under the cursor,
+     * its ink, and the slider's groove.
+     */
+    private record Flyout(int fill, int edge, int row, int picked, int ink, int trough) {
     }
 }

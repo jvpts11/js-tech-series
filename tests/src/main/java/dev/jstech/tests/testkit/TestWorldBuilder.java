@@ -46,8 +46,15 @@ public final class TestWorldBuilder {
     /** The Network OS id installed on every test Mainframe: the minimal OS that enables orchestration. */
     public static final ResourceLocation NETWORK_OS = ResourceLocation.fromNamespaceAndPath("jsc", "mc_net");
 
-    /** What the base's desktop machines run: a Standard-era system, the same a player would install. */
+    /**
+     * What the base's desktop machines run: Frames 11, put straight on the disk. Their boards are Standard ones, on
+     * which a player's installer offers Frames 10 and keeps 11 for an Advanced machine; the tests reach the newest
+     * desktop without going through the installer, which is tested on its own.
+     */
     public static final ResourceLocation DESKTOP_OS = ResourceLocation.fromNamespaceAndPath("jsc", "frames_11");
+
+    /** The system a Standard machine's installer offers, for the tests that hold a machine to its own age. */
+    public static final ResourceLocation STANDARD_OS = ResourceLocation.fromNamespaceAndPath("jsc", "frames_10");
 
     private final ServerLevel level;
     private final UnaryOperator<BlockPos> toAbsolute;

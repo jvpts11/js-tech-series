@@ -31,6 +31,12 @@ public enum BootSplash implements IStableName {
     /** Black, the logo above the middle, and three blocks running through a trough beneath it. */
     FRAMES_XP("frames_xp"),
 
+    /** Black, four coloured lights that sweep in and close into the waving flag, and the system's words under it. */
+    FRAMES_7("frames_7"),
+
+    /** Black, the window of four panes in blue, and a ring of dots chasing round below it. */
+    FRAMES_10("frames_10"),
+
     /** Near black, the maker's mark in the middle, and a ring of dots turning below it. */
     FRAMES_11("frames_11");
 
@@ -57,7 +63,9 @@ public enum BootSplash implements IStableName {
         return switch (familyRank) {
             case 1 -> FRAMES_95;
             case 2 -> FRAMES_XP;
-            case 3 -> FRAMES_11;
+            case 3 -> FRAMES_7;
+            case 4 -> FRAMES_10;
+            case 5 -> FRAMES_11;
             default -> PLAIN;
         };
     }

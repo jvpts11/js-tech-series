@@ -1,0 +1,22 @@
+{
+  "basic": "#FF4B6B94",
+  "buttonBottom": "#0DFFFFFF",
+  "buttonTop": "#4DFFFFFF",
+  "chevron": "#FF4A9A3E",
+  "dirt": "#FF8A6A45",
+  "dirtDark": "#FF6B4A2C",
+  "fieldRim": "#FF7F9DB9",
+  "glassBottom": "#E612203A",
+  "glassTop": "#CC3C5A82",
+  "grass": "#FF7FC26B",
+  "hint": "#FF8A8A8A",
+  "ink": "#FF000000",
+  "paper": "#FFFFFFFF",
+  "paperRim": "#FF6D8BB0",
+  "pictureFrame": "#FFE8F0FA",
+  "placeHot": "#33FFFFFF",
+  "placeInk": "#FFFFFFFF",
+  "rowHot": "#FFDBEAFB",
+  "rowRim": "#FF7DA2CE",
+  "rule": "#FFD6DFEA"
+}

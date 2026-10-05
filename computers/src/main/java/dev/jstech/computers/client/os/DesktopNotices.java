@@ -7,8 +7,10 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.operation.payload.MachineSoundPayload;
+import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.UiContext;
@@ -16,7 +18,12 @@ import dev.jstech.core.client.motion.FadeLayer;
 import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.motion.Motion;
 import dev.jstech.core.motion.MotionKinds;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
@@ -29,8 +36,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * What the desktop tells the player, in the two ways it can: a dialog over everything that has to be answered or put
  * away (an error, a question, the Open with chooser), and a balloon over the notification area that says one thing
- * and goes away on its own, taking nothing over.
+ * and goes away on its own, taking nothing over. On Frames 10 the balloon is the toast in the corner, and every
+ * notice is also kept for the Action Center.
+ *
+ * <p>The toast's colours are {@code jsc:desktop/toast}.
  */
+@PaletteHolder
 final class DesktopNotices {
 
     private final DesktopState desktop;
@@ -45,10 +56,21 @@ final class DesktopNotices {
     @Nullable
     private Balloon leaving;
     private Motion balloonOut = Motion.FINISHED;
+    /** Every notice raised since the desktop opened, newest first, which Frames 10's Action Center lists. */
+    private final List<Notice> history = new ArrayList<>();
+    /** How many of those came since the Action Center was last opened. */
+    private int unread;
+    /** Frames 10's Quiet hours: on, a notice goes to the Action Center without popping up or sounding. */
+    private boolean quiet;
 
     /** How long a balloon stays up before it fades away, in milliseconds. */
     private static final long BALLOON_MS = 9_000L;
     private static final int BALLOON_W = 152;
+    /** Frames 10's notice, the toast in the corner, and how many notices the Action Center keeps. */
+    private static final int TOAST_W = 168;
+    private static final int HISTORY_MAX = 12;
+    private static final Palette<Toast> TOAST = Palettes.declare(JsComputers.MODID, "desktop/toast",
+            new Toast(0xF21F1F1F, 0xFF2B2B2B, 0xFFFFFFFF, 0xFFBBBBBB, 0xFF0078D7));
 
     DesktopNotices(final DesktopState desktop) {
         this.desktop = desktop;
@@ -183,10 +205,55 @@ final class DesktopNotices {
      * @param opens the window key of the program a click on it opens, or empty
      */
     void showBalloon(final String title, final String body, final String opens) {
+        history.add(0, new Notice(title, body, opens, desktop.prefs().clockText()));
+        if (history.size() > HISTORY_MAX) {
+            history.remove(history.size() - 1);
+        }
+        unread++;
+        if (quiet) {
+            return;
+        }
         this.balloon = new Balloon(title, body, System.currentTimeMillis() + BALLOON_MS, opens);
         this.balloonIn = desktop.motion().start(MotionKinds.NOTICE_SHOW);
         this.leaving = null;
         PacketDistributor.sendToServer(new MachineSoundPayload(desktop.hostPos(), SystemSound.NOTIFY));
+    }
+
+    /** The notices raised since the desktop opened, newest first. */
+    List<Notice> history() {
+        return Collections.unmodifiableList(history);
+    }
+
+    /** How many notices came since the Action Center was last opened. */
+    int unread() {
+        return unread;
+    }
+
+    /** The Action Center was opened: what it lists has been seen. */
+    void markRead() {
+        unread = 0;
+    }
+
+    /** Clears the Action Center's list, and the one up in the corner with it. */
+    void clearAll() {
+        history.clear();
+        unread = 0;
+        letGo();
+    }
+
+    /** Takes one notice off the Action Center's list. */
+    void forget(final Notice notice) {
+        history.remove(notice);
+    }
+
+    /** Whether Quiet hours is on. */
+    boolean quiet() {
+        return quiet;
+    }
+
+    /** Turns Quiet hours on or off. */
+    void toggleQuiet() {
+        quiet = !quiet;
     }
 
     /** Whether a balloon is up. */
@@ -241,6 +308,10 @@ final class DesktopNotices {
     }
 
     private void paintBalloon(final GuiGraphics g, final Balloon shown, final int tbY, final int sw) {
+        if (desktop.panelStyle() == PanelStyle.FRAMES_10) {
+            paintToast(g, shown, tbY, sw);
+            return;
+        }
         final int[] r = balloonRect(shown, tbY, sw);
         final Font font = desktop.textFont();
         final int x = r[0];
@@ -283,6 +354,26 @@ final class DesktopNotices {
     }
 
     /**
+     * Frames 10's notice: a dark card in the corner over the taskbar, the program's mark, its name over the words, and
+     * a cross that appears under the cursor; no tail, since it points at nothing but the corner it came from.
+     */
+    private void paintToast(final GuiGraphics g, final Balloon shown, final int tbY, final int sw) {
+        final int[] r = balloonRect(shown, tbY, sw);
+        final Font font = desktop.textFont();
+        final Toast c = TOAST.get();
+        g.fill(r[0], r[1], r[0] + r[2], r[1] + r[3], c.card());
+        Draw.outline(g, r[0], r[1], r[2], r[3], c.edge());
+        g.fill(r[0] + 6, r[1] + 6, r[0] + 16, r[1] + 16, c.mark());
+        Draw.text(g, font, font.plainSubstrByWidth(shown.title(), r[2] - 34), r[0] + 22, r[1] + 6, c.title());
+        int ly = r[1] + 18;
+        for (final FormattedCharSequence line : font.split(Component.literal(shown.body()), r[2] - 28)) {
+            Draw.text(g, font, line, r[0] + 22, ly, c.body());
+            ly += 9;
+        }
+        Draw.text(g, font, "x", r[0] + r[2] - 9, r[1] + 4, c.body());
+    }
+
+    /**
      * A click on the desktop, asked of the balloon first. The close box only puts it away; anywhere else on a balloon
      * that carries an offer takes it up, which is what made those balloons worth clicking rather than dismissing.
      *
@@ -306,6 +397,11 @@ final class DesktopNotices {
     /** The balloon's box in desktop-local coordinates, or null when none is up. Draw and hit-test share it. */
     @Nullable
     private int[] balloonRect(final Balloon shown, final int tbY, final int sw) {
+        if (desktop.panelStyle() == PanelStyle.FRAMES_10) {
+            final int lines = desktop.textFont().split(Component.literal(shown.body()), TOAST_W - 28).size();
+            final int h = 18 + lines * 9 + 5;
+            return new int[] {Math.max(4, sw - TOAST_W - 4), tbY - h - 4, TOAST_W, h};
+        }
         final int lines = desktop.textFont().split(Component.literal(shown.body()), BALLOON_W - 12).size();
         final int h = 15 + lines * 9 + 5;
         final int x = Math.max(4, sw - BALLOON_W - 6);
@@ -318,5 +414,16 @@ final class DesktopNotices {
      * @param opens the program a click on it opens, or empty when clicking it only puts it away
      */
     private record Balloon(String title, String body, long until, String opens) {
+    }
+
+    /**
+     * A notice as the Action Center keeps it: what it said, the program a click on it opens, and the time on the
+     * clock when it came.
+     */
+    record Notice(String title, String body, String opens, String time) {
+    }
+
+    /** Frames 10's toast: its card and edge, the program's mark, the name and the words under it. */
+    private record Toast(int card, int edge, int title, int body, int mark) {
     }
 }

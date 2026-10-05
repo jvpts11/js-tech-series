@@ -73,6 +73,12 @@ public final class AudioClientTests {
     private static final String ALERTS = AudioChannels.ALERTS.id().toString();
     /** How long, in ticks, a test waits for the camera to catch up with the player. */
     private static final int CAMERA_WAIT = 100;
+    /*
+     * How long a stopped sound may still be counted as playing. The game stops a channel on its sound thread and
+     * forgets it on a later tick, and with the suite's game windows running side by side that thread can wait over a
+     * second for its turn.
+     */
+    private static final int STOP_WAIT = 80;
 
     private AudioClientTests() {
     }
@@ -236,7 +242,7 @@ public final class AudioClientTests {
                 })
                 .thenWaitUntil(() -> AudioEngine.isPlaying(beep[0]), 40, "the beep is heard")
                 .then(10, () -> AudioEngine.stop(beep[0]))
-                .thenWaitUntil(() -> !AudioEngine.isPlaying(beep[0]), 20, "and stops when it is told to");
+                .thenWaitUntil(() -> !AudioEngine.isPlaying(beep[0]), STOP_WAIT, "and stops when it is told to");
     }
 
     /**

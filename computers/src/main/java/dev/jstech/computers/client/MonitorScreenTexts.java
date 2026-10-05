@@ -30,6 +30,10 @@ final class MonitorScreenTexts {
     static final TextKey SAFE_TO_TURN_OFF =
             TextKey.of("jsc.splash.safe_to_turn_off", "It's now safe to turn off your computer.");
     static final TextKey WELCOME = TextKey.of("jsc.splash.welcome", "welcome");
+    /* Frames 7's start and its Welcome, and Frames 10's sign-in, each in its own capitals. */
+    static final TextKey STARTING_SYSTEM = TextKey.of("jsc.splash.starting_system", "Starting %s");
+    static final TextKey WELCOME_TITLE = TextKey.of("jsc.splash.welcome_title", "Welcome");
+    static final TextKey DAY_OF_WORLD = TextKey.of("jsc.splash.day_of_world", "Day %s");
     static final TextKey STARTING_PANEL = TextKey.of("jsc.splash.starting_panel", "Starting the panel...");
     static final TextKey STARTING_DESKTOP = TextKey.of("jsc.splash.starting_desktop", "Starting the desktop...");
     static final TextKey STARTING_FILES = TextKey.of("jsc.splash.starting_files", "Starting Files...");

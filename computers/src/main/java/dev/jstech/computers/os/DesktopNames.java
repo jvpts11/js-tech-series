@@ -20,6 +20,9 @@ final class DesktopNames {
 
     static final TextKey MEGASHELL = TextKey.of("jsc.desktop.frames_11.command_prompt", "Megashell");
     static final TextKey FRAMES_95_SYSTEM = TextKey.of("jsc.desktop.frames_95.device_manager", "System");
+    static final TextKey FRAMES_7_COMPUTER = TextKey.of("jsc.desktop.frames_7.this_pc", "Computer");
+    static final TextKey FRAMES_7_CONTROL_PANEL = TextKey.of("jsc.desktop.frames_7.settings", "Control Panel");
+    static final TextKey FRAMES_10_FILE_EXPLORER = TextKey.of("jsc.desktop.frames_10.files", "File Explorer");
 
     static final TextKey KDE_FILES = TextKey.of("jsc.desktop.kde_plasma.files", "Dolphin");
     static final TextKey KDE_EDITOR = TextKey.of("jsc.desktop.kde_plasma.editor", "Kate");

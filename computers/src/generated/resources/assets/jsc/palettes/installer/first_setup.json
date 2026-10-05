@@ -1,0 +1,12 @@
+{
+  "accent": "#FFFFFFFF",
+  "button": "#FFFFFFFF",
+  "buttonHeld": "#FFDDE8F2",
+  "buttonInk": "#FF0063B1",
+  "buttonOff": "#FF7FA9CF",
+  "dim": "#FFCCDDEE",
+  "ground": "#FF0063B1",
+  "select": "#40FFFFFF",
+  "selectText": "#FFFFFFFF",
+  "text": "#FFFFFFFF"
+}

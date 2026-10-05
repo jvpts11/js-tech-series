@@ -48,6 +48,8 @@ final class SettingsStorage {
         s.putInt("EffectSpeed", settings.effectSpeed());
         // Always written, even empty: a machine whose player unpinned everything must not get the default back.
         s.put("Pinned", strings(settings.pinned()));
+        // Always written too: a Start the player emptied stays empty.
+        s.put("StartTiles", strings(settings.startTiles().encoded()));
         if (!settings.favourites().isEmpty()) {
             s.put("Favourites", strings(settings.favourites()));
         }
@@ -106,6 +108,9 @@ final class SettingsStorage {
                 : ComputerSettings.EFFECT_SPEED_NORMAL);
         if (s.contains("Pinned")) {
             settings.setPinned(strings(s.getList("Pinned", Tag.TAG_STRING)));
+        }
+        if (s.contains("StartTiles")) {
+            settings.startTiles().setEncoded(strings(s.getList("StartTiles", Tag.TAG_STRING)));
         }
         settings.setFavourites(strings(s.getList("Favourites", Tag.TAG_STRING)));
         final List<ComputerSettings.Share> shares = new ArrayList<>();

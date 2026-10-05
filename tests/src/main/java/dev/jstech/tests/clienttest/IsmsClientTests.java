@@ -64,6 +64,8 @@ public final class IsmsClientTests {
             "frames_xp");
     private static final ResourceLocation FRAMES_11 = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
             "frames_11");
+    private static final ResourceLocation FRAMES_7 = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
+            "frames_7");
 
     private IsmsClientTests() {
     }
@@ -401,7 +403,7 @@ public final class IsmsClientTests {
                 "disk_vaultis_link_ide_40g", FRAMES_XP),
         TRANSITION(ComputingModule.TRANSITION_PERSONAL_COMPUTER, "motherboard_atx_transition_775",
                 "cpu_integra_centro_2_duo_e6600", List.of("ram_ddr2_2048", "ram_ddr2_2048"), "gpu_vertex_8800_gt",
-                "psu_450b", "disk_hdd_500g", FRAMES_XP),
+                "psu_450b", "disk_hdd_500g", FRAMES_7),
         ADVANCED(ComputingModule.ADVANCED_PERSONAL_COMPUTER, "motherboard_atx_advanced_1151",
                 "cpu_integra_centro_c9_9900k", List.of("ram_ddr4_16384", "ram_ddr4_16384"), "gpu_vertex_gtx_1080_ti",
                 "psu_1000g", "disk_ssd_8t", FRAMES_11);

@@ -110,7 +110,7 @@ public final class ComputerSettings {
     private String themePreset = "";
     /** Whether the taskbar app strip is centered (Frames 11 look) rather than left-aligned; default centered. */
     private boolean taskbarCentered = true;
-    /** Whether the desktop and its programs use the dark theme (Frames 11 only); default light. */
+    /** Whether the desktop and its programs use the dark theme (Frames 10 and 11 only); default light. */
     private boolean darkMode;
     /**
      * The system's own visual effects switched off on its settings page, by the names its motion profile gives them
@@ -124,6 +124,8 @@ public final class ComputerSettings {
      * they were pinned. A fresh machine pins its file explorer, the way every desktop these imitate did.
      */
     private final List<String> pinned = new ArrayList<>(List.of(DEFAULT_PINNED));
+    /** The tiles of Frames 10's Start menu, in the player's order and sizes. */
+    private final StartTiles startTiles = StartTiles.defaults();
     /** Default program id per lowercase file extension (e.g. {@code "txt" -> "jsc:editor"}). */
     private final Map<String, String> defaultApps = new LinkedHashMap<>();
     /**
@@ -347,6 +349,11 @@ public final class ComputerSettings {
 
     public boolean isPinned(final String id) {
         return pinned.contains(normalizeId(id));
+    }
+
+    /** The tiles of Frames 10's Start menu, which the Start menu arranges and the machine keeps. */
+    public StartTiles startTiles() {
+        return startTiles;
     }
 
     /** A program id as the pinned list keeps it: its path, lower-case, without a {@code jsc:} namespace. */

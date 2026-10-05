@@ -85,15 +85,16 @@ final class TaskbarModel {
             return false;
         }
         final PanelStyle style = desktop.panelStyle();
-        return style == PanelStyle.FRAMES_11 || style == PanelStyle.FRAMES_XP
-                || style == PanelStyle.KDE || style == PanelStyle.CINNAMON;
+        return style == PanelStyle.FRAMES_11 || style == PanelStyle.FRAMES_XP || style == PanelStyle.FRAMES_7
+                || style == PanelStyle.FRAMES_10 || style == PanelStyle.KDE || style == PanelStyle.CINNAMON;
     }
 
     /** Whether the panel's popup shows the windows' live pictures (a modern panel) rather than their titles. */
     boolean thumbnails() {
         final PanelStyle style = desktop.panelStyle();
         return !desktop.periodPanel()
-                && (style == PanelStyle.FRAMES_11 || style == PanelStyle.KDE || style == PanelStyle.CINNAMON);
+                && (style == PanelStyle.FRAMES_11 || style == PanelStyle.FRAMES_7 || style == PanelStyle.FRAMES_10
+                || style == PanelStyle.KDE || style == PanelStyle.CINNAMON);
     }
 
     /**
@@ -187,6 +188,17 @@ final class TaskbarModel {
                 w[i] = DesktopScreen.WIN11_SLOT;
             }
             return new TaskStrip(entries, x, w, 0, 0, sw);
+        }
+        // Frames 7 and 10 give every program one button of icon alone, pinned and open in one row after Start.
+        if (style == PanelStyle.FRAMES_7 || style == PanelStyle.FRAMES_10) {
+            final boolean seven = style == PanelStyle.FRAMES_7;
+            final int appsX = seven ? AeroSuperbar.appsLeft() : MetroTaskbar.appsLeft();
+            final int slot = seven ? AeroSuperbar.SLOT : MetroTaskbar.SLOT;
+            for (int i = 0; i < n; i++) {
+                x[i] = appsX + i * slot;
+                w[i] = slot;
+            }
+            return new TaskStrip(entries, x, w, 0, 0, right);
         }
         int left = TASK_X;
         int quickX = 0;

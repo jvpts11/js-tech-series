@@ -152,7 +152,8 @@ final class DesktopPainter {
         PixWallpaper.want(desktop.hostPos(), prefs.wallpaper());
         if (!PixWallpaper.paint(g, sw, sh)) {
             WallpaperPainter.paint(g, sw, sh, desktop.desktopId(), desktop.platform(), prefs.wallpaper(),
-                    prefs.darkMode() && desktop.panelStyle() == PanelStyle.FRAMES_11);
+                    prefs.darkMode() && (desktop.panelStyle() == PanelStyle.FRAMES_11
+                            || desktop.panelStyle() == PanelStyle.FRAMES_10));
         }
     }
 
@@ -262,6 +263,10 @@ final class DesktopPainter {
             desktop.cdePanels().render(g, sw, sh, desktop.prefs().cdePalette());
         } else if (style == PanelStyle.FRAMES_11) {
             desktop.framesPanels().renderModern(g, tbY, sw, lmx, lmy);
+        } else if (style == PanelStyle.FRAMES_7) {
+            desktop.aeroSuperbar().render(g, tbY, sw, lmx, lmy);
+        } else if (style == PanelStyle.FRAMES_10) {
+            desktop.metroTaskbar().render(g, tbY, sw, lmx, lmy);
         } else if (desktop.periodPanel()) {
             // A Legacy-era Unix desktop's panel, drawn out of the skin's own relief.
             desktop.linuxPanels().renderPeriod(g, tbY, sw, sh, lmx, lmy);
@@ -325,6 +330,14 @@ final class DesktopPainter {
             g.pose().translate(0, 0, DesktopZ.MENU);
             volume.render(g, new UiContext(prefs.skin(), font, lmx, lmy, partialTick), view.width(), tbY,
                     view.panelOnTop());
+            g.pose().popPose();
+        }
+        // Frames 10's Task View over the windows, and its Action Center down the edge.
+        if (desktop.taskView().isOpen() || desktop.actionCenter().isOpen()) {
+            g.pose().pushPose();
+            g.pose().translate(0, 0, DesktopZ.MENU);
+            desktop.taskView().render(g, view.width(), tbY, lmx, lmy);
+            desktop.actionCenter().render(g, tbY, view.width(), lmx, lmy);
             g.pose().popPose();
         }
         final DeskMenu deskMenu = desktop.deskMenu();

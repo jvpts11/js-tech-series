@@ -69,7 +69,8 @@ public final class ShellView extends Panel implements ShellViews.IListener {
      * each system's desktop.
      */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/shell_view",
-            new Colours(0xFF5A6678, 0xFF000000, 0xFF0A1A30, 0xFF1E1F23, 0xFF0C1420, 0xFF1A141E, 0xFF16202A));
+            new Colours(0xFF5A6678, 0xFF000000, 0xFF0A1A30, 0xFF000000, 0xFF0C0C0C, 0xFF1E1F23, 0xFF0C1420,
+                    0xFF1A141E, 0xFF16202A));
     /** The command that opens a program's window from the prompt, a word of the prompt and not of any language. */
     private static final String RUN = "run";
 
@@ -181,7 +182,10 @@ public final class ShellView extends Panel implements ShellViews.IListener {
              * print. A shell that cannot tell which system it is on says nothing at all.
              */
             if (systemName != null && !systemName.isEmpty()) {
-                push(systemName, CliStyle.ACCENT);
+                // The editions whose prompt opened on their build say the line and the build, as theirs did.
+                final String build = Branding.systemBuild(systemName);
+                push(build.isEmpty() ? systemName : GameText.resolve(ShellViewTexts.VERSION_BANNER.with(
+                        Branding.systemLine(systemName), build)), CliStyle.ACCENT);
                 push(Branding.systemCopyright(systemName, era()), CliStyle.DIM);
             }
             /*
@@ -442,6 +446,9 @@ public final class ShellView extends Panel implements ShellViews.IListener {
         return switch (skin.form()) {
             case BEVEL -> c.bevelGround();
             case LUNA -> c.lunaGround();
+            // Frames 7's console went back to plain black, and 10's to the near black it kept after.
+            case AERO -> c.aeroGround();
+            case METRO -> c.metroGround();
             case FLAT -> c.flatGround();
             /*
              * The period Unix terminals were not pure black: xterm-era consoles carried a slight cast
@@ -658,7 +665,7 @@ public final class ShellView extends Panel implements ShellViews.IListener {
     }
 
     /** The scrolled tag, and the console's ground on the grey, blue, flat, KDE, GNOME and CDE desktops. */
-    private record Colours(int tag, int bevelGround, int lunaGround, int flatGround, int kdeGround, int gnomeGround,
-                           int motifGround) {
+    private record Colours(int tag, int bevelGround, int lunaGround, int aeroGround, int metroGround, int flatGround,
+                           int kdeGround, int gnomeGround, int motifGround) {
     }
 }

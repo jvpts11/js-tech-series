@@ -60,6 +60,8 @@ final class CopyProgressApp implements IDesktopApp {
     private static final int AVI_FRAMES = 16;
     private static final int GRAPH_H = 36;
     private static final int AREA_ALPHA = 0x60;
+    /** How strong the light running along Frames 7's bar is, as an alpha over white. */
+    private static final int SWEEP = 0x50;
 
     CopyProgressApp(final BlockPos host, final Style style) {
         this.host = host;
@@ -84,7 +86,7 @@ final class CopyProgressApp implements IDesktopApp {
             case FRAMES_95, FRAMES_XP -> GameText.resolve(run != null && run.deleting() ? CopyTexts.DELETING
                     : run != null && run.current().kind() == CopyProgressPayload.MOVE ? CopyTexts.MOVING
                     : CopyTexts.COPYING);
-            case FRAMES_11 -> percentLine(run);
+            case FRAMES_7, FRAMES_10, FRAMES_11 -> percentLine(run);
             case KDE2 -> GameText.resolve(CopyTexts.PROGRESS_DIALOG);
             case GNOME1 -> GameText.resolve(CopyTexts.COPYING_FILES);
             case CINNAMON -> GameText.resolve(CopyTexts.FILE_OPERATIONS);
@@ -95,7 +97,8 @@ final class CopyProgressApp implements IDesktopApp {
     public int defaultWidth() {
         return switch (style) {
             case FRAMES_95, FRAMES_XP -> 192;
-            case FRAMES_11 -> 238;
+            case FRAMES_7 -> 214;
+            case FRAMES_10, FRAMES_11 -> 238;
             case KDE2 -> 228;
             case GNOME1 -> 198;
             case CINNAMON -> 228;
@@ -106,7 +109,8 @@ final class CopyProgressApp implements IDesktopApp {
     public int defaultHeight() {
         return switch (style) {
             case FRAMES_95, FRAMES_XP -> 124;
-            case FRAMES_11 -> 136;
+            case FRAMES_7 -> 96;
+            case FRAMES_10, FRAMES_11 -> 136;
             case KDE2 -> 124;
             case GNOME1 -> 80;
             case CINNAMON -> 62;
@@ -128,7 +132,9 @@ final class CopyProgressApp implements IDesktopApp {
         }
         switch (style) {
             case FRAMES_95, FRAMES_XP -> frames(g, font, run, x, y, w, h, mouseX, mouseY);
-            case FRAMES_11 -> eleven(g, font, run, x, y, w, h);
+            case FRAMES_7 -> seven(g, font, run, x, y, w, h, mouseX, mouseY);
+            // Frames 10 drew the speed graph first; 11 kept the window as it was.
+            case FRAMES_10, FRAMES_11 -> eleven(g, font, run, x, y, w, h);
             case KDE2 -> kio(g, font, run, x, y, w, h, mouseX, mouseY);
             case GNOME1 -> gmc(g, font, run, x, y, w, h, mouseX, mouseY);
             case CINNAMON -> nemo(g, font, run, x, y, w);
@@ -192,6 +198,8 @@ final class CopyProgressApp implements IDesktopApp {
         return switch (panel) {
             case FRAMES_95 -> Style.FRAMES_95;
             case FRAMES_XP -> Style.FRAMES_XP;
+            case FRAMES_7 -> Style.FRAMES_7;
+            case FRAMES_10 -> Style.FRAMES_10;
             case FRAMES_11 -> Style.FRAMES_11;
             case KDE -> period ? Style.KDE2 : null;
             case GNOME -> period ? Style.GNOME1 : null;
@@ -258,6 +266,37 @@ final class CopyProgressApp implements IDesktopApp {
             final int bx = x + 2 + i * (block + 1);
             g.fill(bx, y + 2, bx + block, y + h - 2, skin.progressFill());
         }
+    }
+
+    /*
+     * Frames 7: how many items and how much, where from and where to, the time left, the green bar with the light
+     * running along it, the link to more details and Cancel. Its title is how far it has got.
+     */
+    private void seven(final GuiGraphics g, final Font font, final CopyRun run, final int x, final int y,
+                       final int w, final int h, final int mouseX, final int mouseY) {
+        int ly = y + PAD;
+        text(g, font, GameText.resolve(CopyTexts.COPYING_ITEMS_SIZE.with(run.items(), mb(run.mbTotal()))), x + PAD,
+                ly, w - 2 * PAD, skin.text());
+        ly += LINE;
+        text(g, font, GameText.resolve(CopyTexts.FROM_TO.with(run.current().from(), run.current().to())), x + PAD,
+                ly, w - 2 * PAD, skin.text());
+        ly += LINE;
+        text(g, font, GameText.resolve(CopyTexts.ABOUT_SECONDS_REMAINING.with(Math.max(1, run.secondsLeft()))),
+                x + PAD, ly, w - 2 * PAD, skin.text());
+        ly += LINE + 3;
+        final int barW = w - 2 * PAD;
+        skin.field(g, x + PAD, ly, barW, 10, false);
+        final int fill = (int) Math.floor((barW - 2) * run.fraction());
+        g.fill(x + PAD + 1, ly + 1, x + PAD + 1 + fill, ly + 9, skin.progressFill());
+        // The light that runs along a filling bar, every two seconds, over the part already filled.
+        final int sweep = (int) (MotionClock.loopMs() % 2000L * (barW + 24) / 2000L) - 12;
+        final int from = Math.max(0, sweep);
+        final int to = Math.min(fill, sweep + 12);
+        if (to > from) {
+            g.fill(x + PAD + 1 + from, ly + 1, x + PAD + 1 + to, ly + 9, SWEEP << 24 | 0xFFFFFF);
+        }
+        Draw.text(g, font, GameText.resolve(CopyTexts.MORE_DETAILS), x + PAD, y + h - PAD - 9, skin.accent());
+        cancelButton(g, font, x + w - PAD - BUTTON_W, y + h - PAD - BUTTON_H, mouseX, mouseY);
     }
 
     /* Frames 11: what is copied, the percentage, the speed graph, and the details under it. */
@@ -440,6 +479,6 @@ final class CopyProgressApp implements IDesktopApp {
 
     /** The copy window shapes, by the systems that had a window for a copy. */
     enum Style {
-        FRAMES_95, FRAMES_XP, FRAMES_11, KDE2, GNOME1, CINNAMON
+        FRAMES_95, FRAMES_XP, FRAMES_7, FRAMES_10, FRAMES_11, KDE2, GNOME1, CINNAMON
     }
 }

@@ -97,6 +97,15 @@ public final class SettingsLayout {
      * {@code flatSkin} showing the taskbar and appearance rows on top of that (the flat skin alone).
      */
     public static Offsets of(final int w, final int swatchCount, final boolean richSkin, final boolean flatSkin) {
+        return of(w, swatchCount, richSkin, flatSkin, flatSkin);
+    }
+
+    /**
+     * The same, the taskbar row and the appearance row said apart: Frames 10 has the dark theme Frames 11 has but
+     * not its centred taskbar, so it keeps the appearance row and no taskbar row.
+     */
+    public static Offsets of(final int w, final int swatchCount, final boolean richSkin, final boolean taskbarRow,
+                             final boolean appearanceRow) {
         int y = HEADING_H;
         final int wallpaperCaptionY = y;
         y += CAPTION_H;
@@ -129,11 +138,13 @@ public final class SettingsLayout {
         int taskbarY = ABSENT;
         int appearanceCaptionY = ABSENT;
         int appearanceY = ABSENT;
-        if (flatSkin) {
+        if (taskbarRow) {
             taskbarCaptionY = y;
             y += CAPTION_H;
             taskbarY = y;
             y += TOGGLE_ROW_H;
+        }
+        if (appearanceRow) {
             appearanceCaptionY = y;
             y += CAPTION_H;
             appearanceY = y;
@@ -164,6 +175,8 @@ public final class SettingsLayout {
         l.box("clock", 0, o.clockY(), w, TOGGLE_ROW_H);
         if (o.flatSkin()) {
             l.box("taskbar", 0, o.taskbarY(), w, TOGGLE_ROW_H);
+        }
+        if (o.appearanceY() != ABSENT) {
             l.box("appearance", 0, o.appearanceY(), w, TOGGLE_ROW_H);
         }
         return l;

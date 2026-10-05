@@ -22,9 +22,23 @@
       },
       "trigger": "jsc:event"
     },
+    "frames_10": {
+      "conditions": {
+        "detail": "frames_10",
+        "event": "screenfetch"
+      },
+      "trigger": "jsc:event"
+    },
     "frames_11": {
       "conditions": {
         "detail": "frames_11",
+        "event": "screenfetch"
+      },
+      "trigger": "jsc:event"
+    },
+    "frames_7": {
+      "conditions": {
+        "detail": "frames_7",
         "event": "screenfetch"
       },
       "trigger": "jsc:event"
@@ -102,6 +116,12 @@
     ],
     [
       "frames_xp"
+    ],
+    [
+      "frames_7"
+    ],
+    [
+      "frames_10"
     ],
     [
       "frames_11"

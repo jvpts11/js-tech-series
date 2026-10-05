@@ -13,6 +13,18 @@
       }
     },
     {
+      "sound": "jsc:os/frames_7/startup",
+      "when": {
+        "system": "jsc:frames_7"
+      }
+    },
+    {
+      "sound": "jsc:os/frames_10/startup",
+      "when": {
+        "system": "jsc:frames_10"
+      }
+    },
+    {
       "sound": "jsc:os/frames_11/startup",
       "when": {
         "system": "jsc:frames_11"

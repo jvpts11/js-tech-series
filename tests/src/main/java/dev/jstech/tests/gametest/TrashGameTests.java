@@ -255,7 +255,7 @@ public final class TrashGameTests {
 
         final DesktopFilesPayload desk = new DesktopFilesPayload(List.of(), "", "", "Desk", List.of(), List.of(),
                 List.of(), new DesktopFilesPayload.Prefs(0, 100, false, true, false, 100, DesktopEffects.ALL_ON),
-                List.of(), List.of(),
+                List.of(), List.of(), List.of(),
                 Map.of(), true, Map.of(), 20.0F);
         DesktopFilesPayload.STREAM_CODEC.encode(buf, desk);
         helper.assertTrue(DesktopFilesPayload.STREAM_CODEC.decode(buf).trashFull(),
