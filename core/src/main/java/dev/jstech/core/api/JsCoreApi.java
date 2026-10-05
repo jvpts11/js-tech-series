@@ -29,7 +29,14 @@ public final class JsCoreApi {
      * The number of the shape of this API, raised by one whenever anything is added to it.
      *
      * <p>An addon that uses something added later can say so by refusing to load below the number that
-     * added it, which is the whole reason this is a number and not a date.
+     * added it, which is the whole reason this is a number and not a date. The list of what each number
+     * added is kept in {@code core/src/test/resources/api/core.txt}, one line per type and member.
+     *
+     * <pre>{@code
+     * if (JsCoreApi.VERSION < 3) {
+     *     throw new IllegalStateException("MyAddon needs J's Core with API version 3 or newer");
+     * }
+     * }</pre>
      */
     public static final int VERSION = 3;
 

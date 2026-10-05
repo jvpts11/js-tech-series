@@ -20,6 +20,14 @@ import org.jetbrains.annotations.ApiStatus;
  * <p>A mod is handed one wherever it draws inside a machine's screen, a desktop program or a component of a
  * program's window among them, and drawing through it is what makes what it draws look like the system the machine
  * runs. Coordinates are the screen's pixels, and colours opaque {@code 0xAARRGGBB}.
+ *
+ * <pre>{@code
+ * public void draw(GuiGraphics g, Font font, ISkin skin, int x, int y, int w, int h, int mouseX, int mouseY) {
+ *     skin.panel(g, x + 4, y + 4, w - 8, h - 24);
+ *     skin.button(g, font, x + w - 64, y + h - 18, 60, 14, "Scan", false, false, true);
+ *     Draw.text(g, font, "Ready", x + 8, y + 8, skin.text());
+ * }
+ * }</pre>
  */
 @ApiStatus.Experimental
 public interface ISkin {

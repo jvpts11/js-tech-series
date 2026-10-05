@@ -1,26 +1,22 @@
 # Documentation
 
-Public documentation for the J's Tech Series: how the code is written, how it is versioned and released,
-and how the series is put together. Everything here is meant to be read by a contributor opening the
-repository for the first time. What each mod does is on its own page: [J's Core](../core/README.md),
-[J's Computers](../computers/README.md) and [J's Industrial](../industrial/README.md).
+The documentation of the J's Tech Series. Each mod keeps its own, in a `docs/` folder beside its code; this folder
+holds what concerns the whole series.
 
+## Each mod
+
+| Mod | For players | For programmers |
+| --- | --- | --- |
+| [J's Core](../core/README.md) | (a library: nothing to play on its own) | [J's Core documentation](../core/docs/README.md): every part of the library, from zero, with code. |
+| [J's Computers](../computers/README.md) | [J's Computers documentation](../computers/docs/README.md): computers, systems, the network, autocrafting, cables, Σ#. | [Building on J's Computers](../computers/docs/API.md). |
+| [J's Industrial](../industrial/README.md) | [The machines](../industrial/docs/MACHINES.md). | [For mod and pack authors](../industrial/docs/FOR_MOD_AUTHORS.md). |
+
+## The whole series
+
+- [The API](API.md): what a mod built on the series may use, what it may not, and what it can expect to keep
+  working from one release to the next.
 - [Code style](CODE_STYLE.md): headers, naming, modelling, imports, comments and commit messages.
-- [Versions, phases and releases](RELEASING.md): what a version number means, the development phases
-  and their gates, snapshot builds, and how a release is cut.
-- [UI components](UI_COMPONENTS.md): the component model the desktop programs and dialogs are built from,
-  and how to write a program on it.
-- [Fonts](FONTS.md): declaring a font from its free source, what the data generation makes of it, and
-  drawing text on a monospace grid with the box lines and blocks joined.
-- [Motion](MOTION.md): curves, the motion profile each look moves by, changing one with a resource pack, the
-  clock every motion is read against and the player's switch that reduces it.
-- [Cables](CABLES.md): the shared cable block, the data lines with their eras, speeds and ranges, the
-  routers and repeaters, the buses and crafting parts on the cables, and the peripheral cables.
-- [Σ#](SIGMA.md): the computers' programming language: its two shapes of program, the budget and
-  the clock it runs under, and everything a program can reach.
-- [ComputerCraft](COMPUTERCRAFT.md): the bridge to CC: Tweaked: the Network Gateway, what each side can
-  ask of the other, the agent their computers carry, and what it costs.
-- [Music on a server](SOUNDFOUNDRY.md): where songs are kept, how a server's owner offers albums in the
-  music catalogue, and the settings that bound it.
+- [Versions, phases and releases](RELEASING.md): what a version number means, the development phases and their
+  gates, snapshot builds, and how a release is cut.
 
 Design documents and balancing notes are not part of the repository.

@@ -87,6 +87,17 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   are J's Core's processing recipes.
 
 ### Added
+- Documentation for each mod, in a `docs` folder of its own, written for a reader who knows nothing of the mod
+  yet, with what can go wrong at the end of every page. J's Computers' explains to players their first computer and
+  network, the hardware and what every number on a part means, the systems and how to install them, the network
+  and IQL, and autocrafting, and to addon authors everything a computer is made of, with the code that adds each.
+  J's Industrial's explains every machine with its real numbers, and its recipes, tags and capabilities to mod and
+  pack authors. J's Core's explains each part of the library to programmers, from adding it to a project to
+  machines, multiblocks, networks, Operations, energy and fluids, cables, the world and dimensions, saved state,
+  ownership, progression, commands, entities, overlays, settings, sound, screens and testing. The pages on cables,
+  Σ#, ComputerCraft and music moved to J's Computers' folder, and those on fonts, motion and UI components to J's
+  Core's. The API's own documentation in the code explains, with examples, what a network category, an Operation
+  and its handler, a language, an instruction set and a kernel are.
 - J's Core's settings screen, in its own look: a mod's files and their sections down the left, each setting with a
   switch, a number to type or step, a word to go through or a text to type, Done to keep the changes and Cancel to
   drop them. J's Core and J's Computers open it from the mods list. A world's settings are changed from inside it.
@@ -514,7 +525,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   levels and no lapis. Anvil: the anvil's repairs, combinations and names for two thirds of its levels, and it never
   wears. What the cards hold falls out of a broken computer. The numbers are first estimates.
 - A tab strip can have tabs that cannot be chosen, drawn dim with a word after them, in J's Core.
-- The cables explained in `docs/CABLES.md`: the shared cable block and its colours, each data line with its cables,
+- The cables explained in `computers/docs/CABLES.md`: the shared cable block and its colours, each data line with its cables,
   speeds and ranges by era, the routers and repeaters, the buses and crafting parts, and the peripheral cables.
 - UPDATE, the network's door to the personal-use cards, with the same rules, price, pace and queue as the
   Workshop: an item the network holds goes to a card of the Personal Computer that asks, the card works on it, and
@@ -1267,7 +1278,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   does and gives the text back instead of printing it. A method or a variable of the program's own under one of
   those names is still the one called, so no program changes. Σ's `Standard` library gains `Random` in the same
   version, with `Next` and `Seed`. The editors offer the old names, each way it is written, priced as the call it
-  stands for, and only to a project whose version has them; `docs/SIGMA.md` lists them with the long way of each.
+  stands for, and only to a project whose version has them; `computers/docs/SIGMA.md` lists them with the long way of each.
 - `printf` and `sprintf` in Σ 2 read the rest of what C wrote in a hole: flags, widths, precisions, `%u`, `%x`,
   `%X`, `%o`, `%e` and `%E`, and put the value in the hole the way C does (`%05d` of -42 is `-0042`, `%.2f`
   rounds the number the machine holds half to even). A number with a fraction and no precision is still written

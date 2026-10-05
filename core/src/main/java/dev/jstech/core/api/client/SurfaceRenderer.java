@@ -20,6 +20,26 @@ import org.jetbrains.annotations.ApiStatus;
  *
  * <p>A renderer that throws is not asked again: its window shows the placeholder from then on and the game writes one
  * line about it in the log, so a fault in one mod's drawing never takes the game down.
+ *
+ * <p>A renderer of 64 by 40 pixels that paints a moving gradient, as a desktop program of J's Computers hands it out
+ * from its {@code renderer()}:
+ *
+ * <pre>{@code
+ * private final SurfaceRenderer renderer = new SurfaceRenderer(64, 40, false) {
+ *     private int frame;
+ *
+ *     @Override
+ *     public void frame(final ISurface surface, final double seconds) {
+ *         final PixelSurface pixels = (PixelSurface) surface;
+ *         for (int y = 0; y < pixels.height(); y++) {
+ *             for (int x = 0; x < pixels.width(); x++) {
+ *                 pixels.set(x, y, 0xFF000000 | ((x + this.frame) * 4 & 0xFF) << 16 | y * 6 << 8);
+ *             }
+ *         }
+ *         this.frame++;
+ *     }
+ * };
+ * }</pre>
  */
 @ApiStatus.Experimental
 public abstract class SurfaceRenderer {

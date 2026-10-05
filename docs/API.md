@@ -77,8 +77,14 @@ The mods of the series add their own through the same events. Sigma Sharp is reg
 J's Computers listening for `CoreRegisterEvent`, exactly as an addon would, so the way in is the one that
 is tried every time the game starts rather than a path only addons take.
 
-Two of the same thing are refused rather than one quietly replacing the other, because which of the two
-won would otherwise depend on the order the mods happened to load in.
+Nothing quietly replaces anything, because which of two won would otherwise depend on the order the mods
+happened to load in. Two of the same id are refused. The one exception is a language: one registered under an
+id already taken replaces the language before it, so an addon can improve a language in place, and the log says
+so; a language that claims a file extension another language has is refused.
+
+Each mod's documentation explains its part of the API from zero, with code: [J's Core](../core/docs/README.md)
+(languages and kinds of Operation, the skins and surfaces a mod draws with) and
+[J's Computers](../computers/docs/API.md) (everything a computer is made of).
 
 ## What is not open, and why
 

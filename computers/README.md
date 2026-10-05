@@ -45,7 +45,7 @@ many things may happen at once. Speaking of things, this mod also handles things
 different system, Operations, more on that below.
 
 In order to work, every computer needs an operating system. Operating systems are installed from media. The Frames
-desktops (95, XP and 11) and a handful of Linux distros each ship their own programs: a file explorer,
+desktops (95, XP, 7, 10 and 11) and a handful of Linux distros each ship their own programs: a file explorer,
 a text editor, a terminal, settings, a system monitor, and the programs that talk to the network. Programs you
 install on top come on their own installation media, which need the right media drive; they range from floppy
 disks to USB flash drives.
@@ -74,35 +74,40 @@ across as many machines as the network has.
   Cluster Management Computer that installs and monitors racked machines.
 - Personal computers, crafting computers, monitors and their peripheral cables; drives for floppies, CDs,
   DVDs and USB sticks; a dock station.
-- The Frames 95, XP and 11 desktops and five Linux distributions with three desktop environments, with a
-  boot manager, dual boot and package managers.
+- MC-DOS, MC-NET and UNIX System V; the Frames 95, XP, 7, 10 and 11 desktops; FreeBSD and five Linux
+  distributions with the KDE, GNOME, Cinnamon and CDE desktops; a boot manager, dual boot and package managers.
 - The Network Interactor for storage and crafting requests, the Network Manager for the mainframe, the
   Crafting Manager, the Craft Planner, Storage Insights, the Automation Manager, and a few small programs.
 - Machine autocrafting with multi-stage recipes, parallel stages and crafting-card threads; fluids and
   chemicals travel through the network like items.
 - Cables by job and era: access, backbone, long distance, high compute and crafting lines, each era with its
   own speed and range, routers and repeaters, buses and crafting parts on the cables, and a peripheral cable
-  per era for monitors, speakers and devices. How they work is in [docs/CABLES.md](../docs/CABLES.md).
+  per era for monitors, speakers and devices. How they work is in [docs/CABLES.md](docs/CABLES.md).
 - Σ#, the computers' own programming language, with five editors to write it in: programs that run
   at the prompt or stay up, threads, programs starting programs on the same machine or on another one of
   the network, folders shared between machines, and the network's query language from inside a
-  program. The reference is in [docs/SIGMA.md](../docs/SIGMA.md).
+  program. The reference is in [docs/SIGMA.md](docs/SIGMA.md).
 - The Network Gateway, a peripheral that puts the data network within reach of ComputerCraft's
   computers when CC: Tweaked is present: our cable on its back, CC's on its front, an item buffer between
   them, and the Gateway Manager on the host computer (or the `gateway` command) to name it, set what the
   other side may do and read its log.
 - JEI support: the ingredient list sits beside every monitor screen and recipes transfer straight into the
-  Pattern Studio. Mekanism machines can be driven through the network when Mekanism is present.
+  Pattern Studio. EMI's list keeps clear of the monitor screens too. Mekanism machines can be driven through the
+  network when Mekanism is present.
 
 Recipes for the computing blocks are missing on purpose: they arrive with the industrial chains that
 make their parts. Play it in creative for now.
+
+Everything is explained, from your first computer to building on the mod, in the
+[J's Computers documentation](docs/README.md).
 
 ## Requirements
 
 - Minecraft 1.21.1 and NeoForge 21.1.248 or newer.
 - [J's Core](../core/README.md) at the same version (required).
 - [GeckoLib](https://github.com/bernie-g/geckolib) 4.7 or newer (required).
-- [JEI](https://github.com/mezz/JustEnoughItems) (optional, for recipe lookup beside the monitors).
+- [JEI](https://github.com/mezz/JustEnoughItems) or [EMI](https://github.com/emilyploszaj/emi) (optional, for
+  recipe lookup beside the monitors).
 - [Mekanism](https://github.com/mekanism/Mekanism) (optional, its machines and chemicals join the network).
 - [CC: Tweaked](https://tweaked.cc) 1.120 or newer (optional, for the Network Gateway; without it the
   block links and holds items but its ComputerCraft side never comes up).

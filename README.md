@@ -54,7 +54,9 @@ Until the entire series hit v1.0.0r, all mods of the J's Tech Series live here i
   and hosts the development runs; This mot is not intended to be used in-game, if you ever find this in your mods folder,
   uninstall, since this mod does nothing than just run tests for development, it also adds nothing to the game by itself. See
   [tests/README.md](tests/README.md).
-- `docs/`: the public documentation: code style, versions and releases.
+- `docs/`: what concerns the whole series (the API promise, code style, versions and releases) and the
+  [index of every mod's documentation](docs/README.md). Each mod keeps its own documentation in its `docs/`
+  folder.
 
 In the future, each mod will get their own dedicated repository, for now, all mods will stay here to ease development.
 

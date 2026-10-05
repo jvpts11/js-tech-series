@@ -22,6 +22,15 @@ import org.jetbrains.annotations.ApiStatus;
  *
  * <p>Like a socket, the id is text in the {@code namespace:path} shape and nothing here touches Minecraft: which
  * programs a machine will run is worked out where the hardware is, and that is tested without the game.
+ *
+ * <pre>{@code
+ * new IsaSpec("myaddon:arm64", "ARM64", 64, Set.of("myaddon:arm64"))
+ * }</pre>
+ *
+ * @param id   the ISA's id, {@code namespace:path}; programs and processors name it, so it never changes once released
+ * @param name what a person reads, such as {@code x86-64}
+ * @param bits the word size of its programs, which is also how much room an item takes on its machines' disks
+ * @param runs every ISA whose programs this one runs, its own id among them: x86-64 runs x86 and x86-16 programs
  */
 @ApiStatus.Experimental
 public record IsaSpec(String id, String name, int bits, Set<String> runs) {

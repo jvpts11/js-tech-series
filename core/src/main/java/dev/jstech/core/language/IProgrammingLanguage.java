@@ -30,6 +30,22 @@ import org.jetbrains.annotations.Nullable;
  * <p>A language may do nothing but compile. Its binary extensions are then empty, and what it compiles to is a listing
  * the machines run themselves: listings belong to the machines, and no language may claim their extension. A language
  * that runs its own files instead names their extensions and starts and restores its programs.
+ *
+ * <p>The smallest language compiles and colours, and leaves the rest to the defaults:
+ *
+ * <pre>{@code
+ * public final class Brainstorm implements IProgrammingLanguage {
+ *     public ResourceLocation id() { return ResourceLocation.fromNamespaceAndPath("myaddon", "brainstorm"); }
+ *     public String displayName() { return "Brainstorm"; }
+ *     public Set<String> sourceExtensions() { return Set.of("bs"); }
+ *     public Set<String> binaryExtensions() { return Set.of(); } // compiles to the machines' own listing
+ *     public CompileResult compile(List<SourceText> sources) { return CompileResult.of(toListing(sources)); }
+ *     public List<Token> tokenize(String text) { return List.of(); } // nothing coloured
+ * }
+ * }</pre>
+ *
+ * <p>Register it from {@code CoreRegisterEvent#languages()}. Its id names it on every machine and in every saved
+ * program, so it never changes once released.
  */
 public interface IProgrammingLanguage {
 

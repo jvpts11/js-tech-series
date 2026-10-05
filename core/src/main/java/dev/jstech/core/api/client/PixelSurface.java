@@ -35,6 +35,10 @@ public final class PixelSurface implements ISurface {
     /** How many surfaces have been given a texture, so each gets a name of its own. */
     private static int made;
 
+    /**
+     * A surface of that size, at least one pixel each way, every pixel 0 (transparent) to begin with. Made by the host
+     * of a renderer, at the size the renderer asks for; a renderer never makes its own.
+     */
     public PixelSurface(final int width, final int height) {
         this.width = Math.max(1, width);
         this.height = Math.max(1, height);

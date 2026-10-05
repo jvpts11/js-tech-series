@@ -16,9 +16,37 @@ import java.util.Objects;
 /**
  * What one kind of Operation is: what it takes, where it can run, and what carries it out.
  *
- * <p>Registered once while the game loads, and read from then on by everything that dispatches one. What it
- * needs of a network cannot change after it is declared: the set is copied on the way in, so that whoever
- * declared it cannot go on holding the same set and quietly change what the Operation requires later.
+ * <p>An Operation is a request a player or a program makes of a data network: search the storage, craft this, move
+ * that. The network does not run it on the spot; it queues it, gives it to a computer that can carry it out, and
+ * follows its {@link OperationStatus} from {@link OperationStatus#PENDING PENDING} to one of the outcomes. A kind of
+ * Operation is what every request of that kind has in common, and this record is how a mod says it:
+ *
+ * <pre>{@code
+ * public record CountItemsArgs(String item) implements IOperationArgs {
+ * }
+ *
+ * public static final OperationType<CountItemsArgs> COUNT_ITEMS = new OperationType<>(
+ *         "myaddon:count_items",          // saved in worlds: never change it
+ *         CountItemsArgs.class,            // what a request of this kind carries
+ *         OperationCategory.STORAGE,       // the family it belongs to
+ *         IndustrialTier.T1,               // the lowest industrial tier that can run it
+ *         EnumSet.of(NetworkCategory.C),   // who may run it: the computers
+ *         args -> OperationStatus.COMPLETED);
+ * }</pre>
+ *
+ * <p>Registered once while the game loads (see {@link OperationTypeRegistry}), and read from then on by everything
+ * that dispatches one. What it needs of a network cannot change after it is declared: the set is copied on the way
+ * in, so that whoever declared it cannot go on holding the same set and quietly change what the Operation requires
+ * later.
+ *
+ * @param id                 the kind's id, {@code namespace:path} in lower case, with the mod's id as the namespace;
+ *                           worlds save it and the network sends it, so it never changes once released
+ * @param argsClass          the record a request of this kind carries
+ * @param category           the family it belongs to, which the screens that list Operations group by
+ * @param minTier            the lowest industrial tier, the axis of how far a world's industry has come, that can
+ *                           run it
+ * @param requiredCategories which members of a network may run it (see {@link NetworkCategory}); never empty
+ * @param handler            the code that takes a request and starts or does the work
  */
 public record OperationType<T extends IOperationArgs>(
         String id,

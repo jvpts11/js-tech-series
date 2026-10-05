@@ -14,17 +14,24 @@ import dev.jstech.core.id.StableCodecs;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Immutable descriptor for a kernel that an OS can run on top of.
+ * A kernel: the core of an operating system, which every system built on it shares.
  *
- * <p>A kernel defines the scheduling model and filesystem model available to the OS. Community
- * addons can register custom kernels via {@link ComputersRegisterEvent#kernel} to
- * ship alternative kernel implementations (e.g. Unix-like) without modifying the mod core. The
- * {@link #CODEC} keeps this JSON-serialisable so the built-in kernels can later move to a datapack.
+ * <p>A kernel says three things about its systems: how they share the processor among their programs (not at all,
+ * by each program giving way, or by the kernel taking turns for them), how they keep files (none, one folder, or
+ * folders inside folders), and how their command line behaves. An operating system names the kernel it runs on
+ * ({@link OsDef}), so several systems can share one, as every Linux distribution here shares {@code jsc:linux}.
+ * Addons register their own via {@link ComputersRegisterEvent#kernel}. The {@link #CODEC} keeps this
+ * JSON-serialisable so the built-in kernels can later move to a datapack.
+ *
+ * <pre>{@code
+ * new KernelDef(ResourceLocation.fromNamespaceAndPath("myaddon", "micro"),
+ *         SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX)
+ * }</pre>
  *
  * @param id          unique registry key for this kernel (e.g. {@code jsc:dos})
  * @param scheduler   the task-scheduling model this kernel provides
  * @param filesystem  the filesystem model this kernel provides
- * @param shellFamily the command-line syntax family every OS on this kernel speaks (DOS or POSIX)
+ * @param shellFamily the command-line syntax family every OS on this kernel speaks (DOS, POSIX or NET)
  */
 public record KernelDef(
         ResourceLocation id,

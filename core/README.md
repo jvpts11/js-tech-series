@@ -5,10 +5,13 @@
 The shared library of the [J's Tech Series](../README.md), and a general-purpose library for building
 technology mods: the series is built on it, and any mod may use it. Its id is `jscore`, and every mod of the
 series requires it at the same version. It adds nothing to play on its own beyond the materials every mod
-trades (the shared cable block each mod registers its cables into, and the series' technical reference, are
-on their way): install it because another mod asks for it, or because your own project builds on it (see
+trades and the shared cable block each mod lays its cables in (the series' technical reference is on its way):
+install it because another mod asks for it, or because your own project builds on it (see
 [Using the Core in your project](#using-the-core-in-your-project)). Everything in it is declared through
 explicit builders.
+
+Every part is explained from zero, with the code that uses it, in the
+[J's Core documentation](docs/README.md).
 
 ## What it holds
 
@@ -79,19 +82,35 @@ What a technology mod needs, whichever mod it is.
 
 - The GUI toolkit the screens of every mod are drawn with: skins, themes by era, text with a shadow that
   suits its ground, layouts that can be tested without the game, and the
-  [components](../docs/UI_COMPONENTS.md) desktop programs are composed from.
-- [Fonts](../docs/FONTS.md): a mod declares a font with its licence and credit, the data generation turns its
+  [components](docs/UI_COMPONENTS.md) desktop programs are composed from.
+- [Fonts](docs/FONTS.md): a mod declares a font with its licence and credit, the data generation turns its
   free source (a BDF bitmap font) into the font the game draws from, and a grid painter puts text on a
   monospace grid in it, drawing the box lines and blocks itself so frames and bars join. The Core carries Misc
   Fixed, the fixed font of the old Unix terminals, in three sizes (6x10, 9x15, 10x20), for any mod's terminal-like
   views.
-- [Motion](../docs/MOTION.md): curves written as CSS writes them, a profile of motions for each look a mod
+- [Motion](docs/MOTION.md): curves written as CSS writes them, a profile of motions for each look a mod
   declares (growing, sliding, going down to a place and back, an outline travelling, a colour giving way), kept as
   a file a resource pack replaces, and one clock every motion is read against, smooth between ticks and still for a
   player who reduces motion.
 - The registry of programming languages a machine can run, the configuration system (with ranges every value
   is clamped into), the series' internal event bus, persistence helpers, the payload framework and the unit
   formatter.
+
+### Machines, the world and the rest
+
+- [Processing machines](docs/MACHINES.md) with slots, tanks, energy, progress and upgrades; recipes of several
+  items and fluids in data files; and a page in JEI and in EMI for every recipe kind.
+- [Multiblocks](docs/MULTIBLOCKS.md) as data, with ports that pass pipes through to the controller.
+- [The world](docs/WORLD.md): ores and structures declared for the data generation, dimensions with rules for
+  gravity, air, heat, weather and pressure, dimensions made while the game runs, data over areas, and chunk
+  loading by owner.
+- [Ownership](docs/OWNERSHIP.md) and teams (FTB Teams when it is installed), [progression](docs/PROGRESSION.md)
+  axes and advancements, and [commands](docs/COMMANDS.md) under `/jstech`.
+- [Entities](docs/ENTITIES.md), vehicles, robots that work a list of tasks, projectiles, and what a player wears
+  (Curios or Accessories when installed).
+- [Overlays](docs/OVERLAYS.md): HUD elements that stack, holograms, and Jade's lines.
+- A [settings screen](docs/SETTINGS.md) in the Core's look for every mod's settings, and a [GameTest
+  kit](docs/TESTING.md).
 
 ## Configuration
 
@@ -101,26 +120,33 @@ degrades a setting instead of breaking the world; the file is re-read when it ch
 
 | Key | Default | What it tunes |
 | --- | --- | --- |
-| `hdd_latency_ticks`, `ssd_latency_ticks`, `nvme_latency_ticks` | 10, 3, 1 | The seek latency of each disk class before a transfer starts streaming. |
-| `operation_waiting_timeout_ticks` | 1200 | How long an Operation waits on a locked resource or a busy executor before it gives up. |
-| `operation_priority_aging_ticks` | 600 | Ticks a queued Operation waits per priority level it gains while others jump ahead; 0 disables aging. |
-| `subframe_efficiency_factor` | 0.6 | The share of its own capacity a Subframe lends to the Mainframe orchestrating it. |
-| `orphaned_operations_expiry_hours` | 24 | How long a saved, never-resumed Operation may sit before a reload discards it instead of resuming it; 0 never expires. |
+| `balance.hdd_latency_ticks`, `ssd_latency_ticks`, `nvme_latency_ticks` | 10, 3, 1 | The seek latency of each disk class before a transfer starts streaming. |
+| `balance.operation_waiting_timeout_ticks` | 1200 | How long an Operation waits on a locked resource or a busy executor before it gives up. |
+| `balance.operation_priority_aging_ticks` | 600 | Ticks a queued Operation waits per priority level it gains while others jump ahead; 0 disables aging. |
+| `balance.subframe_efficiency_factor` | 0.6 | The share of its own capacity a Subframe lends to the Mainframe orchestrating it. |
+| `balance.orphaned_operations_expiry_hours` | 24 | How long a saved, never-resumed Operation may sit before a reload discards it instead of resuming it; 0 never expires. |
+| `balance.program_machine_micros` | 1000 | The real time, in microseconds, one machine may spend running its programs in a tick. |
+| `balance.program_server_micros` | 8000 | The same for every machine of the server together. |
 | `media.download_kilobytes_per_second` | 1024 | How fast the server sends recordings to each player. |
 | `media.upload_kilobytes_per_second` | 512 | How fast each player sends a recording they bring. |
 | `media.max_file_megabytes` | 32 | The largest recording a player may bring; 0 takes none from players at all. |
 | `media.player_quota_megabytes` | 512 | How much the recordings one player brought may take together; 0 sets no limit. |
+| `calendar.days_per_season` | 28 | How many days a season of the world's year lasts; a year is four seasons. |
+| `world.chunks_per_owner` | 25 | How many chunks one player or team may keep loaded through machines, across the world. |
 
+The same settings, and every other mod's, can be changed on the Core's settings screen, from the game's Mods list.
 Each player's own sound settings (channel volumes, muted sounds, what the Sound Mixer shows) are kept on their
 computer in `config/jstech-audio.json`.
 
 ## For addon authors
 
-The public API for addons is still being carved out; until it is, everything here is internal and may
-change between versions. The series keeps one version across all its mods, so an addon should require
-the core and the mod it extends at the same version.
+The Core's API, what the series promises to keep and how long, is its `api` packages and a few types named in
+[docs/API.md](../docs/API.md); it is versioned (`JsCoreApi.VERSION`) and not yet settled. The library parts the
+[documentation](docs/README.md) describes work and are there to be used, but may change shape between releases
+until they move into the API; the changelog says so when they do. The series keeps one version across all its
+mods, so an addon should require the core and the mod it extends at the same version.
 
-Two entry points are already stable enough to build on. `JsCore.events()` is the series' event bus: the
+Two entry points have been there longest. `JsCore.events()` is the series' event bus: the
 Mainframe posts the life of every Operation on it (created, started, then completed, failed or discarded,
 each carrying the network, the Operation id and its type id), on the server thread, and any mod subscribes
 with core types alone. `JsCore.operations()` is the registry of Operation types the mods declare, each with

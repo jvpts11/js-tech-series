@@ -36,6 +36,11 @@ public final class GpuSurface implements ISurface {
     /** How many surfaces have been given a texture, so each gets a name of its own. */
     private static int made;
 
+    /**
+     * A surface of that size, at least one pixel each way, black to begin with. Made by the host of a renderer, at the
+     * size the renderer asks for; a renderer never makes its own. Its target is only made the first time it is asked
+     * for, on the thread that draws.
+     */
     public GpuSurface(final int width, final int height) {
         this.width = Math.max(1, width);
         this.height = Math.max(1, height);
