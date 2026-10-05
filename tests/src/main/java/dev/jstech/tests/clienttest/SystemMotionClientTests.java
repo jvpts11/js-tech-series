@@ -16,6 +16,7 @@ import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.machine.FileCopyJobs;
 import dev.jstech.computers.operation.payload.files.FileTransferPayloads;
 import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.FilesystemKind;
@@ -39,7 +40,8 @@ import org.jetbrains.annotations.Nullable;
  * Each system moving as the real one did: Frames 11's windows growing in and fading, Frames 95's caption flying to
  * the taskbar, the desktop behind Frames XP's Turn Off draining to grey, CDE's busy light blinking while a program
  * starts, each console's cursor blinking to its own beat; the desktop's own pointer over the glass; and a copy that
- * takes time showing its window, Frames 95's flying paper, and Plasma's notification instead of a window.
+ * takes time showing its window, Frames 95's flying paper, Frames 11's pause button, and Plasma's notification
+ * instead of a window.
  */
 public final class SystemMotionClientTests {
 
@@ -50,6 +52,8 @@ public final class SystemMotionClientTests {
     private static final int MOTION_WAIT = 100;
     /** Long enough for the grey behind Turn Off, a second and a half at its own pace, and a copy of a few seconds. */
     private static final int LONG_WAIT = 400;
+    /** Long enough for the slowest start a program can take, five seconds, with some to spare. */
+    private static final int START_WAIT = 140;
     private static final String CALCULATOR = "Calculator";
     /** The Settings program by its key, which every desktop knows whatever it calls the program. */
     private static final String SETTINGS = "jsc:settings";
@@ -140,8 +144,8 @@ public final class SystemMotionClientTests {
                         seen[1] = true;
                     }
                     return seen[1];
-                }, SCREEN_WAIT, "the busy light to light and go dark again as the program starts")
-                .thenWaitUntil(() -> !desktop(ctx).busyLightLit(), SCREEN_WAIT, "the light to stay dark after")
+                }, START_WAIT, "the busy light to light and go dark again as the program starts")
+                .thenWaitUntil(() -> !desktop(ctx).busyLightLit(), START_WAIT, "the light to stay dark after")
                 .then(0, () -> MotionClock.setReduced(true));
     }
 
@@ -206,6 +210,26 @@ public final class SystemMotionClientTests {
                 .thenScreenshot(SETTLE, "frames95-copy-window")
                 .thenWaitUntil(() -> !desktop(ctx).copyUnderWay() && !desktop(ctx).copyWindowUp(), LONG_WAIT,
                         "the window to go when the copy has ended");
+    }
+
+    @ClientTest(timeoutTicks = 3600)
+    public static void copy_pausesAndGoesOnFromTheFrames11Window(final ClientTestContext ctx) {
+        final double[] fraction = new double[1];
+        bigCopy(booted(ctx, "frames_11", null), ctx)
+                .thenWaitUntil(() -> desktop(ctx).copyWindowUp() && desktop(ctx).copyPausePoint()[0] > 0, LONG_WAIT,
+                        "the copy window with its pause button")
+                .then(SETTLE, () -> click(ctx, desktop(ctx).copyPausePoint()))
+                .thenWaitUntil(() -> desktop(ctx).copyPaused(), SCREEN_WAIT, "the machine to say its copies are paused")
+                .thenWaitUntilServer(level -> FileCopyJobs.pausedOn(level, ctx.abs(COMPUTER)), SCREEN_WAIT,
+                        "the machine to hold its copies",
+                        level -> "copies on the machine: " + FileCopyJobs.runningOn(level, ctx.abs(COMPUTER)))
+                .thenScreenshot(2, "frames11-copy-paused")
+                .then(0, () -> fraction[0] = desktop(ctx).copyFraction())
+                .thenAssert(40, () -> desktop(ctx).copyFraction() == fraction[0],
+                        "a paused copy stands where it was")
+                .then(0, () -> click(ctx, desktop(ctx).copyPausePoint()))
+                .thenWaitUntil(() -> !desktop(ctx).copyPaused(), SCREEN_WAIT, "the copies to go on")
+                .thenWaitUntil(() -> !desktop(ctx).copyUnderWay(), LONG_WAIT, "the copies to end after all");
     }
 
     @ClientTest(timeoutTicks = 3600)

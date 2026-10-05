@@ -503,7 +503,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   busy while the program in front waits on the machine, and to its working pointer while a program starts or a copy
   runs (busy on a system that had no working pointer, and KDE bounces the program's icon beside the arrow as it
   starts); each turns at its system's pace, and stands in its first picture with motion reduced. Off the glass the
-  game's own pointer is back, and the Desktop cursors setting turns the desktops' pointers off.
+  game's own pointer is back, and the Desktop cursors setting turns the desktops' pointers off. A program's start,
+  which the working pointer, KDE's bouncing icon and CDE's busy light show, lasts as long as the program's weight takes
+  to load from the machine's disk at its processor's pace: about a second for a light program on a quick machine, up
+  to five for a heavy one on a slow machine.
 - A file copy takes time: its size read at the pace of the slower of the two volumes (a hard disk, a solid-state or
   NVMe disk, a floppy, a CD, a DVD, a stick), or to another machine at the slowest cable on the way, and the file
   arrives when that time is up. A machine copies one file after another; a move to another volume takes as long, and
@@ -513,7 +516,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   details, KDE 2 and 3's KIO progress dialog (which can be kept open), GNOME 1's gmc dialog and Cinnamon's File
   Operations; Plasma shows a notification over the panel and a ring filling at the tray, GNOME its operations pie
   and its popover, and CDE no window, only its busy pointer and busy light. Cancel calls off whatever of the copy is
-  left. The numbers are first estimates.
+  left, and the pause button of Frames 11's window, Plasma's notification and Cinnamon's File Operations holds the
+  copies where they are until it is pressed again. The numbers are first estimates.
 - The speakers have a power light on their front, lit while their computer runs.
 - Each system's own page for its visual effects, in the Settings window, kept by the machine: Frames 95's Effects
   from the Display page, Frames XP's Performance Options from the System page (its presets, and a box for each effect,

@@ -28,6 +28,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.ProgramLoading;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
@@ -160,13 +161,14 @@ final class DesktopState {
      * what the working pointer shows while it lasts.
      */
     private double startedAt = Double.NEGATIVE_INFINITY;
-
     /**
-     * How long a program's start counts as under way. A window here comes up the moment it is asked for, where the
-     * real systems took a while to load the program, so a start is answered for this long: one blink of CDE's busy
-     * light, a moment of the working pointer.
+     * How long the last start counts as under way, in milliseconds. A window here comes up the moment it is asked
+     * for, where the real systems took a while to load the program, so a start is answered for as long as the
+     * program's weight takes to load on this machine: a second to five.
      */
-    private static final double STARTING_MS = 500.0;
+    private double startingMs;
+    /** How fast this machine loads a program, as it last said; the reference pace until it has. */
+    private double loadMbPerSecond = ProgramLoading.REFERENCE_MB_PER_SECOND;
 
     DesktopState(final DesktopSurface surface, final BlockPos host, final BlockPos monitorPos,
                  final ResourceLocation osId, final ResourceLocation desktopId, final int ramTotalMb,
@@ -288,21 +290,25 @@ final class DesktopState {
         return front != null && front.app().waiting();
     }
 
-    /** A program is being started from this desktop: its start is under way for a moment. */
-    void programStarting() {
+    /**
+     * The program opened under {@code key} is being started from this desktop: its start is under way for as long as
+     * its weight takes to load on this machine.
+     */
+    void programStarting(final String key) {
         this.startedAt = MotionClock.now();
+        this.startingMs = ProgramLoading.startMillis(memory.windowRamMb(key), loadMbPerSecond);
     }
 
     /** Whether a program's start is still under way. */
     boolean starting() {
-        return MotionClock.now() - startedAt < STARTING_MS;
+        return MotionClock.now() - startedAt < startingMs;
     }
 
     /** Whether CDE's busy light is lit this frame: blinking while a start is under way, dark the rest of the time. */
     boolean busyLit() {
         final double since = MotionClock.now() - startedAt;
         // A copy keeps it blinking for as long as it runs, CDE having no copy window to say so.
-        final boolean busy = since < STARTING_MS || copying();
+        final boolean busy = since < startingMs || copying();
         if (!busy) {
             return false;
         }
@@ -977,6 +983,7 @@ final class DesktopState {
         desktopItems.addAll(payload.files());
         computerName = payload.computerName();
         packageVersions = payload.versions();
+        loadMbPerSecond = payload.loadMbPerSecond();
         view.setScalePercent(payload.prefs().scale());
         // The look the machine keeps goes in first, so the skin the choices rebuild is drawn from it.
         prefs.takeCdeStyle(CdeStyle.parse(payload.cdeStyle()));

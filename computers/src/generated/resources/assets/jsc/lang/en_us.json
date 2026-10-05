@@ -2212,6 +2212,8 @@
   "jsc.copy.name": "Name:",
   "jsc.copy.open_destination": "Open Destination",
   "jsc.copy.open_file": "Open File",
+  "jsc.copy.paused": "Paused",
+  "jsc.copy.paused_percent": "Paused - %s%% complete",
   "jsc.copy.percent_complete": "%s%% complete",
   "jsc.copy.progress_dialog": "Progress Dialog - Konqueror",
   "jsc.copy.progress_line": "%s MB of %s MB - %s seconds left (%s MB/sec)",

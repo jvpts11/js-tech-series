@@ -2199,6 +2199,8 @@
   "jsc.copy.name": "Nome:",
   "jsc.copy.open_destination": "Abrir destino",
   "jsc.copy.open_file": "Abrir arquivo",
+  "jsc.copy.paused": "Pausado",
+  "jsc.copy.paused_percent": "Pausado - %s%% concluído",
   "jsc.copy.percent_complete": "%s%% concluído",
   "jsc.copy.progress_dialog": "Diálogo de progresso - Konqueror",
   "jsc.copy.progress_line": "%s MB de %s MB - faltam %s segundos (%s MB/s)",

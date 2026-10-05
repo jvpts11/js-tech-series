@@ -20,6 +20,7 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.UUID;
@@ -35,7 +36,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * A file copy takes time: its size read at the pace of the slower volume, the file arriving when that time is up and
- * not before; a machine copies one file after another; a cancelled copy never arrives.
+ * not before; a machine copies one file after another; paused copies stand still until taken up again; a cancelled
+ * copy never arrives.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -115,7 +117,7 @@ public final class FileCopyGameTests {
         TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(PC);
         final AtomicInteger carried = new AtomicInteger();
         final long job = FileCopyJobs.start(helper.getLevel(), helper.absolutePos(PC), player(helper),
-                new FileCopyJobs.Copy(CopyProgressPayload.COPY, "a.txt", "", "", 40L, 1.0), 40,
+                new FileCopyJobs.Copy(CopyProgressPayload.COPY, "a.txt", Text.EMPTY, Text.EMPTY, 40L, 1.0), 40,
                 carried::incrementAndGet);
         helper.assertTrue(job > 0L, "a copy that takes time is under way");
         FileCopyJobs.cancel(helper.getLevel(), helper.absolutePos(PC), job);
@@ -127,12 +129,39 @@ public final class FileCopyGameTests {
         });
     }
 
+    @GameTest(template = ARENA, timeoutTicks = 300)
+    public static void copies_pausedStandStillAndGoOnWhenTakenUp(final GameTestHelper helper) {
+        TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(PC);
+        final AtomicInteger carried = new AtomicInteger();
+        final BlockPos host = helper.absolutePos(PC);
+        FileCopyJobs.start(helper.getLevel(), host, player(helper),
+                new FileCopyJobs.Copy(CopyProgressPayload.COPY, "a.txt", Text.EMPTY, Text.EMPTY, 40L, 1.0), 40,
+                carried::incrementAndGet);
+        FileCopyJobs.pause(helper.getLevel(), host, true);
+        helper.assertTrue(FileCopyJobs.pausedOn(helper.getLevel(), host), "the machine's copies are paused");
+        // A copy asked for while the others stand waits with them, behind them.
+        FileCopyJobs.start(helper.getLevel(), host, player(helper),
+                new FileCopyJobs.Copy(CopyProgressPayload.COPY, "b.txt", Text.EMPTY, Text.EMPTY, 20L, 1.0), 20,
+                carried::incrementAndGet);
+        helper.startSequence()
+                .thenExecuteAfter(60, () -> {
+                    helper.assertTrue(carried.get() == 0, "nothing is carried out while they stand, past their time");
+                    FileCopyJobs.pause(helper.getLevel(), host, false);
+                    helper.assertTrue(!FileCopyJobs.pausedOn(helper.getLevel(), host), "taken up again");
+                })
+                .thenExecuteAfter(35, () -> helper.assertTrue(carried.get() == 0,
+                        "the first still has the whole of its time to go, having stood from its start"))
+                .thenExecuteAfter(SLACK + 5, () -> helper.assertTrue(carried.get() == 1, "the first has arrived"))
+                .thenExecuteAfter(20, () -> helper.assertTrue(carried.get() == 2, "and the second after it"))
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void copy_thatTakesNoTimeIsCarriedOutAtOnce(final GameTestHelper helper) {
         TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(PC);
         final AtomicInteger carried = new AtomicInteger();
         final long job = FileCopyJobs.start(helper.getLevel(), helper.absolutePos(PC), player(helper),
-                new FileCopyJobs.Copy(CopyProgressPayload.COPY, "tiny.txt", "", "", 0L, 80.0), 0,
+                new FileCopyJobs.Copy(CopyProgressPayload.COPY, "tiny.txt", Text.EMPTY, Text.EMPTY, 0L, 80.0), 0,
                 carried::incrementAndGet);
         helper.assertTrue(job == 0L && carried.get() == 1, "a copy of nothing is done before anyone sees it");
         helper.succeed();

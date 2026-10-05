@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.CancelCopyPayload;
 import dev.jstech.computers.operation.payload.CopyProgressPayload;
+import dev.jstech.computers.operation.payload.PauseCopyPayload;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.motion.MotionClock;
@@ -17,6 +18,7 @@ import dev.jstech.core.motion.MotionKinds;
 import dev.jstech.core.motion.MotionScope;
 import dev.jstech.core.motion.Rhythm;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.Locale;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -30,15 +32,17 @@ import org.jetbrains.annotations.Nullable;
  * folder to folder over a bar of blocks and the seconds remaining, "Deleting..." with the paper flying into the
  * Recycle Bin; Frames 11's window with its speed graph and its details; KDE 2 and 3's KIO progress dialog; GNOME 1's
  * small gmc dialog; Cinnamon's File Operations. It shows the machine's whole run of copies and goes when the run ends,
- * unless KIO was told to keep it open; Cancel calls off whatever of the run is left.
+ * unless KIO was told to keep it open; Cancel calls off whatever of the run is left, and the pause button of Frames 11
+ * and Nemo stops the run where it is until it is pressed again.
  */
 final class CopyProgressApp implements IDesktopApp {
 
     private final BlockPos host;
     private final Style style;
     private OsSkin skin = OsSkin.fallback();
-    /* Where Cancel and KIO's box were drawn last, so a click lands on what was drawn. */
+    /* Where Cancel, the pause button and KIO's box were drawn last, so a click lands on what was drawn. */
     private int[] cancelAt = NOWHERE;
+    private int[] pauseAt = NOWHERE;
     private int[] keepAt = NOWHERE;
     private boolean keepOpen;
     /* The run as it was last drawn, so a window kept open still has something to say once the run is over. */
@@ -67,6 +71,12 @@ final class CopyProgressApp implements IDesktopApp {
         return keepOpen;
     }
 
+    /** The middle of the pause button as it was last drawn, desktop-local, or null for a window without one. */
+    @Nullable
+    int[] pausePoint() {
+        return pauseAt[2] > 0 ? new int[] {pauseAt[0] + pauseAt[2] / 2, pauseAt[1] + pauseAt[3] / 2} : null;
+    }
+
     @Override
     public String title() {
         final CopyRun run = run();
@@ -74,7 +84,7 @@ final class CopyProgressApp implements IDesktopApp {
             case FRAMES_95, FRAMES_XP -> GameText.resolve(run != null && run.deleting() ? CopyTexts.DELETING
                     : run != null && run.current().kind() == CopyProgressPayload.MOVE ? CopyTexts.MOVING
                     : CopyTexts.COPYING);
-            case FRAMES_11 -> GameText.resolve(CopyTexts.PERCENT_COMPLETE.with(percent(run)));
+            case FRAMES_11 -> percentLine(run);
             case KDE2 -> GameText.resolve(CopyTexts.PROGRESS_DIALOG);
             case GNOME1 -> GameText.resolve(CopyTexts.COPYING_FILES);
             case CINNAMON -> GameText.resolve(CopyTexts.FILE_OPERATIONS);
@@ -133,6 +143,9 @@ final class CopyProgressApp implements IDesktopApp {
         }
         if (inside(cancelAt, mouseX, mouseY)) {
             cancel(host);
+        } else if (inside(pauseAt, mouseX, mouseY)) {
+            final CopyRun run = run();
+            pause(host, run == null || !run.paused());
         } else if (inside(keepAt, mouseX, mouseY)) {
             keepOpen = !keepOpen;
         }
@@ -145,6 +158,32 @@ final class CopyProgressApp implements IDesktopApp {
                 PacketDistributor.sendToServer(new CancelCopyPayload(host, copy.job()));
             }
         }
+    }
+
+    /** Pauses the machine's run of copies, or takes it up again. */
+    static void pause(final BlockPos host, final boolean pause) {
+        PacketDistributor.sendToServer(new PauseCopyPayload(host, pause));
+    }
+
+    /**
+     * The pause button's mark in a box of 9 by 9 at ({@code x}, {@code y}): the two bars while the run goes, and the
+     * triangle that takes it up again while it is paused.
+     */
+    static void pauseMark(final GuiGraphics g, final int x, final int y, final boolean paused, final int colour) {
+        if (paused) {
+            for (int i = 0; i < 4; i++) {
+                g.fill(x + 2 + i, y + 1 + i, x + 3 + i, y + 8 - i, colour);
+            }
+        } else {
+            g.fill(x + 2, y + 1, x + 4, y + 8, colour);
+            g.fill(x + 6, y + 1, x + 8, y + 8, colour);
+        }
+    }
+
+    /** Frames 11's line of how far the run is, which says so when it is paused. */
+    static String percentLine(@Nullable final CopyRun run) {
+        return GameText.resolve(run != null && run.paused() ? CopyTexts.PAUSED_PERCENT.with(percent(run))
+                : CopyTexts.PERCENT_COMPLETE.with(percent(run)));
     }
 
     /** The copy window shape of a desktop of that look, or null for one with no copy window (CDE's). */
@@ -228,15 +267,21 @@ final class CopyProgressApp implements IDesktopApp {
         text(g, font, GameText.resolve(CopyTexts.COPYING_ITEMS.with(run.items(), run.current().from(),
                 run.current().to())), x + PAD, ly, w - 2 * PAD, skin.text());
         ly += LINE + 2;
-        text(g, font, GameText.resolve(CopyTexts.PERCENT_COMPLETE.with(percent(run))), x + PAD, ly,
-                w - 2 * PAD - 14, skin.text());
+        text(g, font, percentLine(run), x + PAD, ly, w - 2 * PAD - 28, skin.text());
         final int cancelX = x + w - PAD - 9;
         Draw.text(g, font, "x", cancelX + 2, ly, skin.text());
         cancelAt = new int[] {cancelX, ly - 1, 9, 9};
+        final int pauseX = cancelX - 14;
+        pauseMark(g, pauseX, ly - 1, run.paused(), skin.text());
+        pauseAt = new int[] {pauseX, ly - 1, 9, 9};
         ly += LINE + 2;
         graph(g, run, x + PAD, ly, w - 2 * PAD, GRAPH_H);
         ly += GRAPH_H + 4;
-        final int value = x + PAD + 68;
+        // The figures stand clear of the longest of their labels, whatever language the labels are in.
+        final int labels = Math.max(font.width(GameText.resolve(CopyTexts.NAME)),
+                Math.max(font.width(GameText.resolve(CopyTexts.TIME_REMAINING)),
+                        font.width(GameText.resolve(CopyTexts.ITEMS_REMAINING))));
+        final int value = x + PAD + labels + 6;
         Draw.text(g, font, GameText.resolve(CopyTexts.NAME), x + PAD, ly, skin.dim());
         text(g, font, run.current().name(), value, ly, w - (value - x) - PAD, skin.text());
         ly += LINE;
@@ -284,11 +329,11 @@ final class CopyProgressApp implements IDesktopApp {
         ly += LINE + 2;
         final int value = x + PAD + 56;
         Draw.text(g, font, GameText.resolve(CopyTexts.SOURCE), x + PAD, ly, skin.text());
-        text(g, font, GameText.resolve(CopyTexts.FILE_URL.with(run.current().from() + "/" + run.current().name())),
+        text(g, font, GameText.resolve(CopyTexts.FILE_URL.with(pathOf(run.current().from(), run.current().name()))),
                 value, ly, w - (value - x) - PAD, skin.text());
         ly += LINE;
         Draw.text(g, font, GameText.resolve(CopyTexts.DESTINATION), x + PAD, ly, skin.text());
-        text(g, font, GameText.resolve(CopyTexts.FILE_URL.with(run.current().to() + "/" + run.current().name())),
+        text(g, font, GameText.resolve(CopyTexts.FILE_URL.with(pathOf(run.current().to(), run.current().name()))),
                 value, ly, w - (value - x) - PAD, skin.text());
         ly += LINE + 2;
         final int done = run.items() - run.itemsLeft() + (run.itemsLeft() > 0 ? 1 : 0);
@@ -330,11 +375,11 @@ final class CopyProgressApp implements IDesktopApp {
         int ly = y + PAD;
         final int value = x + PAD + 62;
         Draw.text(g, font, GameText.resolve(CopyTexts.COPYING_FROM), x + PAD, ly, skin.text());
-        text(g, font, "/" + run.current().from() + "/" + run.current().name(), value, ly, w - (value - x) - PAD,
+        text(g, font, "/" + pathOf(run.current().from(), run.current().name()), value, ly, w - (value - x) - PAD,
                 skin.text());
         ly += LINE;
         Draw.text(g, font, GameText.resolve(CopyTexts.TO), x + PAD, ly, skin.text());
-        text(g, font, "/" + run.current().to(), value, ly, w - (value - x) - PAD, skin.text());
+        text(g, font, "/" + pathOf(run.current().to(), ""), value, ly, w - (value - x) - PAD, skin.text());
         ly += LINE + 3;
         skin.field(g, x + PAD, ly, w - 2 * PAD, 8, false);
         g.fill(x + PAD + 1, ly + 1, x + PAD + 1 + (int) Math.floor((w - 2 * PAD - 2) * run.fraction()), ly + 7,
@@ -348,7 +393,7 @@ final class CopyProgressApp implements IDesktopApp {
         final int ly = y + PAD + 2;
         g.fill(x + PAD, ly + 2, x + PAD + 14, ly + 16, skin.progressFill());
         final int tx = x + PAD + 20;
-        final int tw = w - (tx - x) - PAD - 12;
+        final int tw = w - (tx - x) - PAD - 26;
         final String what = run.deleting() ? GameText.resolve(CopyTexts.DELETING_QUOTED.with(run.current().name()))
                 : GameText.resolve(CopyTexts.COPYING_QUOTED.with(run.current().name(), run.current().to()));
         text(g, font, what, tx, ly, tw, skin.text());
@@ -359,6 +404,8 @@ final class CopyProgressApp implements IDesktopApp {
         final int cx = x + w - PAD - 8;
         Draw.text(g, font, "x", cx + 2, ly + 4, skin.text());
         cancelAt = new int[] {cx, ly + 3, 9, 9};
+        pauseMark(g, cx - 13, ly + 3, run.paused(), skin.text());
+        pauseAt = new int[] {cx - 13, ly + 3, 9, 9};
     }
 
     private void cancelButton(final GuiGraphics g, final Font font, final int x, final int y, final int mouseX,
@@ -366,6 +413,18 @@ final class CopyProgressApp implements IDesktopApp {
         cancelAt = new int[] {x, y, BUTTON_W, BUTTON_H};
         skin.button(g, font, x, y, BUTTON_W, BUTTON_H, GameText.resolve(CopyTexts.CANCEL),
                 inside(cancelAt, mouseX, mouseY), false, false);
+    }
+
+    /*
+     * A file's place written as a path under the root, for the windows that show one: the folder and the name, or
+     * the name alone in the root itself.
+     */
+    private static String pathOf(final Text folder, final String name) {
+        final String place = GameText.resolve(folder);
+        if (place.isEmpty() || "/".equals(place)) {
+            return name;
+        }
+        return name.isEmpty() ? place : place + "/" + name;
     }
 
     /* A line of text cut to the room it has. */

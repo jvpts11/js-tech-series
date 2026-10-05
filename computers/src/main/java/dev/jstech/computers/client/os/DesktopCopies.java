@@ -62,10 +62,13 @@ public final class DesktopCopies {
         return out;
     }
 
-    /** Whether a copy is under way on the machine at {@code host}. */
+    /**
+     * Whether a copy is under way on the machine at {@code host}: one paused is not, so the pointer and CDE's busy
+     * light stop saying the machine is working while it stands.
+     */
     public static boolean copying(final BlockPos host) {
         final Map<Long, Entry> run = RUNS.get(host);
-        return run != null && run.values().stream().anyMatch(entry -> !entry.ended());
+        return run != null && run.values().stream().anyMatch(entry -> !entry.ended() && !entry.copy().paused());
     }
 
     /** The game time now, smooth between ticks, which every copy's progress is read against. */

@@ -16,6 +16,7 @@ import dev.jstech.computers.operation.payload.CopyFilePayload;
 import dev.jstech.computers.operation.payload.CopyProgressPayload;
 import dev.jstech.computers.operation.payload.MediumTransferPayload;
 import dev.jstech.computers.operation.payload.MoveFilePayload;
+import dev.jstech.computers.operation.payload.PauseCopyPayload;
 import dev.jstech.computers.operation.payload.RenameVolumePayload;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
@@ -70,6 +71,9 @@ public final class FileTransferPayloads {
         ComputerAccess.accept(registrar, CancelCopyPayload.TYPE, CancelCopyPayload.STREAM_CODEC,
                 ComputerAccess.machine(CancelCopyPayload::hostPos),
                 (payload, player, level) -> FileCopyJobs.cancel(level, payload.hostPos(), payload.job()));
+        ComputerAccess.accept(registrar, PauseCopyPayload.TYPE, PauseCopyPayload.STREAM_CODEC,
+                ComputerAccess.machine(PauseCopyPayload::hostPos),
+                (payload, player, level) -> FileCopyJobs.pause(level, payload.hostPos(), payload.pause()));
         registrar.playToClient(CopyProgressPayload.TYPE, CopyProgressPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) -> DesktopCopies.accept(payload)));
     }

@@ -17,8 +17,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Shows this desktop's machine copying: a copy window once a run of copies outlasts a moment, in the shape its system
  * gave it, gone when the run ends; or, where the system showed a copy without a window, Plasma's notification over the
- * panel with a ring filling at the tray, and GNOME's operations pie at the top bar with its popover under it. CDE shows
- * nothing but its busy pointer and its panel's light.
+ * panel with a ring filling at the tray, its pause button and its cross live, and GNOME's operations pie at the top
+ * bar with its popover under it. CDE shows nothing but its busy pointer and its panel's light.
  */
 final class CopyWindows {
 
@@ -26,6 +26,10 @@ final class CopyWindows {
     /** The copy window up now, or null. */
     @Nullable
     private CopyProgressApp window;
+    /* Where Plasma's notification, its pause button and its cross were drawn last, desktop-local, for a click. */
+    private int[] cardAt = NOWHERE;
+    private int[] pauseAt = NOWHERE;
+    private int[] cancelAt = NOWHERE;
 
     /** The key the copy window opens under, which no program has. */
     static final String KEY = "jsc:copy_progress";
@@ -34,6 +38,7 @@ final class CopyWindows {
     private static final int POPOVER_W = 176;
     private static final int POPOVER_H = 38;
     private static final int RING = 9;
+    private static final int[] NOWHERE = {0, 0, 0, 0};
 
     CopyWindows(final DesktopState desktop) {
         this.desktop = desktop;
@@ -69,6 +74,9 @@ final class CopyWindows {
      * popover. Nothing for a run that has not yet outlasted a moment.
      */
     void renderOverlay(final GuiGraphics g, final int tbY, final int sw) {
+        cardAt = NOWHERE;
+        pauseAt = NOWHERE;
+        cancelAt = NOWHERE;
         final CopyRun run = run();
         if (run == null || !run.showsWindow() || !desktop.surface().moves()) {
             return;
@@ -78,6 +86,24 @@ final class CopyWindows {
         } else if (desktop.panelStyle() == PanelStyle.GNOME && !desktop.periodPanel()) {
             gnome(g, run, sw);
         }
+    }
+
+    /**
+     * A click at the desktop-local point ({@code x}, {@code y}) on Plasma's notification: the pause button pauses the
+     * run or takes it up again, the cross calls it off, and the rest of the notification takes the click so nothing
+     * under it reacts. Returns whether the notification took it.
+     */
+    boolean click(final double x, final double y) {
+        if (!inside(cardAt, x, y)) {
+            return false;
+        }
+        if (inside(pauseAt, x, y)) {
+            final CopyRun run = run();
+            CopyProgressApp.pause(desktop.hostPos(), run == null || !run.paused());
+        } else if (inside(cancelAt, x, y)) {
+            CopyProgressApp.cancel(desktop.hostPos());
+        }
+        return true;
     }
 
     @Nullable
@@ -92,9 +118,14 @@ final class CopyWindows {
         final int x = sw - CARD_W - 6;
         final int y = tbY - CARD_H - 6;
         skin.windowFrame(g, x, y, CARD_W, CARD_H);
+        cardAt = new int[] {x, y, CARD_W, CARD_H};
         g.fill(x + 6, y + 5, x + 14, y + 13, skin.accent());
-        Draw.text(g, font, GameText.resolve(CopyTexts.KIO_COPYING), x + 18, y + 5, skin.text());
+        Draw.text(g, font, GameText.resolve(run.paused() ? CopyTexts.PAUSED : CopyTexts.KIO_COPYING), x + 18, y + 5,
+                skin.text());
         Draw.text(g, font, "x", x + CARD_W - 10, y + 5, skin.text());
+        cancelAt = new int[] {x + CARD_W - 12, y + 4, 9, 9};
+        CopyProgressApp.pauseMark(g, x + CARD_W - 25, y + 4, run.paused(), skin.text());
+        pauseAt = new int[] {x + CARD_W - 25, y + 4, 9, 9};
         final String what = GameText.resolve(CopyTexts.FILE_TO.with(run.current().name(), run.current().to()));
         Draw.text(g, font, font.plainSubstrByWidth(what, CARD_W - 12), x + 6, y + 16, skin.text());
         g.fill(x + 6, y + 27, x + CARD_W - 6, y + 29, skin.listHover());
@@ -162,6 +193,10 @@ final class CopyWindows {
                 g.fill(x + i, y + j, x + i + 1, y + j + 1, turned(dx, dy) <= fraction ? lit : unlit);
             }
         }
+    }
+
+    private static boolean inside(final int[] r, final double mx, final double my) {
+        return r[2] > 0 && mx >= r[0] && mx < r[0] + r[2] && my >= r[1] && my < r[1] + r[3];
     }
 
     /* How far round from the top, clockwise, a point stands, from 0 to 1. */

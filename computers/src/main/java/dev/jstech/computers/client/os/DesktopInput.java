@@ -348,6 +348,10 @@ final class DesktopInput {
         if (clickedBalloon(mouseX, mouseY, tbY, view.width())) {
             return true;
         }
+        // Plasma's copy notification over the panel: its pause button and its cross, and nothing under it.
+        if (desktop.copies().click(mouseX, mouseY)) {
+            return true;
+        }
         // The panel's menu takes the next click wherever it lands: on an entry it runs it, anywhere else it closes.
         final PanelMenu panelMenu = desktop.panelMenu();
         if (panelMenu.click(mouseX, mouseY)) {

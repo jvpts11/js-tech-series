@@ -146,7 +146,10 @@ final class DesktopWindows {
         opened.setWorkspaces(WorkspaceSet.only(shown));
         opened.move(desktop.motion().start(MotionKinds.WINDOW_OPEN));
         windows.add(opened);
-        desktop.programStarting();
+        // A copy's window is the system telling of a copy, not a program being loaded.
+        if (!CopyWindows.KEY.equals(key)) {
+            desktop.programStarting(key);
+        }
     }
 
     /**

@@ -24,15 +24,26 @@ import org.jetbrains.annotations.Nullable;
  * @param fraction    how far through the run it is, from 0 to 1
  * @param secondsLeft how many seconds are left, rounded up
  * @param running     how long the run has been going, in ticks
+ * @param paused      whether the run is paused, standing where it was when it was
  */
 record CopyRun(CopyProgressPayload current, int items, int itemsLeft, double mbTotal, double mbDone,
-               double fraction, int secondsLeft, double running) {
+               double fraction, int secondsLeft, double running, boolean paused) {
 
-    /** The run as it stands at the game time {@code now}, or null when it is empty. */
+    /** The run as it stands at the game time {@code at}, or null when it is empty. */
     @Nullable
-    static CopyRun of(final List<CopyProgressPayload> run, final double now) {
+    static CopyRun of(final List<CopyProgressPayload> run, final double at) {
         if (run.isEmpty()) {
             return null;
+        }
+        // A paused run stands where it was at the moment it was paused, every copy of it alike.
+        boolean paused = false;
+        double now = at;
+        for (final CopyProgressPayload copy : run) {
+            if (!copy.done() && copy.paused()) {
+                paused = true;
+                now = Math.min(at, copy.pausedTick());
+                break;
+            }
         }
         long start = Long.MAX_VALUE;
         long end = Long.MIN_VALUE;
@@ -60,7 +71,7 @@ record CopyRun(CopyProgressPayload current, int items, int itemsLeft, double mbT
         final double whole = Math.max(1L, end - start);
         final double fraction = Math.max(0.0, Math.min(1.0, (now - start) / whole));
         final int seconds = (int) Math.max(0L, (long) Math.ceil((end - now) / 20.0));
-        return new CopyRun(current, run.size(), left, total, done, fraction, seconds, now - start);
+        return new CopyRun(current, run.size(), left, total, done, fraction, seconds, now - start, paused);
     }
 
     /** Whether the run has gone on long enough for its window to come up: past the moment the old systems waited. */

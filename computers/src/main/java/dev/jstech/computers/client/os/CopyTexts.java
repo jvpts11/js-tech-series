@@ -25,6 +25,7 @@ final class CopyTexts {
 
     // Frames 11.
     static final TextKey PERCENT_COMPLETE = TextKey.of("jsc.copy.percent_complete", "%s%% complete");
+    static final TextKey PAUSED_PERCENT = TextKey.of("jsc.copy.paused_percent", "Paused - %s%% complete");
     static final TextKey COPYING_ITEMS = TextKey.of("jsc.copy.copying_items", "Copying %s items from %s to %s");
     static final TextKey NAME = TextKey.of("jsc.copy.name", "Name:");
     static final TextKey TIME_REMAINING = TextKey.of("jsc.copy.time_remaining", "Time remaining:");
@@ -50,6 +51,7 @@ final class CopyTexts {
     // Plasma's notification.
     static final TextKey FILE_TO = TextKey.of("jsc.copy.file_to", "%s to %s");
     static final TextKey MIB_PER_SECOND = TextKey.of("jsc.copy.mib_per_second", "%s MiB/s");
+    static final TextKey PAUSED = TextKey.of("jsc.copy.paused", "Paused");
 
     // GNOME 1's gmc.
     static final TextKey COPYING_FILES = TextKey.of("jsc.copy.copying_files", "Copying files");

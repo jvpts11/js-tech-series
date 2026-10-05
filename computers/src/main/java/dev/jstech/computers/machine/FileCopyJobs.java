@@ -9,7 +9,9 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.CopyProgressPayload;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,13 +34,17 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * out when that time is up, so the file arrives when the copy ends and not before. The player who started it is told
  * when it starts and when it ends, which is what the copy windows are drawn from.
  *
- * <p>A copy over in no time is carried out at once and told to nobody. A copy still under way when the server stops
- * is carried out then, so a file is never lost to a copy that was cut short.
+ * <p>A machine's copies can be paused and taken up again from a copy window that has the button: while paused their
+ * time stands still, and taking them up again moves every one of them on by as long as they stood. A copy over in no
+ * time is carried out at once and told to nobody. A copy still under way when the server stops is carried out then,
+ * so a file is never lost to a copy that was cut short.
  */
 @EventBusSubscriber(modid = JsComputers.MODID)
 public final class FileCopyJobs {
 
     private static final Map<Long, Job> JOBS = new LinkedHashMap<>();
+    /** The machines whose copies are paused, and the game time each was paused at. */
+    private static final Map<Host, Long> PAUSED = new HashMap<>();
     private static long nextId = 1L;
 
     private FileCopyJobs() {
@@ -55,15 +61,19 @@ public final class FileCopyJobs {
             return 0L;
         }
         // A machine copies one file after another, so a copy asked for during another starts when that one ends.
-        long begins = level.getGameTime();
+        final Host at = new Host(level.dimension(), host.immutable());
+        long begins = clockOf(level, at);
         for (final Job job : JOBS.values()) {
-            if (job.dimension().equals(level.dimension()) && job.told().hostPos().equals(host)) {
+            if (job.on(at)) {
                 begins = Math.max(begins, job.told().endTick());
             }
         }
         final long id = nextId++;
-        final CopyProgressPayload told = new CopyProgressPayload(host.immutable(), id, copy.kind(), copy.name(),
-                copy.from(), copy.to(), copy.sizeMb(), (float) copy.mbPerSecond(), begins, begins + ticks, false);
+        // A copy joining a machine whose copies are paused waits with them.
+        final long paused = PAUSED.getOrDefault(at, CopyProgressPayload.RUNNING);
+        final CopyProgressPayload told = new CopyProgressPayload(at.pos(), id, copy.kind(), copy.name(),
+                copy.from(), copy.to(), copy.sizeMb(), (float) copy.mbPerSecond(), begins, begins + ticks, paused,
+                false);
         JOBS.put(id, new Job(level.dimension(), player.getUUID(), told, carryOut));
         PacketDistributor.sendToPlayer(player, told);
         return id;
@@ -74,41 +84,82 @@ public final class FileCopyJobs {
      * it was and nothing arrives. The copies queued behind it move up. Whoever started it is told it ended.
      */
     public static void cancel(final ServerLevel level, final BlockPos host, final long job) {
+        final Host at = new Host(level.dimension(), host.immutable());
         final Job called = JOBS.get(job);
-        if (called == null || !called.dimension().equals(level.dimension()) || !called.told().hostPos().equals(host)) {
+        if (called == null || !called.on(at)) {
             return;
         }
         JOBS.remove(job);
-        final long now = level.getGameTime();
+        final long now = clockOf(level, at);
         final long saved = called.told().endTick() - Math.max(now, called.told().startTick());
         // What was queued behind it on the same machine starts that much sooner.
         for (final Map.Entry<Long, Job> entry : JOBS.entrySet()) {
             final Job later = entry.getValue();
-            if (later.dimension().equals(level.dimension()) && later.told().hostPos().equals(host)
-                    && later.told().startTick() >= called.told().endTick()) {
-                entry.setValue(later.movedUp(saved));
+            if (later.on(at) && later.told().startTick() >= called.told().endTick()) {
+                entry.setValue(later.retold(later.told().shifted(-saved)));
             }
+        }
+        if (runningOn(level, host) == 0) {
+            PAUSED.remove(at);
         }
         final ServerPlayer player = level.getServer().getPlayerList().getPlayer(called.player());
         if (player != null) {
             PacketDistributor.sendToPlayer(player, called.told().ended());
             for (final Job later : JOBS.values()) {
-                if (later.player().equals(called.player()) && later.told().hostPos().equals(host)) {
+                if (later.player().equals(called.player()) && later.on(at)) {
                     PacketDistributor.sendToPlayer(player, later.told());
                 }
             }
         }
     }
 
-    /** How many copies are under way on the machine at {@code host}. */
+    /**
+     * Pauses the copies under way on the machine at {@code host} when {@code pause} is set, and takes them up again
+     * when it is not. Paused, their time stands still and nothing is carried out; taken up again, each one starts and
+     * ends as much later as they stood. Whoever started them is told either way.
+     */
+    public static void pause(final ServerLevel level, final BlockPos host, final boolean pause) {
+        final Host at = new Host(level.dimension(), host.immutable());
+        final long now = level.getGameTime();
+        final Long since = PAUSED.get(at);
+        if (pause == (since != null) || runningOn(level, host) == 0) {
+            return;
+        }
+        if (pause) {
+            PAUSED.put(at, now);
+        } else {
+            PAUSED.remove(at);
+        }
+        for (final Map.Entry<Long, Job> entry : JOBS.entrySet()) {
+            final Job job = entry.getValue();
+            if (!job.on(at)) {
+                continue;
+            }
+            final CopyProgressPayload told = pause ? job.told().pausedAt(now)
+                    : job.told().shifted(now - since).pausedAt(CopyProgressPayload.RUNNING);
+            entry.setValue(job.retold(told));
+            final ServerPlayer player = level.getServer().getPlayerList().getPlayer(job.player());
+            if (player != null) {
+                PacketDistributor.sendToPlayer(player, told);
+            }
+        }
+    }
+
+    /** How many copies are under way on the machine at {@code host}, paused or not. */
     public static int runningOn(final ServerLevel level, final BlockPos host) {
+        final Host at = new Host(level.dimension(), host);
         int count = 0;
         for (final Job job : JOBS.values()) {
-            if (job.dimension().equals(level.dimension()) && job.told().hostPos().equals(host)) {
+            if (job.on(at)) {
                 count++;
             }
         }
         return count;
+    }
+
+    /** Whether the copies on the machine at {@code host} are paused. */
+    public static boolean pausedOn(final ServerLevel level, final BlockPos host) {
+        return PAUSED.containsKey(new Host(level.dimension(), host));
     }
 
     @SubscribeEvent
@@ -122,7 +173,7 @@ public final class FileCopyJobs {
         while (each.hasNext()) {
             final Job job = each.next();
             final ServerLevel level = server.getLevel(job.dimension());
-            if (level == null || level.getGameTime() >= job.told().endTick()) {
+            if (level == null || !PAUSED.containsKey(job.host()) && level.getGameTime() >= job.told().endTick()) {
                 due.add(job);
                 each.remove();
             }
@@ -137,10 +188,16 @@ public final class FileCopyJobs {
     public static void onServerStopping(final ServerStoppingEvent event) {
         final List<Job> left = new ArrayList<>(JOBS.values());
         JOBS.clear();
+        PAUSED.clear();
         for (final Job job : left) {
             job.carryOut().run();
         }
         nextId = 1L;
+    }
+
+    /* The game time the copies on a machine are at: now, or where they stood when they were paused. */
+    private static long clockOf(final ServerLevel level, final Host at) {
+        return PAUSED.getOrDefault(at, level.getGameTime());
     }
 
     private static void finish(final MinecraftServer server, final Job job) {
@@ -157,23 +214,34 @@ public final class FileCopyJobs {
      * @param kind        {@link CopyProgressPayload#COPY}, {@link CopyProgressPayload#MOVE} or
      *                    {@link CopyProgressPayload#DELETE}
      * @param name        the file's name
-     * @param from        the folder it comes from
+     * @param from        the folder it comes from, the volume's name for its root
      * @param to          the folder it goes to, empty for a deletion
      * @param sizeMb      how much it weighs, in the megabytes its disk counts
      * @param mbPerSecond how fast it goes
      */
-    public record Copy(byte kind, String name, String from, String to, long sizeMb, double mbPerSecond) {
+    public record Copy(byte kind, String name, Text from, Text to, long sizeMb, double mbPerSecond) {
+    }
+
+    /* A machine, by the dimension it stands in and where. */
+    private record Host(ResourceKey<Level> dimension, BlockPos pos) {
     }
 
     /** A copy under way: where, for whom, what its player was told, and what carries it out. */
     private record Job(ResourceKey<Level> dimension, UUID player, CopyProgressPayload told, Runnable carryOut) {
 
-        /* The same copy starting and ending that many ticks sooner. */
-        Job movedUp(final long ticks) {
-            final CopyProgressPayload t = told;
-            return new Job(dimension, player, new CopyProgressPayload(t.hostPos(), t.job(), t.kind(), t.name(),
-                    t.from(), t.to(), t.sizeMb(), t.mbPerSecond(), t.startTick() - ticks, t.endTick() - ticks,
-                    false), carryOut);
+        /* The machine it runs on. */
+        Host host() {
+            return new Host(dimension, told.hostPos());
+        }
+
+        /* Whether it runs on that machine. */
+        boolean on(final Host at) {
+            return dimension.equals(at.dimension()) && told.hostPos().equals(at.pos());
+        }
+
+        /* The same copy, its player told something new of it. */
+        Job retold(final CopyProgressPayload now) {
+            return new Job(dimension, player, now, carryOut);
         }
     }
 }

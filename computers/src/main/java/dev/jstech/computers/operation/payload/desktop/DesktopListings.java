@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.files.TrashPayloads;
@@ -21,6 +22,7 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramKind;
+import dev.jstech.computers.os.ProgramLoading;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.DiskTrash;
@@ -66,7 +68,7 @@ final class DesktopListings {
             return new DesktopFilesPayload(List.of(), "", "", "", List.of(), List.of(), List.of(),
                     new DesktopFilesPayload.Prefs(0, 100, false, true, false, 0, DesktopEffects.ALL_ON), community,
                     List.of(), Map.of(),
-                    false, Map.of());
+                    false, Map.of(), (float) ProgramLoading.REFERENCE_MB_PER_SECOND);
         }
         final ComputerConsoleState console = computer.console();
         final ComputerSettings settings = console.settings();
@@ -79,7 +81,14 @@ final class DesktopListings {
                 new DesktopFilesPayload.Prefs(settings.accent(), settings.brightness(), settings.clock12h(),
                         settings.taskbarCentered(), settings.darkMode(), settings.guiScale(),
                         new DesktopEffects(List.copyOf(settings.effectsOff()), settings.effectSpeed())),
-                community, settings.pinned(), settings.defaultApps(), trashFull, versions(console));
+                community, settings.pinned(), settings.defaultApps(), trashFull, versions(console),
+                (float) loadRate(computer, disk));
+    }
+
+    /* How fast the machine loads a program: the disk it starts from, at its processor's pace. */
+    private static double loadRate(final IOsHost computer, final ItemStack disk) {
+        final int tier = disk.getItem() instanceof DiskItem item ? item.spec().tier().speedMultiplier() : 1;
+        return ProgramLoading.loadRate(tier, computer.cpuCores(), computer.maxCpuMhz());
     }
 
     /** The version each installed package is at, by id path; a package with no version on record is left out. */

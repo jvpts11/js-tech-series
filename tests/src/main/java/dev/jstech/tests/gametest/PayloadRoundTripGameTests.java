@@ -133,7 +133,7 @@ public final class PayloadRoundTripGameTests {
                 programs, List.of("screenfetch", "vim"), List.of(),
                 new DesktopFilesPayload.Prefs(0, 100, false, true, false, 100,
                         new DesktopEffects(List.of("animations"), 60)), List.of(), List.of(), Map.of(),
-                false, Map.of("sgsc", "2.0", "scc", "1.0")));
+                false, Map.of("sgsc", "2.0", "scc", "1.0"), 160.0F));
         helper.succeed();
     }
 

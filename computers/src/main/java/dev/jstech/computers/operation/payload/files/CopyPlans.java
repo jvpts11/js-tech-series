@@ -12,7 +12,10 @@ import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.machine.FileCopyJobs;
 import dev.jstech.computers.machine.RemoteComputerService;
 import dev.jstech.computers.operation.payload.CopyProgressPayload;
+import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.VolumeLabel;
 import dev.jstech.computers.os.fs.CopyTiming;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FsPaths;
@@ -49,8 +52,8 @@ final class CopyPlans {
     static FileCopyJobs.Copy plan(final ServerLevel level, final IOsHost computer, final byte kind, final String src,
                                   final String destDir) {
         final String name = FsPaths.fileName(pathPart(src));
-        final String from = FsPaths.fileName(parent(pathPart(src)));
-        final String to = destDir.isEmpty() ? "" : FsPaths.fileName(pathPart(destDir));
+        final Text from = folderName(level, computer, src, parent(pathPart(src)));
+        final Text to = folderName(level, computer, destDir, pathPart(destDir));
         final long size = sizeOf(level, computer, src);
         double rate = CopyTiming.slowest(rateOf(level, computer, src), rateOf(level, computer, destDir));
         if (src.startsWith(NET_ROOT) || destDir.startsWith(NET_ROOT)) {
@@ -63,9 +66,43 @@ final class CopyPlans {
     /** What a file in the trash weighs and how fast its disk lets it go, for a deletion that takes time. */
     static FileCopyJobs.Copy deletion(final IOsHost computer, final String path) {
         final ItemStack disk = computer.systemDisk();
+        final String folder = parent(path);
         return new FileCopyJobs.Copy(CopyProgressPayload.DELETE, FsPaths.fileName(path),
-                FsPaths.fileName(parent(path)), "",
+                folder.isEmpty() ? systemDiskName(computer) : Text.literal(FsPaths.fileName(folder)), Text.EMPTY,
                 DiskFilesystem.weightOf(disk, path), volumeRate(disk));
+    }
+
+    /*
+     * A folder as a copy window names it: its own name, or for the root of a volume the volume's name, the way the
+     * explorer's drive tree names it.
+     */
+    private static Text folderName(final ServerLevel level, final IOsHost computer, final String path,
+                                   final String folder) {
+        if (!folder.isEmpty()) {
+            return Text.literal(FsPaths.fileName(folder));
+        }
+        if (path.startsWith("media:")) {
+            final ItemStack medium = mediaStackFor(level, computer, path);
+            return VolumeLabel.of(medium, InstallerProjection.facts(medium)
+                    .map(f -> DiskFilesPayload.SETUP.with(f.name()))
+                    .orElse(DiskFilesPayload.REMOVABLE_DRIVE.text()));
+        }
+        if (path.startsWith(NET_ROOT)) {
+            return DiskFilesPayload.NETWORK.text();
+        }
+        return systemDiskName(computer);
+    }
+
+    /*
+     * The system disk's root as the explorer names it: the root itself on a UNIX-like system, where everything hangs
+     * from it, and elsewhere the player's label for the disk, or a local disk.
+     */
+    private static Text systemDiskName(final IOsHost computer) {
+        final OsDef os = computer.installedOs();
+        if (os != null && os.platform().unixLike()) {
+            return Text.literal("/");
+        }
+        return VolumeLabel.of(computer.systemDisk(), DiskFilesPayload.LOCAL_DISK.text());
     }
 
     /* The file's size, read on the volume it is on; over the network it is read through the shell. */

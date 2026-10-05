@@ -295,6 +295,24 @@ interface DesktopInspection {
         return desktop().copying();
     }
 
+    /** Where the copy window's pause button is on the screen, or the origin when no window with one is up. */
+    default int[] copyPausePoint() {
+        final CopyProgressApp window = desktop().copies().window();
+        return window == null || window.pausePoint() == null ? new int[] {0, 0} : screen(window.pausePoint());
+    }
+
+    /** How far through its run of copies the desktop's machine is, from 0 to 1, or 0 with none under way. */
+    default double copyFraction() {
+        final CopyRun run = CopyRun.of(DesktopCopies.run(desktop().hostPos()), DesktopCopies.now());
+        return run == null ? 0.0 : run.fraction();
+    }
+
+    /** Whether the copies on the desktop's machine are paused, as the machine last said. */
+    default boolean copyPaused() {
+        final CopyRun run = CopyRun.of(DesktopCopies.run(desktop().hostPos()), DesktopCopies.now());
+        return run != null && run.paused();
+    }
+
     /** Whether that kind of thing ({@code window_open}, {@code menu_show}...) moves on this desktop as it is now. */
     default boolean kindMoves(final String kind) {
         return desktop().motion().spec(kind).moves();
