@@ -1,0 +1,74 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.buses.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.buses.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.buses.use1",
+        "jsc.guide.buses.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.buses.fix1",
+          "problem": "jsc.guide.buses.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:import_bus",
+  "id": "jsc:buses",
+  "items": [
+    "jsc:vintage_import_bus",
+    "jsc:legacy_import_bus",
+    "jsc:transition_import_bus",
+    "jsc:import_bus",
+    "jsc:advanced_import_bus",
+    "jsc:vintage_export_bus",
+    "jsc:legacy_export_bus",
+    "jsc:transition_export_bus",
+    "jsc:export_bus",
+    "jsc:advanced_export_bus",
+    "jsc:vintage_external_storage_bus",
+    "jsc:legacy_external_storage_bus",
+    "jsc:transition_external_storage_bus",
+    "jsc:external_storage_bus",
+    "jsc:advanced_external_storage_bus"
+  ],
+  "order": 29,
+  "section": "jsc:storage",
+  "title": "jsc.guide.buses.title"
+}

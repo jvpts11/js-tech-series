@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.guide;
 
+import dev.jstech.core.id.IStableName;
 import java.util.List;
 import java.util.Objects;
 
@@ -129,6 +130,124 @@ public sealed interface GuideBlock {
         public Define {
             Objects.requireNonNull(termKey, "termKey");
             Objects.requireNonNull(definitionKey, "definitionKey");
+        }
+    }
+
+    /** A note set apart in the style's accent: what to read next, a hint. */
+    record Note(String key) implements GuideBlock {
+
+        public Note {
+            Objects.requireNonNull(key, "key");
+        }
+    }
+
+    /**
+     * What follows starts in the next column of the page, or on the next page: on a drawing, the second half of a
+     * sheet or the next sheet. A style whose pages hold one column runs straight on past it, as a book's text does.
+     */
+    record Break(BreakKind kind) implements GuideBlock {
+
+        public Break {
+            Objects.requireNonNull(kind, "kind");
+        }
+    }
+
+    /** Where a break sends what follows it. */
+    enum BreakKind implements IStableName {
+        /** The next column, or the next page when this is the last column. */
+        COLUMN("column"),
+        /** The next page. */
+        PAGE("page");
+
+        private final String serializedName;
+
+        BreakKind(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return this.serializedName;
+        }
+    }
+
+    /**
+     * A block seen from three sides, as a drawing shows a machine: from above, from the front and from the side, with
+     * how wide a block is under the front, and numbered balloons pointing at what the legend under it explains.
+     *
+     * @param item     the block's item, {@code namespace:path}
+     * @param callouts the balloons, in the order their numbers go
+     */
+    record Views(String item, List<Callout> callouts) implements GuideBlock {
+
+        public Views {
+            Objects.requireNonNull(item, "item");
+            callouts = List.copyOf(callouts);
+        }
+    }
+
+    /**
+     * A balloon pointing at a place on one of the views, and the line of the legend that says what it is.
+     *
+     * @param number the number in the balloon
+     * @param view   the view it points at
+     * @param u      how far across the face it points, in the face's sixteen pixels
+     * @param v      how far down the face it points
+     * @param key    the legend's sentence for it
+     */
+    record Callout(int number, View view, int u, int v, String key) {
+
+        public Callout {
+            Objects.requireNonNull(view, "view");
+            Objects.requireNonNull(key, "key");
+        }
+    }
+
+    /** A side a block is seen from. */
+    enum View implements IStableName {
+        TOP("top"),
+        FRONT("front"),
+        SIDE("side");
+
+        private final String serializedName;
+
+        View(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return this.serializedName;
+        }
+    }
+
+    /**
+     * Blocks seen from above, side by side as they are to be placed, each named under it, those that are optional
+     * outlined in dots: how to set something up.
+     *
+     * @param captionKey the plan's title, such as "Setting it up (seen from above)"
+     * @param parts      the blocks, left to right
+     */
+    record Plan(String captionKey, List<PlanPart> parts) implements GuideBlock {
+
+        public Plan {
+            Objects.requireNonNull(captionKey, "captionKey");
+            parts = List.copyOf(parts);
+        }
+    }
+
+    /**
+     * One block of a plan.
+     *
+     * @param item     the block's item, or empty for an optional place drawn only as its outline
+     * @param labelKey what it is called under it
+     * @param optional whether it may be left out, drawn in dots
+     */
+    record PlanPart(String item, String labelKey, boolean optional) {
+
+        public PlanPart {
+            item = item == null ? "" : item;
+            Objects.requireNonNull(labelKey, "labelKey");
         }
     }
 

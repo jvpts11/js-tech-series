@@ -23,11 +23,12 @@ import java.util.Objects;
  * @param partNumber  the part number printed on the cover, data rather than words, or empty
  * @param style       the style it is drawn in, {@code namespace:path}
  * @param chapters    the namespaces of the chapters it holds, in the order the chapters say; {@code *} holds every one
- * @param aboutKeys   the paragraphs of its "About this manual" page
+ * @param aboutKeys   the paragraphs of its "About this manual" page, or the notes under a drawing list
  * @param priority    which manual the manual key opens when several hold an item's entry: the highest
+ * @param icon        the mark printed on its cover, a texture {@code namespace:path} of 32 by 32 pixels, or empty
  */
 public record GuideManual(String id, String titleKey, List<String> coverKeys, String edition, String partNumber,
-                          String style, List<String> chapters, List<String> aboutKeys, int priority) {
+                          String style, List<String> chapters, List<String> aboutKeys, int priority, String icon) {
 
     /** The chapter list that holds every chapter there is. */
     public static final String EVERY_CHAPTER = "*";
@@ -41,6 +42,7 @@ public record GuideManual(String id, String titleKey, List<String> coverKeys, St
         partNumber = partNumber == null ? "" : partNumber;
         chapters = List.copyOf(chapters);
         aboutKeys = List.copyOf(aboutKeys);
+        icon = icon == null ? "" : icon;
     }
 
     /** Whether the manual holds the chapter of that namespace. */

@@ -1,0 +1,62 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.items_as_data.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.items_as_data.for"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.items_as_data.definition1",
+      "term": "jsc.guide.items_as_data.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.items_as_data.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.items_as_data.use1",
+        "jsc.guide.items_as_data.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.items_as_data.fix1",
+          "problem": "jsc.guide.items_as_data.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:disk_vaultis_trench_20m",
+  "id": "jsc:items_as_data",
+  "order": 28,
+  "section": "jsc:storage",
+  "title": "jsc.guide.items_as_data.title"
+}

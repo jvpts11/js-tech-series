@@ -16,6 +16,7 @@ import dev.jstech.computers.audio.MusicImports;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.audio.catalog.SoundfoundryCatalog;
 import dev.jstech.computers.config.ComputersServerConfig;
+import dev.jstech.computers.guide.ComputersGuide;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.operation.ComputingOperations;
@@ -69,6 +70,8 @@ public class JsComputers {
             ComponentKinds.freeze();
         }));
 
+        // The mod's chapter of the manuals and its own Guide to Operations, with the manual's item.
+        ComputersGuide.declare();
         ComputingModule.register(modEventBus);
         // The buses mounted on cables, registered with the Core's parts.
         ComputingParts.register(modEventBus);

@@ -1,0 +1,6 @@
+{
+  "icon": "minecraft:redstone",
+  "id": "jscore:energy",
+  "order": 1,
+  "title": "jscore.guide.section.energy"
+}

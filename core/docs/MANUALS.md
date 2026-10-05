@@ -12,12 +12,26 @@ item. A mod writes what the pages say.
 - An **entry** is one thing a player can look up, and starts on a page of its own. It is made of **blocks**:
   paragraphs, headings, figures, tables, recipes, numbered steps, warnings, problems and their fixes, words explained,
   links to other entries, and special blocks a mod draws itself.
-- A **style** is only data: the colours, one page or two side by side, the size of a page, the fonts, the binder's
-  rings, how pages are numbered.
+- A **style** is only data: the colours, one page or two side by side, the size of a page and its columns, the
+  fonts, what decorates the pages (a binder's rings, a drawing's grid and frame), the cover, how pages are numbered.
 
 A mod's entries are written once and show in every manual that holds its chapter: its own manual, and the series'
 manual that holds every chapter. Everything is numbered as technical manuals are: chapter 3, section 3.2, entry 3.2.6,
-Figure 3-9, page 3-14.
+Figure 3-9, page 3-14. A set of drawings numbers its entries as drawings instead: JI-102 is the second drawing of the
+second section, on as many sheets as it takes.
+
+## The series' manuals
+
+*Added 2026-10-05.*
+
+| Manual | Item | What it holds | How it looks |
+| --- | --- | --- | --- |
+| Technical Reference | `jscore:technical_reference`, tab J's Core | Every chapter of every mod installed: the series, the Core, J's Computers, J's Industrial. | The navy binder, a tab for each chapter. Handed to each player once, the first time they join a world. |
+| Guide to Operations | `jsc:guide_to_operations`, tab J's Computers | J's Computers' chapter. | The beige binder of the early computer manuals, with a cyan band. |
+| Plant Drawings | `jsindustrial:plant_drawings`, tab J's Industrial | J's Industrial's chapter. | A slate folder of blueprints: a drawing list, then each machine drawn from three sides on its sheets. |
+
+A chapter opens on two facing pages: its number, its title and what it is about on the left, its sections and the
+pages they start on on the right. So it always opens on a left page, a page is left blank before it when it would not.
 
 ## Writing a chapter
 
@@ -29,7 +43,8 @@ public final class MyGuide {
     private static final ModGuide GUIDE = MyContent.CONTENT.guide();
 
     static {
-        GUIDE.chapter().titled("My Mod").order(10).tab("mymod:guide/tab").register();
+        GUIDE.chapter().titled("My Mod").order(40).tab("mymod:guide/tab")
+                .about("Kilns and ovens that fire clay with energy.").register();
     }
 
     public static final ModGuide.SectionRef MACHINES = GUIDE.section("machines").titled("Machines")
@@ -66,6 +81,10 @@ Call `MyGuide.declare()` from your mod's constructor, before your content regist
 writes the files a manual is read from, under `assets/mymod/guide/`, and every sentence to your English language
 file, under keys made from the entry and the part (`mymod.guide.kiln.what`). Translate those keys like any other.
 
+A chapter's `about` is the paragraph on its opening page. The series' chapters stand in this order: the series 0,
+the Core 10, J's Computers 20, J's Industrial 30; an addon picks an order after them. Sections and entries share one
+set of ids, so a section and an entry cannot both be `mymod:kilns`: the declaration stops and says so.
+
 ### The five parts
 
 Every entry of the series follows the same five parts, in this order, each with its own method that puts the part's
@@ -92,9 +111,24 @@ makes the index the manual's glossary.
 | `steps(english...)` | Numbered steps of the entry's own. |
 | `warning(english)` | A warning in a box. |
 | `seeAlso(entries...)` | "See 3.2.2 and 3.4.3", each number a link. |
+| `note(english)` | A line set apart in the style's accent: what to read next, a hint. |
+| `views(block)`, then `callout(number, view, u, v, english)` | The block from above, the front and the side, with the width of one block under the front. Each callout is a numbered balloon pointing at a place of one face (`u`, `v` in the face's sixteen pixels), and a line of the legend under the views. |
+| `plan(caption)`, then `planPart(block, english)`, `planOptional(english)` | Blocks seen from above side by side as they are to be placed, each named under it; an optional place is outlined in dots. |
+| `nextColumn()`, `nextPage()` | On a page of two columns, what follows starts in the next column, or on the next page (the next sheet of a drawing). A page of one column runs straight on. |
 | `custom(kind, height, json)` | A special block your mod draws (below). |
 
 `covers(item)` says which items this entry is the page of: holding the manual key over one of them opens here.
+`coversAll(family)` does the same for a whole family, read when the files are written, so a part added to the family
+later is the page of the entry with nothing more to write:
+
+```java
+.coversAll(() -> MyContent.CONTENT.declaredItems().stream().map(DeferredItem::get)
+        .filter(item -> item instanceof KilnPartItem).map(ItemLike.class::cast).toList())
+```
+
+A block is drawn in its views and plans from the faces of its model: the top, the side facing north, and the side
+facing east. A style that traces blocks draws those faces as line work, an outline and every edge where one shade
+meets another; any other draws them as they look.
 
 ## Writing a manual
 
@@ -108,12 +142,20 @@ GUIDE.manual("handbook").titled("My Mod Handbook")
         .style(CoreGuide.BINDER)
         .chapters("mymod")                      // or "*" for every chapter of every mod
         .about("This handbook holds everything My Mod adds.")
+        .icon("mymod:gui/guide/cover_mark")      // a 32 by 32 texture printed on the cover
         .priority(5)
         .register();
 ```
 
+The cover prints the first of its `cover` lines bold and the others small, the title large, and the edition under
+it; an edition may hold `%s`, which is the number of sheets the manual has ("Set A - Sheets 1 to %s"). The part
+number stands at the foot of a binder's cover as "Part No. MM-0001". The Technical Reference, which holds every
+chapter, has priority 100; the series' own manuals 50.
+
 Give the player an item that opens it: a `ManualItem`, declared like any item,
-`CONTENT.item("handbook", props -> new ManualItem(props, "mymod:handbook"))`.
+`CONTENT.item("handbook", props -> new ManualItem(props, "mymod:handbook"))`. To hand it to each player once, the
+first time they join a world, call `GuideGifts.giveOnFirstJoin("mymod:handbook", MyContent.HANDBOOK)` while the game
+loads: it goes into the first free place above the hotbar, and the world keeps who was given it.
 
 When several manuals hold an item's entry, the manual key opens the one with the highest `priority`.
 
@@ -123,26 +165,43 @@ When several manuals hold an item's entry, the manual key opens the one with the
 
 The Core brings one style, `jscore:binder`: two cream pages side by side in navy vinyl covers with three rings
 through them, the chapter tabs at the right edge, tables in the terminal font, pages numbered by chapter. A style is a
-file, `assets/<namespace>/guide/styles/<path>.json`, so a resource pack can replace it and a mod can bring its own:
+file, `assets/<namespace>/guide/styles/<path>.json`, so a resource pack can replace it and a mod can bring its own.
+Two helpers make the usual ones in code:
+
+- `CoreGuide.binder(palette, band)`: a binder in your palette. With `band`, its words stand on the cover itself and a
+  stripe of the band's colour crosses its foot (J's Computers' beige Guide to Operations); without, they stand on a
+  pasted label (the navy Technical Reference).
+- `CoreGuide.drawings(palette, prefix)`: a folder of drawings. One wide sheet at a time in two columns, the grid, the
+  frame with its zones numbered along the top and lettered down the side, the title block in the corner (the set, the
+  drawing's title, its number, which sheet of how many, its revision), headings in capitals, notes lettered small,
+  blocks traced as line work, and each entry a drawing numbered after `prefix` (J's Industrial's Plant Drawings).
 
 ```json
 {
-  "palette": "jscore:guide/binder",
-  "colours": { "paper": "#FFFAF6EA" },
-  "spread": true,
-  "page_width": 166,
-  "page_height": 201,
-  "margin": 10,
-  "rings": true,
+  "palette": "jsindustrial:guide/drawings",
+  "pages": { "spread": false, "width": 340, "height": 201, "margin": 15, "columns": 2 },
+  "decor": { "grid": true, "frame": true, "title_block": true, "upper_headings": true, "traced": true,
+             "plain_numbers": true, "small_text": true },
+  "cover": { "kind": "folder", "label": true, "band": true },
   "table_font": "jscore:fixed_6x10",
-  "folios": "chapter_page"
+  "folios": "drawing",
+  "drawing_prefix": "JI"
 }
 ```
 
-- `palette` names a declared palette ([Text and colour](TEXT_AND_COLOUR.md)) whose roles colour the book: `cover`,
-  `coverEdge`, `paper`, `gutter`, `ink`, `faint`, `heading`, `link`, `rule`, `shade`, `highlight`, `ring`, `label`,
-  `labelInk`, `tab`, `tabInk`, `warning`. `colours` sets any of them outright, so a style needs no code at all.
-- `spread` is two pages at a time, or one; `folios` is `chapter_page` (3-14) or `sequential` (1, 2, 3).
+- `palette` names a declared palette ([Text and colour](TEXT_AND_COLOUR.md)) of the `GuidePalettes.Binder` kind,
+  whose roles colour the book: `cover`, `coverEdge`, `paper`, `gutter`, `ink`, `faint`, `heading`, `link`, `rule`,
+  `shade`, `highlight`, `ring`, `label`, `labelInk`, `tab`, `tabInk`, `warning`, `accent` (notes, what can go wrong,
+  a link pointed at on a drawing), `number` (the numbers of steps and balloons), `band`, `grid`, `spine` and
+  `coverLine` (the cover's first line). `colours` sets any of them outright, so a style needs no code at all.
+- `pages`: two at a time or one, their size, the margin, and how many columns the text runs in.
+- `decor`: a binder's `rings`; a drawing's `grid`, `frame` and `title_block`; `upper_headings`; `traced` blocks;
+  `plain_numbers` for steps without a full stop; `small_text` for notes lettered small.
+- `cover`: a `binder` with its spine, rivets and tabs, or a `folder` with the edges of its sheets showing; on a
+  `label` or not; with a `band` or not.
+- `folios` is `chapter_page` (3-14), `sequential` (1, 2, 3) or `drawing` (JI-102, with `drawing_prefix`). A set of
+  drawings opens with its drawing list in place of contents, the manual's `about` lines as the notes under it, and
+  has no index pages: its search still finds every entry by name.
 - A chapter's tab takes its colour from the chapter's `tab`: a palette's id whose role `tab` it is, or a colour
   written `#AARRGGBB`.
 
@@ -185,3 +244,7 @@ the manual still opens.
 - **An entry is missing from a manual.** Its section is missing, or the manual does not hold its chapter.
 - **A "See" link shows a path instead of a number.** The entry it names is in no chapter of this manual.
 - **The manual key does nothing over an item.** No entry `covers` it, or the key is bound to something else.
+- **A drawing runs on to a sheet with a line or two.** Its text is longer than its column: shorten it, or move a
+  `nextColumn` or `nextPage` so each sheet holds what it was written for. A translation that runs longer simply goes
+  on to the next sheet.
+- **The declaration stops on an id named twice.** A section and an entry share an id; rename one.

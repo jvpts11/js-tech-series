@@ -1,0 +1,19 @@
+{
+  "about": [
+    "jsc.guide.manual.guide_to_operations.about1",
+    "jsc.guide.manual.guide_to_operations.about2",
+    "jsc.guide.manual.guide_to_operations.about3"
+  ],
+  "chapters": [
+    "jsc"
+  ],
+  "cover": [
+    "jsc.guide.manual.guide_to_operations.cover1"
+  ],
+  "edition": "jsc.guide.manual.guide_to_operations.edition",
+  "icon": "jsc:gui/guide/cover_mark",
+  "id": "jsc:guide_to_operations",
+  "priority": 50,
+  "style": "jsc:operations",
+  "title": "jsc.guide.manual.guide_to_operations.title"
+}

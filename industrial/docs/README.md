@@ -8,6 +8,11 @@ and the chains that turn ore into parts.
 | [The machines](MACHINES.md) | players | Every block and item the mod adds, how to use each, its numbers and what can go wrong. |
 | [For mod and pack authors](FOR_MOD_AUTHORS.md) | mod and pack authors | Its recipes and their format, its tags, and what its machines offer to other mods. |
 
+In the game, the mod's own manual is the **Plant Drawings**, a folder of blueprints in the J's Industrial tab: each
+machine drawn from three sides, set up in a plan seen from above, with its steps and what can go wrong. The same
+entries are the J's Industrial chapter of the series' **Technical Reference**. Hold the manual key (**M**) over a
+machine to open its drawing.
+
 The machines are built on the processing machines of J's Core; the Core's own pages explain how
 ([Machines](../../core/docs/MACHINES.md)).
 

@@ -1,0 +1,67 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.this_manual.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.this_manual.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.this_manual.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jscore.guide.this_manual.use1",
+        "jscore.guide.this_manual.use2",
+        "jscore.guide.this_manual.use3",
+        "jscore.guide.this_manual.use4",
+        "jscore.guide.this_manual.use5"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jscore.guide.this_manual.fix1",
+          "problem": "jscore.guide.this_manual.problem1"
+        },
+        {
+          "fix": "jscore.guide.this_manual.fix2",
+          "problem": "jscore.guide.this_manual.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jscore:technical_reference",
+  "id": "jscore:this_manual",
+  "items": [
+    "jscore:technical_reference"
+  ],
+  "order": 3,
+  "section": "jscore:manuals",
+  "title": "jscore.guide.this_manual.title"
+}

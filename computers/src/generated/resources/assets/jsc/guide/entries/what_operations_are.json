@@ -1,0 +1,115 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_operations_are.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_operations_are.for"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.what_operations_are.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.what_operations_are.table1_1",
+          "value": {
+            "words": "jsc.guide.what_operations_are.value1_1"
+          }
+        },
+        {
+          "label": "jsc.guide.what_operations_are.table1_2",
+          "value": {
+            "words": "jsc.guide.what_operations_are.value1_2"
+          }
+        },
+        {
+          "label": "jsc.guide.what_operations_are.table1_3",
+          "value": {
+            "words": "jsc.guide.what_operations_are.value1_3"
+          }
+        },
+        {
+          "label": "jsc.guide.what_operations_are.table1_4",
+          "value": {
+            "words": "jsc.guide.what_operations_are.value1_4"
+          }
+        },
+        {
+          "label": "jsc.guide.what_operations_are.table1_5",
+          "value": {
+            "words": "jsc.guide.what_operations_are.value1_5"
+          }
+        },
+        {
+          "label": "jsc.guide.what_operations_are.table1_6",
+          "value": {
+            "words": "jsc.guide.what_operations_are.value1_6"
+          }
+        },
+        {
+          "label": "jsc.guide.what_operations_are.table1_7",
+          "value": {
+            "words": "jsc.guide.what_operations_are.value1_7"
+          }
+        },
+        {
+          "label": "jsc.guide.what_operations_are.table1_8",
+          "value": {
+            "words": "jsc.guide.what_operations_are.value1_8"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_operations_are.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.what_operations_are.use1",
+        "jsc.guide.what_operations_are.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.what_operations_are.fix1",
+          "problem": "jsc.guide.what_operations_are.problem1"
+        },
+        {
+          "fix": "jsc.guide.what_operations_are.fix2",
+          "problem": "jsc.guide.what_operations_are.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:what_operations_are",
+  "order": 26,
+  "section": "jsc:operations",
+  "title": "jsc.guide.what_operations_are.title"
+}

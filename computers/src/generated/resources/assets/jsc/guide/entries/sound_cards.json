@@ -1,0 +1,64 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_cards.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sound_cards.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.sound_cards.use1",
+        "jsc.guide.sound_cards.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sound_cards.fix1",
+          "problem": "jsc.guide.sound_cards.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:sound_card_tone_blaster",
+  "id": "jsc:sound_cards",
+  "items": [
+    "jsc:sound_card_tone_blaster",
+    "jsc:sound_card_tone_blaster_128",
+    "jsc:sound_card_tone_blaster_live",
+    "jsc:sound_card_tone_blaster_audigy",
+    "jsc:sound_card_tone_blaster_hi_fi"
+  ],
+  "order": 14,
+  "section": "jsc:hardware",
+  "title": "jsc.guide.sound_cards.title"
+}

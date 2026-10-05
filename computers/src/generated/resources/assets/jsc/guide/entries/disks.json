@@ -1,0 +1,109 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.disks.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.disks.for"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.disks.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.disks.table1_1",
+          "value": {
+            "words": "jsc.guide.disks.value1_1"
+          }
+        },
+        {
+          "label": "jsc.guide.disks.table1_2",
+          "value": {
+            "words": "jsc.guide.disks.value1_2"
+          }
+        },
+        {
+          "label": "jsc.guide.disks.table1_3",
+          "value": {
+            "words": "jsc.guide.disks.value1_3"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.disks.use1",
+        "jsc.guide.disks.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.disks.fix1",
+          "problem": "jsc.guide.disks.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:disk_vaultis_trench_20m",
+  "id": "jsc:disks",
+  "items": [
+    "jsc:disk_hdd_500g",
+    "jsc:disk_hdd_1t",
+    "jsc:disk_hdd_2t",
+    "jsc:disk_hdd_4t",
+    "jsc:disk_hdd_8t",
+    "jsc:disk_hdd_12t",
+    "jsc:disk_hdd_16t",
+    "jsc:disk_hdd_20t",
+    "jsc:disk_hdd_24t",
+    "jsc:disk_ssd_500g",
+    "jsc:disk_ssd_1t",
+    "jsc:disk_ssd_2t",
+    "jsc:disk_ssd_4t",
+    "jsc:disk_ssd_8t",
+    "jsc:disk_nvme_500g",
+    "jsc:disk_nvme_1t",
+    "jsc:disk_nvme_2t",
+    "jsc:disk_nvme_4t",
+    "jsc:disk_nvme_8t",
+    "jsc:disk_vaultis_trench_20m",
+    "jsc:disk_vaultis_trench_100m",
+    "jsc:disk_vaultis_trench_200m",
+    "jsc:disk_vaultis_link_ide_4g",
+    "jsc:disk_vaultis_link_ide_20g",
+    "jsc:disk_vaultis_link_ide_40g",
+    "jsc:disk_vaultis_link_sata_ssd_64g"
+  ],
+  "order": 13,
+  "section": "jsc:hardware",
+  "title": "jsc.guide.disks.title"
+}

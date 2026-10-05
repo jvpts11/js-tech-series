@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -103,7 +102,7 @@ public final class ModContent {
     private final List<ProcessingKind> declaredProcessing = new ArrayList<>();
     private @Nullable DeferredRegister<EntityType<?>> entityTypes;
     private final List<EntityEntry<?>> declaredEntities = new ArrayList<>();
-    private @Nullable ModGuide guide;
+    private final Map<String, ModGuide> guides = new LinkedHashMap<>();
 
     /* Every mod's content, by mod id, in the order the mods made theirs. */
     private static final Map<String, ModContent> BY_MOD = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -149,15 +148,20 @@ public final class ModContent {
      * which the data generation writes out with the rest of its content.
      */
     public ModGuide guide() {
-        if (this.guide == null) {
-            this.guide = new ModGuide(this.modid);
-        }
-        return this.guide;
+        return this.guide(this.modid);
     }
 
-    /** What this mod declared for the manuals, when it declared anything. */
-    public Optional<ModGuide> declaredGuide() {
-        return this.guide == null || this.guide.isEmpty() ? Optional.empty() : Optional.of(this.guide);
+    /**
+     * A chapter this mod writes under another namespace than its own, as the Core writes the series' chapter under
+     * {@code jstech}: its files and its sentences ship with this mod.
+     */
+    public ModGuide guide(final String namespace) {
+        return this.guides.computeIfAbsent(namespace, ModGuide::new);
+    }
+
+    /** Everything this mod declared for the manuals, under each namespace it wrote in. */
+    public List<ModGuide> declaredGuides() {
+        return this.guides.values().stream().filter(guide -> !guide.isEmpty()).toList();
     }
 
     /** Starts declaring a block made from its properties. */

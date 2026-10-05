@@ -1,0 +1,61 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.hbw_interface.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.hbw_interface.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.hbw_interface.use1",
+        "jsc.guide.hbw_interface.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.hbw_interface.fix1",
+          "problem": "jsc.guide.hbw_interface.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:hbw_interface",
+  "id": "jsc:hbw_interface",
+  "items": [
+    "jsc:hbw_interface",
+    "jsc:advanced_hbw_interface"
+  ],
+  "order": 23,
+  "section": "jsc:network",
+  "title": "jsc.guide.hbw_interface.title"
+}

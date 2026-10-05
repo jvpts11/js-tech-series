@@ -1,0 +1,26 @@
+{
+  "cover": {
+    "band": true,
+    "kind": "folder"
+  },
+  "decor": {
+    "frame": true,
+    "grid": true,
+    "plain_numbers": true,
+    "small_text": true,
+    "title_block": true,
+    "traced": true,
+    "upper_headings": true
+  },
+  "drawing_prefix": "JI",
+  "folios": "drawing",
+  "pages": {
+    "columns": 2,
+    "height": 201,
+    "margin": 15,
+    "spread": false,
+    "width": 340
+  },
+  "palette": "jsindustrial:guide/drawings",
+  "table_font": "jscore:fixed_6x10"
+}

@@ -1,0 +1,62 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.phi_coprocessors.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.phi_coprocessors.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_standard_tab"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.phi_coprocessors.use1"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.phi_coprocessors.fix1",
+          "problem": "jsc.guide.phi_coprocessors.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:phi_5100",
+  "id": "jsc:phi_coprocessors",
+  "items": [
+    "jsc:phi_5100",
+    "jsc:phi_7120",
+    "jsc:phi_7290",
+    "jsc:phi_9000"
+  ],
+  "order": 18,
+  "section": "jsc:hardware",
+  "title": "jsc.guide.phi_coprocessors.title"
+}

@@ -19,10 +19,14 @@ import org.junit.jupiter.api.Test;
 
 class GuideLayoutTest {
 
-    private static final GuideStyle STYLE = new GuideStyle("", Map.of(), true, 166, 201, 10, true, "", "",
-            GuideStyle.Folios.CHAPTER_PAGE);
+    private static final GuideStyle STYLE = new GuideStyle("", Map.of(), new GuideStyle.Pages(true, 166, 201, 10, 1),
+            GuideStyle.Decor.binder(true), "", "", GuideStyle.Folios.CHAPTER_PAGE, "",
+            new GuideStyle.Cover(GuideStyle.CoverKind.BINDER, true, false));
+    private static final GuideStyle DRAWINGS = new GuideStyle("", Map.of(),
+            new GuideStyle.Pages(false, 340, 201, 15, 2), GuideStyle.Decor.drawing(), "", "",
+            GuideStyle.Folios.DRAWING, "JI", new GuideStyle.Cover(GuideStyle.CoverKind.FOLDER, true, true));
     private static final GuideManual MANUAL = new GuideManual("test:manual", "manual.title", List.of(), "", "",
-            "test:style", List.of(GuideManual.EVERY_CHAPTER), List.of("about.one"), 0);
+            "test:style", List.of(GuideManual.EVERY_CHAPTER), List.of("about.one"), 0, "");
 
     @Test
     void lay_numbersChaptersSectionsAndEntries() {
@@ -147,6 +151,98 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_opensEveryChapterOnALeftPageLeavingAPageBlankBeforeIt() {
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:one",
+                new GuideBlock.Paragraph("one.text"))), chapter("beta", entry("beta:two",
+                new GuideBlock.Paragraph("two.text"))))));
+
+        final int alpha = book.pageOf("alpha").orElseThrow();
+        final int beta = book.pageOf("beta").orElseThrow();
+        assertEquals(0, alpha % 2, "the first chapter opens on a left page");
+        assertEquals(0, beta % 2, "the second chapter opens on a left page");
+        assertTrue(book.pages().get(beta - 1).pieces().stream().anyMatch(piece -> piece instanceof GuidePiece.Text
+                text && text.text().equals(GuideTexts.BLANK.key())), "the page before it says it is left blank");
+    }
+
+    @Test
+    void lay_listsAChaptersSectionsAndTheirPagesOnItsOpeningSpread() {
+        final GuideBook book = lay(contents());
+
+        final GuideBook.Page facing = book.pages().get(book.pageOf("alpha").orElseThrow() + 1);
+        final GuideBook.Page first = book.pages().get(book.pageOf("alpha:first").orElseThrow());
+        assertEquals(GuideTexts.IN_THIS_CHAPTER.key(), facing.header());
+        assertTrue(facing.pieces().stream().anyMatch(piece -> piece instanceof GuidePiece.Leader leader
+                && leader.lead().equals("1.1") && leader.link().equals("alpha:parts")
+                && leader.right().equals(first.folio())), () -> "" + facing.pieces());
+    }
+
+    @Test
+    void lay_numbersDrawingsBySectionInHundreds() {
+        final GuideBook book = drawings();
+
+        assertEquals("JI-001", book.numbers().get("alpha:intro"));
+        assertEquals("JI-101", book.numbers().get("alpha:press"));
+        assertEquals("JI-102", book.numbers().get("alpha:mill"));
+        assertEquals("JI-101", book.pages().get(book.pageOf("alpha:press").orElseThrow()).folio());
+    }
+
+    @Test
+    void lay_opensASetOfDrawingsWithItsDrawingListAndNoIndex() {
+        final GuideBook book = drawings();
+
+        final GuideBook.Page list = book.pages().getFirst();
+        assertEquals("JI-000", list.folio());
+        assertEquals(GuideTexts.DRAWING_LIST.key(), list.title());
+        for (final String target : List.of("alpha:intro", "alpha:press", "alpha:mill")) {
+            assertTrue(list.pieces().stream().anyMatch(piece -> piece instanceof GuidePiece.Text text
+                    && text.link().equals(target)), () -> "the list leads to " + target);
+        }
+        assertEquals(book.pages().size(), book.indexAt(), "a set of drawings has no index pages");
+        assertFalse(book.index().isEmpty(), "but the search still has its index");
+    }
+
+    @Test
+    void lay_countsTheSheetsOfEachDrawing() {
+        final GuideBook book = drawings();
+
+        final int press = book.pageOf("alpha:press").orElseThrow();
+        assertEquals(1, book.pages().get(press).sheet());
+        assertEquals(2, book.pages().get(press).sheets());
+        assertEquals(2, book.pages().get(press + 1).sheet());
+        assertEquals("JI-101", book.pages().get(press + 1).folio());
+        assertEquals(1, book.pages().get(book.pageOf("alpha:mill").orElseThrow()).sheets());
+    }
+
+    @Test
+    void lay_runsTextOnInTheSecondColumnAndKeepsItAboveTheTitleBlock() {
+        final String words = "word ".repeat(300);
+        final GuideBook book = GuideLayout.lay(MANUAL, DRAWINGS, new GuideContents(List.of(chapter("alpha",
+                entry("alpha:long", new GuideBlock.Paragraph(words))))), new FixedText(Map.of()));
+
+        final GuideBook.Page sheet = book.pages().get(book.pageOf("alpha:long").orElseThrow());
+        final int second = GuideLayout.columnX(DRAWINGS, 1);
+        assertTrue(sheet.pieces().stream().anyMatch(piece -> piece.x() == second), "the text runs on in column 2");
+        for (final GuidePiece piece : sheet.pieces()) {
+            final int bottom = GuideLayout.bottom(DRAWINGS, piece.x() >= second ? 1 : 0);
+            assertTrue(piece.y() <= bottom, () -> piece + " stands below " + bottom);
+        }
+        assertTrue(GuideLayout.bottom(DRAWINGS, 1) < GuideLayout.bottom(DRAWINGS, 0),
+                "the column over the title block ends above it");
+    }
+
+    @Test
+    void lay_writesADrawingsHeadingsInCapitalsAndItsStepsWithPlainNumbers() {
+        final GuideBook book = GuideLayout.lay(MANUAL, DRAWINGS, new GuideContents(List.of(chapter("alpha",
+                entry("alpha:one", new GuideBlock.Heading("what"), new GuideBlock.Steps(List.of("a", "b")))))),
+                new FixedText(Map.of()));
+
+        final List<String> words = book.pages().get(book.pageOf("alpha:one").orElseThrow()).pieces().stream()
+                .filter(piece -> piece instanceof GuidePiece.Text).map(piece -> ((GuidePiece.Text) piece).text())
+                .toList();
+        assertEquals(List.of("WHAT", "1", "a", "2", "b"), words);
+    }
+
+    @Test
     void roman_writesSmallRomanNumerals() {
         assertEquals("i", GuideLayout.roman(1));
         assertEquals("iv", GuideLayout.roman(4));
@@ -178,16 +274,33 @@ class GuideLayoutTest {
                 List.of(), List.of(new GuideBlock.Figure("minecraft:sand", "only.figure"),
                 new GuideBlock.SeeAlso(List.of("alpha:second"))));
         return new GuideContents(List.of(
-                new GuideContents.Chapter(new GuideChapter("alpha", 0, "alpha.title", ""), List.of(
+                new GuideContents.Chapter(new GuideChapter("alpha", 0, "alpha.title", "", "alpha.about"), List.of(
                         new GuideContents.Section(new GuideSection("alpha:parts", 0, "parts.title", ""),
                                 List.of(first, second)))),
-                new GuideContents.Chapter(new GuideChapter("beta", 1, "beta.title", ""), List.of(
+                new GuideContents.Chapter(new GuideChapter("beta", 1, "beta.title", "", ""), List.of(
                         new GuideContents.Section(new GuideSection("beta:things", 0, "things.title", ""),
                                 List.of(only))))));
     }
 
+    /** A set of drawings: a first section of one drawing, a second of two, the first of them two sheets long. */
+    private static GuideBook drawings() {
+        final GuideEntry intro = new GuideEntry("alpha:intro", "alpha:reading", 0, "intro.title", "", List.of(),
+                List.of(new GuideBlock.Paragraph("intro.text")));
+        final GuideEntry press = new GuideEntry("alpha:press", "alpha:machines", 0, "press.title", "", List.of(),
+                List.of(new GuideBlock.Paragraph("press.text"), new GuideBlock.Break(GuideBlock.BreakKind.PAGE),
+                        new GuideBlock.Paragraph("press.more")));
+        final GuideEntry mill = new GuideEntry("alpha:mill", "alpha:machines", 1, "mill.title", "", List.of(),
+                List.of(new GuideBlock.Paragraph("mill.text")));
+        return GuideLayout.lay(MANUAL, DRAWINGS, new GuideContents(List.of(new GuideContents.Chapter(
+                new GuideChapter("alpha", 0, "alpha.title", "", ""), List.of(
+                        new GuideContents.Section(new GuideSection("alpha:reading", 0, "reading.title", ""),
+                                List.of(intro)),
+                        new GuideContents.Section(new GuideSection("alpha:machines", 1, "machines.title", ""),
+                                List.of(press, mill)))))), new FixedText(Map.of()));
+    }
+
     private static GuideContents.Chapter chapter(final String namespace, final GuideEntry entry) {
-        return new GuideContents.Chapter(new GuideChapter(namespace, 0, namespace + ".title", ""), List.of(
+        return new GuideContents.Chapter(new GuideChapter(namespace, 0, namespace + ".title", "", ""), List.of(
                 new GuideContents.Section(new GuideSection(namespace + ":section", 0, "section.title", ""),
                         List.of(entry))));
     }

@@ -40,6 +40,10 @@ public final class ManualScreenLayout {
     public static final int SEARCH_HEIGHT = 14;
     /** Where the search field stands on the left page, under the page's head. */
     public static final int SEARCH_Y = 22;
+    /** The closed manual: as wide as one page and its covers, whatever its pages are. */
+    public static final int COVER_WIDTH = 180;
+    /** How far a closed binder's tabs stand out past its edge. */
+    public static final int COVER_TAB_OUT = 11;
 
     private ManualScreenLayout() {
     }
@@ -64,6 +68,18 @@ public final class ManualScreenLayout {
     /** A chapter's tab, counted from the top. */
     public static Rect tab(final Geometry geometry, final int index) {
         return new Rect(geometry.tabsX(), TAB_TOP + index * TAB_PITCH, TAB_WIDTH, TAB_HEIGHT);
+    }
+
+    /** The closed manual, in the middle of where the open one stands, its tabs beside it. */
+    public static Rect cover(final Geometry geometry) {
+        return new Rect((geometry.coverRight() - COVER_WIDTH - COVER_TAB_OUT) / 2, 0, COVER_WIDTH,
+                geometry.height());
+    }
+
+    /** A chapter's tab on the closed binder, standing out past its edge. */
+    public static Rect coverTab(final Geometry geometry, final int index) {
+        final Rect cover = cover(geometry);
+        return new Rect(cover.x() + cover.width(), TAB_TOP + index * TAB_PITCH, COVER_TAB_OUT, TAB_HEIGHT);
     }
 
     /** The search field on the left page, inside its margins. */

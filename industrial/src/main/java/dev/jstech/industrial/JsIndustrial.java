@@ -8,6 +8,7 @@
 package dev.jstech.industrial;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.industrial.guide.IndustrialGuide;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -27,6 +28,8 @@ public final class JsIndustrial {
 
     public JsIndustrial(final IEventBus modEventBus, final ModContainer modContainer) {
         LOGGER.info("J's Industrial {} loaded.", modContainer.getModInfo().getVersion());
+        // The mod's chapter of the manuals and its own Plant Drawings, with the folder's item.
+        IndustrialGuide.declare();
         IndustrialModule.register(modEventBus);
     }
 }

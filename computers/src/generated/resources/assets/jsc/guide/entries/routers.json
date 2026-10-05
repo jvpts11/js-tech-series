@@ -1,0 +1,66 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.routers.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.routers.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.routers.use1",
+        "jsc.guide.routers.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.routers.fix1",
+          "problem": "jsc.guide.routers.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:standard_router",
+  "id": "jsc:routers",
+  "items": [
+    "jsc:vintage_router",
+    "jsc:personal_router",
+    "jsc:transition_router",
+    "jsc:standard_router",
+    "jsc:advanced_router",
+    "jsc:optical_router",
+    "jsc:advanced_optical_router"
+  ],
+  "order": 21,
+  "section": "jsc:network",
+  "title": "jsc.guide.routers.title"
+}

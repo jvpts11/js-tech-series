@@ -28,8 +28,10 @@ public enum TextSize {
     SMALL_BOLD(8),
     /** The table font, which lines figures up. */
     TABLE(11),
-    /** A big letter heading a letter of the index, or a chapter's number. */
-    LETTER(20);
+    /** A big letter heading a letter of the index. */
+    LETTER(20),
+    /** A chapter's number on its opening page, four times the size of running text. */
+    CHAPTER(30);
 
     private final int lineHeight;
 

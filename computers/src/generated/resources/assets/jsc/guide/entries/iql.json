@@ -1,0 +1,58 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.iql.use1",
+        "jsc.guide.iql.use2",
+        "jsc.guide.iql.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.iql.fix1",
+          "problem": "jsc.guide.iql.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:iql",
+  "order": 27,
+  "section": "jsc:operations",
+  "title": "jsc.guide.iql.title"
+}

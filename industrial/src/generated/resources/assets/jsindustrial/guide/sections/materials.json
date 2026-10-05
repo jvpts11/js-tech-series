@@ -1,0 +1,6 @@
+{
+  "icon": "minecraft:iron_ingot",
+  "id": "jsindustrial:materials",
+  "order": 3,
+  "title": "jsindustrial.guide.section.materials"
+}

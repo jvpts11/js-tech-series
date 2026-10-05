@@ -1,0 +1,128 @@
+{
+  "blocks": [
+    {
+      "type": "views",
+      "callouts": [
+        {
+          "number": 1,
+          "text": "jsindustrial.guide.coal_generator.callout1",
+          "u": 8,
+          "v": 8,
+          "view": "front"
+        },
+        {
+          "number": 2,
+          "text": "jsindustrial.guide.coal_generator.callout2",
+          "u": 8,
+          "v": 8,
+          "view": "side"
+        }
+      ],
+      "item": "jsindustrial:coal_generator"
+    },
+    {
+      "type": "note",
+      "text": "jsindustrial.manual.set_up_next"
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.coal_generator.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.guide.coal_generator.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsindustrial.manual.from_the_tab"
+    },
+    {
+      "type": "warning",
+      "text": "jsindustrial.guide.coal_generator.warning1"
+    },
+    {
+      "type": "break",
+      "to": "page"
+    },
+    {
+      "type": "plan",
+      "caption": "jsindustrial.manual.set_up_plan",
+      "parts": [
+        {
+          "item": "jsindustrial:coal_generator",
+          "label": "jsindustrial.manual.generator"
+        },
+        {
+          "item": "jsindustrial:macerator",
+          "label": "jsindustrial.guide.coal_generator.plan1_2"
+        },
+        {
+          "label": "jsindustrial.guide.coal_generator.plan1_3",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsindustrial.guide.coal_generator.use1",
+        "jsindustrial.guide.coal_generator.use2",
+        "jsindustrial.guide.coal_generator.use3",
+        "jsindustrial.guide.coal_generator.use4"
+      ]
+    },
+    {
+      "type": "break",
+      "to": "column"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsindustrial.guide.coal_generator.fix1",
+          "problem": "jsindustrial.guide.coal_generator.problem1"
+        },
+        {
+          "fix": "jsindustrial.guide.coal_generator.fix2",
+          "problem": "jsindustrial.guide.coal_generator.problem2"
+        },
+        {
+          "fix": "jsindustrial.guide.coal_generator.fix3",
+          "problem": "jsindustrial.guide.coal_generator.problem3"
+        }
+      ]
+    }
+  ],
+  "icon": "jsindustrial:coal_generator",
+  "id": "jsindustrial:coal_generator",
+  "items": [
+    "jsindustrial:coal_generator"
+  ],
+  "order": 1,
+  "section": "jsindustrial:machines",
+  "title": "jsindustrial.guide.coal_generator.title"
+}

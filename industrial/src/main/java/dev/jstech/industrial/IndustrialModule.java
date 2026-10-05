@@ -65,6 +65,8 @@ public final class IndustrialModule {
         }
     });
     private static final ContentTab.Section CABLES = INDUSTRIAL_TAB.section();
+    /** The tab's last shelf: the mod's manual. */
+    public static final ContentTab.Section MANUALS = INDUSTRIAL_TAB.section();
 
     // Recipes: the kinds of the processing machines, each a recipe type of its own, read the Core's way.
 

@@ -1,0 +1,62 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_interface_cards.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_interface_cards.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.cluster_interface_cards.use1"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cluster_interface_cards.fix1",
+          "problem": "jsc.guide.cluster_interface_cards.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:serial_console_card",
+  "id": "jsc:cluster_interface_cards",
+  "items": [
+    "jsc:serial_console_card",
+    "jsc:management_nic",
+    "jsc:fabric_host_adapter",
+    "jsc:fabric_dpu"
+  ],
+  "order": 16,
+  "section": "jsc:hardware",
+  "title": "jsc.guide.cluster_interface_cards.title"
+}

@@ -1,0 +1,91 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.shared_materials.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.shared_materials.for"
+    },
+    {
+      "type": "figure",
+      "caption": "jscore.guide.shared_materials.figure1",
+      "item": "jscore:iron_plate"
+    },
+    {
+      "type": "table",
+      "caption": "jscore.guide.shared_materials.table1",
+      "rows": [
+        {
+          "label": "jscore.guide.shared_materials.table1_1",
+          "value": {
+            "words": "jscore.guide.shared_materials.value1_1"
+          }
+        },
+        {
+          "label": "jscore.guide.shared_materials.table1_2",
+          "value": {
+            "words": "jscore.guide.shared_materials.value1_2"
+          }
+        },
+        {
+          "label": "jscore.guide.shared_materials.table1_3",
+          "value": {
+            "words": "jscore.guide.shared_materials.value1_3"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.shared_materials.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jscore.guide.shared_materials.use1",
+        "jscore.guide.shared_materials.use2",
+        "jscore.guide.shared_materials.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jscore.guide.shared_materials.fix1",
+          "problem": "jscore.guide.shared_materials.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jscore:iron_plate",
+  "id": "jscore:shared_materials",
+  "items": [
+    "jscore:iron_dust",
+    "jscore:iron_plate",
+    "jscore:copper_plate"
+  ],
+  "section": "jscore:materials",
+  "title": "jscore.guide.shared_materials.title"
+}

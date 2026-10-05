@@ -1,0 +1,15 @@
+{
+  "cover": {
+    "band": true,
+    "label": false
+  },
+  "decor": {
+    "rings": true
+  },
+  "pages": {
+    "height": 201,
+    "width": 166
+  },
+  "palette": "jsc:guide/operations",
+  "table_font": "jscore:fixed_6x10"
+}

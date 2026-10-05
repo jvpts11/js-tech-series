@@ -1,8 +1,11 @@
 {
-  "margin": 10,
-  "page_height": 201,
-  "page_width": 166,
+  "decor": {
+    "rings": true
+  },
+  "pages": {
+    "height": 201,
+    "width": 166
+  },
   "palette": "jscore:guide/binder",
-  "rings": true,
   "table_font": "jscore:fixed_6x10"
 }

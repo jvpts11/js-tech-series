@@ -48,6 +48,29 @@ public final class GuideTexts {
     /** The search button at the top of the binder, for a reader who points at it. */
     public static final TextKey TO_SEARCH = TextKey.of("jscore.guide.to_search", "Search");
 
+    /** The part number at the foot of a binder's cover. */
+    public static final TextKey PART_NUMBER = TextKey.of("jscore.guide.part_number", "Part No. %s");
+
+    /** A chapter's opening pages, and the page left blank so a chapter opens on a left page. */
+    public static final TextKey CHAPTER = TextKey.of("jscore.guide.chapter_word", "Chapter");
+    public static final TextKey IN_THIS_CHAPTER = TextKey.of("jscore.guide.in_this_chapter", "In this chapter");
+    public static final TextKey BLANK = TextKey.of("jscore.guide.blank", "This page is intentionally left blank.");
+
+    /** A set of drawings: its list, and the title block in the corner of every sheet. */
+    public static final TextKey DRAWING_LIST = TextKey.of("jscore.guide.drawing_list", "Drawing list");
+    public static final TextKey DRAWING = TextKey.of("jscore.guide.drawing", "Dwg");
+    public static final TextKey TITLE = TextKey.of("jscore.guide.title", "Title");
+    public static final TextKey SHEETS = TextKey.of("jscore.guide.sheets", "Sheets");
+    public static final TextKey SHEET = TextKey.of("jscore.guide.sheet", "Sheet");
+    public static final TextKey SHEET_OF = TextKey.of("jscore.guide.sheet_of", "%s of %s");
+    public static final TextKey REVISION = TextKey.of("jscore.guide.revision", "Rev");
+
+    /** A block seen from three sides, and the size of one block drawn under it. */
+    public static final TextKey VIEW_TOP = TextKey.of("jscore.guide.view_top", "Top");
+    public static final TextKey VIEW_FRONT = TextKey.of("jscore.guide.view_front", "Front");
+    public static final TextKey VIEW_SIDE = TextKey.of("jscore.guide.view_side", "Side");
+    public static final TextKey ONE_BLOCK = TextKey.of("jscore.guide.one_block", "1 block");
+
     private GuideTexts() {
     }
 }

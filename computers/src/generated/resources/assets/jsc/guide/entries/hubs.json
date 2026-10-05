@@ -1,0 +1,63 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.hubs.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.hubs.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.hubs.use1"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.hubs.fix1",
+          "problem": "jsc.guide.hubs.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:standard_hub",
+  "id": "jsc:hubs",
+  "items": [
+    "jsc:vintage_hub",
+    "jsc:legacy_hub",
+    "jsc:transition_hub",
+    "jsc:standard_hub",
+    "jsc:advanced_hub"
+  ],
+  "order": 41,
+  "section": "jsc:peripherals",
+  "title": "jsc.guide.hubs.title"
+}

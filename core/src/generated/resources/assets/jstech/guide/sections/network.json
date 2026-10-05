@@ -1,0 +1,6 @@
+{
+  "icon": "minecraft:redstone",
+  "id": "jstech:network",
+  "order": 2,
+  "title": "jstech.guide.section.network"
+}

@@ -1,0 +1,67 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.first_computer.use1",
+        "jsc.guide.first_computer.use2",
+        "jsc.guide.first_computer.use3",
+        "jsc.guide.first_computer.use4",
+        "jsc.guide.first_computer.use5",
+        "jsc.guide.first_computer.use6"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.first_computer.fix1",
+          "problem": "jsc.guide.first_computer.problem1"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix2",
+          "problem": "jsc.guide.first_computer.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:personal_computer",
+  "id": "jsc:first_computer",
+  "items": [
+    "jsc:guide_to_operations"
+  ],
+  "section": "jsc:computers",
+  "title": "jsc.guide.first_computer.title"
+}

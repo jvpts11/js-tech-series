@@ -73,7 +73,7 @@ public final class ContentLanguageProvider extends LanguageProvider {
         // The names and tooltips NeoForge's settings screen shows for the mod's settings files.
         ConfigTexts.english(content.modid()).forEach(this::add);
         // Everything the mod writes in the manuals, under the keys its declarations made.
-        content.declaredGuide().ifPresent(guide -> guide.translations().forEach(this::add));
+        content.declaredGuides().forEach(guide -> guide.translations().forEach(this::add));
         more.forEach(names -> names.accept(this::add));
     }
 }

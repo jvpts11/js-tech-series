@@ -1,0 +1,93 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.the_systems.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.the_systems.for"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.the_systems.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.the_systems.table1_1",
+          "value": {
+            "words": "jsc.guide.the_systems.value1_1"
+          }
+        },
+        {
+          "label": "jsc.guide.the_systems.table1_2",
+          "value": {
+            "words": "jsc.guide.the_systems.value1_2"
+          }
+        },
+        {
+          "label": "jsc.guide.the_systems.table1_3",
+          "value": {
+            "words": "jsc.guide.the_systems.value1_3"
+          }
+        },
+        {
+          "label": "jsc.guide.the_systems.table1_4",
+          "value": {
+            "words": "jsc.guide.the_systems.value1_4"
+          }
+        },
+        {
+          "label": "jsc.guide.the_systems.table1_5",
+          "value": {
+            "words": "jsc.guide.the_systems.value1_5"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.the_systems.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.the_systems.use1",
+        "jsc.guide.the_systems.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.the_systems.fix1",
+          "problem": "jsc.guide.the_systems.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:floppy_disk",
+  "id": "jsc:the_systems",
+  "order": 36,
+  "section": "jsc:systems",
+  "title": "jsc.guide.the_systems.title"
+}

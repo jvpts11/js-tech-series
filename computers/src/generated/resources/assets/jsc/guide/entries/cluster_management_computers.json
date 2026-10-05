@@ -1,0 +1,75 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_management_computers.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_management_computers.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.cluster_management_computers.use1",
+        "jsc.guide.cluster_management_computers.use2",
+        "jsc.guide.cluster_management_computers.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cluster_management_computers.fix1",
+          "problem": "jsc.guide.cluster_management_computers.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:cluster_interface_cards"
+      ]
+    }
+  ],
+  "icon": "jsc:cluster_management_computer",
+  "id": "jsc:cluster_management_computers",
+  "items": [
+    "jsc:cluster_management_computer",
+    "jsc:high_performance_cluster_management_computer",
+    "jsc:aesthetic_cluster_management_computer",
+    "jsc:vintage_cluster_management_computer",
+    "jsc:legacy_cluster_management_computer",
+    "jsc:transition_cluster_management_computer",
+    "jsc:advanced_cluster_management_computer",
+    "jsc:advanced_high_performance_cluster_management_computer",
+    "jsc:advanced_aesthetic_cluster_management_computer"
+  ],
+  "order": 3,
+  "section": "jsc:computers",
+  "title": "jsc.guide.cluster_management_computers.title"
+}

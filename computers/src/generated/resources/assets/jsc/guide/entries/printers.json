@@ -1,0 +1,66 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.printers.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.printers.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.printers.use1",
+        "jsc.guide.printers.use2",
+        "jsc.guide.printers.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.printers.fix1",
+          "problem": "jsc.guide.printers.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:printer",
+  "id": "jsc:printers",
+  "items": [
+    "jsc:vintage_printer",
+    "jsc:legacy_printer",
+    "jsc:transition_printer",
+    "jsc:printer",
+    "jsc:advanced_printer",
+    "jsc:printed_paper"
+  ],
+  "order": 42,
+  "section": "jsc:peripherals",
+  "title": "jsc.guide.printers.title"
+}

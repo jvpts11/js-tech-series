@@ -1,0 +1,65 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_interfaces.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_interfaces.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.redstone_interfaces.use1",
+        "jsc.guide.redstone_interfaces.use2",
+        "jsc.guide.redstone_interfaces.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.redstone_interfaces.fix1",
+          "problem": "jsc.guide.redstone_interfaces.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:standard_redstone_interface",
+  "id": "jsc:redstone_interfaces",
+  "items": [
+    "jsc:vintage_redstone_interface",
+    "jsc:legacy_redstone_interface",
+    "jsc:transition_redstone_interface",
+    "jsc:standard_redstone_interface",
+    "jsc:advanced_redstone_interface"
+  ],
+  "order": 44,
+  "section": "jsc:peripherals",
+  "title": "jsc.guide.redstone_interfaces.title"
+}

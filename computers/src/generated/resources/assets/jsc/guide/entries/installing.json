@@ -1,0 +1,103 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing.for"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.installing.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.installing.table1_1",
+          "value": {
+            "words": "jsc.guide.installing.value1_1"
+          }
+        },
+        {
+          "label": "jsc.guide.installing.table1_2",
+          "value": {
+            "words": "jsc.guide.installing.value1_2"
+          }
+        },
+        {
+          "label": "jsc.guide.installing.table1_3",
+          "value": {
+            "words": "jsc.guide.installing.value1_3"
+          }
+        },
+        {
+          "label": "jsc.guide.installing.table1_4",
+          "value": {
+            "words": "jsc.guide.installing.value1_4"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.installing.use1",
+        "jsc.guide.installing.use2",
+        "jsc.guide.installing.use3",
+        "jsc.guide.installing.use4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.installing.fix1",
+          "problem": "jsc.guide.installing.problem1"
+        },
+        {
+          "fix": "jsc.guide.installing.fix2",
+          "problem": "jsc.guide.installing.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:usb_flash_drive",
+  "id": "jsc:installing",
+  "items": [
+    "jsc:floppy_disk",
+    "jsc:cd_rom",
+    "jsc:cd_rw",
+    "jsc:dvd_rom",
+    "jsc:dvd_rw",
+    "jsc:bd_rom",
+    "jsc:bd_re",
+    "jsc:usb_flash_drive"
+  ],
+  "order": 35,
+  "section": "jsc:systems",
+  "title": "jsc.guide.installing.title"
+}

@@ -1,0 +1,71 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.how_autocrafting_works.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.how_autocrafting_works.for"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.how_autocrafting_works.definition1",
+      "term": "jsc.guide.how_autocrafting_works.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.how_autocrafting_works.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.how_autocrafting_works.use1",
+        "jsc.guide.how_autocrafting_works.use2",
+        "jsc.guide.how_autocrafting_works.use3",
+        "jsc.guide.how_autocrafting_works.use4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.how_autocrafting_works.fix1",
+          "problem": "jsc.guide.how_autocrafting_works.problem1"
+        },
+        {
+          "fix": "jsc.guide.how_autocrafting_works.fix2",
+          "problem": "jsc.guide.how_autocrafting_works.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:crafting_cable",
+  "id": "jsc:how_autocrafting_works",
+  "items": [
+    "jsc:crafting_cable"
+  ],
+  "order": 31,
+  "section": "jsc:autocrafting",
+  "title": "jsc.guide.how_autocrafting_works.title"
+}

@@ -52,6 +52,7 @@ public final class ClientTestSuite {
             HudHologramClientTests.class,
             WorldStabilityClientTests.class,
             ManualClientTests.class,
+            SeriesManualsClientTests.class,
             FreeBsdClientTests.class,
             FullJourneyClientTests.class,
             GatewayManagerClientTests.class,

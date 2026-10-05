@@ -1,0 +1,102 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jstech.guide.hardware_eras.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jstech.guide.hardware_eras.for"
+    },
+    {
+      "type": "define",
+      "definition": "jstech.guide.hardware_eras.definition1",
+      "term": "jstech.guide.hardware_eras.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jstech.guide.hardware_eras.table1",
+      "rows": [
+        {
+          "label": "jstech.guide.hardware_eras.table1_1",
+          "value": {
+            "words": "jstech.guide.hardware_eras.value1_1"
+          }
+        },
+        {
+          "label": "jstech.guide.hardware_eras.table1_2",
+          "value": {
+            "words": "jstech.guide.hardware_eras.value1_2"
+          }
+        },
+        {
+          "label": "jstech.guide.hardware_eras.table1_3",
+          "value": {
+            "words": "jstech.guide.hardware_eras.value1_3"
+          }
+        },
+        {
+          "label": "jstech.guide.hardware_eras.table1_4",
+          "value": {
+            "words": "jstech.guide.hardware_eras.value1_4"
+          }
+        },
+        {
+          "label": "jstech.guide.hardware_eras.table1_5",
+          "value": {
+            "words": "jstech.guide.hardware_eras.value1_5"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jstech.guide.hardware_eras.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstech.guide.hardware_eras.use1",
+        "jstech.guide.hardware_eras.use2",
+        "jstech.guide.hardware_eras.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jstech.guide.hardware_eras.fix1",
+          "problem": "jstech.guide.hardware_eras.problem1"
+        },
+        {
+          "fix": "jstech.guide.hardware_eras.fix2",
+          "problem": "jstech.guide.hardware_eras.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:clock",
+  "id": "jstech:hardware_eras",
+  "section": "jstech:eras",
+  "title": "jstech.guide.hardware_eras.title"
+}

@@ -52,7 +52,7 @@ public final class JsTestsDataGenerators {
         generator.addProvider(event.includeClient(), new ContentCueProvider(output, TestSounds.CONTENT));
         generator.addProvider(event.includeClient(),
                 new ContentItemModelProvider(output, TestSounds.CONTENT, event.getExistingFileHelper()));
-        TestSounds.CONTENT.declaredGuide().ifPresent(guide -> generator.addProvider(event.includeClient(),
+        TestSounds.CONTENT.declaredGuides().forEach(guide -> generator.addProvider(event.includeClient(),
                 new GuideProvider(output, guide)));
     }
 }

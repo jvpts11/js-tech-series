@@ -1,0 +1,72 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.fe_energy.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.fe_energy.for"
+    },
+    {
+      "type": "define",
+      "definition": "jscore.guide.fe_energy.definition1",
+      "term": "jscore.guide.fe_energy.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jscore.guide.fe_energy.definition2",
+      "term": "jscore.guide.fe_energy.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jscore.guide.fe_energy.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jscore.guide.fe_energy.use1",
+        "jscore.guide.fe_energy.use2",
+        "jscore.guide.fe_energy.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jscore.guide.fe_energy.fix1",
+          "problem": "jscore.guide.fe_energy.problem1"
+        },
+        {
+          "fix": "jscore.guide.fe_energy.fix2",
+          "problem": "jscore.guide.fe_energy.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:redstone",
+  "id": "jscore:fe_energy",
+  "order": 1,
+  "section": "jscore:energy",
+  "title": "jscore.guide.fe_energy.title"
+}

@@ -1,0 +1,271 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.processors.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.processors.for"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.processors.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.processors.table1_1",
+          "value": {
+            "words": "jsc.guide.processors.value1_1"
+          }
+        },
+        {
+          "label": "jsc.guide.processors.table1_2",
+          "value": {
+            "words": "jsc.guide.processors.value1_2"
+          }
+        },
+        {
+          "label": "jsc.guide.processors.table1_3",
+          "value": {
+            "words": "jsc.guide.processors.value1_3"
+          }
+        },
+        {
+          "label": "jsc.guide.processors.table1_4",
+          "value": {
+            "words": "jsc.guide.processors.value1_4"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.processors.use1",
+        "jsc.guide.processors.use2"
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.processors.definition1",
+      "term": "jsc.guide.processors.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.processors.fix1",
+          "problem": "jsc.guide.processors.problem1"
+        },
+        {
+          "fix": "jsc.guide.processors.fix2",
+          "problem": "jsc.guide.processors.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:cpu_integra_pentix_133",
+  "id": "jsc:processors",
+  "items": [
+    "jsc:cpu_integra_servo_2620",
+    "jsc:cpu_integra_servo_2690",
+    "jsc:cpu_integra_servo_2697_v2",
+    "jsc:cpu_integra_486sx",
+    "jsc:cpu_integra_486dx2",
+    "jsc:cpu_integra_486dx4",
+    "jsc:cpu_velocion_5x86_133",
+    "jsc:cpu_integra_pentix_75",
+    "jsc:cpu_velocion_k5_pr133",
+    "jsc:cpu_integra_pentix_133",
+    "jsc:cpu_integra_pentix_mmx_233",
+    "jsc:cpu_velocion_k6_ii",
+    "jsc:cpu_velocion_k6_iii",
+    "jsc:cpu_velocion_k6_iii_plus",
+    "jsc:cpu_integra_pentix_pro_150",
+    "jsc:cpu_integra_pentix_pro_180",
+    "jsc:cpu_integra_pentix_pro_200",
+    "jsc:cpu_integra_celer_300a",
+    "jsc:cpu_integra_pentix_ii_300",
+    "jsc:cpu_integra_pentix_ii_450",
+    "jsc:cpu_integra_pentix_iii_600",
+    "jsc:cpu_integra_pentix_700",
+    "jsc:cpu_integra_pentix_iii_s_1000",
+    "jsc:cpu_integra_pentix_iii_s_1400",
+    "jsc:cpu_velocion_duro_1300",
+    "jsc:cpu_velocion_sprint_xp_2400",
+    "jsc:cpu_velocion_sprint_xp_2800",
+    "jsc:cpu_velocion_sprint_xp_3200",
+    "jsc:cpu_integra_celer_2_0",
+    "jsc:cpu_integra_pentix_4_2_4c",
+    "jsc:cpu_integra_pentix_4_3_2c",
+    "jsc:cpu_integra_pentix_4_ee_3_4",
+    "jsc:cpu_integra_celer_d_325j",
+    "jsc:cpu_integra_pentix_4_520",
+    "jsc:cpu_integra_pentix_4_540",
+    "jsc:cpu_integra_pentix_4_560",
+    "jsc:cpu_velocion_semper_3100",
+    "jsc:cpu_velocion_sprint_64_3200",
+    "jsc:cpu_velocion_sprint_64_3700",
+    "jsc:cpu_velocion_sprint_64_3500",
+    "jsc:cpu_velocion_sprint_64_4000",
+    "jsc:cpu_velocion_sprint_64_fx_55",
+    "jsc:cpu_integra_servo_2800",
+    "jsc:cpu_integra_servo_3060",
+    "jsc:cpu_integra_servo_3200",
+    "jsc:cpu_velocion_optera_244",
+    "jsc:cpu_velocion_optera_248",
+    "jsc:cpu_velocion_optera_250",
+    "jsc:cpu_integra_pentix_d_805",
+    "jsc:cpu_integra_celer_e1200",
+    "jsc:cpu_integra_centro_2_duo_e4300",
+    "jsc:cpu_integra_centro_2_duo_e6600",
+    "jsc:cpu_integra_centro_2_duo_e8500",
+    "jsc:cpu_integra_centro_2_quad_q6600",
+    "jsc:cpu_integra_centro_2_extreme_qx9650",
+    "jsc:cpu_velocion_sprint_64_x2_3800",
+    "jsc:cpu_velocion_sprint_64_x2_6000",
+    "jsc:cpu_velocion_ascent_x4_9850",
+    "jsc:cpu_velocion_sprint_ii_x2_250",
+    "jsc:cpu_velocion_sprint_ii_x4_630",
+    "jsc:cpu_velocion_ascent_x4_955",
+    "jsc:cpu_velocion_ascent_x4_965",
+    "jsc:cpu_velocion_ascent_x6_1090t",
+    "jsc:cpu_velocion_ascent_x6_1100t",
+    "jsc:cpu_integra_pentix_g6950",
+    "jsc:cpu_integra_centro_c3_530",
+    "jsc:cpu_integra_centro_c5_750",
+    "jsc:cpu_integra_centro_c7_860",
+    "jsc:cpu_integra_centro_c7_880",
+    "jsc:cpu_integra_centro_c7_920",
+    "jsc:cpu_integra_centro_c7_960",
+    "jsc:cpu_integra_centro_c7_980x",
+    "jsc:cpu_integra_servo_5520",
+    "jsc:cpu_integra_servo_5570",
+    "jsc:cpu_integra_servo_5680",
+    "jsc:cpu_integra_servo_5100",
+    "jsc:cpu_integra_servo_5160",
+    "jsc:cpu_integra_servo_5335",
+    "jsc:cpu_integra_servo_5450",
+    "jsc:cpu_velocion_optera_2218",
+    "jsc:cpu_velocion_optera_8356",
+    "jsc:cpu_velocion_optera_8384",
+    "jsc:cpu_velocion_optera_8435",
+    "jsc:cpu_integra_celer_g530",
+    "jsc:cpu_integra_centro_c3_2120",
+    "jsc:cpu_integra_centro_c5_2500k",
+    "jsc:cpu_integra_centro_c7_2600k",
+    "jsc:cpu_integra_centro_c7_3770k",
+    "jsc:cpu_integra_pentix_g3258",
+    "jsc:cpu_integra_centro_c3_4160",
+    "jsc:cpu_integra_centro_c5_4590",
+    "jsc:cpu_integra_centro_c5_4690k",
+    "jsc:cpu_integra_servo_1231_v3",
+    "jsc:cpu_integra_centro_c7_4790k",
+    "jsc:cpu_integra_centro_c7_3820",
+    "jsc:cpu_integra_centro_c7_3930k",
+    "jsc:cpu_integra_centro_c7_4930k",
+    "jsc:cpu_integra_centro_c7_4960x",
+    "jsc:cpu_integra_servo_2609",
+    "jsc:cpu_integra_servo_4650",
+    "jsc:cpu_integra_servo_4657l_v2",
+    "jsc:cpu_velocion_fx_4300",
+    "jsc:cpu_velocion_fx_6300",
+    "jsc:cpu_velocion_fx_8350",
+    "jsc:cpu_velocion_fx_9590",
+    "jsc:cpu_velocion_fuse_a4_6300",
+    "jsc:cpu_velocion_fuse_a8_6600k",
+    "jsc:cpu_velocion_fuse_a10_6800k",
+    "jsc:cpu_velocion_optera_6212",
+    "jsc:cpu_velocion_optera_6272",
+    "jsc:cpu_velocion_optera_6380",
+    "jsc:cpu_velocion_sprint_200ge",
+    "jsc:cpu_velocion_awayken_3_3200g",
+    "jsc:cpu_velocion_awayken_5_1600",
+    "jsc:cpu_velocion_awayken_5_3600",
+    "jsc:cpu_velocion_awayken_7_1800x",
+    "jsc:cpu_velocion_awayken_7_5800x3d",
+    "jsc:cpu_velocion_awayken_9_3900x",
+    "jsc:cpu_velocion_awayken_9_5900x",
+    "jsc:cpu_velocion_awayken_9_5950x",
+    "jsc:cpu_velocion_awayken_5_7600",
+    "jsc:cpu_velocion_awayken_7_7700x",
+    "jsc:cpu_velocion_awayken_7_9800x3d",
+    "jsc:cpu_velocion_awayken_9_7950x",
+    "jsc:cpu_velocion_awayken_9_9950x",
+    "jsc:cpu_integra_pentix_g4560",
+    "jsc:cpu_integra_centro_c3_8100",
+    "jsc:cpu_integra_centro_c5_8400",
+    "jsc:cpu_integra_centro_c7_8700k",
+    "jsc:cpu_integra_centro_c9_9900k",
+    "jsc:cpu_integra_centro_c3_10100",
+    "jsc:cpu_integra_centro_c5_10400",
+    "jsc:cpu_integra_centro_c9_10900k",
+    "jsc:cpu_integra_centro_c3_12100",
+    "jsc:cpu_integra_centro_c5_12400",
+    "jsc:cpu_integra_centro_c5_13600k",
+    "jsc:cpu_integra_centro_c9_12900k",
+    "jsc:cpu_integra_centro_c9_13900k",
+    "jsc:cpu_integra_centro_c9_13900ks",
+    "jsc:cpu_integra_centro_ultra_c5_225",
+    "jsc:cpu_integra_centro_ultra_c5_245k",
+    "jsc:cpu_integra_centro_ultra_c7_265k",
+    "jsc:cpu_integra_centro_ultra_c9_285k",
+    "jsc:cpu_integra_centro_c9_7900x",
+    "jsc:cpu_integra_centro_c9_7980xe",
+    "jsc:cpu_integra_centro_c9_10980xe",
+    "jsc:cpu_velocion_threadkiller_1920x",
+    "jsc:cpu_velocion_threadkiller_1950x",
+    "jsc:cpu_velocion_threadkiller_2990wx",
+    "jsc:cpu_velocion_threadkiller_7960x",
+    "jsc:cpu_velocion_threadkiller_7980x",
+    "jsc:cpu_velocion_threadkiller_7995wx",
+    "jsc:cpu_velocion_epic_7251",
+    "jsc:cpu_velocion_epic_7302",
+    "jsc:cpu_velocion_epic_7452",
+    "jsc:cpu_velocion_epic_7763",
+    "jsc:cpu_velocion_epic_9124",
+    "jsc:cpu_velocion_epic_9374f",
+    "jsc:cpu_velocion_epic_9654",
+    "jsc:cpu_integra_servo_bronzo_3106",
+    "jsc:cpu_integra_servo_plata_4114",
+    "jsc:cpu_integra_servo_oro_6148",
+    "jsc:cpu_integra_servo_platina_8180",
+    "jsc:cpu_integra_servo_w_3175x",
+    "jsc:cpu_integra_servo_plata_4314",
+    "jsc:cpu_integra_servo_platina_8352y",
+    "jsc:cpu_integra_servo_platina_8380h",
+    "jsc:cpu_integra_servo_platina_8380",
+    "jsc:cpu_integra_servo_plata_4410y",
+    "jsc:cpu_integra_servo_oro_6442y",
+    "jsc:cpu_integra_servo_w9_3495x",
+    "jsc:cpu_integra_servo_platina_8490h",
+    "jsc:cpu_integra_servo_platina_8592"
+  ],
+  "order": 9,
+  "section": "jsc:hardware",
+  "title": "jsc.guide.processors.title"
+}

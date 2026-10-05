@@ -1,0 +1,61 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_router.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_router.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_shared_tab"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.server_router.use1",
+        "jsc.guide.server_router.use2",
+        "jsc.guide.server_router.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.server_router.fix1",
+          "problem": "jsc.guide.server_router.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:server_router",
+  "id": "jsc:server_router",
+  "items": [
+    "jsc:server_router"
+  ],
+  "order": 25,
+  "section": "jsc:network",
+  "title": "jsc.guide.server_router.title"
+}

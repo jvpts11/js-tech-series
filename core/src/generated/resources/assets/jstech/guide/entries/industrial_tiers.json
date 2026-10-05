@@ -1,0 +1,57 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jstech.guide.industrial_tiers.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jstech.guide.industrial_tiers.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jstech.guide.industrial_tiers.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstech.guide.industrial_tiers.use1",
+        "jstech.guide.industrial_tiers.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jstech.guide.industrial_tiers.fix1",
+          "problem": "jstech.guide.industrial_tiers.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:iron_ingot",
+  "id": "jstech:industrial_tiers",
+  "order": 1,
+  "section": "jstech:tiers",
+  "title": "jstech.guide.industrial_tiers.title"
+}

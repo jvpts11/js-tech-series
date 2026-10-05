@@ -97,6 +97,21 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the index as the player types. Holding M over an item in any inventory opens its page, and the item's tooltip says
   so. Styles are data a resource pack can replace; the Core brings a ring binder with navy covers. Entries follow five
   parts: what it is, what it is for, how to get it, how to use it, and what can go wrong.
+- The series' three manuals. The **Technical Reference**, a navy binder holding a chapter for every mod installed
+  (the series, J's Core, J's Computers, J's Industrial), is handed to each player once, the first time they join a
+  world, above their hotbar, and is in J's Core's new creative tab. The **Guide to Operations** is J's Computers' own,
+  a beige binder with a cyan band, in the mod's tab among the programs. The **Plant Drawings** are J's Industrial's
+  own, a slate folder of blueprints in its tab: a drawing list, then every machine drawn from above, the front and
+  the side, traced from its own block, with numbered balloons, set up in a plan seen from above, on sheets with a
+  frame, zones and a title block (JI-102, sheet 1 of 2). Every item of the three mods is the page of an entry, in
+  English and Brazilian Portuguese, and every number on them is the mods' own.
+- Manuals open each chapter on two facing pages, its number large in the chapter's colour with its title and what it
+  is about, and its sections with their icons and pages; a page is left blank before a chapter that would open on a
+  right page, as printed manuals do. Recipes show their time over the arrow, their energy under it, and the name of
+  what they make. A mod writing a chapter can add notes, a block's three views with balloons and their legend, plans
+  of blocks seen from above, and breaks to the next column or page; can make one entry the page of a whole family of
+  items; can print a mark on a manual's cover and hand a manual to every player once; and can draw its manual as a
+  binder or as a folder of drawings, in two columns, with its own palette.
 - Documentation for each mod, in a `docs` folder of its own, written for a reader who knows nothing of the mod
   yet, with what can go wrong at the end of every page. J's Computers' explains to players their first computer and
   network, the hardware and what every number on a part means, the systems and how to install them, the network

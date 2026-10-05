@@ -1,0 +1,144 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.graphics_cards.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.graphics_cards.for"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.graphics_cards.definition1",
+      "term": "jsc.guide.graphics_cards.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.graphics_cards.use1",
+        "jsc.guide.graphics_cards.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.graphics_cards.fix1",
+          "problem": "jsc.guide.graphics_cards.problem1"
+        },
+        {
+          "fix": "jsc.guide.graphics_cards.fix2",
+          "problem": "jsc.guide.graphics_cards.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:gpu_vertex_8800_gt",
+  "id": "jsc:graphics_cards",
+  "items": [
+    "jsc:gpu_radiance_hd_7970",
+    "jsc:gpu_vga_256",
+    "jsc:gpu_wonder_vga",
+    "jsc:gpu_3d_blaster",
+    "jsc:gpu_rave_pro",
+    "jsc:gpu_prism_4",
+    "jsc:gpu_voodoo_gfx",
+    "jsc:gpu_prism_tnt",
+    "jsc:gpu_prism_tnt2_m64",
+    "jsc:gpu_vertex_256",
+    "jsc:gpu_radiance_7000",
+    "jsc:gpu_vertex_2_mx_400",
+    "jsc:gpu_radiance_8500",
+    "jsc:gpu_vertex_4_ti_4200",
+    "jsc:gpu_radiance_9200_se",
+    "jsc:gpu_vertex_fx_5200",
+    "jsc:gpu_radiance_9600_xt",
+    "jsc:gpu_radiance_9800_pro",
+    "jsc:gpu_radiance_9800_xt",
+    "jsc:gpu_vertex_6800_ultra",
+    "jsc:gpu_vertex_6200",
+    "jsc:gpu_radiance_x300",
+    "jsc:gpu_vertex_6600_gt",
+    "jsc:gpu_radiance_x800_xt",
+    "jsc:gpu_vertex_7300_gs",
+    "jsc:gpu_radiance_x1300",
+    "jsc:gpu_vertex_7600_gt",
+    "jsc:gpu_vertex_7800_gtx",
+    "jsc:gpu_radiance_x1950_xtx",
+    "jsc:gpu_vertex_8600_gt",
+    "jsc:gpu_vertex_8800_gt",
+    "jsc:gpu_radiance_hd_3850",
+    "jsc:gpu_vertex_9600_gt",
+    "jsc:gpu_radiance_hd_4670",
+    "jsc:gpu_vertex_gtx_280",
+    "jsc:gpu_radiance_hd_4870",
+    "jsc:gpu_radiance_hd_5770",
+    "jsc:gpu_vertex_gt_240",
+    "jsc:gpu_radiance_hd_6850",
+    "jsc:gpu_vertex_gtx_480",
+    "jsc:gpu_radiance_hd_5870",
+    "jsc:gpu_vertex_gt_730",
+    "jsc:gpu_radiance_hd_7750",
+    "jsc:gpu_vertex_gtx_550_ti",
+    "jsc:gpu_vertex_gtx_750_ti",
+    "jsc:gpu_radiance_hd_7850",
+    "jsc:gpu_vertex_gtx_660",
+    "jsc:gpu_vertex_gtx_1060",
+    "jsc:gpu_radiance_rx_480",
+    "jsc:gpu_vertex_gtx_970",
+    "jsc:gpu_vertex_gtx_780_ti",
+    "jsc:gpu_radiance_r9_290x",
+    "jsc:gpu_radiance_r9_fury_x",
+    "jsc:gpu_vertex_gtx_980_ti",
+    "jsc:gpu_vertex_gtx_1080",
+    "jsc:gpu_tessera_k40",
+    "jsc:gpu_radiance_rx_550",
+    "jsc:gpu_vertex_gtx_1650",
+    "jsc:gpu_radiance_rx_580",
+    "jsc:gpu_vertex_rtx_2060",
+    "jsc:gpu_vertex_gtx_1080_ti",
+    "jsc:gpu_radiance_rx_vega_64",
+    "jsc:gpu_radiance_rx_5700_xt",
+    "jsc:gpu_vertex_rtx_3060",
+    "jsc:gpu_radiance_rx_6600",
+    "jsc:gpu_vertex_rtx_3080",
+    "jsc:gpu_radiance_rx_6900_xt",
+    "jsc:gpu_vertex_rtx_4060",
+    "jsc:gpu_radiance_rx_7900_xtx",
+    "jsc:gpu_vertex_rtx_4090",
+    "jsc:gpu_vertex_rtx_5060",
+    "jsc:gpu_radiance_rx_9070_xt",
+    "jsc:gpu_vertex_rtx_5090",
+    "jsc:gpu_tessera_v100",
+    "jsc:gpu_tessera_a100",
+    "jsc:gpu_tessera_h100"
+  ],
+  "order": 11,
+  "section": "jsc:hardware",
+  "title": "jsc.guide.graphics_cards.title"
+}

@@ -1,0 +1,68 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_interfaces.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_interfaces.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.crafting_interfaces.use1",
+        "jsc.guide.crafting_interfaces.use2",
+        "jsc.guide.crafting_interfaces.use3",
+        "jsc.guide.crafting_interfaces.use4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.crafting_interfaces.fix1",
+          "problem": "jsc.guide.crafting_interfaces.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:crafting_interface",
+  "id": "jsc:crafting_interfaces",
+  "items": [
+    "jsc:vintage_crafting_interface",
+    "jsc:legacy_crafting_interface",
+    "jsc:transition_crafting_interface",
+    "jsc:crafting_interface",
+    "jsc:advanced_crafting_interface",
+    "jsc:crafting_input_router",
+    "jsc:receiving_bus"
+  ],
+  "order": 33,
+  "section": "jsc:autocrafting",
+  "title": "jsc.guide.crafting_interfaces.title"
+}

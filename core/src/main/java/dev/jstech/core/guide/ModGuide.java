@@ -7,11 +7,15 @@
  */
 package dev.jstech.core.guide;
 
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
@@ -47,6 +51,8 @@ public final class ModGuide {
     private final List<GuideManual> manuals = new ArrayList<>();
     private final Map<String, GuideStyle> styles = new LinkedHashMap<>();
     private final Map<String, String> english = new LinkedHashMap<>();
+    /** The ids of the sections and entries, which share one name space: a link names either by its id. */
+    private final Set<String> ids = new LinkedHashSet<>();
     private GuideChapter chapter;
 
     public ModGuide(final String namespace) {
@@ -124,6 +130,16 @@ public final class ModGuide {
         return GuideIds.of(this.namespace, path);
     }
 
+    /** Takes an id for a section or an entry, refusing one already taken by either. */
+    private String claim(final String path) {
+        final String id = this.id(path);
+        if (!this.ids.add(id)) {
+            throw new IllegalStateException("the id " + id + " names two sections or entries; a link could not"
+                    + " tell them apart");
+        }
+        return id;
+    }
+
     private String key(final String what, final String english) {
         Objects.requireNonNull(english, "the English of " + what);
         final String key = this.namespace + ".guide." + what;
@@ -156,8 +172,15 @@ public final class ModGuide {
         private String title;
         private int order;
         private String tab = "";
+        private String about;
 
         private ChapterBuilder() {
+        }
+
+        /** The paragraph on the chapter's opening page, in English: what the mod is about. */
+        public ChapterBuilder about(final String english) {
+            this.about = english;
+            return this;
         }
 
         /** The chapter's title, in English: the mod's name, as a manual's contents lists it. */
@@ -186,7 +209,8 @@ public final class ModGuide {
                 throw new IllegalStateException(ModGuide.this.namespace + "'s chapter needs a title");
             }
             ModGuide.this.chapter = new GuideChapter(ModGuide.this.namespace, this.order,
-                    ModGuide.this.key("chapter", this.title), this.tab);
+                    ModGuide.this.key("chapter", this.title), this.tab,
+                    this.about == null ? "" : ModGuide.this.key("chapter.about", this.about));
             return ModGuide.this.chapter;
         }
     }
@@ -218,7 +242,7 @@ public final class ModGuide {
             if (this.title == null) {
                 throw new IllegalStateException("the section " + ModGuide.this.id(this.path) + " needs a title");
             }
-            final String id = ModGuide.this.id(this.path);
+            final String id = ModGuide.this.claim(this.path);
             final String titleKey = ModGuide.this.key("section." + this.path, this.title);
             final int order = ModGuide.this.sections.size();
             final Supplier<? extends ItemLike> sectionIcon = this.icon;
@@ -237,6 +261,7 @@ public final class ModGuide {
         private final SectionRef section;
         private final List<Supplier<GuideBlock>> blocks = new ArrayList<>();
         private final List<Supplier<? extends ItemLike>> covers = new ArrayList<>();
+        private final List<Supplier<? extends Collection<? extends ItemLike>>> families = new ArrayList<>();
         private Supplier<? extends ItemLike> icon;
         private String title;
         private int paragraphs;
@@ -247,7 +272,11 @@ public final class ModGuide {
         private int warnings;
         private int problems;
         private int terms;
+        private int notes;
+        private int plans;
         private List<GuideBlock.TableRow> rows;
+        private List<GuideBlock.Callout> callouts;
+        private List<Supplier<GuideBlock.PlanPart>> planParts;
 
         private EntryBuilder(final String path, final SectionRef section) {
             this.path = path;
@@ -272,6 +301,15 @@ public final class ModGuide {
             return this;
         }
 
+        /**
+         * Every item of a family this entry is the page of, such as every processor: the family is read when the
+         * files are written, so it holds whatever the mod registered by then.
+         */
+        public EntryBuilder coversAll(final Supplier<? extends Collection<? extends ItemLike>> items) {
+            this.families.add(items);
+            return this;
+        }
+
         /** The first part of the spine: what the thing is, from zero. */
         public EntryBuilder whatItIs(final String english) {
             return this.spine(GuideTexts.WHAT_IT_IS.key(), "what", english);
@@ -285,6 +323,16 @@ public final class ModGuide {
         /** The third part: how to get it. */
         public EntryBuilder howToGetIt(final String english) {
             return this.spine(GuideTexts.HOW_TO_GET_IT.key(), "get", english);
+        }
+
+        /**
+         * The third part in a sentence many entries share, such as where every item of a mod comes from: declared
+         * once as a {@link TextKey}, it is translated once.
+         */
+        public EntryBuilder howToGetIt(final TextKey shared) {
+            final String key = shared.key();
+            this.add(() -> new GuideBlock.Heading(GuideTexts.HOW_TO_GET_IT.key()));
+            return this.add(() -> new GuideBlock.Paragraph(key));
         }
 
         /** The fourth part: how to use it, step by step. */
@@ -404,19 +452,111 @@ public final class ModGuide {
             return this.add(() -> new GuideBlock.Custom(type, height, data));
         }
 
+        /** A note set apart in the style's accent: what to read next, a hint. */
+        public EntryBuilder note(final String english) {
+            this.notes++;
+            final String key = this.key("note" + this.notes, english);
+            return this.add(() -> new GuideBlock.Note(key));
+        }
+
+        /** A note many entries share, declared once as a {@link TextKey}. */
+        public EntryBuilder note(final TextKey shared) {
+            final String key = shared.key();
+            return this.add(() -> new GuideBlock.Note(key));
+        }
+
+        /** What follows starts in the page's next column, or on the next page after its last column. */
+        public EntryBuilder nextColumn() {
+            return this.add(() -> new GuideBlock.Break(GuideBlock.BreakKind.COLUMN));
+        }
+
+        /** What follows starts on the next page: on a drawing, the next sheet. */
+        public EntryBuilder nextPage() {
+            return this.add(() -> new GuideBlock.Break(GuideBlock.BreakKind.PAGE));
+        }
+
+        /** The block seen from above, the front and the side; its balloons follow with {@link #callout}. */
+        public EntryBuilder views(final Supplier<? extends ItemLike> block) {
+            final List<GuideBlock.Callout> list = new ArrayList<>();
+            this.callouts = list;
+            return this.add(() -> new GuideBlock.Views(itemId(block), list));
+        }
+
+        /**
+         * A numbered balloon of the last views, pointing at a place of a face, in its sixteen pixels, and what the
+         * legend under the views says of it, in English.
+         */
+        public EntryBuilder callout(final int number, final GuideBlock.View view, final int u, final int v,
+                                    final String english) {
+            if (this.callouts == null) {
+                throw new IllegalStateException("a balloon follows the views it points at");
+            }
+            final String key = this.key("callout" + (this.callouts.size() + 1), english);
+            this.callouts.add(new GuideBlock.Callout(number, view, u, v, key));
+            return this;
+        }
+
+        /** A numbered balloon whose line of the legend many entries share, declared once as a {@link TextKey}. */
+        public EntryBuilder callout(final int number, final GuideBlock.View view, final int u, final int v,
+                                    final TextKey shared) {
+            if (this.callouts == null) {
+                throw new IllegalStateException("a balloon follows the views it points at");
+            }
+            this.callouts.add(new GuideBlock.Callout(number, view, u, v, shared.key()));
+            return this;
+        }
+
+        /** A plan of blocks seen from above, titled in English; its blocks follow with {@link #planPart}. */
+        public EntryBuilder plan(final String caption) {
+            this.plans++;
+            return this.planUnder(this.key("plan" + this.plans, caption));
+        }
+
+        /** A plan titled in a sentence many entries share, declared once as a {@link TextKey}. */
+        public EntryBuilder plan(final TextKey caption) {
+            this.plans++;
+            return this.planUnder(caption.key());
+        }
+
+        /** A block of the last plan, named in English under it. */
+        public EntryBuilder planPart(final Supplier<? extends ItemLike> block, final String label) {
+            return this.part(block, this.partKey(label), false);
+        }
+
+        /** A block of the last plan, named in words many entries share. */
+        public EntryBuilder planPart(final Supplier<? extends ItemLike> block, final TextKey label) {
+            return this.part(block, label.key(), false);
+        }
+
+        /** A place of the last plan that may be left empty, outlined in dots and named in English. */
+        public EntryBuilder planOptional(final String label) {
+            return this.part(null, this.partKey(label), true);
+        }
+
+        /** A place of the last plan that may be left empty, named in words many entries share. */
+        public EntryBuilder planOptional(final TextKey label) {
+            return this.part(null, label.key(), true);
+        }
+
         public void register() {
             if (this.title == null) {
                 throw new IllegalStateException("the entry " + ModGuide.this.id(this.path) + " needs a title");
             }
-            final String id = ModGuide.this.id(this.path);
+            final String id = ModGuide.this.claim(this.path);
             final String titleKey = this.key("title", this.title);
             final int order = ModGuide.this.entries.size();
             final List<Supplier<GuideBlock>> declared = List.copyOf(this.blocks);
             final List<Supplier<? extends ItemLike>> items = List.copyOf(this.covers);
+            final List<Supplier<? extends Collection<? extends ItemLike>>> groups = List.copyOf(this.families);
             final Supplier<? extends ItemLike> entryIcon = this.icon;
             final String sectionId = this.section.id();
-            ModGuide.this.entries.add(() -> new GuideEntry(id, sectionId, order, titleKey, itemId(entryIcon),
-                    items.stream().map(ModGuide::itemId).toList(), declared.stream().map(Supplier::get).toList()));
+            ModGuide.this.entries.add(() -> {
+                final Set<String> covered = new LinkedHashSet<>();
+                items.forEach(item -> covered.add(itemId(item)));
+                groups.forEach(group -> group.get().forEach(item -> covered.add(itemId(() -> item))));
+                return new GuideEntry(id, sectionId, order, titleKey, itemId(entryIcon), List.copyOf(covered),
+                        declared.stream().map(Supplier::get).toList());
+            });
         }
 
         private EntryBuilder spine(final String heading, final String part, final String english) {
@@ -433,6 +573,29 @@ public final class ModGuide {
             }
             final GuideBlock block = new GuideBlock.Steps(keys);
             return this.add(() -> block);
+        }
+
+        private EntryBuilder planUnder(final String key) {
+            final List<Supplier<GuideBlock.PlanPart>> list = new ArrayList<>();
+            this.planParts = list;
+            return this.add(() -> new GuideBlock.Plan(key, list.stream().map(Supplier::get).toList()));
+        }
+
+        /** The key of the next block of the last plan, its English given. */
+        private String partKey(final String english) {
+            if (this.planParts == null) {
+                throw new IllegalStateException("a plan's blocks follow the plan");
+            }
+            return this.key("plan" + this.plans + "_" + (this.planParts.size() + 1), english);
+        }
+
+        private EntryBuilder part(final Supplier<? extends ItemLike> block, final String key,
+                                  final boolean optional) {
+            if (this.planParts == null) {
+                throw new IllegalStateException("a plan's blocks follow the plan");
+            }
+            this.planParts.add(() -> new GuideBlock.PlanPart(itemId(block), key, optional));
+            return this;
         }
 
         private List<GuideBlock.TableRow> rowList() {
@@ -464,9 +627,19 @@ public final class ModGuide {
         private String partNumber = "";
         private String style;
         private int priority;
+        private String icon = "";
 
         private ManualBuilder(final String path) {
             this.path = path;
+        }
+
+        /**
+         * The mark printed on its cover: a texture of 32 by 32 pixels, named as a model names one ({@code
+         * jsc:gui/guide/cover_mark} is {@code assets/jsc/textures/gui/guide/cover_mark.png}).
+         */
+        public ManualBuilder icon(final String texture) {
+            this.icon = Objects.requireNonNull(texture, "texture");
+            return this;
         }
 
         /** The manual's title, in English. */
@@ -521,16 +694,17 @@ public final class ModGuide {
             return this;
         }
 
-        public GuideManual register() {
+        /** Declares the manual, and gives back its id. */
+        public String register() {
             if (this.title == null || this.style == null || this.chapters.isEmpty()) {
                 throw new IllegalStateException("the manual " + ModGuide.this.id(this.path)
                         + " needs a title, a style and its chapters");
             }
-            final GuideManual manual = new GuideManual(ModGuide.this.id(this.path),
-                    ModGuide.this.key(this.what("title"), this.title), this.cover, this.edition, this.partNumber,
-                    this.style, this.chapters, this.about, this.priority);
-            ModGuide.this.manuals.add(manual);
-            return manual;
+            final String id = ModGuide.this.id(this.path);
+            final String titleKey = ModGuide.this.key(this.what("title"), this.title);
+            ModGuide.this.manuals.add(new GuideManual(id, titleKey, this.cover, this.edition, this.partNumber,
+                    this.style, this.chapters, this.about, this.priority, this.icon));
+            return id;
         }
 
         /** A key of this manual's, kept apart from the entries' keys. */

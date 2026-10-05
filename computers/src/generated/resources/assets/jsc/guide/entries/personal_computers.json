@@ -1,0 +1,125 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.personal_computers.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.personal_computers.for"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.personal_computers.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.personal_computers.table1_1",
+          "value": {
+            "literal": "1"
+          }
+        },
+        {
+          "label": "jsc.guide.personal_computers.table1_2",
+          "value": {
+            "literal": "1"
+          }
+        },
+        {
+          "label": "jsc.guide.personal_computers.table1_3",
+          "value": {
+            "literal": "4"
+          }
+        },
+        {
+          "label": "jsc.guide.personal_computers.table1_4",
+          "value": {
+            "literal": "4"
+          }
+        },
+        {
+          "label": "jsc.guide.personal_computers.table1_5",
+          "value": {
+            "literal": "2"
+          }
+        },
+        {
+          "label": "jsc.guide.personal_computers.table1_6",
+          "value": {
+            "literal": "1"
+          }
+        },
+        {
+          "label": "jsc.guide.personal_computers.table1_7",
+          "value": {
+            "literal": "18"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.personal_computers.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.personal_computers.use1",
+        "jsc.guide.personal_computers.use2",
+        "jsc.guide.personal_computers.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.personal_computers.fix1",
+          "problem": "jsc.guide.personal_computers.problem1"
+        },
+        {
+          "fix": "jsc.guide.personal_computers.fix2",
+          "problem": "jsc.guide.personal_computers.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:personal_computer",
+  "id": "jsc:personal_computers",
+  "items": [
+    "jsc:personal_computer",
+    "jsc:high_performance_personal_computer",
+    "jsc:aesthetic_personal_computer",
+    "jsc:vintage_personal_computer",
+    "jsc:legacy_personal_computer",
+    "jsc:transition_personal_computer",
+    "jsc:advanced_personal_computer",
+    "jsc:advanced_high_performance_personal_computer",
+    "jsc:advanced_aesthetic_personal_computer"
+  ],
+  "order": 1,
+  "section": "jsc:computers",
+  "title": "jsc.guide.personal_computers.title"
+}

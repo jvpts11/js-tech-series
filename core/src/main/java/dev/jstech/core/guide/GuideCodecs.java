@@ -13,7 +13,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.jstech.core.id.StableNames;
+import dev.jstech.core.id.StableCodecs;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -76,7 +76,8 @@ public final class GuideCodecs {
             Codec.STRING.fieldOf("namespace").forGetter(GuideChapter::namespace),
             Codec.INT.optionalFieldOf("order", 0).forGetter(GuideChapter::order),
             Codec.STRING.fieldOf("title").forGetter(GuideChapter::titleKey),
-            Codec.STRING.optionalFieldOf("tab", "").forGetter(GuideChapter::tab)
+            Codec.STRING.optionalFieldOf("tab", "").forGetter(GuideChapter::tab),
+            Codec.STRING.optionalFieldOf("about", "").forGetter(GuideChapter::aboutKey)
     ).apply(instance, GuideChapter::new));
 
     public static final Codec<GuideManual> MANUAL = RecordCodecBuilder.create(instance -> instance.group(
@@ -88,27 +89,64 @@ public final class GuideCodecs {
             Codec.STRING.fieldOf("style").forGetter(GuideManual::style),
             Codec.STRING.listOf().fieldOf("chapters").forGetter(GuideManual::chapters),
             Codec.STRING.listOf().optionalFieldOf("about", List.of()).forGetter(GuideManual::aboutKeys),
-            Codec.INT.optionalFieldOf("priority", 0).forGetter(GuideManual::priority)
+            Codec.INT.optionalFieldOf("priority", 0).forGetter(GuideManual::priority),
+            Codec.STRING.optionalFieldOf("icon", "").forGetter(GuideManual::icon)
     ).apply(instance, GuideManual::new));
 
-    public static final Codec<GuideStyle.Folios> FOLIOS = Codec.STRING.comapFlatMap(GuideCodecs::folios,
-            GuideStyle.Folios::serializedName);
+    public static final Codec<GuideStyle.Pages> PAGES = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.BOOL.optionalFieldOf("spread", true).forGetter(GuideStyle.Pages::spread),
+            Codec.INT.fieldOf("width").forGetter(GuideStyle.Pages::width),
+            Codec.INT.fieldOf("height").forGetter(GuideStyle.Pages::height),
+            Codec.INT.optionalFieldOf("margin", 10).forGetter(GuideStyle.Pages::margin),
+            Codec.INT.optionalFieldOf("columns", 1).forGetter(GuideStyle.Pages::columns)
+    ).apply(instance, GuideStyle.Pages::new));
+
+    public static final Codec<GuideStyle.Decor> DECOR = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.BOOL.optionalFieldOf("rings", false).forGetter(GuideStyle.Decor::rings),
+            Codec.BOOL.optionalFieldOf("grid", false).forGetter(GuideStyle.Decor::grid),
+            Codec.BOOL.optionalFieldOf("frame", false).forGetter(GuideStyle.Decor::frame),
+            Codec.BOOL.optionalFieldOf("title_block", false).forGetter(GuideStyle.Decor::titleBlock),
+            Codec.BOOL.optionalFieldOf("upper_headings", false).forGetter(GuideStyle.Decor::upperHeadings),
+            Codec.BOOL.optionalFieldOf("traced", false).forGetter(GuideStyle.Decor::traced),
+            Codec.BOOL.optionalFieldOf("plain_numbers", false).forGetter(GuideStyle.Decor::plainNumbers),
+            Codec.BOOL.optionalFieldOf("small_text", false).forGetter(GuideStyle.Decor::smallText)
+    ).apply(instance, GuideStyle.Decor::new));
+
+    public static final Codec<GuideStyle.Cover> COVER = RecordCodecBuilder.create(instance -> instance.group(
+            StableCodecs.byName(GuideStyle.CoverKind.class).optionalFieldOf("kind", GuideStyle.CoverKind.BINDER)
+                    .forGetter(GuideStyle.Cover::kind),
+            Codec.BOOL.optionalFieldOf("label", true).forGetter(GuideStyle.Cover::label),
+            Codec.BOOL.optionalFieldOf("band", false).forGetter(GuideStyle.Cover::band)
+    ).apply(instance, GuideStyle.Cover::new));
 
     public static final Codec<GuideStyle> STYLE = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.optionalFieldOf("palette", "").forGetter(GuideStyle::palette),
             Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("colours", Map.of())
                     .forGetter(GuideStyle::colours),
-            Codec.BOOL.optionalFieldOf("spread", true).forGetter(GuideStyle::spread),
-            Codec.INT.fieldOf("page_width").forGetter(GuideStyle::pageWidth),
-            Codec.INT.fieldOf("page_height").forGetter(GuideStyle::pageHeight),
-            Codec.INT.optionalFieldOf("margin", 9).forGetter(GuideStyle::margin),
-            Codec.BOOL.optionalFieldOf("rings", false).forGetter(GuideStyle::rings),
+            PAGES.fieldOf("pages").forGetter(GuideStyle::pages),
+            DECOR.optionalFieldOf("decor", GuideStyle.Decor.binder(false)).forGetter(GuideStyle::decor),
             Codec.STRING.optionalFieldOf("body_font", "").forGetter(GuideStyle::bodyFont),
             Codec.STRING.optionalFieldOf("table_font", "").forGetter(GuideStyle::tableFont),
-            FOLIOS.optionalFieldOf("folios", GuideStyle.Folios.CHAPTER_PAGE).forGetter(GuideStyle::folios)
+            StableCodecs.byName(GuideStyle.Folios.class).optionalFieldOf("folios", GuideStyle.Folios.CHAPTER_PAGE)
+                    .forGetter(GuideStyle::folios),
+            Codec.STRING.optionalFieldOf("drawing_prefix", "").forGetter(GuideStyle::drawingPrefix),
+            COVER.optionalFieldOf("cover", new GuideStyle.Cover(GuideStyle.CoverKind.BINDER, true, false))
+                    .forGetter(GuideStyle::cover)
     ).apply(instance, GuideStyle::new));
 
-    private static final StableNames<GuideStyle.Folios> FOLIO_NAMES = StableNames.of(GuideStyle.Folios.class);
+    public static final Codec<GuideBlock.Callout> CALLOUT = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.INT.fieldOf("number").forGetter(GuideBlock.Callout::number),
+            StableCodecs.byName(GuideBlock.View.class).fieldOf("view").forGetter(GuideBlock.Callout::view),
+            Codec.INT.fieldOf("u").forGetter(GuideBlock.Callout::u),
+            Codec.INT.fieldOf("v").forGetter(GuideBlock.Callout::v),
+            Codec.STRING.fieldOf("text").forGetter(GuideBlock.Callout::key)
+    ).apply(instance, GuideBlock.Callout::new));
+
+    public static final Codec<GuideBlock.PlanPart> PLAN_PART = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.STRING.optionalFieldOf("item", "").forGetter(GuideBlock.PlanPart::item),
+            Codec.STRING.fieldOf("label").forGetter(GuideBlock.PlanPart::labelKey),
+            Codec.BOOL.optionalFieldOf("optional", false).forGetter(GuideBlock.PlanPart::optional)
+    ).apply(instance, GuideBlock.PlanPart::new));
 
     private static final MapCodec<GuideBlock.Paragraph> PARAGRAPH = RecordCodecBuilder.mapCodec(instance ->
             instance.group(Codec.STRING.fieldOf("text").forGetter(GuideBlock.Paragraph::key))
@@ -152,6 +190,20 @@ public final class GuideCodecs {
                     custom.data())))
     ).apply(instance, (type, height, data) -> new GuideBlock.Custom(type, height,
             data.map(JsonElement::toString).orElse("{}"))));
+    private static final MapCodec<GuideBlock.Note> NOTE = RecordCodecBuilder.mapCodec(instance ->
+            instance.group(Codec.STRING.fieldOf("text").forGetter(GuideBlock.Note::key))
+                    .apply(instance, GuideBlock.Note::new));
+    private static final MapCodec<GuideBlock.Break> BREAK = RecordCodecBuilder.mapCodec(instance ->
+            instance.group(StableCodecs.byName(GuideBlock.BreakKind.class).fieldOf("to")
+                    .forGetter(GuideBlock.Break::kind)).apply(instance, GuideBlock.Break::new));
+    private static final MapCodec<GuideBlock.Views> VIEWS = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Codec.STRING.fieldOf("item").forGetter(GuideBlock.Views::item),
+            CALLOUT.listOf().optionalFieldOf("callouts", List.of()).forGetter(GuideBlock.Views::callouts)
+    ).apply(instance, GuideBlock.Views::new));
+    private static final MapCodec<GuideBlock.Plan> PLAN = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Plan::captionKey),
+            PLAN_PART.listOf().fieldOf("parts").forGetter(GuideBlock.Plan::parts)
+    ).apply(instance, GuideBlock.Plan::new));
 
     private GuideCodecs() {
     }
@@ -169,6 +221,10 @@ public final class GuideCodecs {
             case GuideBlock.Define define -> "define";
             case GuideBlock.SeeAlso see -> "see";
             case GuideBlock.Custom custom -> "custom";
+            case GuideBlock.Note note -> "note";
+            case GuideBlock.Break cut -> "break";
+            case GuideBlock.Views views -> "views";
+            case GuideBlock.Plan plan -> "plan";
         };
     }
 
@@ -185,6 +241,10 @@ public final class GuideCodecs {
             case "define" -> DEFINE;
             case "see" -> SEE;
             case "custom" -> CUSTOM;
+            case "note" -> NOTE;
+            case "break" -> BREAK;
+            case "views" -> VIEWS;
+            case "plan" -> PLAN;
             default -> throw new IllegalArgumentException("no block of the type " + type);
         };
     }
@@ -211,12 +271,6 @@ public final class GuideCodecs {
             case GuideBlock.GuideValue.Literal literal -> new RawValue(Optional.empty(), Optional.empty(), "",
                     Optional.of(literal.text()));
         };
-    }
-
-    private static DataResult<GuideStyle.Folios> folios(final String name) {
-        final GuideStyle.Folios folios = FOLIO_NAMES.find(name);
-        return folios == null ? DataResult.error(() -> "no way of numbering pages called " + name)
-                : DataResult.success(folios);
     }
 
     /** A table value as its file writes it: one of its three forms, the others absent. */

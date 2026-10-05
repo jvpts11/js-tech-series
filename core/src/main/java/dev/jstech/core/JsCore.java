@@ -23,6 +23,7 @@ import dev.jstech.core.energy.CoreEnergy;
 import dev.jstech.core.event.CoreEventDispatcher;
 import dev.jstech.core.font.CoreFonts;
 import dev.jstech.core.guide.CoreGuide;
+import dev.jstech.core.guide.GuideGifts;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.integration.accessories.AccessoriesIntegration;
 import dev.jstech.core.integration.curios.CuriosIntegration;
@@ -123,6 +124,8 @@ public final class JsCore {
         MediaLedgers.register();
         // How far each player has come along each progression axis, and the advancement triggers every mod stands on.
         PlayerProgress.register();
+        // The manuals each player was handed as they first joined, so each is handed once.
+        GuideGifts.register();
         CoreTriggers.register(modEventBus);
         // The series' commands under /jstech: the Core's own, and the recordings' upkeep.
         CoreCommands.declare();

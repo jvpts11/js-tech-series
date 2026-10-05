@@ -1,0 +1,63 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.repeaters.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.repeaters.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.repeaters.use1"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.repeaters.fix1",
+          "problem": "jsc.guide.repeaters.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:standard_repeater",
+  "id": "jsc:repeaters",
+  "items": [
+    "jsc:vintage_repeater",
+    "jsc:legacy_repeater",
+    "jsc:transition_repeater",
+    "jsc:standard_repeater",
+    "jsc:advanced_repeater"
+  ],
+  "order": 22,
+  "section": "jsc:network",
+  "title": "jsc.guide.repeaters.title"
+}

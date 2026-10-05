@@ -1,0 +1,64 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.drives.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.drives.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.drives.use1",
+        "jsc.guide.drives.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.drives.fix1",
+          "problem": "jsc.guide.drives.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:floppy_drive",
+  "id": "jsc:drives",
+  "items": [
+    "jsc:floppy_drive",
+    "jsc:cd_drive",
+    "jsc:dvd_drive",
+    "jsc:blu_ray_drive",
+    "jsc:dock_station"
+  ],
+  "order": 39,
+  "section": "jsc:peripherals",
+  "title": "jsc.guide.drives.title"
+}

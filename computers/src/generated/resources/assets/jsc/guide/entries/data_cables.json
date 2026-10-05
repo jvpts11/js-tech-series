@@ -1,0 +1,121 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.data_cables.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.data_cables.for"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.data_cables.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.data_cables.table1_1",
+          "value": {
+            "words": "jsc.guide.data_cables.value1_1"
+          }
+        },
+        {
+          "label": "jsc.guide.data_cables.table1_2",
+          "value": {
+            "words": "jsc.guide.data_cables.value1_2"
+          }
+        },
+        {
+          "label": "jsc.guide.data_cables.table1_3",
+          "value": {
+            "words": "jsc.guide.data_cables.value1_3"
+          }
+        },
+        {
+          "label": "jsc.guide.data_cables.table1_4",
+          "value": {
+            "words": "jsc.guide.data_cables.value1_4"
+          }
+        }
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.data_cables.definition1",
+      "term": "jsc.guide.data_cables.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.data_cables.definition2",
+      "term": "jsc.guide.data_cables.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.data_cables.use1",
+        "jsc.guide.data_cables.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.data_cables.fix1",
+          "problem": "jsc.guide.data_cables.problem1"
+        },
+        {
+          "fix": "jsc.guide.data_cables.fix2",
+          "problem": "jsc.guide.data_cables.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:ethernet_cable",
+  "id": "jsc:data_cables",
+  "items": [
+    "jsc:thin_coax_cable",
+    "jsc:ethernet_cable",
+    "jsc:cat5e_cable",
+    "jsc:gigabit_cable",
+    "jsc:cat6a_cable",
+    "jsc:thick_coax_cable",
+    "jsc:hbw_cable",
+    "jsc:cx4_cable",
+    "jsc:fibre_cable",
+    "jsc:om5_cable",
+    "jsc:telephone_line",
+    "jsc:leased_line",
+    "jsc:t3_line",
+    "jsc:vldc_cable",
+    "jsc:dark_fibre_cable",
+    "jsc:infiniband_cable",
+    "jsc:hpc_cable",
+    "jsc:osfp_cable"
+  ],
+  "order": 20,
+  "section": "jsc:network",
+  "title": "jsc.guide.data_cables.title"
+}

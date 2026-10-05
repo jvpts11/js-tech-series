@@ -1,0 +1,69 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.for"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.rack_equipment.definition1",
+      "term": "jsc.guide.rack_equipment.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_shared_tab"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.rack_equipment.use1",
+        "jsc.guide.rack_equipment.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.rack_equipment.fix1",
+          "problem": "jsc.guide.rack_equipment.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:kvm_switch",
+  "id": "jsc:rack_equipment",
+  "items": [
+    "jsc:raid_controller",
+    "jsc:cache_card",
+    "jsc:kvm_switch",
+    "jsc:rack_ups",
+    "jsc:cooling_unit"
+  ],
+  "order": 7,
+  "section": "jsc:computers",
+  "title": "jsc.guide.rack_equipment.title"
+}

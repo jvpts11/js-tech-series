@@ -1,0 +1,71 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.server_racks.use1",
+        "jsc.guide.server_racks.use2",
+        "jsc.guide.server_racks.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.server_racks.fix1",
+          "problem": "jsc.guide.server_racks.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:server_rack",
+  "id": "jsc:server_racks",
+  "items": [
+    "jsc:vintage_server_rack",
+    "jsc:legacy_server_rack",
+    "jsc:transition_server_rack",
+    "jsc:server_rack",
+    "jsc:advanced_server_rack",
+    "jsc:supercomputer_rack",
+    "jsc:advanced_supercomputer_rack"
+  ],
+  "order": 5,
+  "section": "jsc:computers",
+  "title": "jsc.guide.server_racks.title"
+}

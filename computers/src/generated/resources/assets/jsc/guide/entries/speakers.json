@@ -1,0 +1,64 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.speakers.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.speakers.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.speakers.use1",
+        "jsc.guide.speakers.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.speakers.fix1",
+          "problem": "jsc.guide.speakers.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:speaker",
+  "id": "jsc:speakers",
+  "items": [
+    "jsc:legacy_speaker",
+    "jsc:transition_speaker",
+    "jsc:transition_subwoofer",
+    "jsc:speaker",
+    "jsc:advanced_speaker"
+  ],
+  "order": 43,
+  "section": "jsc:peripherals",
+  "title": "jsc.guide.speakers.title"
+}

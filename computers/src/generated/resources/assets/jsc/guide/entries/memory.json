@@ -1,0 +1,89 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.memory.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.memory.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.memory.use1",
+        "jsc.guide.memory.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.memory.fix1",
+          "problem": "jsc.guide.memory.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:ram_simm_4",
+  "id": "jsc:memory",
+  "items": [
+    "jsc:ram_ddr3_8192",
+    "jsc:ram_simm_4",
+    "jsc:ram_simm_16",
+    "jsc:ram_edo_16",
+    "jsc:ram_edo_32",
+    "jsc:ram_edo_64",
+    "jsc:ram_sdram_32",
+    "jsc:ram_sdram_64",
+    "jsc:ram_sdram_128",
+    "jsc:ram_sdram_256",
+    "jsc:ram_ddr_256",
+    "jsc:ram_ddr_512",
+    "jsc:ram_ddr_1024",
+    "jsc:ram_ddr2_512",
+    "jsc:ram_ddr2_1024",
+    "jsc:ram_ddr2_2048",
+    "jsc:ram_ddr2_4096_rdimm",
+    "jsc:ram_ddr3_1024",
+    "jsc:ram_ddr3_2048",
+    "jsc:ram_ddr3_4096",
+    "jsc:ram_ddr3l_4096",
+    "jsc:ram_ddr3_16384_rdimm",
+    "jsc:ram_ddr4_8192",
+    "jsc:ram_ddr4_16384",
+    "jsc:ram_ddr4_32768",
+    "jsc:ram_ddr4_65536_rdimm",
+    "jsc:ram_ddr5_16384",
+    "jsc:ram_ddr5_32768",
+    "jsc:ram_ddr5_65536_rdimm",
+    "jsc:ram_ddr5_131072_rdimm"
+  ],
+  "order": 10,
+  "section": "jsc:hardware",
+  "title": "jsc.guide.memory.title"
+}

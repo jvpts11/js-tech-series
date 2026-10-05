@@ -1,0 +1,77 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_computers.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_computers.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.crafting_computers.use1",
+        "jsc.guide.crafting_computers.use2",
+        "jsc.guide.crafting_computers.use3",
+        "jsc.guide.crafting_computers.use4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.crafting_computers.fix1",
+          "problem": "jsc.guide.crafting_computers.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:how_autocrafting_works",
+        "jsc:crafting_cards"
+      ]
+    }
+  ],
+  "icon": "jsc:crafting_computer",
+  "id": "jsc:crafting_computers",
+  "items": [
+    "jsc:crafting_computer",
+    "jsc:high_performance_crafting_computer",
+    "jsc:aesthetic_crafting_computer",
+    "jsc:vintage_crafting_computer",
+    "jsc:legacy_crafting_computer",
+    "jsc:transition_crafting_computer",
+    "jsc:advanced_crafting_computer",
+    "jsc:advanced_high_performance_crafting_computer",
+    "jsc:advanced_aesthetic_crafting_computer"
+  ],
+  "order": 2,
+  "section": "jsc:computers",
+  "title": "jsc.guide.crafting_computers.title"
+}

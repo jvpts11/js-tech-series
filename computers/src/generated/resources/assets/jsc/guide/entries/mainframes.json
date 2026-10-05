@@ -1,0 +1,117 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.for"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mainframes.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.mainframes.table1_1",
+          "value": {
+            "literal": "1 MTX"
+          }
+        },
+        {
+          "label": "jsc.guide.mainframes.table1_2",
+          "value": {
+            "literal": "4"
+          }
+        },
+        {
+          "label": "jsc.guide.mainframes.table1_3",
+          "value": {
+            "literal": "8"
+          }
+        },
+        {
+          "label": "jsc.guide.mainframes.table1_4",
+          "value": {
+            "literal": "6"
+          }
+        },
+        {
+          "label": "jsc.guide.mainframes.table1_5",
+          "value": {
+            "literal": "4"
+          }
+        },
+        {
+          "label": "jsc.guide.mainframes.table1_6",
+          "value": {
+            "literal": "27"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.mainframes.use1",
+        "jsc.guide.mainframes.use2",
+        "jsc.guide.mainframes.use3",
+        "jsc.guide.mainframes.use4"
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mainframes.definition1",
+      "term": "jsc.guide.mainframes.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mainframes.fix1",
+          "problem": "jsc.guide.mainframes.problem1"
+        },
+        {
+          "fix": "jsc.guide.mainframes.fix2",
+          "problem": "jsc.guide.mainframes.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:mainframes",
+  "items": [
+    "jsc:mainframe",
+    "jsc:vintage_mainframe",
+    "jsc:legacy_mainframe",
+    "jsc:transition_mainframe",
+    "jsc:advanced_mainframe"
+  ],
+  "order": 4,
+  "section": "jsc:computers",
+  "title": "jsc.guide.mainframes.title"
+}

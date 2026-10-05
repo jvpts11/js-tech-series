@@ -1,0 +1,6 @@
+{
+  "icon": "minecraft:iron_ingot",
+  "id": "jstech:tiers",
+  "order": 1,
+  "title": "jstech.guide.section.tiers"
+}

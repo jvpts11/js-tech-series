@@ -7,7 +7,8 @@
  */
 package dev.jstech.core.client.guide;
 
-import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
+import dev.jstech.core.format.Unit;
+import dev.jstech.core.format.UnitFormatter;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.machine.MachineTexts;
 import dev.jstech.core.machine.ProcessingViewLayout;
@@ -81,7 +82,11 @@ public final class GuideRecipes {
             for (final SizedIngredient input : processing.inputs()) {
                 inputs.add(Arrays.asList(input.getItems()));
             }
-            return new View(inputs, List.copyOf(processing.outputs()), ProcessingRecipeViews.workLine(processing));
+            final Component energy = processing.energyPerTick() <= 0 ? Component.empty()
+                    : Component.literal(UnitFormatter.forCurrentLocale().compact(processing.energyPerTick(),
+                            Unit.FE_PER_TICK));
+            return new View(inputs, List.copyOf(processing.outputs()), GameText.component(
+                    MachineTexts.RECIPE_TIME.with(ProcessingViewLayout.seconds(processing.ticks()))), energy);
         }
         final List<List<ItemStack>> inputs = new ArrayList<>();
         for (final Ingredient ingredient : recipe.getIngredients()) {
@@ -89,11 +94,11 @@ public final class GuideRecipes {
                 inputs.add(Arrays.asList(ingredient.getItems()));
             }
         }
-        final Component work = recipe instanceof AbstractCookingRecipe cooking
+        final Component time = recipe instanceof AbstractCookingRecipe cooking
                 ? GameText.component(MachineTexts.RECIPE_TIME.with(
                         ProcessingViewLayout.seconds(cooking.getCookingTime())))
                 : Component.empty();
-        return new View(inputs, List.of(recipe.getResultItem(registries)), work);
+        return new View(inputs, List.of(recipe.getResultItem(registries)), time, Component.empty());
     }
 
     /**
@@ -101,9 +106,10 @@ public final class GuideRecipes {
      *
      * @param inputs  each input's choices, the first one drawn and the others in turn
      * @param outputs what it makes
-     * @param work    the time and the energy written over its arrow, or nothing
+     * @param time    how long it takes, written over its arrow, or nothing
+     * @param energy  the energy it spends a tick, written under its arrow, or nothing
      */
-    public record View(List<List<ItemStack>> inputs, List<ItemStack> outputs, Component work) {
+    public record View(List<List<ItemStack>> inputs, List<ItemStack> outputs, Component time, Component energy) {
 
         public View {
             inputs = inputs.stream().map(List::copyOf).toList();

@@ -19,8 +19,8 @@ import net.minecraft.resources.ResourceLocation;
 
 /**
  * How each size of a manual's text is drawn in a style: the font, bold or not, and the scale. Running text is the
- * style's body font at full size; headings are bold; big titles and the index's letters twice the size; heads, feet
- * and captions three quarters; tables in the style's table font, which lines figures up.
+ * style's body font at full size; headings are bold; big titles and the index's letters twice the size, a chapter's
+ * number four times; heads, feet and captions three quarters; tables in the style's table font, which lines figures up.
  */
 public final class GuideFonts {
 
@@ -28,6 +28,8 @@ public final class GuideFonts {
     public static final float SMALL = 0.75F;
     /** The scale of big titles. */
     public static final float BIG = 2.0F;
+    /** The scale of a chapter's number on its opening page. */
+    public static final float HUGE = 4.0F;
 
     private GuideFonts() {
     }
@@ -49,6 +51,7 @@ public final class GuideFonts {
     public static float scale(final TextSize size) {
         return switch (size) {
             case TITLE, LETTER -> BIG;
+            case CHAPTER -> HUGE;
             case SMALL, SMALL_BOLD -> SMALL;
             default -> 1.0F;
         };

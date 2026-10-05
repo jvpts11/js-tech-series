@@ -1,0 +1,60 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tank.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tank.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_shared_tab"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.tank.use1",
+        "jsc.guide.tank.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.tank.fix1",
+          "problem": "jsc.guide.tank.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:tank",
+  "id": "jsc:tank",
+  "items": [
+    "jsc:tank"
+  ],
+  "order": 30,
+  "section": "jsc:storage",
+  "title": "jsc.guide.tank.title"
+}

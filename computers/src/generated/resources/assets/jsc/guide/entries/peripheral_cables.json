@@ -1,0 +1,100 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.peripheral_cables.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.peripheral_cables.for"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.peripheral_cables.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.peripheral_cables.table1_1",
+          "value": {
+            "literal": "8"
+          }
+        },
+        {
+          "label": "jsc.guide.peripheral_cables.table1_2",
+          "value": {
+            "literal": "12"
+          }
+        },
+        {
+          "label": "jsc.guide.peripheral_cables.table1_3",
+          "value": {
+            "literal": "14"
+          }
+        },
+        {
+          "label": "jsc.guide.peripheral_cables.table1_4",
+          "value": {
+            "literal": "16"
+          }
+        },
+        {
+          "label": "jsc.guide.peripheral_cables.table1_5",
+          "value": {
+            "literal": "20"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.peripheral_cables.use1",
+        "jsc.guide.peripheral_cables.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.peripheral_cables.fix1",
+          "problem": "jsc.guide.peripheral_cables.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:peripheral_cable",
+  "id": "jsc:peripheral_cables",
+  "items": [
+    "jsc:vintage_peripheral_cable",
+    "jsc:legacy_peripheral_cable",
+    "jsc:transition_peripheral_cable",
+    "jsc:peripheral_cable",
+    "jsc:advanced_peripheral_cable"
+  ],
+  "order": 40,
+  "section": "jsc:peripherals",
+  "title": "jsc.guide.peripheral_cables.title"
+}

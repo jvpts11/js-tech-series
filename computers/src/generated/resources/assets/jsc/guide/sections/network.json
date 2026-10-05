@@ -1,0 +1,6 @@
+{
+  "icon": "jsc:server_rack",
+  "id": "jsc:network",
+  "order": 2,
+  "title": "jsc.guide.section.network"
+}

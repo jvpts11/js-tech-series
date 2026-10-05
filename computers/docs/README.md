@@ -17,6 +17,10 @@ part by part, the systems and programs they run, and the network that stores, mo
 | [ComputerCraft](COMPUTERCRAFT.md) | Working together with CC: Tweaked's computers through the Network Gateway. |
 | [Music on a server](SOUNDFOUNDRY.md) | For server owners: where the music lives, the catalogue, and its settings. |
 
+The same, and more, is in the game: the **Guide to Operations**, the mod's own manual (tab J's Computers, among the
+programs), and the J's Computers chapter of the series' **Technical Reference**. Hold the manual key (**M**) over
+any item of the mod to open its page.
+
 ## For addon authors
 
 | Page | What it covers |

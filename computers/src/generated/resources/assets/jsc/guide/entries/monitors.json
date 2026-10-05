@@ -1,0 +1,67 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.what"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jsc.manual.from_the_tabs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.monitors.use1",
+        "jsc.guide.monitors.use2"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.monitors.fix1",
+          "problem": "jsc.guide.monitors.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:monitors",
+  "items": [
+    "jsc:mono_i_monitor",
+    "jsc:vintage_monitor",
+    "jsc:amber_monitor",
+    "jsc:cga_monitor",
+    "jsc:legacy_monitor",
+    "jsc:transition_monitor",
+    "jsc:monitor",
+    "jsc:color_monitor"
+  ],
+  "order": 38,
+  "section": "jsc:peripherals",
+  "title": "jsc.guide.monitors.title"
+}
