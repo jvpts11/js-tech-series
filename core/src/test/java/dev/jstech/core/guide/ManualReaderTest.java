@@ -94,6 +94,41 @@ class ManualReaderTest {
     }
 
     @Test
+    void article_namesTheItemsAnEntryShowsInALine() {
+        final List<String> items = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            items.add("gamma:part" + i);
+        }
+        final GuideEntry parts = new GuideEntry("gamma:parts", "gamma:section", 0, "parts.title", "", items,
+                List.of(new GuideBlock.Paragraph("text")));
+        final ManualReader.Article article = new ManualReader(MANUAL, new GuideContents(List.of(chapter("gamma",
+                parts))), new FixedText()).article("gamma:parts").orElseThrow();
+
+        final ManualReader.Piece.Parts line = (ManualReader.Piece.Parts) article.pieces().getFirst();
+        assertEquals("jscore.guide.items_more[part0, part1, part2, part3, part4, part5, part6, part7,2]",
+                line.line(), "the line names the first eight and says how many more");
+        assertEquals(10, line.parts().size());
+        assertEquals(new ManualReader.Part("gamma:part9", "part9"), line.parts().getLast());
+    }
+
+    @Test
+    void article_writesALinkInASentenceAsItsWordsAndListsItAfter() {
+        final GuideEntry one = new GuideEntry("gamma:one", "gamma:section", 0, "one.title", "", List.of(),
+                List.of(new GuideBlock.Paragraph("go to [the two](gamma:two) now")));
+        final GuideEntry two = new GuideEntry("gamma:two", "gamma:section", 1, "two.title", "", List.of(),
+                List.of(new GuideBlock.Paragraph("text")));
+        final ManualReader reader = new ManualReader(MANUAL, new GuideContents(List.of(new GuideContents.Chapter(
+                new GuideChapter("gamma", 0, "gamma.title", "", ""), List.of(new GuideContents.Section(
+                        new GuideSection("gamma:section", 0, "section.title", ""), List.of(one, two)))))),
+                new FixedText());
+
+        assertEquals(List.of(new ManualReader.Piece.Paragraph("go to the two (1.1.2) now", ManualReader.Tone.PLAIN),
+                new ManualReader.Piece.Links("jscore.guide.see_also", List.of(
+                        new ManualReader.Link("gamma:two", "1.1.2 two.title")))),
+                reader.article("gamma:one").orElseThrow().pieces());
+    }
+
+    @Test
     void nextAndPrevious_walkTheEntriesAcrossChapters() {
         final ManualReader reader = reader();
 

@@ -1,47 +1,64 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.first_computer.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.first_computer.what"
+      "text": "jsc.guide.first_computer.text2"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
+      "text": "jsc.guide.first_computer.heading1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.first_computer.for"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
+      "text": "jsc.guide.first_computer.text3"
     },
     {
       "type": "text",
-      "text": "jsc.guide.first_computer.get"
+      "text": "jsc.guide.first_computer.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text8"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
+      "text": "jsc.guide.first_computer.heading2"
     },
     {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.first_computer.use1",
-        "jsc.guide.first_computer.use2",
-        "jsc.guide.first_computer.use3",
-        "jsc.guide.first_computer.use4",
-        "jsc.guide.first_computer.use5",
-        "jsc.guide.first_computer.use6"
-      ]
+      "type": "text",
+      "text": "jsc.guide.first_computer.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text10"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jsc.guide.first_computer.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_computer.text11"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -53,15 +70,32 @@
         {
           "fix": "jsc.guide.first_computer.fix2",
           "problem": "jsc.guide.first_computer.problem2"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix3",
+          "problem": "jsc.guide.first_computer.problem3"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix4",
+          "problem": "jsc.guide.first_computer.problem4"
         }
       ]
     }
   ],
   "icon": "jsc:personal_computer",
   "id": "jsc:first_computer",
-  "items": [
-    "jsc:guide_to_operations"
+  "order": 1,
+  "section": "jsc:getting_started",
+  "shows": [
+    "jsc:personal_computer",
+    "jsc:motherboard_atx_standard_lga1150",
+    "jsc:cpu_integra_centro_c5_4690k",
+    "jsc:ram_ddr3_8192",
+    "jsc:gpu_vertex_gtx_970",
+    "jsc:psu_650g",
+    "jsc:disk_ssd_1t",
+    "jsc:monitor",
+    "jsc:dock_station"
   ],
-  "section": "jsc:computers",
   "title": "jsc.guide.first_computer.title"
 }

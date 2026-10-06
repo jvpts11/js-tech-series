@@ -1,20 +1,16 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.rack_equipment.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
+      "text": "jsc.guide.rack_equipment.text2"
     },
     {
       "type": "text",
-      "text": "jsc.guide.rack_equipment.for"
+      "text": "jsc.guide.rack_equipment.text3"
     },
     {
       "type": "define",
@@ -23,26 +19,7 @@
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
-      "type": "text",
-      "text": "jsc.manual.from_the_shared_tab"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.rack_equipment.use1",
-        "jsc.guide.rack_equipment.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -63,7 +40,7 @@
     "jsc:rack_ups",
     "jsc:cooling_unit"
   ],
-  "order": 7,
+  "order": 16,
   "section": "jsc:computers",
   "title": "jsc.guide.rack_equipment.title"
 }

@@ -1,20 +1,12 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.graphics_cards.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.graphics_cards.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.graphics_cards.for"
+      "text": "jsc.guide.graphics_cards.text2"
     },
     {
       "type": "define",
@@ -22,27 +14,16 @@
       "term": "jsc.guide.graphics_cards.term1"
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
+      "type": "text",
+      "text": "jsc.guide.graphics_cards.text3"
     },
     {
       "type": "text",
-      "text": "jsc.manual.from_the_tabs"
+      "text": "jsc.guide.graphics_cards.text4"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.graphics_cards.use1",
-        "jsc.guide.graphics_cards.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -138,7 +119,7 @@
     "jsc:gpu_tessera_a100",
     "jsc:gpu_tessera_h100"
   ],
-  "order": 11,
+  "order": 8,
   "section": "jsc:hardware",
   "title": "jsc.guide.graphics_cards.title"
 }

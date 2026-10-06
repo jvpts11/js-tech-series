@@ -1,78 +1,28 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.processors.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.processors.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
+      "text": "jsc.guide.processors.text2"
     },
     {
       "type": "text",
-      "text": "jsc.guide.processors.for"
-    },
-    {
-      "type": "table",
-      "caption": "jsc.guide.processors.table1",
-      "rows": [
-        {
-          "label": "jsc.guide.processors.table1_1",
-          "value": {
-            "words": "jsc.guide.processors.value1_1"
-          }
-        },
-        {
-          "label": "jsc.guide.processors.table1_2",
-          "value": {
-            "words": "jsc.guide.processors.value1_2"
-          }
-        },
-        {
-          "label": "jsc.guide.processors.table1_3",
-          "value": {
-            "words": "jsc.guide.processors.value1_3"
-          }
-        },
-        {
-          "label": "jsc.guide.processors.table1_4",
-          "value": {
-            "words": "jsc.guide.processors.value1_4"
-          }
-        }
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
+      "text": "jsc.guide.processors.text3"
     },
     {
       "type": "text",
-      "text": "jsc.manual.from_the_tabs"
+      "text": "jsc.guide.processors.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.processors.text5"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.processors.use1",
-        "jsc.guide.processors.use2"
-      ]
-    },
-    {
-      "type": "define",
-      "definition": "jsc.guide.processors.definition1",
-      "term": "jsc.guide.processors.term1"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -265,7 +215,7 @@
     "jsc:cpu_integra_servo_platina_8490h",
     "jsc:cpu_integra_servo_platina_8592"
   ],
-  "order": 9,
+  "order": 6,
   "section": "jsc:hardware",
   "title": "jsc.guide.processors.title"
 }

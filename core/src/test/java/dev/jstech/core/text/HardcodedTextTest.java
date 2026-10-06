@@ -60,9 +60,10 @@ class HardcodedTextTest {
      * manual's chapter, section, entry or manual says, each written to the language file under a key of its own.
      */
     private static final Set<String> DECLARATIONS = Set.of("named", "described", "subtitle", "sectionNamed",
-            "titled", "whatItIs", "whatItIsFor", "howToGetIt", "howToUseIt", "whatCanGoWrong", "paragraph",
-            "subheading", "figure", "table", "property", "amount", "fixed", "warning", "define", "steps", "cover",
-            "edition", "about", "note", "callout", "plan", "planPart", "planOptional");
+            "titled", "whatItIs", "whatItIsFor", "howToGetIt", "howToUseIt", "whatCanGoWrong", "ifSomethingGoesWrong",
+            "paragraph", "subheading", "figure", "picture", "drawing", "table", "property", "amount", "fixed",
+            "warning", "define", "steps", "cover", "edition", "about", "note", "callout", "plan", "planPart",
+            "planOptional");
 
     /** The toolkit's controls whose first words are the label a player reads on them. */
     private static final Set<String> LABELLED = Set.of("Button", "Label", "Checkbox", "Popup");

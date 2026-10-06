@@ -1,5 +1,6 @@
 {
-  "icon": "jsc:personal_computer",
+  "icon": "jsc:mainframe",
   "id": "jsc:computers",
+  "order": 2,
   "title": "jsc.guide.section.computers"
 }

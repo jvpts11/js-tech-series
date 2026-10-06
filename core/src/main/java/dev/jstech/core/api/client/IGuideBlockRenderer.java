@@ -24,7 +24,9 @@ import org.jetbrains.annotations.ApiStatus;
  * }</pre>
  *
  * <p>The Core keeps the room on the page and draws nothing in it but what the renderer draws. A kind no renderer is
- * registered for is left blank, so a manual still opens on a game without the mod that draws it.
+ * registered for is left blank, so a manual still opens on a game without the mod that draws it. The same renderer
+ * draws a picture an entry names as a drawing of its kind ({@code {"type": "picture", "drawing": "myaddon:structure",
+ * ...}}), in the column's width and the picture's height, numbered and captioned as a figure.
  */
 @ApiStatus.Experimental
 public interface IGuideBlockRenderer {

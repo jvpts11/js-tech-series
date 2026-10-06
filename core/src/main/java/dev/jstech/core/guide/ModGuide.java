@@ -262,6 +262,7 @@ public final class ModGuide {
         private final List<Supplier<GuideBlock>> blocks = new ArrayList<>();
         private final List<Supplier<? extends ItemLike>> covers = new ArrayList<>();
         private final List<Supplier<? extends Collection<? extends ItemLike>>> families = new ArrayList<>();
+        private final List<Supplier<? extends ItemLike>> shown = new ArrayList<>();
         private Supplier<? extends ItemLike> icon;
         private String title;
         private int paragraphs;
@@ -310,6 +311,16 @@ public final class ModGuide {
             return this;
         }
 
+        /**
+         * Items shown on the plate under the entry's title in place of those it is the page of: the parts an entry
+         * about an idea talks about, such as everything a first computer is built from.
+         */
+        @SafeVarargs
+        public final EntryBuilder shows(final Supplier<? extends ItemLike>... items) {
+            this.shown.addAll(List.of(items));
+            return this;
+        }
+
         /** The first part of the spine: what the thing is, from zero. */
         public EntryBuilder whatItIs(final String english) {
             return this.spine(GuideTexts.WHAT_IT_IS.key(), "what", english);
@@ -343,21 +354,21 @@ public final class ModGuide {
 
         /** The fifth part: what can go wrong, each problem as a player sees it followed by its fix. */
         public EntryBuilder whatCanGoWrong(final String... problemThenFix) {
-            if (problemThenFix.length == 0 || problemThenFix.length % 2 != 0) {
-                throw new IllegalArgumentException("what can go wrong is pairs of a problem and its fix");
-            }
-            this.add(() -> new GuideBlock.Heading(GuideTexts.WHAT_CAN_GO_WRONG.key()));
-            final List<GuideBlock.Problem> list = new ArrayList<>();
-            for (int i = 0; i < problemThenFix.length; i += 2) {
-                this.problems++;
-                list.add(new GuideBlock.Problem(this.key("problem" + this.problems, problemThenFix[i]),
-                        this.key("fix" + this.problems, problemThenFix[i + 1])));
-            }
-            final GuideBlock block = new GuideBlock.Problems(list);
-            return this.add(() -> block);
+            return this.troubles(GuideTexts.WHAT_CAN_GO_WRONG.key(), problemThenFix);
         }
 
-        /** A paragraph. */
+        /**
+         * What can go wrong, at the end of an entry written as running text: under "If something goes wrong", each
+         * problem as a player sees it followed by its fix.
+         */
+        public EntryBuilder ifSomethingGoesWrong(final String... problemThenFix) {
+            return this.troubles(GuideTexts.IF_SOMETHING_GOES_WRONG.key(), problemThenFix);
+        }
+
+        /**
+         * A paragraph. Its words may lead to another page: {@code [the words](namespace:path)} draws the words and
+         * the target's number as a link, {@code [](namespace:path)} the number alone.
+         */
         public EntryBuilder paragraph(final String english) {
             this.paragraphs++;
             final String key = this.key("text" + this.paragraphs, english);
@@ -376,6 +387,27 @@ public final class ModGuide {
             this.figures++;
             final String key = this.key("figure" + this.figures, caption);
             return this.add(() -> new GuideBlock.Figure(itemId(item), key));
+        }
+
+        /**
+         * A picture the mod ships, numbered with the figures and captioned: a texture {@code namespace:path} under
+         * {@code textures/}, drawn {@code width} by {@code height} (a width of 0 takes the column's).
+         */
+        public EntryBuilder picture(final String texture, final int width, final int height, final String caption) {
+            this.figures++;
+            final String key = this.key("figure" + this.figures, caption);
+            return this.add(() -> new GuideBlock.Picture(texture, "", "{}", width, height, key));
+        }
+
+        /**
+         * A picture a renderer draws as the page is shown, numbered with the figures and captioned: the kind
+         * registered with {@code GuideBlockRenderers}, handed {@code data} (JSON), as wide as the column and
+         * {@code height} tall.
+         */
+        public EntryBuilder drawing(final String kind, final int height, final String data, final String caption) {
+            this.figures++;
+            final String key = this.key("figure" + this.figures, caption);
+            return this.add(() -> new GuideBlock.Picture("", kind, data, 0, height, key));
         }
 
         /** A table; its rows follow with {@link #property}, {@link #amount} and {@link #fixed}. */
@@ -548,15 +580,32 @@ public final class ModGuide {
             final List<Supplier<GuideBlock>> declared = List.copyOf(this.blocks);
             final List<Supplier<? extends ItemLike>> items = List.copyOf(this.covers);
             final List<Supplier<? extends Collection<? extends ItemLike>>> groups = List.copyOf(this.families);
+            final List<Supplier<? extends ItemLike>> showing = List.copyOf(this.shown);
             final Supplier<? extends ItemLike> entryIcon = this.icon;
             final String sectionId = this.section.id();
             ModGuide.this.entries.add(() -> {
                 final Set<String> covered = new LinkedHashSet<>();
                 items.forEach(item -> covered.add(itemId(item)));
                 groups.forEach(group -> group.get().forEach(item -> covered.add(itemId(() -> item))));
+                final List<String> shows = showing.stream().map(ModGuide::itemId).toList();
                 return new GuideEntry(id, sectionId, order, titleKey, itemId(entryIcon), List.copyOf(covered),
-                        declared.stream().map(Supplier::get).toList());
+                        shows, declared.stream().map(Supplier::get).toList());
             });
+        }
+
+        private EntryBuilder troubles(final String heading, final String... problemThenFix) {
+            if (problemThenFix.length == 0 || problemThenFix.length % 2 != 0) {
+                throw new IllegalArgumentException("what can go wrong is pairs of a problem and its fix");
+            }
+            this.add(() -> new GuideBlock.Heading(heading));
+            final List<GuideBlock.Problem> list = new ArrayList<>();
+            for (int i = 0; i < problemThenFix.length; i += 2) {
+                this.problems++;
+                list.add(new GuideBlock.Problem(this.key("problem" + this.problems, problemThenFix[i]),
+                        this.key("fix" + this.problems, problemThenFix[i + 1])));
+            }
+            final GuideBlock block = new GuideBlock.Problems(list);
+            return this.add(() -> block);
         }
 
         private EntryBuilder spine(final String heading, final String part, final String english) {

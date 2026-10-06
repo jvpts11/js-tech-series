@@ -1,20 +1,12 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.items_as_data.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.items_as_data.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.items_as_data.for"
+      "text": "jsc.guide.items_as_data.text2"
     },
     {
       "type": "define",
@@ -22,27 +14,16 @@
       "term": "jsc.guide.items_as_data.term1"
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
+      "type": "text",
+      "text": "jsc.guide.items_as_data.text3"
     },
     {
       "type": "text",
-      "text": "jsc.guide.items_as_data.get"
+      "text": "jsc.guide.items_as_data.text4"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.items_as_data.use1",
-        "jsc.guide.items_as_data.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -56,7 +37,7 @@
   ],
   "icon": "jsc:disk_vaultis_trench_20m",
   "id": "jsc:items_as_data",
-  "order": 28,
+  "order": 35,
   "section": "jsc:storage",
   "title": "jsc.guide.items_as_data.title"
 }

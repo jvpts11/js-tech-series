@@ -1,44 +1,60 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.iql.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.iql.what"
+      "text": "jsc.guide.iql.text2"
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.iql.for"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.iql.get"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.iql.use1",
-        "jsc.guide.iql.use2",
-        "jsc.guide.iql.use3"
+      "type": "table",
+      "caption": "jsc.guide.iql.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.iql.table1_1",
+          "value": {
+            "literal": "SELECT 64 iron_ingot"
+          }
+        },
+        {
+          "label": "jsc.guide.iql.table1_2",
+          "value": {
+            "literal": "CRAFT 64 torch"
+          }
+        },
+        {
+          "label": "jsc.guide.iql.table1_3",
+          "value": {
+            "literal": "QUERY items WHERE qty > 100"
+          }
+        },
+        {
+          "label": "jsc.guide.iql.table1_4",
+          "value": {
+            "literal": "QUERY items ORDER BY name LIMIT 2"
+          }
+        },
+        {
+          "label": "jsc.guide.iql.table1_5",
+          "value": {
+            "literal": "QUERY disks"
+          }
+        }
       ]
     },
     {
+      "type": "text",
+      "text": "jsc.guide.iql.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.text4"
+    },
+    {
       "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -46,13 +62,17 @@
         {
           "fix": "jsc.guide.iql.fix1",
           "problem": "jsc.guide.iql.problem1"
+        },
+        {
+          "fix": "jsc.guide.iql.fix2",
+          "problem": "jsc.guide.iql.problem2"
         }
       ]
     }
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:iql",
-  "order": 27,
+  "order": 33,
   "section": "jsc:operations",
   "title": "jsc.guide.iql.title"
 }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.guide;
 
+import dev.jstech.core.guide.GuideLinks.Run;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -49,6 +50,7 @@ public final class GuideLayout {
     private final List<BodyPage> body = new ArrayList<>();
     private final Map<String, Integer> bodyTargets = new HashMap<>();
     private final Map<String, String> numbers = new HashMap<>();
+    private final Map<String, String> chapterNumbers = new HashMap<>();
     private final List<PendingLine> indexLines = new ArrayList<>();
     private final List<DrawingRow> drawingRows = new ArrayList<>();
     private List<GuidePiece> pieces = new ArrayList<>();
@@ -77,6 +79,8 @@ public final class GuideLayout {
     public static final int FOOTER_ROOM = 21;
     /** How tall a figure's frame is, an item drawn twice its size in the middle. */
     public static final int FIGURE_HEIGHT = 46;
+    /** How tall the plate under an entry's title is: a row of items at their own size, and its edge. */
+    public static final int PLATE_HEIGHT = 20;
     /** How tall a row of recipes is: the slots, and the time and energy over the arrow. */
     public static final int RECIPE_ROW = 26;
     /** The same on a drawing, whose notes are lettered small: the slots and a little room. */
@@ -285,6 +289,7 @@ public final class GuideLayout {
         int sectionsBefore = 0;
         for (final GuideContents.Chapter chapter : contents.chapters()) {
             chapterNo++;
+            this.chapterNumbers.put(chapter.chapter().namespace(), String.valueOf(chapterNo));
             int sectionNo = 0;
             for (final GuideContents.Section section : chapter.sections()) {
                 sectionNo++;
@@ -409,6 +414,12 @@ public final class GuideLayout {
         } else {
             this.lines(number + "  " + title, 0, this.width, TextSize.HEADING, GuideStyle.HEADING, "");
             this.y += TITLE_GAP;
+            // A drawing shows its machine in its views; a page of a binder shows its items on a plate under the title.
+            if (!entry.shown().isEmpty()) {
+                this.ensure(PLATE_HEIGHT);
+                this.place(new GuidePiece.Plate(this.x(), this.y, this.width, entry.id(), entry.shown()));
+                this.y += PLATE_HEIGHT + BLOCK_GAP;
+            }
         }
         for (final GuideBlock block : entry.blocks()) {
             this.block(block, entry);
@@ -418,12 +429,13 @@ public final class GuideLayout {
     private void block(final GuideBlock block, final GuideEntry entry) {
         switch (block) {
             case GuideBlock.Paragraph paragraph -> {
-                this.lines(this.text.text(paragraph.key()), 0, this.width, this.sized(TextSize.BODY),
-                        GuideStyle.INK, "");
+                this.richLines(this.text.text(paragraph.key()), 0, this.width, this.sized(TextSize.BODY),
+                        GuideStyle.INK);
                 this.y += PARAGRAPH_GAP;
             }
             case GuideBlock.Heading heading -> this.heading(heading);
             case GuideBlock.Figure figure -> this.figure(figure);
+            case GuideBlock.Picture picture -> this.picture(picture);
             case GuideBlock.Table table -> this.table(table);
             case GuideBlock.Recipes recipes -> this.recipes(recipes);
             case GuideBlock.Steps steps -> this.steps(steps);
@@ -432,8 +444,8 @@ public final class GuideLayout {
             case GuideBlock.Define define -> this.define(define, entry);
             case GuideBlock.SeeAlso see -> this.seeAlso(see);
             case GuideBlock.Note note -> {
-                this.lines(this.text.text(note.key()), 0, this.width, this.sized(TextSize.BODY),
-                        GuideStyle.ACCENT, "");
+                this.richLines(this.text.text(note.key()), 0, this.width, this.sized(TextSize.BODY),
+                        GuideStyle.ACCENT);
                 this.y += PARAGRAPH_GAP;
             }
             case GuideBlock.Break cut -> this.cut(cut);
@@ -456,8 +468,7 @@ public final class GuideLayout {
             this.y += TITLE_GAP;
         }
         // What can go wrong stands out in the style's accent, so a reader in trouble finds it at a glance.
-        final String colour = GuideTexts.WHAT_CAN_GO_WRONG.key().equals(heading.key()) ? GuideStyle.ACCENT
-                : GuideStyle.HEADING;
+        final String colour = troubles(heading.key()) ? GuideStyle.ACCENT : GuideStyle.HEADING;
         this.lines(this.upper(this.text.text(heading.key())), 0, this.width, size, colour, "");
         if (this.style.decor().smallText()) {
             this.y += 1;
@@ -474,6 +485,22 @@ public final class GuideLayout {
         this.place(new GuidePiece.Item(this.x() + this.width / 2 - 16, this.y + (FIGURE_HEIGHT - 32) / 2,
                 figure.item(), 2));
         this.y += FIGURE_HEIGHT + CAPTION_GAP;
+        this.caption(label, caption);
+        this.y += BLOCK_GAP;
+    }
+
+    /* A picture is counted with the figures, drawn as wide as asked (the column at most) and centred in it. */
+    private void picture(final GuideBlock.Picture picture) {
+        this.figures++;
+        final String label = this.text.text(GuideTexts.FIGURE.key(), this.chapterNumber + "-" + this.figures);
+        final List<String> caption = this.captionLines(label, picture.captionKey());
+        final int pictureWidth = picture.width() == 0 ? this.width : Math.min(this.width, picture.width());
+        final int pictureHeight = picture.width() == 0 || picture.width() <= this.width ? picture.height()
+                : picture.height() * this.width / picture.width();
+        this.ensure(pictureHeight + CAPTION_GAP + this.captionHeight(label, caption));
+        this.place(new GuidePiece.Picture(this.x() + (this.width - pictureWidth) / 2, this.y, pictureWidth,
+                pictureHeight, picture.image(), picture.drawing(), picture.data()));
+        this.y += pictureHeight + CAPTION_GAP;
         this.caption(label, caption);
         this.y += BLOCK_GAP;
     }
@@ -562,10 +589,10 @@ public final class GuideLayout {
         int number = 0;
         for (final String key : steps.keys()) {
             number++;
-            final List<String> lines = wrap(this.text.text(key), this.width - indent, body, this.text);
+            final List<List<Run>> lines = this.richWrap(this.text.text(key), this.width - indent, body);
             this.ensure(body.lineHeight());
             this.place(new GuidePiece.Text(this.x(), this.y, this.stepNumber(number), bold, GuideStyle.NUMBER, ""));
-            this.placeLines(lines, indent, body, GuideStyle.INK, "");
+            this.placeRich(lines, indent, body, GuideStyle.INK);
             this.y += 2;
         }
         this.y += PARAGRAPH_GAP;
@@ -578,10 +605,10 @@ public final class GuideLayout {
     private void warning(final GuideBlock.Warning warning) {
         final TextSize body = this.sized(TextSize.BODY);
         final TextSize bold = this.sized(TextSize.BOLD);
-        final List<String> lines = wrap(this.text.text(warning.key()), this.width - 2 * BOX_PAD, body, this.text);
+        final List<List<Run>> lines = this.richWrap(this.text.text(warning.key()), this.width - 2 * BOX_PAD, body);
         final int height = 2 * BOX_PAD + bold.lineHeight() + lines.size() * body.lineHeight();
         if (height > this.bottom() - this.top) {
-            this.lines(this.text.text(warning.key()), 0, this.width, body, GuideStyle.WARNING, "");
+            this.richLines(this.text.text(warning.key()), 0, this.width, body, GuideStyle.WARNING);
             this.y += PARAGRAPH_GAP;
             return;
         }
@@ -590,12 +617,13 @@ public final class GuideLayout {
                 GuideStyle.WARNING));
         this.place(new GuidePiece.Text(this.x() + BOX_PAD, this.y + BOX_PAD,
                 this.upper(this.text.text(GuideTexts.WARNING.key())), bold, GuideStyle.WARNING, ""));
-        int lineY = this.y + BOX_PAD + bold.lineHeight();
-        for (final String line : lines) {
-            this.place(new GuidePiece.Text(this.x() + BOX_PAD, lineY, line, body, GuideStyle.INK, ""));
-            lineY += body.lineHeight();
+        final int boxBottom = this.y + height;
+        this.y += BOX_PAD + bold.lineHeight();
+        for (final List<Run> line : lines) {
+            this.placeRun(line, BOX_PAD, body, GuideStyle.INK);
+            this.y += body.lineHeight();
         }
-        this.y += height + BLOCK_GAP;
+        this.y = boxBottom + BLOCK_GAP;
     }
 
     private void problems(final GuideBlock.Problems problems) {
@@ -606,7 +634,7 @@ public final class GuideLayout {
             this.ensure(2 * body.lineHeight());
             this.lines(this.text.text(problem.problemKey()), 0, this.width, this.sized(TextSize.BOLD),
                     GuideStyle.INK, "");
-            this.lines(this.text.text(problem.fixKey()), indent, this.width - indent, body, GuideStyle.INK, "");
+            this.richLines(this.text.text(problem.fixKey()), indent, this.width - indent, body, GuideStyle.INK);
             this.y += small ? 3 : PARAGRAPH_GAP;
         }
     }
@@ -617,8 +645,8 @@ public final class GuideLayout {
         this.ensure(2 * body.lineHeight());
         this.indexLines.add(new PendingLine(term, entry.id(), "", true, this.body.size()));
         this.lines(term, 0, this.width, this.sized(TextSize.BOLD), GuideStyle.HEADING, "");
-        this.lines(this.text.text(define.definitionKey()), FIX_INDENT, this.width - FIX_INDENT, body,
-                GuideStyle.INK, "");
+        this.richLines(this.text.text(define.definitionKey()), FIX_INDENT, this.width - FIX_INDENT, body,
+                GuideStyle.INK);
         this.y += PARAGRAPH_GAP;
     }
 
@@ -770,6 +798,127 @@ public final class GuideLayout {
             this.place(new GuidePiece.Text(this.x() + indent, this.y, line, size, colour, link));
             this.y += size.lineHeight();
         }
+    }
+
+    /**
+     * Wraps a sentence that may hold links and places its lines from the cursor down, each link's words in the link's
+     * colour and leading where it does.
+     */
+    private void richLines(final String sentence, final int indent, final int room, final TextSize size,
+                           final String colour) {
+        this.placeRich(this.richWrap(sentence, room, size), indent, size, colour);
+    }
+
+    /**
+     * A sentence that may hold links broken into lines no wider than {@code room}, between words only: a link's
+     * number stays with its words, and a comma after a link stays with it.
+     */
+    private List<List<Run>> richWrap(final String sentence, final int room, final TextSize size) {
+        final List<List<Run>> words = new ArrayList<>();
+        List<Run> word = new ArrayList<>();
+        for (final Run run : GuideLinks.runs(sentence, this::numberOf)) {
+            int at = 0;
+            final String runText = run.text();
+            while (at < runText.length()) {
+                if (runText.charAt(at) == ' ') {
+                    if (!word.isEmpty()) {
+                        words.add(word);
+                        word = new ArrayList<>();
+                    }
+                    at++;
+                    continue;
+                }
+                int end = at;
+                while (end < runText.length() && runText.charAt(end) != ' ') {
+                    end++;
+                }
+                word.add(new Run(runText.substring(at, end), run.target()));
+                at = end;
+            }
+        }
+        if (!word.isEmpty()) {
+            words.add(word);
+        }
+        final List<List<Run>> lines = new ArrayList<>();
+        List<Run> line = new ArrayList<>();
+        for (final List<Run> next : words) {
+            final List<Run> tried = new ArrayList<>(line);
+            if (!tried.isEmpty()) {
+                // A space between two words of one link belongs to the link; any other to the plain words.
+                final String between = tried.getLast().target().equals(next.getFirst().target())
+                        ? next.getFirst().target() : "";
+                tried.add(new Run(" ", between));
+            }
+            tried.addAll(next);
+            if (line.isEmpty() || this.text.width(plain(tried), size) <= room) {
+                line = tried;
+                continue;
+            }
+            lines.add(line);
+            line = new ArrayList<>(next);
+        }
+        if (!line.isEmpty() || lines.isEmpty()) {
+            lines.add(line);
+        }
+        final List<List<Run>> joined = new ArrayList<>();
+        for (final List<Run> each : lines) {
+            joined.add(join(each));
+        }
+        return joined;
+    }
+
+    /** Places lines of runs from the cursor down, each {@code indent} into its column, running on where it must. */
+    private void placeRich(final List<List<Run>> lines, final int indent, final TextSize size, final String colour) {
+        for (final List<Run> line : lines) {
+            this.ensure(size.lineHeight());
+            this.placeRun(line, indent, size, colour);
+            this.y += size.lineHeight();
+        }
+    }
+
+    /** One line of runs at the cursor's height, plain words in {@code colour} and links in the link's. */
+    private void placeRun(final List<Run> line, final int indent, final TextSize size, final String colour) {
+        final StringBuilder before = new StringBuilder();
+        for (final Run run : line) {
+            final int at = this.x() + indent + this.text.width(before.toString(), size);
+            this.place(new GuidePiece.Text(at, this.y, run.text(), size,
+                    run.target().isEmpty() ? colour : GuideStyle.LINK, run.target()));
+            before.append(run.text());
+        }
+    }
+
+    /** The number a link's target has in this manual: an entry's or a section's, or a chapter's; null when not held. */
+    private String numberOf(final String target) {
+        final String number = this.numbers.get(target);
+        return number != null ? number : this.chapterNumbers.get(target);
+    }
+
+    /** Runs side by side that lead to the same place made one, so a link is one piece to point at. */
+    private static List<Run> join(final List<Run> runs) {
+        final List<Run> joined = new ArrayList<>();
+        for (final Run run : runs) {
+            if (!joined.isEmpty() && joined.getLast().target().equals(run.target())) {
+                final Run last = joined.removeLast();
+                joined.add(new Run(last.text() + run.text(), run.target()));
+            } else {
+                joined.add(run);
+            }
+        }
+        return joined;
+    }
+
+    private static String plain(final List<Run> runs) {
+        final StringBuilder out = new StringBuilder();
+        for (final Run run : runs) {
+            out.append(run.text());
+        }
+        return out.toString();
+    }
+
+    /** Whether a heading leads into what can go wrong, which stands out in the style's accent. */
+    private static boolean troubles(final String headingKey) {
+        return GuideTexts.WHAT_CAN_GO_WRONG.key().equals(headingKey)
+                || GuideTexts.IF_SOMETHING_GOES_WRONG.key().equals(headingKey);
     }
 
     /** Moves on to the next column when what comes next is taller than the room left in this one. */

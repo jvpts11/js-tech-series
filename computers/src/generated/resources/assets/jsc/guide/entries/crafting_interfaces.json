@@ -1,45 +1,34 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.crafting_interfaces.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.crafting_interfaces.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
+      "text": "jsc.guide.crafting_interfaces.text2"
     },
     {
       "type": "text",
-      "text": "jsc.guide.crafting_interfaces.for"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
-      "type": "text",
-      "text": "jsc.manual.from_the_tabs"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
+      "text": "jsc.guide.crafting_interfaces.text3"
     },
     {
       "type": "steps",
       "steps": [
-        "jsc.guide.crafting_interfaces.use1",
-        "jsc.guide.crafting_interfaces.use2",
-        "jsc.guide.crafting_interfaces.use3",
-        "jsc.guide.crafting_interfaces.use4"
+        "jsc.guide.crafting_interfaces.step1",
+        "jsc.guide.crafting_interfaces.step2",
+        "jsc.guide.crafting_interfaces.step3",
+        "jsc.guide.crafting_interfaces.step4",
+        "jsc.guide.crafting_interfaces.step5"
       ]
     },
     {
+      "type": "text",
+      "text": "jsc.guide.crafting_interfaces.text4"
+    },
+    {
       "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -47,6 +36,10 @@
         {
           "fix": "jsc.guide.crafting_interfaces.fix1",
           "problem": "jsc.guide.crafting_interfaces.problem1"
+        },
+        {
+          "fix": "jsc.guide.crafting_interfaces.fix2",
+          "problem": "jsc.guide.crafting_interfaces.problem2"
         }
       ]
     }
@@ -62,7 +55,7 @@
     "jsc:crafting_input_router",
     "jsc:receiving_bus"
   ],
-  "order": 33,
+  "order": 40,
   "section": "jsc:autocrafting",
   "title": "jsc.guide.crafting_interfaces.title"
 }

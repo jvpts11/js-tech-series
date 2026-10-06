@@ -1,20 +1,8 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
-    },
-    {
       "type": "text",
-      "text": "jsc.guide.data_cables.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.data_cables.for"
+      "text": "jsc.guide.data_cables.text1"
     },
     {
       "type": "table",
@@ -47,6 +35,10 @@
       ]
     },
     {
+      "type": "text",
+      "text": "jsc.guide.data_cables.text2"
+    },
+    {
       "type": "define",
       "definition": "jsc.guide.data_cables.definition1",
       "term": "jsc.guide.data_cables.term1"
@@ -57,27 +49,16 @@
       "term": "jsc.guide.data_cables.term2"
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
+      "type": "text",
+      "text": "jsc.guide.data_cables.text3"
     },
     {
       "type": "text",
-      "text": "jsc.manual.from_the_tabs"
+      "text": "jsc.guide.data_cables.text4"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.data_cables.use1",
-        "jsc.guide.data_cables.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -115,7 +96,7 @@
     "jsc:hpc_cable",
     "jsc:osfp_cable"
   ],
-  "order": 20,
+  "order": 25,
   "section": "jsc:network",
   "title": "jsc.guide.data_cables.title"
 }

@@ -1,20 +1,12 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.mainframes.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.mainframes.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.mainframes.for"
+      "text": "jsc.guide.mainframes.text2"
     },
     {
       "type": "table",
@@ -59,25 +51,8 @@
       ]
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
       "type": "text",
-      "text": "jsc.manual.from_the_tabs"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.mainframes.use1",
-        "jsc.guide.mainframes.use2",
-        "jsc.guide.mainframes.use3",
-        "jsc.guide.mainframes.use4"
-      ]
+      "text": "jsc.guide.mainframes.text3"
     },
     {
       "type": "define",
@@ -85,8 +60,12 @@
       "term": "jsc.guide.mainframes.term1"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text4"
+    },
+    {
       "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -111,7 +90,7 @@
     "jsc:transition_mainframe",
     "jsc:advanced_mainframe"
   ],
-  "order": 4,
+  "order": 14,
   "section": "jsc:computers",
   "title": "jsc.guide.mainframes.title"
 }

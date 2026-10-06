@@ -1,0 +1,61 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.operations_catalogue.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.operations_catalogue.definition1",
+      "term": "jsc.guide.operations_catalogue.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.operations_catalogue.definition2",
+      "term": "jsc.guide.operations_catalogue.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.operations_catalogue.definition3",
+      "term": "jsc.guide.operations_catalogue.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.operations_catalogue.definition4",
+      "term": "jsc.guide.operations_catalogue.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.operations_catalogue.definition5",
+      "term": "jsc.guide.operations_catalogue.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.operations_catalogue.definition6",
+      "term": "jsc.guide.operations_catalogue.term6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.operations_catalogue.definition7",
+      "term": "jsc.guide.operations_catalogue.term7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.operations_catalogue.definition8",
+      "term": "jsc.guide.operations_catalogue.term8"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.operations_catalogue.warning1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.operations_catalogue.text2"
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:operations_catalogue",
+  "order": 31,
+  "section": "jsc:operations",
+  "title": "jsc.guide.operations_catalogue.title"
+}

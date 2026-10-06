@@ -1,0 +1,73 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.eras.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.eras.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.eras.table1_1",
+          "value": {
+            "words": "jsc.guide.eras.value1_1"
+          }
+        },
+        {
+          "label": "jsc.guide.eras.table1_2",
+          "value": {
+            "words": "jsc.guide.eras.value1_2"
+          }
+        },
+        {
+          "label": "jsc.guide.eras.table1_3",
+          "value": {
+            "words": "jsc.guide.eras.value1_3"
+          }
+        },
+        {
+          "label": "jsc.guide.eras.table1_4",
+          "value": {
+            "words": "jsc.guide.eras.value1_4"
+          }
+        },
+        {
+          "label": "jsc.guide.eras.table1_5",
+          "value": {
+            "words": "jsc.guide.eras.value1_5"
+          }
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.eras.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.eras.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.eras.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.eras.definition1",
+      "term": "jsc.guide.eras.term1"
+    }
+  ],
+  "icon": "jsc:vintage_personal_computer",
+  "id": "jsc:eras",
+  "order": 4,
+  "section": "jsc:getting_started",
+  "shows": [
+    "jsc:vintage_personal_computer",
+    "jsc:legacy_personal_computer",
+    "jsc:transition_personal_computer",
+    "jsc:personal_computer",
+    "jsc:advanced_personal_computer"
+  ],
+  "title": "jsc.guide.eras.title"
+}

@@ -24,10 +24,12 @@ import java.util.Objects;
  * @param titleKey its title's sentence
  * @param icon     the item drawn beside it in lists, or empty
  * @param items    the items it is the page of
+ * @param shows    the items shown under its title, when they are others than those it is the page of: the parts an
+ *                 entry about an idea talks about; empty to show the items it is the page of
  * @param blocks   what it says, in order
  */
 public record GuideEntry(String id, String section, int order, String titleKey, String icon, List<String> items,
-                         List<GuideBlock> blocks) {
+                         List<String> shows, List<GuideBlock> blocks) {
 
     public GuideEntry {
         Objects.requireNonNull(id, "id");
@@ -35,7 +37,19 @@ public record GuideEntry(String id, String section, int order, String titleKey, 
         Objects.requireNonNull(titleKey, "titleKey");
         icon = icon == null ? "" : icon;
         items = List.copyOf(items);
+        shows = List.copyOf(shows);
         blocks = List.copyOf(blocks);
+    }
+
+    /** An entry that shows the items it is the page of. */
+    public GuideEntry(final String id, final String section, final int order, final String titleKey,
+                      final String icon, final List<String> items, final List<GuideBlock> blocks) {
+        this(id, section, order, titleKey, icon, items, List.of(), blocks);
+    }
+
+    /** The items shown under its title: those it names to show, or else those it is the page of. */
+    public List<String> shown() {
+        return this.shows.isEmpty() ? this.items : this.shows;
     }
 
     /** The mod the entry belongs to: the namespace of its id. */

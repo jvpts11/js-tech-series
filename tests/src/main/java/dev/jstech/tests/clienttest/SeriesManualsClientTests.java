@@ -28,6 +28,8 @@ public final class SeriesManualsClientTests {
     private static final int MOST_SHEETS = 17;
     /** The most sheets a drawing of the set was written for: the Macerator's three, its recipes on the third. */
     private static final int MOST_SHEETS_A_DRAWING = 3;
+    /** A part on the plate of the first computer's page, whose own page is the processors'. */
+    private static final String PROCESSOR = "jsc:cpu_integra_centro_c5_4690k";
 
     private SeriesManualsClientTests() {
     }
@@ -69,6 +71,39 @@ public final class SeriesManualsClientTests {
                 .thenAssert(0, () -> manual().goTo("jsc:personal_computers") && shows("jsc:personal_computers"),
                         "it opens at an entry")
                 .thenScreenshot(SETTLE, "series_operations_entry")
+                .thenAssert(0, () -> manual().goTo("jsc:graphics_cards") && shows("jsc:graphics_cards"),
+                        "and at the graphics cards, a family of many items")
+                .thenScreenshot(SETTLE, "series_operations_family")
+                .then(0, SeriesManualsClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 400)
+    public static void guideToOperations_showsItsItemsOnAPlateAndItsFirmwareInPictures(final ClientTestContext ctx) {
+        ctx.then(0, () -> GuideClient.open(ComputersGuide.GUIDE_TO_OPERATIONS, "jsc:welcome"))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> shows("jsc:welcome"), "the guide opens at its welcome")
+                .thenScreenshot(2, "series_operations_welcome")
+                .thenAssert(0, () -> manual().goTo("jsc:first_computer") && shows("jsc:first_computer"),
+                        "and turns to building a first computer")
+                .thenScreenshot(SETTLE, "series_operations_first_computer")
+                .thenWaitUntil(() -> {
+                    // The plate turns over every two seconds; the processor is clicked while it is on it.
+                    final int[] point = manual().plateItemPoint(PROCESSOR);
+                    if (point == null) {
+                        return false;
+                    }
+                    ctx.click(point[0], point[1]);
+                    return true;
+                }, OPEN * 4, "the processor on the plate to be clicked")
+                .thenAssert(SETTLE, () -> shows("jsc:processors"), "the processor leads to the processors' page")
+                .thenAssert(0, () -> manual().goTo("jsc:firmware") && shows("jsc:firmware"),
+                        "the firmware's entry is in the guide")
+                .thenScreenshot(SETTLE, "series_operations_firmware")
+                .then(0, () -> manual().turn(1))
+                .thenScreenshot(SETTLE, "series_operations_firmware_2")
+                .then(0, () -> manual().turn(1))
+                .thenScreenshot(SETTLE, "series_operations_firmware_3")
                 .then(0, SeriesManualsClientTests::close)
                 .thenAwaitNoScreen(OPEN);
     }

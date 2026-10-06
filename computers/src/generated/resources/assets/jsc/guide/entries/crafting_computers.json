@@ -1,45 +1,56 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.crafting_computers.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.crafting_computers.what"
+      "text": "jsc.guide.crafting_computers.text2"
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.crafting_computers.for"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
-      "type": "text",
-      "text": "jsc.manual.from_the_tabs"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.crafting_computers.use1",
-        "jsc.guide.crafting_computers.use2",
-        "jsc.guide.crafting_computers.use3",
-        "jsc.guide.crafting_computers.use4"
+      "type": "table",
+      "caption": "jsc.guide.crafting_computers.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.crafting_computers.table1_1",
+          "value": {
+            "literal": "2"
+          }
+        },
+        {
+          "label": "jsc.guide.crafting_computers.table1_2",
+          "value": {
+            "literal": "4"
+          }
+        },
+        {
+          "label": "jsc.guide.crafting_computers.table1_3",
+          "value": {
+            "literal": "5"
+          }
+        },
+        {
+          "label": "jsc.guide.crafting_computers.table1_4",
+          "value": {
+            "literal": "6"
+          }
+        },
+        {
+          "label": "jsc.guide.crafting_computers.table1_5",
+          "value": {
+            "literal": "8"
+          }
+        }
       ]
     },
     {
+      "type": "text",
+      "text": "jsc.guide.crafting_computers.text3"
+    },
+    {
       "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -47,14 +58,11 @@
         {
           "fix": "jsc.guide.crafting_computers.fix1",
           "problem": "jsc.guide.crafting_computers.problem1"
+        },
+        {
+          "fix": "jsc.guide.crafting_computers.fix2",
+          "problem": "jsc.guide.crafting_computers.problem2"
         }
-      ]
-    },
-    {
-      "type": "see",
-      "entries": [
-        "jsc:how_autocrafting_works",
-        "jsc:crafting_cards"
       ]
     }
   ],
@@ -69,9 +77,15 @@
     "jsc:transition_crafting_computer",
     "jsc:advanced_crafting_computer",
     "jsc:advanced_high_performance_crafting_computer",
-    "jsc:advanced_aesthetic_crafting_computer"
+    "jsc:advanced_aesthetic_crafting_computer",
+    "jsc:crafting_card_isa",
+    "jsc:crafting_card_pci",
+    "jsc:crafting_card_t2",
+    "jsc:crafting_card_t3",
+    "jsc:crafting_card_pcie3",
+    "jsc:crafting_card_t4"
   ],
-  "order": 2,
-  "section": "jsc:computers",
+  "order": 39,
+  "section": "jsc:autocrafting",
   "title": "jsc.guide.crafting_computers.title"
 }

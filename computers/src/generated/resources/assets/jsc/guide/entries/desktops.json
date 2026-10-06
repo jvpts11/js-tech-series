@@ -1,0 +1,34 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.desktops.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.desktops.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.desktops.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.desktops.fix1",
+          "problem": "jsc.guide.desktops.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:desktops",
+  "order": 19,
+  "section": "jsc:systems",
+  "title": "jsc.guide.desktops.title"
+}

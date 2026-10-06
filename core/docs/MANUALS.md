@@ -85,10 +85,10 @@ A chapter's `about` is the paragraph on its opening page. The series' chapters s
 the Core 10, J's Computers 20, J's Industrial 30; an addon picks an order after them. Sections and entries share one
 set of ids, so a section and an entry cannot both be `mymod:kilns`: the declaration stops and says so.
 
-### The five parts
+### The five parts, or running text
 
-Every entry of the series follows the same five parts, in this order, each with its own method that puts the part's
-heading before its words:
+An entry is written in one of two forms. The Core's chapter and J's Industrial's drawings follow the same five
+parts, in this order, each with its own method that puts the part's heading before its words:
 
 1. `whatItIs`: what the thing is, from zero.
 2. `whatItIsFor`: why a player would want it.
@@ -97,8 +97,56 @@ heading before its words:
 5. `whatCanGoWrong`: each problem as a player sees it, then its fix.
 
 A player who knows the thing skips to the table or to what can go wrong; one who does not reads it from the top.
+
+*Added 2026-10-06.* J's Computers' chapter is a guide instead: it explains the idea before the part, in
+`paragraph`s and `subheading`s, the way a person tells it, and ends an entry with
+`ifSomethingGoesWrong(problem, fix, ...)`, the same problems and fixes under "If something goes wrong". Pick the
+form that suits your chapter and keep to it in every entry.
+
 Explain a word where an entry first uses it, with `define`: the index lists every such word with its page, which
 makes the index the manual's glossary.
+
+### Links inside a sentence
+
+*Added 2026-10-06.*
+
+Any sentence of an entry (a paragraph, a step, a note, a warning, a fix, a definition) can lead to another page in
+its own words. Write the words in square brackets and the target after them in round ones:
+
+```java
+.paragraph("Every disk is counted in items of its era; [the eras](mymod:eras) explain why.")
+.paragraph("Give it energy first ([](mymod:generator)).")
+```
+
+The first reads "the eras (2.1.4)", the second "(2.3.1)": the words and the number, or the number alone, drawn as a
+link the reader clicks. The number is the one the target has in the manual being read, so the same sentence is
+right in your own manual and in one holding every chapter; a target that manual does not hold reads as its words
+alone. A target is an entry or a section (`namespace:path`) or a chapter (its namespace). A translation keeps the
+brackets and the target and translates the words. Read as text, in a help program, a link is written as its words
+and number, and the entry lists every page it led to under "See also" at its end.
+
+### The plate under the title
+
+*Added 2026-10-06.*
+
+On a binder's page the items an entry talks about stand on a plate under its title, at their own size: the ones it
+is the page of, or the ones `shows(item...)` names when they are others, such as every part of a first computer on
+the page that builds one. A row holds what fits the column (eight on the Core's binder); a family longer than that
+turns over to its next row every two seconds. The pointer on an item shows its tooltip, and a click on one whose
+page is another entry goes there. A set of drawings has no plate, since its views show the machine. Read as text, the
+plate is a line, "Items: ...", naming the first eight and how many more.
+
+### Pictures
+
+*Added 2026-10-06.*
+
+A picture is numbered with the figures ("Figure 3-2.") and captioned like them, and comes two ways:
+
+- `picture(texture, width, height, caption)`: an image your mod ships, a texture `namespace:path` under
+  `textures/`, drawn at that size (a width of 0 takes the column's).
+- `drawing(kind, height, json, caption)`: a drawing a renderer of yours makes as the page is shown, registered like a
+  special block's (below). The picture then never falls behind what it shows and reads in the reader's language:
+  J's Computers draws its firmware's real screens this way, `drawing("jsc:firmware", 97, "{\"look\":\"uefi\"}", ...)`.
 
 ### The other blocks
 
@@ -116,6 +164,9 @@ makes the index the manual's glossary.
 | `plan(caption)`, then `planPart(block, english)`, `planOptional(english)` | Blocks seen from above side by side as they are to be placed, each named under it; an optional place is outlined in dots. |
 | `nextColumn()`, `nextPage()` | On a page of two columns, what follows starts in the next column, or on the next page (the next sheet of a drawing). A page of one column runs straight on. |
 | `custom(kind, height, json)` | A special block your mod draws (below). |
+| `picture(texture, width, height, caption)`, `drawing(kind, height, json, caption)` | A numbered picture: an image, or a drawing your mod's renderer makes (above). |
+| `shows(item...)` | The items on the plate under the title, when they are others than those the entry is the page of. |
+| `ifSomethingGoesWrong(problem, fix, ...)` | The end of an entry in running text: each problem, then its fix. |
 
 `covers(item)` says which items this entry is the page of: holding the manual key over one of them opens here.
 `coversAll(family)` does the same for a whole family, read when the files are written, so a part added to the family
@@ -229,7 +280,8 @@ GuideBlockRenderers.register(ResourceLocation.fromNamespaceAndPath("mymod", "str
 ```
 
 The page keeps the room and hands your renderer the JSON as a tag. A game without your mod leaves the room blank, and
-the manual still opens.
+the manual still opens. The same renderer draws a `drawing` picture of its kind, given the column's width and the
+picture's height.
 
 ## Reading a manual as text
 
@@ -247,9 +299,9 @@ reader.search("steam pressure");      // the entries holding every word
 reader.index();                       // titles and explained words, alphabetically
 ```
 
-`words` is the `IGuideText` that puts the keys in the reader's language, as the binder's screen does. An article's
-pieces are a sealed set (`Heading`, `Paragraph`, `Item`, `Term`, `Table`, `Picture`, `Recipes`, `Links`), so a
-viewer handles each one and the compiler says when a new one comes. Figures and tables keep their chapter's numbers
+`words` is the `IGuideText` that puts the keys in the reader's language, as the binder's screen does, and names items
+with `itemName`. An article's pieces are a sealed set (`Parts`, `Heading`, `Paragraph`, `Item`, `Term`, `Table`,
+`Picture`, `Recipes`, `Links`), so a viewer handles each one and the compiler says when a new one comes. Figures and tables keep their chapter's numbers
 ("Table 3-7"); a block seen from three sides becomes its picture and its legend, a plan its parts, and a page break
 or a special block is left out. J's Computers reads the manuals this way in its help programs.
 
@@ -258,7 +310,8 @@ or a special block is left out. J's Computers reads the manuals this way in its 
 - Using the manual item opens it at its cover the first time; after that, at the page it was closed at, for as long
   as the game runs. A click on the cover opens it to its contents.
 - The arrows, the arrow keys, Page Up and Page Down and the mouse wheel turn the pages; Home goes to the contents.
-- A line of the contents, a number after "See", a line of the index and a chapter's tab each go to their page.
+- A line of the contents, a number after "See", a link in a sentence, a line of the index and a chapter's tab each
+  go to their page; so does an item on the plate under an entry's title whose page is another.
 - The magnifier on the top edge turns the left page into a search of the index that filters as the player types; the
   right page shows the index around the first thing found.
 - Holding **M** (the player can change it, "Open Its Page in the Manual") for a moment over an item in any inventory,

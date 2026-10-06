@@ -8,6 +8,7 @@
 package dev.jstech.core.client.guide;
 
 import dev.jstech.core.client.GameLocale;
+import dev.jstech.core.guide.GuideIds;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.IGuideText;
 import dev.jstech.core.guide.TextSize;
@@ -15,7 +16,10 @@ import dev.jstech.core.text.TextFormat;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.locale.Language;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * The manual's layout answered from the player's game: words in the loaded language, widths from the game's fonts in
@@ -60,5 +64,19 @@ public final class ClientGuideText implements IGuideText {
     public String amount(final long value, final String unit) {
         final String number = GameLocale.count(value);
         return unit.isEmpty() ? number : number + " " + unit;
+    }
+
+    @Override
+    public String itemName(final String item) {
+        return itemNameOf(item);
+    }
+
+    /** An item's name in the loaded language, read from the game's items; its id's path when it has none. */
+    public static String itemNameOf(final String item) {
+        final ResourceLocation id = ResourceLocation.tryParse(item);
+        if (id == null || !BuiltInRegistries.ITEM.containsKey(id)) {
+            return GuideIds.path(item);
+        }
+        return new ItemStack(BuiltInRegistries.ITEM.get(id)).getHoverName().getString();
     }
 }

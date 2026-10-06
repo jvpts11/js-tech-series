@@ -28,6 +28,7 @@ import net.minecraft.util.ExtraCodecs;
  * <pre>{@code
  * {"type": "text", "text": "jsc.guide.graphics_cards.what"}
  * {"type": "figure", "item": "jsc:gtx_780_ti", "caption": "jsc.guide.graphics_cards.figure1"}
+ * {"type": "picture", "drawing": "jsc:firmware", "data": {"look": "uefi"}, "height": 92, "caption": "..."}
  * {"type": "table", "caption": "...", "rows": [{"label": "...", "amount": 3072, "unit": "MB"}]}
  * {"type": "recipes", "recipe_type": "jsindustrial:compressing"}
  * }</pre>
@@ -62,6 +63,7 @@ public final class GuideCodecs {
             Codec.STRING.fieldOf("title").forGetter(GuideEntry::titleKey),
             Codec.STRING.optionalFieldOf("icon", "").forGetter(GuideEntry::icon),
             Codec.STRING.listOf().optionalFieldOf("items", List.of()).forGetter(GuideEntry::items),
+            Codec.STRING.listOf().optionalFieldOf("shows", List.of()).forGetter(GuideEntry::shows),
             BLOCK.listOf().fieldOf("blocks").forGetter(GuideEntry::blocks)
     ).apply(instance, GuideEntry::new));
 
@@ -192,6 +194,17 @@ public final class GuideCodecs {
                     custom.data())))
     ).apply(instance, (type, height, data) -> new GuideBlock.Custom(type, height,
             data.map(JsonElement::toString).orElse("{}"))));
+    private static final MapCodec<GuideBlock.Picture> PICTURE = RecordCodecBuilder.mapCodec(instance ->
+            instance.group(
+                    Codec.STRING.optionalFieldOf("image", "").forGetter(GuideBlock.Picture::image),
+                    Codec.STRING.optionalFieldOf("drawing", "").forGetter(GuideBlock.Picture::drawing),
+                    ExtraCodecs.JSON.optionalFieldOf("data").forGetter(picture -> Optional.of(
+                            JsonParser.parseString(picture.data()))),
+                    Codec.INT.optionalFieldOf("width", 0).forGetter(GuideBlock.Picture::width),
+                    Codec.INT.fieldOf("height").forGetter(GuideBlock.Picture::height),
+                    Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Picture::captionKey)
+            ).apply(instance, (image, drawing, data, width, height, caption) -> new GuideBlock.Picture(image,
+                    drawing, data.map(JsonElement::toString).orElse("{}"), width, height, caption)));
     private static final MapCodec<GuideBlock.Note> NOTE = RecordCodecBuilder.mapCodec(instance ->
             instance.group(Codec.STRING.fieldOf("text").forGetter(GuideBlock.Note::key))
                     .apply(instance, GuideBlock.Note::new));
@@ -215,6 +228,7 @@ public final class GuideCodecs {
             case GuideBlock.Paragraph paragraph -> "text";
             case GuideBlock.Heading heading -> "heading";
             case GuideBlock.Figure figure -> "figure";
+            case GuideBlock.Picture picture -> "picture";
             case GuideBlock.Table table -> "table";
             case GuideBlock.Recipes recipes -> "recipes";
             case GuideBlock.Steps steps -> "steps";
@@ -235,6 +249,7 @@ public final class GuideCodecs {
             case "text" -> PARAGRAPH;
             case "heading" -> HEADING;
             case "figure" -> FIGURE;
+            case "picture" -> PICTURE;
             case "table" -> TABLE;
             case "recipes" -> RECIPES;
             case "steps" -> STEPS;

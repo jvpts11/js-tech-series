@@ -1,0 +1,58 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.engines.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.engines.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.engines.table1_1",
+          "value": {
+            "words": "jsc.guide.engines.value1_1"
+          }
+        },
+        {
+          "label": "jsc.guide.engines.table1_2",
+          "value": {
+            "words": "jsc.guide.engines.value1_2"
+          }
+        },
+        {
+          "label": "jsc.guide.engines.table1_3",
+          "value": {
+            "words": "jsc.guide.engines.value1_3"
+          }
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engines.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engines.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.engines.fix1",
+          "problem": "jsc.guide.engines.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:engines",
+  "order": 34,
+  "section": "jsc:operations",
+  "title": "jsc.guide.engines.title"
+}

@@ -1,0 +1,46 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.welcome.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.welcome.text6"
+    }
+  ],
+  "icon": "jsc:personal_computer",
+  "id": "jsc:welcome",
+  "items": [
+    "jsc:guide_to_operations"
+  ],
+  "section": "jsc:getting_started",
+  "shows": [
+    "jsc:personal_computer",
+    "jsc:monitor",
+    "jsc:mainframe",
+    "jsc:server_rack",
+    "jsc:crafting_computer"
+  ],
+  "title": "jsc.guide.welcome.title"
+}

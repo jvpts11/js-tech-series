@@ -18,6 +18,7 @@ import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCodecs;
 import dev.jstech.core.guide.GuideEntry;
 import dev.jstech.core.guide.GuideGifts;
+import dev.jstech.core.guide.GuideLinks;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.guide.ModGuide;
 import dev.jstech.core.registry.CoreItems;
@@ -26,6 +27,7 @@ import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -40,8 +42,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The series' own manuals as their mods declare them: the Technical Reference handed to a player once, as they first
- * join a world; every item of the series the page of some entry; every entry of the series following the five parts
- * in their order; and every entry, the drawings' views and plans included, read back from its file the same.
+ * join a world; every item of the series the page of some entry; every entry following the form of its chapter, the
+ * five parts in their order or running text; every link in a sentence leading to a page that exists; and every entry,
+ * the drawings' views and plans included, read back from its file the same.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -54,6 +57,8 @@ public final class SeriesManualsGameTests {
     private static final List<String> SERIES = List.of("jscore", "jsc", "jsindustrial");
     private static final List<String> SPINE = List.of(GuideTexts.WHAT_IT_IS.key(), GuideTexts.WHAT_IT_IS_FOR.key(),
             GuideTexts.HOW_TO_GET_IT.key(), GuideTexts.HOW_TO_USE_IT.key(), GuideTexts.WHAT_CAN_GO_WRONG.key());
+    /** The chapters written as a guide in running text rather than in the five parts. */
+    private static final Set<String> PROSE = Set.of("jsc");
 
     private SeriesManualsGameTests() {
     }
@@ -94,20 +99,50 @@ public final class SeriesManualsGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void seriesEntries_followTheFivePartsInTheirOrder(final GameTestHelper helper) {
+    public static void seriesEntries_followTheFormOfTheirChapter(final GameTestHelper helper) {
         final List<String> wrong = new ArrayList<>();
         for (final ModGuide guide : guides()) {
+            // J's Computers' chapter is a guide in running text; the others' entries follow the five parts.
+            final boolean prose = PROSE.contains(guide.namespace());
             for (final GuideEntry entry : guide.declaredEntries()) {
                 final List<String> spine = entry.blocks().stream()
                         .filter(part -> part instanceof GuideBlock.Heading heading && SPINE.contains(heading.key()))
                         .map(part -> ((GuideBlock.Heading) part).key()).toList();
-                if (!spine.equals(SPINE)) {
+                final boolean written = entry.blocks().stream().anyMatch(part -> part instanceof GuideBlock.Paragraph);
+                if (prose ? !spine.isEmpty() || !written : !spine.equals(SPINE)) {
                     wrong.add(entry.id() + " " + spine);
                 }
             }
         }
-        helper.assertTrue(wrong.isEmpty(), "every entry says what it is, what for, how to get it, how to use it and"
-                + " what can go wrong, in that order; not " + wrong);
+        helper.assertTrue(wrong.isEmpty(), "every entry of a chapter in the five parts says what it is, what for, how"
+                + " to get it, how to use it and what can go wrong, in that order, and every entry of a chapter in"
+                + " running text has its paragraphs and none of those headings; not " + wrong);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void seriesLinks_leadToPagesThatExist(final GameTestHelper helper) {
+        final Set<String> pages = new HashSet<>();
+        for (final ModGuide guide : guides()) {
+            pages.add(guide.namespace());
+            guide.declaredSections().forEach(section -> pages.add(section.id()));
+            guide.declaredEntries().forEach(entry -> pages.add(entry.id()));
+        }
+        final List<String> broken = new ArrayList<>();
+        int links = 0;
+        for (final ModGuide guide : guides()) {
+            for (final Map.Entry<String, String> sentence : guide.translations().entrySet()) {
+                for (final String target : GuideLinks.targets(sentence.getValue())) {
+                    links++;
+                    if (!pages.contains(target)) {
+                        broken.add(sentence.getKey() + " -> " + target);
+                    }
+                }
+            }
+        }
+        helper.assertTrue(links > 0, "the series' sentences lead to other pages");
+        helper.assertTrue(broken.isEmpty(), "every link in a sentence leads to a page the series declares; not "
+                + broken);
         helper.succeed();
     }
 

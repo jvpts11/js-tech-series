@@ -45,17 +45,18 @@ public final class ComputersGuide {
         guide.manual("guide_to_operations").titled("Guide to Operations").cover("J's Computers")
                 .edition("First Edition (September 2026)").style(OPERATIONS_STYLE).chapters("jsc").priority(50)
                 .icon("jsc:gui/guide/cover_mark")
-                .about("This binder is the operator's guide to J's Computers: every computer, every part, the"
-                                + " network and what it does for you.",
-                        "Every entry says, in this order, what the thing is, what it is for, how to get it, how to"
-                                + " use it step by step, and what can go wrong. New to computers? Start with 1.1.1,"
-                                + " Your first computer.",
-                        "The magnifier on the top edge finds any part by name. Hold the manual key over an item to"
-                                + " open its page.")
+                .about("This binder is the operator's guide to J's Computers: what a computer is here, how to build"
+                                + " one, and everything the network does for you.",
+                        "New to it? Start at the beginning, with Welcome to J's Computers. The entries explain the"
+                                + " ideas first and the parts after, and a number in brackets leads to another"
+                                + " entry.",
+                        "The magnifier on the top edge finds anything by name, and the items on the plate under a"
+                                + " title lead to their own pages. Hold the manual key over an item to open its"
+                                + " page.")
                 .register();
         guide.chapter().titled("J's Computers").order(20).tab("#FF39D6C4")
-                .about("Computers from the 1980s to today: build them part by part, join them in a network, and let"
-                        + " the network move items, run Operations and craft for you.")
+                .about("Computers from the early 1990s to today: build them part by part, join them in a network,"
+                        + " and let the network keep your items, move them and craft for you.")
                 .register();
         ComputersEntries.declare(guide);
     }

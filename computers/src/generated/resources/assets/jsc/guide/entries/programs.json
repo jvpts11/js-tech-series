@@ -1,43 +1,72 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.programs.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.programs.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
+      "text": "jsc.guide.programs.text2"
     },
     {
       "type": "text",
-      "text": "jsc.guide.programs.for"
+      "text": "jsc.guide.programs.text3"
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.programs.get"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.programs.use1",
-        "jsc.guide.programs.use2"
+      "type": "table",
+      "caption": "jsc.guide.programs.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.programs.table1_1",
+          "value": {
+            "words": "jsc.guide.programs.value1_1"
+          }
+        },
+        {
+          "label": "jsc.guide.programs.table1_2",
+          "value": {
+            "words": "jsc.guide.programs.value1_2"
+          }
+        },
+        {
+          "label": "jsc.guide.programs.table1_3",
+          "value": {
+            "words": "jsc.guide.programs.value1_3"
+          }
+        },
+        {
+          "label": "jsc.guide.programs.table1_4",
+          "value": {
+            "words": "jsc.guide.programs.value1_4"
+          }
+        },
+        {
+          "label": "jsc.guide.programs.table1_5",
+          "value": {
+            "words": "jsc.guide.programs.value1_5"
+          }
+        },
+        {
+          "label": "jsc.guide.programs.table1_6",
+          "value": {
+            "words": "jsc.guide.programs.value1_6"
+          }
+        },
+        {
+          "label": "jsc.guide.programs.table1_7",
+          "value": {
+            "words": "jsc.guide.programs.value1_7"
+          }
+        }
       ]
     },
     {
+      "type": "text",
+      "text": "jsc.guide.programs.text4"
+    },
+    {
       "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -45,13 +74,17 @@
         {
           "fix": "jsc.guide.programs.fix1",
           "problem": "jsc.guide.programs.problem1"
+        },
+        {
+          "fix": "jsc.guide.programs.fix2",
+          "problem": "jsc.guide.programs.problem2"
         }
       ]
     }
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:programs",
-  "order": 37,
+  "order": 20,
   "section": "jsc:systems",
   "title": "jsc.guide.programs.title"
 }

@@ -1,43 +1,20 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.sound_cards.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.sound_cards.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
+      "text": "jsc.guide.sound_cards.text2"
     },
     {
       "type": "text",
-      "text": "jsc.guide.sound_cards.for"
+      "text": "jsc.guide.sound_cards.text3"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
-      "type": "text",
-      "text": "jsc.manual.from_the_tabs"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.sound_cards.use1",
-        "jsc.guide.sound_cards.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -58,7 +35,7 @@
     "jsc:sound_card_tone_blaster_audigy",
     "jsc:sound_card_tone_blaster_hi_fi"
   ],
-  "order": 14,
+  "order": 11,
   "section": "jsc:hardware",
   "title": "jsc.guide.sound_cards.title"
 }

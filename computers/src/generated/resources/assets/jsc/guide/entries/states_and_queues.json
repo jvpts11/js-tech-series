@@ -1,0 +1,96 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.states_and_queues.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.states_and_queues.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.states_and_queues.table1_1",
+          "value": {
+            "words": "jsc.guide.states_and_queues.value1_1"
+          }
+        },
+        {
+          "label": "jsc.guide.states_and_queues.table1_2",
+          "value": {
+            "words": "jsc.guide.states_and_queues.value1_2"
+          }
+        },
+        {
+          "label": "jsc.guide.states_and_queues.table1_3",
+          "value": {
+            "words": "jsc.guide.states_and_queues.value1_3"
+          }
+        },
+        {
+          "label": "jsc.guide.states_and_queues.table1_4",
+          "value": {
+            "words": "jsc.guide.states_and_queues.value1_4"
+          }
+        },
+        {
+          "label": "jsc.guide.states_and_queues.table1_5",
+          "value": {
+            "words": "jsc.guide.states_and_queues.value1_5"
+          }
+        },
+        {
+          "label": "jsc.guide.states_and_queues.table1_6",
+          "value": {
+            "words": "jsc.guide.states_and_queues.value1_6"
+          }
+        },
+        {
+          "label": "jsc.guide.states_and_queues.table1_7",
+          "value": {
+            "words": "jsc.guide.states_and_queues.value1_7"
+          }
+        },
+        {
+          "label": "jsc.guide.states_and_queues.table1_8",
+          "value": {
+            "words": "jsc.guide.states_and_queues.value1_8"
+          }
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.states_and_queues.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.states_and_queues.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.states_and_queues.fix1",
+          "problem": "jsc.guide.states_and_queues.problem1"
+        },
+        {
+          "fix": "jsc.guide.states_and_queues.fix2",
+          "problem": "jsc.guide.states_and_queues.problem2"
+        },
+        {
+          "fix": "jsc.guide.states_and_queues.fix3",
+          "problem": "jsc.guide.states_and_queues.problem3"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:states_and_queues",
+  "order": 32,
+  "section": "jsc:operations",
+  "title": "jsc.guide.states_and_queues.title"
+}

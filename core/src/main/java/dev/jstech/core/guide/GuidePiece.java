@@ -84,6 +84,30 @@ public sealed interface GuidePiece {
     }
 
     /**
+     * The plate under an entry's title holding the items it shows, a row at a time: when they are more than a row
+     * holds, the row turns over to the next ones every little while.
+     *
+     * @param entry the entry it is under, so an item whose page is another leads there
+     * @param items the items, in order
+     */
+    record Plate(int x, int y, int width, String entry, List<String> items) implements GuidePiece {
+
+        public Plate {
+            items = List.copyOf(items);
+        }
+    }
+
+    /**
+     * A picture in the room given: an image the mod ships, drawn to that size, or a drawing a mod's renderer makes.
+     *
+     * @param image   the texture, or empty for a drawing
+     * @param drawing the kind of drawing, or empty for an image
+     */
+    record Picture(int x, int y, int width, int height, String image, String drawing, String data)
+            implements GuidePiece {
+    }
+
+    /**
      * A block seen from above, the front and the side, with its balloons and the words under each view.
      *
      * @param labels the words under the top, front and side views, and the width of one block under the front

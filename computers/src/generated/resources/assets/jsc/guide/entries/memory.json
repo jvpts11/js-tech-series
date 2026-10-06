@@ -1,43 +1,24 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.memory.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.memory.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
+      "text": "jsc.guide.memory.text2"
     },
     {
       "type": "text",
-      "text": "jsc.guide.memory.for"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
+      "text": "jsc.guide.memory.text3"
     },
     {
       "type": "text",
-      "text": "jsc.manual.from_the_tabs"
+      "text": "jsc.guide.memory.text4"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.memory.use1",
-        "jsc.guide.memory.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -45,6 +26,10 @@
         {
           "fix": "jsc.guide.memory.fix1",
           "problem": "jsc.guide.memory.problem1"
+        },
+        {
+          "fix": "jsc.guide.memory.fix2",
+          "problem": "jsc.guide.memory.problem2"
         }
       ]
     }
@@ -83,7 +68,7 @@
     "jsc:ram_ddr5_65536_rdimm",
     "jsc:ram_ddr5_131072_rdimm"
   ],
-  "order": 10,
+  "order": 7,
   "section": "jsc:hardware",
   "title": "jsc.guide.memory.title"
 }

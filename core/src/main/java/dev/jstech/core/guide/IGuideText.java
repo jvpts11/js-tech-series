@@ -27,4 +27,12 @@ public interface IGuideText {
 
     /** An amount written the reader's way, with its unit after it: "12,000 FE". */
     String amount(long value, String unit);
+
+    /**
+     * The name of an item, {@code namespace:path}, in the reader's language. Whoever knows no better names it by its
+     * path, as a test does.
+     */
+    default String itemName(final String item) {
+        return GuideIds.path(item);
+    }
 }

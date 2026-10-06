@@ -1,0 +1,34 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.two_systems.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.two_systems.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.two_systems.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.two_systems.fix1",
+          "problem": "jsc.guide.two_systems.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:two_systems",
+  "order": 21,
+  "section": "jsc:systems",
+  "title": "jsc.guide.two_systems.title"
+}

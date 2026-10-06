@@ -1,44 +1,24 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
-    },
-    {
       "type": "text",
-      "text": "jsc.guide.server_router.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.server_router.for"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
-      "type": "text",
-      "text": "jsc.manual.from_the_shared_tab"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
+      "text": "jsc.guide.server_router.text1"
     },
     {
       "type": "steps",
       "steps": [
-        "jsc.guide.server_router.use1",
-        "jsc.guide.server_router.use2",
-        "jsc.guide.server_router.use3"
+        "jsc.guide.server_router.step1",
+        "jsc.guide.server_router.step2",
+        "jsc.guide.server_router.step3"
       ]
     },
     {
+      "type": "text",
+      "text": "jsc.guide.server_router.text2"
+    },
+    {
       "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -55,7 +35,7 @@
   "items": [
     "jsc:server_router"
   ],
-  "order": 25,
+  "order": 29,
   "section": "jsc:network",
   "title": "jsc.guide.server_router.title"
 }

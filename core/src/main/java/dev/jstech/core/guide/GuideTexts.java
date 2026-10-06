@@ -34,6 +34,9 @@ public final class GuideTexts {
     public static final TextKey HOW_TO_USE_IT = TextKey.of("jscore.guide.how_to_use_it", "How to use it");
     public static final TextKey WHAT_CAN_GO_WRONG = TextKey.of("jscore.guide.what_can_go_wrong",
             "What can go wrong");
+    /** The same troubles at the end of an entry written as running text rather than in the five parts. */
+    public static final TextKey IF_SOMETHING_GOES_WRONG = TextKey.of("jscore.guide.if_something_goes_wrong",
+            "If something goes wrong");
 
     /** The search on the index. */
     public static final TextKey SEARCH = TextKey.of("jscore.guide.search", "Search the index");
@@ -75,6 +78,9 @@ public final class GuideTexts {
     public static final TextKey SEE_ALSO = TextKey.of("jscore.guide.see_also", "See also:");
     public static final TextKey WARNING_LINE = TextKey.of("jscore.guide.warning_line", "Warning: %s");
     public static final TextKey OPTIONAL_PART = TextKey.of("jscore.guide.optional_part", "%s (optional)");
+    /** The items an entry shows under its title, named when there is no room to draw them. */
+    public static final TextKey ITEMS_LINE = TextKey.of("jscore.guide.items_line", "Items: %s");
+    public static final TextKey ITEMS_MORE = TextKey.of("jscore.guide.items_more", "Items: %s and %s more");
 
     private GuideTexts() {
     }

@@ -1,20 +1,12 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.the_systems.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.the_systems.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.the_systems.for"
+      "text": "jsc.guide.the_systems.text2"
     },
     {
       "type": "table",
@@ -49,31 +41,34 @@
           "value": {
             "words": "jsc.guide.the_systems.value1_5"
           }
+        },
+        {
+          "label": "jsc.guide.the_systems.table1_6",
+          "value": {
+            "words": "jsc.guide.the_systems.value1_6"
+          }
+        },
+        {
+          "label": "jsc.guide.the_systems.table1_7",
+          "value": {
+            "words": "jsc.guide.the_systems.value1_7"
+          }
+        },
+        {
+          "label": "jsc.guide.the_systems.table1_8",
+          "value": {
+            "words": "jsc.guide.the_systems.value1_8"
+          }
         }
       ]
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
       "type": "text",
-      "text": "jsc.guide.the_systems.get"
+      "text": "jsc.guide.the_systems.text3"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.the_systems.use1",
-        "jsc.guide.the_systems.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -87,7 +82,7 @@
   ],
   "icon": "jsc:floppy_disk",
   "id": "jsc:the_systems",
-  "order": 36,
+  "order": 18,
   "section": "jsc:systems",
   "title": "jsc.guide.the_systems.title"
 }

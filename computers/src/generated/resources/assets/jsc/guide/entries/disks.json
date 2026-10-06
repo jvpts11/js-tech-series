@@ -1,67 +1,24 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.disks.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.disks.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
+      "text": "jsc.guide.disks.text2"
     },
     {
       "type": "text",
-      "text": "jsc.guide.disks.for"
-    },
-    {
-      "type": "table",
-      "caption": "jsc.guide.disks.table1",
-      "rows": [
-        {
-          "label": "jsc.guide.disks.table1_1",
-          "value": {
-            "words": "jsc.guide.disks.value1_1"
-          }
-        },
-        {
-          "label": "jsc.guide.disks.table1_2",
-          "value": {
-            "words": "jsc.guide.disks.value1_2"
-          }
-        },
-        {
-          "label": "jsc.guide.disks.table1_3",
-          "value": {
-            "words": "jsc.guide.disks.value1_3"
-          }
-        }
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
+      "text": "jsc.guide.disks.text3"
     },
     {
       "type": "text",
-      "text": "jsc.manual.from_the_tabs"
+      "text": "jsc.guide.disks.text4"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.disks.use1",
-        "jsc.guide.disks.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -69,6 +26,10 @@
         {
           "fix": "jsc.guide.disks.fix1",
           "problem": "jsc.guide.disks.problem1"
+        },
+        {
+          "fix": "jsc.guide.disks.fix2",
+          "problem": "jsc.guide.disks.problem2"
         }
       ]
     }
@@ -103,7 +64,7 @@
     "jsc:disk_vaultis_link_ide_40g",
     "jsc:disk_vaultis_link_sata_ssd_64g"
   ],
-  "order": 13,
+  "order": 10,
   "section": "jsc:hardware",
   "title": "jsc.guide.disks.title"
 }

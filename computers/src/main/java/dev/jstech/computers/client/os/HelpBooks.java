@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.core.client.GameLocale;
+import dev.jstech.core.client.guide.ClientGuideText;
 import dev.jstech.core.client.guide.GuideLibrary;
 import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.IGuideText;
@@ -112,6 +113,11 @@ public final class HelpBooks {
         public String amount(final long value, final String unit) {
             final String number = GameLocale.count(value);
             return unit.isEmpty() ? number : number + " " + unit;
+        }
+
+        @Override
+        public String itemName(final String item) {
+            return ClientGuideText.itemNameOf(item);
         }
     }
 }

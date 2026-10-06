@@ -11,11 +11,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * A manual read as text rather than as pages: what a help program on a computer, or a viewer at a terminal, shows of
@@ -44,6 +46,8 @@ public final class ManualReader {
 
     /** The characters a typed name may spell a gap with, all read alike: "graphics-cards" is "graphics cards". */
     private static final String GAPS = "[-_\\s]+";
+    /** How many of the items an entry shows its line names before saying how many more there are. */
+    private static final int NAMED_ITEMS = 8;
 
     public ManualReader(final GuideManual manual, final GuideContents contents, final IGuideText text) {
         this.manual = Objects.requireNonNull(manual, "manual");
@@ -227,17 +231,41 @@ public final class ManualReader {
         final Node node = this.nodes.get(entry.id());
         final List<Piece> pieces = new ArrayList<>();
         final StringBuilder words = new StringBuilder(node.title()).append('\n');
+        // What its sentences link to in their own words, listed after it, since running text has no links in it.
+        final Set<String> linked = new LinkedHashSet<>();
         this.index.add(new IndexLine(node.title(), entry.id(), false));
+        if (!entry.shown().isEmpty()) {
+            final List<Part> parts = new ArrayList<>();
+            final List<String> names = new ArrayList<>();
+            for (final String item : entry.shown()) {
+                final String name = this.text.itemName(item);
+                parts.add(new Part(item, name));
+                if (names.size() < NAMED_ITEMS) {
+                    names.add(name);
+                }
+            }
+            // A family of a hundred parts is named by its first few, so the line stays a line.
+            final int more = parts.size() - names.size();
+            final String line = more == 0 ? this.text.text(GuideTexts.ITEMS_LINE.key(), String.join(", ", names))
+                    : this.text.text(GuideTexts.ITEMS_MORE.key(), String.join(", ", names), more);
+            pieces.add(new Piece.Parts(line, parts));
+        }
         for (final GuideBlock block : entry.blocks()) {
             switch (block) {
                 case GuideBlock.Paragraph paragraph -> pieces.add(new Piece.Paragraph(
-                        this.text.text(paragraph.key()), Tone.PLAIN));
+                        this.linked(paragraph.key(), linked), Tone.PLAIN));
                 case GuideBlock.Heading heading -> pieces.add(new Piece.Heading(this.text.text(heading.key()),
-                        GuideTexts.WHAT_CAN_GO_WRONG.key().equals(heading.key())));
+                        GuideTexts.WHAT_CAN_GO_WRONG.key().equals(heading.key())
+                                || GuideTexts.IF_SOMETHING_GOES_WRONG.key().equals(heading.key())));
                 case GuideBlock.Figure figure -> {
                     figures++;
                     pieces.add(new Piece.Picture(figure.item(), this.text.text(GuideTexts.FIGURE.key(),
                             chapterNo + "-" + figures) + " " + this.text.text(figure.captionKey())));
+                }
+                case GuideBlock.Picture picture -> {
+                    figures++;
+                    pieces.add(new Piece.Picture("", this.text.text(GuideTexts.FIGURE.key(),
+                            chapterNo + "-" + figures) + " " + this.text.text(picture.captionKey())));
                 }
                 case GuideBlock.Table table -> {
                     tables++;
@@ -253,20 +281,20 @@ public final class ManualReader {
                     int number = 0;
                     for (final String key : steps.keys()) {
                         number++;
-                        pieces.add(new Piece.Item(number + ".", this.text.text(key)));
+                        pieces.add(new Piece.Item(number + ".", this.linked(key, linked)));
                     }
                 }
                 case GuideBlock.Warning warning -> pieces.add(new Piece.Paragraph(this.text.text(
-                        GuideTexts.WARNING_LINE.key(), this.text.text(warning.key())), Tone.WARNING));
+                        GuideTexts.WARNING_LINE.key(), this.linked(warning.key(), linked)), Tone.WARNING));
                 case GuideBlock.Problems problems -> {
                     for (final GuideBlock.Problem problem : problems.problems()) {
                         pieces.add(new Piece.Term(this.text.text(problem.problemKey()),
-                                this.text.text(problem.fixKey())));
+                                this.linked(problem.fixKey(), linked)));
                     }
                 }
                 case GuideBlock.Define define -> {
                     final String term = this.text.text(define.termKey());
-                    pieces.add(new Piece.Term(term, this.text.text(define.definitionKey())));
+                    pieces.add(new Piece.Term(term, this.linked(define.definitionKey(), linked)));
                     this.index.add(new IndexLine(term, entry.id(), true));
                 }
                 case GuideBlock.SeeAlso see -> {
@@ -276,7 +304,8 @@ public final class ManualReader {
                     }
                     pieces.add(new Piece.Links(this.text.text(GuideTexts.SEE_ALSO.key()), links));
                 }
-                case GuideBlock.Note note -> pieces.add(new Piece.Paragraph(this.text.text(note.key()), Tone.NOTE));
+                case GuideBlock.Note note -> pieces.add(new Piece.Paragraph(this.linked(note.key(), linked),
+                        Tone.NOTE));
                 case GuideBlock.Views views -> {
                     pieces.add(new Piece.Picture(views.item(), ""));
                     for (final GuideBlock.Callout callout : views.callouts()) {
@@ -298,6 +327,19 @@ public final class ManualReader {
                 }
             }
         }
+        for (final GuideBlock block : entry.blocks()) {
+            if (block instanceof GuideBlock.SeeAlso see) {
+                see.entries().forEach(linked::remove);
+            }
+        }
+        linked.remove(entry.id());
+        if (!linked.isEmpty()) {
+            final List<Link> links = new ArrayList<>();
+            for (final String target : linked) {
+                links.add(new Link(target, this.label(target)));
+            }
+            pieces.add(new Piece.Links(this.text.text(GuideTexts.SEE_ALSO.key()), links));
+        }
         for (final Piece piece : pieces) {
             words.append(piece.words()).append('\n');
         }
@@ -305,6 +347,23 @@ public final class ManualReader {
                 this.parents.getOrDefault(entry.id(), ""), pieces));
         this.searchable.put(entry.id(), words.toString().toLowerCase(Locale.ROOT));
         return new Counted(figures, tables);
+    }
+
+    /**
+     * A sentence in the reader's language with its links written as their words and numbers, the entries they lead
+     * to that this manual holds noted in {@code linked}.
+     */
+    private String linked(final String key, final Set<String> linked) {
+        final String sentence = this.text.text(key);
+        for (final String target : GuideLinks.targets(sentence)) {
+            if (this.nodes.containsKey(target)) {
+                linked.add(target);
+            }
+        }
+        return GuideLinks.plain(sentence, target -> {
+            final Node node = this.nodes.get(target);
+            return node == null ? null : node.number();
+        });
     }
 
     private String value(final GuideBlock.GuideValue value) {
@@ -414,7 +473,32 @@ public final class ManualReader {
             }
         }
 
-        /** An item drawn large, with its numbered caption, or none for a block shown before its legend. */
+        /**
+         * The items an entry shows under its title.
+         *
+         * @param line  them named in a line, for a reader that draws no items: "Items: ..."
+         * @param parts each item with its name
+         */
+        record Parts(String line, List<Part> parts) implements Piece {
+
+            public Parts {
+                parts = List.copyOf(parts);
+            }
+
+            @Override
+            public String words() {
+                final StringBuilder out = new StringBuilder(this.line);
+                for (final Part part : this.parts) {
+                    out.append(' ').append(part.name());
+                }
+                return out.toString();
+            }
+        }
+
+        /**
+         * An item drawn large, with its numbered caption, or none for a block shown before its legend; a picture that
+         * is no item (an image, a drawing) has an empty item and only its caption.
+         */
         record Picture(String item, String caption) implements Piece {
 
             @Override
@@ -452,6 +536,10 @@ public final class ManualReader {
 
     /** A row of a table. */
     public record Row(String label, String value) {
+    }
+
+    /** An item an entry shows, {@code namespace:path}, and its name in the reader's language. */
+    public record Part(String item, String name) {
     }
 
     /** A link: where it goes, and its words, the number and title of what it goes to. */

@@ -12,13 +12,17 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * One piece of a manual's entry: a paragraph, a heading, a figure, a table, the recipes of a kind, numbered steps, a
- * warning, the problems and their fixes, a word explained, links to other entries, or a special block another mod
- * draws.
+ * One piece of a manual's entry: a paragraph, a heading, a figure, a picture, a table, the recipes of a kind, numbered
+ * steps, a warning, the problems and their fixes, a word explained, links to other entries, or a special block
+ * another mod draws.
  *
  * <p>An entry is a list of these, laid out on the pages in the order given. Words are never held here, only the keys
  * of the sentences, so a manual reads in each player's language and a resource pack can reword it. Ids are text in
  * the {@code namespace:path} shape, so the layout of a manual can be worked out and tested with no game around it.
+ *
+ * <p>A sentence may lead to another page in its own words, written {@code [the words](namespace:path)}: the words
+ * are drawn as a link to that entry, section or chapter, with its number after them in brackets, and
+ * {@code [](namespace:path)} draws the number alone ({@link GuideLinks}).
  */
 public sealed interface GuideBlock {
 
@@ -49,6 +53,35 @@ public sealed interface GuideBlock {
         public Figure {
             Objects.requireNonNull(item, "item");
             Objects.requireNonNull(captionKey, "captionKey");
+        }
+    }
+
+    /**
+     * A picture with its numbered caption under it ("Figure 3-9. ..."), counted with the figures: an image the mod
+     * ships, or a drawing a mod's renderer makes as the page is drawn, such as one of its machines' screens, which
+     * then reads in the reader's language and never falls behind the screen it shows.
+     *
+     * @param image      the image, a texture {@code namespace:path} under {@code textures/}, or empty for a drawing
+     * @param drawing    the kind of drawing, as its mod registered the renderer, or empty for an image
+     * @param data       what the drawing's renderer is handed, as JSON text
+     * @param width      how wide it is drawn, in the page's pixels; 0 for the whole column
+     * @param height     how tall it is drawn
+     * @param captionKey the caption's sentence
+     */
+    record Picture(String image, String drawing, String data, int width, int height, String captionKey)
+            implements GuideBlock {
+
+        public Picture {
+            image = image == null ? "" : image;
+            drawing = drawing == null ? "" : drawing;
+            data = data == null ? "{}" : data;
+            Objects.requireNonNull(captionKey, "captionKey");
+            if (image.isEmpty() == drawing.isEmpty()) {
+                throw new IllegalArgumentException("a picture is an image or a drawing, one of the two");
+            }
+            if (width < 0 || height < 1) {
+                throw new IllegalArgumentException("a picture has a size; got " + width + " by " + height);
+            }
         }
     }
 

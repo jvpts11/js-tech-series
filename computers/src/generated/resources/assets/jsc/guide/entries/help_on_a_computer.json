@@ -1,0 +1,34 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.help_on_a_computer.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.help_on_a_computer.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.help_on_a_computer.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.help_on_a_computer.fix1",
+          "problem": "jsc.guide.help_on_a_computer.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:guide_to_operations",
+  "id": "jsc:help_on_a_computer",
+  "order": 22,
+  "section": "jsc:systems",
+  "title": "jsc.guide.help_on_a_computer.title"
+}

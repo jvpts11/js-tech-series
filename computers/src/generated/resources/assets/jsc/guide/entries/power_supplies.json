@@ -1,43 +1,20 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.power_supplies.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.power_supplies.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
+      "text": "jsc.guide.power_supplies.text2"
     },
     {
       "type": "text",
-      "text": "jsc.guide.power_supplies.for"
+      "text": "jsc.guide.power_supplies.text3"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
-      "type": "text",
-      "text": "jsc.manual.from_the_tabs"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.power_supplies.use1",
-        "jsc.guide.power_supplies.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -65,7 +42,7 @@
     "jsc:psu_2000p",
     "jsc:psu_3000p"
   ],
-  "order": 12,
+  "order": 9,
   "section": "jsc:hardware",
   "title": "jsc.guide.power_supplies.title"
 }

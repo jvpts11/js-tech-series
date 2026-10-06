@@ -1,43 +1,24 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.buses.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.buses.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
+      "text": "jsc.guide.buses.text2"
     },
     {
       "type": "text",
-      "text": "jsc.guide.buses.for"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
+      "text": "jsc.guide.buses.text3"
     },
     {
       "type": "text",
-      "text": "jsc.manual.from_the_tabs"
+      "text": "jsc.guide.buses.text4"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.buses.use1",
-        "jsc.guide.buses.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -68,7 +49,7 @@
     "jsc:external_storage_bus",
     "jsc:advanced_external_storage_bus"
   ],
-  "order": 29,
+  "order": 36,
   "section": "jsc:storage",
   "title": "jsc.guide.buses.title"
 }

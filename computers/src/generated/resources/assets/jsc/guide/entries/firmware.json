@@ -1,0 +1,83 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.firmware.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.firmware.text2"
+    },
+    {
+      "type": "picture",
+      "caption": "jsc.guide.firmware.figure1",
+      "data": {
+        "look": "cli_bios"
+      },
+      "drawing": "jsc:firmware",
+      "height": 97
+    },
+    {
+      "type": "picture",
+      "caption": "jsc.guide.firmware.figure2",
+      "data": {
+        "look": "blue_bios"
+      },
+      "drawing": "jsc:firmware",
+      "height": 97
+    },
+    {
+      "type": "picture",
+      "caption": "jsc.guide.firmware.figure3",
+      "data": {
+        "look": "uefi"
+      },
+      "drawing": "jsc:firmware",
+      "height": 97
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.firmware.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.firmware.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.firmware.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.firmware.definition1",
+      "term": "jsc.guide.firmware.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.firmware.fix1",
+          "problem": "jsc.guide.firmware.problem1"
+        },
+        {
+          "fix": "jsc.guide.firmware.fix2",
+          "problem": "jsc.guide.firmware.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:motherboard_atx_standard_lga1150",
+  "id": "jsc:firmware",
+  "order": 2,
+  "section": "jsc:getting_started",
+  "shows": [
+    "jsc:motherboard_babyat_vintage",
+    "jsc:motherboard_atx_legacy_lga775",
+    "jsc:motherboard_atx_standard_lga1150"
+  ],
+  "title": "jsc.guide.firmware.title"
+}

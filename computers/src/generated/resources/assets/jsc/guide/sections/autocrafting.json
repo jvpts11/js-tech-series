@@ -1,6 +1,6 @@
 {
   "icon": "jsc:crafting_card_pcie3",
   "id": "jsc:autocrafting",
-  "order": 5,
+  "order": 7,
   "title": "jsc.guide.section.autocrafting"
 }

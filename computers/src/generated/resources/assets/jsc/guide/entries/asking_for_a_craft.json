@@ -1,0 +1,34 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.asking_for_a_craft.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.asking_for_a_craft.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.asking_for_a_craft.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.asking_for_a_craft.fix1",
+          "problem": "jsc.guide.asking_for_a_craft.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:crafting_computer",
+  "id": "jsc:asking_for_a_craft",
+  "order": 42,
+  "section": "jsc:autocrafting",
+  "title": "jsc.guide.asking_for_a_craft.title"
+}

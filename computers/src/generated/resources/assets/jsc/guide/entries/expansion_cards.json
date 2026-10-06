@@ -1,0 +1,77 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.expansion_cards.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.expansion_cards.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.expansion_cards.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.expansion_cards.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.expansion_cards.fix1",
+          "problem": "jsc.guide.expansion_cards.problem1"
+        },
+        {
+          "fix": "jsc.guide.expansion_cards.fix2",
+          "problem": "jsc.guide.expansion_cards.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:furnace_card",
+  "id": "jsc:expansion_cards",
+  "items": [
+    "jsc:crafting_table_card",
+    "jsc:furnace_card",
+    "jsc:enchanting_card",
+    "jsc:anvil_card",
+    "jsc:serial_console_card",
+    "jsc:management_nic",
+    "jsc:fabric_host_adapter",
+    "jsc:fabric_dpu",
+    "jsc:optical_network_card",
+    "jsc:phi_5100",
+    "jsc:phi_7120",
+    "jsc:phi_7290",
+    "jsc:phi_9000"
+  ],
+  "order": 12,
+  "section": "jsc:hardware",
+  "title": "jsc.guide.expansion_cards.title"
+}

@@ -244,6 +244,84 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_putsThePlateOfAnEntrysItemsUnderItsTitle() {
+        final GuideEntry pressed = new GuideEntry("alpha:press", "alpha:section", 0, "press.title", "",
+                List.of("alpha:press_block"), List.of("alpha:gear", "alpha:plate"),
+                List.of(new GuideBlock.Paragraph("press.text")));
+        final GuideBook book = GuideLayout.lay(MANUAL, STYLE, new GuideContents(List.of(chapter("alpha", pressed))),
+                new FixedText(Map.of()));
+
+        final List<GuidePiece> pieces = book.pages().get(book.pageOf("alpha:press").orElseThrow()).pieces();
+        final GuidePiece.Plate plate = pieces.stream().filter(piece -> piece instanceof GuidePiece.Plate)
+                .map(piece -> (GuidePiece.Plate) piece).findFirst().orElseThrow();
+        assertEquals(List.of("alpha:gear", "alpha:plate"), plate.items(), "the plate shows what the entry names");
+        assertEquals("alpha:press", plate.entry());
+        final GuidePiece.Text words = pieces.stream().filter(piece -> piece instanceof GuidePiece.Text text
+                && text.text().equals("press.text")).map(piece -> (GuidePiece.Text) piece).findFirst().orElseThrow();
+        assertTrue(words.y() >= plate.y() + GuideLayout.PLATE_HEIGHT, "the text starts under the plate");
+    }
+
+    @Test
+    void lay_showsNoPlateOnADrawingNorForAnEntryWithNoItems() {
+        final GuideEntry pressed = new GuideEntry("alpha:press", "alpha:section", 0, "press.title", "",
+                List.of("alpha:press_block"), List.of(new GuideBlock.Paragraph("press.text")));
+        final GuideContents contents = new GuideContents(List.of(chapter("alpha", pressed)));
+
+        assertTrue(GuideLayout.lay(MANUAL, DRAWINGS, contents, new FixedText(Map.of())).pages().stream()
+                .flatMap(page -> page.pieces().stream()).noneMatch(piece -> piece instanceof GuidePiece.Plate),
+                "a drawing shows its machine in its views instead");
+        assertTrue(lay(contents()).pages().stream().flatMap(page -> page.pieces().stream())
+                .noneMatch(piece -> piece instanceof GuidePiece.Plate), "an entry with no items has no plate");
+    }
+
+    @Test
+    void lay_countsAPictureWithTheFigures() {
+        final GuideBook book = GuideLayout.lay(MANUAL, STYLE, new GuideContents(List.of(chapter("alpha", entry(
+                "alpha:one", new GuideBlock.Figure("minecraft:stone", "one.figure"),
+                new GuideBlock.Picture("", "alpha:screen", "{}", 0, 40, "one.picture"))))),
+                new FixedText(Map.of()));
+
+        final List<GuidePiece> pieces = book.pages().stream().flatMap(page -> page.pieces().stream()).toList();
+        final GuidePiece.Picture picture = pieces.stream().filter(piece -> piece instanceof GuidePiece.Picture)
+                .map(piece -> (GuidePiece.Picture) piece).findFirst().orElseThrow();
+        assertEquals("alpha:screen", picture.drawing());
+        assertEquals(40, picture.height());
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Text text
+                && text.text().equals("jscore.guide.figure[1-2]")), "the picture is the chapter's second figure");
+    }
+
+    @Test
+    void lay_drawsALinkInASentenceInTheLinksColourWithItsNumber() {
+        final FixedText text = new FixedText(Map.of("first.text", "read [the second](alpha:second), then go"));
+        final GuideBook book = lay(contents(), text);
+
+        final List<GuidePiece.Text> words = book.pages().get(book.pageOf("alpha:first").orElseThrow()).pieces()
+                .stream().filter(piece -> piece instanceof GuidePiece.Text).map(piece -> (GuidePiece.Text) piece)
+                .toList();
+        final GuidePiece.Text link = words.stream().filter(piece -> piece.link().equals("alpha:second")).findFirst()
+                .orElseThrow();
+        assertEquals("the second (1.1.2)", link.text(), "the link reads its words and the number it leads to");
+        assertEquals(GuideStyle.LINK, link.colour());
+        final GuidePiece.Text before = words.stream().filter(piece -> piece.text().equals("read ")).findFirst()
+                .orElseThrow();
+        assertEquals(before.x() + 6 * "read ".length(), link.x(), "the link goes on where the words before it end");
+    }
+
+    @Test
+    void lay_keepsALinksNumberAndTheCommaAfterItOnOneLine() {
+        final FixedText text = new FixedText(Map.of("first.text", "aaaaaaaaaaaaaaaaaa [](alpha:second), b"));
+        final GuideBook book = lay(contents(), text);
+
+        final GuidePiece.Text link = book.pages().get(book.pageOf("alpha:first").orElseThrow()).pieces().stream()
+                .filter(piece -> piece instanceof GuidePiece.Text candidate && candidate.link().equals("alpha:second"))
+                .map(piece -> (GuidePiece.Text) piece).findFirst().orElseThrow();
+        assertEquals("1.1.2", link.text(), "a link with no words reads its number");
+        assertTrue(book.pages().get(book.pageOf("alpha:first").orElseThrow()).pieces().stream()
+                .anyMatch(piece -> piece instanceof GuidePiece.Text plain && plain.text().startsWith(",")
+                        && plain.y() == link.y()), "the comma stays on the link's line");
+    }
+
+    @Test
     void roman_writesSmallRomanNumerals() {
         assertEquals("i", GuideLayout.roman(1));
         assertEquals("iv", GuideLayout.roman(4));

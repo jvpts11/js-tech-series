@@ -106,6 +106,8 @@ public final class HelpPages {
                     lines.addAll(wrapped(term.text(), voice.termIndent, width, HelpLine.Ink.BODY));
                 }
                 case ManualReader.Piece.Table table -> table(lines, table, voice, width);
+                case ManualReader.Piece.Parts parts -> lines.addAll(wrapped(parts.line(), voice.bodyIndent, width,
+                        HelpLine.Ink.DIM));
                 case ManualReader.Piece.Picture picture -> {
                     if (!picture.caption().isEmpty()) {
                         lines.addAll(wrapped(picture.caption(), voice.bodyIndent, width, HelpLine.Ink.DIM));

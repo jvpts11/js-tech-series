@@ -135,7 +135,7 @@ public final class HelpTerminalClientTests {
                 .then(SETTLE, () -> ctx.type("man graphics-cards"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> prompt(ctx).editorText().startsWith("GRAPHICS_CARDS(7)")
-                        && prompt(ctx).editorText().contains("WHAT IT IS"), SCREEN_WAIT, "man to page the entry")
+                        && prompt(ctx).editorText().contains("Items: "), SCREEN_WAIT, "man to page the entry")
                 .thenScreenshot(2, "help-freebsd-man")
                 .then(SETTLE, () -> ctx.type("q"))
                 .thenWaitUntil(() -> !prompt(ctx).editing(), SCREEN_WAIT, "q to leave the pager");

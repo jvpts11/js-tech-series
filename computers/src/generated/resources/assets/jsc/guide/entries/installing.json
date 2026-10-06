@@ -1,20 +1,12 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.installing.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.installing.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.installing.for"
+      "text": "jsc.guide.installing.text2"
     },
     {
       "type": "table",
@@ -47,29 +39,29 @@
       ]
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
       "type": "text",
-      "text": "jsc.guide.installing.get"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
+      "text": "jsc.guide.installing.text3"
     },
     {
       "type": "steps",
       "steps": [
-        "jsc.guide.installing.use1",
-        "jsc.guide.installing.use2",
-        "jsc.guide.installing.use3",
-        "jsc.guide.installing.use4"
+        "jsc.guide.installing.step1",
+        "jsc.guide.installing.step2",
+        "jsc.guide.installing.step3",
+        "jsc.guide.installing.step4"
       ]
     },
     {
+      "type": "text",
+      "text": "jsc.guide.installing.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing.text5"
+    },
+    {
       "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -97,7 +89,7 @@
     "jsc:bd_re",
     "jsc:usb_flash_drive"
   ],
-  "order": 35,
-  "section": "jsc:systems",
+  "order": 3,
+  "section": "jsc:getting_started",
   "title": "jsc.guide.installing.title"
 }

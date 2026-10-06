@@ -12,7 +12,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   cycle begins. Each mod's API is now kept line by line, every type and member a mod can reach with the version
   that brought it, and the tests fail when the code and that list disagree; `docs/API.md` says how.
 - Added: `GuideBlockRenderers` and `IGuideBlockRenderer` in J's Core's client API: what draws a mod's own kind of
-  block on a manual's page, registered once from its client setup, handed the block's data as a tag.
+  block on a manual's page, or a picture drawn as the page is shown, registered once from its client setup, handed
+  the block's data as a tag.
 - Added: a build can ask a language for an instruction set and a version of the language at once, with
   `IProgrammingLanguage.compile(sources, CompileOptions)`; a language without versions builds as it did for the
   instruction set alone, which is what the method does unless overridden.
@@ -97,8 +98,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   3-9, page 3-14), builds its contents and its index, and searches the index as the player types. Holding M a moment
   over an item in any inventory, or with the item in hand, opens its page in its mod's own manual, while a small bar
   fills under the slot or the crosshair in that manual's look; the item's tooltip says so. Styles are data a resource
-  pack can replace; the Core brings a ring binder with navy covers. Entries follow five parts: what it is, what it is
-  for, how to get it, how to use it, and what can go wrong.
+  pack can replace; the Core brings a ring binder with navy covers. An entry follows five parts (what it is, what it is
+  for, how to get it, how to use it, and what can go wrong) or reads as running text ending in what to do if
+  something goes wrong. Its sentences lead to other pages in their own words, the link's number written after them;
+  the items it talks about stand on a plate under its title, turning over a row at a time when they are many, each
+  showing its tooltip and leading to its own page; and its pictures are images or drawings a mod makes as the page
+  is shown, numbered with the figures.
 - The series' three manuals. The **Technical Reference**, a navy binder holding a chapter for every mod installed
   (the series, J's Core, J's Computers, J's Industrial), is handed to each player once, the first time they join a
   world, above their hotbar, and is in J's Core's new creative tab. The **Guide to Operations** is J's Computers' own,
@@ -108,6 +113,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   drawn from above, the front and the side, traced from its own block, with numbered balloons, set up in a plan seen
   from above, on sheets with a frame, zones and a title block (JI-102, sheet 1 of 2). Every item of the three mods is
   the page of an entry, in English and Brazilian Portuguese, and every number on them is the mods' own.
+- J's Computers' chapter is a guide written to be read: it starts with what a computer is in the mod, builds a first
+  computer part by part, explains the firmware with pictures of the real BIOS and UEFI screens of each age, then
+  goes through the parts inside a computer, the computers, their systems and programs, the network, Operations and
+  their catalogue, storage, autocrafting and the devices, each idea before the parts that serve it.
 - Manuals open each chapter on two facing pages, its number large in the chapter's colour with its title and what it
   is about, and its sections with their icons and pages; a page is left blank before a chapter that would open on a
   right page, as printed manuals do. Recipes show their time over the arrow, their energy under it, and the name of

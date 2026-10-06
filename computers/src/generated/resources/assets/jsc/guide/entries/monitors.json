@@ -1,43 +1,20 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.monitors.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.monitors.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
+      "text": "jsc.guide.monitors.text2"
     },
     {
       "type": "text",
-      "text": "jsc.guide.monitors.for"
+      "text": "jsc.guide.monitors.text3"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
-      "type": "text",
-      "text": "jsc.manual.from_the_tabs"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.monitors.use1",
-        "jsc.guide.monitors.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -45,6 +22,10 @@
         {
           "fix": "jsc.guide.monitors.fix1",
           "problem": "jsc.guide.monitors.problem1"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix2",
+          "problem": "jsc.guide.monitors.problem2"
         }
       ]
     }
@@ -61,7 +42,7 @@
     "jsc:monitor",
     "jsc:color_monitor"
   ],
-  "order": 38,
+  "order": 43,
   "section": "jsc:peripherals",
   "title": "jsc.guide.monitors.title"
 }

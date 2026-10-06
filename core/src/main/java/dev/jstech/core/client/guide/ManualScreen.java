@@ -38,6 +38,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -46,6 +47,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -101,6 +103,9 @@ public final class ManualScreen extends Screen {
     private static final int FOLDER_LABEL_WIDTH = 128;
     private static final int MARK = 32;
     private static final int CYCLE_MILLIS = 1000;
+    /** How far apart the items of a plate stand, and how long it shows a row before turning to the next. */
+    private static final int PLATE_PITCH = 18;
+    private static final int PLATE_TURN_MILLIS = 2000;
     private static final double SHADOW = 0.6;
     /** A drawing's grid, and its frame's zones: six across, four down. */
     private static final int GRID = 10;
@@ -204,6 +209,20 @@ public final class ManualScreen extends Screen {
         final OptionalInt page = this.book.pageOf(target);
         page.ifPresent(this::goToPage);
         return page.isPresent();
+    }
+
+    /**
+     * Where an item stands on a plate of the spread shown, in the screen's coordinates, while the plate shows it; null
+     * when it does not (client tests click it).
+     */
+    @Nullable
+    public int[] plateItemPoint(final String item) {
+        final int first = this.style.spread() ? this.spread * 2 : this.spread;
+        final int[] onLeft = this.plateItemOn(this.geometry.left(), first, item);
+        if (onLeft != null || this.geometry.right() == null) {
+            return onLeft;
+        }
+        return this.plateItemOn(this.geometry.right(), this.rightPage(first), item);
     }
 
     /** Opens or closes the search on the left page. */
@@ -777,7 +796,92 @@ public final class ManualScreen extends Screen {
             }
             case GuidePiece.Views views -> this.drawViews(g, x, y, views, mx, my);
             case GuidePiece.Plan plan -> this.drawPlan(g, x, y, plan, mx, my);
+            case GuidePiece.Plate plate -> this.drawPlate(g, x, y, plate, chapter, mx, my);
+            case GuidePiece.Picture picture -> this.drawPicture(g, x, y, picture, mx, my);
         }
+    }
+
+    /**
+     * The items an entry shows, on a plate under its title: a row of them at their own size, turning over to the next
+     * row every little while when there are more, the one under the pointer lit as a slot is and named in its tooltip.
+     */
+    private void drawPlate(final GuiGraphics g, final int x, final int y, final GuidePiece.Plate plate,
+                           final String chapter, final int mx, final int my) {
+        g.fill(x, y, x + plate.width(), y + GuideLayout.PLATE_HEIGHT, this.colour(GuideStyle.SHADE, chapter));
+        Draw.outline(g, x, y, plate.width(), GuideLayout.PLATE_HEIGHT, this.colour(GuideStyle.RULE, chapter));
+        final List<String> row = plateRow(plate);
+        final int first = x + plateStart(plate, row.size());
+        for (int i = 0; i < row.size(); i++) {
+            final int itemX = first + i * PLATE_PITCH;
+            final ItemStack stack = this.stackOf(row.get(i));
+            this.drawItem(g, stack, itemX, y + 2, 100, mx, my);
+            if (!stack.isEmpty() && mx >= itemX && my >= y + 2 && mx < itemX + 16 && my < y + 18) {
+                AbstractContainerScreen.renderSlotHighlight(g, itemX, y + 2, 0);
+            }
+        }
+    }
+
+    /** A picture: an image drawn to its size, or a drawing its mod's renderer makes in the room given. */
+    private void drawPicture(final GuiGraphics g, final int x, final int y, final GuidePiece.Picture picture,
+                             final int mx, final int my) {
+        if (!picture.image().isEmpty()) {
+            final ResourceLocation image = ResourceLocation.parse(picture.image()).withPrefix("textures/")
+                    .withSuffix(".png");
+            Draw.blended(() -> g.blit(image, x, y, picture.width(), picture.height(), 0.0F, 0.0F, picture.width(),
+                    picture.height(), picture.width(), picture.height()));
+            return;
+        }
+        final IGuideBlockRenderer renderer = GuideBlockRenderers.get(ResourceLocation.parse(picture.drawing()));
+        if (renderer != null) {
+            renderer.draw(g, this.font, x, y, picture.width(), picture.height(), this.dataOf(picture.data()),
+                    mx + this.left, my + this.top);
+        }
+    }
+
+    /** The items of a plate shown now: the row the plate has turned to. */
+    private static List<String> plateRow(final GuidePiece.Plate plate) {
+        final int perRow = platePerRow(plate);
+        final int rows = (plate.items().size() + perRow - 1) / perRow;
+        final int shown = rows <= 1 ? 0 : (int) (Util.getMillis() / PLATE_TURN_MILLIS % rows);
+        return plate.items().subList(shown * perRow, Math.min(plate.items().size(), (shown + 1) * perRow));
+    }
+
+    private static int platePerRow(final GuidePiece.Plate plate) {
+        return Math.max(1, (plate.width() - 2) / PLATE_PITCH);
+    }
+
+    /** How far into the plate its row starts, so the row stands in the middle of it. */
+    private static int plateStart(final GuidePiece.Plate plate, final int count) {
+        return (plate.width() - (count * PLATE_PITCH - 2)) / 2;
+    }
+
+    @Nullable
+    private int[] plateItemOn(final ManualScreenLayout.Rect page, final int index, final String item) {
+        if (index < 0 || index >= this.book.pages().size()) {
+            return null;
+        }
+        for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+            if (piece instanceof GuidePiece.Plate plate) {
+                final List<String> row = plateRow(plate);
+                final int at = row.indexOf(item);
+                if (at >= 0) {
+                    return new int[]{this.left + page.x() + plate.x() + plateStart(plate, row.size())
+                            + at * PLATE_PITCH + 8, this.top + page.y() + plate.y() + 10};
+                }
+            }
+        }
+        return null;
+    }
+
+    /** The item of a plate under a point of its page, or empty. */
+    private static String plateItemAt(final GuidePiece.Plate plate, final double px, final double py) {
+        if (py < plate.y() + 2 || py >= plate.y() + 18) {
+            return "";
+        }
+        final List<String> row = plateRow(plate);
+        final double across = px - plate.x() - plateStart(plate, row.size());
+        final int at = (int) Math.floor(across / PLATE_PITCH);
+        return across >= 0 && at < row.size() && across - at * PLATE_PITCH < 16 ? row.get(at) : "";
     }
 
     /**
@@ -1117,6 +1221,14 @@ public final class ManualScreen extends Screen {
                     && py < leader.y() + leader.size().lineHeight() && px >= leader.x()
                     && px < leader.x() + leader.width()) {
                 return leader.link();
+            }
+            // An item on a plate whose page is another entry leads to it, as a link would.
+            if (piece instanceof GuidePiece.Plate plate) {
+                final String item = plateItemAt(plate, px, py);
+                if (!item.isEmpty()) {
+                    return GuideLibrary.loaded().pageOf(item).filter(entry -> !entry.equals(plate.entry()))
+                            .orElse("");
+                }
             }
         }
         return "";

@@ -1,20 +1,12 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.motherboards.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.motherboards.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.motherboards.for"
+      "text": "jsc.guide.motherboards.text2"
     },
     {
       "type": "define",
@@ -22,27 +14,21 @@
       "term": "jsc.guide.motherboards.term1"
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
+      "type": "define",
+      "definition": "jsc.guide.motherboards.definition2",
+      "term": "jsc.guide.motherboards.term2"
     },
     {
       "type": "text",
-      "text": "jsc.manual.from_the_tabs"
+      "text": "jsc.guide.motherboards.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.motherboards.text4"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.motherboards.use1",
-        "jsc.guide.motherboards.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -50,6 +36,10 @@
         {
           "fix": "jsc.guide.motherboards.fix1",
           "problem": "jsc.guide.motherboards.problem1"
+        },
+        {
+          "fix": "jsc.guide.motherboards.fix2",
+          "problem": "jsc.guide.motherboards.problem2"
         }
       ]
     }
@@ -109,7 +99,7 @@
     "jsc:motherboard_mtx_a_3647",
     "jsc:motherboard_mtx_a_4189"
   ],
-  "order": 8,
+  "order": 5,
   "section": "jsc:hardware",
   "title": "jsc.guide.motherboards.title"
 }

@@ -1,0 +1,25 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.what_a_network_is.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_a_network_is.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_a_network_is.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_a_network_is.text4"
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:what_a_network_is",
+  "order": 23,
+  "section": "jsc:network",
+  "title": "jsc.guide.what_a_network_is.title"
+}

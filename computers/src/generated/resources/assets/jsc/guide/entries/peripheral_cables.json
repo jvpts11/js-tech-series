@@ -1,20 +1,8 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
-    },
-    {
       "type": "text",
-      "text": "jsc.guide.peripheral_cables.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.peripheral_cables.for"
+      "text": "jsc.guide.peripheral_cables.text1"
     },
     {
       "type": "table",
@@ -53,27 +41,20 @@
       ]
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
+      "type": "text",
+      "text": "jsc.guide.peripheral_cables.text2"
     },
     {
       "type": "text",
-      "text": "jsc.manual.from_the_tabs"
+      "text": "jsc.guide.peripheral_cables.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.peripheral_cables.text4"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.peripheral_cables.use1",
-        "jsc.guide.peripheral_cables.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -81,6 +62,10 @@
         {
           "fix": "jsc.guide.peripheral_cables.fix1",
           "problem": "jsc.guide.peripheral_cables.problem1"
+        },
+        {
+          "fix": "jsc.guide.peripheral_cables.fix2",
+          "problem": "jsc.guide.peripheral_cables.problem2"
         }
       ]
     }
@@ -92,9 +77,14 @@
     "jsc:legacy_peripheral_cable",
     "jsc:transition_peripheral_cable",
     "jsc:peripheral_cable",
-    "jsc:advanced_peripheral_cable"
+    "jsc:advanced_peripheral_cable",
+    "jsc:vintage_hub",
+    "jsc:legacy_hub",
+    "jsc:transition_hub",
+    "jsc:standard_hub",
+    "jsc:advanced_hub"
   ],
-  "order": 40,
+  "order": 45,
   "section": "jsc:peripherals",
   "title": "jsc.guide.peripheral_cables.title"
 }

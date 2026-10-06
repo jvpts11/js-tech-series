@@ -1,43 +1,16 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.drives.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.drives.what"
+      "text": "jsc.guide.drives.text2"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.drives.for"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
-      "type": "text",
-      "text": "jsc.manual.from_the_tabs"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.drives.use1",
-        "jsc.guide.drives.use2"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -58,7 +31,7 @@
     "jsc:blu_ray_drive",
     "jsc:dock_station"
   ],
-  "order": 39,
+  "order": 44,
   "section": "jsc:peripherals",
   "title": "jsc.guide.drives.title"
 }

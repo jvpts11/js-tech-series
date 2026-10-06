@@ -1,48 +1,77 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.server_racks.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.server_racks.for"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
-    },
-    {
-      "type": "text",
-      "text": "jsc.manual.from_the_tabs"
-    },
-    {
       "type": "text",
       "text": "jsc.guide.server_racks.text1"
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
+      "type": "text",
+      "text": "jsc.guide.server_racks.text2"
     },
     {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.server_racks.use1",
-        "jsc.guide.server_racks.use2",
-        "jsc.guide.server_racks.use3"
+      "type": "define",
+      "definition": "jsc.guide.server_racks.definition1",
+      "term": "jsc.guide.server_racks.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.server_racks.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.server_racks.table1_1",
+          "value": {
+            "words": "jsc.guide.server_racks.value1_1"
+          }
+        },
+        {
+          "label": "jsc.guide.server_racks.table1_2",
+          "value": {
+            "words": "jsc.guide.server_racks.value1_2"
+          }
+        },
+        {
+          "label": "jsc.guide.server_racks.table1_3",
+          "value": {
+            "words": "jsc.guide.server_racks.value1_3"
+          }
+        },
+        {
+          "label": "jsc.guide.server_racks.table1_4",
+          "value": {
+            "words": "jsc.guide.server_racks.value1_4"
+          }
+        },
+        {
+          "label": "jsc.guide.server_racks.table1_5",
+          "value": {
+            "words": "jsc.guide.server_racks.value1_5"
+          }
+        },
+        {
+          "label": "jsc.guide.server_racks.table1_6",
+          "value": {
+            "words": "jsc.guide.server_racks.value1_6"
+          }
+        },
+        {
+          "label": "jsc.guide.server_racks.table1_7",
+          "value": {
+            "words": "jsc.guide.server_racks.value1_7"
+          }
+        }
       ]
     },
     {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text4"
+    },
+    {
       "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -50,6 +79,10 @@
         {
           "fix": "jsc.guide.server_racks.fix1",
           "problem": "jsc.guide.server_racks.problem1"
+        },
+        {
+          "fix": "jsc.guide.server_racks.fix2",
+          "problem": "jsc.guide.server_racks.problem2"
         }
       ]
     }
@@ -63,9 +96,25 @@
     "jsc:server_rack",
     "jsc:advanced_server_rack",
     "jsc:supercomputer_rack",
-    "jsc:advanced_supercomputer_rack"
+    "jsc:advanced_supercomputer_rack",
+    "jsc:vintage_server_case",
+    "jsc:vintage_server",
+    "jsc:legacy_server_case",
+    "jsc:legacy_server",
+    "jsc:transition_server_case",
+    "jsc:transition_server",
+    "jsc:server_case",
+    "jsc:server",
+    "jsc:advanced_server_case",
+    "jsc:advanced_server",
+    "jsc:storage_server_case",
+    "jsc:storage_server",
+    "jsc:compute_server_case",
+    "jsc:compute_server",
+    "jsc:supercomputer_node",
+    "jsc:advanced_supercomputer_node"
   ],
-  "order": 5,
+  "order": 15,
   "section": "jsc:computers",
   "title": "jsc.guide.server_racks.title"
 }

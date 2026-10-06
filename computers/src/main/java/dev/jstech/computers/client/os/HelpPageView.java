@@ -371,6 +371,7 @@ final class HelpPageView {
                     this.words(term.text(), TERM_INDENT, this.style.ink(), false);
                 }
                 case ManualReader.Piece.Table table -> this.table(table);
+                case ManualReader.Piece.Parts parts -> this.words(parts.line(), 0, this.style.faint(), false);
                 case ManualReader.Piece.Picture picture -> this.picture(picture);
                 case ManualReader.Piece.Recipes recipes -> this.recipes(recipes, source);
                 case ManualReader.Piece.Links links -> this.links(reader, links);
@@ -446,14 +447,17 @@ final class HelpPageView {
 
     private void picture(final ManualReader.Piece.Picture picture) {
         final ItemStack stack = stack(picture.item());
-        if (stack.isEmpty()) {
+        if (stack.isEmpty() && picture.caption().isEmpty()) {
             return;
         }
         this.y += GAP;
-        this.ops.add(new Fill(PAD, this.y, ICON + 8, ICON + 8, this.style.shade()));
-        this.ops.add(new Outline(PAD, this.y, ICON + 8, ICON + 8, this.style.rule()));
-        this.ops.add(new Stack(PAD + 4, this.y + 4, stack, 2.0f));
-        this.y += ICON + 8 + 2;
+        // A picture that is no item (a screen a manual draws) says what it shows in its caption alone.
+        if (!stack.isEmpty()) {
+            this.ops.add(new Fill(PAD, this.y, ICON + 8, ICON + 8, this.style.shade()));
+            this.ops.add(new Outline(PAD, this.y, ICON + 8, ICON + 8, this.style.rule()));
+            this.ops.add(new Stack(PAD + 4, this.y + 4, stack, 2.0f));
+            this.y += ICON + 8 + 2;
+        }
         if (!picture.caption().isEmpty()) {
             this.words(picture.caption(), 0, this.style.faint(), false);
         }

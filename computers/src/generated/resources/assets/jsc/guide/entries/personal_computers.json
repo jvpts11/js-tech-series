@@ -1,20 +1,12 @@
 {
   "blocks": [
     {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is"
+      "type": "text",
+      "text": "jsc.guide.personal_computers.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.personal_computers.what"
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_it_is_for"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.personal_computers.for"
+      "text": "jsc.guide.personal_computers.text2"
     },
     {
       "type": "table",
@@ -65,32 +57,16 @@
       ]
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.how_to_get_it"
+      "type": "text",
+      "text": "jsc.guide.personal_computers.text3"
     },
     {
       "type": "text",
-      "text": "jsc.manual.from_the_tabs"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.personal_computers.text1"
+      "text": "jsc.guide.personal_computers.text4"
     },
     {
       "type": "heading",
-      "text": "jscore.guide.how_to_use_it"
-    },
-    {
-      "type": "steps",
-      "steps": [
-        "jsc.guide.personal_computers.use1",
-        "jsc.guide.personal_computers.use2",
-        "jsc.guide.personal_computers.use3"
-      ]
-    },
-    {
-      "type": "heading",
-      "text": "jscore.guide.what_can_go_wrong"
+      "text": "jscore.guide.if_something_goes_wrong"
     },
     {
       "type": "problems",
@@ -98,10 +74,6 @@
         {
           "fix": "jsc.guide.personal_computers.fix1",
           "problem": "jsc.guide.personal_computers.problem1"
-        },
-        {
-          "fix": "jsc.guide.personal_computers.fix2",
-          "problem": "jsc.guide.personal_computers.problem2"
         }
       ]
     }
@@ -119,7 +91,7 @@
     "jsc:advanced_high_performance_personal_computer",
     "jsc:advanced_aesthetic_personal_computer"
   ],
-  "order": 1,
+  "order": 13,
   "section": "jsc:computers",
   "title": "jsc.guide.personal_computers.title"
 }
