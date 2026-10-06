@@ -157,7 +157,9 @@ Give the player an item that opens it: a `ManualItem`, declared like any item,
 first time they join a world, call `GuideGifts.giveOnFirstJoin("mymod:handbook", MyContent.HANDBOOK)` while the game
 loads: it goes into the first free place above the hotbar, and the world keeps who was given it.
 
-When several manuals hold an item's entry, the manual key opens the one with the highest `priority`.
+When several manuals hold an item's entry, the manual key opens one that names the item's chapter before one that
+holds every chapter, so a mod's item opens in the mod's own manual when it has one, and in the Technical Reference
+when it has not. Among manuals alike, it opens the one with the highest `priority`.
 
 ## Styles
 
@@ -204,6 +206,11 @@ Two helpers make the usual ones in code:
   has no index pages: its search still finds every entry by name.
 - A chapter's tab takes its colour from the chapter's `tab`: a palette's id whose role `tab` it is, or a colour
   written `#AARRGGBB`.
+- `hold_bar` is the bar that fills while the manual key is held over an item this manual opens: `plain` (a thin bar
+  in the series' accent, the default), `blocks` (blue blocks lighting one after another in a dark, rimmed track, as
+  a desktop of the 2000s loaded; J's Computers) or `hazard` (black and yellow stripes, as a machine's guard is
+  marked; J's Industrial). In code, `CoreGuide.binder(...).withHoldBar(GuideStyle.HoldBar.BLOCKS)`. Its colours are
+  the palette `jscore:guide/hold_bar`.
 
 ## A special block
 
@@ -248,14 +255,16 @@ or a special block is left out. J's Computers reads the manuals this way in its 
 
 ## What a player does with it
 
-- Using the manual item opens it at its cover; a click opens it to its contents.
+- Using the manual item opens it at its cover the first time; after that, at the page it was closed at, for as long
+  as the game runs. A click on the cover opens it to its contents.
 - The arrows, the arrow keys, Page Up and Page Down and the mouse wheel turn the pages; Home goes to the contents.
 - A line of the contents, a number after "See", a line of the index and a chapter's tab each go to their page.
 - The magnifier on the top edge turns the left page into a search of the index that filters as the player types; the
   right page shows the index around the first thing found.
-- Holding **M** (the player can change it, "Open Its Page in the Manual") over an item in any inventory for a moment
-  opens the manual at its page; pressing it with the item in hand does the same. An item with a page says so at the
-  foot of its tooltip: "Hold [M] to open its page in the manual".
+- Holding **M** (the player can change it, "Open Its Page in the Manual") for a moment over an item in any inventory,
+  or with the item in hand, opens the manual at its page. While it is held a small bar fills under the slot, or
+  under the crosshair, in the look of the manual it opens. The key has to be let go before it opens a page again.
+  An item with a page says so at the foot of its tooltip: "Hold [M] to open its page in the manual".
 - On a computer of J's Computers, every system's help reads the same manuals beside its own commands.
 
 ## What can go wrong

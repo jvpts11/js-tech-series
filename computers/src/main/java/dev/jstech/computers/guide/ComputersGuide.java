@@ -11,6 +11,7 @@ import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.guide.CoreGuide;
+import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.ManualItem;
 import dev.jstech.core.guide.ModGuide;
 import java.util.List;
@@ -38,7 +39,9 @@ public final class ComputersGuide {
     /** Declares the chapter, the manual and its style, before the data generation writes the mod's files. */
     public static void declare() {
         final ModGuide guide = ComputingContent.CONTENT.guide();
-        guide.style("operations", CoreGuide.binder("jsc:guide/operations", true));
+        // Held over an item, the manual key lights blue blocks one after another, as Frames XP did while it loaded.
+        guide.style("operations", CoreGuide.binder("jsc:guide/operations", true)
+                .withHoldBar(GuideStyle.HoldBar.BLOCKS));
         guide.manual("guide_to_operations").titled("Guide to Operations").cover("J's Computers")
                 .edition("First Edition (September 2026)").style(OPERATIONS_STYLE).chapters("jsc").priority(50)
                 .icon("jsc:gui/guide/cover_mark")

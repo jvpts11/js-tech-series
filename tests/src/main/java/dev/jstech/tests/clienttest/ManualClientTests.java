@@ -7,15 +7,21 @@
  */
 package dev.jstech.tests.clienttest;
 
+import dev.jstech.computers.guide.ComputersGuide;
 import dev.jstech.core.client.guide.GuideClient;
 import dev.jstech.core.client.guide.ManualScreen;
+import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.guide.GuideBook;
 import dev.jstech.core.guide.GuideTexts;
+import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.text.GameText;
+import dev.jstech.industrial.guide.IndustrialGuide;
 import dev.jstech.tests.TestGuide;
 import dev.jstech.tests.TestPress;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -26,21 +32,25 @@ import net.minecraft.world.item.TooltipFlag;
 /**
  * The Core's manuals as a player reads them: the test manual opened at its cover and turned to its contents, opened
  * at an entry, a link and a tab followed, its index searched as the player types, a long entry run on to the pages
- * after its first, an item's page opened by the manual key, and the manual item opening its manual.
+ * after its first, the manual opened again where it was closed, an item's page opened by the manual key held over
+ * it while a bar in the manual's look fills, and the manual item opening its manual.
  */
 public final class ManualClientTests {
 
     private static final int SETTLE = 4;
     private static final int OPEN = 40;
+    /* Far enough into a hold for its bar to show, and early enough to see it before the page opens. */
+    private static final float HALF_HELD = 0.35F;
 
     private ManualClientTests() {
     }
 
     @ClientTest(timeoutTicks = 300)
-    public static void manual_opensAtItsCoverAndTurnsToItsContents(final ClientTestContext ctx) {
+    public static void manual_closesToItsCoverAndTurnsToItsContents(final ClientTestContext ctx) {
         ctx.then(0, () -> GuideClient.open(TestGuide.MANUAL, ""))
                 .thenAwaitScreen(ManualScreen.class, OPEN)
-                .thenAssert(SETTLE, () -> manual().spread() == -1, "the manual opens at its cover")
+                .then(SETTLE, () -> manual().turn(-manual().spread() - 1))
+                .thenAssert(SETTLE, () -> manual().spread() == -1, "the manual turns back to its cover")
                 .thenScreenshot(2, "manual_cover")
                 .then(0, () -> manual().turn(1))
                 .thenAssert(SETTLE, () -> manual().spread() == 0
@@ -128,6 +138,65 @@ public final class ManualClientTests {
     }
 
     @ClientTest(timeoutTicks = 300)
+    public static void manual_opensAgainWhereItWasClosed(final ClientTestContext ctx) {
+        final AtomicInteger left = new AtomicInteger(-2);
+        ctx.then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.LONG))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .then(SETTLE, () -> {
+                    manual().turn(1);
+                    left.set(manual().spread());
+                })
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN)
+                .then(0, () -> GuideClient.open(TestGuide.MANUAL, ""))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> left.get() > 0 && manual().spread() == left.get(),
+                        "the manual opens at the spread it was closed at")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 300)
+    public static void manualKey_heldOverTheItemInHandFillsABarAndOpensItsPage(final ClientTestContext ctx) {
+        ctx.thenGive(0, new ItemStack(TestPress.UPGRADE.get()))
+                .then(2, () -> ctx.selectHotbar(0))
+                .then(2, () -> manualKey().setDown(true))
+                .thenWaitUntil(() -> GuideClient.holdProgress() > HALF_HELD, OPEN,
+                        "the bar fills while the key is held")
+                .thenScreenshot(0, "manual_hold_bar_plain")
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> shows(TestGuide.PRESS), "and the item's page opens when it is full")
+                .then(0, () -> manualKey().setDown(false))
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN)
+                .thenGive(0);
+    }
+
+    @ClientTest(timeoutTicks = 300)
+    public static void manualKey_fillsTheBarOfTheManualItOpens(final ClientTestContext ctx) {
+        ctx.thenGive(0, new ItemStack(ComputersGuide.MANUAL.get()), new ItemStack(IndustrialGuide.MANUAL.get()))
+                .then(2, () -> ctx.selectHotbar(0))
+                .then(2, () -> manualKey().setDown(true))
+                .thenWaitUntil(() -> GuideClient.holdProgress() > HALF_HELD, OPEN, "the Guide to Operations' bar fills")
+                .thenScreenshot(0, "manual_hold_bar_blocks")
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .then(0, () -> manualKey().setDown(false))
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN)
+                .then(2, () -> ctx.selectHotbar(1))
+                .then(2, () -> manualKey().setDown(true))
+                .thenWaitUntil(() -> GuideClient.holdProgress() > HALF_HELD, OPEN, "the Plant Drawings' bar fills")
+                .thenScreenshot(0, "manual_hold_bar_hazard")
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> manual().manual().id().equals(IndustrialGuide.PLANT_DRAWINGS),
+                        "and the drawings open")
+                .then(0, () -> manualKey().setDown(false))
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN)
+                .thenGive(0);
+    }
+
+    @ClientTest(timeoutTicks = 300)
     public static void manualItem_opensItsManual(final ClientTestContext ctx) {
         ctx.then(0, () -> {
                     final Minecraft minecraft = Minecraft.getInstance();
@@ -153,5 +222,10 @@ public final class ManualClientTests {
 
     private static void close() {
         Minecraft.getInstance().setScreen(null);
+    }
+
+    /* The manual key's binding, held down and let go as the player's finger would. */
+    private static KeyMapping manualKey() {
+        return KeyActionsClient.mapping(CoreKeys.OPEN_IN_MANUAL);
     }
 }

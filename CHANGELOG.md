@@ -92,19 +92,22 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Manuals, in J's Core, for every mod to write in: a mod declares its chapter once, as entries of ready blocks
   (paragraphs, figures, numbered tables whose amounts are read from the code, the recipes the world holds, steps,
   warnings, problems with their fixes, words explained, links), and they show in its own manual and in any manual
-  holding every chapter. A manual opens at its cover, turns its pages with the arrows, the keys or the wheel, numbers
-  everything as technical manuals do (3.2.6, Figure 3-9, page 3-14), builds its contents and its index, and searches
-  the index as the player types. Holding M over an item in any inventory opens its page, and the item's tooltip says
-  so. Styles are data a resource pack can replace; the Core brings a ring binder with navy covers. Entries follow five
-  parts: what it is, what it is for, how to get it, how to use it, and what can go wrong.
+  holding every chapter. A manual opens at its cover the first time and after that at the page it was closed at,
+  turns its pages with the arrows, the keys or the wheel, numbers everything as technical manuals do (3.2.6, Figure
+  3-9, page 3-14), builds its contents and its index, and searches the index as the player types. Holding M a moment
+  over an item in any inventory, or with the item in hand, opens its page in its mod's own manual, while a small bar
+  fills under the slot or the crosshair in that manual's look; the item's tooltip says so. Styles are data a resource
+  pack can replace; the Core brings a ring binder with navy covers. Entries follow five parts: what it is, what it is
+  for, how to get it, how to use it, and what can go wrong.
 - The series' three manuals. The **Technical Reference**, a navy binder holding a chapter for every mod installed
   (the series, J's Core, J's Computers, J's Industrial), is handed to each player once, the first time they join a
   world, above their hotbar, and is in J's Core's new creative tab. The **Guide to Operations** is J's Computers' own,
-  a beige binder with a cyan band, in the mod's tab among the programs. The **Plant Drawings** are J's Industrial's
-  own, a slate folder of blueprints in its tab: a drawing list, then every machine drawn from above, the front and
-  the side, traced from its own block, with numbered balloons, set up in a plan seen from above, on sheets with a
-  frame, zones and a title block (JI-102, sheet 1 of 2). Every item of the three mods is the page of an entry, in
-  English and Brazilian Portuguese, and every number on them is the mods' own.
+  a beige binder with a cyan band, in the mod's tab among the programs, and its bar lights blue blocks one after
+  another as a desktop of the 2000s did while it loaded. The **Plant Drawings** are J's Industrial's own, a slate
+  folder of blueprints in its tab whose bar runs in black and yellow stripes: a drawing list, then every machine
+  drawn from above, the front and the side, traced from its own block, with numbered balloons, set up in a plan seen
+  from above, on sheets with a frame, zones and a title block (JI-102, sheet 1 of 2). Every item of the three mods is
+  the page of an entry, in English and Brazilian Portuguese, and every number on them is the mods' own.
 - Manuals open each chapter on two facing pages, its number large in the chapter's colour with its title and what it
   is about, and its sections with their icons and pages; a page is left blank before a chapter that would open on a
   right page, as printed manuals do. Recipes show their time over the arrow, their energy under it, and the name of

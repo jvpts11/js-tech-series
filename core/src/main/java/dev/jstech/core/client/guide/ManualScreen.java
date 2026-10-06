@@ -118,12 +118,20 @@ public final class ManualScreen extends Screen {
     private static final int BALLOON_X = 80;
     private static final int BALLOON_STEP = 48;
     private static final int BALLOON_ROOM = 48;
+    /*
+     * The spread each manual was left open at, by its id, for as long as the game runs: a manual opened again from its
+     * item opens where it was closed, as a book does.
+     */
+    private static final Map<String, Integer> LEFT_AT = new HashMap<>();
 
     public ManualScreen(final GuideManual manual, final GuideStyle style, final String openAt) {
         super(GameText.component(GuideTexts.CONTENTS));
         this.manual = manual;
         this.style = style;
         this.openAt = openAt == null ? "" : openAt;
+        if (this.openAt.isEmpty()) {
+            this.spread = LEFT_AT.getOrDefault(manual.id(), -1);
+        }
     }
 
     @Override
@@ -233,6 +241,13 @@ public final class ManualScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    /* The page the manual is closed at is where it opens next time from its item. */
+    @Override
+    public void removed() {
+        LEFT_AT.put(this.manual.id(), this.spread);
+        super.removed();
     }
 
     @Override

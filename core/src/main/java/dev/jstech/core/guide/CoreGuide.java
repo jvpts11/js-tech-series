@@ -77,7 +77,8 @@ public final class CoreGuide {
     public static GuideStyle binder(final String palette, final boolean band) {
         return new GuideStyle(palette, Map.of(), new GuideStyle.Pages(true, PAGE_WIDTH, PAGE_HEIGHT, MARGIN, 1),
                 GuideStyle.Decor.binder(true), "", CoreFonts.FIXED_6X10.id().toString(),
-                GuideStyle.Folios.CHAPTER_PAGE, "", new GuideStyle.Cover(GuideStyle.CoverKind.BINDER, !band, band));
+                GuideStyle.Folios.CHAPTER_PAGE, "", new GuideStyle.Cover(GuideStyle.CoverKind.BINDER, !band, band),
+                GuideStyle.HoldBar.PLAIN);
     }
 
     /**
@@ -88,6 +89,7 @@ public final class CoreGuide {
     public static GuideStyle drawings(final String palette, final String prefix) {
         return new GuideStyle(palette, Map.of(), new GuideStyle.Pages(false, SHEET_WIDTH, PAGE_HEIGHT,
                 SHEET_MARGIN, 2), GuideStyle.Decor.drawing(), "", CoreFonts.FIXED_6X10.id().toString(),
-                GuideStyle.Folios.DRAWING, prefix, new GuideStyle.Cover(GuideStyle.CoverKind.FOLDER, true, true));
+                GuideStyle.Folios.DRAWING, prefix, new GuideStyle.Cover(GuideStyle.CoverKind.FOLDER, true, true),
+                GuideStyle.HoldBar.PLAIN);
     }
 }

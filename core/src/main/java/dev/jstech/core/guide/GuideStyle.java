@@ -28,9 +28,10 @@ import java.util.Objects;
  * @param folios        how its pages are numbered
  * @param drawingPrefix the letters a drawing's number starts with ({@code JI} for JI-102), for drawing numbers
  * @param cover         how its cover looks
+ * @param holdBar       the little bar that fills while the manual key is held over an item to open its page here
  */
 public record GuideStyle(String palette, Map<String, String> colours, Pages pages, Decor decor, String bodyFont,
-                         String tableFont, Folios folios, String drawingPrefix, Cover cover) {
+                         String tableFont, Folios folios, String drawingPrefix, Cover cover, HoldBar holdBar) {
 
     /**
      * The colour roles a style fills, each named as a palette's record names its components and as style files name
@@ -73,6 +74,13 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
         Objects.requireNonNull(folios, "folios");
         drawingPrefix = drawingPrefix == null ? "" : drawingPrefix;
         Objects.requireNonNull(cover, "cover");
+        Objects.requireNonNull(holdBar, "holdBar");
+    }
+
+    /** The same style with another bar filling while the manual key is held over an item. */
+    public GuideStyle withHoldBar(final HoldBar bar) {
+        return new GuideStyle(this.palette, this.colours, this.pages, this.decor, this.bodyFont, this.tableFont,
+                this.folios, this.drawingPrefix, this.cover, bar);
     }
 
     /** Whether it opens as two pages side by side. */
@@ -167,6 +175,27 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
         private final String serializedName;
 
         CoverKind(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return this.serializedName;
+        }
+    }
+
+    /** The bar that fills while the manual key is held over an item, in the look of the manual it opens. */
+    public enum HoldBar implements IStableName {
+        /** A plain bar in the series' accent. */
+        PLAIN("plain"),
+        /** Blue blocks lighting one after another in a dark, rimmed track, as a system of the early 2000s loaded. */
+        BLOCKS("blocks"),
+        /** Black and yellow stripes running in, as the edge of a machine's guard is marked. */
+        HAZARD("hazard");
+
+        private final String serializedName;
+
+        HoldBar(final String serializedName) {
             this.serializedName = serializedName;
         }
 

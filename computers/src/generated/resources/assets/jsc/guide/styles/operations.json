@@ -6,6 +6,7 @@
   "decor": {
     "rings": true
   },
+  "hold_bar": "blocks",
   "pages": {
     "height": 201,
     "width": 166

@@ -24,7 +24,7 @@ import java.util.Objects;
  * @param style       the style it is drawn in, {@code namespace:path}
  * @param chapters    the namespaces of the chapters it holds, in the order the chapters say; {@code *} holds every one
  * @param aboutKeys   the paragraphs of its "About this manual" page, or the notes under a drawing list
- * @param priority    which manual the manual key opens when several hold an item's entry: the highest
+ * @param priority    which manual the manual key opens when several alike hold an item's entry: the highest
  * @param icon        the mark printed on its cover, a texture {@code namespace:path} of 32 by 32 pixels, or empty
  */
 public record GuideManual(String id, String titleKey, List<String> coverKeys, String edition, String partNumber,
@@ -48,5 +48,10 @@ public record GuideManual(String id, String titleKey, List<String> coverKeys, St
     /** Whether the manual holds the chapter of that namespace. */
     public boolean holds(final String namespace) {
         return this.chapters.contains(EVERY_CHAPTER) || this.chapters.contains(namespace);
+    }
+
+    /** Whether the manual names the chapter of that namespace, rather than holding it as one of every chapter. */
+    public boolean names(final String namespace) {
+        return this.chapters.contains(namespace);
     }
 }

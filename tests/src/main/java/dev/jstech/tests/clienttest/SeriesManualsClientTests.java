@@ -36,7 +36,8 @@ public final class SeriesManualsClientTests {
     public static void technicalReference_opensEachChapterOnALeftPage(final ClientTestContext ctx) {
         ctx.then(0, () -> GuideClient.open(CoreGuide.TECHNICAL_REFERENCE, ""))
                 .thenAwaitScreen(ManualScreen.class, OPEN)
-                .thenAssert(SETTLE, () -> manual().spread() == -1, "the binder opens at its cover")
+                .then(SETTLE, SeriesManualsClientTests::toCover)
+                .thenAssert(SETTLE, () -> manual().spread() == -1, "the binder closes to its cover")
                 .thenScreenshot(2, "series_reference_cover")
                 .then(0, () -> manual().turn(1))
                 .thenScreenshot(SETTLE, "series_reference_contents")
@@ -60,6 +61,7 @@ public final class SeriesManualsClientTests {
     public static void guideToOperations_holdsTheComputersChapterInItsOwnBinder(final ClientTestContext ctx) {
         ctx.then(0, () -> GuideClient.open(ComputersGuide.GUIDE_TO_OPERATIONS, ""))
                 .thenAwaitScreen(ManualScreen.class, OPEN)
+                .then(SETTLE, SeriesManualsClientTests::toCover)
                 .thenScreenshot(SETTLE, "series_operations_cover")
                 .thenAssert(0, () -> manual().book().pageOf("jsindustrial").isEmpty()
                         && manual().book().pageOf("jsc:personal_computers").isPresent(),
@@ -75,6 +77,7 @@ public final class SeriesManualsClientTests {
     public static void plantDrawings_openAtTheDrawingListAndTurnSheetBySheet(final ClientTestContext ctx) {
         ctx.then(0, () -> GuideClient.open(IndustrialGuide.PLANT_DRAWINGS, ""))
                 .thenAwaitScreen(ManualScreen.class, OPEN)
+                .then(SETTLE, SeriesManualsClientTests::toCover)
                 .thenScreenshot(SETTLE, "series_drawings_folder")
                 .then(0, () -> manual().turn(1))
                 .thenAssert(SETTLE, () -> manual().book().pages().getFirst().folio().equals("JI-000")
@@ -120,6 +123,11 @@ public final class SeriesManualsClientTests {
 
     private static ManualScreen manual() {
         return (ManualScreen) Minecraft.getInstance().screen;
+    }
+
+    /* A manual opens where it was last closed; this turns it back to its cover. */
+    private static void toCover() {
+        manual().turn(-manual().spread() - 1);
     }
 
     private static GuideBook.Page page(final String target) {

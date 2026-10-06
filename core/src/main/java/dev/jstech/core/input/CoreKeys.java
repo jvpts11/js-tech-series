@@ -37,8 +37,8 @@ public final class CoreKeys {
             .onServer(ItemStates::cycleHeld));
 
     /**
-     * Opens the manual at the page of the item under the pointer, held a moment so a stray press does nothing, or of
-     * the item in the main hand. M, as the manuals' tooltips say, until the player changes it.
+     * Opens the manual at the page of the item under the pointer, or of the item in the main hand, held a moment so a
+     * stray press does nothing. M, as the manuals' tooltips say, until the player changes it.
      */
     public static final KeyAction OPEN_IN_MANUAL = KeyActions.declare(KeyAction.builder(
                     ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "open_in_manual"), GuideTexts.OPEN_KEY)

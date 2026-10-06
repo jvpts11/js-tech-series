@@ -131,7 +131,9 @@ public final class GuideCodecs {
                     .forGetter(GuideStyle::folios),
             Codec.STRING.optionalFieldOf("drawing_prefix", "").forGetter(GuideStyle::drawingPrefix),
             COVER.optionalFieldOf("cover", new GuideStyle.Cover(GuideStyle.CoverKind.BINDER, true, false))
-                    .forGetter(GuideStyle::cover)
+                    .forGetter(GuideStyle::cover),
+            StableCodecs.byName(GuideStyle.HoldBar.class).optionalFieldOf("hold_bar", GuideStyle.HoldBar.PLAIN)
+                    .forGetter(GuideStyle::holdBar)
     ).apply(instance, GuideStyle::new));
 
     public static final Codec<GuideBlock.Callout> CALLOUT = RecordCodecBuilder.create(instance -> instance.group(

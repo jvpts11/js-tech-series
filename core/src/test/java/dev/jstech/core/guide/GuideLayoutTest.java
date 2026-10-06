@@ -21,10 +21,11 @@ class GuideLayoutTest {
 
     private static final GuideStyle STYLE = new GuideStyle("", Map.of(), new GuideStyle.Pages(true, 166, 201, 10, 1),
             GuideStyle.Decor.binder(true), "", "", GuideStyle.Folios.CHAPTER_PAGE, "",
-            new GuideStyle.Cover(GuideStyle.CoverKind.BINDER, true, false));
+            new GuideStyle.Cover(GuideStyle.CoverKind.BINDER, true, false), GuideStyle.HoldBar.PLAIN);
     private static final GuideStyle DRAWINGS = new GuideStyle("", Map.of(),
             new GuideStyle.Pages(false, 340, 201, 15, 2), GuideStyle.Decor.drawing(), "", "",
-            GuideStyle.Folios.DRAWING, "JI", new GuideStyle.Cover(GuideStyle.CoverKind.FOLDER, true, true));
+            GuideStyle.Folios.DRAWING, "JI", new GuideStyle.Cover(GuideStyle.CoverKind.FOLDER, true, true),
+            GuideStyle.HoldBar.HAZARD);
     private static final GuideManual MANUAL = new GuideManual("test:manual", "manual.title", List.of(), "", "",
             "test:style", List.of(GuideManual.EVERY_CHAPTER), List.of("about.one"), 0, "");
 

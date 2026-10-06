@@ -18,6 +18,7 @@ import static dev.jstech.industrial.guide.IndustrialGuideTexts.THE_FRONT;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideBlock;
+import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.ManualItem;
 import dev.jstech.core.guide.ModGuide;
 import dev.jstech.industrial.IndustrialModule;
@@ -46,7 +47,9 @@ public final class IndustrialGuide {
     /** Declares the chapter, the drawings and their style, before the data generation writes the mod's files. */
     public static void declare() {
         final ModGuide guide = IndustrialModule.CONTENT.guide();
-        guide.style("drawings", CoreGuide.drawings("jsindustrial:guide/drawings", "JI"));
+        // Held over an item, the manual key fills a bar in the black and yellow of a machine's guard.
+        guide.style("drawings", CoreGuide.drawings("jsindustrial:guide/drawings", "JI")
+                .withHoldBar(GuideStyle.HoldBar.HAZARD));
         guide.manual("plant_drawings").titled("Plant Drawings").cover("J's Industrial")
                 .edition("Set A - Sheets 1 to %s").style(DRAWINGS_STYLE).chapters("jsindustrial").priority(50)
                 .icon("jsindustrial:gui/guide/cover_mark")

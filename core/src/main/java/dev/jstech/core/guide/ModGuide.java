@@ -688,7 +688,10 @@ public final class ModGuide {
             return this;
         }
 
-        /** Which manual the manual key opens when several hold an item's entry: the highest. */
+        /**
+         * Which manual the manual key opens when several alike hold an item's entry: the highest. A manual that names
+         * the entry's chapter comes before one that holds every chapter, whatever their priorities.
+         */
         public ManualBuilder priority(final int priority) {
             this.priority = priority;
             return this;

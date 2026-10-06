@@ -89,17 +89,20 @@ public final class GuideLibrary {
     }
 
     /**
-     * The manual the manual key opens an entry in: of those holding the entry's chapter, the one of the highest
-     * priority, and of two alike the one whose id sorts first.
+     * The manual the manual key opens an entry in: of those holding the entry's chapter, one written for that chapter
+     * before one that holds every chapter, so a mod's item opens in the mod's own manual when it has one; then the one
+     * of the highest priority, and of two alike the one whose id sorts first.
      */
     public Optional<GuideManual> manualFor(final String entry) {
         final GuideEntry found = this.entries.get(entry);
         if (found == null) {
             return Optional.empty();
         }
-        return this.manuals.values().stream().filter(manual -> manual.holds(found.namespace()))
-                .filter(manual -> this.chapters.containsKey(found.namespace()))
-                .min(Comparator.comparingInt((GuideManual manual) -> -manual.priority())
+        final String chapter = found.namespace();
+        return this.manuals.values().stream().filter(manual -> manual.holds(chapter))
+                .filter(manual -> this.chapters.containsKey(chapter))
+                .min(Comparator.comparing((GuideManual manual) -> !manual.names(chapter))
+                        .thenComparingInt(manual -> -manual.priority())
                         .thenComparing(GuideManual::id));
     }
 
