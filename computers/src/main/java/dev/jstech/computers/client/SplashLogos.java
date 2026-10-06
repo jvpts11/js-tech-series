@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.core.client.gui.component.Draw;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.AbstractTexture;
@@ -108,14 +109,14 @@ public final class SplashLogos {
         final int side = Math.max(1, size);
         final ResourceLocation mark = markOf(edition);
         smooth(mark);
-        g.blit(mark, x, y, side, side, 0.0F, 0.0F, MARK_TEX, MARK_TEX, MARK_TEX, MARK_TEX);
+        Draw.blended(() -> g.blit(mark, x, y, side, side, 0.0F, 0.0F, MARK_TEX, MARK_TEX, MARK_TEX, MARK_TEX));
     }
 
     /** Draws the maker's badge with its top right corner at {@code (right, y)}. */
     public static void badge(final GuiGraphics g, final int right, final int y) {
         smooth(JSC_BADGE);
-        g.blit(JSC_BADGE, right - BADGE_W, y, BADGE_W, BADGE_H, 0.0F, 0.0F,
-                BADGE_TEX_W, BADGE_TEX_H, BADGE_TEX_W, BADGE_TEX_H);
+        Draw.blended(() -> g.blit(JSC_BADGE, right - BADGE_W, y, BADGE_W, BADGE_H, 0.0F, 0.0F,
+                BADGE_TEX_W, BADGE_TEX_H, BADGE_TEX_W, BADGE_TEX_H));
     }
 
     /** Draws a lockup centred on {@code cx}, with its top at {@code top}. */
@@ -127,7 +128,7 @@ public final class SplashLogos {
     public static void draw(final GuiGraphics g, final ResourceLocation logo, final int cx, final int top,
                             final int width, final int height) {
         smooth(logo);
-        g.blit(logo, cx - width / 2, top, width, height, 0.0F, 0.0F, TEX_W, TEX_H, TEX_W, TEX_H);
+        Draw.blended(() -> g.blit(logo, cx - width / 2, top, width, height, 0.0F, 0.0F, TEX_W, TEX_H, TEX_W, TEX_H));
     }
 
     /**
@@ -137,8 +138,8 @@ public final class SplashLogos {
     public static void at(final GuiGraphics g, final ResourceLocation logo, final int x, final int y,
                           final int width, final int height) {
         smooth(logo);
-        g.blit(logo, x, y, width, height, 0.0F, 0.0F, width * SUPERSAMPLE, height * SUPERSAMPLE,
-                width * SUPERSAMPLE, height * SUPERSAMPLE);
+        Draw.blended(() -> g.blit(logo, x, y, width, height, 0.0F, 0.0F, width * SUPERSAMPLE, height * SUPERSAMPLE,
+                width * SUPERSAMPLE, height * SUPERSAMPLE));
     }
 
     /**

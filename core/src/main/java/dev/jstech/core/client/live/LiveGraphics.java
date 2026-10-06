@@ -25,7 +25,9 @@ import org.jetbrains.annotations.Nullable;
  * them for the texture instead and leaves every other call as the game makes it.
  *
  * <p>A painter whose picture is part of a bigger area it lays itself out in (a desktop laid out round a monitor's
- * glass, of which only the glass is wanted) can {@link #shift} the area, and a clip it asks for moves with it.
+ * glass, of which only the glass is wanted) can {@link #shift} the area, and a clip it asks for moves with it. The
+ * shift is not in the pose: a clip worked out through the pose, as a window clipping its contents does, is then in the
+ * area's units like one given straight, and both are moved once.
  */
 public final class LiveGraphics extends GuiGraphics {
 
@@ -49,9 +51,16 @@ public final class LiveGraphics extends GuiGraphics {
     /**
      * Moves what is drawn from now on by {@code (dx, dy)}, clips included: a painter laying itself out in a bigger area
      * shifts it so the part it wants falls on the texture.
+     *
+     * <p>The view is moved rather than the pose. Moved in the pose, a clip worked out through the pose already held
+     * the shift and was moved by it a second time, so a window's clip landed up and to the left of the window: its
+     * contents showed the rows scrolled above it over its title bar, and none of the rows it should have shown.
      */
     public void shift(final int dx, final int dy) {
-        pose().translate(dx, dy, 0.0F);
+        // What is already drawn stays where it was drawn; only what comes after is moved.
+        flush();
+        RenderSystem.getModelViewStack().translate(dx, dy, 0.0F);
+        RenderSystem.applyModelViewMatrix();
         originX += dx;
         originY += dy;
     }

@@ -23,6 +23,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.handling.IPayloadHandler;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.jetbrains.annotations.Nullable;
@@ -119,6 +120,14 @@ public final class ComputerAccess {
      * <p>Which of the three does not matter to the machine, since each is the same player at the same machine through
      * a menu the server opened, and a program can be opened in more than one of them.
      */
+    /**
+     * Near enough to see the place a payload names, {@code reach} blocks at most: a monitor's face in the world, which
+     * anybody in sight of it may ask after, the way it is drawn for anybody in sight of it.
+     */
+    public static <P> IPayloadGate<P> inSightOf(final Function<P, BlockPos> place, final double reach) {
+        return (player, payload) -> player.distanceToSqr(Vec3.atCenterOf(place.apply(payload))) <= reach * reach;
+    }
+
     public static <P> IPayloadGate<P> machine(final Function<P, BlockPos> host) {
         return (player, payload) -> {
             final BlockPos shown = shownBy(player.containerMenu);

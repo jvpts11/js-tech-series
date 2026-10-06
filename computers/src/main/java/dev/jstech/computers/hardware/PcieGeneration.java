@@ -33,6 +33,23 @@ public enum PcieGeneration {
         this.generation = generation;
     }
 
+    /** The bus as a part's sheet names it, the same in every language: "AGP 4x", "PCI-e 3.0". */
+    public Text label() {
+        return switch (this) {
+            case ISA -> Text.literal("ISA");
+            case PCI -> Text.literal("PCI");
+            case AGP_2X -> Text.literal("AGP 2x");
+            case AGP_4X -> Text.literal("AGP 4x");
+            case AGP_8X -> Text.literal("AGP 8x");
+            case PCIE_1_0 -> Text.literal("PCI-e 1.0");
+            case PCIE_2_0 -> Text.literal("PCI-e 2.0");
+            case PCIE_3_0 -> Text.literal("PCI-e 3.0");
+            case PCIE_4_0 -> Text.literal("PCI-e 4.0");
+            case PCIE_5_0 -> Text.literal("PCI-e 5.0");
+            case PCIE_6_0 -> Text.literal("PCI-e 6.0");
+        };
+    }
+
     /** The slot as its specifications name it, the same in every language: "AGP 4x", "PCI Express 3.0 x16". */
     public Text slotName() {
         return switch (this) {

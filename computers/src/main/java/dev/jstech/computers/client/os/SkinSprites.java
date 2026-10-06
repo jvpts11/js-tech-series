@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.core.client.gui.component.Draw;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
@@ -67,10 +68,11 @@ public final class SkinSprites {
         final int side = Math.min(size, Math.min(w, h));
         final int ox = x + (w - side) / 2;
         final int oy = y + (h - side) / 2;
+        // A picture's soft edges are blended into what is under them, never drawn solid.
         if (side == size) {
-            g.blit(texture, ox, oy, 0.0F, 0.0F, size, size, size, size);
+            Draw.blended(() -> g.blit(texture, ox, oy, 0.0F, 0.0F, size, size, size, size));
         } else {
-            g.blit(texture, ox, oy, side, side, 0.0F, 0.0F, size, size, size, size);
+            Draw.blended(() -> g.blit(texture, ox, oy, side, side, 0.0F, 0.0F, size, size, size, size));
         }
     }
 

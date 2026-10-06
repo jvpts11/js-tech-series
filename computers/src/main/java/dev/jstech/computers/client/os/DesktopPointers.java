@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import com.mojang.blaze3d.platform.Window;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.core.motion.MotionKinds;
 import dev.jstech.core.motion.MotionSpec;
@@ -17,6 +18,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -84,27 +86,38 @@ final class DesktopPointers {
             case ARROW -> set.arrow();
         };
         final int frame = art.frames() > 1 ? frame(state, art) : 0;
-        // The size of the computer's own pointer: one texel to one pixel of the window, at the display's own scale.
-        final float texel = screenTexel();
+        final Window window = Minecraft.getInstance().getWindow();
+        final double guiScale = window.getGuiScale();
+        // The size of the computer's own pointer: whole pixels of the window to a texel, at the display's own scale.
+        final float texel = (float) (pixelsPerTexel(window) / (guiScale * desktop.view().scale()));
+        /*
+         * The tip lands on a whole pixel of the window. Between two, every column of the picture was sampled off its
+         * texel's middle, and some came out twice and some not at all: the pointer looked chewed.
+         */
+        final Matrix4f pose = g.pose().last().pose();
+        final float atX = pose.m00() * x + pose.m30();
+        final float atY = pose.m11() * y + pose.m31();
+        final float snapX = (float) ((Math.round(atX * guiScale) / guiScale - atX) / pose.m00());
+        final float snapY = (float) ((Math.round(atY * guiScale) / guiScale - atY) / pose.m11());
         g.pose().pushPose();
-        g.pose().translate(x, y, 0);
+        g.pose().translate(x + snapX, y + snapY, 0);
         g.pose().scale(texel, texel, 1);
-        g.blit(art.texture(), -art.hotX(), -art.hotY(), frame * art.w(), 0, art.w(), art.h(),
-                art.frames() * art.w(), art.h());
+        Draw.blended(() -> g.blit(art.texture(), -art.hotX(), -art.hotY(), frame * art.w(), 0, art.w(), art.h(),
+                art.frames() * art.w(), art.h()));
         g.pose().popPose();
     }
 
     /*
-     * How big a texel is drawn in the desktop's own units for it to come out as one pixel of the game's window, times
-     * the display's scale (125 or 150 percent on Windows), which is the size the system's own pointer is drawn at.
+     * How many pixels of the game's window a texel of the pointer takes: the display's scale (125 or 150 percent on
+     * Windows), which is the size the system's own pointer is drawn at, rounded to whole pixels. A texel of one and a
+     * quarter pixels drew some of the picture's columns once and some twice.
      */
-    private float screenTexel() {
-        final Window window = Minecraft.getInstance().getWindow();
+    private static int pixelsPerTexel(final Window window) {
         final float[] scaleX = new float[1];
         final float[] scaleY = new float[1];
         GLFW.glfwGetWindowContentScale(window.getWindow(), scaleX, scaleY);
         final float display = scaleX[0] > 0.0F ? scaleX[0] : 1.0F;
-        return (float) (display / (window.getGuiScale() * desktop.view().scale()));
+        return Math.max(1, Math.round(display));
     }
 
     /* The picture a turning pointer stands at, by the system's own pace. */

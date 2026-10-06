@@ -98,10 +98,12 @@ public final class CommandLine extends UiComponent {
     }
 
     /**
-     * Writes the line in a font of cells, one character to each, as the terminal above it is written, rather than
-     * in the game's font.
+     * Writes the line on a grid, one character to each cell, as the terminal above it is written, rather than letter
+     * after letter as wide as each is.
+     *
+     * @param font the font of cells the grid is drawn in, or null for the game's own font on cells
      */
-    public CommandLine setCellFont(final CellFont font) {
+    public CommandLine setCellFont(final @Nullable CellFont font) {
         grid = new GridPainter<>(font);
         return this;
     }

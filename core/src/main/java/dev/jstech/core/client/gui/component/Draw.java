@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.gui.component;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.core.gui.TextShadow;
 import dev.jstech.core.gui.layout.WindowGeometry;
 import net.minecraft.client.gui.Font;
@@ -121,5 +122,23 @@ public final class Draw {
     /** Fades a rectangle out, the way a disabled control is shown. */
     public static void disabled(final GuiGraphics g, final int x, final int y, final int w, final int h) {
         g.fill(x, y, x + w, y + h, ComponentPalette.get().disabled());
+    }
+
+    /**
+     * Runs a drawing of textures with their alpha blended, as a picture with soft edges needs: a pointer's shadow, an
+     * orb's rim, a logo's anti-aliased outline.
+     *
+     * <p>The game's blit draws with whatever blending was left on, and a filled box leaves none, so after one a
+     * texture's half-clear pixels came out solid: a pointer's soft shadow became a hard black outline, and a pixel
+     * almost wholly clear came out in its full colour. Only a pixel wholly clear is dropped without blending.
+     */
+    public static void blended(final Runnable drawing) {
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        try {
+            drawing.run();
+        } finally {
+            RenderSystem.disableBlend();
+        }
     }
 }

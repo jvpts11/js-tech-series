@@ -678,17 +678,20 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
                     && os.platform() == Platform.MC_NET;
             // Which run of the machine this terminal belongs to, so it does not come up showing another's lines.
             final long session = host.console() == null ? 0L : host.console().session();
+            // The machine's display scale, which its text is drawn at as its desktop is.
+            final int scale = host.console() == null ? 0 : host.console().settings().guiScale();
             player.openMenu(new SimpleMenuProvider(
                     (id, inv, p) -> tty
-                            ? new LinuxTtyMenu(id, inv, monitorPos, owner, era, console, session)
+                            ? new LinuxTtyMenu(id, inv, monitorPos, owner, era, console, session, scale)
                             : dos
-                                    ? new DosTerminalMenu(id, inv, monitorPos, owner, era, console, session)
+                                    ? new DosTerminalMenu(id, inv, monitorPos, owner, era, console, session, scale)
                                     : net
-                                            ? new NetTerminalMenu(id, inv, monitorPos, owner, era, console, session)
+                                            ? new NetTerminalMenu(id, inv, monitorPos, owner, era, console, session,
+                                                    scale)
                                             : new CommandPromptMenu(id, inv, monitorPos, owner, era, console,
-                                                    session),
+                                                    session, scale),
                     title),
-                    buf -> CommandPromptMenu.writeOpenBuffer(buf, monitorPos, owner, era, console, session));
+                    buf -> CommandPromptMenu.writeOpenBuffer(buf, monitorPos, owner, era, console, session, scale));
         }
     }
 

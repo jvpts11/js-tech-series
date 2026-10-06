@@ -73,6 +73,6 @@ public class MonitorBenchmarks {
         for (int i = 0; i < IMonitorPicture.MAX_LINES; i++) {
             lines.add(new WireLine("C:\\> dir /w   VOLUME IN DRIVE C IS SYSTEM   " + i, 0));
         }
-        return new IMonitorPicture.Console(HardwareEra.VINTAGE, lines, "C:\\>");
+        return new IMonitorPicture.Console(HardwareEra.VINTAGE, lines, "C:\\>", null, 0);
     }
 }

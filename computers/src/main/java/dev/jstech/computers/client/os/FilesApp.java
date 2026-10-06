@@ -1268,9 +1268,10 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         final int frame = throbbing() && !MotionClock.reduced()
                 ? Math.min(frames - 1, Rhythm.frame(spec, MotionClock.now() - awaitingSince)) : 0;
         final int side = FilesLayout.THROBBER;
-        g.blit(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/throbber/" + set + ".png"),
-                x + FilesLayout.throbberX(width), y + FilesLayout.throbberY(), frame * side, 0, side, side,
-                frames * side, side);
+        final ResourceLocation strip =
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/throbber/" + set + ".png");
+        Draw.blended(() -> g.blit(strip, x + FilesLayout.throbberX(width), y + FilesLayout.throbberY(), frame * side,
+                0, side, side, frames * side, side));
     }
 
     /** Places every component from the content rectangle; the same layout the next click is read against. */

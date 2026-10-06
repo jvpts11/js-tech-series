@@ -352,8 +352,8 @@ public final class BootSplashArt {
         final int side = LIGHTS * LIGHTS_SCALE;
         final int lx = x + (w - side) / 2;
         final int ly = y + h / 2 - side / 2 - 14;
-        g.blit(FRAMES_7_LIGHTS, lx, ly, side, side, frame * LIGHTS, 0, LIGHTS, LIGHTS, LIGHTS * LIGHTS_FRAMES,
-                LIGHTS);
+        Draw.blended(() -> g.blit(FRAMES_7_LIGHTS, lx, ly, side, side, frame * LIGHTS, 0, LIGHTS, LIGHTS,
+                LIGHTS * LIGHTS_FRAMES, LIGHTS));
         Draw.textCentered(g, font, GameText.resolve(MonitorScreenTexts.STARTING_SYSTEM.with("Frames")), x + w / 2,
                 ly + side * 3 / 4 + 6, c.words());
         Draw.textCentered(g, font, "(C) Midsoft Corporation", x + w / 2, y + h - 14, c.smallPrint());
@@ -426,13 +426,14 @@ public final class BootSplashArt {
     private static void ring(final GuiGraphics g, final int x, final int y, final double loop) {
         final int frame = (int) ((long) (loop * MS_PER_TICK / RING_MS) % RING_FRAMES);
         // The ring's pictures stand side by side in one row, as the busy pointer reads them.
-        g.blit(AERO_RING, x, y, frame * RING, 0, RING, RING, RING * RING_FRAMES, RING);
+        Draw.blended(() -> g.blit(AERO_RING, x, y, frame * RING, 0, RING, RING, RING * RING_FRAMES, RING));
     }
 
     /** Frames 10's dots chasing round at {@code (x, y)}, on the motion clock. */
     private static void dots(final GuiGraphics g, final int x, final int y, final double loop) {
         final int frame = (int) ((long) (loop * MS_PER_TICK / DOTS_MS) % DOTS_FRAMES);
-        g.blit(FRAMES_10_DOTS, x, y, frame * DOTS_SIZE, 0, DOTS_SIZE, DOTS_SIZE, DOTS_SIZE * DOTS_FRAMES, DOTS_SIZE);
+        Draw.blended(() -> g.blit(FRAMES_10_DOTS, x, y, frame * DOTS_SIZE, 0, DOTS_SIZE, DOTS_SIZE,
+                DOTS_SIZE * DOTS_FRAMES, DOTS_SIZE));
     }
 
     /**

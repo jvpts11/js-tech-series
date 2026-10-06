@@ -30,7 +30,7 @@ import org.jetbrains.annotations.ApiStatus;
  * @param id   the ISA's id, {@code namespace:path}; programs and processors name it, so it never changes once released
  * @param name what a person reads, such as {@code x86-64}
  * @param bits the word size of its programs, which is also how much room an item takes on its machines' disks
- * @param runs every ISA whose programs this one runs, its own id among them: x86-64 runs x86 and x86-16 programs
+ * @param runs every ISA whose programs this one runs, its own id among them: x86-64 runs x86 and IA-16 programs
  */
 @ApiStatus.Experimental
 public record IsaSpec(String id, String name, int bits, Set<String> runs) {

@@ -14,6 +14,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.CommandPromptScreen;
 import dev.jstech.computers.client.term.TermPainter;
 import dev.jstech.computers.gui.layout.CommandPromptLayout;
+import dev.jstech.computers.gui.term.TermGrid;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import java.util.HashMap;
@@ -27,8 +28,8 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * A console drawn in the terminal font: at a whole number of the screen's pixels to each of the font's, and with the
- * block characters filling their cells so a bar of them is one solid stripe, as on a real terminal.
+ * A console drawn in the game's font on the terminal's grid: at the machine's display scale, as its desktop is drawn,
+ * and with the block characters filling their cells so a bar of them is one solid stripe, as on a real terminal.
  */
 public final class TerminalFontClientTests {
 
@@ -73,8 +74,9 @@ public final class TerminalFontClientTests {
                 .thenRightClick(SETTLE, MONITOR)
                 .thenAwaitScreen(CommandPromptScreen.class, BOOT_WAIT)
                 .thenWaitUntil(() -> said(ctx, "Console Login"), SCREEN_WAIT, "the console to sign in")
-                .thenAssert(1, () -> crisp(ctx), "the terminal font is drawn at a whole number of screen pixels")
-                .thenAssert(0, () -> largest(ctx), "the console's eighty columns fill its glass with crisp cells")
+                .thenAssert(1, () -> atTheMachinesScale(ctx),
+                        "the console's text follows the machine's display scale, as its desktop's would")
+                .thenAssert(0, () -> fits(ctx), "the console's eighty columns fit its glass")
                 .then(SETTLE, () -> ctx.type("echo " + BAR))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> said(ctx, BAR), SCREEN_WAIT, "echo to print the bar of blocks")
@@ -88,9 +90,16 @@ public final class TerminalFontClientTests {
         return prompt.scrollbackText().stream().anyMatch(l -> l.contains(words));
     }
 
-    private static boolean crisp(final ClientTestContext ctx) {
-        final double pixels = ctx.screen(CommandPromptScreen.class).textScale() * ctx.mc().getWindow().getGuiScale();
-        return pixels >= 1 && Math.abs(pixels - Math.round(pixels)) < 1e-4;
+    /*
+     * Whether the text is drawn at the machine's display scale (the default one here), or as near it as a whole number
+     * of screen pixels is, within half of one, or smaller only as far as its columns need.
+     */
+    private static boolean atTheMachinesScale(final ClientTestContext ctx) {
+        final CommandPromptScreen<?> prompt = ctx.screen(CommandPromptScreen.class);
+        final double gui = ctx.mc().getWindow().getGuiScale();
+        final int glass = prompt.getXSize() - CommandPromptLayout.GLASS_LEFT - CommandPromptLayout.GLASS_RIGHT_MARGIN;
+        final double wanted = Math.min(TermGrid.scaleOf(0), glass / (double) (80 * TermPainter.CELL));
+        return Math.abs(prompt.textScale() - wanted) * gui <= 0.5 + 1e-4;
     }
 
     /** How many screen pixels wide the bar's cells come out, in the size of the font the console picked. */
@@ -100,17 +109,12 @@ public final class TerminalFontClientTests {
         return (int) Math.round(BLOCKS * prompt.face().width() * pixels) - 1;
     }
 
-    /**
-     * Whether the console drew its columns in the largest crisp cells they leave room for: at least as wide as the
-     * small size's at one screen pixel each, and no wider than the glass holds eighty of.
-     */
-    private static boolean largest(final ClientTestContext ctx) {
+    /** Whether the console's eighty columns fit the glass at the scale it drew them. */
+    private static boolean fits(final ClientTestContext ctx) {
         final CommandPromptScreen<?> prompt = ctx.screen(CommandPromptScreen.class);
-        final double gui = ctx.mc().getWindow().getGuiScale();
-        final double cell = prompt.face().width() * prompt.textScale() * gui;
-        final double glass = (prompt.getXSize() - CommandPromptLayout.GLASS_LEFT
-                - CommandPromptLayout.GLASS_RIGHT_MARGIN) * gui;
-        return cell >= TermPainter.CELL && 80 * cell <= glass + 1e-6;
+        final double cell = prompt.face().width() * prompt.textScale();
+        return 80 * cell <= prompt.getXSize() - CommandPromptLayout.GLASS_LEFT
+                - CommandPromptLayout.GLASS_RIGHT_MARGIN + 1e-3;
     }
 
     /**

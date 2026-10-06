@@ -223,7 +223,7 @@ final class PanelTray {
             return;
         }
         g.setColor((argb >> 16 & 0xFF) / 255.0F, (argb >> 8 & 0xFF) / 255.0F, (argb & 0xFF) / 255.0F, 1.0F);
-        g.blit(SPEAKER, x, y, 0.0F, 0.0F, SPEAKER_BODY, ICON, ICON, ICON);
+        Draw.blended(() -> g.blit(SPEAKER, x, y, 0.0F, 0.0F, SPEAKER_BODY, ICON, ICON, ICON));
         g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         final int mark = PALETTE.get().muted();
         for (int i = 0; i < MUTE_MARK; i++) {
@@ -292,7 +292,8 @@ final class PanelTray {
                                         final int textColor) {
         tinted(g, NETWORK, x, y, up ? textColor : faded(textColor));
         if (!up) {
-            g.blit(OFFLINE, x + ICON - BADGE, y + ICON - BADGE, 0.0F, 0.0F, BADGE, BADGE, BADGE, BADGE);
+            Draw.blended(() -> g.blit(OFFLINE, x + ICON - BADGE, y + ICON - BADGE, 0.0F, 0.0F, BADGE, BADGE, BADGE,
+                    BADGE));
         }
     }
 
@@ -303,7 +304,7 @@ final class PanelTray {
     private static void tinted(final GuiGraphics g, final ResourceLocation mask, final int x, final int y,
                                final int argb) {
         g.setColor((argb >> 16 & 0xFF) / 255.0F, (argb >> 8 & 0xFF) / 255.0F, (argb & 0xFF) / 255.0F, 1.0F);
-        g.blit(mask, x, y, 0.0F, 0.0F, ICON, ICON, ICON, ICON);
+        Draw.blended(() -> g.blit(mask, x, y, 0.0F, 0.0F, ICON, ICON, ICON, ICON));
         g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 

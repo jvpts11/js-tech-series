@@ -189,7 +189,8 @@ final class SoundfoundryStandardSkin {
             cover(g, font, x, y, size, name);
             return;
         }
-        g.blit(art.texture(), x, y, size, size, 0.0F, 0.0F, art.width(), art.height(), art.width(), art.height());
+        Draw.blended(() -> g.blit(art.texture(), x, y, size, size, 0.0F, 0.0F, art.width(), art.height(),
+                art.width(), art.height()));
     }
 
     /**

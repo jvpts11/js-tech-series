@@ -37,7 +37,7 @@ public class SoundCardItem extends SpecItem<SoundCardSpec> implements IExpansion
     private static final TextKey FITS_ISA = TextKey.of("jsc.item.sound_card.fits_isa", "Fits an ISA slot");
     private static final TextKey FITS_PCI = TextKey.of("jsc.item.sound_card.fits_pci", "Fits a PCI slot");
     private static final TextKey FITS_AGP = TextKey.of("jsc.item.sound_card.fits_agp", "Fits an AGP slot");
-    private static final TextKey FITS_PCIE = TextKey.of("jsc.item.sound_card.fits_pcie", "Fits a PCIe slot");
+    private static final TextKey FITS_PCIE = TextKey.of("jsc.item.sound_card.fits_pcie", "Fits a PCI-e slot");
 
     public SoundCardItem(final Properties properties, final SoundCardSpec spec) {
         super(properties, spec);

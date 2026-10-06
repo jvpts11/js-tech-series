@@ -554,7 +554,8 @@ final class FramesLaunchers {
         }
         final ResourceLocation skin = player.getSkin().texture();
         g.blit(skin, x, y, size, size, 8.0F, 8.0F, 8, 8, 64, 64);
-        g.blit(skin, x, y, size, size, 40.0F, 8.0F, 8, 8, 64, 64);
+        // The hat layer is clear where the player wears none, so it is laid over the face, not drawn solid.
+        Draw.blended(() -> g.blit(skin, x, y, size, size, 40.0F, 8.0F, 8, 8, 64, 64));
     }
 
     /** The period launcher's one colour of its own: the desktop's name on its side band. */

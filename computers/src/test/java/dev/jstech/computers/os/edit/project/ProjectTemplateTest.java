@@ -41,7 +41,7 @@ class ProjectTemplateTest {
         assertEquals(List.of("Sorter.sg"), file.sources());
         assertEquals("jsc:sigma", file.language());
         assertEquals("Sorter.sgproj", file.fileName());
-        assertEquals("jsc:x86_16", file.platform());
+        assertEquals("jsc:ia_16", file.platform());
         assertEquals("jsc:x86", ProjectTemplate.CONSOLE_APP.project("Sorter", SHARP).platform());
         assertEquals(file, ProjectFile.read(file.write()), "and it reads back as it was written");
     }

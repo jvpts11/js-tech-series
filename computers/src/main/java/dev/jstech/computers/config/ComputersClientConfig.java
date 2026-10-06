@@ -44,6 +44,8 @@ public final class ComputersClientConfig {
                     ConfigFormats.TOML)
             .comment("How the computers of J's Computers look on this player's game.")
             .sectionNamed("client", "Client")
+            .sectionComment("client", "How the desktops look on this game: whether they move, whose pointer they "
+                    + "draw, and what of the world outside the game they show.")
             .key(REDUCE_MOTION, MotionClock::setReduced)
             .key(DESKTOP_CURSORS)
             .key(OUTSIDE_COMPONENTS)

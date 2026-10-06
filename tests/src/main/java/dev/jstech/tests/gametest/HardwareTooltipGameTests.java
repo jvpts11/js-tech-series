@@ -103,9 +103,33 @@ public final class HardwareTooltipGameTests {
      */
     @GameTest(template = ARENA)
     public static void cpuTooltip_namesTheInstructionSetAndItsWordSize(final GameTestHelper helper) {
-        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()), "x86-16, 16-bit");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()), "IA-16, 16-bit");
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_700.get()), "x86, 32-bit");
         assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C5_4590.get()), "x86-64, 64-bit");
+        helper.succeed();
+    }
+
+    /**
+     * Buses and memory read as a part's sheet writes them ("PCI-e 3.0", "AGP 4x", "DDR3"), never as the code's names
+     * for them.
+     */
+    @GameTest(template = ARENA)
+    public static void partTooltips_writeBusesAndMemoryAsTheirSheetsDo(final GameTestHelper helper) {
+        assertTooltipHas(helper, new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()), "PCI-e 3.0");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()), "DDR3");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.GPU_VERTEX_GTX_780_TI.get()), "PCI-e 3.0");
+        for (final Item item : BuiltInRegistries.ITEM) {
+            if (!JsComputers.MODID.equals(BuiltInRegistries.ITEM.getKey(item).getNamespace())) {
+                continue;
+            }
+            final List<Component> tooltip = new ItemStack(item).getTooltipLines(
+                    Item.TooltipContext.of(helper.getLevel()), null, TooltipFlag.NORMAL);
+            for (final Component line : tooltip) {
+                final String said = line.getString();
+                helper.assertFalse(said.contains("PCIE_") || said.contains("AGP_") || said.matches(".*\\bT\\d_.*"),
+                        BuiltInRegistries.ITEM.getKey(item) + " shows a code name: " + said);
+            }
+        }
         helper.succeed();
     }
 
@@ -170,7 +194,7 @@ public final class HardwareTooltipGameTests {
         final ItemStack pcie = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER_HI_FI.get());
         assertTooltipHas(helper, pcie, "Wavetable, 32 voices");
         assertTooltipHas(helper, pcie, "Recordings: 16-bit stereo, 44.1 kHz");
-        assertTooltipHas(helper, pcie, "Fits a PCIe slot");
+        assertTooltipHas(helper, pcie, "Fits a PCI-e slot");
         assertTooltipHas(helper, new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()),
                 "On-board audio");
         assertTooltipHas(helper, new ItemStack(HardwareItems.MOTHERBOARD_ATX_TRANSITION_775.get()),

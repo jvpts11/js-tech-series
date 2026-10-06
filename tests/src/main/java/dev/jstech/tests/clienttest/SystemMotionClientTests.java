@@ -202,6 +202,18 @@ public final class SystemMotionClientTests {
                 .thenAssert(2, () -> !desktop(ctx).osPointerHidden(), "off the glass the game's pointer is back");
     }
 
+    /** Frames 7's arrow and its Start orb, both drawn with their soft edges blended into what is under them. */
+    @ClientTest(timeoutTicks = 2400)
+    public static void pointer_framesSevenArrowAndOrbAreDrawnSoft(final ClientTestContext ctx) {
+        booted(ctx, "frames_7", null)
+                .then(SETTLE, () -> {
+                    final int[] middle = desktop(ctx).glassPoint(60, 60);
+                    ctx.pointAt(middle[0], middle[1]);
+                })
+                .thenAssert(2, () -> "arrow".equals(desktop(ctx).pointerState()), "the desktop draws its arrow")
+                .thenScreenshot(1, "frames7-own-pointer");
+    }
+
     @ClientTest(timeoutTicks = 3600)
     public static void copy_thatTakesAWhileShowsTheFlyingPaperOnFrames95(final ClientTestContext ctx) {
         bigCopy(booted(ctx, "frames_95", null), ctx)

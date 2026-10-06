@@ -99,11 +99,11 @@ Foundation ships it, in the public domain, in three sizes of one design:
 | `FIXED_9X15` | 9 x 15 | 12 | nearly 4,800 |
 | `FIXED_10X20` | 10 x 20 | 16 | over 5,200 |
 
-Any mod can draw its terminal-like views in them, and J's Computers draws every one of its terminals in them: the
-consoles, the terminal windows, the console editors and the text-mode installers. A bitmap font drawn at a scale where
-one of its pixels is not a whole number of the screen's comes out smeared, so a terminal picks, for the screen it is
-on, the size and the whole number of screen pixels to each font pixel that draw the widest cell its eighty columns
-still fit: on a monitor's glass, the 9x15 at one pixel each at GUI scale 2, the 6x10 at two at GUI scale 3, the 9x15
-at two at GUI scale 4. A terminal window on a desktop draws in the 6x10, one GUI pixel to each of its own.
+Any mod can draw its terminal-like views in them, and the manuals draw their tables in the 6x10. A bitmap font drawn
+at a scale where one of its pixels is not a whole number of the screen's comes out smeared, so a view in one does
+best to draw it at a whole number of screen pixels to each of the font's.
 
-A `CommandLine` of the Core's toolkit writes the line being typed in such a font too, with `setCellFont`.
+`GridPainter` lays text on a grid of cells in such a font, or in the game's own font when it is handed none: J's
+Computers' terminals write that way, in the game's font, one character to a cell six of its pixels wide and ten
+tall. A `CommandLine` of the Core's toolkit writes the line being typed on such a grid too, with `setCellFont`, in a
+font of cells or, given none, in the game's.

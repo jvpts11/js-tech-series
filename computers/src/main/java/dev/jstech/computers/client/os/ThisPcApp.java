@@ -691,8 +691,8 @@ public final class ThisPcApp implements IDesktopApp {
         final String osFull = GameText.resolve(about.operatingSystem());
         final String house = Branding.houseOf(data.machine().osLabel()).name();
         if (about.freeBsd()) {
-            g.blit(FREEBSD_ORB, x + ThisPcLayout.KdeAbout.ORB_X, y + ThisPcLayout.KdeAbout.ORB_Y,
-                    ThisPcLayout.ABOUT_ORB, ThisPcLayout.ABOUT_ORB, 0, 0, 32, 32, 32, 32);
+            Draw.blended(() -> g.blit(FREEBSD_ORB, x + ThisPcLayout.KdeAbout.ORB_X, y + ThisPcLayout.KdeAbout.ORB_Y,
+                    ThisPcLayout.ABOUT_ORB, ThisPcLayout.ABOUT_ORB, 0, 0, 32, 32, 32, 32));
         }
         final float heroScale = ThisPcLayout.KdeAbout.HERO_SCALE;
         final int heroMaxW = (int) ((ThisPcLayout.KdeAbout.W - ThisPcLayout.KdeAbout.TITLE_X - 4) / heroScale);
@@ -746,8 +746,9 @@ public final class ThisPcApp implements IDesktopApp {
         final String heroTitle = about.freeBsd() ? osFull.replace("-RELEASE", "") : osFull;
         final String house = Branding.houseOf(data.machine().osLabel()).name();
         if (about.freeBsd()) {
-            g.blit(FREEBSD_ORB, x + ThisPcLayout.GnomeAbout.orbX(), y + ThisPcLayout.GnomeAbout.ORB_Y,
-                    ThisPcLayout.ABOUT_ORB_BIG, ThisPcLayout.ABOUT_ORB_BIG, 0, 0, 32, 32, 32, 32);
+            Draw.blended(() -> g.blit(FREEBSD_ORB, x + ThisPcLayout.GnomeAbout.orbX(),
+                    y + ThisPcLayout.GnomeAbout.ORB_Y, ThisPcLayout.ABOUT_ORB_BIG, ThisPcLayout.ABOUT_ORB_BIG, 0, 0,
+                    32, 32, 32, 32));
         }
         centredString(g, font, x, y + ThisPcLayout.GnomeAbout.TITLE_Y, ThisPcLayout.GnomeAbout.W, heroTitle,
                 skin.text(), ThisPcLayout.GnomeAbout.HERO_SCALE);
@@ -793,8 +794,9 @@ public final class ThisPcApp implements IDesktopApp {
         final String osName = data.machine().osLabel();
         final String house = Branding.houseOf(osName).name();
         if (about.freeBsd()) {
-            g.blit(FREEBSD_ORB, x + ThisPcLayout.CinnamonAbout.orbX(), y + ThisPcLayout.CinnamonAbout.LOGO_ORB_Y,
-                    ThisPcLayout.ABOUT_ORB_BIG, ThisPcLayout.ABOUT_ORB_BIG, 0, 0, 32, 32, 32, 32);
+            Draw.blended(() -> g.blit(FREEBSD_ORB, x + ThisPcLayout.CinnamonAbout.orbX(),
+                    y + ThisPcLayout.CinnamonAbout.LOGO_ORB_Y, ThisPcLayout.ABOUT_ORB_BIG, ThisPcLayout.ABOUT_ORB_BIG,
+                    0, 0, 32, 32, 32, 32));
         }
         centredString(g, font, x, y + ThisPcLayout.CinnamonAbout.LOGO_TITLE_Y, ThisPcLayout.CinnamonAbout.LOGO_W,
                 osName, skin.text(), 1.0f);

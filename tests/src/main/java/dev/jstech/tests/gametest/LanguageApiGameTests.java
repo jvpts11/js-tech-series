@@ -324,7 +324,7 @@ public final class LanguageApiGameTests {
                 + "Console.PrintLine(\"hello\"); } }";
         final IProgrammingLanguage.CompileResult built =
                 sigma.compile(List.of(new IProgrammingLanguage.SourceText("t.sg", small)));
-        helper.assertTrue(built.ok() && built.binary().contains(".arch jsc:x86_16"),
+        helper.assertTrue(built.ok() && built.binary().contains(".arch jsc:ia_16"),
                 "it builds for the oldest machines: " + built.complaints());
         final IProgrammingLanguage.CompileResult refused = sigma.compile(List.of(
                 new IProgrammingLanguage.SourceText("t.sg", "namespace T; interface IThing { } class T { "
@@ -332,7 +332,7 @@ public final class LanguageApiGameTests {
         helper.assertTrue(!refused.ok() && refused.complaints().stream().anyMatch(c -> "S3052".equals(c.code())),
                 "and is refused what it does not have: " + refused.complaints());
         final IProgrammingLanguage.CompileResult tooOld = SigmaLanguage.SIGMA_SHARP.compile(
-                List.of(new IProgrammingLanguage.SourceText("hello.sgs", HELLO)), "jsc:x86_16");
+                List.of(new IProgrammingLanguage.SourceText("hello.sgs", HELLO)), "jsc:ia_16");
         helper.assertTrue(!tooOld.ok() && tooOld.complaints().stream().anyMatch(c -> "S4012".equals(c.code())),
                 "the full language is not built for the oldest machines: " + tooOld.complaints());
         final PersonalComputerBlockEntity computer =

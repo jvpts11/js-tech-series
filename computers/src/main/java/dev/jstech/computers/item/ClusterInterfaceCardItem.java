@@ -63,7 +63,7 @@ public class ClusterInterfaceCardItem extends SpecItem<ClusterInterfaceCardSpec>
         tooltip.add(GameText.component((spec.parallelNodes() == 1 ? INSTALLS_ONE : INSTALLS_MANY)
                 .with(spec.parallelNodes())).withStyle(ChatFormatting.GRAY));
         HardwareTooltip.appendEra(tooltip, spec.era());
-        tooltip.add(GameText.component(HardwareTooltip.TIER_POWER_BUS.with(spec.tier(), spec.tdpWatts(), spec.bus()))
-                .withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(GameText.component(HardwareTooltip.TIER_POWER_BUS.with(spec.tier().text(), spec.tdpWatts(),
+                spec.bus().label())).withStyle(ChatFormatting.DARK_GRAY));
     }
 }

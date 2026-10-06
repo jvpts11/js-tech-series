@@ -87,7 +87,7 @@ class BareFunctionsTest {
         final String source = (level.full() ? SHARP_PRELUDE : PRELUDE) + "class Says : Script { " + members
                 + " public override void OnTick() { " + body + " } }";
         return SigmaCompiler.compile(List.of(new SourceFile(level.full() ? "Says.sgs" : "Says.sg", source)),
-                level.full() ? AsmProgram.DEFAULT_ISA : "jsc:x86_16", level, version);
+                level.full() ? AsmProgram.DEFAULT_ISA : "jsc:ia_16", level, version);
     }
 
     private static String listing(final String body, final LanguageLevel level) {

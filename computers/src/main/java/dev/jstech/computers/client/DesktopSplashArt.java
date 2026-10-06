@@ -179,7 +179,7 @@ public final class DesktopSplashArt {
         final int cx = x + w / 2;
         final int side = MARK;
         final int top = y + h / 2 - 34;
-        g.blit(PLASMA_MARK, cx - side / 2, top, 0.0F, 0.0F, side, side, side, side);
+        Draw.blended(() -> g.blit(PLASMA_MARK, cx - side / 2, top, 0.0F, 0.0F, side, side, side, side));
         big(g, font, "Plasma", cx, top + side + 6, 1.8f, c.name());
 
         final int barW = 88;
@@ -209,7 +209,7 @@ public final class DesktopSplashArt {
         final int side = MARK;
         final int top = y + h / 2 - 32;
         // The menu button's mark: the green plate, the white square in it, and the green one inside that.
-        g.blit(CINNAMON_MARK, cx - side / 2, top, 0.0F, 0.0F, side, side, side, side);
+        Draw.blended(() -> g.blit(CINNAMON_MARK, cx - side / 2, top, 0.0F, 0.0F, side, side, side, side));
         big(g, font, "Cinnamon", cx, top + side + 8, 1.7f, c.name());
 
         final int dy = top + side + 30;

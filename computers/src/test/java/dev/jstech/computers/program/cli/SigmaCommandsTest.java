@@ -159,7 +159,7 @@ class SigmaCommandsTest {
         this.computer.add(SigmaCommands.SUBSET_COMPILER);
         this.computer.files.put("Watch.sg", SUBSET);
         this.run("scc Watch.sg");
-        assertTrue(this.computer.files.get("Watch.asm").contains(".arch jsc:x86_16"),
+        assertTrue(this.computer.files.get("Watch.asm").contains(".arch jsc:ia_16"),
                 this.computer.files.get("Watch.asm"));
     }
 
@@ -192,7 +192,7 @@ class SigmaCommandsTest {
     void sgsc_willNotBuildForTheIsaThatRunsSigmaOnly() {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Monitor.sgs", SCRIPT);
-        assertTrue(this.run("sgsc Monitor.sgs --arch x86-16").contains("scc"));
+        assertTrue(this.run("sgsc Monitor.sgs --arch IA-16").contains("scc"));
         assertFalse(this.computer.files.containsKey("Monitor.asm"));
     }
 
@@ -200,7 +200,7 @@ class SigmaCommandsTest {
     void scc_buildsForTheIsaThatRunsSigmaOnly() {
         this.computer.add(SigmaCommands.SUBSET_COMPILER);
         this.computer.files.put("Watch.sg", SUBSET);
-        assertTrue(this.run("scc Watch.sg --arch x86-16").contains("wrote Watch.asm"));
+        assertTrue(this.run("scc Watch.sg --arch IA-16").contains("wrote Watch.asm"));
     }
 
     @Test

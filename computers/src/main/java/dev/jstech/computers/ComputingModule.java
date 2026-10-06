@@ -326,10 +326,10 @@ public final class ComputingModule {
             .properties(properties -> properties.mapColor(MapColor.COLOR_GRAY).strength(0.6F).sound(SoundType.METAL)
                     .noOcclusion())
             .named("Server Router")
-            .look(IBlockLook.facing(new IBlockModel.SixFaces("server_router", "block/server_router_top",
-                    "block/server_router_top", "block/server_router_front", "block/server_router_back",
-                    "block/server_router_side", "block/server_router_side", "block/server_router_side")))
-            .item().tab(shelf(Shelf.NETWORK, null)).register();
+            // Every face is a port bank, one datacenter section each, so all six look alike and the facing shows none.
+            .look(IBlockLook.fixed(new IBlockModel.Handmade("network/server_router")))
+            .item().itemLook(IItemLook.parent("block/network/server_router")).tab(shelf(Shelf.NETWORK, null))
+            .register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ServerRouterBlockEntity>> SERVER_ROUTER_BE =
             CONTENT.blockEntity("server_router", ServerRouterBlockEntity::new, SERVER_ROUTER);
 
@@ -912,7 +912,7 @@ public final class ComputingModule {
     public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_PCIE3 = part("crafting_card_pcie3",
             HardwareEra.STANDARD, properties -> new CraftingCardItem(properties, new CraftingCardSpec(
                     HardwareEra.STANDARD, IndustrialTier.T3, PcieGeneration.PCIE_3_0, 0.15, 6, 110)))
-            .named("Forge Logic Crafting Card PCIe 3.0").register();
+            .named("Forge Logic Crafting Card PCI-e 3.0").register();
     // The card of the Advanced boards, twice the tier before it again.
     public static final ItemEntry<CraftingCardItem> CRAFTING_CARD_T4 = part("crafting_card_t4", HardwareEra.ADVANCED,
             properties -> new CraftingCardItem(properties, new CraftingCardSpec(HardwareEra.ADVANCED,

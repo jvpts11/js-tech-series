@@ -784,7 +784,7 @@ public final class SigmaProcessGameTests {
     /** What the program that opens files until it cannot said on that machine. */
     private static List<String> opened(final GameTestHelper helper, final CraftingComputerBlockEntity machine) {
         final SigmaCompiler.Result built = SigmaCompiler.compile(
-                List.of(new SourceFile("Opens.sgs", OPENS_ALL)), "jsc:x86_16");
+                List.of(new SourceFile("Opens.sgs", OPENS_ALL)), "jsc:ia_16");
         final MachinePrograms programs = machine.programs();
         final MachinePrograms.Started started = programs.start("opens.asm", built.assembly(), 1, machine);
         helper.assertTrue(started.ok(), "it starts: " + started.message());

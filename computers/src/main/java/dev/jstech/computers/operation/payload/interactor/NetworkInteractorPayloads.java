@@ -266,12 +266,18 @@ public final class NetworkInteractorPayloads {
     private static void handleNiGridClick(final NiGridClickPayload payload, final ServerPlayer player,
                                           final ServerLevel level) {
         final var host = niHost(player, level, payload.host(), payload.monitorPos());
-        if (host == null || host.networkUuid() == null || payload.amount() <= 0L) {
+        if (host == null || payload.amount() <= 0L) {
             return;
         }
         // Clamp the client-supplied amount so a spoofed packet cannot ask the dispatcher for Long.MAX.
         final long safeAmount = Math.min(payload.amount(), Integer.MAX_VALUE);
         final StorageKey key = payload.key();
+        // Only the moves to and from the network need one; what a computer holds itself comes out without it.
+        final boolean toOrFromNetwork = payload.mode() == NiGridClickPayload.MODE_NET_TO_LOCAL
+                || payload.mode() == NiGridClickPayload.MODE_LOCAL_TO_NET;
+        if (toOrFromNetwork && host.networkUuid() == null) {
+            return;
+        }
         if (payload.mode() == NiGridClickPayload.MODE_NET_TO_LOCAL) {
             // Pull from the network into this computer's local storage, exactly like the terminal SELECT.
             final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());

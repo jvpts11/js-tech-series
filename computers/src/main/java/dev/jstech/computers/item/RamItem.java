@@ -34,7 +34,7 @@ public class RamItem extends SpecItem<RamSpec> {
     public void appendHoverText(final ItemStack stack, final TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
         final RamSpec spec = spec();
-        tooltip.add(GameText.component(BUFFER.with(spec.bufferItems(), spec.generation()))
+        tooltip.add(GameText.component(BUFFER.with(spec.bufferItems(), spec.generation().label()))
                 .withStyle(ChatFormatting.GRAY));
         tooltip.add(GameText.component(HardwareTooltip.WATTS.with(spec.tdpWatts()))
                 .withStyle(ChatFormatting.DARK_GRAY));

@@ -10,7 +10,6 @@ package dev.jstech.computers.item;
 import dev.jstech.computers.audio.SoundHardwareTexts;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.MotherboardSpec;
-import dev.jstech.computers.hardware.RamGeneration;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -51,14 +50,14 @@ public class MotherboardItem extends SpecItem<MotherboardSpec> {
         tooltip.add(GameText.component(FORM_FACTOR.with(spec.formFactor().label())).withStyle(ChatFormatting.AQUA));
         final String ramTypes = spec.acceptedRam().stream()
                 .sorted()
-                .map(RamGeneration::name)
+                .map(generation -> generation.label().english())
                 .collect(Collectors.joining(" / "));
         /*
          * The board is where a build succeeds or fails, so it spells out exactly what its slots take:
-         * the socket, the memory generations, and the bus version cards are held to.
+         * the socket, the memory generations, and the bus version cards are held to, each as its sheet names it.
          */
         tooltip.add(GameText.component(SLOTS.with(spec.cpuSlots(), spec.socket().display(), spec.ramSlots(), ramTypes,
-                spec.pcieSlots(), spec.pcieGeneration())).withStyle(ChatFormatting.GRAY));
+                spec.pcieSlots(), spec.pcieGeneration().label())).withStyle(ChatFormatting.GRAY));
         if (spec.hasOnBoardAudio()) {
             tooltip.add(GameText.component(SoundHardwareTexts.ON_BOARD_AUDIO).withStyle(ChatFormatting.GRAY));
         }

@@ -3348,6 +3348,16 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         return local(tabs.tabCenter(TAB_NETWORK));
     }
 
+    /** Content-local centre of the Local tab: what this computer holds on its own disks. */
+    public int[] localTabCenter() {
+        return local(tabs.tabCenter(TAB_LOCAL));
+    }
+
+    /** The centre of the storage dialog's To Inventory button. */
+    public int[] storagePopupToInventoryCenter() {
+        return local(requestPopup.toInventory.center());
+    }
+
     /** Content-local centre of the Favourites tab (the starred one at the strip's right end). */
     public int[] favouritesTabCenter() {
         return local(tabs.tabCenter(TAB_FAV));

@@ -53,6 +53,8 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
      * and the lines from before it are not the new system's.
      */
     private final long session;
+    /** The machine's display scale in percent, 0 for the default, which its text is drawn at as its desktop is. */
+    private final int scalePercent;
 
     /** The longest a shell's or a family's name travels at, and the longest a machine's or a system's does. */
     private static final int SHORT_NAME = 16;
@@ -62,9 +64,10 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
 
     public CommandPromptMenu(final int containerId, final Inventory playerInventory,
                              final BlockPos monitorPos, final BlockPos hostPos,
-                             @Nullable final HardwareEra era, final ConsoleIdentity console, final long session) {
+                             @Nullable final HardwareEra era, final ConsoleIdentity console, final long session,
+                             final int scalePercent) {
         this(ComputingMenus.COMMAND_PROMPT_MENU.get(), containerId, playerInventory, monitorPos, hostPos,
-                era, console, session);
+                era, console, session, scalePercent);
     }
 
     /**
@@ -74,13 +77,14 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
     protected CommandPromptMenu(final MenuType<?> type, final int containerId,
                                 final Inventory playerInventory, final BlockPos monitorPos, final BlockPos hostPos,
                                 @Nullable final HardwareEra era, final ConsoleIdentity console,
-                                final long session) {
+                                final long session, final int scalePercent) {
         super(type, containerId, playerInventory, validity(playerInventory.player.level(), monitorPos, hostPos));
         this.monitorPos = monitorPos;
         this.hostPos = hostPos;
         this.era = era;
         this.console = console == null ? ConsoleIdentity.NONE : console;
         this.session = session;
+        this.scalePercent = scalePercent;
         IWatchedConsole.opened(playerInventory.player, hostPos);
     }
 
@@ -94,12 +98,12 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
                                                 final RegistryFriendlyByteBuf buf) {
         final OpenData data = readOpenBuffer(buf);
         return new CommandPromptMenu(containerId, playerInventory, data.monitor(), data.host(), data.era(),
-                data.console(), data.session());
+                data.console(), data.session(), data.scalePercent());
     }
 
     /** The shared open-buffer contents, so each terminal menu's {@code fromNetwork} reads them the same way. */
     protected record OpenData(BlockPos monitor, BlockPos host, @Nullable HardwareEra era, ConsoleIdentity console,
-                              long session) {
+                              long session, int scalePercent) {
     }
 
     protected static OpenData readOpenBuffer(final RegistryFriendlyByteBuf buf) {
@@ -113,16 +117,17 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
         final String platform = buf.readUtf(SHORT_NAME);
         final ConsoleIdentity console = ConsoleIdentity.ofWire(shell, live, hostname, osLabel, platform,
                 buf.readVarInt());
-        return new OpenData(monitor, host, era, console, buf.readVarLong());
+        final long session = buf.readVarLong();
+        return new OpenData(monitor, host, era, console, session, buf.readVarInt());
     }
 
     /**
-     * Writes the open buffer the client reconstructs from: the two positions, the host era's id (-1 if none), and
-     * who the console says it is (nothing at all for a DOS-family OS).
+     * Writes the open buffer the client reconstructs from: the two positions, the host era's id (-1 if none), who
+     * the console says it is (nothing at all for a DOS-family OS), its run, and the display scale its text is drawn at.
      */
     public static void writeOpenBuffer(final RegistryFriendlyByteBuf buf, final BlockPos monitorPos,
                                        final BlockPos hostPos, @Nullable final HardwareEra era,
-                                       final ConsoleIdentity console, final long session) {
+                                       final ConsoleIdentity console, final long session, final int scalePercent) {
         buf.writeBlockPos(monitorPos);
         buf.writeBlockPos(hostPos);
         buf.writeVarInt(era == null ? -1 : era.id());
@@ -134,11 +139,17 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
         buf.writeUtf(console.platformName(), SHORT_NAME);
         buf.writeVarInt(console.bits());
         buf.writeVarLong(session);
+        buf.writeVarInt(scalePercent);
     }
 
     /** Which run of the machine this terminal belongs to, so its lines are not another run's. */
     public long session() {
         return this.session;
+    }
+
+    /** The machine's display scale in percent, 0 for the default: the size its text is drawn at, as its desktop's. */
+    public int scalePercent() {
+        return this.scalePercent;
     }
 
     /** Who the console says it is, whole, for what greets and prompts from it. */

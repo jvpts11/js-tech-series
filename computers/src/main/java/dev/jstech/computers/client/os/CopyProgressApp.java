@@ -238,8 +238,10 @@ final class CopyProgressApp implements IDesktopApp {
                 : "copy");
         final int frame = Math.min(AVI_FRAMES - 1, Rhythm.frame(MotionScope.spec(MotionKinds.COPY),
                 MotionClock.loopMs()));
-        g.blit(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/copy/" + set + ".png"),
-                x + (w - AVI_W) / 2, y + PAD, frame * AVI_W, 0, AVI_W, AVI_H, AVI_FRAMES * AVI_W, AVI_H);
+        final ResourceLocation strip =
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/copy/" + set + ".png");
+        Draw.blended(() -> g.blit(strip, x + (w - AVI_W) / 2, y + PAD, frame * AVI_W, 0, AVI_W, AVI_H,
+                AVI_FRAMES * AVI_W, AVI_H));
         int ly = y + PAD + AVI_H + 3;
         text(g, font, run.current().name(), x + PAD, ly, w - 2 * PAD, skin.text());
         ly += LINE;

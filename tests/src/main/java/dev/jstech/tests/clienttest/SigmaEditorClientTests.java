@@ -540,7 +540,7 @@ public final class SigmaEditorClientTests {
                 .thenWaitUntil(() -> studio(ctx).outputLines().stream().anyMatch(l -> l.startsWith("Build succeeded")),
                         SCREEN_WAIT, "the build to succeed")
                 .thenWaitUntilServer(level -> diskText(ctx, level, "progs/Old/Old/build/Old.asm")
-                                .contains(".arch jsc:x86_16"), SCREEN_WAIT,
+                                .contains(".arch jsc:ia_16"), SCREEN_WAIT,
                         "the listing to say it was built for the oldest machines",
                         level -> diskText(ctx, level, "progs/Old/Old/build/Old.asm"))
                 .thenScreenshot(2, "sigma-built")

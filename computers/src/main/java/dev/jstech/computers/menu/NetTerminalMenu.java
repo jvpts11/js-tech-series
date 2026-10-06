@@ -27,15 +27,15 @@ public class NetTerminalMenu extends CommandPromptMenu {
 
     public NetTerminalMenu(final int containerId, final Inventory playerInventory, final BlockPos monitorPos,
                            final BlockPos hostPos, @Nullable final HardwareEra era,
-                           final ConsoleIdentity console, final long session) {
+                           final ConsoleIdentity console, final long session, final int scalePercent) {
         super(ComputingMenus.NET_TERMINAL_MENU.get(), containerId, playerInventory, monitorPos, hostPos,
-                era, console, session);
+                era, console, session, scalePercent);
     }
 
     public static NetTerminalMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                               final RegistryFriendlyByteBuf buf) {
         final OpenData data = readOpenBuffer(buf);
         return new NetTerminalMenu(containerId, playerInventory, data.monitor(), data.host(), data.era(),
-                data.console(), data.session());
+                data.console(), data.session(), data.scalePercent());
     }
 }

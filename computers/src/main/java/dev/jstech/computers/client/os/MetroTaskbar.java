@@ -79,8 +79,8 @@ final class MetroTaskbar {
         }
         final int tint = startLit ? c.startLit() : c.ink();
         g.setColor((tint >> 16 & 0xFF) / 255.0F, (tint >> 8 & 0xFF) / 255.0F, (tint & 0xFF) / 255.0F, 1.0F);
-        g.blit(START_GLYPH, (START_W - GLYPH) / 2, tbY + (DesktopScreen.TASKBAR_H - GLYPH) / 2, 0.0F, 0.0F, GLYPH,
-                GLYPH, GLYPH, GLYPH);
+        Draw.blended(() -> g.blit(START_GLYPH, (START_W - GLYPH) / 2, tbY + (DesktopScreen.TASKBAR_H - GLYPH) / 2,
+                0.0F, 0.0F, GLYPH, GLYPH, GLYPH, GLYPH));
         g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
 
         // The search box, white, with its magnifier and the line it waits with.

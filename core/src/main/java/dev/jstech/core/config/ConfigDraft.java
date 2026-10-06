@@ -161,6 +161,28 @@ public final class ConfigDraft {
         }
     }
 
+    /** Puts the given settings back to their defaults, a section's, as changes to keep or drop like any other. */
+    public void defaults(final List<ConfigKey<?>> keys) {
+        for (final ConfigKey<?> key : keys) {
+            putDefault(key);
+        }
+    }
+
+    /** Puts one setting back to its default, as a change to keep or drop like any other. */
+    public void toDefault(final ConfigKey<?> key) {
+        putDefault(key);
+    }
+
+    /** Whether {@code key} shows a value other than its default, kept or not. */
+    public boolean isOffDefault(final ConfigKey<?> key) {
+        return !Objects.equals(value(key), key.defaultValue());
+    }
+
+    /** How many changes are held and not kept yet. */
+    public int changeCount() {
+        return pending.size();
+    }
+
     /** Hands every change to the file, which writes itself once, and forgets them. */
     public void apply() {
         if (pending.isEmpty()) {

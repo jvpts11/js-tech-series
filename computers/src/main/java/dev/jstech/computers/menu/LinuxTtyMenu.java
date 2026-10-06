@@ -24,15 +24,15 @@ public class LinuxTtyMenu extends CommandPromptMenu {
 
     public LinuxTtyMenu(final int containerId, final Inventory playerInventory, final BlockPos monitorPos,
                         final BlockPos hostPos, @Nullable final HardwareEra era, final ConsoleIdentity console,
-                        final long session) {
+                        final long session, final int scalePercent) {
         super(ComputingMenus.LINUX_TTY_MENU.get(), containerId, playerInventory, monitorPos, hostPos,
-                era, console, session);
+                era, console, session, scalePercent);
     }
 
     public static LinuxTtyMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                            final RegistryFriendlyByteBuf buf) {
         final OpenData data = readOpenBuffer(buf);
         return new LinuxTtyMenu(containerId, playerInventory, data.monitor(), data.host(), data.era(),
-                data.console(), data.session());
+                data.console(), data.session(), data.scalePercent());
     }
 }

@@ -118,7 +118,7 @@ public class CraftingCardItem extends SpecItem<CraftingCardSpec> implements IExp
         if (held.size() > LISTED) {
             tooltip.add(GameText.component(MORE.with(held.size() - LISTED)).withStyle(ChatFormatting.GOLD));
         }
-        tooltip.add(GameText.component(HardwareTooltip.TIER_POWER_BUS.with(spec.tier(), spec.tdpWatts(), spec.bus()))
-                .withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(GameText.component(HardwareTooltip.TIER_POWER_BUS.with(spec.tier().text(), spec.tdpWatts(),
+                spec.bus().label())).withStyle(ChatFormatting.DARK_GRAY));
     }
 }

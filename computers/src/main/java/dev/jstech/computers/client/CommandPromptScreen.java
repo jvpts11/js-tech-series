@@ -212,13 +212,13 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         this.imageWidth = MonitorGlass.width(this.width);
         this.imageHeight = MonitorGlass.height(this.height);
         /*
-         * The glass always has the same columns, so the text is drawn in the size of the terminal font and at the
-         * scale that hold them with the largest letters, and at a whole number of the screen's pixels to each of the
-         * font's so no letter comes out smeared: what the machine laid out for that many cells stays laid out.
+         * The text is drawn at the machine's display scale, the one its desktop is drawn at, as near it as crisp
+         * letters allow; the glass always has the same columns, so a glass too narrow for them at that scale draws
+         * them smaller: what the machine laid out for that many cells stays laid out.
          */
         final TermFace.Fitted fitted = TermFace.forGlass(
                 this.imageWidth - CommandPromptLayout.GLASS_LEFT - CommandPromptLayout.GLASS_RIGHT_MARGIN,
-                TermBuffer.MONITOR_COLUMNS);
+                TermBuffer.MONITOR_COLUMNS, menu.scalePercent());
         this.textScale = fitted.scale();
         this.painter.use(fitted.face());
         // A machine with only its terminal draws its programs' windows here, in letters.

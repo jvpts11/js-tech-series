@@ -40,7 +40,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
     private static final TextKey MIXED_ISAS = TextKey.of("jsc.build.mixed_isas",
             "CPU instruction set %s does not match the %s of the other processors");
     private static final TextKey TOO_MANY_CARDS =
-            TextKey.of("jsc.build.too_many_cards", "too many PCIe cards: %s installed, %s PCIe slots");
+            TextKey.of("jsc.build.too_many_cards", "too many PCI-e cards: %s installed, %s PCI-e slots");
     private static final TextKey WRONG_BUS = TextKey.of("jsc.build.wrong_bus",
             "expansion card bus family %s is not compatible with board bus %s");
     private static final TextKey SOUND_CARD_ERA = TextKey.of("jsc.build.sound_card_era",
@@ -263,7 +263,8 @@ public record ComputerBuild(MotherboardSpec motherboard,
         }
         for (final IExpansionCardSpec card : pcieCards) {
             if (!card.fits(motherboard.pcieGeneration())) {
-                problems.add(WRONG_BUS.with(card.bus().busFamily(), motherboard.pcieGeneration().busFamily()));
+                problems.add(WRONG_BUS.with(card.bus().busFamily().label(),
+                        motherboard.pcieGeneration().busFamily().label()));
             }
             if (card instanceof SoundCardSpec sound && sound.era() != motherboard.era()) {
                 problems.add(SOUND_CARD_ERA.with(sound.era().named(), motherboard.era().named()));
@@ -279,7 +280,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
         }
         for (final RamSpec ram : rams) {
             if (!motherboard.acceptedRam().contains(ram.generation())) {
-                problems.add(WRONG_RAM.with(ram.generation()));
+                problems.add(WRONG_RAM.with(ram.generation().label()));
             }
         }
 

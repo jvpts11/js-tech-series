@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.computers.os.OsMotions;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -66,7 +67,7 @@ final class AeroSuperbar {
         final boolean orbLit = desktop.start().isOpen() || lmx >= 0 && lmx < START_W && lmy >= tbY;
         final int ox = (START_W - ORB) / 2;
         final int oy = tbY + (DesktopScreen.TASKBAR_H - ORB) / 2;
-        g.blit(ORB_TEXTURE, ox, oy, 0.0F, 0.0F, ORB, ORB, ORB, ORB);
+        Draw.blended(() -> g.blit(ORB_TEXTURE, ox, oy, 0.0F, 0.0F, ORB, ORB, ORB, ORB));
         if (orbLit) {
             disc(g, ox + ORB / 2, oy + ORB / 2, ORB / 2 - 1, c.orbGlow());
         }

@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.core.client.gui.component.Draw;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
@@ -28,7 +29,7 @@ public final class FramesEmblem {
 
     /** Draws that edition's mark with its top-left at {@code (x, y)}; an edition nobody knows wears the newest's. */
     public static void draw(final GuiGraphics g, final int x, final int y, final PanelStyle edition) {
-        g.blit(texture(edition), x, y, 0.0F, 0.0F, SIZE, SIZE, SIZE, SIZE);
+        Draw.blended(() -> g.blit(texture(edition), x, y, 0.0F, 0.0F, SIZE, SIZE, SIZE, SIZE));
     }
 
     private static ResourceLocation texture(final PanelStyle edition) {

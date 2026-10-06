@@ -241,8 +241,8 @@ public final class SigmaCommands {
              * here rather than at the machine: a listing they could load can only ever have been written from a
              * source they could have held. Refused before anything is compiled, with the way to do it.
              */
-            if (this.level.full() && Isas.X86_16.id().equals(isa)) {
-                ctx.out().error(CliTexts.SAID_BY.with(this.verb, SIGMA_ONLY.with(Isas.X86_16.name())));
+            if (this.level.full() && Isas.IA_16.id().equals(isa)) {
+                ctx.out().error(CliTexts.SAID_BY.with(this.verb, SIGMA_ONLY.with(Isas.IA_16.name())));
                 return;
             }
 

@@ -18,7 +18,7 @@ public enum ExpansionBus {
     ISA("ISA"),
     PCI("PCI"),
     AGP("AGP"),
-    PCIE("PCIe");
+    PCIE("PCI-e");
 
     private final String label;
 

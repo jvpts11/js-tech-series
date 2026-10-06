@@ -142,11 +142,11 @@ public final class SigmaLanguage implements IProgrammingLanguage {
          * made and not at the machine: one they could load can only have come from a source they could have held.
          * The prompt's compiler says the same thing, so a studio pointed at those machines is told as plainly.
          */
-        if (this.level.full() && Isas.X86_16.id().equals(isa)) {
+        if (this.level.full() && Isas.IA_16.id().equals(isa)) {
             final String first = sources.isEmpty() ? "" : sources.getFirst().name();
             return CompileResult.failed(List.of(new Complaint(first, 1, 1,
                     SigmaError.OLDEST_MACHINES_TAKE_SIGMA.code(),
-                    SigmaError.OLDEST_MACHINES_TAKE_SIGMA.message(Isas.X86_16.name()))));
+                    SigmaError.OLDEST_MACHINES_TAKE_SIGMA.message(Isas.IA_16.name()))));
         }
         final List<SourceFile> files = new ArrayList<>();
         for (final SourceText source : sources) {

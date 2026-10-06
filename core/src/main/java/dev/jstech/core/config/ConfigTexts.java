@@ -32,7 +32,10 @@ public final class ConfigTexts {
     public static final TextKey VERSION_TOOLTIP = TextKey.of("jscore.configuration.config_version.tooltip",
             "The version of this file's layout. The game upgrades an older file to it; leave it as it is.");
 
-    private static final String TOOLTIP = ".tooltip";
+    /** What the key of a setting's or a section's comment ends in, after its own key. */
+    public static final String TOOLTIP = ".tooltip";
+    /** What the key of a setting's unit ends in, after its own key. */
+    public static final String UNIT = ".unit";
 
     private ConfigTexts() {
     }
@@ -69,6 +72,9 @@ public final class ConfigTexts {
                 out.put(key(modId, setting.dottedPath()), setting.title());
                 if (!setting.comment().isEmpty()) {
                     out.put(key(modId, setting.dottedPath()) + TOOLTIP, String.join("\n", setting.comment()));
+                }
+                if (!setting.unit().isBlank()) {
+                    out.put(key(modId, setting.dottedPath()) + UNIT, setting.unit());
                 }
             }
         }

@@ -32,8 +32,8 @@ import java.util.Set;
  */
 public final class Isas {
 
-    /** The 16-bit x86 of the first machines, and the only thing they run. */
-    public static final IsaSpec X86_16 = own("x86_16", "x86-16", 16);
+    /** IA-16, the 16-bit x86 of the first machines, and the only thing they run. */
+    public static final IsaSpec IA_16 = own("ia_16", "IA-16", 16);
 
     /**
      * The 32-bit x86, which runs what was built for the 16-bit one as well as its own.
@@ -42,7 +42,7 @@ public final class Isas {
      * the oldest machine of the line keeps working on every machine after it, and never the other way about. It
      * is also what lets one program serve all three ages, since the smaller language builds for the oldest.
      */
-    public static final IsaSpec X86 = own("x86", "x86", 32, X86_16);
+    public static final IsaSpec X86 = own("x86", "x86", 32, IA_16);
 
     /** The 64-bit x86, which runs what was built for the 32-bit one as well as its own. */
     public static final IsaSpec X86_64 = own("x86_64", "x86-64", 64, X86);
@@ -60,7 +60,7 @@ public final class Isas {
     private static final Map<String, IsaSpec> KNOWN = new LinkedHashMap<>();
 
     static {
-        add(X86_16);
+        add(IA_16);
         add(X86);
         add(X86_64);
     }
@@ -164,7 +164,7 @@ public final class Isas {
      */
     public static IsaSpec of(final HardwareEra era) {
         return switch (era) {
-            case VINTAGE -> X86_16;
+            case VINTAGE -> IA_16;
             case LEGACY -> X86;
             case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> X86_64;
         };
@@ -178,7 +178,7 @@ public final class Isas {
      * everything after. The full one begins where its own library does, on the 32-bit machines.
      */
     public static IsaSpec oldestFor(final LanguageLevel level) {
-        return level.full() ? X86 : X86_16;
+        return level.full() ? X86 : IA_16;
     }
 
     /*

@@ -49,20 +49,20 @@ public final class CoreConfigKeys {
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = ConfigKey.whole(
             BALANCE + ".hdd_latency_ticks", OperationBalance.DEFAULT_HDD_LATENCY_TICKS).range(0, MAX_LATENCY_TICKS)
             .comment("How long a hard disk drive takes to find what it is asked for, in ticks.")
-            .named("Hard disk latency");
+            .named("Hard disk latency").unit("ticks");
 
     /** The seek latency of a solid-state drive, in ticks. */
     public static final ConfigKey<Integer> SSD_LATENCY_TICKS = ConfigKey.whole(
             BALANCE + ".ssd_latency_ticks", OperationBalance.DEFAULT_SSD_LATENCY_TICKS).range(0, MAX_LATENCY_TICKS)
             .comment("How long a solid-state drive takes to find what it is asked for, in ticks.")
-            .named("SSD latency");
+            .named("SSD latency").unit("ticks");
 
     /** The seek latency of an NVMe drive, in ticks. */
     public static final ConfigKey<Integer> NVME_LATENCY_TICKS = ConfigKey.whole(
             BALANCE + ".nvme_latency_ticks", OperationBalance.DEFAULT_NVME_LATENCY_TICKS)
             .range(0, MAX_LATENCY_TICKS)
             .comment("How long an NVMe drive takes to find what it is asked for, in ticks.")
-            .named("NVMe latency");
+            .named("NVMe latency").unit("ticks");
 
     /** How long an Operation waits on a LOCKed resource or a busy executor before it gives up, in ticks. */
     public static final ConfigKey<Integer> OPERATION_WAITING_TIMEOUT_TICKS = ConfigKey.whole(
@@ -70,7 +70,7 @@ public final class CoreConfigKeys {
             .range(20, MAX_TIMEOUT_TICKS)
             .comment("How long an Operation waits on a locked resource or a busy machine before it gives up, "
                     + "in ticks.")
-            .named("Operation waiting time");
+            .named("Operation waiting time").unit("ticks");
 
     /** Ticks a queued Operation waits per level of priority it gains; 0 disables aging. */
     public static final ConfigKey<Integer> OPERATION_PRIORITY_AGING_TICKS = ConfigKey.whole(
@@ -78,7 +78,7 @@ public final class CoreConfigKeys {
             .range(0, MAX_TIMEOUT_TICKS)
             .comment("How many ticks a queued Operation waits for each level of priority it gains; 0 never raises "
                     + "it.")
-            .named("Priority aging");
+            .named("Priority aging").unit("ticks");
 
     /** The share of a Subframe's own capacity it lends to the Mainframe orchestrating it. */
     public static final ConfigKey<Double> SUBFRAME_EFFICIENCY_FACTOR = ConfigKey.number(
@@ -93,21 +93,21 @@ public final class CoreConfigKeys {
             .range(0, MAX_EXPIRY_HOURS)
             .comment("How many hours a saved Operation nobody resumed waits before it is discarded; 0 keeps it for "
                     + "ever.")
-            .named("Forgotten Operations last");
+            .named("Forgotten Operations last").unit("hours");
 
     /** Real time one machine may spend running its programs in a tick, in microseconds. */
     public static final ConfigKey<Integer> PROGRAM_MACHINE_MICROS = ConfigKey.whole(
             BALANCE + ".program_machine_micros", ExecutionBalance.DEFAULT_MACHINE_MICROS)
             .range(MIN_MACHINE_MICROS, MAX_MACHINE_MICROS)
             .comment("The real time one machine may spend running its programs in a tick, in microseconds.")
-            .named("Program time per machine");
+            .named("Program time per machine").unit("µs");
 
     /** Real time every machine together may spend running programs in a tick, in microseconds. */
     public static final ConfigKey<Integer> PROGRAM_SERVER_MICROS = ConfigKey.whole(
             BALANCE + ".program_server_micros", ExecutionBalance.DEFAULT_SERVER_MICROS)
             .range(MIN_SERVER_MICROS, MAX_SERVER_MICROS)
             .comment("The real time every machine together may spend running programs in a tick, in microseconds.")
-            .named("Program time per server");
+            .named("Program time per server").unit("µs");
 
     /** Kilobytes a second the server sends each player of the recordings they are about to hear. */
     public static final ConfigKey<Integer> MEDIA_DOWNLOAD_KILOBYTES_PER_SECOND = ConfigKey.whole(
@@ -115,21 +115,21 @@ public final class CoreConfigKeys {
             .range(MIN_MEDIA_RATE, MAX_MEDIA_RATE)
             .comment("How many kilobytes a second the server sends each player of the recordings they are about "
                     + "to hear.")
-            .named("Download speed");
+            .named("Download speed").unit("KB/s");
 
     /** Kilobytes a second a player sends the server of a recording they bring. */
     public static final ConfigKey<Integer> MEDIA_UPLOAD_KILOBYTES_PER_SECOND = ConfigKey.whole(
             MEDIA + ".upload_kilobytes_per_second", MediaBalance.DEFAULT_UPLOAD_KILOBYTES_PER_SECOND)
             .range(MIN_MEDIA_RATE, MAX_MEDIA_RATE)
             .comment("How many kilobytes a second a player sends the server of a recording they bring.")
-            .named("Upload speed");
+            .named("Upload speed").unit("KB/s");
 
     /** The biggest recording a player may bring, in megabytes; 0 takes none. */
     public static final ConfigKey<Integer> MEDIA_MAX_FILE_MEGABYTES = ConfigKey.whole(
             MEDIA + ".max_file_megabytes", MediaBalance.DEFAULT_MAX_FILE_MEGABYTES)
             .range(0, MAX_MEDIA_FILE_MEGABYTES)
             .comment("The biggest recording a player may bring, in megabytes; 0 takes none.")
-            .named("Largest recording");
+            .named("Largest recording").unit("MB");
 
     /** How much of the store the recordings one player brought may take, in megabytes; 0 sets no limit. */
     public static final ConfigKey<Integer> MEDIA_PLAYER_QUOTA_MEGABYTES = ConfigKey.whole(
@@ -137,14 +137,14 @@ public final class CoreConfigKeys {
             .range(0, MAX_MEDIA_QUOTA_MEGABYTES)
             .comment("How much of the server's store the recordings one player brought may take, in megabytes; "
                     + "0 sets no limit.")
-            .named("Recordings per player");
+            .named("Recordings per player").unit("MB");
 
     /** How many days a season of the world's year lasts. */
     public static final ConfigKey<Integer> CALENDAR_DAYS_PER_SEASON = ConfigKey.whole(
             CALENDAR + ".days_per_season", WorldCalendar.DEFAULT_DAYS_PER_SEASON)
             .range(1, WorldCalendar.MOST_DAYS_PER_SEASON)
             .comment("How many days a season of the world's year lasts; a year is four seasons.")
-            .named("Days per season");
+            .named("Days per season").unit("days");
 
     /** How many chunks one player or team may keep loaded through the series' machines, across the world. */
     public static final ConfigKey<Integer> WORLD_CHUNKS_PER_OWNER = ConfigKey.whole(
@@ -152,7 +152,7 @@ public final class CoreConfigKeys {
             .range(0, MAX_CHUNKS_PER_OWNER)
             .comment("How many chunks one player or team may keep loaded through machines, across every dimension; "
                     + "0 lets nobody keep any.")
-            .named("Loaded chunks per owner");
+            .named("Loaded chunks per owner").unit("chunks");
 
     /** The file, each setting passed into the balance it sets. */
     public static final ConfigFile FILE = ConfigFile.builder("jstech-balance", ConfigSide.SERVER, ConfigFormats.TOML)
@@ -164,7 +164,7 @@ public final class CoreConfigKeys {
                     + "and how big one may be.")
             .sectionComment(CALENDAR, "The world's calendar: how long its seasons last.")
             .sectionComment(WORLD, "What machines may do to the world: how many chunks an owner keeps loaded.")
-            .sectionNamed(BALANCE, "Operations and programs")
+            .sectionNamed(BALANCE, "Engine and programs")
             .sectionNamed(MEDIA, "Recordings")
             .sectionNamed(CALENDAR, "Calendar")
             .sectionNamed(WORLD, "World")

@@ -120,7 +120,7 @@ public final class IsaGameTests {
         }
         final MachinePrograms.Started started = run(computer, "jsc:x86");
         helper.assertFalse(started.ok(), "the earliest machines run only their own, which is what dates them");
-        helper.assertTrue(started.message().contains("this machine is x86-16"),
+        helper.assertTrue(started.message().contains("this machine is IA-16"),
                 "it says what the machine is: " + started.message());
         helper.succeed();
     }
@@ -140,9 +140,9 @@ public final class IsaGameTests {
         if (oldest == null || later == null) {
             return;
         }
-        final MachinePrograms.Started onTheOldest = run(oldest, "jsc:x86_16");
+        final MachinePrograms.Started onTheOldest = run(oldest, "jsc:ia_16");
         helper.assertTrue(onTheOldest.ok(), "the machine it was built for runs it: " + onTheOldest.message());
-        final MachinePrograms.Started onALaterOne = run(later, "jsc:x86_16");
+        final MachinePrograms.Started onALaterOne = run(later, "jsc:ia_16");
         helper.assertTrue(onALaterOne.ok(),
                 "and so does one of the age after: " + onALaterOne.message());
         helper.succeed();

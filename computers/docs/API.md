@@ -64,7 +64,7 @@ public static final IsaSpec ARM64 = new IsaSpec("myaddon:arm64", "ARM64", 64, Se
 ```
 
 `IsaSpec(id, name, bits, runs)`: `runs` is every instruction set this one can run, its own included (an x86-64
-processor runs x86 and x86-16 programs). A program built for an instruction set runs on every processor whose
+processor runs x86 and IA-16 programs). A program built for an instruction set runs on every processor whose
 `runs` holds it. Bringing processors of your own needs no socket registration: a socket is an id in the
 `namespace:path` form that a processor and a board both name.
 

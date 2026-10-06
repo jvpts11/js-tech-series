@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.block.MonitorKind;
 import dev.jstech.computers.block.MonitorPanel;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
@@ -33,6 +34,8 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.monitor.IMonitorPicture;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
+import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
@@ -49,6 +52,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.ClientHooks;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
@@ -83,6 +89,14 @@ public final class MonitorClientTests {
     private static final BlockPos DRIVE = new BlockPos(4, 2, 2);
     private static final ResourceLocation FREEBSD =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "freebsd");
+    /* How far the power button stands out of the face, a hair less than its model's half pixel. */
+    private static final double BUTTON_PROUD = 0.02;
+    /* Where the player stands to look down at that monitor's face, and how far down. */
+    private static final BlockPos FACE_VIEW = new BlockPos(9, 2, 2);
+    private static final float FACE_VIEW_PITCH = 22.0F;
+    /* A folder made on a Frames desktop, and the program pinned to its panel. */
+    private static final String FOLDER = "Users/Public/Desktop/Projects";
+    private static final String CALCULATOR_KEY = "calculator";
 
     private MonitorClientTests() {
     }
@@ -250,6 +264,84 @@ public final class MonitorClientTests {
                 .thenScreenshot(SETTLE, "face-with-a-program");
     }
 
+    /**
+     * The face shows the desktop the machine keeps: a folder made on it and a program pinned to its panel, with nobody
+     * at the machine; and a terminal left open there is drawn inside its own window, its last lines at the foot.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void face_showsTheDesktopsFoldersPinsAndATerminalInItsWindow(final ClientTestContext ctx) {
+        final IDesktopApp[] terminal = new IDesktopApp[1];
+        final String[] terminalName = new String[1];
+        ctx.thenBuild(0, world -> {
+                    final PersonalComputerBlockEntity pc = world.placeRunningPersonalComputer(COMPUTER);
+                    String built = "";
+                    for (final String segment : FOLDER.split("/")) {
+                        built = built.isEmpty() ? segment : built + "/" + segment;
+                        DiskFilesystem.mkdir(pc.systemDisk(), built, FilesystemKind.HIERARCHICAL);
+                    }
+                    pc.console().settings().pin(CALCULATOR_KEY);
+                    world.placeMonitor(SCREEN, Direction.WEST);
+                })
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .thenWaitUntil(() -> MonitorPictureCache.of(ctx.abs(SCREEN)) instanceof IMonitorPicture.Desktop,
+                        BOOT_WAIT, "the machine to come up")
+                .thenWaitUntil(() -> {
+                    final OffscreenDesktop face = MonitorPainter.desktopOf(ctx.abs(SCREEN));
+                    return face != null && face.desktopItemNames().contains("Projects")
+                            && face.pinnedLabels().contains("Calculator");
+                }, LIGHT_WAIT, "the face to show the folder on the desktop and the program pinned to the panel", () -> {
+                    final OffscreenDesktop face = MonitorPainter.desktopOf(ctx.abs(SCREEN));
+                    return face == null ? "no face"
+                            : "items=" + face.desktopItemNames() + " pins=" + face.pinnedLabels();
+                })
+                .thenRightClick(SETTLE, SCREEN)
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .then(SETTLE, () -> {
+                    terminalName[0] = DesktopScreen.terminalName();
+                    DesktopScreen.requestOpen(terminalName[0]);
+                })
+                .thenWaitUntil(() -> {
+                    terminal[0] = openProgram(ctx, terminalName[0]);
+                    return terminal[0] != null;
+                }, LIGHT_WAIT, "the terminal to open")
+                // More lines than its window shows, so the ones scrolled above it are there to be wrongly shown.
+                .then(SETTLE, () -> {
+                    for (int i = 0; i < 24; i++) {
+                        ctx.type("echo line " + i);
+                        ctx.key(GLFW.GLFW_KEY_ENTER);
+                    }
+                })
+                .then(LIGHT_WAIT / 4, () -> ctx.player().closeContainer())
+                .thenAwaitNoScreen(LIGHT_WAIT)
+                .thenWaitUntil(() -> faceDraws(ctx, terminal[0]), LIGHT_WAIT,
+                        "the face to draw the terminal by the program left open at the machine")
+                // A step back, looking down at the glass, to see the window and what is drawn in it.
+                .thenTeleport(SETTLE, FACE_VIEW, Direction.WEST)
+                .then(2, () -> ctx.player().setXRot(FACE_VIEW_PITCH))
+                .thenScreenshot(SETTLE * 10, "face-terminal-folder-pin");
+    }
+
+    /** Looked at, the power button is outlined on its own, where a click presses it, and not the whole monitor. */
+    @ClientTest(timeoutTicks = 2400)
+    public static void powerButton_isOutlinedOnItsOwnWhileLookedAt(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    world.placeRunningPersonalComputer(COMPUTER);
+                    world.placeMonitor(SCREEN, Direction.WEST);
+                })
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .then(SETTLE, () -> lookAt(ctx, buttonMiddle(ctx)))
+                .thenWaitUntil(() -> {
+                    if (!(ctx.mc().hitResult instanceof BlockHitResult hit)
+                            || !hit.getBlockPos().equals(ctx.abs(SCREEN))) {
+                        return false;
+                    }
+                    final BlockState state = ctx.mc().level.getBlockState(hit.getBlockPos());
+                    final double[] at = MonitorBlock.frontPoint(state, hit.getBlockPos(), hit);
+                    return at != null && ((MonitorBlock) state.getBlock()).kind().onButton(at[0], at[1]);
+                }, LIGHT_WAIT, "the crosshair to rest on the power button")
+                .thenScreenshot(SETTLE, "power-button-outline");
+    }
+
     @ClientTest(timeoutTicks = 2400)
     public static void face_showsTheInstallerOnThePageThePlayerIsOn(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {
@@ -292,6 +384,28 @@ public final class MonitorClientTests {
                 .thenWaitUntil(() -> "NAME".equals(ctx.screen(InstallerScreen.class).pageName()), LIGHT_WAIT,
                         "Enter to carry the installer on to its next page")
                 .thenWaitUntil(() -> facePage(ctx, "NAME"), LIGHT_WAIT, "and the face to follow it there");
+    }
+
+    /*
+     * The middle of the power button of the monitor at SCREEN, in the world: its front looks east, so across its
+     * front runs toward the north, and the button stands on the face's plane.
+     */
+    private static Vec3 buttonMiddle(final ClientTestContext ctx) {
+        final BlockPos at = ctx.abs(SCREEN);
+        final MonitorKind kind = ((MonitorBlock) ctx.mc().level.getBlockState(at).getBlock()).kind();
+        final double across = (kind.button(0) + kind.button(2)) / 2.0 / MonitorKind.FRONT;
+        final double fromTop = (kind.button(1) + kind.button(3)) / 2.0 / MonitorKind.FRONT;
+        return new Vec3(at.getX() + 1.0 + BUTTON_PROUD, at.getY() + 1.0 - fromTop, at.getZ() + 1.0 - across);
+    }
+
+    /* Turns the player's head to look at a point. */
+    private static void lookAt(final ClientTestContext ctx, final Vec3 point) {
+        final Vec3 eye = ctx.player().getEyePosition();
+        final double dx = point.x - eye.x;
+        final double dy = point.y - eye.y;
+        final double dz = point.z - eye.z;
+        ctx.player().setYRot((float) Math.toDegrees(Math.atan2(-dx, dz)));
+        ctx.player().setXRot((float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz))));
     }
 
     /* Whether the face of the monitor is drawn by the installer's screen, on the page named {@code page}. */

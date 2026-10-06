@@ -252,7 +252,7 @@ final class CdePanels {
         }
         final ResourceLocation picture = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
                 "textures/gui/cde/panel/" + control.name().toLowerCase(Locale.ROOT) + ".png");
-        g.blit(picture, cx - PICTURE / 2, top, 0.0F, 0.0F, PICTURE, PICTURE, PICTURE, PICTURE);
+        Draw.blended(() -> g.blit(picture, cx - PICTURE / 2, top, 0.0F, 0.0F, PICTURE, PICTURE, PICTURE, PICTURE));
         switch (control) {
             case CLOCK -> clockHands(g, cx, top + PICTURE / 2);
             case DATE -> day(g, cx, top + 11);

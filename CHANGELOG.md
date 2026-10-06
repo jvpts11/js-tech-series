@@ -1358,6 +1358,24 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 
 ### Changed
+- The settings screen of the series' mods is new: a tab for the world's settings, one for the player's and one for
+  every game's, each with a line saying where they are kept; each section with its count of settings, a mark while
+  one of them is changed and not saved, and a line saying what it is for; a card for each setting with its whole
+  description (the rest where the pointer rests on it), its default, its bounds and its unit; a Default button on a
+  setting that is off its default; a search through every section by name and description; and how many changes
+  wait, beside Save. A world's settings opened from outside it are shown dimmed under a line saying why. J's Core's
+  "Operations and programs" section is now "Engine and programs".
+- The terminals write in the game's own font again, still one character to a cell, and a monitor's console draws it
+  at the machine's display scale, the same scale its desktop is drawn at.
+- The instruction set of the Vintage processors is called IA-16 (it was x86-16): a project that names
+  `jsc:x86_16` names `jsc:ia_16`.
+- A part's tooltip names its slot and its memory as the parts' own sheets do: PCI-e 3.0, AGP 8x, DDR3.
+- The Server Router wears the look of the other network devices: a bank of four ports on every face, framed in
+  router blue, and the routers' two blinking lamps.
+- A monitor's power button is outlined on its own while it is looked at, in the series' accent, rather than the
+  whole monitor.
+- A monitor's face in the world shows the desktop the machine keeps: the folders and files on it, and the programs
+  pinned to its panel.
 - CDE's Help Viewer is now every desktop's Help, under the name its system gives it, and opens on the manuals rather
   than on the first command's page. `help` on MC-DOS and MC-NET opens the full-screen help instead of printing; on
   Frames it prints as before.
@@ -1482,7 +1500,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   for it.
 - A monitor going dark is heard only from a picture tube; the flat panels of the Transition and every later era
   go dark silently, as the Standard ones always did.
-- What a processor understands (x86-16, x86, x86-64) is its instruction set: the firmware lists it as the
+- What a processor understands (IA-16, x86, x86-64) is its instruction set: the firmware lists it as the
   Instruction Set, a build of mixed processors is refused for mixing instruction sets, and `sgsc --arch` asks for
   an instruction set by the same ids and names as before. The word architecture is left for the design of a chip.
 - How much a processor orchestrates counts the design of its cores as well as how many there are and how fast
@@ -1686,6 +1704,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- The desktops' pointers, Frames 7's Start orb and the other pictures with soft edges (the systems' marks and logos,
+  the panels' icons) have their edges blended into what is under them: a pointer's soft shadow came out as a hard
+  black outline, and a pixel almost wholly clear in its full colour, the blue specks round the orb. A pointer's tip
+  lands on a whole pixel of the window, so no column of it is drawn twice.
+- The pointer no longer disappears behind a program's dialog, such as the Network Interactor's request dialog.
+- A computer on no network hands over what its own storage holds through the Network Interactor.
+- On a monitor's face in the world, a window keeps what its program draws inside its frame: a terminal showed the
+  lines scrolled above it over its title bar, and nothing where its last lines should have been.
 - A player made by a test, or by another mod, on a connection that agreed on nothing no longer has J's Core's data
   sent to it as it joins, which failed it.
 - A machine stacked with a great many slowing upgrades no longer takes a negative time to work.

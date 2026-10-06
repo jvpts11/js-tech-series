@@ -61,8 +61,8 @@ SOFTWARE.
 
 ## Misc Fixed
 
-J's Core's fonts `jscore:fixed_6x10`, `jscore:fixed_9x15` and `jscore:fixed_10x20`, the fonts the terminals of the
-series draw in, are the X Window System's Misc Fixed font at six by ten, nine by fifteen and ten by twenty pixels, from
+J's Core's fonts `jscore:fixed_6x10`, `jscore:fixed_9x15` and `jscore:fixed_10x20`, the fonts the tables of the
+series' manuals are drawn in, are the X Window System's Misc Fixed font at six by ten, nine by fifteen and ten by twenty pixels, from
 Markus Kuhn's ucs-fonts as the X.Org Foundation ships them in font-misc-misc. Their glyphs are carried unchanged, laid
 out on the pictures the game's fonts are drawn from. Their makers put them in the public domain, which asks for no
 notice; they are credited here with thanks. The notice each carries:

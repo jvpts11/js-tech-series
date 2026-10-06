@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.client.term.TermFace;
 import dev.jstech.computers.client.term.TermPainter;
 import dev.jstech.computers.client.term.TermPalette;
 import dev.jstech.computers.client.term.TermSelector;
@@ -30,7 +31,6 @@ import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
-import dev.jstech.core.font.CoreFonts;
 import dev.jstech.core.gui.TextScreen;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -211,7 +211,7 @@ public final class ShellView extends Panel implements ShellViews.IListener {
                 .setPrompt(this::promptNow)
                 .setUnseen(() -> this.keyboard.asking() && this.keyboard.unseen())
                 .setTakesNothing(() -> this.keyboard.asking())
-                .setCellFont(CoreFonts.FIXED_6X10));
+                .setCellFont(TermFace.SMALL.font()));
         focus(this.console);
         ShellViews.register(this);
         // Sync the real prompt (and any pending build notices) before the player types anything.

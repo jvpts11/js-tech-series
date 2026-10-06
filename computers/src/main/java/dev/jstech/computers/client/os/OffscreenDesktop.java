@@ -8,7 +8,10 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.menu.DesktopMenu;
+import dev.jstech.computers.operation.payload.DesktopFilesPayload;
+import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.os.OpenWindow;
+import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.core.client.gui.component.Grounds;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +23,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A machine's desktop drawn with no screen open: the same desktop its monitor's screen shows, sized to whatever it is
  * drawn into. It has no container, so a window with an inventory zone shows the zone empty, and it asks the machine
- * nothing, so it shows the desktop as the machine's identity makes it: the system's look and era, its panel and the
- * programs every copy of that system has. A monitor showing its desktop in the world draws it this way.
+ * nothing itself: what the desktop holds (its files and folders, what is pinned to its panel, how it is set to look)
+ * is handed to it, as the monitor showing it in the world fetches it. A monitor showing its desktop in the world
+ * draws it this way.
  */
 public final class OffscreenDesktop implements DesktopSurface {
 
@@ -82,6 +86,14 @@ public final class OffscreenDesktop implements DesktopSurface {
     }
 
     /**
+     * Takes what the machine's desktop holds, as the desktop opened at the machine takes it: the files and folders on
+     * it, what is pinned to its panel and how it is set to look.
+     */
+    public void takeListing(final DesktopFilesPayload listing) {
+        state.takeDesktop(listing);
+    }
+
+    /**
      * How many times the programs this client has for any machine have changed hands; a face drawn with them shows its
      * windows again when this moves on, so a program opened or left at the machine reaches its face.
      */
@@ -101,6 +113,24 @@ public final class OffscreenDesktop implements DesktopSurface {
     /** What the desktop lists as things it can start, in the order its launcher shows them. */
     public List<String> launcherLabels() {
         return state.launcherLabels();
+    }
+
+    /** The names of the files and folders on the desktop, in the order their icons stand. */
+    public List<String> desktopItemNames() {
+        final List<String> names = new ArrayList<>();
+        for (final DiskFilesPayload.WireFile file : state.deskFiles()) {
+            names.add(FsPaths.fileName(file.path()));
+        }
+        return names;
+    }
+
+    /** The programs pinned to the desktop's panel, by the label the panel shows them under. */
+    public List<String> pinnedLabels() {
+        final List<String> labels = new ArrayList<>();
+        for (final String key : state.taskbar().pinnedKeys()) {
+            labels.add(state.nameOf(key));
+        }
+        return labels;
     }
 
     @Override

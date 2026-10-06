@@ -487,6 +487,60 @@ public final class NetworkInteractorClientTests {
                 .thenAwaitNoScreen(SCREEN_WAIT);
     }
 
+    /**
+     * A computer on no network still hands over what it holds itself: the Local tab lists its own disks' items,
+     * and To Inventory in the storage dialog puts them in the player's inventory. The dialog leaves the pointer
+     * drawn over it.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void interactor_withdrawsLocalStorageWithNoNetwork(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    final CraftingComputerBlockEntity cc = world.placeRunningCraftingComputer(CRAFTING_COMPUTER);
+                    TestWorldBuilder.installDesktop(cc, FRAMES_XP, Programs.CRAFTING_MANAGER);
+                    cc.togglePower();
+                    cc.togglePower();
+                    world.placeMonitor(MONITOR, Direction.EAST);
+                    cc.localStore().insert(StorageKey.of(Items.IRON_INGOT), 8L);
+                })
+                .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
+                .then(1, () -> ctx.mc().player.getInventory().clearContent())
+                .thenRightClick(SETTLE, MONITOR)
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .then(2, () -> launch(ctx))
+                .thenWaitUntil(() -> interactor(ctx) != null, SCREEN_WAIT, "the Network Interactor window")
+                .then(2, () -> ctx.clickDesktop(point(ctx, interactor(ctx).localTabCenter())));
+        clearSearch(ctx)
+                .thenWaitUntil(() -> interactor(ctx).listedNames().equals(List.of("Iron Ingot")), SCREEN_WAIT,
+                        "the Local tab to list the computer's own ingots",
+                        () -> "tab=" + interactor(ctx).activeTab() + " listed=" + interactor(ctx).listedNames())
+                .then(1, () -> {
+                    ctx.clickDesktop(point(ctx, interactor(ctx).gridCellCenter(0)));
+                    ctx.clickDesktop(point(ctx, interactor(ctx).gridCellCenter(0)));
+                })
+                .then(1, () -> ctx.assertTrue(interactor(ctx).isRequestPopupOpen(),
+                        "a double click opens the storage dialog"))
+                .then(1, () -> ctx.pointAtDesktop(point(ctx, interactor(ctx).storagePopupToInventoryCenter())))
+                .thenScreenshot(2, "storage-dialog-pointer")
+                .then(1, () -> ctx.clickDesktop(point(ctx, interactor(ctx).storagePopupToInventoryCenter())))
+                .thenWaitUntil(() -> ctx.mc().player.getInventory().countItem(Items.IRON_INGOT) == 8, SCREEN_WAIT,
+                        "the eight ingots to reach the inventory with no network",
+                        () -> "inventory=" + ctx.mc().player.getInventory().countItem(Items.IRON_INGOT))
+                .thenWaitUntilServer(level -> TestWorldBuilder.at(level, ctx.origin())
+                                .blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class).localStore().view()
+                                .getOrDefault(StorageKey.of(Items.IRON_INGOT), 0L) == 0L,
+                        SCREEN_WAIT, "the computer's own storage to give them up",
+                        level -> "local=" + TestWorldBuilder.at(level, ctx.origin())
+                                .blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class).localStore().view())
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                // Escape drops a selection first, so a second one may be needed to leave the screen.
+                .then(2, () -> {
+                    if (ctx.mc().screen != null) {
+                        ctx.key(GLFW.GLFW_KEY_ESCAPE);
+                    }
+                })
+                .thenAwaitNoScreen(SCREEN_WAIT);
+    }
+
     // helpers
 
     private static void launch(final ClientTestContext ctx) {

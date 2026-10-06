@@ -13,6 +13,7 @@ import dev.jstech.computers.operation.payload.CreateAutomationJobPayload;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.EngineActionPayload;
+import dev.jstech.computers.operation.payload.FaceListingPayload;
 import dev.jstech.computers.operation.payload.FileSavedPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
@@ -22,6 +23,7 @@ import dev.jstech.computers.operation.payload.IsmsActionPayload;
 import dev.jstech.computers.operation.payload.IsmsPlanPayload;
 import dev.jstech.computers.operation.payload.IsmsSchemaPayload;
 import dev.jstech.computers.operation.payload.IsmsTracePayload;
+import dev.jstech.computers.operation.payload.RequestFaceListingPayload;
 import dev.jstech.computers.operation.payload.RequestIsmsSchemaPayload;
 import dev.jstech.computers.operation.payload.RunIqlPayload;
 import dev.jstech.computers.trace.TraceEvent;
@@ -150,6 +152,18 @@ public final class PayloadRoundTripGameTests {
                         new DesktopEffects(List.of("animations"), 60, true)), List.of(), List.of(),
                 List.of("files:m", "system_monitor:w", "network_manager:s"), Map.of(),
                 false, Map.of("sgsc", "2.0", "scc", "1.0"), 160.0F));
+        helper.succeed();
+    }
+
+    /** A face's listing names its monitor and carries the desktop's folders and pins the way a screen's does. */
+    @GameTest(template = ARENA)
+    public static void desktop_faceListingRoundTripsWithItsFoldersAndPins(final GameTestHelper helper) {
+        roundTrip(helper, RequestFaceListingPayload.STREAM_CODEC, new RequestFaceListingPayload(MONITOR));
+        roundTrip(helper, FaceListingPayload.STREAM_CODEC, new FaceListingPayload(MONITOR, new DesktopFilesPayload(
+                List.of(new DiskFilesPayload.WireFile("Users/Public/Desktop/Projects", "", 0L, false, true)), "", "",
+                "Desk", List.of(), List.of(), List.of(),
+                new DesktopFilesPayload.Prefs(0, 100, false, true, false, 100, DesktopEffects.ALL_ON), List.of(),
+                List.of("calculator", "files"), List.of(), Map.of(), false, Map.of(), 160.0F)));
         helper.succeed();
     }
 

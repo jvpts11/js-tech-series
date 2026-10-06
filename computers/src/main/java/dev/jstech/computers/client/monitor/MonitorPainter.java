@@ -16,7 +16,9 @@ import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.layout.CommandPromptLayout;
 import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.monitor.IMonitorPicture;
+import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
+import dev.jstech.computers.operation.payload.RequestFaceListingPayload;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsMotions;
@@ -42,6 +44,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -66,6 +69,8 @@ public final class MonitorPainter {
     private static final int GLASS_ENDS = MonitorGlass.ABOVE_AND_BELOW;
     /* The desktops drawn for faces, by the monitor showing them: a few at once, the least recently seen let go. */
     private static final int DESKTOPS_KEPT = 8;
+    /* How often a face asks again what its desktop holds, in ticks: every five seconds. */
+    private static final long LISTING_EVERY = 100L;
     private static final Map<BlockPos, Shown> DESKTOPS = new LinkedHashMap<>(16, 0.75F, true) {
         @Override
         protected boolean removeEldestEntry(final Map.Entry<BlockPos, Shown> eldest) {
@@ -126,6 +131,14 @@ public final class MonitorPainter {
         return shown == null ? null : shown.desktop;
     }
 
+    /** Hands the face of the monitor at {@code monitor} what its desktop holds, if it still draws a desktop. */
+    public static void takeListing(final BlockPos monitor, final DesktopFilesPayload listing) {
+        final Shown shown = DESKTOPS.get(monitor);
+        if (shown != null) {
+            shown.desktop.takeListing(listing);
+        }
+    }
+
     @SubscribeEvent
     public static void onLeave(final ClientPlayerNetworkEvent.LoggingOut event) {
         DESKTOPS.clear();
@@ -140,7 +153,7 @@ public final class MonitorPainter {
         final Font font = Minecraft.getInstance().font;
         final TermFace.Fitted fitted = TermFace.forGlass(
                 width - CommandPromptLayout.GLASS_LEFT - CommandPromptLayout.GLASS_RIGHT_MARGIN,
-                TermBuffer.MONITOR_COLUMNS);
+                TermBuffer.MONITOR_COLUMNS, picture.scalePercent());
         final TermFace face = fitted.face();
         final float scale = fitted.scale();
         final int pitch = Math.max(1, Math.round(face.height() * scale));
@@ -174,8 +187,17 @@ public final class MonitorPainter {
             DESKTOPS.put(monitor.immutable(), shown);
         }
         final int programs = OffscreenDesktop.programsGeneration();
-        if (!picture.windows().equals(shown.windows) || picture.workspace() != shown.workspace
-                || programs != shown.programs) {
+        final boolean windowsMoved = !picture.windows().equals(shown.windows) || picture.workspace() != shown.workspace;
+        /*
+         * What the desktop holds is asked for when the face is made, when its windows change (a player leaving the
+         * machine changes them) and every few seconds while it is drawn, for a folder made or a program pinned there.
+         */
+        final long now = Minecraft.getInstance().level == null ? 0L : Minecraft.getInstance().level.getGameTime();
+        if (windowsMoved || now - shown.askedAt >= LISTING_EVERY) {
+            shown.askedAt = now;
+            PacketDistributor.sendToServer(new RequestFaceListingPayload(monitor.immutable()));
+        }
+        if (windowsMoved || programs != shown.programs) {
             shown.programs = programs;
             final List<OpenWindow> windows = new ArrayList<>(picture.windows().size());
             for (final DesktopWindowsPayload.WireWindow window : picture.windows()) {
@@ -206,6 +228,8 @@ public final class MonitorPainter {
         private int workspace = -1;
         /** Which hands this client's programs were in when the windows were last shown. */
         private int programs = -1;
+        /** The game time what the desktop holds was last asked for; long ago for a face just made. */
+        private long askedAt = Long.MIN_VALUE / 2;
 
         private Shown(final IMonitorPicture.Desktop made, final OffscreenDesktop desktop) {
             this.made = made;

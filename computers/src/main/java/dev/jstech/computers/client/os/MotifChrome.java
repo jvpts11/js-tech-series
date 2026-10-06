@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.CdeBackdrop;
 import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Grounds;
 import java.util.EnumMap;
 import java.util.Map;
@@ -132,7 +133,7 @@ final class MotifChrome {
         }
         final int tint = p.backdropB();
         g.setColor((tint >> 16 & 0xFF) / 255.0F, (tint >> 8 & 0xFF) / 255.0F, (tint & 0xFF) / 255.0F, 1.0F);
-        g.blit(mask, 0, 0, 0.0F, 0.0F, w, h, TILE, TILE);
+        Draw.blended(() -> g.blit(mask, 0, 0, 0.0F, 0.0F, w, h, TILE, TILE));
         g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 

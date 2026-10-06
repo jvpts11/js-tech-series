@@ -25,6 +25,8 @@ public static final ConfigKey<Integer> KILN_HEAT = ConfigKey.whole("kiln.max_hea
 - `comment` is written above the setting in the file and shown as its tooltip on the screen; the range or the
   words allowed, and the default, are added to it for you.
 - `named` is the setting's name on the settings screen, in English. It is required for a TOML file's settings.
+- `unit` (*added 2026-10-06*) is what a number counts, in English (`"KB/s"`, `"ticks"`, `"days"`): the screen
+  writes it after the number and after its default and bounds, and it is translated like the name.
 
 ## A file of settings
 
@@ -57,7 +59,8 @@ when it changes), or JSON, JSON5 or YAML (kept by the Core, written safely so a 
 file). TOML, JSON5 and YAML keep their comments; JSON cannot.
 
 `sectionNamed` names each section on the settings screen; a TOML file whose section has no name refuses to build,
-as does a setting without `named`, because the screen and the language file need them. `version(n)` and
+as does a setting without `named`, because the screen and the language file need them. `sectionComment` says what
+a section is for: it is written above the section in the file and shown under its title on the screen. `version(n)` and
 `upgrade(from, step)` change an older file's shape when it is read (`IConfigUpgrade.rename(from, to)`, `remove`).
 
 ## When someone writes a wrong value
@@ -75,21 +78,33 @@ comments. A file written by a **newer** version of your mod is read as far as po
 
 ## The settings screen
 
-*Added 2026-10-05.*
+*Added 2026-10-05; redrawn 2026-10-06.*
 
-The Core draws a settings screen for every file of a mod, reached from the game's Mods list: the files and their
-sections on the left, the settings on the right, each with the control its kind needs (a switch, a number you type
-or step, a word to cycle through, a text field). Done keeps the changes and writes them, Cancel or Escape drops
-them. A world's server settings can only be changed inside that world, on the game running it.
+The Core draws a settings screen for every TOML file of a mod, reached from the game's Mods list. Its header has
+your mod's mark, its name and version, and a search box that finds settings in every section by their names and
+descriptions. Down the left, a tab for each kind of file you have (World, This player, Every game) with a line
+saying where it is kept, and the tab's sections, each with how many settings it holds and an amber mark while one
+of them is changed and not saved. On the right, the open section's title and its `sectionComment`, then a card for
+each setting: its name, its description (three lines, the whole of it where the pointer rests on the card), its
+default with its bounds and unit, and the control its kind needs (a switch, a number you type or step, a word to
+cycle through, a text field). A setting off its default has a Default button; a changed one is marked CHANGED.
+Section defaults puts the open section back, Save keeps every change and writes it, Cancel or Escape drops them. A
+world's server settings can only be changed inside that world, on the game running it; elsewhere they are shown
+dimmed under a line saying so.
 
-Give your mod the screen from its client entry point:
+Give your mod the screen from its client entry point, with or without a mark of its own (a small drawing in one
+colour, `IConfigBadge`; without one it gets `IConfigBadge.CHIP`):
 
 ```java
 modContainer.registerExtensionPoint(IConfigScreenFactory.class, CoreConfigScreen::new);
+// or, with your mark:
+modContainer.registerExtensionPoint(IConfigScreenFactory.class,
+        (mod, parent) -> new CoreConfigScreen(mod, parent, MY_MARK));
 ```
 
-The names and tooltips come from your settings' `named` and `comment`, written to your language file as
-`<mod>.configuration.<path>` and `<mod>.configuration.<path>.tooltip`, so they can be translated.
+The names, tooltips and units come from your settings' `named`, `comment` and `unit` and your sections'
+`sectionNamed` and `sectionComment`, written to your language file as `<mod>.configuration.<path>`,
+`<mod>.configuration.<path>.tooltip` and `<mod>.configuration.<path>.unit`, so they can be translated.
 
 ## The Core's own settings
 

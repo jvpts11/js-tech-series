@@ -84,17 +84,20 @@ public final class ComputersServerConfig {
                             + "slowest cable on its way. A song from the catalogue comes at the speed of the cable the "
                             + "computer itself is plugged into; the songs coming in at once share it.",
                     "A cable with no speed of its own below carries songs at Ethernet's.")
-            .named("Songs over Ethernet");
+            .named("Songs over Ethernet")
+            .unit("KB/s");
 
     public static final ConfigKey<Integer> HBW_KILOBYTES_PER_SECOND = ConfigKey.whole(
             "soundfoundry.hbw_kilobytes_per_second", HBW_SPEED).range(1, MOST_SPEED)
             .comment("The same over a high-bandwidth cable.")
-            .named("Songs over HBW");
+            .named("Songs over HBW")
+            .unit("KB/s");
 
     public static final ConfigKey<Integer> HPC_KILOBYTES_PER_SECOND = ConfigKey.whole(
             "soundfoundry.hpc_kilobytes_per_second", HPC_SPEED).range(1, MOST_SPEED)
             .comment("The same over the high-performance fabric of a supercomputer.")
-            .named("Songs over HPC");
+            .named("Songs over HPC")
+            .unit("KB/s");
 
     public static final ConfigKey<Boolean> OUTSIDE_COMPONENTS = ConfigKey.flag("programs.outside_components", false)
             .comment("Whether a program may put in its windows a component of a kind that reaches outside the game, "
@@ -113,6 +116,13 @@ public final class ComputersServerConfig {
             .sectionNamed("prompt", "The prompt")
             .sectionNamed("soundfoundry", "Soundfoundry")
             .sectionNamed("programs", "Programs")
+            .sectionComment("boot", "How the machines come up: whether they stop at their system's boot manager.")
+            .sectionComment("install_by_hand", "Installing a system by hand: how much of its guide the machine "
+                    + "insists on.")
+            .sectionComment("prompt", "What every computer's command line has, whatever system it runs.")
+            .sectionComment("soundfoundry", "The music service: the catalogue the server offers, and how fast a song "
+                    + "travels over each kind of cable into a computer.")
+            .sectionComment("programs", "What the programs players write may put in their windows.")
             .key(SHOW_BOOT_MENU)
             .key(GENTOO_EVERY_STEP)
             .key(ARCH_EVERY_STEP)

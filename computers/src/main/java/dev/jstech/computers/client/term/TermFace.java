@@ -10,58 +10,64 @@ package dev.jstech.computers.client.term;
 import dev.jstech.computers.gui.term.TermGrid;
 import dev.jstech.core.client.font.GridPainter;
 import dev.jstech.core.font.CellFont;
-import dev.jstech.core.font.CoreFonts;
 import java.util.List;
 import net.minecraft.client.Minecraft;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * A size of the terminal font: the Core's font it is drawn from, and its cell.
+ * A size the terminals write in: the font it is drawn from, and its cell.
  *
- * <p>The terminals draw in Misc Fixed, in whichever of its three sizes fits them best on the screen they are on
- * ({@link TermGrid#fit}): a terminal window on a desktop in the small one, one GUI pixel to each of its own, and a
- * monitor's whole glass in the size and at the scale that draws the largest crisp letters its columns leave room for.
+ * <p>The terminals write in the game's own font, laid on a grid of cells six of its pixels wide and ten tall
+ * ({@link TermGrid}), so they read like the rest of the game and their columns still line up. A terminal window on a
+ * desktop draws it at the desktop's own scale, and a monitor's whole glass at the machine's display scale, the same
+ * one, as near it as crisp letters and its columns allow.
  */
 public final class TermFace {
 
-    private final CellFont font;
+    private final @Nullable CellFont font;
+    private final TermGrid.Cell cell;
     private final GridPainter<Integer> lines;
 
-    /** The small size, 6x10, which a terminal window draws in. */
-    public static final TermFace SMALL = new TermFace(CoreFonts.FIXED_6X10);
-    private static final List<TermFace> SIZES =
-            List.of(SMALL, new TermFace(CoreFonts.FIXED_9X15), new TermFace(CoreFonts.FIXED_10X20));
+    /** The size a terminal window draws in: the game's font on cells six wide and ten tall. */
+    public static final TermFace SMALL = new TermFace(null, TermGrid.SIZES.get(0));
+    private static final List<TermFace> SIZES = List.of(SMALL);
 
-    private TermFace(final CellFont font) {
+    private TermFace(final @Nullable CellFont font, final TermGrid.Cell cell) {
         this.font = font;
+        this.cell = cell;
         this.lines = new GridPainter<>(font);
     }
 
-    /** The size at that place among the font's sizes, smallest first. */
+    /** The size at that place among the sizes, smallest first. */
     public static TermFace of(final int size) {
         return SIZES.get(Math.max(0, Math.min(SIZES.size() - 1, size)));
     }
 
     /**
      * The size, and the scale against its own pixels, that a glass that many GUI pixels across draws that many columns
-     * at on this screen.
+     * at on this screen, for a machine at that display scale.
+     *
+     * @param scalePercent the machine's display scale in percent, 0 for the default ({@link TermGrid#scaleOf})
      */
-    public static Fitted forGlass(final int glassWidth, final int columns) {
-        final TermGrid.Fit fit = TermGrid.fit(glassWidth, Minecraft.getInstance().getWindow().getGuiScale(), columns);
+    public static Fitted forGlass(final int glassWidth, final int columns, final int scalePercent) {
+        final TermGrid.Fit fit = TermGrid.fit(glassWidth, Minecraft.getInstance().getWindow().getGuiScale(), columns,
+                TermGrid.scaleOf(scalePercent));
         return new Fitted(of(fit.size()), fit.scale());
     }
 
-    public CellFont font() {
+    /** The font of cells this size is drawn in, or null for the game's own. */
+    public @Nullable CellFont font() {
         return font;
     }
 
     /** How wide a cell is, in the font's own pixels. */
     public int width() {
-        return font.cellWidth();
+        return cell.width();
     }
 
-    /** How tall a row is, in the font's own pixels: the font's height, so box lines and blocks meet row to row. */
+    /** How tall a row is, in the font's own pixels, so box lines and blocks meet row to row. */
     public int height() {
-        return font.cellHeight();
+        return cell.height();
     }
 
     /** The painter single lines in this size are drawn with. */

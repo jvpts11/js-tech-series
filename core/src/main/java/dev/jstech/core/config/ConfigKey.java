@@ -37,9 +37,11 @@ import java.util.Optional;
  * @param comment      what a person reads above it in the file, a line each
  * @param title        what it is called in English where it is shown (a settings screen), or empty when it is shown
  *                     nowhere but its file
+ * @param unit         what a number of it counts, in English as a settings screen writes it after the number
+ *                     ({@code "KB/s"}, {@code "ticks"}), or empty when it counts nothing nameable
  */
 public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Optional<ConfigKeyRange<?>> range,
-                           Optional<List<String>> allowed, List<String> comment, String title) {
+                           Optional<List<String>> allowed, List<String> comment, String title, String unit) {
 
     public ConfigKey {
         Objects.requireNonNull(path, "path");
@@ -49,6 +51,7 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
         Objects.requireNonNull(allowed, "allowed");
         Objects.requireNonNull(comment, "comment");
         Objects.requireNonNull(title, "title");
+        Objects.requireNonNull(unit, "unit");
         if (path.isEmpty()) {
             throw new IllegalArgumentException("a setting needs a name");
         }
@@ -99,25 +102,25 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
     /** A setting of any kind that has a codec, at a dotted path ({@code "section.name"}). */
     public static <T> ConfigKey<T> of(final String path, final Codec<T> codec, final T defaultValue) {
         return new ConfigKey<>(ConfigTree.path(path), codec, defaultValue, Optional.empty(), Optional.empty(),
-                List.of(), "");
+                List.of(), "", "");
     }
 
     /** The same setting, a number held to {@code min} and {@code max}, both included. */
     public <N extends Number & Comparable<N>> ConfigKey<T> range(final N min, final N max) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, Optional.of(new ConfigKeyRange<>(min, max)),
-                Optional.empty(), this.comment, this.title);
+                Optional.empty(), this.comment, this.title, this.unit);
     }
 
     /** The same setting, a text held to these words; any other falls back to the default. */
     public ConfigKey<T> allowing(final String... words) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, Optional.empty(),
-                Optional.of(List.of(words)), this.comment, this.title);
+                Optional.of(List.of(words)), this.comment, this.title, this.unit);
     }
 
     /** The same setting, with these lines above it in the file; on a settings screen, they are its tooltip. */
     public ConfigKey<T> comment(final String... lines) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed,
-                Arrays.asList(lines), this.title);
+                Arrays.asList(lines), this.title, this.unit);
     }
 
     /**
@@ -126,7 +129,16 @@ public record ConfigKey<T>(List<String> path, Codec<T> codec, T defaultValue, Op
      */
     public ConfigKey<T> named(final String english) {
         return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed, this.comment,
-                english);
+                english, this.unit);
+    }
+
+    /**
+     * The same setting, a number of these: a settings screen writes the unit after the number and after its default
+     * and bounds, translated as the setting's name is.
+     */
+    public ConfigKey<T> unit(final String english) {
+        return new ConfigKey<>(this.path, this.codec, this.defaultValue, this.range, this.allowed, this.comment,
+                this.title, english);
     }
 
     /** Where it sits, written with dots: {@code "boot.show_boot_menu"}. */

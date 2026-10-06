@@ -11,7 +11,7 @@ Every computer and part belongs to an **era**, a generation of computing. Five h
 
 | Era | Like | Word size | Disk space an item takes | Instruction set | Install media |
 | --- | --- | --- | --- | --- | --- |
-| Vintage | the early 1990s | 16-bit | 1 MB | x86-16 | floppy disks |
+| Vintage | the early 1990s | 16-bit | 1 MB | IA-16 | floppy disks |
 | Legacy | around 2000 | 32-bit | 16 MB | x86 | CDs |
 | Transition | the late 2000s | 64-bit | 256 MB | x86-64 | DVDs |
 | Standard | the 2010s | 64-bit | 256 MB | x86-64 | USB sticks for systems, DVDs for programs |
@@ -23,7 +23,7 @@ Every computer and part belongs to an **era**, a generation of computing. Five h
   an item is. A 20 MB Vintage drive holds 20 items. From the Transition on an item is 256 MB, so a 1 TB disk holds
   4,096 items.
 - **Instruction set** (ISA): what a processor runs. A program built for an instruction set runs on that one and
-  every newer one (x86-64 runs x86 and x86-16 programs), never on an older one.
+  every newer one (x86-64 runs x86 and IA-16 programs), never on an older one.
 - Each era has its creative tab, **J's Computers - Vintage** to **- Advanced**, with the same shelves in each:
   personal computers, crafting computers, cluster management computers, Mainframes, server racks, rack bays,
   peripherals, network, components and programs. What every era shares is in the tab **J's Computers**.

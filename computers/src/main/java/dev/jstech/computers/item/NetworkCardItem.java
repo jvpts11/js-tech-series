@@ -27,7 +27,7 @@ public class NetworkCardItem extends SpecItem<NetworkCardSpec> implements IExpan
 
     private static final TextKey FIBRE =
             TextKey.of("jsc.item.network_card.fibre", "Lets a Mainframe, a rack or a CMC take the fibre backbone");
-    private static final TextKey FITS_PCIE = TextKey.of("jsc.item.network_card.fits_pcie", "Fits a PCIe slot");
+    private static final TextKey FITS_PCIE = TextKey.of("jsc.item.network_card.fits_pcie", "Fits a PCI-e slot");
 
     public NetworkCardItem(final Properties properties, final NetworkCardSpec spec) {
         super(properties, spec);

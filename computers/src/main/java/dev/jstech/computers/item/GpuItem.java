@@ -49,7 +49,7 @@ public class GpuItem extends SpecItem<GpuSpec> implements IExpansionCardItem {
          * Say what the card wants and what happens when it does not get it: the card still fits an
          * older board, so without this line the lost VRAM would look like a bug rather than a trade-off.
          */
-        tooltip.add(GameText.component(OLDER_SLOT.with(spec.bus())).withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(GameText.component(OLDER_SLOT.with(spec.bus().label())).withStyle(ChatFormatting.DARK_GRAY));
         HardwareTooltip.appendEra(tooltip, spec.era());
     }
 }

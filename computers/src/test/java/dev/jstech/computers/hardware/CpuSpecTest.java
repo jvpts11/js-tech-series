@@ -156,7 +156,7 @@ class CpuSpecTest {
 
     @Test
     void isa_ofOurOwnChips_followsTheEra() {
-        assertEquals(Isas.X86_16, new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 25, 3, false).isa());
+        assertEquals(Isas.IA_16, new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 25, 3, false).isa());
         assertEquals(Isas.X86, new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 800, 25, false).isa());
         assertEquals(Isas.X86_64,
                 new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 3500, 130, false).isa());

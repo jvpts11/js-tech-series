@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.Window;
+import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.client.Minecraft;
@@ -494,8 +495,7 @@ public final class ClientTestContext {
 
     /** Clicks a desktop-relative point (window and app geometry, as the desktop apps report it). */
     public void clickDesktop(final int[] point) {
-        final dev.jstech.computers.client.os.DesktopScreen desktop =
-                screen(dev.jstech.computers.client.os.DesktopScreen.class);
+        final DesktopScreen desktop = screen(DesktopScreen.class);
         // A desktop drawn smaller puts its points closer together on the screen; the click goes where they are drawn.
         click(desktop.desktopX() + point[0] * desktop.desktopScale() + 0.5,
                 desktop.desktopY() + point[1] * desktop.desktopScale() + 0.5);
@@ -503,8 +503,7 @@ public final class ClientTestContext {
 
     /** Presses on one desktop-local point, drags to another and lets go, at the desktop's scale. */
     public void dragDesktop(final int[] from, final int[] to) {
-        final dev.jstech.computers.client.os.DesktopScreen desktop =
-                screen(dev.jstech.computers.client.os.DesktopScreen.class);
+        final DesktopScreen desktop = screen(DesktopScreen.class);
         final double s = desktop.desktopScale();
         final double sx = desktop.desktopX() + from[0] * s + 0.5;
         final double sy = desktop.desktopY() + from[1] * s + 0.5;
@@ -518,9 +517,15 @@ public final class ClientTestContext {
 
     /** The right button on a desktop-local point, the way {@link #clickDesktop} is the left one. */
     public void rightClickDesktop(final int[] point) {
-        final dev.jstech.computers.client.os.DesktopScreen desktop =
-                screen(dev.jstech.computers.client.os.DesktopScreen.class);
+        final DesktopScreen desktop = screen(DesktopScreen.class);
         rightClick(desktop.desktopX() + point[0] * desktop.desktopScale() + 0.5,
+                desktop.desktopY() + point[1] * desktop.desktopScale() + 0.5);
+    }
+
+    /** Rests the pointer on a desktop-local point without pressing anything, the way {@link #pointAt} does. */
+    public void pointAtDesktop(final int[] point) {
+        final DesktopScreen desktop = screen(DesktopScreen.class);
+        pointAt(desktop.desktopX() + point[0] * desktop.desktopScale() + 0.5,
                 desktop.desktopY() + point[1] * desktop.desktopScale() + 0.5);
     }
 

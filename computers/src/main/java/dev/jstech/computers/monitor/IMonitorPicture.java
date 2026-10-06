@@ -71,11 +71,12 @@ public sealed interface IMonitorPicture
     }
 
     /**
-     * A machine at its prompt: the last lines its console printed, the prompt waiting under them, and the family of
-     * its system, whose console blinks its cursor to its own beat; null where there is no system yet.
+     * A machine at its prompt: the last lines its console printed, the prompt waiting under them, the family of its
+     * system, whose console blinks its cursor to its own beat (null where there is no system yet), and the machine's
+     * display scale in percent (0 for the default), which its text is drawn at as on the open prompt.
      */
-    record Console(HardwareEra era, List<WireLine> lines, String prompt, @Nullable Platform platform)
-            implements IMonitorPicture {
+    record Console(HardwareEra era, List<WireLine> lines, String prompt, @Nullable Platform platform,
+                   int scalePercent) implements IMonitorPicture {
 
         public Console {
             lines = List.copyOf(lines.size() > MAX_LINES ? lines.subList(lines.size() - MAX_LINES, lines.size())
@@ -129,6 +130,7 @@ public sealed interface IMonitorPicture
                 WireLine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)).encode(buf, console.lines());
                 buf.writeUtf(clip(console.prompt()), PROMPT_MAX);
                 buf.writeUtf(console.platform() == null ? "" : console.platform().serializedName());
+                buf.writeVarInt(console.scalePercent());
             }
             case Desktop desktop -> {
                 buf.writeByte(3);
@@ -207,7 +209,7 @@ public sealed interface IMonitorPicture
         return switch (buf.readByte()) {
             case 2 -> new Console(buf.readEnum(HardwareEra.class),
                     WireLine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)).decode(buf), buf.readUtf(PROMPT_MAX),
-                    Platform.byName(buf.readUtf()));
+                    Platform.byName(buf.readUtf()), buf.readVarInt());
             case 3 -> new Desktop(BlockPos.STREAM_CODEC.decode(buf), buf.readResourceLocation(),
                     buf.readResourceLocation(), buf.readVarInt(), buf.readVarInt(),
                     new ArrayList<>(DesktopWindowsPayload.WireWindow.STREAM_CODEC

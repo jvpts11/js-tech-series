@@ -11,54 +11,59 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The grid the terminals are drawn on: the cells of the terminal font, Misc Fixed in its three sizes, and which size a
- * glass draws at what scale.
+ * The grid the terminals are drawn on: the cells the game's font is laid on, and the scale a glass draws them at.
  *
- * <p>The terminal font is a bitmap font. Drawn at a scale where one of its pixels does not come out as a whole number
- * of the screen's, some of its columns come out a pixel wider than the others and every letter looks smeared. So a
- * glass picks, for the screen it is on, a size of the font and a whole number of the screen's pixels to each of the
- * font's: the pair that draws the widest cell and still fits its columns. On a screen where a pixel of the GUI is two
- * of the screen's, that is the 9x15 at one pixel each, as large as the game's small text; where it is three, the 6x10
- * at two each; where it is four, the 9x15 at two each. Only on a screen too small for even the smallest size at one
- * pixel each is the text drawn smaller than that, since cut-off columns would be worse than soft letters.
+ * <p>The terminals write in the game's own font, one character to a cell six of its pixels wide, which is what nearly
+ * every letter of it takes, and ten tall, which leaves a pixel between its lines. A glass draws it at the machine's
+ * display scale, the same a desktop on it is drawn at (three quarters of the game's own text unless the machine is set
+ * otherwise), or smaller where its columns would not fit at that.
+ *
+ * <p>It is a bitmap font: drawn at a scale where one of its pixels does not come out as a whole number of the
+ * screen's, some of its columns come out a pixel wider than the others. So the glass draws at the whole number of
+ * screen pixels to each of the font's nearest the machine's scale, where that still fits the columns, and the letters
+ * are crisp; where it does not fit, it keeps the scale and lets the letters be a little uneven, since text far smaller
+ * than the desktop's is harder to read than an uneven letter.
  *
  * <p>Pure: the screens hand it the size of their glass and the game's GUI scale, so its answers are tested without
  * the game.
  */
 public final class TermGrid {
 
-    /** How wide the small size's cell is, in its own pixels: the size a terminal window draws in. */
+    /** How wide a cell is, in the font's own pixels: the size a terminal window draws in. */
     public static final int CELL = 6;
-    /** How tall the small size's row is: the font's own height, so box lines and blocks meet from row to row. */
+    /** How tall a row is: a line of the game's font and a pixel under it; box lines and blocks fill all of it. */
     public static final int ROW = 10;
-    /** The sizes of the terminal font, smallest first, as {@code jscore:fixed_6x10}, {@code 9x15} and {@code 10x20}. */
-    public static final List<Cell> SIZES = List.of(new Cell(6, 10), new Cell(9, 15), new Cell(10, 20));
+    /** The cells the terminals draw in, smallest first: the game's font on cells six wide and ten tall. */
+    public static final List<Cell> SIZES = List.of(new Cell(CELL, ROW));
+    /**
+     * The display scale a machine draws at when it has not been set otherwise, in percent of the game's own size: the
+     * size a desktop is drawn at.
+     */
+    public static final int DEFAULT_SCALE = 75;
 
     private TermGrid() {
     }
 
+    /** A machine's display scale as a factor: its setting in percent, the default where it has none. */
+    public static float scaleOf(final int percent) {
+        return (percent <= 0 ? DEFAULT_SCALE : percent) / 100.0F;
+    }
+
     /**
-     * The size and scale a glass that many GUI pixels across draws that many columns at: of every size at every whole
-     * number of screen pixels to each of its own, the widest cell whose columns still fit, and of two as wide the
-     * larger size, whose letters are drawn finer.
+     * The scale a glass that many GUI pixels across draws that many columns at: the whole number of screen pixels to
+     * each of the font's nearest the machine's display scale, where that fits the columns; else the display scale, or
+     * less where even that would not fit them.
      *
      * @param glassWidth how wide the glass is, in GUI pixels
      * @param guiScale   how many screen pixels a GUI pixel is
+     * @param scale      the machine's display scale, as a factor ({@link #scaleOf})
      */
-    public static Fit fit(final int glassWidth, final double guiScale, final int columns) {
-        final double room = glassWidth * guiScale;
-        Fit best = null;
-        int widest = 0;
-        for (int size = 0; size < SIZES.size(); size++) {
-            final int across = Math.max(1, columns * SIZES.get(size).width());
-            final int whole = (int) Math.floor(room / across);
-            final int drawn = whole * SIZES.get(size).width();
-            if (whole >= 1 && drawn >= widest) {
-                widest = drawn;
-                best = new Fit(size, (float) (whole / guiScale));
-            }
-        }
-        return best != null ? best : new Fit(0, glassWidth / (float) Math.max(1, columns * CELL));
+    public static Fit fit(final int glassWidth, final double guiScale, final int columns, final float scale) {
+        final int across = Math.max(1, columns * CELL);
+        final float size = Math.min(scale, glassWidth / (float) across);
+        final long whole = Math.round(size * guiScale);
+        final float crisp = (float) (whole / guiScale);
+        return new Fit(0, whole >= 1 && crisp * across <= glassWidth + 1.0e-4F ? crisp : size);
     }
 
     /** How many cells a line takes: one for each character. */
@@ -131,7 +136,7 @@ public final class TermGrid {
      * Which size of the terminal font a glass draws in, and at what scale against its own pixels.
      *
      * @param size  the size's place in {@link #SIZES}
-     * @param scale how large the font is drawn: a whole number of screen pixels to each of its own
+     * @param scale how large the font is drawn against its own pixels, in GUI pixels to each of them
      */
     public record Fit(int size, float scale) {
 

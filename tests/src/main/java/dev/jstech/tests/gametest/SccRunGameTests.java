@@ -95,7 +95,7 @@ public final class SccRunGameTests {
                      * player who typed "scc hello.sg" gets "hello.asm" back, in the same case, and runs it the
                      * same way. This is exactly that case, spelled by hand instead of through a real compile.
                      */
-                    helper.assertTrue(cli.writeFile("hello.asm", listing("jsc:x86_16", "Hello")).ok(),
+                    helper.assertTrue(cli.writeFile("hello.asm", listing("jsc:ia_16", "Hello")).ok(),
                             "the listing is on the disk");
                     final CliShell shell = CliCommands.shellFor(cli, 52);
                     final CliShell.Response response = shell.run("hello", cli);
@@ -141,7 +141,7 @@ public final class SccRunGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
-                    helper.assertTrue(cli.writeFile("hello.asm", listing("jsc:x86_16", "Hello")).ok(),
+                    helper.assertTrue(cli.writeFile("hello.asm", listing("jsc:ia_16", "Hello")).ok(),
                             "the listing is on the disk");
                     final CliShell shell = CliCommands.shellFor(cli, 52);
                     final String explicit = text(shell.run("./hello", cli));
@@ -224,7 +224,7 @@ public final class SccRunGameTests {
                     // Installing scc puts a real C:\SCC directory on the disk and on the machine's own PATH.
                     computer.console().install(SCC.toString());
                     final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
-                    helper.assertTrue(cli.writeFile("SCC\\HELLO.ASM", listing("jsc:x86_16", "Hello")).ok(),
+                    helper.assertTrue(cli.writeFile("SCC\\HELLO.ASM", listing("jsc:ia_16", "Hello")).ok(),
                             "the listing is in the installed program's own directory");
                     final CliShell shell = CliCommands.shellFor(cli, 52);
                     final String said = text(shell.run("hello", cli));
@@ -248,7 +248,7 @@ public final class SccRunGameTests {
                     final CliShell shell = CliCommands.shellFor(cli, 52);
                     final String said = text(shell.run("clock", cli));
                     helper.assertTrue(said.contains("A4015"), "the refusal is named; got " + said);
-                    helper.assertTrue(said.contains("built for x86; this machine is x86-16"),
+                    helper.assertTrue(said.contains("built for x86; this machine is IA-16"),
                             "it names both instruction sets; got " + said);
                 })
                 .thenSucceed();
@@ -307,7 +307,7 @@ public final class SccRunGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
-                    helper.assertTrue(cli.writeFile("/usr/bin/hello.asm", listing("jsc:x86_16", "Hello")).ok(),
+                    helper.assertTrue(cli.writeFile("/usr/bin/hello.asm", listing("jsc:ia_16", "Hello")).ok(),
                             "the listing is in a directory the default PATH searches");
                     final CliShell shell = CliCommands.shellFor(cli, 52);
                     final String said = text(shell.run("hello", cli));
@@ -331,7 +331,7 @@ public final class SccRunGameTests {
                     // Installing scc puts a real C:\SCC directory on the disk and on the machine's own PATH.
                     computer.console().install(SCC.toString());
                     final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
-                    helper.assertTrue(cli.writeFile("hello.asm", listing("jsc:x86_16", "Hello")).ok(),
+                    helper.assertTrue(cli.writeFile("hello.asm", listing("jsc:ia_16", "Hello")).ok(),
                             "the current directory's own copy is built for this machine");
                     helper.assertTrue(cli.writeFile("SCC\\HELLO.ASM", listing("jsc:x86", "Hello")).ok(),
                             "the PATH's copy is built for a different instruction set on purpose");

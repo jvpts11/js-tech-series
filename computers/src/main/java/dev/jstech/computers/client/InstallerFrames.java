@@ -201,10 +201,11 @@ final class InstallerFrames {
 
     /**
      * The size of the terminal font a text-mode page is written in, and its scale: those of a console on the same
-     * glass, since such an installer ran in the machine's terminal and fitted its eighty columns.
+     * glass at the display scale a fresh system has, since such an installer ran in the machine's terminal before
+     * anything was set, and fitted its eighty columns.
      */
     static TermFace.Fitted wall() {
-        return TermFace.forGlass(InstallerLayout.WIDTH - WALL_MARGINS, TermBuffer.MONITOR_COLUMNS);
+        return TermFace.forGlass(InstallerLayout.WIDTH - WALL_MARGINS, TermBuffer.MONITOR_COLUMNS, 0);
     }
 
     /** A label cut to the room it has, so a long step name never runs out of its panel. */

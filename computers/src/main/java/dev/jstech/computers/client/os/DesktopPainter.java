@@ -45,8 +45,12 @@ final class DesktopPainter {
     private static final int FAR = -10000;
     /** How far the pointer may drift, in desktop pixels, before the hint under it counts as a new one. */
     private static final int TIP_SLACK = 2;
-    /** How far above the carried stack the pointer is drawn. */
-    private static final int POINTER_LIFT = 50;
+    /*
+     * Where the pointer is drawn: over the veil, which already covers every dialog and the items a dialog lifts.
+     * Drawn just over the carried stack instead, a program's dialog (the request dialog of the Network Interactor,
+     * the power dialog) hid the pointer the moment it opened.
+     */
+    private static final int POINTER_Z = DesktopZ.POPUP + DesktopZ.DECORATION_LIFT + DesktopZ.ITEM_DEPTH + 50;
     /** No place at all, for a motion that goes nowhere but grows or shrinks where it is. */
     private static final int[] NOWHERE = {0, 0, 0, 0};
 
@@ -119,7 +123,7 @@ final class DesktopPainter {
         if (desktop.surface().ownPointer() && lmx >= 0 && lmy >= 0 && lmx < sw && lmy < sh) {
             g.enableScissor(ox, oy, ox + view.glassWidth(), oy + view.glassHeight());
             g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.CURSOR + POINTER_LIFT);
+            g.pose().translate(0, 0, POINTER_Z);
             desktop.pointers().draw(g, lmx, lmy);
             g.pose().popPose();
             g.disableScissor();

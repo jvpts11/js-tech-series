@@ -38,7 +38,6 @@ public final class SettingsScreenClientTests {
     private static final String RAW_KEY = ".configuration.";
     /** The languages the series ships its names in, each read on its own beside English. */
     private static final List<String> LANGUAGES = List.of("en_us", "pt_br");
-
     private SettingsScreenClientTests() {
     }
 
@@ -57,14 +56,15 @@ public final class SettingsScreenClientTests {
                         }
                         for (final String section : ConfigTexts.sectionsOf(file)) {
                             final String shown = names.getOrDefault(ConfigTexts.key(modId, section));
-                            if (ctx.mc().font.width(shown) > ConfigScreenLayout.railLabelWidth()) {
+                            if (ctx.mc().font.width(shown) > ConfigScreenLayout.railLabelWidth(width)) {
                                 wide.add(language + " section " + shown);
                             }
                         }
                         for (final ConfigKey<?> key : file.keys()) {
                             final String shown = names.getOrDefault(ConfigTexts.key(modId, key.dottedPath()));
+                            // The worst a card leaves its name: a unit after its number and a Default button.
                             if (ctx.mc().font.width(shown)
-                                    > ConfigScreenLayout.nameWidth(width, ConfigDraft.controlOf(key))) {
+                                    > ConfigScreenLayout.nameWidth(width, ConfigDraft.controlOf(key), true, true)) {
                                 wide.add(language + " setting " + shown);
                             }
                         }
@@ -81,19 +81,27 @@ public final class SettingsScreenClientTests {
     public static void settingsScreen_showsTheComputersSettingsByTheirNames(final ClientTestContext ctx) {
         ctx.then(0, () -> open(ctx, JsComputers.MODID))
                 .thenAwaitScreen(CoreConfigScreen.class, 40)
-                .thenAssert(1, () -> {
+                .thenAssert(1, () -> screen(ctx).scopeLabels().equals(List.of("World", "This player")),
+                        "a tab for the world's settings and one for the player's")
+                .thenAssert(0, () -> {
                     final List<String> rail = screen(ctx).railLabels();
-                    return rail.containsAll(List.of("WORLD", "Starting up", "Installing by hand", "The prompt",
-                            "Soundfoundry", "PLAYER", "Client")) && untranslated(rail).isEmpty();
-                }, "the computers' world and player settings, each section under its name")
-                .then(0, () -> ctx.assertTrue(screen(ctx).openSection("Starting up"), "the boot section opens"))
-                .thenAssert(1, () -> screen(ctx).rowNames().contains("Show the boot menu")
-                        && untranslated(screen(ctx).rowNames()).isEmpty(), "its setting under its name")
-                .thenScreenshot(2, "computers-boot-settings")
+                    return rail.equals(List.of("Starting up", "Installing by hand", "The prompt", "Soundfoundry",
+                            "Programs")) && untranslated(rail).isEmpty();
+                }, "the world's tab lists its sections under their names")
+                .then(0, () -> ctx.assertTrue(screen(ctx).openSection("Soundfoundry"), "the music section opens"))
+                .thenAssert(1, () -> screen(ctx).rowNames().containsAll(List.of("Music catalogue",
+                        "Songs over Ethernet")) && untranslated(screen(ctx).rowNames()).isEmpty(),
+                        "its settings under their names")
+                .thenScreenshot(2, "computers-soundfoundry-settings")
                 .then(0, () -> ctx.assertTrue(screen(ctx).openSection("Client"), "the player's section opens"))
                 .thenAssert(1, () -> screen(ctx).rowNames().containsAll(List.of("Reduce motion", "Desktop cursors")),
                         "the player's own settings: Reduce motion and Desktop cursors")
                 .thenScreenshot(2, "computers-client-settings")
+                // The search finds a setting under any tab by what it does.
+                .then(0, () -> screen(ctx).search("boot manager"))
+                .thenAssert(1, () -> screen(ctx).rowNames().equals(List.of("Show the boot menu")),
+                        "the search finds the boot menu by its description")
+                .thenScreenshot(2, "computers-search")
                 .then(0, () -> ctx.mc().setScreen(null));
     }
 
@@ -103,7 +111,7 @@ public final class SettingsScreenClientTests {
                 .thenAwaitScreen(CoreConfigScreen.class, 40)
                 .thenAssert(1, () -> {
                     final List<String> rail = screen(ctx).railLabels();
-                    return rail.containsAll(List.of("Operations and programs", "Recordings"))
+                    return rail.containsAll(List.of("Engine and programs", "Recordings"))
                             && untranslated(rail).isEmpty();
                 }, "the Core's world settings, each section under its name")
                 .then(0, () -> ctx.assertTrue(screen(ctx).openSection("Recordings"), "the recordings open"))
@@ -131,8 +139,9 @@ public final class SettingsScreenClientTests {
                 .then(1, () -> {
                     screen(ctx).openSection("Starting up");
                     screen(ctx).openDraft().toggle(ComputersServerConfig.SHOW_BOOT_MENU);
-                    screen(ctx).done();
                 })
+                .thenScreenshot(2, "computers-boot-changed")
+                .then(0, () -> screen(ctx).done())
                 .thenAssert(1, () -> file.get(ComputersServerConfig.SHOW_BOOT_MENU) != before,
                         "Done keeps it in the world's settings")
                 .then(0, () -> file.set(ComputersServerConfig.SHOW_BOOT_MENU, before));

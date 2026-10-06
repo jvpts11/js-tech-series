@@ -9,6 +9,8 @@ package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.client.monitor.MonitorPainter;
 import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.SettingsApp;
@@ -20,7 +22,9 @@ import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.EndProcessPayload;
+import dev.jstech.computers.operation.payload.FaceListingPayload;
 import dev.jstech.computers.operation.payload.RequestDesktopFilesPayload;
+import dev.jstech.computers.operation.payload.RequestFaceListingPayload;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SetDesktopPrefsPayload;
 import dev.jstech.computers.operation.payload.SetIconPositionPayload;
@@ -29,8 +33,11 @@ import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.live.LiveRate;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.util.Loaded;
 import java.util.List;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -60,6 +67,12 @@ public final class DesktopPayloads {
                 ComputerAccess.machine(RequestDesktopFilesPayload::hostPos), DesktopPayloads::handleRequestDesktopFiles);
         registrar.playToClient(DesktopFilesPayload.TYPE, DesktopFilesPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(DesktopPayloads::handleDesktopFiles));
+        // A face in the world asks for what its desktop holds; anybody near enough to see the face may.
+        ComputerAccess.accept(registrar, RequestFaceListingPayload.TYPE, RequestFaceListingPayload.STREAM_CODEC,
+                ComputerAccess.inSightOf(RequestFaceListingPayload::monitor, LiveRate.FAR),
+                DesktopPayloads::handleRequestFaceListing);
+        registrar.playToClient(FaceListingPayload.TYPE, FaceListingPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread(DesktopPayloads::handleFaceListing));
         ComputerAccess.accept(registrar, SetDesktopPrefsPayload.TYPE, SetDesktopPrefsPayload.STREAM_CODEC,
                 ComputerAccess.machine(SetDesktopPrefsPayload::hostPos), DesktopPayloads::handleSetDesktopPrefs);
         ComputerAccess.accept(registrar, RequestSettingsPayload.TYPE, RequestSettingsPayload.STREAM_CODEC,
@@ -91,6 +104,28 @@ public final class DesktopPayloads {
         final IComputerTerminalHost terminal =
                 level.getBlockEntity(payload.hostPos()) instanceof IComputerTerminalHost host ? host : null;
         PacketDistributor.sendToPlayer(player, DesktopListings.of(shown, terminal));
+    }
+
+    /*
+     * The listing of the desktop a monitor's face shows: the machine the monitor shows, running, as the face's own
+     * description finds it. Only reads, like the description, besides forgetting where a deleted file's icon stood.
+     */
+    private static void handleRequestFaceListing(final RequestFaceListingPayload payload, final ServerPlayer player,
+                                                 final ServerLevel level) {
+        if (!(Loaded.blockEntity(level, payload.monitor()) instanceof MonitorBlockEntity monitor) || !monitor.lit()) {
+            return;
+        }
+        final BlockPos owner = monitor.remoteSession() != null ? monitor.remoteSession() : monitor.ownerPos();
+        if (owner == null || !(Loaded.blockEntity(level, owner) instanceof IOsHost shown) || !shown.isRunning()) {
+            return;
+        }
+        final IComputerTerminalHost terminal = shown instanceof IComputerTerminalHost host ? host : null;
+        PacketDistributor.sendToPlayer(player,
+                new FaceListingPayload(payload.monitor(), DesktopListings.of(shown, terminal)));
+    }
+
+    private static void handleFaceListing(final FaceListingPayload payload, final Player player) {
+        MonitorPainter.takeListing(payload.monitor(), payload.listing());
     }
 
     private static void handleSetDesktopPrefs(final SetDesktopPrefsPayload payload, final ServerPlayer player,

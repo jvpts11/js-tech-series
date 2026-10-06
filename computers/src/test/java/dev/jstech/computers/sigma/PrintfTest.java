@@ -35,7 +35,7 @@ class PrintfTest {
     private static SigmaCompiler.Result built(final String body, final LanguageLevel level) {
         final String source = PRELUDE + "class Says : Script { public override void OnTick() { " + body + " } }";
         return SigmaCompiler.compile(List.of(new SourceFile(level.full() ? "Says.sgs" : "Says.sg", source)),
-                level.full() ? AsmProgram.DEFAULT_ISA : "jsc:x86_16", level);
+                level.full() ? AsmProgram.DEFAULT_ISA : "jsc:ia_16", level);
     }
 
     /** What the program printed, a line to an entry, in the smaller language. */
@@ -86,8 +86,8 @@ class PrintfTest {
     void printf_isTheSameListingInBothLanguages() {
         final List<SourceFile> source = List.of(new SourceFile("Says.sg", PRELUDE
                 + "class Says : Script { public override void OnTick() { int n = 3; printf(\"%d items\\n\", n); } }"));
-        final SigmaCompiler.Result small = SigmaCompiler.compile(source, "jsc:x86_16", LanguageLevel.SIGMA);
-        final SigmaCompiler.Result big = SigmaCompiler.compile(source, "jsc:x86_16", LanguageLevel.SIGMA_SHARP);
+        final SigmaCompiler.Result small = SigmaCompiler.compile(source, "jsc:ia_16", LanguageLevel.SIGMA);
+        final SigmaCompiler.Result big = SigmaCompiler.compile(source, "jsc:ia_16", LanguageLevel.SIGMA_SHARP);
         assertTrue(small.ok(), () -> String.join("\n", small.lines()));
         assertTrue(big.ok(), () -> String.join("\n", big.lines()));
         assertEquals(small.assembly(), big.assembly());
@@ -136,12 +136,12 @@ class PrintfTest {
     void printf_aWidthAtTheFirstVersionNeedsTheSecond() {
         final SigmaCompiler.Result first = SigmaCompiler.compile(List.of(new SourceFile("Says.sg", PRELUDE
                         + "class Says : Script { public override void OnTick() { printf(\"%5d %x\\n\", 1, 2); } }")),
-                "jsc:x86_16", LanguageLevel.SIGMA, SigmaVersions.FIRST);
+                "jsc:ia_16", LanguageLevel.SIGMA, SigmaVersions.FIRST);
         final String said = String.join("\n", first.lines());
         assertTrue(said.contains("'%5d' needs Σ 2; this project is Σ 1") && said.contains("'%x' needs Σ 2"), said);
         final SigmaCompiler.Result plain = SigmaCompiler.compile(List.of(new SourceFile("Says.sg", PRELUDE
                         + "class Says : Script { public override void OnTick() { printf(\"%ld %d\\n\", 1, 2); } }")),
-                "jsc:x86_16", LanguageLevel.SIGMA, SigmaVersions.FIRST);
+                "jsc:ia_16", LanguageLevel.SIGMA, SigmaVersions.FIRST);
         assertTrue(plain.ok(), () -> String.join("\n", plain.lines()));
     }
 
@@ -164,7 +164,7 @@ class PrintfTest {
     void printf_ofTheProgramsOwnIsTheOneCalled() {
         final SigmaCompiler.Result own = SigmaCompiler.compile(List.of(new SourceFile("Says.sg", PRELUDE
                 + "class Says : Script { void printf(int n) { } public override void OnTick() { printf(4); } }")),
-                "jsc:x86_16", LanguageLevel.SIGMA);
+                "jsc:ia_16", LanguageLevel.SIGMA);
         assertTrue(own.ok(), () -> String.join("\n", own.lines()));
     }
 }

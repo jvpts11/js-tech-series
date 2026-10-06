@@ -35,10 +35,10 @@ class IsasTest {
     }
 
     @Test
-    void x86_16_runsOnlyItsOwn() {
-        assertTrue(Isas.X86_16.runs(Isas.X86_16));
-        assertFalse(Isas.X86_16.runs(Isas.X86));
-        assertFalse(Isas.X86_16.runs(Isas.X86_64));
+    void ia16_runsOnlyItsOwn() {
+        assertTrue(Isas.IA_16.runs(Isas.IA_16));
+        assertFalse(Isas.IA_16.runs(Isas.X86));
+        assertFalse(Isas.IA_16.runs(Isas.X86_64));
     }
 
     /**
@@ -50,21 +50,21 @@ class IsasTest {
      */
     @Test
     void x86_runsWhatWasBuiltForTheSixteenBitOne() {
-        assertTrue(Isas.X86.runs(Isas.X86_16));
-        assertTrue(Isas.X86_64.runs(Isas.X86_16));
+        assertTrue(Isas.X86.runs(Isas.IA_16));
+        assertTrue(Isas.X86_64.runs(Isas.IA_16));
         assertTrue(Isas.X86_64.runs(Isas.X86));
     }
 
     @Test
     void bits_growWithTheSeries() {
-        assertEquals(16, Isas.X86_16.bits());
+        assertEquals(16, Isas.IA_16.bits());
         assertEquals(32, Isas.X86.bits());
         assertEquals(64, Isas.X86_64.bits());
     }
 
     @Test
     void of_vintage_isTheSixteenBitOne() {
-        assertEquals(Isas.X86_16, Isas.of(HardwareEra.VINTAGE));
+        assertEquals(Isas.IA_16, Isas.of(HardwareEra.VINTAGE));
     }
 
     @Test
@@ -83,7 +83,7 @@ class IsasTest {
 
     @Test
     void byId_findsTheOnesThisModBrings() {
-        assertEquals(Isas.X86_16, Isas.byId("jsc:x86_16").orElseThrow());
+        assertEquals(Isas.IA_16, Isas.byId("jsc:ia_16").orElseThrow());
         assertEquals(Isas.X86, Isas.byId("jsc:x86").orElseThrow());
         assertEquals(Isas.X86_64, Isas.byId("jsc:x86_64").orElseThrow());
     }
@@ -96,8 +96,8 @@ class IsasTest {
     @Test
     void all_holdTheThreeThisModBrings_oldestFirst() {
         final List<IsaSpec> all = Isas.all();
-        assertTrue(all.containsAll(List.of(Isas.X86_16, Isas.X86, Isas.X86_64)));
-        assertTrue(all.indexOf(Isas.X86_16) < all.indexOf(Isas.X86)
+        assertTrue(all.containsAll(List.of(Isas.IA_16, Isas.X86, Isas.X86_64)));
+        assertTrue(all.indexOf(Isas.IA_16) < all.indexOf(Isas.X86)
                 && all.indexOf(Isas.X86) < all.indexOf(Isas.X86_64),
                 "the series is listed in the order it was built: " + all);
     }
@@ -107,6 +107,8 @@ class IsasTest {
         assertEquals(Isas.X86_64, Isas.find("jsc:x86_64").orElseThrow());
         assertEquals(Isas.X86_64, Isas.find("x86-64").orElseThrow());
         assertEquals(Isas.X86_64, Isas.find("X86-64").orElseThrow());
+        assertEquals(Isas.IA_16, Isas.find("IA-16").orElseThrow());
+        assertEquals("IA-16", Isas.IA_16.name());
     }
 
     @Test
@@ -156,15 +158,15 @@ class IsasTest {
      */
     @Test
     void oldestWith_staysAtTheOldestEvenWhereNewerOnesWouldTakeIt() {
-        assertTrue(Isas.X86.runs(Isas.X86_16), "the newer ones are candidates");
-        assertEquals(Isas.X86_16, Isas.oldestWith(Isas.X86_16, EnumSet.of(Opcode.ADD)));
+        assertTrue(Isas.X86.runs(Isas.IA_16), "the newer ones are candidates");
+        assertEquals(Isas.IA_16, Isas.oldestWith(Isas.IA_16, EnumSet.of(Opcode.ADD)));
     }
 
     /** Going the other way is not offered: a program of a later chip never drifts down to an earlier one. */
     @Test
     void oldestWith_neverMovesAProgramDownToAnEarlierChip() {
         assertEquals(Isas.X86, Isas.oldestWith(Isas.X86, EnumSet.of(Opcode.ADD)));
-        assertFalse(Isas.X86_16.runs(Isas.X86), "which is why the oldest of all is not a candidate for it");
+        assertFalse(Isas.IA_16.runs(Isas.X86), "which is why the oldest of all is not a candidate for it");
     }
 
     /**

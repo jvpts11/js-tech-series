@@ -139,6 +139,6 @@ public final class MonitorPictures {
         final Platform platform = terminal.console().liveInstall() != null ? Platform.LINUX
                 : host.installedOs() == null ? null : host.installedOs().platform();
         return new IMonitorPicture.Console(era, terminal.console().glass(), SshTerminal.prompt(here, here),
-                platform);
+                platform, terminal.console().settings().guiScale());
     }
 }

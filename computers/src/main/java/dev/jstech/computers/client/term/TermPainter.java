@@ -21,15 +21,13 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
- * Draws a terminal's rows on a grid, in the terminal font: every character in a cell of its own, all the cells the
- * same width.
+ * Draws a terminal's rows on a grid: every character in a cell of its own, all the cells the same width.
  *
- * <p>The terminals draw in Misc Fixed, the font of the X terminals and the Unix consoles, in the size their screen
- * fits best ({@link TermFace}), through the Core's grid painter: the columns of a table line up, a bar made of one
- * character holds still as its line redraws, and the box lines and blocks are drawn to fill their cells so a frame
- * meets its own corners and a bar has no gaps. A character the font lacks is drawn in the game's font, in the middle
- * of its cell. A row is laid out once and kept for as long as it is on the glass, and the whole glass goes to the
- * card in one batch.
+ * <p>The terminals write in the game's own font, at the scale their screen fits best ({@link TermFace}), through the
+ * Core's grid painter: the columns of a table line up, a bar made of one character holds still as its line redraws,
+ * and the box lines and blocks are drawn to fill their cells so a frame meets its own corners and a bar has no gaps. A
+ * letter narrower than a cell is drawn in the middle of it. A row is laid out once and kept for as long as it is on
+ * the glass, and the whole glass goes to the card in one batch.
  */
 public final class TermPainter {
 
