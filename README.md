@@ -32,10 +32,15 @@ Planned, in the order the series grows: Space, Warfare, Transport, Agriculture, 
 Geology and Oceanics. The phases the series goes through, and what each phase needs before it starts, are
 in [docs/RELEASING.md](docs/RELEASING.md).
 
+**Every mod of the series depends only on J's Core, never on another mod of the series.** J's Computers needs only
+J's Core, and so does J's Industrial; J's Space will need only J's Core, and so will every mod that comes after it.
+When several are installed together, they work with each other through what J's Core gives them all and through
+integrations that only wake when the other mod is present, so leaving any of them out never breaks the others. The
+computing mod drives any machine that exposes the usual item and energy capabilities, and the industrial mod's
+machines work with any FE generator.
+
 Every mod carries the same version and they are released together. Put J's Core and the mods you want in
-`mods/`, all at the same version; each mod's page lists its own requirements. J's Computers and J's
-Industrial do not need each other: the computing mod drives any machine that exposes the usual item and
-energy capabilities, and the industrial mod's machines work with any FE generator.
+`mods/`, all at the same version; each mod's page lists its own requirements.
 
 All the current obligatory dependencies are set to be replaced in the future for a native implementation of what
 the dependency adds, the objective is to ease the process of porting by controlling the entire source code on the

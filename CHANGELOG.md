@@ -143,6 +143,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Σ#, ComputerCraft and music moved to J's Computers' folder, and those on fonts, motion and UI components to J's
   Core's. The API's own documentation in the code explains, with examples, what a network category, an Operation
   and its handler, a language, an instruction set and a kernel are.
+- The design of J's Computers, in `computers/docs/design`: one page per subject, from the eras and the hardware to the
+  network, Operations, the systems, Σ#, sound and the API, each saying how its system works and ending with what is
+  designed and still to be built, gathered on the first page; with the formulas in one place and a catalogue of every
+  part of every era with its figures. The series' README now says plainly that every mod of the series depends only
+  on J's Core and never on another mod of the series.
 - J's Core's settings screen, in its own look: a mod's files and their sections down the left, each setting with a
   switch, a number to type or step, a word to go through or a text to type, Done to keep the changes and Cancel to
   drop them. J's Core and J's Computers open it from the mods list. A world's settings are changed from inside it.

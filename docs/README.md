@@ -19,4 +19,7 @@ holds what concerns the whole series.
 - [Versions, phases and releases](RELEASING.md): what a version number means, the development phases and their
   gates, snapshot builds, and how a release is cut.
 
-Design documents and balancing notes are not part of the repository.
+## The design
+
+Each mod's design lives in a `design/` folder inside its `docs/`, one page per subject, as each one is written:
+[J's Computers' design](../computers/docs/design/README.md).

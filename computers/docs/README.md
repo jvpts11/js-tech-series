@@ -32,3 +32,8 @@ J's Computers is built on J's Core; its pages explain the parts every mod of the
 ([J's Core documentation](../../core/docs/README.md)).
 
 Each section says when the part it describes was added to the series, as `Added YYYY-MM-DD`.
+
+## The design
+
+[The design of J's Computers](design/README.md): one page per subject, saying how every system works and why, with
+what is designed and still to be built at the end of each page, and the catalogue of every part of every era.
