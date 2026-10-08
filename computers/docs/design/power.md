@@ -88,6 +88,27 @@ small, a hot rack), not bad luck: whoever sizes power supplies well almost never
 
 Today power supplies don't wear or fail, and the 3000P is an ordinary power supply named "(Redundant)".
 
+### Overvoltage
+
+A power supply connects in J's Core's low voltage class. Energy of a higher class reaching it, a wrong cable or a
+lightning surge, does what it does to real computers (estimates):
+
+- **One class above:** the **power supply burns**, as a power supply failure (above), and the other parts **may burn
+  with it**, as a real power supply that blows sometimes takes the board along: the motherboard 15%, each processor,
+  memory module and expansion card 10%, each disk 5%. A burnt disk loses what it held, as a dead real drive. The
+  computer shuts down suddenly (below).
+- **Two classes above or more**, an arc flash: the power supply burns, and every part has a 50% chance. The case stands.
+
+Two things protect a computer, as in real life:
+
+- **a fuse**: computers have J's Core's protection tab with its fuse slot, as every machine of the series. With the
+  right fuse nothing burns, but the computer shuts down at once, which is still a sudden shutdown;
+- **a UPS** between the line and the computer, which isolates the load from the grid as real double-conversion UPSes do:
+  it protects from overvoltage one class above **without shutting the computer down**. Against two classes above, not
+  even a UPS holds.
+
+The overvoltage setting of J's Core turns all of this off: a computer on a higher class then just doesn't start.
+
 ### Shutting down suddenly
 
 A computer also shuts down **suddenly**: on a **power loss** (the energy source goes away, a generator runs out of fuel,

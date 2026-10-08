@@ -59,7 +59,7 @@ describes it.
 - Motherboards with expansion slots in groups, and PCI sound cards on Legacy boards. [Hardware](hardware.md)
 - Real byte capacities for removable media. [Storage devices](storage-devices.md)
 - Energy: computers draw J's Core's energy, in watts, through their power supply. [Power](power.md)
-- Power supply wear, failure and the redundant 3000P. [Power](power.md)
+- Power supply wear, failure and the redundant 3000P, and overvoltage with fuses and UPS protection. [Power](power.md)
 - Sudden shutdowns, item loss when the network fails, disk checks at boot, UPS blocks and the Rack UPS.
   [Power](power.md)
 - Thermal budgets and temperatures for every computer, with throttling and thermal trips. [Temperature](temperature.md)
