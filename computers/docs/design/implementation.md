@@ -92,9 +92,10 @@ outside_components = false
 **What isn't a setting.** The formulas' constants (the processor's 40, the 256 items per GB, the server bonus's 0.05,
 the efficiencies) live in the code, not in the settings: changing them on one server would unbalance the whole
 catalogue. Whoever wants a faster or slower network has the keys that exist (the disks' waits, the programs' clock, the
-watt to FE factor). The keys of each system still to build come with it (security, for example). The lists of items (the
-3D Printer's and the AI's) are in the server's settings, not in data packs; models in loot come in through a loot
-function ([Artificial intelligence](ai.md)); the hardware's recipes are decided with J's Industrial ([Eras](eras.md)).
+setting that turns the energy draw off). The keys of each system still to build come with it (security, for example).
+The lists of items (the 3D Printer's and the AI's) are in the server's settings, not in data packs; models in loot come
+in through a loot function ([Artificial intelligence](ai.md)); the hardware's recipes follow J's Computers' simple path,
+and J's Industrial's with it installed ([Eras](eras.md)).
 
 ## Compatibility
 
@@ -135,7 +136,7 @@ The keys of the systems still to build, which come with them:
 ```toml
 # jscomputers-server.toml
 [update]
-cost = "fe"                              # fe, xp, both, none (Operations)
+cost = "energy"                          # energy, xp, both, none (Operations)
 
 [hardware]
 psu_failures = true                      # power supply failure (Power)

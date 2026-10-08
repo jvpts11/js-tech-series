@@ -37,23 +37,27 @@ When a cable is placed between two devices, the system checks the neighbours, on
 
 The real conflict is between Mainframes (below).
 
-## The five cable systems
+## The cable systems
 
 Every cable of the series lives in a single block, J's Core's cable block: up to nine wires per block, each in its lane
 of a 3×3 grid seen from the front, so a data cable, a peripheral cable and a crafting cable can run side by side in the
 same block without joining. Where a wire changes lane, the block becomes a junction box. A dye on a wire gives it a ring
 of that colour: wires of different colours never join, and an undyed wire joins all of them. Breaking takes out only the
-wire or the part being looked at.
+wire or the part being looked at. Each mod registers its own cables in the block; the ones that matter to J's Computers:
 
 1. **Data:** the network's lines (below). Only this system carries the network id.
 2. **Peripheral:** point to point, links devices to a computer ([Peripherals](peripherals.md)).
 3. **Telemetry:** J's Space's dedicated link for satellite data. It exists as a cable type (256 blocks), with no block
    yet.
-4. **Industrial control:** J's Industrial's point-to-point link between monitored machines and a machine controller. It
-   exists as a type (8 blocks), with no block yet.
-5. **Energy (FE):** J's Industrial's energy cable, in the bottom left lane.
+4. **Industrial control:** J's Industrial's point-to-point link between its machines and the Fieldbus Cards of an
+   Industrial Controller Computer, a computer J's Industrial adds when both mods are installed. It exists as a type (8
+   blocks), with no block yet.
+5. **Energy:** J's Core's energy, J's Energy, in real units, through J's Industrial's energy cables and lines, or any
+   mod's FE cable through J's Core's converters ([Power](power.md)).
 
-They share space without getting in each other's way. There is no sixth system.
+Other mods add their own: J's Industrial's Research Link Cable, for example, groups research centres, and reaches the
+network through J's Industrial's Research Router, a topology element as the Server Router
+([Servers and racks](servers-and-racks.md)). They all share space without getting in each other's way.
 
 ## The lines of data cable
 

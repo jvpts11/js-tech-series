@@ -52,12 +52,13 @@ For using the mod rather than building it, the player and developer guides are o
 Everything below is designed and waiting to be built, in the order of the pages. Each item links to the page that
 describes it.
 
+- Recipes for every part, by J's Computers' simple path and J's Industrial's industrial path. [Eras](eras.md)
 - Disks only in machines of their era or newer, and the Dock Station only taking disks of its era or older.
   [Eras](eras.md), [Peripherals](peripherals.md)
 - The hardware era a player has reached, moved by building a working computer. [Eras](eras.md)
 - Motherboards with expansion slots in groups, and PCI sound cards on Legacy boards. [Hardware](hardware.md)
 - Real byte capacities for removable media. [Storage devices](storage-devices.md)
-- Energy: computers draw FE through their power supply. [Power](power.md)
+- Energy: computers draw J's Core's energy, in watts, through their power supply. [Power](power.md)
 - Power supply wear, failure and the redundant 3000P. [Power](power.md)
 - Sudden shutdowns, item loss when the network fails, disk checks at boot, UPS blocks and the Rack UPS.
   [Power](power.md)
@@ -75,7 +76,7 @@ describes it.
 - The WAN Gateway Computer: network extension and federation. [The network](network.md)
 - DROP without asking, and the UPDATE's cost in energy. [Operations](operations.md)
 - The network's event log. [Operations](operations.md), [Interface](interface.md)
-- Storage corruption and the Defrag. [Storage](storage.md)
+- Storage corruption and the Defrag, and a storage key for every state of matter. [Storage](storage.md)
 - In the interface: the draw and the id in the Local header, the performance graphs, the Craft Planner's Print and the
   CRAFT filter, and longer statistics. [Interface](interface.md)
 - Programs: the "update available" badge, the Backup Service, the Media Player, the Data Compressor and the rest.

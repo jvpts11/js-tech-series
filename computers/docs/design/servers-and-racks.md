@@ -323,7 +323,10 @@ The lanes are cut by the slot's bandwidth ([Hardware](hardware.md)), never below
 (supercomputers and router sections), not from the fibre.
 
 The **Cluster Manager** program has the Supercomputers, Datacenters and AI tabs, with nodes, a map and a queue; the
-shell command `cluster list|nodes|power|install|status|cancel` does the same.
+shell command `cluster list|nodes|power|install|status|cancel` does the same. With J's Industrial installed, it gains a
+**Research** tab: J's Industrial's Research Router groups its research centres (CRCs) on Research Link Cable, the
+network sees each group as a cluster, and the tab shows each group's discovery, progress, queue and what each centre
+adds; the Mainframe can send a discovery to a group or split a big one among groups.
 
 - Installing on many machines at once is a timed job per node (280 ticks at 2 GHz, between 60 and 1,200), in parallel up
   to the number of lanes, with reasons for skipping a node (bay off, already installed, no system, requirements, era).
@@ -371,7 +374,7 @@ How racks are made is decided with how hardware is made ([Eras](eras.md)).
   | --- | --- | --- |
   | UPS Battery Expansion | 1U | Makes the Rack UPS last longer. They stack. ([Power](power.md)) |
   | Vent Panel | 1U | Passive ventilation: takes away some heat, the cheap partner of the Cooling Unit; the filler that is not only for looks. |
-  | PDU (Power Distribution Unit) | 1U | Measures FE per bay and makes the bays' power programmable: it exposes their power to IQL, so an UPDATE or a JOB turns servers on and off by rule. Real power automation. ([Power](power.md)) |
+  | PDU (Power Distribution Unit) | 1U | Measures the energy per bay and makes the bays' power programmable: it exposes their power to IQL, so an UPDATE or a JOB turns servers on and off by rule. Real power automation. ([Power](power.md)) |
   | Drive Shelf (JBOD) | 2U | A shelf of drives only (10 front slots, no server): it extends the bays of the server **right above it** in the stack. With no server above, it does nothing. A Storage Server with shelves is the monster NAS of the late game. |
   | Tape Library | 2U | Cold storage for **data only**, for the Backup Service ([Programs](programs.md)): files, settings and system images on tapes. Huge, slow, and it **never** stores items, so nothing can be duplicated through it. |
 

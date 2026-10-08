@@ -148,6 +148,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   designed and still to be built, gathered on the first page; with the formulas in one place and a catalogue of every
   part of every era with its figures. The series' README now says plainly that every mod of the series depends only
   on J's Core and never on another mod of the series.
+- The design of J's Industrial, in `industrial/docs/design`: one page per subject, from the materials, minerals and
+  the world to metallurgy, the tiers and their circuits, energy, machines, fluids and gases, chemistry, conveyors, the
+  Clean Room, science, nuclear power, the exotic materials of the last tiers and the Aleph, tools and armour, and what
+  it does with J's Computers; each page says how its system works and ends with what is designed and still to be
+  built, gathered on the first page, with the formulas and every setting in one place. J's Computers' design follows
+  it where the two meet: how hardware is made with and without J's Industrial, the energy computers draw, the cable
+  systems, storage for every state of matter, research groups in the Cluster Manager, and recipes that stay visible
+  before they are researched.
 - J's Core's settings screen, in its own look: a mod's files and their sections down the left, each setting with a
   switch, a number to type or step, a word to go through or a text to type, Done to keep the changes and Cancel to
   drop them. J's Core and J's Computers open it from the mods list. A world's settings are changed from inside it.

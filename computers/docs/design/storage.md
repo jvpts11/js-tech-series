@@ -135,3 +135,10 @@ Defrag there, or by installing it again. The mechanics and the numbers will be t
 
 **Settings:** in `[item_loss]` ([Power](power.md)), the `corruption` key turns all corruption off, and
 `network_conflict` only the corruption that comes from a conflict.
+
+### Every state of matter
+
+J's Core splits matter into its states: items, liquids, gases, plasmas, supercritical fluids, slurries and exotic
+matter. The storage key follows: its kinds become items, liquids, gases and plasmas (and the rest as J's Core declares
+them), with other mods' chemicals still coming in through the bridge. Buses, disks, the terminal and Operations treat
+every kind the same way, as they do the three of today.

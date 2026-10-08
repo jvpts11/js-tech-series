@@ -22,4 +22,5 @@ holds what concerns the whole series.
 ## The design
 
 Each mod's design lives in a `design/` folder inside its `docs/`, one page per subject, as each one is written:
-[J's Computers' design](../computers/docs/design/README.md).
+[J's Computers' design](../computers/docs/design/README.md) and
+[J's Industrial's design](../industrial/docs/design/README.md).

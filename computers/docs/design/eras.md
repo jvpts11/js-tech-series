@@ -67,8 +67,9 @@ cards come along if their bus is of the same family; disks and power supplies al
 ## Exa and Singularity
 
 The Exa starts in 2027: it is the era in which computing at the scale of exaflops becomes something a player can own.
-The Singularity comes after it. Neither has parts yet, and their hardware is still to be designed. Wherever a rule is
-given era by era, both use the Advanced values until they have their own.
+The Singularity comes after it. Neither has parts yet, and their hardware is still to be designed; with J's Industrial
+installed, the Singularity's hardware is made of its computronium, matter arranged to compute. Wherever a rule is given
+era by era, both use the Advanced values until they have their own.
 
 ## Telling the eras apart
 
@@ -115,9 +116,19 @@ The software houses (Midsoft, Nouvell Networks, Autodeck and the rest) are in [P
 
 ## How hardware is made
 
-Today every part comes from the creative menu, with no recipes. The series' rule is that J's Computers never depends on
-J's Industrial, and that this design describes how computing works on its own; how hardware is made, with and without
-J's Industrial, is decided together with J's Industrial's design.
+Today every part comes from the creative menu, with no recipes. J's Computers never depends on J's Industrial, so it has
+its own path, and J's Industrial adds another:
+
+- **On its own**, J's Computers makes every part of every era, up to the Singularity, from vanilla materials and J's
+  Core's shared catalogue: a simple path, with a fixed cost per part.
+- **With J's Industrial installed**, the industrial chain is the path at scale: every era is made with the lithography
+  of its real time in J's Industrial's Clean Room (the Vintage with mercury ultraviolet light, the Legacy to the
+  Standard with deep ultraviolet, the Advanced with extreme ultraviolet, the Exa with high-NA extreme ultraviolet, the
+  Singularity beyond), boards on its SMT Line, disks on its disk lines, the monitors of each era and the lasers of
+  optical drives; a wafer gives tens to hundreds of processors, and its processor dice come out as a mix of the era's
+  models, as real binning does. The Singularity era's hardware is made of **computronium**, J's Industrial's matter
+  arranged to compute.
+- A server setting, off by default, makes the industrial chain the only path when both mods are installed.
 
 ## The era a player has reached
 
@@ -132,6 +143,8 @@ wait on it, and operators set it with `/jstech progress`.
   Graphics cards go in the video slot, other cards in a slot of their bus family, and the slot bandwidth cut applies per
   group. Legacy sound cards are PCI, as the real ones were, and so is the Legacy Crafting Card. Today each board has a
   single kind of slot, and the Legacy sound cards sit on AGP 8x and PCIe 1.0.
+- **Recipes for every part**, by J's Computers' simple path, and the industrial path when J's Industrial is installed
+  (above).
 - **Disks only in machines of their era or newer:** a new machine reads old disks, an old one refuses a disk newer than
   itself (in rack bays, by the server's era). Today any disk goes in any computer.
 - **Reaching an era by building:** a player reaches an era the first time they assemble and power on a working computer

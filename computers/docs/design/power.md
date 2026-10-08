@@ -33,18 +33,20 @@ Operation is kept ([Operations](operations.md)).
 
 ### Energy
 
-Computers draw FE, which the power supply takes from any cable or block next to it that gives energy (J's Core's energy
-capability, from any mod).
+Computers draw **J's Energy**, J's Core's energy, which is measured in real units: a computer draws, in watts, what its
+parts draw, through its power supply.
 
 ```
-FE per tick = watts of the parts / efficiency of the power supply × the watt to FE factor
+watts drawn from the grid = watts of the parts / efficiency of the power supply
 ```
 
-- The watt to FE factor is a balance key; at 0, computers run for free, for whoever plays without any energy mod.
+- The power supply connects in J's Core's **low voltage class**, as a real one plugs into a socket. J's Industrial
+  makes, carries and stores that energy; any other mod's FE reaches a computer through J's Core's converters, or
+  directly when J's Core's setting accepts FE.
+- A server setting turns the draw off, so computers run free for whoever plays with no energy source at all.
 - The rule for starting compares the parts' watts with the supply's **rating** (real power supplies are rated by what
   they give out); the efficiency only weighs on what is drawn from the grid.
 - Without energy a computer doesn't start; losing the energy while it runs is a power loss (below).
-- If J's Industrial ever has an energy system of its own, J's Computers gets a setting to use only that energy, or FE.
 
 Today computers draw no energy, and the efficiency is only shown in the tooltip.
 
@@ -124,8 +126,8 @@ A UPS block per era, like the other peripherals, and the Rack UPS (1U) for a who
   and "On battery" on Frames, a notification on Linux, a line on MC-DOS).
 - At 10% battery, the system shuts itself down cleanly, as real UPS software does: no item is lost, and the next boot
   doesn't check the disk.
-- The battery is in FE; how long it lasts is the battery divided by the draw. Estimates: about 5 game minutes at 300 W
-  on a Vintage or Legacy UPS, 10 minutes at 800 W on a Standard one, 15 minutes at 3 kW on the Rack UPS. The rack's UPS
-  Battery Expansions add battery ([Servers and racks](servers-and-racks.md)).
+- The battery holds joules, J's Energy's unit; how long it lasts is the battery divided by the draw. Estimates: about 5
+  game minutes at 300 W on a Vintage or Legacy UPS, 10 minutes at 800 W on a Standard one, 15 minutes at 3 kW on the
+  Rack UPS. The rack's UPS Battery Expansions add battery ([Servers and racks](servers-and-racks.md)).
 
 Today there are no UPS blocks, and the Rack UPS takes 1U with no effect.

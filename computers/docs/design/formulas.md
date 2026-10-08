@@ -47,7 +47,7 @@ The formulas of the systems still to build:
 
 | What | Formula | Page |
 | --- | --- | --- |
-| Energy drawn per tick | the parts' watts / the supply's efficiency × the watt to FE factor (configurable; 0 = free) | [Power](power.md) |
+| Energy drawn | the parts' watts / the supply's efficiency, in J's Core's real units (a setting turns the draw off) | [Power](power.md) |
 | A power supply's wear | the line's base life (60, 100, 150, 250 game days at full load) × 8 up to 50% load, × 3 from 50 to 80%, × 1 above; half in a rack that is throttling; ±20% drawn once; degraded at 80%, failed at 100% | [Power](power.md) |
 | Temperature | the surroundings + the rise from the load; load = thermal budget gives 80 °C; from 80 to 90 °C down to −15%; at 90 °C it cuts down to a floor of 25%; at 100 °C, thermal trip | [Temperature](temperature.md) |
 | A UPS's battery | runtime = battery in FE / draw; clean shutdown at 10% | [Power](power.md) |

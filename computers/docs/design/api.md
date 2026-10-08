@@ -77,5 +77,6 @@ besides the programs and the rest that are already open.
   J's Computers knowing what a robot is.
 
 Cable types already belong to J's Core. The first mods to need the rest are J's Space (the Enigmatic hardware, the
-Satellite Control Computer and the Satellite Cards) and J's Industrial (the hardware's recipes); it is built when the
-first of them starts. Today there is no hardware, computer or era registry.
+Satellite Control Computer and the Satellite Cards) and J's Industrial (the Industrial Controller Computer and its
+Fieldbus Cards, the machines that run as computers, and the hardware's industrial recipes); it is built when the first
+of them starts. Today there is no hardware, computer or era registry.

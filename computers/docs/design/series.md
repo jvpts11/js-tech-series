@@ -41,15 +41,25 @@ and a Σ# program submits them like the others.
 
 ## Hardware and recipes
 
-There are no recipes until J's Industrial; everything comes from the creative tab. When they come, J's Computers has its
-own computing-only way (FE energy is universal), and J's Industrial only adds other ways ([Eras](eras.md)).
+Today everything comes from the creative tab. J's Computers makes every part of every era by its own simple path, from
+vanilla materials and J's Core's catalogue, and with J's Industrial installed the industrial chain is the path at scale;
+a server setting can make it the only one ([Eras](eras.md)).
 
 ## The other mods
 
-- **J's Industrial:** its machines join the network through the capabilities; its energy cable and its industrial
-  control cable live in J's Core's cable block ([The network](network.md)). The simulator's materials are designed with
-  it ([The cosmological simulator](simulator.md)), and so are the heat machines that may join temperature
-  ([Temperature](temperature.md)) and an energy system of its own, if it ever has one ([Power](power.md)).
+- **J's Industrial:** its machines join the network through the capabilities, and its cables live in J's Core's cable
+  block ([The network](network.md)). With both mods installed, J's Industrial is among the first users of the API's
+  computer and hardware registries ([The API](api.md)): it adds the **Industrial Controller Computer** (the ICC, one per
+  era) and its **Fieldbus Cards**, the only computer that reaches J's Industrial's machines over industrial control
+  cable; it lets the machines it declares (accelerators, instruments, the Computational Research Centre and others) take
+  server hardware and run as computers, writing their data as files on the network; it adds a **Research Router**, a
+  topology element as the Server Router, and a **Research** tab to the Cluster Manager
+  ([Servers and racks](servers-and-racks.md)); and it registers its own Operations and industrial programs. J's
+  Computers' Pattern Studio and Crafting Manager show every recipe, marking the ones the team hasn't researched with the
+  discovery they need. The simulator's materials are J's Industrial's exotic elements
+  ([The cosmological simulator](simulator.md)), and the Singularity era's hardware is made of its computronium
+  ([Eras](eras.md)). The energy computers draw is J's Core's, which J's Industrial generates and carries
+  ([Power](power.md)).
 - **J's Space:** the satellites are all J's Space's: the Satellite Control Computer and its specialised hardware (the
   Satellite Cards), the Satellite Manager program, the Satellite Antenna, the satellites, launching, and the dedicated
   infrastructure that moves and handles satellite data, the **telemetry** system (cables and devices of its own, because

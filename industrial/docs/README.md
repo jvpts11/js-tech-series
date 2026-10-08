@@ -17,3 +17,9 @@ The machines are built on the processing machines of J's Core; the Core's own pa
 ([Machines](../../core/docs/MACHINES.md)).
 
 Each section says when the part it describes was added to the series, as `Added YYYY-MM-DD`.
+
+## The design
+
+[The design of J's Industrial](design/README.md): one page per subject, from materials and the world to energy,
+machines, chemistry, the Clean Room, science, nuclear power and the last tiers, saying how every system works and why,
+with what is designed and still to be built at the end of each page.

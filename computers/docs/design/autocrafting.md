@@ -147,6 +147,10 @@ machine editor (with fluids and chemicals); an ingredient dragged from the list 
 window in front receives; with no Studio open, JEI says "Open the Pattern Studio". Without JEI, recipes are built cell
 by cell from the inventory. EMI's list also leaves the monitor screens free.
 
+**Research:** with J's Industrial installed, some of its recipes need a discovery its team hasn't made yet. The Pattern
+Studio and the Crafting Manager still **show every recipe**, marking the locked ones with the discovery they need, so a
+player can plan; only running a locked recipe is refused.
+
 ### The Pattern Encoder
 
 It is the **only** device that writes `.craft` files; drives only read. It is a **peripheral** linked by the peripheral
