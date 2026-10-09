@@ -41,7 +41,8 @@ watts drawn from the grid = watts of the parts / efficiency of the power supply
 ```
 
 - The power supply connects in J's Core's **low voltage class**, as a real one plugs into a socket. J's Industrial
-  makes, carries and stores that energy; any other mod's FE reaches a computer through J's Core's converters, or
+  makes, carries and stores that energy, and so do the generators of other mods of the series, such as J's Space's,
+  through J's Core's basic cable and battery; any other mod's FE reaches a computer through J's Core's converters, or
   directly when J's Core's setting accepts FE.
 - A server setting turns the draw off, so computers run free for whoever plays with no energy source at all.
 - The rule for starting compares the parts' watts with the supply's **rating** (real power supplies are rated by what

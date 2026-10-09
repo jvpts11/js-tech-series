@@ -90,6 +90,10 @@ pushes air one way and clears a room of a cloud.
 | Stainless Gas Pipe | T3 | 400 | corrosive gases: chlorine, hydrogen fluoride | |
 | High-Pressure Pipe | T3 | 800 | **supercritical fluids** | carbon dioxide pipelines |
 
+The **Copper Pipe**, the **Iron Gas Pipe** and the **Vacuum-Jacketed Pipe** are J's Core's **basic lines**: any mod
+uses them on its own, with recipes of vanilla materials, as J's Space carries its propellants with no other mod. J's
+Industrial gives them its industrial recipes and adds every other pipe.
+
 **Slurries:** the **Rubber-Lined Pipe** (T2, 200) and the **Ceramic-Lined Pipe** (T3, 400, which wears much more
 slowly).
 

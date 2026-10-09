@@ -124,8 +124,10 @@ draws the screens.
 ### Enigmatic hardware
 
 The hardware unlocked through J's Space's research system belongs to J's Space, and only exists when J's Space and J's
-Computers are installed together ([The series](series.md)). It is designed with J's Space; J's Computers has no rules of
-its own for it.
+Computers are installed together ([The series](series.md)): an **Enigmatic processor** and an **Enigmatic
+motherboard**, outside the ladder of eras and about the size of the Singularity era, unlocked at 60% of a team's
+Enigmatic comprehension. J's Space registers them through the hardware registry ([The API](api.md)); J's
+Computers has no rules of its own for them.
 
 ## Memory
 

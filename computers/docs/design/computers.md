@@ -180,4 +180,5 @@ Each of these is designed with its own system, and like everything in J's Comput
 | WAN Gateway Computer | A very wide computer that links distant places over the long-distance line, with WAN Interface Cards. | [The network](network.md) |
 | Simulation Node | A node of the cosmological simulator's cluster, with the Singularity's hardware. | [The cosmological simulator](simulator.md) |
 
-The Satellite Control Computer belongs to J's Space ([The series](series.md)).
+The computers J's Space adds when both mods are installed (Mission Control, Satellite Control, Space Research, Flight
+Control and Aerospace Design) belong to J's Space ([The series](series.md)).

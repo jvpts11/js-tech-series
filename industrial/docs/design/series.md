@@ -16,7 +16,8 @@ Through J's Core, any mod gets what J's Industrial makes, without depending on i
 
 - **materials** processed from the catalogue (ingots, plates, wires, alloys, polymers) and the **fuels** of the shared
   catalogue (gasoline, kerosene, diesel, hydrogen);
-- the industrial recipes of J's Core's **generic components** (servomotors, motors, LEDs, sensors, oscillators);
+- the industrial recipes of J's Core's **generic components** (servomotors, motors, LEDs, sensors, oscillators), of
+  its **basic lines** and **basic battery**, and of its **containment** of exotic matter;
 - **J's Energy**, J's Core's energy, which J's Industrial generates, carries and stores;
 - **radiation**, **pollution**, **dissonance** and the **physics kit**, J's Core mechanics it uses and feeds.
 
@@ -25,7 +26,7 @@ Through J's Core, any mod gets what J's Industrial makes, without depending on i
 | Mod | What wakes up |
 | --- | --- |
 | J's Computers | a page of its own: [With J's Computers](computers.md) |
-| J's Space | helium-3 from lunar regolith; metallic hydrogen from gas giants, neutronium from neutron stars, degenerate matter from white dwarfs; the antiproton belt as a free source of antimatter; xenon for ion engines; atomic clocks for navigation; a space module for exo-suits; the radio telescope and the observatories are Space's; power beamed from solar satellites and the Dyson Sphere are Space's; silicon-based life is Space's |
+| J's Space | its chains become the scale path for J's Space's metals, propellants and circuits, and a server rule, off by default, makes them the only path; kerosene, high-test peroxide and nuclear thermal engines; plutonium-238 for RTGs and fission for bases; xenon from the Air Separation Unit for ion engines; speculum metal for telescope mirrors; atomic clocks for navigation; the research computer reads astronomical data; J's Space gives richer and alternative sources: helium-3 from lunar regolith, metallic hydrogen from gas giants, neutronium from the pulsar Lich, degenerate matter from the white dwarf Sirius B, illaenium and the heaviest metals from a kilonova remnant, the antiproton belts as a free source of antimatter, dark matter gathered faster at the Galactic Core; the Casimir Array is the scale path for the exotic matter of its warp drives; a space module for the two closed exo-suits; an industrial deck aboard large starships; the radio telescope and the observatories, power beamed from solar satellites and the Dyson Sphere, and silicon-based life are Space's |
 | J's Geology | natural gas and its helium; seismic prospecting that also finds oil; americium-beryllium sources and caesium gauges for well logging |
 | J's Oceanics | tidal, wave, ocean thermal and offshore wind power; diving gear |
 | J's Civil Works | the decorative machines (stone cutter, panel press, joinery, decorative glass and ceramics, upholstery, lighting line, appliance line, customization centre, blueprint burner, construction printer); fly ash and gypsum for cement; bitumen for roads; smoke detectors and self-powered exit signs |

@@ -60,24 +60,33 @@ a server setting can make it the only one ([Eras](eras.md)).
   ([The cosmological simulator](simulator.md)), and the Singularity era's hardware is made of its computronium
   ([Eras](eras.md)). The energy computers draw is J's Core's, which J's Industrial generates and carries
   ([Power](power.md)).
-- **J's Space:** the satellites are all J's Space's: the Satellite Control Computer and its specialised hardware (the
-  Satellite Cards), the Satellite Manager program, the Satellite Antenna, the satellites, launching, and the dedicated
-  infrastructure that moves and handles satellite data, the **telemetry** system (cables and devices of its own, because
-  a satellite sends an enormous amount of data). When both mods are installed, J's Computers gives it:
-  - **the network:** the satellites' Operations (associating, dissociating, state, commands) are types J's Space
-    registers, and the Mainframe dispatches them like any other, with queues, priority and logging;
-  - **the computer:** the Satellite Control Computer is a network computer like J's Computers' own, with a motherboard,
-    processors, memory, a power supply and a system; J's Space adds it, and the Satellite Cards, through the API's
-    computer and hardware registries ([The API](api.md));
-  - **the program:** the Satellite Manager registers like any program ([Programs](programs.md));
-  - telemetry is the fourth of the five cable systems, now J's Space's, which registers its cables in J's Core's cable
-    block; it is not a sixth.
-
-  The links to other systems (Communication Satellites and wireless, Mapping Satellites, the Laser Satellite's shot and
-  security) are designed with J's Space.
-
-  **Enigmatic hardware:** with J's Space installed, its research system unlocks Enigmatic hardware for computers
-  ([Hardware](hardware.md)). J's Space adds it, through the API's hardware registry.
+- **J's Space:** everything in space is J's Space's: rockets, starships, satellites, probes, observatories, and the
+  **telemetry line**, which joins antennas, ground stations, observatories and research computers and carries data
+  only, never the network id. Its machines work on their own, through their own screens; when both mods are installed,
+  J's Computers puts them on the network and gives them more:
+  - **the computers:** its Mission Control, its Ground Station (the Satellite Control Computer, whose Satellite Cards
+    add antennas and satellites) and its Space Research Computer (with correlator and image processing cards) become
+    computers, with a motherboard, processors, memory, a power supply and a system, as J's Industrial's machines do.
+    It adds two computers of its own: the **Flight Control Computer**, in a rocket or a starship, with
+    radiation-hardened processors, following the eras (the Vintage one is the Apollo Guidance Computer); and the
+    **Aerospace Design Computer**, which runs AeroCAD on good graphics cards. All through the API's computer and
+    hardware registries ([The API](api.md));
+  - **the network:** its Operations (rockets, starships, satellites, observatories, probes, discovery, mining,
+    terraforming, megastructures, cargo) are kinds it registers, dispatched by the Mainframe like any other, and the
+    state of everything in space is a table for SELECT;
+  - **the programs:** the Satellite Manager, the Atlas, AeroCAD, Mission Control and a planetarium register like any
+    program ([Programs](programs.md)), and launches and routes can be automated with Σ#;
+  - **starships:** a small one flies on its Flight Control Computer, a medium one on system computers that check each
+    other, and a large one carries a data deck with a cluster of servers, whose power speeds the warp calculation;
+  - **the network across worlds:** communication satellites extend wireless and join networks on different worlds
+    through the WAN Gateway Computer; the **instant link** federates networks between star systems with no delay; and
+    with two worlds' networks federated, **autocrafting asks J's Space for a cargo flight** when what it needs lies on
+    another world ([Autocrafting](autocrafting.md));
+  - **security:** firing the Laser Satellite takes two authorisations through the directory service, and offensive
+    security can cut another team's satellite loose ([Security](security.md));
+  - **Enigmatic hardware:** an Enigmatic processor and motherboard, outside the ladder of eras and about the size of
+    the Singularity era, unlocked at 60% of a team's Enigmatic comprehension ([Hardware](hardware.md));
+  - its ruins give old hardware and AI models.
 - **J's Overworld:** with J's Computers installed, its structures (abandoned labs) can hold pre-trained AI models
   ([Artificial intelligence](ai.md)).
 - **J's Robotics:** with J's Computers installed, it trains robots' behaviours on the AI's infrastructure

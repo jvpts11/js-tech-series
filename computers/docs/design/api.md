@@ -76,7 +76,8 @@ besides the programs and the rest that are already open.
 - **Dataset and model types** for the AI ([Artificial intelligence](ai.md)), so J's Robotics can train robots without
   J's Computers knowing what a robot is.
 
-Cable types already belong to J's Core. The first mods to need the rest are J's Space (the Enigmatic hardware, the
-Satellite Control Computer and the Satellite Cards) and J's Industrial (the Industrial Controller Computer and its
+Cable types already belong to J's Core. The first mods to need the rest are J's Space (its machines that run as
+computers, the Flight Control and Aerospace Design Computers, the Satellite Cards and the rest of its hardware, and the
+Enigmatic hardware) and J's Industrial (the Industrial Controller Computer and its
 Fieldbus Cards, the machines that run as computers, and the hardware's industrial recipes); it is built when the first
 of them starts. Today there is no hardware, computer or era registry.

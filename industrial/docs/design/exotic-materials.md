@@ -31,8 +31,8 @@ Every element is **discovered** at its first synthesis, and its discoverer names
 
 - Elements 135 to 210 also lie in rare natural veins in the strangest regions of [The Aleph](aleph.md).
 - With J's Computers installed, its **cosmological simulator** gives any of them in plenty, by the scenario simulated.
-- With J's Space installed, **neutron stars** and **white dwarfs** give neutronium and degenerate matter, and merging
-  neutron stars give illaenium.
+- With J's Space installed, the pulsar **Lich**, a neutron star, and the white dwarf **Sirius B** give neutronium and
+  degenerate matter, and a **kilonova remnant**, the cloud left by two neutron stars that merged, gives illaenium.
 
 **The Deep Core Miner** (T6) drills **through the bedrock**, below anything that can be dug. The deepest real borehole
 (Kola, 12 km) and Project Mohole (1961), which tried to reach the mantle, never left the crust; from there on, it is the
@@ -54,15 +54,16 @@ From the real and measured to the hypothetical; that is what sets each tier:
 | Quark-gluon plasma | real: made in heavy-ion collisions (RHIC, LHC), it lasts an instant | the **Heavy-Ion Collider** (T6), held in superconducting plasma conduits | | the raw material of strange matter |
 | Metallic hydrogen | announced in 2017 (Harvard, at 495 GPa), still debated | the **Diamond Anvil Press** (T6), with HPHT diamonds: a little at a time | **J's Space** takes it in quantity from the cores of gas giants | a predicted **room-temperature superconductor** (the Quantum Energy Cable) and the best predicted **rocket propellant** |
 | Strange matter | hypothetical (the "strangelets" feared at RHIC) | from quark-gluon plasma (T7) | | ultra-dense structures; it only exists **contained** |
-| Neutronium | real inside neutron stars; outside them it can't hold | the **Neutron Compressor** (T7) | J's Space's neutron stars | the r-Process Reactor's feed (illaenium), extreme shielding |
-| Degenerate matter | real inside white dwarfs | extreme compression (T7) | J's Space's white dwarfs | ultra-dense ballast and shielding |
+| Neutronium | real inside neutron stars; outside them it can't hold | the **Neutron Compressor** (T7) | J's Space's pulsar Lich | the r-Process Reactor's feed (illaenium), extreme shielding |
+| Degenerate matter | real inside white dwarfs | extreme compression (T7) | J's Space's white dwarf Sirius B | ultra-dense ballast and shielding |
 | Dark matter | hypothetical; real detectors lie **deep underground**, full of **liquid xenon** (LUX-ZEPLIN, 2022) | the **Dark Matter Detector** (T8): deep underground, full of xenon from air separation, it catches particles slowly and condenses them | | zwickium |
-| Negative-mass exotic matter | hypothetical; the **Casimir effect** (negative energy between plates, measured in 1997) is the real starting point | the **Casimir Array** (T8) | J's Space's warp engines | holding portals and wormholes open, newtonium's artificial gravity |
+| Negative-mass exotic matter | hypothetical; the **Casimir effect** (negative energy between plates, measured in 1997) is the real starting point | the **Casimir Array** (T8) | J's Space makes it in its own Casimir generator, for its warp drives; the Array is the scale path | holding portals and wormholes open, newtonium's artificial gravity |
 | Computronium | hypothetical: matter arranged to compute | T9 | with J's Computers, the hardware of the Singularity era | turingium's neural interfaces |
 
 Exotic matter travels in **exotic matter conduits** ([Fluids and gases](fluids-and-gases.md)) and is kept in
 **containment** that spends energy. Without energy, containment stops taking more and **releases nothing**:
-transcendence has no accidents.
+transcendence has no accidents. The containment blocks are J's Core's, shared with J's Space, which keeps in them
+what it gathers from dead stars; J's Industrial gives them their industrial recipes.
 
 ### Antimatter
 
@@ -75,8 +76,8 @@ releases **180 GJ** (E = mc²).
   real one (the series' bet), but still gives back only part of the energy it costs. **Anti-nucleosynthesis** in the
   same factory builds heavier anti-elements, each one dearer than the last (antihelium-4 was really observed, at RHIC,
   in 2011).
-- **Keeping it:** the **Antimatter Trap** (a Penning trap) spends energy; without it, it stops taking more and releases
-  nothing.
+- **Keeping it:** the **Antimatter Trap** (a Penning trap), J's Core's containment in its form for antimatter, spends
+  energy; without it, it stops taking more and releases nothing.
 - **Counted in real units**, as amounts of anti-atoms (like a chemist's mole). Annihilation turns all the mass of both
   sides into energy, so **the heavier the anti-element, the more energy per amount**: antihelium 4 times antihydrogen,
   anticarbon 12 times, anti-iron 56 times, antilead 207 times. It is exact physics.

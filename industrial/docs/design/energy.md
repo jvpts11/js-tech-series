@@ -80,6 +80,9 @@ cable comes in several voltages.
 | Quantum Energy Cable | T6 | any | 10 GW | none |
 | Singularity Cable | T7 | any | no ceiling | none |
 
+- The **Insulated Copper Cable** is one of J's Core's **basic lines**: any mod uses it on its own, with a recipe of
+  vanilla materials, so J's Space's generators reach its machines with no other mod. J's Industrial gives it its
+  industrial recipe and adds every other cable.
 - Superconducting cables carry their coolant (liquid helium for niobium-titanium, liquid nitrogen for REBCO) sealed in
   from when they are made, and need no upkeep.
 - The Quantum and Singularity cables go beyond voltage: they join any class to any class. Their materials are in
@@ -250,6 +253,9 @@ Batteries from the T6 on are decided with [Exotic materials](exotic-materials.md
 | Flywheel Storage | T4 | low | holds little but answers at once, for peaks (Beacon Power, 2011) |
 | Molten Salt Storage | T4 | none, it holds heat | tanks of molten salt beside a solar thermal plant, so it runs at night |
 | SMES | T5 | medium | a niobium-titanium coil in liquid helium: superconducting magnetic storage, discharged almost instantly |
+
+The **Lead-Acid Battery Bank** is J's Core's **basic battery**: any mod uses it on its own, with a recipe of vanilla
+materials; J's Industrial gives it its industrial recipe.
 
 The **Battery Charger** (T2, low, 2 kW) charges batteries; storage blocks also have a slot to charge one.
 

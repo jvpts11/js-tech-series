@@ -167,5 +167,6 @@ recipe in J's Industrial; J's Robotics' robots and J's Transport's vehicles use 
 | Clean Room Seal | T4 | the armour counts as a clean room suit: the exo-suit can walk into the Clean Room |
 
 An exo-suit with the right modules does the work of several protective suits: that is the reward of getting there. A
-simple suit stays the cheap answer of the early game. With J's Space installed, a space module lets an exo-suit be worn
-in space.
+simple suit stays the cheap answer of the early game. With J's Space installed, a **space module** fits the two closed
+exo-suits, the Advanced and the Transcendent, and with it they go anywhere; the Hydraulic Exoframe and the Industrial
+Exo-Suit are open frames and can't be sealed.

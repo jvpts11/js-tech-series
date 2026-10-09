@@ -48,16 +48,18 @@ wire or the part being looked at. Each mod registers its own cables in the block
 1. **Data:** the network's lines (below). Only this system carries the network id.
 2. **Peripheral:** point to point, links devices to a computer ([Peripherals](peripherals.md)).
 3. **Telemetry:** J's Space's dedicated link for satellite data. It exists as a cable type (256 blocks), with no block
-   yet.
+   yet; J's Space replaces it with its **telemetry line**, a line of its own that joins antennas, the devices of a
+   ground station, observatories and the Space Research Computer, and carries data only, never the network id.
 4. **Industrial control:** J's Industrial's point-to-point link between its machines and the Fieldbus Cards of an
    Industrial Controller Computer, a computer J's Industrial adds when both mods are installed. It exists as a type (8
    blocks), with no block yet.
-5. **Energy:** J's Core's energy, J's Energy, in real units, through J's Industrial's energy cables and lines, or any
-   mod's FE cable through J's Core's converters ([Power](power.md)).
+5. **Energy:** J's Core's energy, J's Energy, in real units, through J's Core's basic cable, J's Industrial's energy
+   cables and lines, or any mod's FE cable through J's Core's converters ([Power](power.md)).
 
 Other mods add their own: J's Industrial's Research Link Cable, for example, groups research centres, and reaches the
 network through J's Industrial's Research Router, a topology element as the Server Router
-([Servers and racks](servers-and-racks.md)). They all share space without getting in each other's way.
+([Servers and racks](servers-and-racks.md)), and J's Space's Space Research Link Cable groups its Space Research
+Computers. They all share space without getting in each other's way.
 
 ## The lines of data cable
 

@@ -156,6 +156,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   it where the two meet: how hardware is made with and without J's Industrial, the energy computers draw, the cable
   systems, storage for every state of matter, research groups in the Cluster Manager, and recipes that stay visible
   before they are researched.
+- The design of J's Space, in `space/docs/design`, before any of its code: one page per subject, from the universe,
+  its twenty-six star systems and every world to minerals, travel, propellants, rockets, energy, life support,
+  satellites, exploration, starships, ruins and Enigmatic sites, mining, cargo, terraforming and megastructures, and
+  what it does with J's Computers; each page says how its system works, and the first page gives the order of
+  building. J's Computers' and J's Industrial's designs follow it where they meet: the computers J's Space adds, its
+  telemetry line, the Enigmatic hardware and networks across worlds; J's Core's basic cable, pipes and battery, which
+  any mod uses on its own, and its containment of exotic matter; the dead stars that give exotic matter, and the space
+  module of the closed exo-suits.
 - J's Core's settings screen, in its own look: a mod's files and their sections down the left, each setting with a
   switch, a number to type or step, a word to go through or a text to type, Done to keep the changes and Cancel to
   drop them. J's Core and J's Computers open it from the mods list. A world's settings are changed from inside it.
