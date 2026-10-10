@@ -60,6 +60,7 @@ class ParserTest {
             "class C { bool M(bool b) { return " + "!".repeat(deep) + "b; } }",
             "class C { void M() { " + "{".repeat(deep) + "}".repeat(deep) + " } }",
             "class C { " + "List<".repeat(deep) + "int" + ">".repeat(deep) + " field; }",
+            "class C { " + "class D { ".repeat(deep) + "}".repeat(deep) + " }",
         };
         for (final String source : sources) {
             final SigmaFrontEnd.Result result = parse(source);

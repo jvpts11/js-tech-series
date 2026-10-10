@@ -138,6 +138,8 @@ public enum SigmaError {
     NEEDS_A_LATER_VERSION(TextKey.of("jsc.sigma.error.s3057", "'%s' needs %s %s; this project is %s %s")),
     REF_ONLY_FOR_STRCAT(TextKey.of("jsc.sigma.error.s3058",
             "'ref' is written only for strcat, which joins onto the text '%s' holds; a method fills in with out")),
+    CIRCULAR_BASE(TextKey.of("jsc.sigma.error.s3059",
+            "'%s' already stands behind '%s', so it cannot also stand in front of it")),
 
     // A4001 to A4010 are the listing's own problems, reported by reading one back (ListingError).
     NOT_YET_BUILT(TextKey.of("jsc.sigma.error.s4011", "%s is not built yet")),

@@ -19,6 +19,13 @@ import java.util.Map;
  */
 public interface IConfigFormat {
 
+    /**
+     * How deeply a file's maps and lists may sit inside each other. A settings file needs a handful of levels; a file
+     * damaged, or built to choke, can open thousands, and a reader that follows each one a level down its stack runs
+     * past the end of it.
+     */
+    int DEEPEST_NESTING = 32;
+
     /** The file's extension, without the dot. */
     String extension();
 

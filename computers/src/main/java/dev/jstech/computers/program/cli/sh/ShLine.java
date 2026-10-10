@@ -55,30 +55,35 @@ public record ShLine(List<Stage> stages, String from, String into, boolean appen
     public static final ShLine NOTHING = new ShLine(List.of(), "", "", false);
 
     /**
-     * Reads tokens the way a shell reads them.
+     * Reads a line's words the way a shell reads them.
      *
      * <p>A pipe ends a stage and starts the next. A redirection takes the word after it, whether it was
-     * written against the arrow or apart from it, since both are typed at real shells every day.
+     * written against the arrow or apart from it, since both are typed at real shells every day. Only a word that
+     * was typed as one of the shell's marks is read as one; any other word is a command's, whatever it says.
      */
-    public static ShLine of(final List<String> tokens) {
+    public static ShLine of(final List<ShWord> tokens) {
         final List<Stage> stages = new ArrayList<>();
         final List<String> words = new ArrayList<>();
         String from = "";
         String into = "";
         boolean append = false;
         for (int i = 0; i < tokens.size(); i++) {
-            final String token = tokens.get(i);
-            if (token.equals("|")) {
+            final ShWord token = tokens.get(i);
+            if (!token.operator()) {
+                words.add(token.text());
+                continue;
+            }
+            if (token.text().equals("|")) {
                 addStage(stages, words);
                 continue;
             }
-            final Redirection redirection = redirectionOf(token);
+            final Redirection redirection = redirectionOf(token.text());
             if (redirection == null) {
-                words.add(token);
+                words.add(token.text());
                 continue;
             }
             final String named = redirection.name().isEmpty() && i + 1 < tokens.size()
-                    ? tokens.get(++i) : redirection.name();
+                    ? tokens.get(++i).text() : redirection.name();
             if (redirection.reading()) {
                 from = named;
             } else {

@@ -152,6 +152,8 @@ public final class Json5ConfigFormat implements IConfigFormat {
 
         private final String text;
         private int at;
+        /** How many maps and lists the reading is inside now. */
+        private int depth;
 
         Reader(final String text) {
             this.text = text;
@@ -193,11 +195,16 @@ public final class Json5ConfigFormat implements IConfigFormat {
                 throw new ConfigFormatException(place() + "the file ends where a value should be");
             }
             final char c = peek();
-            if (c == '{') {
-                return object();
-            }
-            if (c == '[') {
-                return array();
+            if (c == '{' || c == '[') {
+                if (++this.depth > DEEPEST_NESTING) {
+                    throw new ConfigFormatException(place() + "maps and lists nested more than " + DEEPEST_NESTING
+                            + " deep");
+                }
+                try {
+                    return c == '{' ? object() : array();
+                } finally {
+                    this.depth--;
+                }
             }
             if (c == '"' || c == '\'') {
                 return string();

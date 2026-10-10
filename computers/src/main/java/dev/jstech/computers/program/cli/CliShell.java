@@ -12,6 +12,7 @@ import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.program.cli.man.ManPage;
 import dev.jstech.computers.program.cli.sh.ShLine;
 import dev.jstech.computers.program.cli.sh.ShRunner;
+import dev.jstech.computers.program.cli.sh.ShWord;
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.program.tty.ITtyProcess;
@@ -81,8 +82,9 @@ public final class CliShell {
          * on the family whose shell does that, opens out a word with a star in it into the names it matches.
          */
         final boolean live = computer.liveInstall() != null;
-        final List<String> tokens = live
-                ? CliTokenizer.tokenize(line) : ShRunner.expand(computer, CliTokenizer.tokenize(line));
+        final List<CliTokenizer.Token> typed = CliTokenizer.words(line);
+        final List<ShWord> words = live ? ShWord.typed(typed) : ShRunner.expand(computer, typed);
+        final List<String> tokens = ShWord.texts(words);
         if (tokens.isEmpty()) {
             return new Response(out.lines(), false);
         }
@@ -95,11 +97,11 @@ public final class CliShell {
          * A line that ends in & is not run here at all: it is left with the machine, which runs it on its own
          * tick and hands the prompt straight back. That is what the mark has always meant on this family.
          */
-        if (!live && !tokens.isEmpty() && tokens.get(tokens.size() - 1).equals("&")
-                && computer.shellFamily() == ShellFamily.POSIX) {
-            return backgrounded(tokens.subList(0, tokens.size() - 1), computer, out);
+        if (!live && words.get(words.size() - 1).isBackground() && computer.shellFamily() == ShellFamily.POSIX) {
+            // The line is kept as it was typed, its quotes too, so what it says reads the same when it runs.
+            return backgrounded(line.substring(0, line.lastIndexOf('&')).strip(), computer, out);
         }
-        final ShLine whole = live ? ShLine.NOTHING : ShLine.of(tokens);
+        final ShLine whole = live ? ShLine.NOTHING : ShLine.of(words);
         if (!whole.isEmpty() && !whole.isSimple()) {
             return ShRunner.run(this, whole, computer, out);
         }
@@ -211,13 +213,13 @@ public final class CliShell {
      * <p>A job costs the machine a megabyte while it has it, which is what says how many a computer can be
      * left with; a machine with none left says so rather than quietly dropping the line.
      */
-    private Response backgrounded(final List<String> tokens, final ICliComputer computer, final CliOutput out) {
+    private Response backgrounded(final String typed, final ICliComputer computer, final CliOutput out) {
         final ICliComputer.MemoryUse memory = computer.memory();
         if (memory.totalMb() > 0 && memory.usedMb() + MachineJobs.JOB_MB > memory.totalMb()) {
             out.error(NO_JOB_MEMORY);
             return new Response(out.lines(), false);
         }
-        final MachineJobs.Job job = computer.addJob(String.join(" ", tokens), JobWhen.AT_ONCE);
+        final MachineJobs.Job job = computer.addJob(typed, JobWhen.AT_ONCE);
         if (job == null) {
             out.error(NO_JOBS);
         } else {

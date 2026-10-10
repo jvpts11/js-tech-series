@@ -102,4 +102,18 @@ class Json5ConfigFormatTest {
         assertThrows(ConfigFormatException.class,
                 () -> ConfigFormats.JSON5.read("{a: \"one\ntwo\"}".getBytes(StandardCharsets.UTF_8)));
     }
+
+    @Test
+    void read_listsNestedThousandsDeep_areRefusedRatherThanOverflowingTheStack() {
+        final String deep = "{a: " + "[".repeat(20_000) + "]".repeat(20_000) + "}";
+        assertThrows(ConfigFormatException.class,
+                () -> ConfigFormats.JSON5.read(deep.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    void read_nestingUpToTheLimit_isRead() throws ConfigFormatException {
+        final int levels = IConfigFormat.DEEPEST_NESTING - 1;
+        final String nested = "{a: " + "[".repeat(levels) + "]".repeat(levels) + "}";
+        assertTrue(ConfigFormats.JSON5.read(nested.getBytes(StandardCharsets.UTF_8)).containsKey("a"));
+    }
 }

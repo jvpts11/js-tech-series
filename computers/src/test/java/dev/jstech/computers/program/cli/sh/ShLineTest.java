@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 class ShLineTest {
 
     private static ShLine of(final String line) {
-        return ShLine.of(CliTokenizer.tokenize(line));
+        return ShLine.of(ShWord.typed(CliTokenizer.words(line)));
     }
 
     @Test
@@ -93,5 +93,22 @@ class ShLineTest {
 
         assertEquals(List.of("where", "oak log"), line.stages().get(0).args());
         assertEquals("where.txt", line.into());
+    }
+
+    @Test
+    void of_anArrowInQuotesIsAWordForTheCommand() {
+        final ShLine line = of("grep \">\" notes.txt");
+
+        assertEquals(List.of(">", "notes.txt"), line.stages().get(0).args());
+        assertFalse(line.writes(), "nothing is written over notes.txt");
+    }
+
+    @Test
+    void of_aWordThatOnlyReadsAsAMarkIsStillAWord() {
+        // What a star opened out into, or what a name stood for, is never one of the shell's marks.
+        final ShLine line = ShLine.of(List.of(ShWord.plain("cat"), ShWord.plain(">old.txt"), ShWord.plain("|")));
+
+        assertTrue(line.isSimple(), "one command and nothing else");
+        assertEquals(List.of(">old.txt", "|"), line.stages().get(0).args());
     }
 }

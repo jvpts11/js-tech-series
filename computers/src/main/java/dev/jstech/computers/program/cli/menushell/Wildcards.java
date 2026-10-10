@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli.menushell;
 
+import dev.jstech.core.text.Glob;
 import java.util.Locale;
 
 /**
@@ -26,22 +27,6 @@ public final class Wildcards {
         if (EVERY_NAME.equals(p)) {
             return true;
         }
-        return matchFrom(p, 0, name.toUpperCase(Locale.ROOT), 0);
-    }
-
-    private static boolean matchFrom(final String p, final int pi, final String n, final int ni) {
-        if (pi == p.length()) {
-            return ni == n.length();
-        }
-        final char c = p.charAt(pi);
-        if (c == '*') {
-            for (int k = ni; k <= n.length(); k++) {
-                if (matchFrom(p, pi + 1, n, k)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        return ni < n.length() && (c == '?' || c == n.charAt(ni)) && matchFrom(p, pi + 1, n, ni + 1);
+        return Glob.matches(p, name, true);
     }
 }

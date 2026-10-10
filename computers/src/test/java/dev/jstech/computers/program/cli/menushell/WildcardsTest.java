@@ -8,8 +8,10 @@
 package dev.jstech.computers.program.cli.menushell;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 class WildcardsTest {
@@ -33,5 +35,12 @@ class WildcardsTest {
     void matches_wantsTheWholeName() {
         assertFalse(Wildcards.matches("READ", "README.TXT"));
         assertTrue(Wildcards.matches("readme.txt", "README.TXT"));
+    }
+
+    @Test
+    void matches_answersQuicklyAPatternOfManyStarsThatFails() {
+        final String pattern = "*A".repeat(40) + "B";
+        assertTimeoutPreemptively(Duration.ofSeconds(1),
+                () -> assertFalse(Wildcards.matches(pattern, "A".repeat(64))));
     }
 }

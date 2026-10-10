@@ -9,6 +9,7 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -210,6 +211,18 @@ public interface ICliFiles {
      */
     default List<String> fileNames() {
         return List.of();
+    }
+
+    /** The same for another folder, named the way the prompt would name it; empty when there is no such folder. */
+    default List<String> fileNames(final String folder) {
+        final ICliComputer.FsResult listing = listDisk(folder);
+        final List<String> names = new ArrayList<>();
+        if (listing.ok() && listing.entries() != null) {
+            for (final ICliComputer.FsEntry entry : listing.entries()) {
+                names.add(entry.isDir() ? entry.name() + "/" : entry.name());
+            }
+        }
+        return names;
     }
 
     default List<ICliComputer.MountInfo> mounts() {

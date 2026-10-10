@@ -15,8 +15,10 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliOutput;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.CliTexts;
+import dev.jstech.computers.program.cli.CliTokenizer;
 import dev.jstech.computers.program.cli.ICliCommand;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.core.text.Glob;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
@@ -51,7 +53,7 @@ public final class ShRunner {
      * opens out {@code *.sgs} before the command ever sees it, and a DOS one reads {@code %HOME%} and hands
      * the star to the command, which is why {@code DEL *.TXT} was the command's own doing.
      */
-    public static List<String> expand(final ICliComputer computer, final List<String> tokens) {
+    public static List<ShWord> expand(final ICliComputer computer, final List<CliTokenizer.Token> tokens) {
         /*
          * Only the DOS family writes a name between per cent signs. The network appliance says it the other
          * way, with the rest of its lowercase habits, so the test is for that family rather than for
@@ -65,19 +67,22 @@ public final class ShRunner {
          */
         final boolean needsPath = dos && holdsPercent(tokens);
         final Map<String, String> named = namesOf(computer, needsPath);
-        final List<String> out = new ArrayList<>(tokens.size());
-        List<String> names = null;
-        for (final String token : tokens) {
-            final String filled = ShWords.expand(token, named, dos);
-            if (dos || (filled.indexOf('*') < 0 && filled.indexOf('?') < 0)) {
-                out.add(filled);
-                continue;
+        final List<ShWord> out = new ArrayList<>(tokens.size());
+        // Each folder a star looks into is listed once a line, and only for a line that has a star in it.
+        final Map<String, List<String>> listed = new LinkedHashMap<>();
+        for (final CliTokenizer.Token token : tokens) {
+            final ShWord typed = ShWord.typed(token);
+            final String filled = ShWords.expand(token.text(), named, dos);
+            if (typed.operator()) {
+                // What a mark was is settled; only the name written against an arrow is put in.
+                out.add(new ShWord(filled, true));
+            } else if (dos || token.quoted() || !Glob.isPattern(filled, true)) {
+                out.add(ShWord.plain(filled));
+            } else {
+                for (final String match : globbed(computer, filled, listed)) {
+                    out.add(ShWord.plain(match));
+                }
             }
-            if (names == null) {
-                // Asked for once per line, and only by a line that has a star in it.
-                names = computer.fileNames();
-            }
-            out.addAll(ShWords.glob(filled, names));
         }
         return out;
     }
@@ -156,13 +161,41 @@ public final class ShRunner {
     }
 
     /** Whether any word on the line holds a per cent sign, the only way a DOS line ever names %PATH%. */
-    private static boolean holdsPercent(final List<String> tokens) {
-        for (final String token : tokens) {
-            if (token != null && token.indexOf('%') >= 0) {
+    private static boolean holdsPercent(final List<CliTokenizer.Token> tokens) {
+        for (final CliTokenizer.Token token : tokens) {
+            if (token.text().indexOf('%') >= 0) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * The names a word with a star in it opens out into, or the word itself when it matches nothing.
+     *
+     * <p>A star stands only in the last part of a path, as it does in most of what anybody types: {@code data/*.sgs}
+     * is matched against what {@code data} holds, and each match keeps the folder in front of it.
+     */
+    private static List<String> globbed(final ICliComputer computer, final String word,
+                                        final Map<String, List<String>> listed) {
+        final int slash = word.lastIndexOf('/');
+        final String folder = slash < 0 ? "" : word.substring(0, slash + 1);
+        final String last = word.substring(slash + 1);
+        if (Glob.isPattern(folder, true) || last.isEmpty()) {
+            return List.of(word);
+        }
+        final List<String> names = listed.computeIfAbsent(folder,
+                at -> at.isEmpty() ? computer.fileNames() : computer.fileNames(at));
+        // A pattern that matches nothing comes back as itself, which with its folder in front is the word as typed.
+        final List<String> matched = ShWords.glob(last, names);
+        if (folder.isEmpty()) {
+            return matched;
+        }
+        final List<String> whole = new ArrayList<>(matched.size());
+        for (final String name : matched) {
+            whole.add(folder + name);
+        }
+        return whole;
     }
 
     /**

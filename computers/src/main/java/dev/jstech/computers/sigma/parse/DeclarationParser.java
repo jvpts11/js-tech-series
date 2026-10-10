@@ -131,21 +131,33 @@ final class DeclarationParser {
         return new IDecl.ClassDecl(modifiers, name, bases, members, flavour, start.line(), start.column());
     }
 
-    /** The members between a class's braces, the opening one already taken; takes the closing one. */
+    /**
+     * The members between a class's braces, the opening one already taken; takes the closing one.
+     *
+     * <p>A member can be a class of its own, whose body is read by this again, so a body counts a level down like a
+     * block does: a file of thousands of classes inside each other is told it nests too deeply.
+     */
     private void parseClassBody(final String name, final List<IDecl.IMemberDecl> members) {
-        while (!this.cursor.check(TokenKind.RIGHT_BRACE) && !this.cursor.atEnd()) {
-            final int before = this.cursor.at();
-            final IDecl.IMemberDecl member = this.parseMember(name);
-            if (member != null) {
-                members.add(member);
-            } else {
-                this.skipToMember();
-            }
-            if (this.cursor.at() == before) {
-                this.cursor.advance();
-            }
+        if (!this.cursor.descend()) {
+            return;
         }
-        this.cursor.expect(TokenKind.RIGHT_BRACE);
+        try {
+            while (!this.cursor.check(TokenKind.RIGHT_BRACE) && !this.cursor.atEnd()) {
+                final int before = this.cursor.at();
+                final IDecl.IMemberDecl member = this.parseMember(name);
+                if (member != null) {
+                    members.add(member);
+                } else {
+                    this.skipToMember();
+                }
+                if (this.cursor.at() == before) {
+                    this.cursor.advance();
+                }
+            }
+            this.cursor.expect(TokenKind.RIGHT_BRACE);
+        } finally {
+            this.cursor.ascend();
+        }
     }
 
     /**

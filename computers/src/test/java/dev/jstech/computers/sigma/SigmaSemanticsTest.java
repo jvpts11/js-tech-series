@@ -11,10 +11,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.sigma.sem.NamedType;
 import dev.jstech.computers.vm.listing.Shape;
+import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -308,6 +310,29 @@ class SigmaSemanticsTest {
     @Test
     void check_reportsABaseThatIsNotAClassOrAnInterface() {
         assertReports("S3031", check("enum Colour { RED }\nclass C : Colour { }"));
+    }
+
+    @Test
+    void check_reportsAClassThatStandsBehindItself() {
+        // Each of these went round its bases for ever; the check has to answer, and with the loop named.
+        assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+            assertReports("S3059", check("class A : A { }"));
+            assertReports("S3059", check("class A : B { }\nclass B : A { }"));
+            assertReports("S3059", check("class A : B { }\nclass B : C { }\nclass C : A { }"));
+        });
+    }
+
+    @Test
+    void check_reportsAnInterfaceThatCarriesItself() {
+        assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+            assertReports("S3059", check("interface IA : IB { }\ninterface IB : IA { }"));
+            assertReports("S3059", check("interface IA : IA { }"));
+        });
+    }
+
+    @Test
+    void check_acceptsAChainOfBasesThatEnds() {
+        assertClean(check("class A { }\nclass B : A { }\nclass C : B { }"));
     }
 
     @Test

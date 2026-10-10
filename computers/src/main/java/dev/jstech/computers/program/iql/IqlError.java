@@ -52,6 +52,10 @@ public final class IqlError extends IllegalArgumentException {
     static final TextKey OFFER_RANGE = TextKey.of("jsc.iql.error.offer_range", "an offer is 1, 2 or 3, not %s");
     static final TextKey NAME_TOO_LONG = TextKey.of("jsc.iql.error.name_too_long",
             "a name is at most %s characters long");
+    static final TextKey CONDITION_TOO_DEEP = TextKey.of("jsc.iql.error.condition_too_deep",
+            "a condition nests at most %s NOTs and brackets deep");
+    static final TextKey CONDITION_TOO_LONG = TextKey.of("jsc.iql.error.condition_too_long",
+            "a condition compares at most %s things");
     static final TextKey NO_WITH = TextKey.of("jsc.iql.error.no_with", "%s takes no WITH");
     static final TextKey COMBINE_NEEDS_WITH = TextKey.of("jsc.iql.error.combine_needs_with",
             "COMBINE needs WITH and the item it adds");

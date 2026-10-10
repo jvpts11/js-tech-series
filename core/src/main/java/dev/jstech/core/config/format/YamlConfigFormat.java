@@ -38,7 +38,6 @@ public final class YamlConfigFormat implements IConfigFormat {
 
     /** How many aliases a file may use; a settings file needs none, and a thousand-fold alias bomb needs many. */
     private static final int MOST_ALIASES = 16;
-    private static final int DEEPEST_NESTING = 32;
     /** The largest file read, in characters: far more than any settings file, far less than one built to choke. */
     private static final int LARGEST_FILE = 1 << 20;
     private static final int INDENT = 2;

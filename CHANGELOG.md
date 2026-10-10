@@ -1956,6 +1956,18 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A self-test, installer or KVM screen closes when its monitor is broken, rather than staying open on nothing.
 - A terminal opens on a monitor whose machine is beyond what the player's game has loaded, where it failed.
 - A volume label is never cut between the two halves of an emoji.
+- A pattern of many stars no longer freezes the server. The DOS Shell's and PACE's search, a shell's file names and
+  IQL's `LIKE` match a pattern in a single pass however many stars it holds; each tried every way the stars could
+  split, which a pattern of ten of them against a long name made last for hours.
+- A shell takes its pipes and arrows only where they were typed bare. An arrow in quotes (`grep ">" notes.txt`), a
+  file name a star opened out into, and a name whose value is a pipe are words for the command, where they could
+  empty a file nobody named. A line sent to the background is kept as it was typed, its quotes too.
+- A star in the last part of a path opens out in that folder: `ls data/*.sgs` lists the Σ files in `data`.
+- An IQL condition nests at most 64 NOTs and brackets deep and compares at most 256 things, and a longer one is
+  refused with the reason, where thousands of brackets from a program or a file crashed the server.
+- The Σ compiler says a file nests too deeply when classes sit inside each other thousands deep, and refuses a class
+  or an interface that stands behind itself with error S3059, where either stopped the game.
+- A JSON5 settings file nested more than 32 deep is refused with the reason, as a YAML one already was.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

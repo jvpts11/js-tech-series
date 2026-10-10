@@ -8,12 +8,15 @@
 package dev.jstech.computers.program.cli.sh;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.computers.program.cli.CliTokenizer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliComputer.FsResult;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class ShRunnerTest {
@@ -23,7 +26,7 @@ class ShRunnerTest {
         final Fake computer = new Fake();
         computer.platform = Platform.UNIX;
         computer.shellFamily = ShellFamily.POSIX;
-        assertEquals("/bin:/usr/bin", ShRunner.expand(computer, List.of("$PATH")).getFirst());
+        assertEquals("/bin:/usr/bin", ShRunner.expand(computer, CliTokenizer.words("$PATH")).getFirst().text());
     }
 
     /** FreeBSD installs its programs where its own tree says, not under the bare guess UNIX answers $PATH with. */
@@ -32,7 +35,7 @@ class ShRunnerTest {
         final Fake computer = new Fake();
         computer.platform = Platform.FREEBSD;
         computer.shellFamily = ShellFamily.POSIX;
-        assertEquals("", ShRunner.expand(computer, List.of("$PATH")).getFirst());
+        assertEquals("", ShRunner.expand(computer, CliTokenizer.words("$PATH")).getFirst().text());
     }
 
     /**
@@ -44,7 +47,7 @@ class ShRunnerTest {
         final Fake computer = new Fake();
         computer.platform = Platform.MC_DOS;
         computer.shellFamily = ShellFamily.DOS;
-        ShRunner.expand(computer, List.of("ver"));
+        ShRunner.expand(computer, CliTokenizer.words("ver"));
         assertEquals(0, computer.filesRead, "no token names %PATH%, so nothing reads a file");
     }
 
@@ -54,8 +57,37 @@ class ShRunnerTest {
         final Fake computer = new Fake();
         computer.platform = Platform.MC_DOS;
         computer.shellFamily = ShellFamily.DOS;
-        assertEquals("C:\\DOS", ShRunner.expand(computer, List.of("%PATH%")).getFirst());
+        assertEquals("C:\\DOS", ShRunner.expand(computer, CliTokenizer.words("%PATH%")).getFirst().text());
         assertEquals(1, computer.filesRead, "the one token naming %PATH% reads AUTOEXEC.BAT once");
+    }
+
+    @Test
+    void expand_aNameAStarMatchesIsAWordWhateverItSays() {
+        final Fake computer = new Fake();
+        computer.here = List.of(">old.txt", "notes.txt");
+        final List<ShWord> words = ShRunner.expand(computer, CliTokenizer.words("cat *"));
+        assertEquals(List.of(ShWord.plain("cat"), ShWord.plain(">old.txt"), ShWord.plain("notes.txt")), words);
+    }
+
+    @Test
+    void expand_aStarInTheLastPartOfAPathLooksInThatFolder() {
+        final Fake computer = new Fake();
+        computer.folders = Map.of("data/", List.of("one.sgs", "two.txt", "three.sgs"));
+        assertEquals(List.of("ls", "data/one.sgs", "data/three.sgs"),
+                ShWord.texts(ShRunner.expand(computer, CliTokenizer.words("ls data/*.sgs"))));
+    }
+
+    @Test
+    void expand_leavesAStarInQuotesAlone() {
+        final Fake computer = new Fake();
+        computer.here = List.of("notes.txt");
+        assertEquals(List.of("echo", "*"), ShWord.texts(ShRunner.expand(computer, CliTokenizer.words("echo \"*\""))));
+    }
+
+    @Test
+    void expand_keepsAMarkTypedBareAsOne() {
+        final List<ShWord> words = ShRunner.expand(new Fake(), CliTokenizer.words("ls > out.txt"));
+        assertTrue(words.get(1).operator(), "the arrow typed bare is the shell's");
     }
 
     /** A computer with only what expanding a shell word reads. */
@@ -64,6 +96,16 @@ class ShRunnerTest {
         private Platform platform = Platform.LINUX;
         private ShellFamily shellFamily = ShellFamily.POSIX;
         private int filesRead;
+        private List<String> here = List.of();
+        private Map<String, List<String>> folders = Map.of();
+
+        @Override public List<String> fileNames() {
+            return this.here;
+        }
+
+        @Override public List<String> fileNames(final String folder) {
+            return this.folders.getOrDefault(folder, List.of());
+        }
 
         @Override public Platform platform() {
             return this.platform;

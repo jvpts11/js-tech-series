@@ -7,9 +7,9 @@
  */
 package dev.jstech.computers.program.iql;
 
+import dev.jstech.core.text.Glob;
 import java.util.Locale;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 /**
  * The boolean tree behind an IQL {@code WHERE} filter or an {@code IF}/{@code WHEN} guard. A leaf is a
@@ -114,16 +114,8 @@ public sealed interface IIqlCondition
         }
 
         private static boolean like(final String actual, final String pattern) {
-            // '*' is the only wildcard; every other character is literal.
-            final String[] parts = pattern.split("\\*", -1);
-            final StringBuilder regex = new StringBuilder("(?i)");
-            for (int i = 0; i < parts.length; i++) {
-                if (i > 0) {
-                    regex.append(".*");
-                }
-                regex.append(Pattern.quote(parts[i]));
-            }
-            return actual.matches(regex.toString());
+            // '*' is the only wildcard; every other character, a question mark too, is literal.
+            return Glob.matches(pattern, actual, false);
         }
     }
 

@@ -16,7 +16,10 @@ import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.INode;
 import dev.jstech.computers.sigma.ast.TypeRef;
 import dev.jstech.computers.vm.listing.Shape;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -351,6 +354,10 @@ public final class Declarations {
                 type.addInterface(named);
             } else if (named.kind().classLike() && type.kind() == NamedType.Kind.STRUCT) {
                 this.diagnostics.error(base.line(), base.column(), SigmaError.STRUCT_NO_BASE, base.describe());
+            } else if (named.kind().classLike() && type.base() == null && standsBehind(type, named)) {
+                // Linking it would close a loop, which every walk up the bases would then go round for ever.
+                this.diagnostics.error(base.line(), base.column(), SigmaError.CIRCULAR_BASE, type.name(),
+                        named.name());
             } else if (named.kind().classLike() && type.base() == null) {
                 type.setBase(named);
             } else {
@@ -445,7 +452,11 @@ public final class Declarations {
     private void fillInterface(final NamedType type, final IDecl.InterfaceDecl declaration) {
         for (final TypeRef base : declaration.bases()) {
             final ITypeSymbol resolved = this.resolve(base);
-            if (resolved instanceof NamedType named && named.kind() == NamedType.Kind.INTERFACE) {
+            if (resolved instanceof NamedType named && named.kind() == NamedType.Kind.INTERFACE
+                    && carries(named, type)) {
+                this.diagnostics.error(base.line(), base.column(), SigmaError.CIRCULAR_BASE, type.name(),
+                        named.name());
+            } else if (resolved instanceof NamedType named && named.kind() == NamedType.Kind.INTERFACE) {
                 type.addInterface(named);
             } else if (!this.rules.isError(resolved)) {
                 this.diagnostics.error(base.line(), base.column(), SigmaError.INVALID_BASE, base.describe());
@@ -683,6 +694,34 @@ public final class Declarations {
             }
         }
         return null;
+    }
+
+    /** Whether {@code type} already stands behind {@code candidate}, the candidate itself included. */
+    private static boolean standsBehind(final NamedType type, final NamedType candidate) {
+        final Set<NamedType> seen = new HashSet<>();
+        for (NamedType at = candidate; at != null && seen.add(at); at = at.base()) {
+            if (at == type) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether {@code candidate} carries {@code type} among its interfaces at any depth, or is it. */
+    private static boolean carries(final NamedType candidate, final NamedType type) {
+        final Deque<NamedType> open = new ArrayDeque<>();
+        open.push(candidate);
+        final Set<NamedType> seen = new HashSet<>();
+        while (!open.isEmpty()) {
+            final NamedType at = open.pop();
+            if (at == type) {
+                return true;
+            }
+            if (seen.add(at)) {
+                at.interfaces().forEach(open::push);
+            }
+        }
+        return false;
     }
 
     /** Whether something may stand in this method's place: it said so, or it is already standing in one. */
