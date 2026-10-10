@@ -2164,7 +2164,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   and installs Frames 11 from a stick in it. A stick that installs a system or a program says what it installs
   rather than "0% used", and a stick in the Dock is drawn as the stick itself, as the Pattern Encoder draws it.
 - A stick taken out of a Pattern Encoder no longer stands in its port again for a moment after it has gone.
-- On a desktop, a window's buttons light only under the window in front, a click on the bare desktop takes the
+- On a desktop, a window's buttons light only under the window in front, the minimize, maximize and close buttons
+  of a window behind another answer the first click and bring it forward, a click on the bare desktop takes the
   keyboard away from the window that had it, and a click on the monitor's frame below the glass no longer reaches
   the taskbar. The desktop's pointer is drawn where the mouse is to a fraction of a pixel, so it moves as finely.
 - Items dragged in a desktop window's inventory land in the cell they are let go over, the hotbar's row included.

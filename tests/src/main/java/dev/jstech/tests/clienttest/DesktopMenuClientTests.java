@@ -10,6 +10,7 @@ package dev.jstech.tests.clienttest;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.FilesApp;
 import dev.jstech.computers.client.os.ShellApp;
 import net.minecraft.client.Minecraft;
@@ -18,10 +19,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.List;
+
 /**
  * The desktop's own menus and settings: the right button on the wallpaper, its New menu making a
- * folder, the explorer's address bar typed over, and a desktop drawn at a smaller scale still taking
- * clicks where things are drawn.
+ * folder, the explorer's address bar typed over, a desktop drawn at a smaller scale still taking
+ * clicks where things are drawn, and the title-bar buttons of a window behind another answering the first click.
  */
 public final class DesktopMenuClientTests {
 
@@ -44,6 +47,28 @@ public final class DesktopMenuClientTests {
 
     private static FilesApp files(final ClientTestContext ctx) {
         return DesktopSteps.app(ctx, "Files", FilesApp.class);
+    }
+
+    /** The explorer windows, the front-most last. */
+    private static List<DesktopWindow> explorers(final ClientTestContext ctx) {
+        return ctx.screen(DesktopScreen.class).windowsFor("Files");
+    }
+
+    /*
+     * Clicks one title-bar button of a window that is not the front one, once, after checking that no window in front
+     * covers the button, which would make the click land on that one instead.
+     */
+    private static void clickButtonBehind(final ClientTestContext ctx, final DesktopWindow behind, final int button) {
+        final List<DesktopWindow> all = explorers(ctx);
+        ctx.assertTrue(all.getLast() != behind, "the window is behind another");
+        final int[] at = behind.buttonCentre(button);
+        for (final DesktopWindow other : all) {
+            if (other != behind && all.indexOf(other) > all.indexOf(behind)) {
+                ctx.assertTrue(at[0] < other.x() || at[0] >= other.x() + other.width() || at[1] < other.y()
+                        || at[1] >= other.y() + other.height(), "the button is not covered by the window in front");
+            }
+        }
+        ctx.clickDesktop(at);
     }
 
     private static ClientTestContext atTheDesktop(final ClientTestContext ctx, final ResourceLocation os,
@@ -197,6 +222,40 @@ public final class DesktopMenuClientTests {
                 .thenWaitUntil(() -> files(ctx).typeColumnWidth() >= before[0] + 20, SCREEN_WAIT,
                         "the Type column to grow by what its edge was dragged")
                 .thenScreenshot(2, "columns-dragged");
+    }
+
+    /**
+     * A title-bar button answers the first click on a window behind another, as on a real desktop: the window comes to
+     * the front and the button does what it does, without a click first to bring the window forward.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void windowButtons_answerTheFirstClickOnAWindowBehind(final ClientTestContext ctx) {
+        // The windows themselves, since bringing one forward changes their order.
+        final DesktopWindow[] first = new DesktopWindow[1];
+        final DesktopWindow[] second = new DesktopWindow[1];
+        atTheDesktop(ctx, FRAMES_XP, 0)
+                .then(SETTLE, () -> DesktopScreen.requestOpenFiles(""))
+                .thenWaitUntil(() -> explorers(ctx).size() == 1, SCREEN_WAIT, "the first explorer to open")
+                .then(SETTLE, () -> DesktopScreen.requestOpenFiles(""))
+                .thenWaitUntil(() -> explorers(ctx).size() == 2, SCREEN_WAIT, "the second explorer to open")
+                .then(SETTLE, () -> {
+                    first[0] = explorers(ctx).getFirst();
+                    second[0] = explorers(ctx).getLast();
+                    clickButtonBehind(ctx, first[0], DesktopWindow.BUTTON_MAXIMIZE);
+                })
+                .thenAssert(2, () -> first[0].maximized() && explorers(ctx).getLast() == first[0],
+                        "a click on the maximize button of the window behind brings it forward and maximizes it")
+                .thenScreenshot(0, "behind-maximized")
+                .then(SETTLE, () -> ctx.clickDesktop(first[0].buttonCentre(DesktopWindow.BUTTON_MAXIMIZE)))
+                .thenAssert(2, () -> !first[0].maximized(), "and a second one gives it back its size")
+                .then(SETTLE, () -> clickButtonBehind(ctx, second[0], DesktopWindow.BUTTON_CLOSE))
+                .thenAssert(2, () -> explorers(ctx).size() == 1 && explorers(ctx).getFirst() == first[0],
+                        "a click on the close button of the window now behind closes it")
+                .then(SETTLE, () -> DesktopScreen.requestOpenFiles(""))
+                .thenWaitUntil(() -> explorers(ctx).size() == 2, SCREEN_WAIT, "another explorer to open in front")
+                .then(SETTLE, () -> clickButtonBehind(ctx, first[0], DesktopWindow.BUTTON_MINIMIZE))
+                .thenAssert(2, () -> first[0].minimized(),
+                        "and one on the minimize button of the window behind puts it away");
     }
 
     /** The scale a machine starts at, before anybody opens Settings. */
