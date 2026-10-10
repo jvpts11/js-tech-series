@@ -30,6 +30,12 @@ public final class DesktopLayout {
      */
     private final Map<String, Integer> iconCells = new LinkedHashMap<>();
 
+    /**
+     * The most icons pinned to a cell. Past it a new icon stays in the auto-flow layout: the listing a desktop is
+     * sent carries no more, and a player's screen could otherwise name new keys without end.
+     */
+    public static final int MOST_ICON_CELLS = 256;
+
     /** Packs a desktop grid column and row into a single value for {@link #iconCells}. */
     public static int packCell(final int column, final int row) {
         return (column << 16) | (row & 0xFFFF);
@@ -68,7 +74,8 @@ public final class DesktopLayout {
 
     /** Pins a desktop icon ({@code key}) to a packed grid cell, replacing any previous position for it. */
     public void setIconCell(final String key, final int packedCell) {
-        if (key != null && !key.isEmpty()) {
+        if (key != null && !key.isEmpty()
+                && (this.iconCells.containsKey(key) || this.iconCells.size() < MOST_ICON_CELLS)) {
             this.iconCells.put(key, packedCell);
         }
     }
@@ -104,7 +111,7 @@ public final class DesktopLayout {
         for (final Tag entry : tag.getList("IconCells", Tag.TAG_COMPOUND)) {
             final CompoundTag c = (CompoundTag) entry;
             final String key = c.getString("Key");
-            if (!key.isEmpty()) {
+            if (!key.isEmpty() && this.iconCells.size() < MOST_ICON_CELLS) {
                 this.iconCells.put(key, c.getInt("Cell"));
             }
         }

@@ -158,8 +158,10 @@ public final class MediaUploads {
             return MediaTexts.QUOTA_FULL.with(megabytes(store.broughtBytes(player.getUUID())),
                     MediaBalance.playerQuotaMegabytes());
         }
+        // A token already on its way is that upload's: taking a second offer under it would leave the first one's file
+        // open on the server, and a client could repeat that without ever filling its count.
         final Map<Integer, Incoming> theirs = INCOMING.get(player.getUUID());
-        if (theirs != null && theirs.size() >= MOST_AT_ONCE) {
+        if (theirs != null && (theirs.size() >= MOST_AT_ONCE || theirs.containsKey(offer.token()))) {
             return MediaTexts.BUSY.text();
         }
         return handler.refuse(player, offer.context(), offer.name(), offer.media());

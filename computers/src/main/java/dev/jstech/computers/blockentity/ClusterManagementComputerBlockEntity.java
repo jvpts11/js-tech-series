@@ -274,7 +274,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
 
     @Nullable
     public HbwInterfaceBlockEntity supercomputerAt(final BlockPos anchor) {
-        return level != null && level.getBlockEntity(anchor) instanceof HbwInterfaceBlockEntity hub ? hub : null;
+        return level != null && Loaded.blockEntity(level, anchor) instanceof HbwInterfaceBlockEntity hub ? hub : null;
     }
 
     @Nullable
@@ -332,7 +332,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
 
     @Nullable
     private ServerRackBlockEntity rackAt(final BlockPos pos) {
-        return level != null && level.getBlockEntity(pos) instanceof ServerRackBlockEntity rack ? rack : null;
+        return level != null && Loaded.blockEntity(level, pos) instanceof ServerRackBlockEntity rack ? rack : null;
     }
 
     // install media: the discs in the readers linked to this machine
@@ -382,13 +382,14 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
         return changed;
     }
 
-    /** Flips one node's bay; the node must be a computer in a cabinet the card reaches. */
-    public boolean toggleNode(final BlockPos rackPos, final int row) {
-        final ServerRackBlockEntity rack = rackAt(rackPos);
-        if (rack == null || !reaches(rack.rackType()) || !rack.computerSlots().contains(row)) {
+    /** Flips one node's bay; the node must be one of the cluster's, a computer in a cabinet the card reaches. */
+    public boolean toggleNode(final ClusterRef ref, final NodeRef node) {
+        final ServerRackBlockEntity rack = rackAt(node.rack());
+        if (rack == null || !reaches(rack.rackType()) || !rack.computerSlots().contains(node.row())
+                || !nodesOf(ref).contains(node)) {
             return false;
         }
-        rack.toggleBayPower(row);
+        rack.toggleBayPower(node.row());
         return true;
     }
 
@@ -534,7 +535,9 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
                 return ClusterJobTexts.NOTHING_TO_INSTALL.text();
             }
         }
-        final List<NodeRef> targets = only != null ? only : nodesOf(ref);
+        // Rows named one by one come from the player's screen, so only those that are the cluster's own are taken.
+        final List<NodeRef> members = nodesOf(ref);
+        final List<NodeRef> targets = only == null ? members : only.stream().filter(members::contains).toList();
         if (targets.isEmpty()) {
             return ClusterJobTexts.NO_NODES.text();
         }
@@ -568,7 +571,8 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
         while (j.lanes.size() < parallelLanes() && !j.queue.isEmpty()) {
             final NodeRef node = j.queue.remove(0);
             final ServerRackBlockEntity rack = rackAt(node.rack());
-            if (rack == null) {
+            // A job read back from a save names its rows as they were; a row the cabinet no longer seats is skipped.
+            if (rack == null || !rack.computerSlots().contains(node.row())) {
                 j.skippedNames.add(ClusterJobTexts.MISSING_RACK.text());
                 continue;
             }

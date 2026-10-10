@@ -137,7 +137,7 @@ public final class ClusterManagerPayloads {
                         ClusterManagerStateBuilder.BAYS_ON.with(cmc.powerAll(ref, true));
                 case ClusterManagerActionPayload.ACTION_POWER_ALL_OFF ->
                         ClusterManagerStateBuilder.BAYS_OFF.with(cmc.powerAll(ref, false));
-                case ClusterManagerActionPayload.ACTION_TOGGLE_NODE -> cmc.toggleNode(node.rack(), node.row())
+                case ClusterManagerActionPayload.ACTION_TOGGLE_NODE -> cmc.toggleNode(ref, node)
                         ? Text.EMPTY : ClusterManagerStateBuilder.NOT_A_NODE.text();
                 case ClusterManagerActionPayload.ACTION_CANCEL_JOB ->
                         cmc.cancelJob() ? ClusterManagerStateBuilder.JOB_CANCELLED.text() : Text.EMPTY;

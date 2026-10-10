@@ -391,9 +391,13 @@ final class MainframeServices {
         return pausedJobs.contains(jobName.toLowerCase(Locale.ROOT));
     }
 
-    /** Pauses a job (a resumable end): the agent stops firing it until it is restarted. */
+    /**
+     * Pauses a job (a resumable end): the agent stops firing it until it is restarted. Only a job the catalog holds
+     * is paused: the name comes from a player's screen, and a list of names nothing answers to would only grow.
+     */
     void pauseJob(final String jobName) {
-        if (pausedJobs.add(jobName.toLowerCase(Locale.ROOT))) {
+        if (catalog.contains(IqlDefinition.ObjectType.JOB, jobName)
+                && pausedJobs.add(jobName.toLowerCase(Locale.ROOT))) {
             mainframe.setChanged();
         }
     }
@@ -455,6 +459,8 @@ final class MainframeServices {
             }
             tag.put("IqlCatalog", objects);
         }
+        // A job dropped from the catalog since it was paused is left out, so the list never outgrows the jobs.
+        pausedJobs.removeIf(name -> !catalog.contains(IqlDefinition.ObjectType.JOB, name));
         if (!pausedJobs.isEmpty()) {
             final ListTag paused = new ListTag();
             for (final String name : pausedJobs) {

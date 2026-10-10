@@ -66,4 +66,11 @@ class InteracStateTest {
     void searchingFor_startsTheRowsAgainFromTheTop() {
         assertEquals(0, InteracState.OPENING.picking(9).searchingFor("stone").selected());
     }
+
+    @Test
+    void constructor_holdsAHugeGlassToTheLargestOneDrawn() {
+        final InteracState state = new InteracState(0, 0, "", "", 0L, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        assertEquals(InteracState.MOST_COLUMNS, state.columns());
+        assertEquals(InteracState.MOST_ROWS, state.rows());
+    }
 }

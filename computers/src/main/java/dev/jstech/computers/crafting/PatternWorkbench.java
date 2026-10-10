@@ -67,6 +67,10 @@ public final class PatternWorkbench {
         /** What a fluid or chemical cell gets when it is placed from an item that carries it: one bucket. */
         public static final long CONTINUOUS_DEFAULT_AMOUNT = StorageKey.MB_EQ_PER_ITEM;
 
+        public DataCell {
+            amount = Math.min(ProcessingPattern.MOST_AMOUNT, amount);
+        }
+
         public static final Codec<DataCell> CODEC = RecordCodecBuilder.create(i -> i.group(
                 StorageKey.CODEC.fieldOf("key").forGetter(DataCell::key),
                 Codec.LONG.fieldOf("amount").forGetter(DataCell::amount),
@@ -350,8 +354,8 @@ public final class PatternWorkbench {
     /** Replaces the whole machine draft with the given cells (a recipe transfer). Chances reset to guaranteed. */
     public void applyProcessingCells(final List<DataCell> inputs, final List<DataCell> outputs) {
         for (int i = 0; i < PROC_GRID; i++) {
-            procInputs[i] = i < inputs.size() ? inputs.get(i) : null;
-            procOutputs[i] = i < outputs.size() ? outputs.get(i) : null;
+            procInputs[i] = i < inputs.size() ? counted(inputs.get(i)) : null;
+            procOutputs[i] = i < outputs.size() ? counted(outputs.get(i)) : null;
             outputChances[i] = ProcessingPattern.FULL_CHANCE;
         }
     }
@@ -676,4 +680,9 @@ public final class PatternWorkbench {
         }
     }
 
+    /* The cell as a draft keeps it: one that asks for nothing, or less, is an empty cell, as the editor makes it. */
+    @Nullable
+    private static DataCell counted(@Nullable final DataCell cell) {
+        return cell == null || cell.amount() <= 0 ? null : cell;
+    }
 }

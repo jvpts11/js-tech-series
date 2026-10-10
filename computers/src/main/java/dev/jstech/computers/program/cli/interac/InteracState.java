@@ -73,6 +73,13 @@ public record InteracState(int tab, int selected, String search, String action, 
     /** How many rows it is taken to hold for the same reason, which is what a terminal held as well. */
     public static final int DEFAULT_ROWS = 24;
 
+    /*
+     * The largest glass a screen is drawn for. The size comes from the path the player's screen asks for, and the
+     * machine draws every row of it, so a path naming two billion rows would have the server build them all.
+     */
+    static final int MOST_COLUMNS = 256;
+    static final int MOST_ROWS = 128;
+
     /** The view as it opens: the network, nothing picked, nothing searched for. */
     public static final InteracState OPENING = new InteracState(0, 0, "", "", 0L);
 
@@ -81,8 +88,8 @@ public record InteracState(int tab, int selected, String search, String action, 
         selected = Math.max(0, selected);
         search = search == null ? "" : search;
         action = action == null ? "" : action.toLowerCase(Locale.ROOT);
-        columns = columns <= 0 ? DEFAULT_COLUMNS : columns;
-        rows = rows <= 0 ? DEFAULT_ROWS : rows;
+        columns = columns <= 0 ? DEFAULT_COLUMNS : Math.min(MOST_COLUMNS, columns);
+        rows = rows <= 0 ? DEFAULT_ROWS : Math.min(MOST_ROWS, rows);
     }
 
     /** The same, for whoever is not saying how big their glass is. */

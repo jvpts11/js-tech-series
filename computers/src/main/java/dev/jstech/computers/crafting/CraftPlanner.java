@@ -83,7 +83,7 @@ public final class CraftPlanner {
         }
 
         public long produced() {
-            return runs * perRun();
+            return Sizes.times(runs, perRun());
         }
     }
 
@@ -271,7 +271,7 @@ public final class CraftPlanner {
             chain.add(key);
             long feasibleRuns = runs;
             for (final Map.Entry<StorageKey, Long> ingredient : ingredients.entrySet()) {
-                final long need = ingredient.getValue() * runs;
+                final long need = Sizes.times(ingredient.getValue(), runs);
                 final long got = produce(ingredient.getKey(), need, depth + 1, chain, false);
                 if (got < need) {
                     // Short on this ingredient: only the runs it fully covers can execute.

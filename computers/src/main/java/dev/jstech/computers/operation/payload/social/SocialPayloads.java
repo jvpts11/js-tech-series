@@ -94,7 +94,9 @@ public final class SocialPayloads {
             return;
         }
         final String who = player.getGameProfile().getName();
-        final String room = payload.room().isBlank() ? MessengerLog.LOBBY : payload.room();
+        // A private room asked for by somebody who is not one of its two is the lobby for them.
+        final String asked = payload.room().isBlank() ? MessengerLog.LOBBY : payload.room();
+        final String room = MessengerLog.mayEnter(asked, who) ? asked : MessengerLog.LOBBY;
         final long now = level.getGameTime();
         // Anybody who has gone quiet is let go of first, so the weight below is of who is really there.
         log.forgetIdle(now);
@@ -117,7 +119,7 @@ public final class SocialPayloads {
             host.changed(); // what was said rides on the Server item, so it is written down at once
             tellEveryone(level, host, log);
         } else {
-            PacketDistributor.sendToPlayer(player, stateOf(host, room, log));
+            PacketDistributor.sendToPlayer(player, stateOf(host, room, log, who));
         }
     }
 
@@ -139,20 +141,20 @@ public final class SocialPayloads {
             if (other == null) {
                 log.disconnect(who);
             } else {
-                PacketDistributor.sendToPlayer(other, stateOf(host, log.roomOf(who), log));
+                PacketDistributor.sendToPlayer(other, stateOf(host, log.roomOf(who), log, who));
             }
         }
     }
 
-    private static MessengerStatePayload stateOf(final ServerServices.Host host,
-                                                 final String room, final MessengerLog log) {
+    private static MessengerStatePayload stateOf(final ServerServices.Host host, final String room,
+                                                 final MessengerLog log, final String viewer) {
         final List<MessengerStatePayload.Line> lines = new ArrayList<>();
         final List<String> connected = log.connected();
         for (final MessengerLog.Message message : log.room(room, MessengerStatePayload.MAX_LINES)) {
             lines.add(new MessengerStatePayload.Line(message.from(), message.text(), message.nudge(),
                     connected.contains(message.from())));
         }
-        final List<String> rooms = log.rooms();
+        final List<String> rooms = log.roomsFor(viewer);
         return new MessengerStatePayload(
                 new MessengerStatePayload.Service(true,
                         TextBounds.clip(host.name(), MessengerStatePayload.Service.MAX_HOST),

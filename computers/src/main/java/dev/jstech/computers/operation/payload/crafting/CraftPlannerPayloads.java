@@ -150,7 +150,7 @@ public final class CraftPlannerPayloads {
         }
         final long runs = Math.max(1, Sizes.ceilDiv(need, perRun));
         for (final Map.Entry<StorageKey, Long> e : inputs.entrySet()) {
-            treeWalk(e.getKey(), e.getValue() * runs, depth + 1, patterns, machines, out, visiting);
+            treeWalk(e.getKey(), Sizes.times(e.getValue(), runs), depth + 1, patterns, machines, out, visiting);
         }
         visiting.remove(key);
     }

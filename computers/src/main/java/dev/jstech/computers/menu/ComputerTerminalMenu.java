@@ -273,7 +273,10 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
         return systemName;
     }
 
-    @Nullable
+    /**
+     * The menu as the player's game opens it. The machine can stand beyond what this game has loaded while its
+     * monitor is close by, so the menu opens without it then: everything it reads of the machine reads as nothing.
+     */
     public static ComputerTerminalMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                    final RegistryFriendlyByteBuf buf) {
         final BlockPos monitorPos = buf.readBlockPos();
@@ -282,11 +285,9 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
         final ResourceLocation spaceId = buf.readBoolean() ? buf.readResourceLocation() : null;
         final String systemName = buf.readUtf(MAX_SYSTEM_NAME);
         final var be = playerInventory.player.level().getBlockEntity(hostPos);
-        if (be instanceof IComputerTerminalHost terminalHost) {
-            return new ComputerTerminalMenu(containerId, playerInventory, terminalHost, hostPos, monitorPos,
-                    initialTab, spaceId, systemName);
-        }
-        return null;
+        return new ComputerTerminalMenu(containerId, playerInventory,
+                be instanceof IComputerTerminalHost terminalHost ? terminalHost : null, hostPos, monitorPos,
+                initialTab, spaceId, systemName);
     }
 
     /** Writes what the client needs before the menu exists: where it is, which heading, and what it runs. */

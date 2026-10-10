@@ -16,8 +16,14 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +56,18 @@ public final class SoundfoundryCovers {
             return size() > KEPT;
         }
     };
+    /*
+     * Covers being made, by key, kept under the lock of MADE: a key asked for again while it is being made waits for
+     * the same making rather than reading its recording a second time.
+     */
+    private static final Map<String, CompletableFuture<byte[]>> MAKING = new HashMap<>();
+    /*
+     * Covers are made one at a time on a thread of their own, with a short line of requests waiting: making one can
+     * read a long recording, and a client asking for covers without end must not take the game's own workers or its
+     * memory. A request past the line comes back with no cover.
+     */
+    private static final int MOST_WAITING = 64;
+    private static final ThreadPoolExecutor MAKER = maker();
 
     private SoundfoundryCovers() {
     }
@@ -88,6 +106,41 @@ public final class SoundfoundryCovers {
             MADE.put(key, made);
         }
         return made;
+    }
+
+    /**
+     * The cover a key names, made on the covers' own thread, or {@link #NONE} at once when too many are already
+     * waiting to be made.
+     */
+    public static CompletableFuture<byte[]> coverLater(final String key) {
+        synchronized (MADE) {
+            final byte[] made = MADE.get(key);
+            if (made != null) {
+                return CompletableFuture.completedFuture(made);
+            }
+            final CompletableFuture<byte[]> making = MAKING.get(key);
+            if (making != null) {
+                return making;
+            }
+            final CompletableFuture<byte[]> future = new CompletableFuture<>();
+            try {
+                MAKER.execute(() -> {
+                    byte[] cover = NONE;
+                    try {
+                        cover = cover(key);
+                    } finally {
+                        synchronized (MADE) {
+                            MAKING.remove(key);
+                        }
+                        future.complete(cover);
+                    }
+                });
+            } catch (final RejectedExecutionException full) {
+                return CompletableFuture.completedFuture(NONE);
+            }
+            MAKING.put(key, future);
+            return future;
+        }
     }
 
     /** Forgets the covers made, the catalogue having been read again. */
@@ -175,5 +228,17 @@ public final class SoundfoundryCovers {
             }
         }
         return (int) (a / n) << 24 | (int) (r / n) << 16 | (int) (g / n) << 8 | (int) (b / n);
+    }
+
+    /* One thread, gone when there is nothing to make, so a server that never shows a cover keeps none. */
+    private static ThreadPoolExecutor maker() {
+        final ThreadPoolExecutor maker = new ThreadPoolExecutor(1, 1, 30L, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(MOST_WAITING), runnable -> {
+                    final Thread thread = new Thread(runnable, "Soundfoundry covers");
+                    thread.setDaemon(true);
+                    return thread;
+                });
+        maker.allowCoreThreadTimeOut(true);
+        return maker;
     }
 }

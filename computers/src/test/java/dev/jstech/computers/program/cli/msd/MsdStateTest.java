@@ -53,4 +53,11 @@ class MsdStateTest {
         assertEquals(MsdScreen.COM_BUTTON, closed.picked());
         assertTrue(closed.action().isEmpty(), "nothing is asked of the main screen");
     }
+
+    @Test
+    void on_holdsAHugeGlassToTheLargestOneDrawn() {
+        final MsdState state = MsdState.OPENING.on(Integer.MAX_VALUE, 2_000_000_000);
+        assertEquals(MsdState.MOST_COLUMNS, state.columns());
+        assertEquals(MsdState.MOST_ROWS, state.rows());
+    }
 }

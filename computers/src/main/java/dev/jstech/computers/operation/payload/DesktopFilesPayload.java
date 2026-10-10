@@ -11,6 +11,7 @@ import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.program.ComputerSettings;
+import dev.jstech.computers.program.DesktopLayout;
 import dev.jstech.computers.program.StartTiles;
 import dev.jstech.core.text.TextBounds;
 import java.util.ArrayList;
@@ -57,7 +58,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
      * cap, so the seventeenth installed program took the machine's desktop away from it.
      */
     public static final int MAX_PROGRAMS = 128;
-    public static final int MAX_ICON_CELLS = 256;
+    public static final int MAX_ICON_CELLS = DesktopLayout.MOST_ICON_CELLS;
     public static final int MAX_PINNED = ComputerSettings.MAX_PINNED;
     public static final int MAX_TILES = StartTiles.MAX;
     public static final int MAX_DEFAULT_APPS = ComputerSettings.MAX_DEFAULT_APPS;
@@ -201,12 +202,15 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
                 community, pinned, startTiles, defaultApps, trashFull, versions, buf.readFloat());
     }
 
-    /* Copied on the way in, so what the desktop is handed cannot change under it after it arrives. */
+    /*
+     * Copied on the way in, so what the desktop is handed cannot change under it after it arrives; the pinned cells
+     * are held to what the listing carries, which past its cap would throw as it is written.
+     */
     public DesktopFilesPayload {
         files = List.copyOf(files);
         programs = List.copyOf(programs);
         sourceBuilt = List.copyOf(sourceBuilt);
-        iconCells = List.copyOf(iconCells);
+        iconCells = List.copyOf(iconCells.size() > MAX_ICON_CELLS ? iconCells.subList(0, MAX_ICON_CELLS) : iconCells);
         community = List.copyOf(community);
         pinned = List.copyOf(pinned);
         startTiles = List.copyOf(startTiles);

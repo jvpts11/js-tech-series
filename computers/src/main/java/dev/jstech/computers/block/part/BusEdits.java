@@ -34,19 +34,21 @@ public final class BusEdits {
     public static boolean apply(final AbstractBusPart bus, final BusEditPayload edit, final ItemStack carried) {
         final int slot = edit.slot();
         final long value = edit.value();
+        // A step past any count there is would wrap the sum round to below zero, so it is held to the largest one.
+        final long step = Math.max(-MOST_COUNT, Math.min(MOST_COUNT, value));
         return switch (edit.op()) {
             case BusEditPayload.FILTER_SLOT -> bus.setFilterSlot(slot, carried, "");
             case BusEditPayload.ADD_ITEM -> !carried.isEmpty() && bus.firstEmptyFilterSlot() >= 0
                     && bus.setFilterSlot(bus.firstEmptyFilterSlot(), carried, "");
             case BusEditPayload.EXCLUDE -> bus.setExclude(value != 0L, "");
-            case BusEditPayload.KEEP -> bus.setKeep(count(bus.keep() + value), "");
-            case BusEditPayload.MAX -> bus.setMax(count(bus.max() + value), "");
+            case BusEditPayload.KEEP -> bus.setKeep(count(bus.keep() + step), "");
+            case BusEditPayload.MAX -> bus.setMax(count(bus.max() + step), "");
             case BusEditPayload.ITEM_KEEP -> inFilter(slot)
-                    && bus.setItemQuantities(slot, count(bus.itemKeep(slot) + value), bus.itemMax(slot), "");
+                    && bus.setItemQuantities(slot, count(bus.itemKeep(slot) + step), bus.itemMax(slot), "");
             case BusEditPayload.ITEM_MAX -> inFilter(slot)
-                    && bus.setItemQuantities(slot, bus.itemKeep(slot), count(bus.itemMax(slot) + value), "");
+                    && bus.setItemQuantities(slot, bus.itemKeep(slot), count(bus.itemMax(slot) + step), "");
             case BusEditPayload.PRIORITY -> bus.setPriority((int) Math.max(-MOST_PRIORITY,
-                    Math.min(MOST_PRIORITY, bus.priority() + value)), "");
+                    Math.min(MOST_PRIORITY, bus.priority() + step)), "");
             case BusEditPayload.MODE -> bus.setMode(value == 1L ? AbstractBusPart.MODE_REDSTONE
                     : AbstractBusPart.MODE_CONTINUOUS, "");
             case BusEditPayload.POWER -> bus.setPowered(value != 0L, "");

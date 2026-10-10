@@ -292,4 +292,21 @@ class MessengerLogTest {
                 new MessengerLog.Message("lobby", "ada", "hello", 1L, false);
         assertTrue(message.bytes() > "hello".length(), "a message costs more than its own words");
     }
+
+    @Test
+    void mayEnter_letsOnlyItsTwoPeopleIntoAPrivateRoom() {
+        final String room = MessengerLog.privateRoom("ada", "bob");
+        assertTrue(MessengerLog.mayEnter(room, "Ada"), "either of the two, in any case");
+        assertTrue(MessengerLog.mayEnter(room, "bob"));
+        assertFalse(MessengerLog.mayEnter(room, "eve"), "and nobody else, however the room is named");
+        assertTrue(MessengerLog.mayEnter(MessengerLog.LOBBY, "eve"), "while the lobby is everybody's");
+    }
+
+    @Test
+    void roomsFor_leavesOutThePrivateRoomsOfOtherPeople() {
+        log.say(MessengerLog.privateRoom("ada", "bob"), "ada", "hi", 1L, false);
+        log.say(MessengerLog.privateRoom("eve", "ada"), "eve", "psst", 2L, false);
+        assertEquals(List.of(MessengerLog.LOBBY, MessengerLog.privateRoom("eve", "ada")), log.roomsFor("eve"));
+        assertEquals(3, log.roomsFor("ada").size(), "the one in both sees both");
+    }
 }

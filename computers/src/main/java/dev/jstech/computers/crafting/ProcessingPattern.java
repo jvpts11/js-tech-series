@@ -37,6 +37,13 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
     public static final int DEFAULT_TIMEOUT_TICKS = 200;
     public static final int FULL_CHANCE = 100;
 
+    /**
+     * The most one input or output moves per run. A plan multiplies it by a number of runs that is itself held below
+     * this, so the product always fits a long; whatever asked for more, a pattern file or a player's screen, is held
+     * to it.
+     */
+    public static final long MOST_AMOUNT = Integer.MAX_VALUE;
+
     /** A recipe without an author's name or note: it goes by its primary output. */
     public ProcessingPattern(final List<ProcessingInput> inputs, final List<ProcessingOutput> outputs,
                              final int timeoutTicks) {
@@ -50,6 +57,10 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
      * flag only lets the GUIs say so until the author edits or confirms it.
      */
     public record ProcessingInput(StorageKey key, long amount, boolean estimated) {
+        public ProcessingInput {
+            amount = Math.max(1L, Math.min(MOST_AMOUNT, amount));
+        }
+
         public ProcessingInput(final StorageKey key, final long amount) {
             this(key, amount, false);
         }
@@ -71,6 +82,7 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
     /** One output: a key, how much it yields per run, and the percent chance it appears (100 = guaranteed). */
     public record ProcessingOutput(StorageKey key, long amount, int chancePercent) {
         public ProcessingOutput {
+            amount = Math.max(1L, Math.min(MOST_AMOUNT, amount));
             chancePercent = Math.max(1, Math.min(FULL_CHANCE, chancePercent));
         }
 

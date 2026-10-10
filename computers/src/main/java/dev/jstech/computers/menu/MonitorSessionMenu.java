@@ -131,11 +131,11 @@ public class MonitorSessionMenu extends CoreMenu implements IMonitorMenu {
         final BlockPos standingAt = monitorPos.equals(hostPos) ? hostPos : monitorPos;
         /*
          * A monitor switched to another machine of the same rack is no longer showing this one, and what is
-         * drawn here belongs to a machine the player is not looking at any more.
+         * drawn here belongs to a machine the player is not looking at any more; a monitor broken or replaced
+         * shows nothing at all.
          */
         final Predicate<Player> monitorStillShows = player -> monitorPos.equals(hostPos)
-                || !(level.getBlockEntity(monitorPos) instanceof MonitorBlockEntity monitor)
-                || monitor.shows(hostPos);
+                || level.getBlockEntity(monitorPos) instanceof MonitorBlockEntity monitor && monitor.shows(hostPos);
         return hostIsMachine.and(MenuValidity.near(level, standingAt, REACH)).and(monitorStillShows);
     }
 

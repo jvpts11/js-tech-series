@@ -273,7 +273,7 @@ public final class ClusterCommand implements ICliCommand {
                     if (index == rackIndex && node.row() == row) {
                         final ServerRackBlockEntity rack =
                                 (ServerRackBlockEntity) Loaded.blockEntity(cmc.getLevel(), node.rack());
-                        if (rack != null && rack.bayPowerOn(row) != on && cmc.toggleNode(node.rack(), row)) {
+                        if (rack != null && rack.bayPowerOn(row) != on && cmc.toggleNode(c.ref(), node)) {
                             ctx.out().ok(BAY_SWITCHED.with(ClusterManagementComputerBlockEntity.nodeName(rack, row),
                                     switched));
                         } else {

@@ -444,7 +444,10 @@ public final class FirmwarePayloads {
                 MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
             }
             case FirmwareActionPayload.ACTION_BOOT_MEDIA -> {
-                if (Loaded.blockEntity(level, BlockPos.of(payload.ref())) instanceof MediaReaderBlockEntity reader
+                // The reader comes from the player's screen, so it is only one the machine is linked to.
+                if (computer.enabledEndpoints().contains(payload.ref())
+                        && Loaded.blockEntity(level, BlockPos.of(payload.ref()))
+                                instanceof MediaReaderBlockEntity reader
                         && reader.insertedKind() == MediaKind.OS_INSTALL && reader.insertedPayload() != null) {
                     final OsDef os = OsRegistry.getOs(reader.insertedPayload());
                     /*
@@ -455,7 +458,10 @@ public final class FirmwarePayloads {
                      */
                     final LiveInstallState.Distro distro =
                             LiveMedium.distroOf(os == null ? null : os.id());
-                    if (os != null && distro != null && os.installMode() != InstallMode.GUIDED) {
+                    final HardwareEra hostEra =
+                            computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
+                    if (os != null && distro != null && os.installMode() != InstallMode.GUIDED
+                            && OsGating.canInstall(os.minEra(), hostEra)) {
                         /*
                          * A live medium: the machine starts from it, which means it restarts. The self-test
                          * runs again and the medium's shell is what comes up after it, exactly as starting

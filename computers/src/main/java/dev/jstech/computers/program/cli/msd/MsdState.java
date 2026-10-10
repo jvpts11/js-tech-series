@@ -36,14 +36,21 @@ public record MsdState(boolean ports, int picked, String action, int columns, in
     /** How many rows it is taken to hold for the same reason. */
     public static final int DEFAULT_ROWS = 24;
 
+    /*
+     * The largest glass a screen is drawn for. The size comes from the path the player's screen asks for, and the
+     * machine draws every row of it, so a path naming two billion rows would have the server build them all.
+     */
+    static final int MOST_COLUMNS = 256;
+    static final int MOST_ROWS = 128;
+
     /** The screen as it opens: the main buttons, the first one picked. */
     public static final MsdState OPENING = new MsdState(false, 0, "", DEFAULT_COLUMNS, DEFAULT_ROWS);
 
     public MsdState {
         picked = Math.max(0, picked);
         action = action == null ? "" : action.toLowerCase(Locale.ROOT);
-        columns = columns <= 0 ? DEFAULT_COLUMNS : columns;
-        rows = rows <= 0 ? DEFAULT_ROWS : rows;
+        columns = columns <= 0 ? DEFAULT_COLUMNS : Math.min(MOST_COLUMNS, columns);
+        rows = rows <= 0 ? DEFAULT_ROWS : Math.min(MOST_ROWS, rows);
     }
 
     /** The same screen with another button or port picked. */

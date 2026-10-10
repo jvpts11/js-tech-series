@@ -397,9 +397,10 @@ public final class ClusterManagerGameTests {
                      */
                     helper.assertTrue(manager.nodesOf(ref).size() == 1,
                             "an off bay stays in the section's node list; got " + manager.nodesOf(ref).size());
-                    helper.assertTrue(manager.toggleNode(helper.absolutePos(SERVER_RACK), 0) && rack.bayPowerOn(0),
+                    helper.assertTrue(manager.toggleNode(ref, new NodeRef(helper.absolutePos(SERVER_RACK), 0))
+                                    && rack.bayPowerOn(0),
                             "a single node answers to its cabinet and row");
-                    helper.assertTrue(!manager.toggleNode(helper.absolutePos(SERVER_RACK), 5),
+                    helper.assertTrue(!manager.toggleNode(ref, new NodeRef(helper.absolutePos(SERVER_RACK), 5)),
                             "an empty row is not a node to switch");
                 })
                 .thenSucceed();
@@ -649,6 +650,41 @@ public final class ClusterManagerGameTests {
                 .thenSucceed();
     }
 
+    /** A row named from a player's screen is only installed on when it is one of the cluster's own. */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void manager_installsOnlyOnRowsOfTheCluster(final GameTestHelper helper) {
+        final ClusterManagementComputerBlockEntity manager = placeBackbone(helper, fabricHostAdapter());
+        final ServerRackBlockEntity rack = placeDatacenter(helper, 1);
+        linkReaderWithDisc(helper, READER_EAST, MediaKind.OS_INSTALL, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 6, () -> {
+                    final ClusterRef ref = sectionRef(helper);
+                    final List<NodeRef> strangers = List.of(new NodeRef(rack.getBlockPos(), 99),
+                            new NodeRef(helper.absolutePos(MAINFRAME), 0));
+                    final String status = manager.startJob(ref, JobKind.SYSTEM, strangers).english();
+                    helper.assertTrue(status.equals("no nodes in that cluster"),
+                            "a row past the cabinet and a block that is no rack are refused; got " + status);
+                    helper.assertTrue(manager.job() == null, "and no job starts");
+                })
+                .thenSucceed();
+    }
+
+    /** The same for switching one node's bay. */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void manager_togglesOnlyNodesOfTheCluster(final GameTestHelper helper) {
+        final ClusterManagementComputerBlockEntity manager = placeBackbone(helper, fabricHostAdapter());
+        final ServerRackBlockEntity rack = placeDatacenter(helper, 1);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 6, () -> {
+                    final ClusterRef ref = sectionRef(helper);
+                    helper.assertFalse(manager.toggleNode(ref, new NodeRef(rack.getBlockPos(), 99)),
+                            "a row the cabinet does not seat is not switched");
+                    final NodeRef node = manager.nodesOf(ref).get(0);
+                    helper.assertTrue(manager.toggleNode(ref, node), "while one of the cluster's own is");
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = INSTALL_TIMEOUT)
     public static void manager_cancelKeepsTheNodesAlreadyBeingWritten(final GameTestHelper helper) {
         final ClusterManagementComputerBlockEntity manager = placeBackbone(helper, fabricHostAdapter());
@@ -738,7 +774,8 @@ public final class ClusterManagerGameTests {
                     final ClusterRef ref = supercomputerRef(manager);
                     helper.assertTrue(manager.powerAll(ref, false) == 0 && rack.bayPowerOn(0) && rack.bayPowerOn(2),
                             "out of the card's reach the bays stay untouched");
-                    helper.assertTrue(!manager.toggleNode(helper.absolutePos(NODE_RACK), 0) && rack.bayPowerOn(0),
+                    helper.assertTrue(!manager.toggleNode(ref, new NodeRef(helper.absolutePos(NODE_RACK), 0))
+                                    && rack.bayPowerOn(0),
                             "a single node out of reach does not answer either");
                     helper.assertTrue(manager.startJob(ref, JobKind.SYSTEM).english()
                                     .equals("this card does not reach that cluster"),

@@ -20,6 +20,7 @@ import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.util.Sizes;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -85,7 +86,7 @@ public final class CraftPlanMath {
                 final long runs = Sizes.ceilDiv(quantity, Math.max(1, bench.result().getCount()));
                 rows = new ArrayList<>();
                 for (final var in : bench.ingredientTotals().entrySet()) {
-                    final long need = in.getValue() * runs;
+                    final long need = Sizes.times(in.getValue(), runs);
                     rows.add(new CraftPlanPayload.Row(in.getKey().stack(1), need,
                             Math.min(stock.getOrDefault(in.getKey(), 0L), need)));
                 }
@@ -155,14 +156,14 @@ public final class CraftPlanMath {
         long units = 0;
         long machineTicks = 0;
         for (final var step : plan.steps()) {
-            units += step.runs() * step.unitsPerRun();
+            units = Sizes.plus(units, Sizes.times(step.runs(), step.unitsPerRun()));
             if (step.isMachine()) {
                 machineTicks += step.machine().timeoutTicks();
             }
         }
         long rate = 0;
         for (final BlockPos pos : mainframe.craftingComputerPositions()) {
-            if (level.getBlockEntity(pos)
+            if (Loaded.blockEntity(level, pos)
                     instanceof CraftingComputerBlockEntity cc
                     && cc.canCraft()) {
                 rate = Math.max(rate, cc.craftingThroughput());
@@ -171,7 +172,8 @@ public final class CraftPlanMath {
         if (rate <= 0) {
             return 0;
         }
-        return (int) Math.max(1, (units + rate - 1) / rate + machineTicks);
+        // A plan too large to finish in a number of ticks the count holds reads as the longest it can say.
+        return (int) Math.min(Integer.MAX_VALUE, Math.max(1L, Sizes.plus(Sizes.ceilDiv(units, rate), machineTicks)));
     }
 
     /** A machine recipe's plan for the request popup: direct rows (need vs have), feasibility, max, estimate, stages. */
@@ -217,7 +219,7 @@ public final class CraftPlanMath {
                 final List<CraftPlanPayload.Row> rows = new ArrayList<>();
                 long maxRuns = Long.MAX_VALUE;
                 for (final var in : bench.ingredientTotals().entrySet()) {
-                    final long need = in.getValue() * runs;
+                    final long need = Sizes.times(in.getValue(), runs);
                     final long have = stock.getOrDefault(in.getKey(), 0L);
                     maxRuns = Math.min(maxRuns, have / Math.max(1, in.getValue()));
                     rows.add(new CraftPlanPayload.Row(in.getKey().stack(1), need, Math.min(have, need)));
@@ -235,7 +237,7 @@ public final class CraftPlanMath {
         final List<CraftPlanPayload.Row> rows = new ArrayList<>();
         long maxRuns = Long.MAX_VALUE;
         for (final var in : first.inputs()) {
-            final long need = in.amount() * runs;
+            final long need = Sizes.times(in.amount(), runs);
             final long have = stock.getOrDefault(in.key(), 0L);
             maxRuns = Math.min(maxRuns, have / Math.max(1, in.amount()));
             final ItemStack icon = in.key().stack(1);

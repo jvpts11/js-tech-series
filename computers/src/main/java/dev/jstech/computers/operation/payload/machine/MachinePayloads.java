@@ -89,7 +89,8 @@ public final class MachinePayloads {
         registrar.playToClient(MonitorPicturePayload.TYPE, MonitorPicturePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) -> IMonitorPictureSink.Holder.accept(payload)));
         ComputerAccess.accept(registrar, RemoteControlPayload.TYPE, RemoteControlPayload.STREAM_CODEC,
-                ComputerAccess.machine(RemoteControlPayload::hostPos), MachinePayloads::handleRemoteControl);
+                ComputerAccess.machineAt(RemoteControlPayload::hostPos, RemoteControlPayload::monitorPos),
+                MachinePayloads::handleRemoteControl);
         registrar.playToClient(RemoteHostsPayload.TYPE, RemoteHostsPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(MachinePayloads::handleRemoteHosts));
         ComputerAccess.accept(registrar, KvmSelectPayload.TYPE, KvmSelectPayload.STREAM_CODEC,

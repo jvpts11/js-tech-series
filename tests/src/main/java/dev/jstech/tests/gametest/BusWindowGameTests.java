@@ -69,6 +69,20 @@ public final class BusWindowGameTests {
         helper.succeed();
     }
 
+    /** A step past any count there is raises a keep to the most it holds, where it once went round to nothing. */
+    @GameTest(template = ARENA)
+    public static void edits_holdAHugeStepToTheLargestCount(final GameTestHelper helper) {
+        final ImportBusPart legacy = ComputingParts.LEGACY_IMPORT.get().create();
+        apply(legacy, BusEditPayload.KEEP, 0, 16L);
+        apply(legacy, BusEditPayload.KEEP, 0, Long.MAX_VALUE);
+        helper.assertTrue(legacy.keep() == BusEdits.MOST_COUNT, "the keep goes to its most; got " + legacy.keep());
+        final ImportBusPart standard = ComputingParts.IMPORT.get().create();
+        apply(standard, BusEditPayload.PRIORITY, 0, Long.MAX_VALUE);
+        helper.assertTrue(standard.priority() == BusEdits.MOST_PRIORITY,
+                "and so does the priority; got " + standard.priority());
+        helper.succeed();
+    }
+
     /** A Vintage bus has nothing to keep and no filter past its first slot, as its window shows. */
     @GameTest(template = ARENA)
     public static void edits_refuseWhatTheEraCannotBeSetTo(final GameTestHelper helper) {

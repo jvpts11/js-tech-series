@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.engine.CraftRequest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -23,6 +24,10 @@ import net.minecraft.world.item.ItemStack;
  */
 public record RequestCraftPlannerPayload(BlockPos host, BlockPos monitorPos, ItemStack target, long quantity)
         implements CustomPacketPayload {
+
+    public RequestCraftPlannerPayload {
+        quantity = Math.min(quantity, CraftRequest.MOST_DEMAND);
+    }
 
     public static final CustomPacketPayload.Type<RequestCraftPlannerPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "request_craft_planner"));

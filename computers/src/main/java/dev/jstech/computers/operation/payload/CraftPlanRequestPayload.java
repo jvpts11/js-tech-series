@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.engine.CraftRequest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -26,6 +27,11 @@ public record CraftPlanRequestPayload(BlockPos monitorPos, BlockPos hostPos,
 
     /** No recipe named: the machine's own choice. */
     public static final int ANY = -1;
+
+    public CraftPlanRequestPayload {
+        // A preview of more than any craft asks for would only work its sums past what a long holds.
+        quantity = Math.min(quantity, CraftRequest.MOST_DEMAND);
+    }
 
     public CraftPlanRequestPayload(final BlockPos monitorPos, final BlockPos hostPos, final ItemStack result,
                                    final long quantity) {

@@ -13,8 +13,6 @@ import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.SoundfoundryCoverPayload;
 import dev.jstech.computers.operation.payload.SoundfoundryCoverRequestPayload;
-import java.util.concurrent.CompletableFuture;
-import net.minecraft.Util;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,11 +41,10 @@ public final class SoundfoundryCoverPayloads {
                                   final ServerLevel level) {
         final MinecraftServer server = level.getServer();
         final String key = payload.key();
-        CompletableFuture.supplyAsync(() -> SoundfoundryCovers.cover(key), Util.backgroundExecutor())
-                .thenAcceptAsync(image -> {
-                    if (!player.hasDisconnected()) {
-                        PacketDistributor.sendToPlayer(player, new SoundfoundryCoverPayload(key, image));
-                    }
-                }, server);
+        SoundfoundryCovers.coverLater(key).thenAcceptAsync(image -> {
+            if (!player.hasDisconnected()) {
+                PacketDistributor.sendToPlayer(player, new SoundfoundryCoverPayload(key, image));
+            }
+        }, server);
     }
 }

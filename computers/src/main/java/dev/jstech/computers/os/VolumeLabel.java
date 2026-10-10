@@ -10,6 +10,7 @@ package dev.jstech.computers.os;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -58,8 +59,7 @@ public final class VolumeLabel {
         if (trimmed.isEmpty()) {
             stack.remove(ComputingComponents.VOLUME_LABEL.get());
         } else {
-            stack.set(ComputingComponents.VOLUME_LABEL.get(),
-                    trimmed.length() > MAX_LENGTH ? trimmed.substring(0, MAX_LENGTH) : trimmed);
+            stack.set(ComputingComponents.VOLUME_LABEL.get(), TextBounds.clip(trimmed, MAX_LENGTH));
         }
     }
 }

@@ -1934,6 +1934,28 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   other side as a question mark.
 - A datapack value holding a string too long to send stays on the server, with a warning in its log, instead of
   dropping every player who joins.
+- Nobody can read or write another pair's private conversation in the Messenger by naming its room, and nobody is
+  shown the names of the private rooms they are not in, which told who talks to whom.
+- The Cluster Manager installs on and switches only the nodes of the cluster chosen. A modified client could name
+  any reachable rack anywhere, and a row past a cabinet's last stopped the manager's job.
+- The Interac and Midsoft Diagnostics screens a machine draws are at most 256 columns by 128 rows: a size asked for
+  without a limit could take all of the server's memory.
+- Booting a live medium from the firmware setup takes only a reader the machine is linked to, and only a system its
+  hardware runs, as installing from one already did.
+- Taking over a remote machine changes only the monitor the player is at.
+- A craft asks for at most 2,147,483,647 of anything, and a plan's sums stop at the largest number they hold rather
+  than going round to nothing, which showed a huge request as already covered.
+- A machine recipe's draft keeps no cell of nothing or less, and holds each amount to what one run can move, however
+  it was filled; a pattern file read back is held to the same.
+- A bus's keep, max and priority raised by a huge step stop at their most, where they went round to nothing.
+- A desktop pins at most 256 icons to cells: a desktop with more pinned no longer opened.
+- An automation job is paused only when there is such a job, and pauses of jobs deleted since are forgotten.
+- The Soundfoundry's covers are made one at a time on a thread of their own, with a short queue, and a cover asked
+  for twice at once is made once; a flood of requests took the workers the game itself uses.
+- A recording offered twice under the same number no longer leaves the first upload's file open on the server.
+- A self-test, installer or KVM screen closes when its monitor is broken, rather than staying open on nothing.
+- A terminal opens on a monitor whose machine is beyond what the player's game has loaded, where it failed.
+- A volume label is never cut between the two halves of an emoji.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 
