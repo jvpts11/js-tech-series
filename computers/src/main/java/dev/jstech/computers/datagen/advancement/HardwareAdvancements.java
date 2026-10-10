@@ -28,7 +28,8 @@ import java.util.function.Supplier;
 
 /**
  * The machines themselves: putting one together, the eras it can be built in, and the racks, datacenters, clusters
- * and supercomputers they grow into. The Advanced, Exa and Singularity builds join once those eras have hardware.
+ * and supercomputers they grow into. Only the eras with a build task here count towards Time Traveller; the
+ * other eras join it when they get their own build task.
  */
 public final class HardwareAdvancements extends JscAdvancementTab {
 
@@ -60,7 +61,7 @@ public final class HardwareAdvancements extends JscAdvancementTab {
             everyEra.put(HardwareMilestones.eraDetail(era), built(era));
         }
         this.challengeOfAll("time_traveller", "standard_build", Items.CLOCK, "Time Traveller",
-                "Build a working computer of every era there is", everyEra);
+                "Build a working Vintage, Legacy and Standard computer", everyEra);
 
         this.goal("rack_em_up", "root", ComputingModule.SERVER_RACK.item(), "Rack 'Em Up",
                 "Fill every unit of a Server Rack", on(JscEvents.RACK_FILLED));

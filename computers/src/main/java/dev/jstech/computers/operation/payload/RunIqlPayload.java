@@ -25,7 +25,7 @@ import net.minecraft.resources.ResourceLocation;
  * @param tab    the query tab that asked
  * @param seq    which statement of the run this is, from zero
  */
-public record RunIqlPayload(BlockPos monitorPos, BlockPos hostPos, int window, int tab, int seq, String statement)
+public record RunIqlPayload(BlockPos hostPos, BlockPos monitorPos, int window, int tab, int seq, String statement)
         implements CustomPacketPayload {
 
     public static final int MAX_LEN = 512;
@@ -35,8 +35,8 @@ public record RunIqlPayload(BlockPos monitorPos, BlockPos hostPos, int window, i
 
     public static final StreamCodec<RegistryFriendlyByteBuf, RunIqlPayload> STREAM_CODEC =
             StreamCodec.composite(
-                    BlockPos.STREAM_CODEC, RunIqlPayload::monitorPos,
                     BlockPos.STREAM_CODEC, RunIqlPayload::hostPos,
+                    BlockPos.STREAM_CODEC, RunIqlPayload::monitorPos,
                     ByteBufCodecs.VAR_INT, RunIqlPayload::window,
                     ByteBufCodecs.VAR_INT, RunIqlPayload::tab,
                     ByteBufCodecs.VAR_INT, RunIqlPayload::seq,

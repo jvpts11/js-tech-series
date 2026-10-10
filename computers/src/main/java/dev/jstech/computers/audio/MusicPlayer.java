@@ -10,8 +10,8 @@ package dev.jstech.computers.audio;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerServices;
-import dev.jstech.computers.os.fs.RecordingFile;
 import dev.jstech.computers.program.SoundfoundryState;
+import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaInfo;
 import dev.jstech.core.audio.media.MediaPlace;
 import dev.jstech.core.audio.media.MediaSessions;
@@ -258,12 +258,16 @@ public final class MusicPlayer {
 
     /*
      * The song takes voices of the sound card, two for a stereo song on a card that plays both sides and one
-     * otherwise, until its end; another sound taking them stops it, and says so on the screen.
+     * otherwise, until its end; another sound taking them stops it, and says so on the screen. A song whose
+     * descriptor gives no length is measured in the media store, and one that cannot be measured keeps its voices
+     * until it is stopped.
      */
     private void takeVoices(final ServerLevel level, final MediaInfo info, final long from) {
         final boolean stereo = computer.audioHost().audioDevice().stereo() && info.channels() >= 2;
-        final long left = Math.max(1L, (info.millis() - Math.max(0L, from)) / TICK_MILLIS);
-        computer.voices().take(level, false, key(), stereo ? 2 : 1, level.getGameTime() + left, stopped -> {
+        final long millis = millisOf(on == null ? null : on.media(), info);
+        final long endsAt = millis <= 0L ? Long.MAX_VALUE
+                : level.getGameTime() + Math.max(1L, (millis - Math.max(0L, from)) / TICK_MILLIS);
+        computer.voices().take(level, false, key(), stereo ? 2 : 1, endsAt, stopped -> {
             MediaSessions.stop(stopped, key());
             trouble = SoundfoundryTexts.VOICES_TAKEN.text();
         });
@@ -331,6 +335,9 @@ public final class MusicPlayer {
         final int next = state.next(state.repeat(), SHUFFLING);
         if (next >= 0) {
             computer.musicPlayer().start(level, next, 0L);
+        } else {
+            // The song held its voices to an end it could not know; with nothing after it they are let go.
+            computer.voices().release(computer.musicPlayer().key());
         }
     }
 
@@ -352,14 +359,17 @@ public final class MusicPlayer {
         return computer.console().soundfoundry();
     }
 
-    /* How long the recording a song names runs, read from the server's store, or 0 when it cannot be read. */
-    static long millisOf(final RecordingFile song) {
-        if (song.info().millis() > 0) {
-            return song.info().millis();
+    /* How long a song runs: its descriptor's length, else the media store's, or 0 when neither knows. */
+    static long millisOf(@Nullable final MediaId media, final MediaInfo info) {
+        if (info.millis() > 0) {
+            return info.millis();
+        }
+        if (media == null) {
+            return 0L;
         }
         return MediaStore.current().map(store -> {
             try {
-                return store.info(song.media()).millis();
+                return store.info(media).millis();
             } catch (final IOException unreadable) {
                 return 0L;
             }

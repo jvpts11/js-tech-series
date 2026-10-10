@@ -149,6 +149,18 @@ public final class BusWindowGameTests {
         helper.succeed();
     }
 
+    /** A bus holds one hours window; a second is refused and the first stays. */
+    @GameTest(template = ARENA)
+    public static void addCondition_refusesASecondHoursWindow(final GameTestHelper helper) {
+        final ImportBusPart bus = ComputingParts.ADVANCED_IMPORT.get().create();
+        helper.assertTrue(bus.addCondition(BusCondition.hours(18, 6), ""), "the first window is taken");
+        helper.assertFalse(bus.addCondition(BusCondition.hours(8, 12), ""), "a second window is refused");
+        helper.assertFalse(BusEdits.apply(bus, new BusEditPayload(BusEditPayload.ADD_CONDITION,
+                BusCondition.Kind.HOURS.id(), 8L * 24L + 12L, ""), ItemStack.EMPTY), "and so is one from the window");
+        helper.assertTrue(bus.conditions().equals(List.of(BusCondition.hours(18, 6))), "the first one stays");
+        helper.succeed();
+    }
+
     /** What the window is sent comes off the wire as it went on. */
     @GameTest(template = ARENA)
     public static void state_comesBackFromTheWireAsItWent(final GameTestHelper helper) {

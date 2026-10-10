@@ -248,7 +248,7 @@ final class IsmsQueries {
         final IsmsDocument.Run run = doc.run;
         final IqlScript.Statement statement = run == null ? null : run.current();
         if (statement != null) {
-            app.send(new RunIqlPayload(app.monitor(), app.host(), app.window(), doc.id, run.next, statement.text()));
+            app.send(new RunIqlPayload(app.host(), app.monitor(), app.window(), doc.id, run.next, statement.text()));
         }
     }
 

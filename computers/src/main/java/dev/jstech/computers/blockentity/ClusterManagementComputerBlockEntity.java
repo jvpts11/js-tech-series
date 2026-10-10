@@ -69,7 +69,7 @@ import java.util.Set;
  * never a loophole. A cluster works without one.
  */
 public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerBlockEntity
-        implements IComputerTerminalHost {
+        implements IComputerTerminalHost, IAssemblyComputer {
 
     // The same consumer/workstation slot layout as a Personal Computer.
     public static final int MOTHERBOARD_SLOT = 0;
@@ -785,26 +785,32 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
     private final DerivedInt assemblyManagerInstalled = fields().derived("AssemblyManagerInstalled",
             () -> console() != null && console().isInstalled(Programs.CLUSTER_MANAGER.toString())).toMenu();
 
+    @Override
     public boolean assemblyRunning() {
         return assemblyRunning.isSet();
     }
 
+    @Override
     public boolean assemblyBuildValid() {
         return assemblyBuildValid.isSet();
     }
 
+    @Override
     public long assemblyCapacity() {
         return assemblyCapacity.getAsInt();
     }
 
+    @Override
     public long assemblyRamBuffer() {
         return assemblyRamBuffer.getAsInt();
     }
 
+    @Override
     public boolean assemblyAutoStart() {
         return assemblyAutoStart.isSet();
     }
 
+    @Override
     public boolean assemblyOnNetwork() {
         return assemblyOnNetwork.isSet();
     }

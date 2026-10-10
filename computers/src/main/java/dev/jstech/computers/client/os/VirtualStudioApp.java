@@ -7,14 +7,14 @@
  */
 package dev.jstech.computers.client.os;
 
+import static dev.jstech.computers.client.os.VirtualStudioLoader.join;
+import static dev.jstech.computers.client.os.VirtualStudioLoader.shortName;
+import static dev.jstech.computers.client.os.VirtualStudioLoader.sourceSuffix;
+
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.operation.payload.DeleteFilePayload;
-import dev.jstech.computers.operation.payload.MachineSoundPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.FolderContentPayload;
-import dev.jstech.computers.operation.payload.RequestFileContentPayload;
-import dev.jstech.computers.operation.payload.RequestFolderContentPayload;
 import dev.jstech.computers.gui.layout.StudioPropertiesLayout;
 import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.hardware.Isas;
@@ -50,14 +50,12 @@ import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.text.TextLists;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -94,9 +92,6 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private static final int TREE_ROW_H = 17;
     private static final int TREE_TEXT_DY = 5;
     private static final int DOCK_H = 52;
-    /** A template row: its title, what it is, and its tags, one under the other. */
-    private static final int TEMPLATE_ROW_H = 28;
-    private static final int RECENT_ROW_H = 19;
     private static final int MIN_CODE_H = 36;
     /** The key the studio's window goes by, which is the program's id. */
     private static final String KEY = "jsc:virtual_studio";
@@ -138,10 +133,6 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     /** Where solutions are made unless the player says otherwise. */
     private static final String LOCATION = CodeWorkspace.HOME;
 
-    /** The solutions opened on each machine lately, for the Start Window while the game runs. */
-    private static final Map<BlockPos, Deque<String>> RECENT = new LinkedHashMap<>();
-    private static final int RECENT_MAX = 5;
-
     /** What the window is showing. */
     private enum Page { START, SOLUTION }
 
@@ -152,13 +143,6 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private record Node(int depth, String label, NodeKind kind, String project, String path) {
     }
 
-    /** What a line of the Output pane reports, which is the colour it is drawn in. */
-    private enum Tone { PLAIN, SUCCEEDED, FAILED }
-
-    /** One line of the Output pane: its words, and what it reports. */
-    private record OutputLine(Text text, Tone tone) {
-    }
-
     private final BlockPos host;
     private final CodeWorkspace workspace;
     private OsSkin skin = OsSkin.fallback();
@@ -166,23 +150,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private int tabSize = 4;
     private boolean completionsOn = true;
 
-    /* The solution */
-    private SolutionFile solution;
-    private String solutionDir = "";
-    private final Map<String, ProjectFile> projects = new LinkedHashMap<>();
+    /* The solution, the build and the New Project wizard, each kept by a class of its own */
+    private final VirtualStudioLoader loader;
+    private final VirtualStudioBuild build;
+    private final VirtualStudioWizard wizard;
     private final Set<String> collapsed = new LinkedHashSet<>();
     private final Set<String> dependenciesOpen = new LinkedHashSet<>();
-    /** Project files still to be read, in order, since one file is waited for at a time. */
-    private final Deque<String> loading = new ArrayDeque<>();
-
-    /* The build */
-    private final Deque<String> buildQueue = new ArrayDeque<>();
-    private String building = "";
-    private boolean runAfterBuild;
-    private final Deque<String> foldersToRead = new ArrayDeque<>();
-    private final Map<String, String> sourceTexts = new LinkedHashMap<>();
-    private final Map<String, List<IProgrammingLanguage.Complaint>> buildErrors = new LinkedHashMap<>();
-    private final List<OutputLine> output = new ArrayList<>();
 
     /* The window */
     private final Panel root = new Panel();
@@ -191,7 +164,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private final TabStrip tabs;
     private final TabStrip dockTabs;
     private final ListView<ProblemReport.Row> errors;
-    private final ListView<OutputLine> outputList;
+    private final ListView<VirtualStudioBuild.OutputLine> outputList;
     private final Button start;
     private final CodeCompletions completions = new CodeCompletions().withCosts(true);
     private final CommandPalette palette = new CommandPalette();
@@ -201,40 +174,6 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private record Link(String title, int x, int y, int width, int height, Runnable action) {
     }
-
-    /* The New Project wizard */
-    private final Popup templates = new Popup(GameText.resolve(VirtualStudioTexts.CREATE_PROJECT), 302, 172)
-            .setLayouter(this::layoutTemplates);
-    private final TextField templateSearch = new TextField(32);
-    private final ListView<ProjectTemplate.Offer> templateList;
-    private final ListView<ProjectTemplate.Offer> recentList;
-    private final Button templateKind;
-    private final Button templateLanguage;
-    private final Button templatePlatform;
-    private final Button templateNext;
-    private final Button templateBack;
-    private String kindFilter = "";
-    private String languageFilter = "";
-    private String platformFilter = "";
-    /** The templates used lately on each machine, newest first, for the wizard's left pane. */
-    private static final Map<BlockPos, Deque<ProjectTemplate.Offer>> RECENT_TEMPLATES = new LinkedHashMap<>();
-
-    /** What the wizard opens on: the shape most programs are, in the language most of them are written in. */
-    private static final ProjectTemplate.Offer FIRST_OFFER =
-            new ProjectTemplate.Offer(ProjectTemplate.CONSOLE_APP, LanguageLevel.SIGMA_SHARP);
-    private final Popup configure = new Popup(GameText.resolve(VirtualStudioTexts.CONFIGURE_TITLE), 240, 124)
-            .setLayouter(this::layoutConfigure);
-    private final TextField projectName = new TextField(32);
-    private final TextField locationField = new TextField(64);
-    private final Button browse;
-    private final TextField solutionName = new TextField(32);
-    private final Label configureNote;
-    private final Button create;
-    private boolean sameFolder = true;
-    private ProjectTemplate.Offer chosen = FIRST_OFFER;
-    private boolean addingToSolution;
-    /** Where the wizard puts the solution: the machine's program folder until the player picks another. */
-    private String location = LOCATION;
 
     /* The small windows a command opens for one thing */
     private final Popup ask = new Popup(() -> this.askTitle, 150, 44).setLayouter(this::layoutAsk);
@@ -282,8 +221,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     public VirtualStudioApp(final BlockPos host) {
         this.host = host;
         this.workspace = new CodeWorkspace(host);
-        this.workspace.setProjectVersion(this::projectVersionOf);
+        this.loader = new VirtualStudioLoader(host, this.workspace, this, () -> this.page = Page.SOLUTION);
+        this.workspace.setProjectVersion(this.loader::projectVersionOf);
+        this.build = new VirtualStudioBuild(host, this.workspace, this.loader, this,
+                () -> showDock(DOCK_OUTPUT), () -> showDock(DOCK_ERRORS), this::runInTerminal);
         this.dialog = new FileDialog(host, this);
+        this.wizard = new VirtualStudioWizard(host, this.workspace, this.loader, this.dialog, () -> this.skin);
         this.explorer = this.root.add(new ListView<>(this::nodes, TREE_ROW_H, this::drawNode)).setOnClick(this::onNode);
         this.tabs = this.root.add(new TabStrip(this.workspace::tabLabels).fitToLabels(10).setUnderline(false));
         this.tabs.setOnSelect(this.workspace::setCurrent);
@@ -291,7 +234,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                 GameText.resolve(VirtualStudioTexts.OUTPUT_TAB), GameText.resolve(StudioTexts.TERMINAL_TAB)))
                 .fitToLabels(12).setUnderline(true));
         this.errors = this.root.add(new ListView<>(this::errorRows, ROW_H, this::drawErrorRow)).setOnClick(this::onError);
-        this.outputList = this.root.add(new ListView<>(() -> this.output, ROW_H, this::drawOutputRow));
+        this.outputList = this.root.add(new ListView<>(() -> this.build.output(), ROW_H, this::drawOutputRow));
         this.terminal = this.root.add(new ShellView(host, false, ""));
         this.terminal.setOnIdle(this::typeNext);
         this.tabs.setCloseable(this::closeTab);
@@ -300,55 +243,6 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                 .setPrimary(true));
         this.root.add(this.menuBar);
         buildMenuBar();
-
-        /*
-         * The wizard's first page: the templates used lately on the left, and on the right the whole
-         * list, narrowed by what is typed and by language, platform and kind.
-         */
-        this.templates.add(new Label(GameText.resolve(VirtualStudioTexts.RECENT_TEMPLATES), Label.Tone.DIM));
-        this.recentList = this.templates.add(new ListView<>(this::recentTemplates, RECENT_ROW_H, this::drawRecent)
-                .setOnClick((index, button, mx, my) -> pickRecent(index)));
-        this.templates.add(this.templateSearch.setPlaceholder(GameText.resolve(VirtualStudioTexts.SEARCH_TEMPLATES)));
-        // Three filters side by side in the small text, the way a row of drop-downs would sit.
-        this.templateLanguage = this.templates.add(new Button(GameText.resolve(VirtualStudioTexts.ALL_LANGUAGES),
-                this::cycleLanguage).setLabelScale(0.75f));
-        this.templatePlatform = this.templates.add(new Button(GameText.resolve(VirtualStudioTexts.ALL_PLATFORMS),
-                this::cyclePlatform).setLabelScale(0.75f));
-        this.templateKind = this.templates.add(new Button(GameText.resolve(VirtualStudioTexts.ALL_TYPES),
-                this::cycleKind).setLabelScale(0.75f));
-        this.templateList = this.templates.add(new ListView<>(this::matchingTemplates, TEMPLATE_ROW_H, this::drawTemplate)
-                .setOnClick((index, button, mx, my) -> pickTemplate(index)));
-        this.templateBack = this.templates.add(new Button(GameText.resolve(VirtualStudioTexts.BACK), () -> { }));
-        this.templateBack.setEnabled(false);
-        this.templateNext = this.templates.add(new Button(GameText.resolve(VirtualStudioTexts.NEXT), this::toConfigure)
-                .setPrimary(true));
-        this.templates.add(new Button(GameText.resolve(StudioTexts.CANCEL), this.templates::close));
-        // The second page: the template chosen, the names, and where it all goes.
-        this.configure.add(new Label(() -> GameText.resolve(this.chosen.title())));
-        this.configure.add(new Label(() -> GameText.resolve(TextLists.join("  ", this.chosen.shownTags())),
-                Label.Tone.DIM));
-        this.configure.add(new Label(GameText.resolve(VirtualStudioTexts.PROJECT_NAME), Label.Tone.DIM));
-        this.configure.add(this.projectName);
-        this.configure.add(new Label(GameText.resolve(VirtualStudioTexts.LOCATION), Label.Tone.DIM));
-        this.configure.add(this.locationField);
-        this.browse = this.configure.add(new Button("...", this::browseLocation));
-        this.configure.add(new Label(GameText.resolve(VirtualStudioTexts.SOLUTION_NAME), Label.Tone.DIM));
-        this.configure.add(this.solutionName);
-        this.configure.add(new Checkbox(() -> GameText.resolve(VirtualStudioTexts.SAME_FOLDER),
-                () -> this.sameFolder, () -> this.sameFolder = !this.sameFolder));
-        this.configureNote = this.configure.add(new Label(() -> GameText.resolve(configureNoteText()),
-                Label.Tone.DIM));
-        this.configure.add(new Button(GameText.resolve(VirtualStudioTexts.BACK), () -> {
-            this.configure.close();
-            this.templates.open();
-        }));
-        this.create = this.configure.add(new Button(GameText.resolve(VirtualStudioTexts.CREATE), this::createProject)
-                .setPrimary(true));
-        this.projectName.setOnEdit(() -> {
-            if (!this.addingToSolution) {
-                this.solutionName.set(this.projectName.edit());
-            }
-        });
 
         this.ask.add(this.askField);
         this.askOk = this.ask.add(new Button(GameText.resolve(StudioTexts.OK), () -> {
@@ -443,12 +337,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     /** The name of the open solution, or empty on the Start Window. */
     public String solutionName() {
-        return this.solution == null ? "" : this.solution.name();
+        return this.loader.solution() == null ? "" : this.loader.solution().name();
     }
 
     /** The names of the projects in the open solution. */
     public List<String> projectNames() {
-        return new ArrayList<>(this.projects.keySet());
+        return new ArrayList<>(this.loader.projects().keySet());
     }
 
     /** The names the suggestion list offers, top to bottom; empty when none is up. */
@@ -458,7 +352,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     /** What the Output pane says, one line after another. */
     public List<String> outputLines() {
-        return this.output.stream().map(line -> GameText.resolve(line.text())).toList();
+        return this.build.output().stream().map(line -> GameText.resolve(line.text())).toList();
     }
 
     /** Whether the window is on its Start Window. */
@@ -471,120 +365,59 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     public void openFile(final String path) {
         if (path.endsWith("." + SolutionFile.EXTENSION)) {
             final int slash = path.lastIndexOf('/');
-            openSolutionFolder(slash > 0 ? path.substring(0, slash) : "");
+            this.loader.openSolutionFolder(slash > 0 ? path.substring(0, slash) : "");
             return;
         }
         if (ProjectFile.isProjectFile(path)) {
             final int slash = path.lastIndexOf('/');
             final String projectDir = slash > 0 ? path.substring(0, slash) : "";
             final int up = projectDir.lastIndexOf('/');
-            openSolutionFolder(up > 0 ? projectDir.substring(0, up) : "");
+            this.loader.openSolutionFolder(up > 0 ? projectDir.substring(0, up) : "");
             return;
         }
         if (this.page == Page.START) {
             final int slash = path.lastIndexOf('/');
-            openFolder(slash > 0 ? path.substring(0, slash) : "");
+            this.loader.openFolder(slash > 0 ? path.substring(0, slash) : "");
         }
         this.workspace.open(path);
     }
 
-    /* Solutions */
-
-    private void remember(final String dir) {
-        final Deque<String> recent = RECENT.computeIfAbsent(this.host, h -> new ArrayDeque<>());
-        recent.remove(dir);
-        recent.addFirst(dir);
-        while (recent.size() > RECENT_MAX) {
-            recent.removeLast();
-        }
+    @Override
+    public void onContent(final String path, final String content, final boolean exists) {
+        this.loader.onContent(path, content, exists);
     }
 
-    private List<String> recent() {
-        return new ArrayList<>(RECENT.getOrDefault(this.host, new ArrayDeque<>()));
-    }
-
-    private static String shortName(final String path) {
-        final int slash = path.lastIndexOf('/');
-        return slash >= 0 && slash < path.length() - 1 ? path.substring(slash + 1) : path;
-    }
-
-    private static String join(final String dir, final String name) {
-        return dir.isEmpty() ? name : dir + "/" + name;
+    @Override
+    public void onFolder(final FolderContentPayload folder) {
+        this.build.onFolder(folder);
     }
 
     /** Opens the solution kept in {@code dir}: its file, then each project's, then the folders. */
     public void openSolutionFolder(final String dir) {
-        this.solutionDir = dir;
-        this.solution = null;
-        this.projects.clear();
-        this.loading.clear();
-        final String file = join(dir, SolutionFile.fileName(shortName(dir)));
-        CodeFileReplies.expectContent(this, file);
-        PacketDistributor.sendToServer(new RequestFileContentPayload(this.host, file));
+        this.loader.openSolutionFolder(dir);
     }
 
     /** Opens a plain folder, with no solution around it: the files are the tree. */
     public void openFolder(final String dir) {
-        this.loading.clear();
-        CodeFileReplies.forget(this);
-        this.solution = null;
-        this.solutionDir = dir;
-        this.projects.clear();
-        this.workspace.setFolder(dir);
-        this.page = Page.SOLUTION;
-        remember(dir);
+        this.loader.openFolder(dir);
     }
 
-    @Override
-    public void onContent(final String path, final String content, final boolean exists) {
-        if (path.endsWith("." + SolutionFile.EXTENSION)) {
-            if (!exists) {
-                this.workspace.say(GameText.resolve(VirtualStudioTexts.NO_SOLUTION_IN.with(
-                        shortName(this.solutionDir))));
-                openFolder(this.solutionDir);
-                return;
-            }
-            this.solution = SolutionFile.read(content);
-            for (final String project : this.solution.projects()) {
-                this.loading.add(join(this.solutionDir, project));
-            }
-            readNextProject();
-            return;
-        }
-        if (ProjectFile.isProjectFile(path)) {
-            if (exists) {
-                final ProjectFile project = ProjectFile.read(content);
-                this.projects.put(project.name(), project);
-            }
-            readNextProject();
-        }
+    /** Builds every project that makes a listing, in the order the solution lists them. */
+    public void buildSolution() {
+        this.build.buildSolution();
     }
 
-    private void readNextProject() {
-        final String next = this.loading.poll();
-        if (next != null) {
-            CodeFileReplies.expectContent(this, next);
-            PacketDistributor.sendToServer(new RequestFileContentPayload(this.host, next));
-            return;
-        }
-        if (this.solution == null) {
-            // The solution was closed or replaced while a late reply was still on its way.
-            return;
-        }
-        // Everything is read: the tree can be built, and the folders are asked for their outputs.
-        this.workspace.setFolder(this.solutionDir);
-        for (final String name : this.projects.keySet()) {
-            this.workspace.toggleFolder(join(join(this.solutionDir, name), "build"));
-        }
-        this.page = Page.SOLUTION;
-        remember(this.solutionDir);
-        this.workspace.say(GameText.resolve(EditorTexts.OPENED.with(this.solution.name())));
-        if (!this.openWhenLoaded.isEmpty()) {
-            final List<String> paths = new ArrayList<>(this.openWhenLoaded);
-            this.openWhenLoaded.clear();
-            this.workspace.openAll(paths, this.currentWhenLoaded);
-            this.currentWhenLoaded = "";
-        }
+    /** Start: builds the startup project and, when it built, runs it at the terminal. */
+    public void startProgram() {
+        this.build.startProgram();
+    }
+
+    /**
+     * Creates a new solution around one project of {@code template}, as the wizard's Create does with
+     * the same directory for both, and opens it.
+     */
+    public void createProject(final ProjectTemplate.Offer template, final String name) {
+        this.wizard.createProject(template, name);
     }
 
     /**
@@ -593,10 +426,10 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
      */
     @Override
     public String saveState() {
-        if (this.page != Page.SOLUTION || this.solutionDir.isEmpty()) {
+        if (this.page != Page.SOLUTION || this.loader.dir().isEmpty()) {
             return "";
         }
-        return (this.solution != null ? "solution" : "folder") + "\n" + this.solutionDir + "\n"
+        return (this.loader.solution() != null ? "solution" : "folder") + "\n" + this.loader.dir() + "\n"
                 + this.workspace.describeOpen().substring(this.workspace.folder().length() + 1);
     }
 
@@ -615,77 +448,23 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         if ("solution".equals(kind)) {
             // The files wait for the solution: the machine answers one file at a time, and the solution goes first.
             final String[] lines = rest.split("\n", -1);
-            this.openWhenLoaded.clear();
+            final List<String> files = new ArrayList<>();
             for (int i = 1; i < lines.length - 1; i++) {
                 if (!lines[i].isEmpty()) {
-                    this.openWhenLoaded.add(lines[i]);
+                    files.add(lines[i]);
                 }
             }
-            this.currentWhenLoaded = lines.length > 2 ? lines[lines.length - 1] : "";
-            openSolutionFolder(dir);
+            this.loader.openSolution(dir, files, lines.length > 2 ? lines[lines.length - 1] : "");
             return;
         }
-        openFolder(dir);
+        this.loader.openFolder(dir);
         this.workspace.reopen(rest);
     }
 
-    private String projectDir(final String name) {
-        return join(this.solutionDir, name);
-    }
-
-    private void saveSolution() {
-        if (this.solution == null) {
-            return;
-        }
-        saveFile(join(this.solutionDir, SolutionFile.fileName(this.solution.name())), this.solution.write());
-    }
-
-    private void saveProject(final ProjectFile project) {
-        this.projects.put(project.name(), project);
-        saveFile(join(projectDir(project.name()), project.fileName()), project.write());
-    }
-
-    /** Sends one file of the solution to be saved, or tells the player it is too long to. */
-    private void saveFile(final String path, final String content) {
-        if (FileSaves.send(this.host, path, content)) {
-            FilesApps.diskChanged();
-        } else {
-            this.workspace.say(GameText.resolve(FileSaves.tooLong(content)));
-        }
-    }
-
-    /** The project that lives in that folder, or null when the folder is nobody's. */
-    private ProjectFile projectIn(final String dir) {
-        for (final ProjectFile project : this.projects.values()) {
-            if (projectDir(project.name()).equals(dir)) {
-                return project;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * What a source of that project ends in, dot included: whatever the language it is written in says, which is
-     * how a Σ project lists, adds and builds {@code .sg} files where a Σ# one does {@code .sgs}.
-     */
-    private static String sourceSuffix(final ProjectFile project) {
-        final IProgrammingLanguage language = project == null ? null
-                : JsCore.languages().get(ResourceLocation.tryParse(project.language()));
-        if (language == null || language.sourceExtensions().isEmpty()) {
-            return "." + LanguageLevel.SIGMA_SHARP.sourceExtension();
-        }
-        return "." + language.sourceExtensions().iterator().next();
-    }
-
     private void closeSolution() {
-        this.loading.clear();
-        CodeFileReplies.forget(this);
-        this.solution = null;
-        this.projects.clear();
-        this.solutionDir = "";
+        this.loader.close();
         this.workspace.closeAll();
-        this.buildErrors.clear();
-        this.output.clear();
+        this.build.clearResults();
         this.page = Page.START;
     }
 
@@ -695,10 +474,10 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final List<Node> out = new ArrayList<>();
         // The listing is rebuilt on every call, so it is taken once and shared by every project.
         final List<CodeWorkspace.TreeRow> tree = this.workspace.tree();
-        if (this.solution == null) {
+        if (this.loader.solution() == null) {
             // A plain folder: what is in it, the way an explorer shows it.
-            out.add(new Node(0, shortName(this.solutionDir).isEmpty() ? "C:\\" : shortName(this.solutionDir),
-                    NodeKind.SOLUTION, "", this.solutionDir));
+            out.add(new Node(0, shortName(this.loader.dir()).isEmpty() ? "C:\\" : shortName(this.loader.dir()),
+                    NodeKind.SOLUTION, "", this.loader.dir()));
             for (final CodeWorkspace.TreeRow row : tree) {
                 final String mark = row.file().directory()
                         ? (this.workspace.isExpanded(row.file().path()) ? "v " : "> ") : "";
@@ -707,13 +486,13 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             }
             return out;
         }
-        out.add(new Node(0, GameText.resolve(VirtualStudioTexts.SOLUTION_NODE.with(this.solution.name(),
-                this.projects.size())), NodeKind.SOLUTION, "", this.solutionDir));
-        for (final ProjectFile project : this.projects.values()) {
+        out.add(new Node(0, GameText.resolve(VirtualStudioTexts.SOLUTION_NODE.with(this.loader.solution().name(),
+                this.loader.projects().size())), NodeKind.SOLUTION, "", this.loader.dir()));
+        for (final ProjectFile project : this.loader.projects().values()) {
             final boolean open = !this.collapsed.contains(project.name());
-            final boolean startup = project.name().equals(startupName());
+            final boolean startup = project.name().equals(this.loader.startupName());
             out.add(new Node(1, (open ? "v " : "> ") + project.name() + (startup ? " *" : ""), NodeKind.PROJECT,
-                    project.name(), projectDir(project.name())));
+                    project.name(), this.loader.projectDir(project.name())));
             if (!open) {
                 continue;
             }
@@ -729,9 +508,10 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             out.add(new Node(2, GameText.resolve(VirtualStudioTexts.PROPERTIES), NodeKind.PROPERTIES, project.name(),
                     ""));
             for (final String source : project.sources()) {
-                out.add(new Node(2, source, NodeKind.SOURCE, project.name(), join(projectDir(project.name()), source)));
+                out.add(new Node(2, source, NodeKind.SOURCE, project.name(),
+                        join(this.loader.projectDir(project.name()), source)));
             }
-            final String buildDir = join(projectDir(project.name()), "build");
+            final String buildDir = join(this.loader.projectDir(project.name()), "build");
             for (final CodeWorkspace.TreeRow row : tree) {
                 if (!row.file().directory() && row.file().path().startsWith(buildDir + "/")) {
                     out.add(new Node(2, "build/" + shortName(row.file().path()), NodeKind.OUTPUT, project.name(),
@@ -756,21 +536,6 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final LanguageLevel level = LanguageLevel.ofId(project.language());
         return level == null ? languageName(project.language())
                 : level.mark() + " " + InstalledCompilers.held(level, project.languageVersion());
-    }
-
-    private String startupName() {
-        if (this.solution == null) {
-            return "";
-        }
-        if (!this.solution.startup().isEmpty()) {
-            return this.solution.startup();
-        }
-        for (final ProjectFile project : this.projects.values()) {
-            if (project.buildsAListing()) {
-                return project.name();
-            }
-        }
-        return "";
     }
 
     private void drawNode(final GuiGraphics g, final UiContext ctx, final Node node, final int index,
@@ -852,8 +617,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     /* Errors and output */
 
     private List<ProblemReport.Row> errorRows() {
-        if (!this.buildErrors.isEmpty()) {
-            return ProblemReport.of(this.buildErrors);
+        if (!this.build.errors().isEmpty()) {
+            return ProblemReport.of(this.build.errors());
         }
         final CodeWorkspace.Doc doc = this.workspace.current();
         if (doc == null) {
@@ -893,7 +658,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         }
     }
 
-    private void drawOutputRow(final GuiGraphics g, final UiContext ctx, final OutputLine line, final int index,
+    private void drawOutputRow(final GuiGraphics g, final UiContext ctx, final VirtualStudioBuild.OutputLine line,
+                               final int index,
                                final int x, final int y, final int width, final int height,
                                final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, width, height, hovered, selected);
@@ -904,490 +670,6 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         };
         Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(line.text()), width - 4), x + 2,
                 y + 1, ink);
-    }
-
-    /** A line of the Output pane, as it is worded. */
-    private void print(final Text text) {
-        print(text, Tone.PLAIN);
-    }
-
-    /** A line of the Output pane, in the colour of what it reports. */
-    private void print(final Text text, final Tone tone) {
-        this.output.add(new OutputLine(text, tone));
-    }
-
-    /* Building */
-
-    /** Builds every project that makes a listing, in the order the solution lists them. */
-    public void buildSolution() {
-        if (this.solution == null) {
-            buildOpenFile();
-            return;
-        }
-        this.output.clear();
-        this.buildErrors.clear();
-        print(VirtualStudioTexts.BUILD_STARTED.with(this.solution.name()));
-        this.buildQueue.clear();
-        for (final ProjectFile project : this.projects.values()) {
-            if (project.buildsAListing()) {
-                this.buildQueue.add(project.name());
-            }
-        }
-        this.dockTabs.setSelected(DOCK_OUTPUT);
-        buildNext();
-    }
-
-    private void buildProject(final String name) {
-        this.output.clear();
-        this.buildErrors.clear();
-        print(VirtualStudioTexts.BUILD_STARTED.with(name));
-        this.buildQueue.clear();
-        this.buildQueue.add(name);
-        this.dockTabs.setSelected(DOCK_OUTPUT);
-        buildNext();
-    }
-
-    /** With no solution, Build is the open file on its own, as the light editor does it. */
-    private void buildOpenFile() {
-        final CodeWorkspace.Doc doc = this.workspace.current();
-        this.output.clear();
-        this.buildErrors.clear();
-        if (doc == null) {
-            print(VirtualStudioTexts.NOTHING_TO_BUILD.text());
-            return;
-        }
-        final IProgrammingLanguage language = CodeWorkspace.languageOf(doc.path());
-        if (language == null) {
-            print(VirtualStudioTexts.NO_LANGUAGE_CLAIMS.with(doc.name()));
-            return;
-        }
-        final IProgrammingLanguage.CompileResult result = language.compile(
-                List.of(new IProgrammingLanguage.SourceText(doc.name(), doc.area().text())),
-                InstalledCompilers.options(language, "", projectVersionOf(doc.path())));
-        finishBuild(doc.name(), doc.path().replaceAll("\\.[^.]+$", "") + ".asm", result, Map.of(doc.path(), doc.name()));
-    }
-
-    private void buildNext() {
-        final String name = this.buildQueue.poll();
-        if (name == null) {
-            if (this.runAfterBuild) {
-                this.runAfterBuild = false;
-                runStartup();
-            }
-            return;
-        }
-        this.building = name;
-        this.sourceTexts.clear();
-        this.foldersToRead.clear();
-        final ProjectFile project = this.projects.get(name);
-        if (project == null) {
-            buildNext();
-            return;
-        }
-        // The project's own folder and every library it references, which may reference more.
-        final Deque<String> pending = new ArrayDeque<>(List.of(name));
-        final Set<String> seen = new LinkedHashSet<>();
-        while (!pending.isEmpty()) {
-            final String each = pending.poll();
-            if (!seen.add(each) || !this.projects.containsKey(each)) {
-                continue;
-            }
-            this.foldersToRead.add(projectDir(each));
-            pending.addAll(this.projects.get(each).references());
-        }
-        readNextFolder();
-    }
-
-    private void readNextFolder() {
-        final String dir = this.foldersToRead.poll();
-        if (dir != null) {
-            CodeFileReplies.expectFolder(this, dir);
-            // Each folder is read for the sources of its own project, since a Σ# program may stand on a Σ library.
-            PacketDistributor.sendToServer(new RequestFolderContentPayload(this.host, dir,
-                    sourceSuffix(projectIn(dir))));
-            return;
-        }
-        compileBuilding();
-    }
-
-    @Override
-    public void onFolder(final FolderContentPayload folder) {
-        for (final FolderContentPayload.WireFile file : folder.files()) {
-            this.sourceTexts.put(file.path(), file.text());
-        }
-        readNextFolder();
-    }
-
-    /** Compiles what was read for the project being built, and writes the listing when it built. */
-    private void compileBuilding() {
-        final ProjectFile project = this.projects.get(this.building);
-        if (project == null) {
-            buildNext();
-            return;
-        }
-        final IProgrammingLanguage language = JsCore.languages().get(
-                ResourceLocation.tryParse(project.language()));
-        if (language == null) {
-            print(VirtualStudioTexts.NO_LANGUAGE_CALLED.with(project.name(), project.language()));
-            buildNext();
-            return;
-        }
-        /*
-         * What is open and changed counts over what the disk holds, so a build sees what the player
-         * sees; a library's sources come in first, so its types are known when the project's are read.
-         */
-        final List<IProgrammingLanguage.SourceText> sources = new ArrayList<>();
-        final Map<String, String> names = new LinkedHashMap<>();
-        final Deque<String> order = new ArrayDeque<>();
-        collectOrder(project.name(), order, new LinkedHashSet<>());
-        for (final String each : order) {
-            final ProjectFile part = this.projects.get(each);
-            for (final String source : part.sources()) {
-                final String path = join(projectDir(each), source);
-                final String text = openText(path, this.sourceTexts.get(path));
-                if (text != null) {
-                    names.put(path, each + "/" + source);
-                    sources.add(new IProgrammingLanguage.SourceText(each + "/" + source, text));
-                }
-            }
-        }
-        if (sources.isEmpty()) {
-            print(VirtualStudioTexts.NO_SOURCES.with(project.name()));
-            buildNext();
-            return;
-        }
-        final IProgrammingLanguage.CompileResult result = language.compile(sources,
-                InstalledCompilers.options(language, project.platform(), project.languageVersion()));
-        finishBuild(project.name(), join(projectDir(project.name()), project.entry()), result, names);
-        buildNext();
-    }
-
-    /** The order to read a project's parts in: its libraries first, itself last. */
-    private void collectOrder(final String name, final Deque<String> order, final Set<String> seen) {
-        if (!seen.add(name) || !this.projects.containsKey(name)) {
-            return;
-        }
-        for (final String reference : this.projects.get(name).references()) {
-            collectOrder(reference, order, seen);
-        }
-        order.add(name);
-    }
-
-    /** The text of a source as the player sees it: the open buffer when there is one, else the disk's. */
-    private String openText(final String path, final String fromDisk) {
-        for (final CodeWorkspace.Doc doc : this.workspace.docs()) {
-            if (doc.path().equals(path)) {
-                return doc.area().text();
-            }
-        }
-        return fromDisk;
-    }
-
-    private void finishBuild(final String what, final String outputPath, final IProgrammingLanguage.CompileResult result,
-                             final Map<String, String> names) {
-        if (result.ok()) {
-            if (!FileSaves.send(this.host, outputPath, result.binary())) {
-                // A listing longer than a file holds is not written, and the build is not called a success.
-                PacketDistributor.sendToServer(new MachineSoundPayload(this.host, SystemSound.ERROR));
-                print(FileSaves.tooLong(result.binary()), Tone.FAILED);
-                print(VirtualStudioTexts.BUILD_FAILED_NAMED.with(what, 1), Tone.FAILED);
-                this.workspace.say(GameText.resolve(VirtualStudioTexts.BUILD_FAILED));
-                this.buildQueue.clear();
-                this.runAfterBuild = false;
-                return;
-            }
-            final int lines = result.binary().split("\n", -1).length;
-            print(VirtualStudioTexts.BUILT_LISTING.with(what, outputPath, lines));
-            print(VirtualStudioTexts.BUILD_SUCCEEDED_NAMED.with(what), Tone.SUCCEEDED);
-            FilesApps.diskChanged();
-            this.workspace.say(GameText.resolve(VirtualStudioTexts.BUILD_SUCCEEDED));
-            // The machine sounds the end of the build once, when the last project in line has built.
-            if (this.buildQueue.isEmpty()) {
-                PacketDistributor.sendToServer(new MachineSoundPayload(this.host, SystemSound.NOTIFY));
-            }
-            return;
-        }
-        PacketDistributor.sendToServer(new MachineSoundPayload(this.host, SystemSound.ERROR));
-        for (final IProgrammingLanguage.Complaint complaint : result.complaints()) {
-            print(VirtualStudioTexts.COMPLAINT.with(what, complaint.text()), Tone.FAILED);
-            // The complaint names the source as the compiler saw it; the row needs the path on the disk.
-            String path = complaint.file();
-            for (final Map.Entry<String, String> entry : names.entrySet()) {
-                if (entry.getValue().equals(complaint.file())) {
-                    path = entry.getKey();
-                }
-            }
-            this.buildErrors.computeIfAbsent(path, p -> new ArrayList<>()).add(complaint);
-        }
-        print(VirtualStudioTexts.BUILD_FAILED_NAMED.with(what, result.complaints().size()), Tone.FAILED);
-        this.workspace.say(GameText.resolve(VirtualStudioTexts.BUILD_FAILED));
-        this.dockTabs.setSelected(DOCK_ERRORS);
-        this.buildQueue.clear();
-        this.runAfterBuild = false;
-    }
-
-    /** Start: builds the startup project and, when it built, runs it at the terminal. */
-    public void startProgram() {
-        if (this.solution == null) {
-            buildOpenFile();
-            final CodeWorkspace.Doc doc = this.workspace.current();
-            if (doc != null && this.buildErrors.isEmpty()) {
-                runListing(doc.path().replaceAll("\\.[^.]+$", "") + ".asm");
-            }
-            return;
-        }
-        final String startup = startupName();
-        if (startup.isEmpty()) {
-            print(VirtualStudioTexts.NO_STARTUP.text());
-            return;
-        }
-        this.runAfterBuild = true;
-        buildProject(startup);
-    }
-
-    private void runStartup() {
-        final ProjectFile project = this.projects.get(startupName());
-        if (project != null && project.buildsAListing() && this.buildErrors.isEmpty()) {
-            runListing(join(projectDir(project.name()), project.entry()));
-        }
-    }
-
-    /**
-     * Runs a listing at the dock's terminal.
-     *
-     * <p>The terminal is a shell of its own and may have been moved anywhere; the listing is named
-     * from the root so it is found wherever the shell stands.
-     */
-    private void runListing(final String path) {
-        runInTerminal(List.of("cd \\", "sigma run \"" + path.replace('/', '\\') + "\""));
-    }
-
-    /** Clean: the listings every project built are deleted, and the tree stops showing them. */
-    private void cleanSolution() {
-        this.output.clear();
-        for (final ProjectFile project : this.projects.values()) {
-            if (project.buildsAListing()) {
-                PacketDistributor.sendToServer(new DeleteFilePayload(this.host,
-                        join(projectDir(project.name()), project.entry())));
-                print(VirtualStudioTexts.DELETED_OF.with(project.entry(), project.name()));
-            }
-        }
-        FilesApps.diskChanged();
-        this.workspace.refresh();
-    }
-
-    /** Package: the prompt's sgpack does it, in the project's folder, at the terminal. */
-    private void packageStartup() {
-        final ProjectFile project = this.projects.get(startupName());
-        if (project == null) {
-            print(VirtualStudioTexts.NO_PACKAGE.text());
-            return;
-        }
-        runInTerminal(List.of(
-                "cd \\" + projectDir(project.name()).replace('/', '\\'),
-                "sgpack init " + project.name(),
-                "sgpack build"));
-    }
-
-    /* The New Project wizard */
-
-    private void newProject(final boolean intoSolution) {
-        this.addingToSolution = intoSolution && this.solution != null;
-        this.templateSearch.set("");
-        this.kindFilter = "";
-        this.languageFilter = "";
-        this.platformFilter = "";
-        this.templateLanguage.setLabel(GameText.resolve(VirtualStudioTexts.ALL_LANGUAGES));
-        this.templatePlatform.setLabel(GameText.resolve(VirtualStudioTexts.ALL_PLATFORMS));
-        this.templateKind.setLabel(GameText.resolve(VirtualStudioTexts.ALL_TYPES));
-        this.templateList.setSelected(0);
-        this.chosen = FIRST_OFFER;
-        this.templates.open();
-    }
-
-    /** The languages the machine knows, which is what the language filter cycles through. */
-    private List<String> languageNames() {
-        final List<String> out = new ArrayList<>();
-        for (final IProgrammingLanguage language : JsCore.languages().all()) {
-            out.add(language.displayName());
-        }
-        return out;
-    }
-
-    private void cycleLanguage() {
-        final List<String> names = languageNames();
-        if (this.languageFilter.isEmpty()) {
-            this.languageFilter = names.isEmpty() ? "" : names.get(0);
-        } else {
-            final int at = names.indexOf(this.languageFilter);
-            this.languageFilter = at + 1 < names.size() ? names.get(at + 1) : "";
-        }
-        this.templateLanguage.setLabel(this.languageFilter.isEmpty()
-                ? GameText.resolve(VirtualStudioTexts.ALL_LANGUAGES) : this.languageFilter);
-    }
-
-    /* The filter holds the kind's word in English, which is what a template matches; the button shows it translated. */
-    private void cycleKind() {
-        final List<TextKey> kinds = ProjectTemplate.kindWords();
-        int at = -1;
-        for (int i = 0; i < kinds.size(); i++) {
-            if (kinds.get(i).english().equals(this.kindFilter)) {
-                at = i;
-            }
-        }
-        final TextKey next = at + 1 < kinds.size() ? kinds.get(at + 1) : null;
-        this.kindFilter = next == null ? "" : next.english();
-        this.templateKind.setLabel(GameText.resolve(next == null ? VirtualStudioTexts.ALL_TYPES : next));
-    }
-
-    /** The icon a template shows in the wizard: the page its first file would have. */
-    private static FileIcons.Kind iconOf(final ProjectTemplate template) {
-        return switch (template) {
-            case CONSOLE_APP -> FileIcons.Kind.PROGRAM;
-            case SCRIPT -> FileIcons.Kind.SOURCE;
-            case CLASS_LIBRARY -> FileIcons.Kind.BUNDLE;
-            case EMPTY_PROJECT -> FileIcons.Kind.FOLDER;
-        };
-    }
-
-    private void drawRecent(final GuiGraphics g, final UiContext ctx, final ProjectTemplate.Offer offer,
-                            final int index, final int x, final int y, final int width, final int height,
-                            final boolean hovered, final boolean selected) {
-        ctx.skin().listRow(g, x, y, width, height, hovered, selected);
-        FileIcons.draw(g, x + 2, y + 1, iconOf(offer.template()), this.skin.iconSet());
-        final int textX = x + 2 + FileIcons.SIZE + 3;
-        final int textW = x + width - 2 - textX;
-        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(offer.title()), textW), textX, y + 1,
-                ctx.skin().listRowText(selected));
-        final String kind = GameText.resolve(offer.kindText());
-        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(offer.language().mark() + "  " + kind, textW),
-                textX, y + 10, ctx.skin().dim());
-    }
-
-    /** The templates that fit what was typed and the three filters, each in every language it comes in. */
-    private List<ProjectTemplate.Offer> matchingTemplates() {
-        final List<ProjectTemplate.Offer> out = new ArrayList<>();
-        final String typed = this.templateSearch.edit().toLowerCase(Locale.ROOT).trim();
-        for (final ProjectTemplate.Offer template : ProjectTemplate.Offer.all()) {
-            if (!template.template().isKind(this.kindFilter)) {
-                continue;
-            }
-            if (!this.languageFilter.isEmpty() && !template.tags().contains(this.languageFilter)) {
-                continue;
-            }
-            if (!this.platformFilter.isEmpty() && !template.tags().contains(this.platformFilter)) {
-                continue;
-            }
-            // The search reads what the player reads, in their language.
-            if (!typed.isEmpty() && !GameText.resolve(template.title()).toLowerCase(Locale.ROOT).contains(typed)
-                    && !GameText.resolve(template.description()).toLowerCase(Locale.ROOT).contains(typed)) {
-                continue;
-            }
-            out.add(template);
-        }
-        return out;
-    }
-
-    private void drawTemplate(final GuiGraphics g, final UiContext ctx, final ProjectTemplate.Offer template,
-                              final int index, final int x, final int y, final int width, final int height,
-                              final boolean hovered, final boolean selected) {
-        ctx.skin().listRow(g, x, y, width, height, hovered, selected);
-        FileIcons.draw(g, x + 3, y + 2, iconOf(template.template()), this.skin.iconSet());
-        final int textX = x + 3 + FileIcons.SIZE + 3;
-        final int textW = x + width - 3 - textX;
-        Draw.text(g, ctx.font(), GameText.resolve(template.title()), textX, y + 1, ctx.skin().listRowText(selected));
-        // The language at the far end of the title's row, since two rows of one shape differ in nothing else there.
-        final String mark = template.language().mark();
-        Draw.text(g, ctx.font(), mark, x + width - 4 - ctx.font().width(mark), y + 1, ctx.skin().dim());
-        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(GameText.resolve(template.description()), textW),
-                textX, y + 9, ctx.skin().dim());
-        final String tags = GameText.resolve(TextLists.join("  ", template.shownTags()));
-        Draw.text(g, ctx.font(), ctx.font().plainSubstrByWidth(tags, textW), textX, y + 17,
-                ctx.skin().dim());
-    }
-
-    private void pickTemplate(final int index) {
-        final List<ProjectTemplate.Offer> shown = matchingTemplates();
-        if (index >= 0 && index < shown.size()) {
-            this.chosen = shown.get(index);
-            this.templateList.setSelected(index);
-        }
-    }
-
-    private void toConfigure() {
-        pickTemplate(this.templateList.selected() < 0 ? 0 : this.templateList.selected());
-        openConfigure();
-    }
-
-    private void openConfigure() {
-        this.templates.close();
-        final String name = uniqueProjectName(
-                this.chosen.template() == ProjectTemplate.CLASS_LIBRARY ? "Library" : "App");
-        this.projectName.set(name);
-        this.locationField.set(shownLocation(this.location));
-        this.locationField.setEnabled(!this.addingToSolution);
-        this.browse.setEnabled(!this.addingToSolution);
-        this.solutionName.set(this.addingToSolution ? this.solution.name() : name);
-        this.solutionName.setEnabled(!this.addingToSolution);
-        this.configure.open();
-        this.configure.focus(this.projectName);
-    }
-
-    /** The location the way the wizard shows it: a drive letter, backslashes, a trailing one. */
-    private static String shownLocation(final String dir) {
-        return "C:\\" + dir.replace('/', '\\') + (dir.isEmpty() ? "" : "\\");
-    }
-
-    /** The location typed in the wizard, back to a path on the drive: no drive letter, forward slashes. */
-    private static String typedLocation(final String shown) {
-        String dir = shown.trim().replace('\\', '/');
-        if (dir.regionMatches(true, 0, "C:", 0, 2)) {
-            dir = dir.substring(2);
-        }
-        while (dir.startsWith("/")) {
-            dir = dir.substring(1);
-        }
-        while (dir.endsWith("/")) {
-            dir = dir.substring(0, dir.length() - 1);
-        }
-        return dir;
-    }
-
-    private String uniqueProjectName(final String base) {
-        String name = base;
-        int n = 1;
-        while (this.projects.containsKey(name)) {
-            name = base + (++n);
-        }
-        return name;
-    }
-
-    private Text configureNoteText() {
-        final String project = this.projectName.edit().trim();
-        final String sol = this.solutionName.edit().trim();
-        final String where = this.addingToSolution ? this.solutionDir
-                : join(typedLocation(this.locationField.edit()), this.sameFolder || sol.isEmpty() ? project : sol);
-        return VirtualStudioTexts.WILL_BE_CREATED.with(shownLocation(join(where, project)));
-    }
-
-    /** Create, from the wizard's second page: what was typed there. */
-    private void createProject() {
-        final String project = this.projectName.edit().trim();
-        final String typedSolution = this.solutionName.edit().trim();
-        final String sol = this.addingToSolution ? this.solution.name()
-                : (typedSolution.isEmpty() || this.sameFolder ? project : typedSolution);
-        if (!this.addingToSolution) {
-            this.location = typedLocation(this.locationField.edit());
-        }
-        create(this.chosen, project, sol, this.addingToSolution);
-    }
-
-    /**
-     * Creates a new solution around one project of {@code template}, as the wizard's Create does with
-     * the same directory for both, and opens it.
-     */
-    public void createProject(final ProjectTemplate.Offer template, final String name) {
-        create(template, name, name, false);
     }
 
     /** The point on the Start Window that opens {@code title}, once drawn, or null when it is not up. */
@@ -1402,150 +684,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     /** Whether the New Project wizard is up, on either of its pages. */
     public boolean wizardOpen() {
-        return this.templates.isOpen() || this.configure.isOpen();
+        return this.wizard.isOpen();
     }
 
     /** Takes the wizard from its template page to its names page with {@code template} chosen. */
     public void chooseTemplate(final ProjectTemplate.Offer template) {
-        this.chosen = template;
-        openConfigure();
-    }
-
-    /** The solution file, the project file and the first source, then the solution opens. */
-    private void create(final ProjectTemplate.Offer template, final String project, final String sol,
-                        final boolean intoSolution) {
-        if (!ProjectTemplate.isValidProjectName(project)) {
-            this.workspace.say(GameText.resolve(VirtualStudioTexts.ONE_WORD));
-            return;
-        }
-        this.configure.close();
-        this.chosen = template;
-        rememberTemplate(template);
-        this.addingToSolution = intoSolution && this.solution != null;
-        final String dir = this.addingToSolution ? this.solutionDir : join(this.location, sol);
-        final ProjectFile file = this.chosen.project(project);
-        final SolutionFile solutionFile = (this.addingToSolution ? this.solution : new SolutionFile(sol, List.of(), ""))
-                .withProject(SolutionFile.projectPath(file));
-        saveFile(join(dir, SolutionFile.fileName(sol)), solutionFile.write());
-        saveFile(join(join(dir, project), file.fileName()), file.write());
-        final String first = this.chosen.firstSource(project);
-        if (!first.isEmpty()) {
-            saveFile(join(join(dir, project), first), this.chosen.source(project));
-        }
-        /*
-         * The files are on their way; asking for the solution now reads them once they have landed. The
-         * first source waits for the solution to be in, since one file is waited for at a time.
-         */
-        this.openWhenLoaded.clear();
-        if (!first.isEmpty()) {
-            this.openWhenLoaded.add(join(join(dir, project), first));
-        }
-        openSolutionFolder(dir);
-    }
-
-    /** A source to open once the solution being read is in, or empty. */
-    /** The files to put on tabs once the solution being read is in, and the one to end on. */
-    private final List<String> openWhenLoaded = new ArrayList<>();
-    private String currentWhenLoaded = "";
-
-    private void layoutTemplates(final Popup p) {
-        final List<UiComponent> c = p.children();
-        final int x = p.x() + 4;
-        final int top = p.contentTop() + 2;
-        final int bottom = p.bottom() - 16;
-        // The left pane: what was used lately.
-        final int leftW = 96;
-        c.get(0).setBounds(x, top, leftW, 9);
-        this.recentList.setBounds(x, top + 10, leftW, bottom - top - 10);
-        // The right pane: search, the three filters in equal thirds, the list.
-        final int rx = x + leftW + 6;
-        final int rw = p.right() - 4 - rx;
-        int y = top;
-        this.templateSearch.setBounds(rx, y, rw, 11);
-        y += 13;
-        final int third = (rw - 8) / 3;
-        this.templateLanguage.setBounds(rx, y, third, 11);
-        this.templatePlatform.setBounds(rx + third + 4, y, third, 11);
-        this.templateKind.setBounds(rx + 2 * (third + 4), y, rw - 2 * (third + 4), 11);
-        y += 13;
-        this.templateList.setBounds(rx, y, rw, bottom - y);
-        final int by = p.bottom() - 14;
-        c.get(c.size() - 1).setBounds(x, by, 40, 11);
-        this.templateBack.setBounds(p.right() - 82, by, 36, 11);
-        this.templateNext.setBounds(p.right() - 42, by, 38, 11);
-    }
-
-    private void layoutConfigure(final Popup p) {
-        final int x = p.x() + 4;
-        int y = p.contentTop() + 1;
-        final int w = p.width() - 8;
-        final List<UiComponent> c = p.children();
-        // The template's name and tags, the way the page is headed.
-        c.get(0).setBounds(x, y, w, 9);
-        y += 9;
-        c.get(1).setBounds(x, y, w, 9);
-        y += 11;
-        final int labelW = 72;
-        c.get(2).setBounds(x, y + 1, labelW, 9);
-        this.projectName.setBounds(x + labelW + 2, y, w - labelW - 2, 11);
-        y += 13;
-        c.get(4).setBounds(x, y + 1, labelW, 9);
-        this.locationField.setBounds(x + labelW + 2, y, w - labelW - 2 - 22, 11);
-        this.browse.setBounds(p.right() - 4 - 20, y, 20, 11);
-        y += 13;
-        c.get(7).setBounds(x, y + 1, labelW, 9);
-        this.solutionName.setBounds(x + labelW + 2, y, w - labelW - 2, 11);
-        y += 13;
-        c.get(9).setBounds(x, y, w, 9);
-        y += 11;
-        this.configureNote.setBounds(x, y, w, 9);
-        final int by = p.bottom() - 14;
-        c.get(11).setBounds(p.right() - 82, by, 36, 11);
-        this.create.setBounds(p.right() - 42, by, 38, 11);
-    }
-
-    /** The templates used lately on this machine, for the wizard's left pane. */
-    private List<ProjectTemplate.Offer> recentTemplates() {
-        return new ArrayList<>(RECENT_TEMPLATES.getOrDefault(this.host, new ArrayDeque<>()));
-    }
-
-    private void pickRecent(final int index) {
-        final List<ProjectTemplate.Offer> recent = recentTemplates();
-        if (index >= 0 && index < recent.size()) {
-            this.chosen = recent.get(index);
-            openConfigure();
-        }
-    }
-
-    private void rememberTemplate(final ProjectTemplate.Offer template) {
-        final Deque<ProjectTemplate.Offer> recent =
-                RECENT_TEMPLATES.computeIfAbsent(this.host, h -> new ArrayDeque<>());
-        recent.remove(template);
-        recent.addFirst(template);
-        while (recent.size() > 3) {
-            recent.removeLast();
-        }
-    }
-
-    private void cyclePlatform() {
-        final List<String> platforms = ProjectTemplate.PLATFORMS;
-        if (this.platformFilter.isEmpty()) {
-            this.platformFilter = platforms.isEmpty() ? "" : platforms.get(0);
-        } else {
-            final int at = platforms.indexOf(this.platformFilter);
-            this.platformFilter = at + 1 < platforms.size() ? platforms.get(at + 1) : "";
-        }
-        this.templatePlatform.setLabel(this.platformFilter.isEmpty()
-                ? GameText.resolve(VirtualStudioTexts.ALL_PLATFORMS) : this.platformFilter);
-    }
-
-    /** Opens the folder picker for where the new solution goes. */
-    private void browseLocation() {
-        this.dialog.openFolder(VirtualStudioTexts.PROJECT_LOCATION.text(), typedLocation(this.locationField.edit()),
-                dir -> {
-                    this.location = dir;
-                    this.locationField.set(shownLocation(dir));
-                });
+        this.wizard.chooseTemplate(template);
     }
 
     /* Properties, options, and the one-thing windows */
@@ -1558,7 +702,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private Text propertyText(final int line) {
-        final ProjectFile project = this.projects.get(this.propertiesOf);
+        final ProjectFile project = this.loader.projects().get(this.propertiesOf);
         if (project == null) {
             return Text.EMPTY;
         }
@@ -1624,7 +768,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     /** The language the open project is written in when it is one with versions, or null. */
     private LanguageLevel versionedLevel() {
-        final ProjectFile project = this.projects.get(this.propertiesOf);
+        final ProjectFile project = this.loader.projects().get(this.propertiesOf);
         return project == null ? null : LanguageLevel.ofId(project.language());
     }
 
@@ -1645,7 +789,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
      */
     private Text versionHintText(final int line) {
         final LanguageLevel level = versionedLevel();
-        final ProjectFile project = this.projects.get(this.propertiesOf);
+        final ProjectFile project = this.loader.projects().get(this.propertiesOf);
         if (level == null || project == null) {
             return Text.EMPTY;
         }
@@ -1671,17 +815,17 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     /** Holds the project to that version of its language from now on; 0 lets it follow the compiler again. */
     private void setLanguageVersion(final int version) {
-        final ProjectFile project = this.projects.get(this.propertiesOf);
+        final ProjectFile project = this.loader.projects().get(this.propertiesOf);
         if (project == null) {
             return;
         }
-        saveProject(project.withLanguageVersion(version));
+        this.loader.saveProject(project.withLanguageVersion(version));
         refreshVersionButtons();
     }
 
     /** Lights the version the open project is held to, Default when it names none, and unlights the rest. */
     private void refreshVersionButtons() {
-        final ProjectFile project = this.projects.get(this.propertiesOf);
+        final ProjectFile project = this.loader.projects().get(this.propertiesOf);
         final int current = project == null ? 0 : project.languageVersion();
         for (int i = 0; i < this.versionButtons.size(); i++) {
             this.versionButtons.get(i).setPrimary(i == current);
@@ -1690,23 +834,23 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     /** Whether the project the popup is open on builds something of its own, and so has a platform to pick. */
     private boolean buildsForAPlatform() {
-        final ProjectFile project = this.projects.get(this.propertiesOf);
+        final ProjectFile project = this.loader.projects().get(this.propertiesOf);
         return project != null && project.buildsAListing();
     }
 
     /** Builds the project for that instruction set from now on, and lights the button that says so. */
     private void setPlatform(final String isa) {
-        final ProjectFile project = this.projects.get(this.propertiesOf);
+        final ProjectFile project = this.loader.projects().get(this.propertiesOf);
         if (project == null) {
             return;
         }
-        saveProject(project.withPlatform(isa));
+        this.loader.saveProject(project.withPlatform(isa));
         refreshPlatformButtons();
     }
 
     /** Lights the instruction set the open project is built for, and unlights the rest. */
     private void refreshPlatformButtons() {
-        final ProjectFile project = this.projects.get(this.propertiesOf);
+        final ProjectFile project = this.loader.projects().get(this.propertiesOf);
         final String current = project == null ? AsmProgram.DEFAULT_ISA : project.platform();
         final List<IsaSpec> all = Isas.all();
         for (int i = 0; i < this.platformButtons.size() && i < all.size(); i++) {
@@ -1716,7 +860,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     /** What the line under the buttons says: which machines the program will run on once it is built. */
     private Text platformHintText() {
-        final ProjectFile project = this.projects.get(this.propertiesOf);
+        final ProjectFile project = this.loader.projects().get(this.propertiesOf);
         if (project == null) {
             return Text.EMPTY;
         }
@@ -1740,7 +884,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
      * goes amber so that it is a decision somebody sees themselves making.
      */
     private int platformHintColor() {
-        final ProjectFile project = this.projects.get(this.propertiesOf);
+        final ProjectFile project = this.loader.projects().get(this.propertiesOf);
         return project != null && AsmProgram.DEFAULT_ISA.equals(project.platform())
                 ? PALETTE.get().platformOn() : PALETTE.get().platformOff();
     }
@@ -1803,6 +947,10 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         this.workspace.close(index);
     }
 
+    private void showDock(final int tab) {
+        this.dockTabs.setSelected(tab);
+    }
+
     /** Types lines at the dock's terminal, one after the other as the machine answers each. */
     private void runInTerminal(final List<String> lines) {
         this.dockTabs.setSelected(DOCK_TERMINAL);
@@ -1835,30 +983,30 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private boolean hasSolution() {
-        return this.solution != null;
+        return this.loader.solution() != null;
     }
 
     private String currentProject() {
         final CodeWorkspace.Doc doc = this.workspace.current();
         if (doc != null) {
-            for (final String name : this.projects.keySet()) {
-                if (doc.path().startsWith(projectDir(name) + "/")) {
+            for (final String name : this.loader.projects().keySet()) {
+                if (doc.path().startsWith(this.loader.projectDir(name) + "/")) {
                     return name;
                 }
             }
         }
-        return startupName();
+        return this.loader.startupName();
     }
 
     private List<ContextMenu.Item> fileMenu() {
         final List<ContextMenu.Item> items = new ArrayList<>(List.of(
-                item(VirtualStudioTexts.NEW_PROJECT, true, () -> newProject(false)),
+                item(VirtualStudioTexts.NEW_PROJECT, true, () -> this.wizard.open(false)),
                 item(StudioTexts.NEW_FILE, this.page == Page.SOLUTION, this::newFile),
                 ContextMenu.Item.separator(),
                 item(VirtualStudioTexts.OPEN_SOLUTION_ITEM, true, this::openSolutionByPicker),
                 item(StudioTexts.OPEN_FOLDER_ITEM, true, this::openFolderByPicker),
                 item(StudioTexts.OPEN_FILE_ITEM, this.page == Page.SOLUTION, this::goToFile)));
-        for (final String dir : recent()) {
+        for (final String dir : this.loader.recent()) {
             items.add(item(StudioTexts.RECENT.with(shortName(dir)), true, () -> openSolutionFolder(dir)));
         }
         items.add(ContextMenu.Item.separator());
@@ -1885,7 +1033,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                     this.dockTabs.setSelected(DOCK_TERMINAL);
                     this.typingInTerminal = true;
                 }),
-                item(VirtualStudioTexts.ASSEMBLY, hasSolution() && this.projects.containsKey(currentProject()),
+                item(VirtualStudioTexts.ASSEMBLY, hasSolution() && this.loader.projects().containsKey(currentProject()),
                         this::openAssembly),
                 ContextMenu.Item.separator(),
                 item(StudioTexts.ZOOM_IN, hasDoc(), () -> zoomEditor(1)),
@@ -1977,12 +1125,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private List<ContextMenu.Item> projectMenu() {
-        final boolean has = hasSolution() && this.projects.containsKey(currentProject());
+        final boolean has = hasSolution() && this.loader.projects().containsKey(currentProject());
         return List.of(
                 item(VirtualStudioTexts.ADD_NEW_ITEM_ITEM, has, this::addNewItem),
                 item(VirtualStudioTexts.ADD_EXISTING_ITEM, has, this::addExistingItem),
-                item(VirtualStudioTexts.ADD_REFERENCE, has && this.projects.size() > 1, this::addReference),
-                item(VirtualStudioTexts.ADD_NEW_PROJECT, hasSolution(), () -> newProject(true)),
+                item(VirtualStudioTexts.ADD_REFERENCE, has && this.loader.projects().size() > 1, this::addReference),
+                item(VirtualStudioTexts.ADD_NEW_PROJECT, hasSolution(), () -> this.wizard.open(true)),
                 ContextMenu.Item.separator(),
                 item(VirtualStudioTexts.SET_STARTUP, has, this::setStartup),
                 item(VirtualStudioTexts.PROPERTIES, has, () -> showProperties(currentProject())));
@@ -1993,12 +1141,13 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         return List.of(
                 item(VirtualStudioTexts.BUILD_SOLUTION, this.page == Page.SOLUTION, this::buildSolution),
                 item(VirtualStudioTexts.REBUILD_SOLUTION, this.page == Page.SOLUTION, this::buildSolution),
-                item(VirtualStudioTexts.CLEAN_SOLUTION, hasSolution(), this::cleanSolution),
+                item(VirtualStudioTexts.CLEAN_SOLUTION, hasSolution(), this.build::cleanSolution),
                 item(name.isEmpty() ? VirtualStudioTexts.BUILD_PROJECT.text()
                         : VirtualStudioTexts.BUILD_NAMED.with(name), hasSolution() && !name.isEmpty(),
-                        () -> buildProject(name)),
+                        () -> this.build.buildProject(name)),
                 ContextMenu.Item.separator(),
-                item(VirtualStudioTexts.PACKAGE, hasSolution() && !startupName().isEmpty(), this::packageStartup));
+                item(VirtualStudioTexts.PACKAGE, hasSolution() && !this.loader.startupName().isEmpty(),
+                        this.build::packageStartup));
     }
 
     private List<ContextMenu.Item> debugMenu() {
@@ -2055,9 +1204,9 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                 entries.add(new CommandPalette.Entry(shortName(path), "", () -> this.workspace.open(path)));
             }
         }
-        for (final ProjectFile project : this.projects.values()) {
+        for (final ProjectFile project : this.loader.projects().values()) {
             for (final String source : project.sources()) {
-                final String path = join(projectDir(project.name()), source);
+                final String path = join(this.loader.projectDir(project.name()), source);
                 entries.add(new CommandPalette.Entry(project.name() + "/" + source, "", () -> this.workspace.open(path)));
             }
         }
@@ -2066,11 +1215,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private void newFile() {
         final String project = currentProject();
-        ask(StudioTexts.NEW_FILE, "untitled" + sourceSuffix(this.projects.get(project)), name -> {
+        ask(StudioTexts.NEW_FILE, "untitled" + sourceSuffix(this.loader.projects().get(project)), name -> {
             if (name.isEmpty()) {
                 return;
             }
-            final String dir = this.projects.containsKey(project) ? projectDir(project) : this.solutionDir;
+            final String dir = this.loader.projects().containsKey(project) ? this.loader.projectDir(project)
+                    : this.loader.dir();
             this.workspace.newFile(join(dir, name));
             setTabSize(this.tabSize);
         });
@@ -2081,7 +1231,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private void addNewItem(final String name) {
-        final ProjectFile project = this.projects.get(name);
+        final ProjectFile project = this.loader.projects().get(name);
         if (project == null) {
             return;
         }
@@ -2089,8 +1239,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             if (file.isEmpty()) {
                 return;
             }
-            this.workspace.newFile(join(projectDir(name), file));
-            saveProject(project.withSource(file));
+            this.workspace.newFile(join(this.loader.projectDir(name), file));
+            this.loader.saveProject(project.withSource(file));
         });
     }
 
@@ -2099,18 +1249,19 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private void addExistingItem(final String name) {
-        final ProjectFile project = this.projects.get(name);
+        final ProjectFile project = this.loader.projects().get(name);
         if (project == null) {
             return;
         }
         final List<CommandPalette.Entry> entries = new ArrayList<>();
         for (final CodeWorkspace.TreeRow row : this.workspace.tree()) {
             final String path = row.file().path();
-            if (!row.file().directory() && path.startsWith(projectDir(name) + "/")
+            if (!row.file().directory() && path.startsWith(this.loader.projectDir(name) + "/")
                     && path.endsWith(sourceSuffix(project))) {
-                final String relative = path.substring(projectDir(name).length() + 1);
+                final String relative = path.substring(this.loader.projectDir(name).length() + 1);
                 if (!project.sources().contains(relative)) {
-                    entries.add(new CommandPalette.Entry(relative, "", () -> saveProject(project.withSource(relative))));
+                    entries.add(new CommandPalette.Entry(relative, "",
+                            () -> this.loader.saveProject(project.withSource(relative))));
                 }
             }
         }
@@ -2122,14 +1273,15 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private void addReference(final String name) {
-        final ProjectFile project = this.projects.get(name);
+        final ProjectFile project = this.loader.projects().get(name);
         if (project == null) {
             return;
         }
         final List<CommandPalette.Entry> entries = new ArrayList<>();
-        for (final String other : this.projects.keySet()) {
+        for (final String other : this.loader.projects().keySet()) {
             if (!other.equals(name) && !project.references().contains(other)) {
-                entries.add(new CommandPalette.Entry(other, "", () -> saveProject(project.withReference(other))));
+                entries.add(new CommandPalette.Entry(other, "",
+                        () -> this.loader.saveProject(project.withReference(other))));
             }
         }
         this.palette.open(entries, "");
@@ -2140,9 +1292,9 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private void setStartup(final String name) {
-        if (this.solution != null && this.projects.containsKey(name)) {
-            this.solution = this.solution.withStartup(name);
-            saveSolution();
+        if (this.loader.solution() != null && this.loader.projects().containsKey(name)) {
+            this.loader.setSolution(this.loader.solution().withStartup(name));
+            this.loader.saveSolution();
         }
     }
 
@@ -2150,16 +1302,16 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     /** What the right button offers on a row of the Solution Explorer, by what the row is. */
     private List<ContextMenu.Item> treeMenu(final Node node) {
-        final boolean several = this.projects.size() > 1;
+        final boolean several = this.loader.projects().size() > 1;
         return switch (node.kind()) {
-            case SOLUTION -> this.solution == null
+            case SOLUTION -> this.loader.solution() == null
                     ? List.of(item(VirtualStudioTexts.REFRESH, true, this.workspace::refresh))
                     : List.of(item(VirtualStudioTexts.BUILD_SOLUTION, true, this::buildSolution),
-                            item(VirtualStudioTexts.CLEAN_SOLUTION, true, this::cleanSolution),
+                            item(VirtualStudioTexts.CLEAN_SOLUTION, true, this.build::cleanSolution),
                             ContextMenu.Item.separator(),
-                            item(VirtualStudioTexts.ADD_NEW_PROJECT, true, () -> newProject(true)));
+                            item(VirtualStudioTexts.ADD_NEW_PROJECT, true, () -> this.wizard.open(true)));
             case PROJECT -> List.of(
-                    item(VirtualStudioTexts.BUILD, true, () -> buildProject(node.project())),
+                    item(VirtualStudioTexts.BUILD, true, () -> this.build.buildProject(node.project())),
                     item(VirtualStudioTexts.SET_STARTUP, true, () -> setStartup(node.project())),
                     ContextMenu.Item.separator(),
                     item(VirtualStudioTexts.ADD_NEW_ITEM_ITEM, true, () -> addNewItem(node.project())),
@@ -2190,15 +1342,15 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     /** Takes the source out of its project's file, leaving the file itself on the disk. */
     private void excludeSource(final Node node) {
-        final ProjectFile project = this.projects.get(node.project());
+        final ProjectFile project = this.loader.projects().get(node.project());
         if (project != null) {
-            saveProject(project.withoutSource(relativeSource(project, node.path())));
+            this.loader.saveProject(project.withoutSource(relativeSource(project, node.path())));
         }
     }
 
     /** A source's name as the project file lists it: its path inside the project's folder. */
     private String relativeSource(final ProjectFile project, final String path) {
-        final String prefix = projectDir(project.name()) + "/";
+        final String prefix = this.loader.projectDir(project.name()) + "/";
         return path.startsWith(prefix) ? path.substring(prefix.length()) : shortName(path);
     }
 
@@ -2237,11 +1389,11 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             }
         }
         PacketDistributor.sendToServer(new DeleteFilePayload(this.host, node.path()));
-        final ProjectFile project = this.projects.get(node.project());
+        final ProjectFile project = this.loader.projects().get(node.project());
         if (node.kind() == NodeKind.SOURCE && project != null) {
-            saveProject(project.withoutSource(relativeSource(project, node.path())));
+            this.loader.saveProject(project.withoutSource(relativeSource(project, node.path())));
         }
-        print(VirtualStudioTexts.DELETED.with(shortName(node.path())));
+        this.build.print(VirtualStudioTexts.DELETED.with(shortName(node.path())));
         FilesApps.diskChanged();
         this.workspace.refresh();
     }
@@ -2346,9 +1498,9 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private void openAssembly() {
-        final ProjectFile project = this.projects.get(currentProject());
+        final ProjectFile project = this.loader.projects().get(currentProject());
         if (project != null && project.buildsAListing()) {
-            this.workspace.open(join(projectDir(project.name()), project.entry()));
+            this.workspace.open(join(this.loader.projectDir(project.name()), project.entry()));
         }
     }
 
@@ -2403,8 +1555,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     @Override
     public String title() {
         final CodeWorkspace.Doc doc = this.workspace.current();
-        final String where = this.solution != null ? this.solution.name()
-                : this.page == Page.SOLUTION ? shortName(this.solutionDir) : "";
+        final String where = this.loader.solution() != null ? this.loader.solution().name()
+                : this.page == Page.SOLUTION ? shortName(this.loader.dir()) : "";
         if (doc == null) {
             return where.isEmpty() ? "Virtual Studio" : where + " - Virtual Studio";
         }
@@ -2454,7 +1606,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     @Override
     public boolean modalActive() {
         // The file window is a window of its own over this one; the desktop holds this one while it is up.
-        return this.templates.isOpen() || this.configure.isOpen() || this.ask.isOpen()
+        return this.wizard.isOpen() || this.ask.isOpen()
                 || this.properties.isOpen() || this.options.isOpen() || this.askClose.isOpen()
                 || this.askDelete.isOpen();
     }
@@ -2531,7 +1683,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         drawStatus(g, font, x, y + height - STATUS_H, width, doc);
         this.completions.render(g, ctx);
         this.palette.render(g, ctx, x, top, width);
-        for (final Popup popup : List.of(this.templates, this.configure, this.ask, this.properties, this.options, this.askClose, this.askDelete)) {
+        for (final Popup popup : popups()) {
             if (popup.isOpen()) {
                 popup.renderIn(g, ctx, x, y, width, height);
             }
@@ -2587,7 +1739,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         int ly = y + 6;
         Draw.text(g, font, GameText.resolve(VirtualStudioTexts.OPEN_RECENT), x + 6, ly, this.skin.text());
         ly += 12;
-        final List<String> recent = recent();
+        final List<String> recent = this.loader.recent();
         if (recent.isEmpty()) {
             Draw.text(g, font, GameText.resolve(StudioTexts.NOTHING_YET), x + 6, ly, this.skin.dim());
         }
@@ -2611,7 +1763,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         ry = card(g, font, rx, ry, cardW, VirtualStudioTexts.OPEN_FILE_CARD, VirtualStudioTexts.OPEN_FILE_HINT,
                 this::openFileFromStart, palette);
         card(g, font, rx, ry, cardW, VirtualStudioTexts.CREATE_PROJECT, VirtualStudioTexts.CREATE_PROJECT_HINT,
-                () -> newProject(false), palette);
+                () -> this.wizard.open(false), palette);
         Draw.popScissor(g);
     }
 
@@ -2636,7 +1788,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final InkPalette palette = InkPalette.forGround(this.skin.isDark()).get();
         g.fill(x, y, x + width, y + height, palette.ground());
         Draw.pushScissor(g, x, y, x + width, y + height);
-        Draw.text(g, font, GameText.resolve(this.solution == null ? VirtualStudioTexts.EMPTY_FOLDER
+        Draw.text(g, font, GameText.resolve(this.loader.solution() == null ? VirtualStudioTexts.EMPTY_FOLDER
                 : VirtualStudioTexts.EMPTY_SOLUTION), x + 6, y + 6, palette.gutterText());
         Draw.popScissor(g);
     }
@@ -2668,9 +1820,9 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private int drawStatusRight(final GuiGraphics g, final Font font, final int x, final int y,
                                 final int width, final CodeWorkspace.Doc doc) {
         int right = x + width - 3;
-        if (this.solution != null) {
-            right -= font.width(this.solution.name());
-            Draw.text(g, font, this.solution.name(), right, y + 1, this.skin.dim());
+        if (this.loader.solution() != null) {
+            right -= font.width(this.loader.solution().name());
+            Draw.text(g, font, this.loader.solution().name(), right, y + 1, this.skin.dim());
             right -= 8;
         }
         if (doc != null) {
@@ -2722,8 +1874,14 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     /* Input */
 
+    /** Every popup the window can show, in the order they are drawn. */
+    private List<Popup> popups() {
+        return List.of(this.wizard.templates(), this.wizard.configure(), this.ask, this.properties, this.options,
+                this.askClose, this.askDelete);
+    }
+
     private Popup openPopup() {
-        for (final Popup popup : List.of(this.templates, this.configure, this.ask, this.properties, this.options, this.askClose, this.askDelete)) {
+        for (final Popup popup : popups()) {
             if (popup.isOpen()) {
                 return popup;
             }
@@ -2873,7 +2031,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             return true;
         }
         if (ctrl && shift && key == GLFW.GLFW_KEY_N) {
-            newProject(false);
+            this.wizard.open(false);
             return true;
         }
         if (ctrl && shift && key == GLFW.GLFW_KEY_B) {
@@ -2937,7 +2095,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private void offerCompletions(final CodeWorkspace.Doc doc) {
         final CodeArea area = doc.area();
         this.completions.offer(area, doc.path(), sourcesAround(doc),
-                new int[] {area.x(), area.y(), area.width(), area.height()}, projectVersionOf(doc.path()));
+                new int[] {area.x(), area.y(), area.width(), area.height()}, this.loader.projectVersionOf(doc.path()));
     }
 
     /**
@@ -2947,41 +2105,25 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
      */
     private List<IProgrammingLanguage.SourceText> sourcesAround(final CodeWorkspace.Doc doc) {
         final List<IProgrammingLanguage.SourceText> out = new ArrayList<>(this.workspace.siblingsOf(doc));
-        final String own = projectOf(doc.path());
+        final String own = this.loader.projectOf(doc.path());
         if (own == null) {
             return out;
         }
         final Deque<String> order = new ArrayDeque<>();
-        collectOrder(own, order, new LinkedHashSet<>());
+        this.loader.collectOrder(own, order, new LinkedHashSet<>());
         for (final String each : order) {
             if (each.equals(own)) {
                 continue;
             }
-            this.workspace.ensureSurveyed(projectDir(each));
-            for (final String source : this.projects.get(each).sources()) {
-                final String text = this.workspace.textOf(join(projectDir(each), source));
+            this.workspace.ensureSurveyed(this.loader.projectDir(each));
+            for (final String source : this.loader.projects().get(each).sources()) {
+                final String text = this.workspace.textOf(join(this.loader.projectDir(each), source));
                 if (text != null) {
                     out.add(new IProgrammingLanguage.SourceText(each + "/" + source, text));
                 }
             }
         }
         return out;
-    }
-
-    /** The project whose folder holds {@code path}, or null when it is in none of the solution's. */
-    private String projectOf(final String path) {
-        for (final String name : this.projects.keySet()) {
-            if (path.startsWith(projectDir(name) + "/")) {
-                return name;
-            }
-        }
-        return null;
-    }
-
-    /** The version of its language the project holding {@code path} names, or 0 when it names none or is none. */
-    private int projectVersionOf(final String path) {
-        final String own = projectOf(path);
-        return own == null ? 0 : this.projects.get(own).languageVersion();
     }
 
     @Override

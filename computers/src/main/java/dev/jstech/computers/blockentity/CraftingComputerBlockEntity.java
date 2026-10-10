@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
  * hold the processing recipes and feed the machines; what it can make is what its cards and its interfaces hold.
  */
 public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntity
-        implements IComputerTerminalHost {
+        implements IComputerTerminalHost, IAssemblyComputer {
 
     /* The craft it runs right now: one at a time without a Supercomputer. */
     @Nullable
@@ -340,26 +340,32 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
         return null;
     }
 
+    @Override
     public boolean assemblyRunning() {
         return assemblyRunning.isSet();
     }
 
+    @Override
     public boolean assemblyBuildValid() {
         return assemblyBuildValid.isSet();
     }
 
+    @Override
     public long assemblyCapacity() {
         return assemblyCapacity.getAsInt();
     }
 
+    @Override
     public long assemblyRamBuffer() {
         return assemblyRamBuffer.getAsInt();
     }
 
+    @Override
     public boolean assemblyAutoStart() {
         return assemblyAutoStart.isSet();
     }
 
+    @Override
     public boolean assemblyOnNetwork() {
         return assemblyOnNetwork.isSet();
     }

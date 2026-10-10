@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.crafting;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.CraftPlannerApp;
@@ -43,6 +44,7 @@ import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextLists;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -53,6 +55,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -70,9 +75,26 @@ import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.craf
 /**
  * The payloads that plan and submit a craft from a terminal and send the list of what the network can craft.
  */
+@EventBusSubscriber(modid = JsComputers.MODID)
 public final class CraftingPayloads {
 
+    /** How long a built catalog is reused at most, in ticks, however still the network looks. */
+    static final long CATALOG_MAX_AGE_TICKS = 20L;
+
+    /* One network's catalog and what it was built from; reused while all of that is unchanged and it is fresh. */
+    private record CachedCatalog(ServerLevel level, long builtAt, long indexVersion, List<CraftingPattern> patterns,
+                                 List<NetworkRecipe> machineRecipes, List<CraftCatalogPayload.Entry> entries) {
+    }
+
+    private static final Map<NetworkUuid, CachedCatalog> CATALOGS = new HashMap<>();
+
     private CraftingPayloads() {
+    }
+
+    /* The kept catalogs hold their level; a server that stops lets them go, so a world left is not kept alive. */
+    @SubscribeEvent
+    public static void onServerStopped(final ServerStoppedEvent event) {
+        CATALOGS.clear();
     }
 
     /** Registers the payloads this class handles. */
@@ -118,6 +140,28 @@ public final class CraftingPayloads {
         if (planner == null) {
             return List.of();
         }
+        // Planning every distinct result is the costly part, so the catalog is kept while the patterns, the machine
+        // recipes and the storage index (the stock the dots are judged by) are as they were, and for 20 ticks at most.
+        final long now = level.getGameTime();
+        final List<CraftingPattern> heldPatterns = mainframe.networkPatterns();
+        final List<NetworkRecipe> heldRecipes = mainframe.networkMachineRecipes();
+        final long indexVersion = mainframe.networkIndex().version();
+        final CachedCatalog cached = CATALOGS.get(net);
+        if (cached != null && cached.level() == level && now >= cached.builtAt()
+                && now - cached.builtAt() <= CATALOG_MAX_AGE_TICKS && cached.indexVersion() == indexVersion
+                && cached.patterns().equals(heldPatterns) && cached.machineRecipes().equals(heldRecipes)) {
+            return cached.entries();
+        }
+        CATALOGS.values().removeIf(old -> old.level() != level || now - old.builtAt() > CATALOG_MAX_AGE_TICKS
+                || now < old.builtAt());
+        final List<CraftCatalogPayload.Entry> built = assembleCraftCatalog(level, net, mainframe, planner);
+        CATALOGS.put(net, new CachedCatalog(level, now, indexVersion, heldPatterns, heldRecipes, built));
+        return built;
+    }
+
+    private static List<CraftCatalogPayload.Entry> assembleCraftCatalog(
+            final ServerLevel level, final NetworkUuid net, final MainframeBlockEntity mainframe,
+            final ICraftPlanning planner) {
         final var stock = NetworkStorage
                 .of(level, net).query();
         // "Any" cells are judged against what the network holds, the way a craft would resolve them.

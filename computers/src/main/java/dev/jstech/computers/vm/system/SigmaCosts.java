@@ -40,6 +40,8 @@ public final class SigmaCosts {
     public static final int DRAW = 50;
     /** What every kilobyte of a value handed to a generic component adds to the draw, since every viewer is sent it. */
     public static final int DRAW_PER_KB = 10;
+    /** Handing a generic component a value: a draw, and the per-kilobyte price for every started block of it. */
+    public static final CallCost DRAW_DATA = CallCost.perBlock(DRAW, DRAW_PER_KB * (CallCost.BLOCK_BYTES / 1024));
     /** Asking the network to do something, which becomes work for the whole base. */
     public static final int SUBMIT = 200;
     /** Starting a thread, beside the call itself: a stack of its own is not a small thing. */

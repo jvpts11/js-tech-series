@@ -17,7 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * Client to server: a command line typed into the Command Prompt running against the computer at {@code hostPos}, opened from the Monitor at {@code monitorPos}. The server runs it through the shell and replies with a {@link CommandOutputPayload}.
  */
-public record RunCommandPayload(BlockPos monitorPos, BlockPos hostPos, String line)
+public record RunCommandPayload(BlockPos hostPos, BlockPos monitorPos, String line)
         implements CustomPacketPayload {
 
     public static final int MAX_LEN = 256;
@@ -27,8 +27,8 @@ public record RunCommandPayload(BlockPos monitorPos, BlockPos hostPos, String li
 
     public static final StreamCodec<RegistryFriendlyByteBuf, RunCommandPayload> STREAM_CODEC =
             StreamCodec.composite(
-                    BlockPos.STREAM_CODEC, RunCommandPayload::monitorPos,
                     BlockPos.STREAM_CODEC, RunCommandPayload::hostPos,
+                    BlockPos.STREAM_CODEC, RunCommandPayload::monitorPos,
                     ByteBufCodecs.stringUtf8(MAX_LEN), RunCommandPayload::line,
                     RunCommandPayload::new);
 

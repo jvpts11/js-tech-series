@@ -74,7 +74,7 @@ public final class BusEdits {
      * is not there, a count under one, an hour off the clock, a bus with no name.
      */
     @Nullable
-    static BusCondition condition(final BusEditPayload edit) {
+    public static BusCondition condition(final BusEditPayload edit) {
         final BusCondition.Kind kind = StableIds.of(BusCondition.Kind.class).find(edit.slot());
         if (kind == null) {
             return null;

@@ -204,14 +204,11 @@ public final class TerminalLocalPayloads {
             return;
         }
         final int idx = payload.slotIndex();
-        final boolean fromCursor = idx == TerminalLocalDepositPayload.CURSOR
-                || idx == TerminalLocalDepositPayload.CURSOR_ONE;
-        // A slot source must be a player-inventory menu slot: every slot in this menu is one.
-        if (!fromCursor && (idx < 0 || idx >= menu.slots.size())) {
+        final DataHandoff.ISource source = TerminalHosts.sourceOf(menu, player, idx,
+                TerminalLocalDepositPayload.CURSOR, TerminalLocalDepositPayload.CURSOR_ONE);
+        if (source == null) {
             return;
         }
-        final DataHandoff.ISource source = fromCursor
-                ? DataHandoff.cursor(player) : DataHandoff.slot(menu.getSlot(idx), player);
         /*
          * A right-click hands over ONE: one item, or what a held container holds, and a held empty
          * container over a fluid or chemical entry fills from the disks instead. Left click and

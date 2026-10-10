@@ -998,7 +998,7 @@ public final class SystemApi {
         final Members component = new Members("GenericComponent");
         component.made(STRING);
         component.valueOnObject(STRING, "Kind", MemberKind.PROCESS, CallCost.FREE);
-        component.drawnValue(OBJECT, "Data");
+        component.dataValue(OBJECT, "Data");
         component.onObject(VOID, "OnAction", MemberKind.PROCESS, CallCost.FREE, "Action<ComponentAction>");
         return new TypeSpec(UI, "GenericComponent", WIDGET, component.members);
     }
@@ -1174,6 +1174,12 @@ public final class SystemApi {
         void drawnValue(final String type, final String name) {
             this.members.add(new PropertySpec(this.id(name), type, false, true, MemberKind.PROCESS, CallCost.FREE,
                     CallCost.of(SigmaCosts.DRAW)));
+        }
+
+        /** A value a generic component holds, written at a draw and more for every started block of it. */
+        void dataValue(final String type, final String name) {
+            this.members.add(new PropertySpec(this.id(name), type, false, true, MemberKind.PROCESS, CallCost.FREE,
+                    SigmaCosts.DRAW_DATA));
         }
 
         /** A call on a widget, which changes what it shows and so costs drawing it again. */

@@ -125,6 +125,8 @@ public class NetworkGatewayBlockEntity extends SyncedBlockEntity implements IPer
     private static final TextKey ADJACENT = TextKey.of("jsc.gateway.adjacent", "adjacent");
     private static final TextKey CABLE_ONE_BLOCK = TextKey.of("jsc.gateway.cable_one_block", "cable, %s block");
     private static final TextKey CABLE_BLOCKS = TextKey.of("jsc.gateway.cable_blocks", "cable, %s blocks");
+    private static final TextKey NAME_TAKEN =
+            TextKey.of("jsc.gateway.name_taken", "another gateway on the wire is already called %s");
     private static final TextKey RENAMED = TextKey.of("jsc.gateway.renamed", "renamed %s to %s");
     /* What the log records of the Gateway's own doings, and how they went. */
     private static final TextKey LOG_RENAME = TextKey.of("jsc.gateway.log.rename", "rename %s to %s");
@@ -262,6 +264,11 @@ public class NetworkGatewayBlockEntity extends SyncedBlockEntity implements IPer
     public Text rename(final String typed, final String by) {
         final String cleaned = GatewayName.clean(typed);
         final String was = name();
+        if (!cleaned.isEmpty() && !cleaned.equals(was) && takenOnWire(cleaned)) {
+            final Text refused = NAME_TAKEN.with(cleaned);
+            logged(by, LOG_RENAME.with(was, cleaned), refused, GatewayLog.Tone.DENIED);
+            return refused;
+        }
         name.set(cleaned.isEmpty() ? defaultName() : cleaned);
         logged(by, LOG_RENAME.with(was, name()), LOG_OK.text(), GatewayLog.Tone.OK);
         return RENAMED.with(was, name());
@@ -596,14 +603,22 @@ public class NetworkGatewayBlockEntity extends SyncedBlockEntity implements IPer
     private String defaultName() {
         final IPeripheralOwner owner = owner();
         if (owner == null || level == null) {
-            return GatewayName.defaultFor(1);
+            return GatewayName.freeDefault(1, this::takenOnWire);
         }
         final List<NetworkGatewayBlockEntity> siblings = NetworkGateways.linkedTo(level, owner);
         int ordinal = siblings.indexOf(this) + 1;
         if (ordinal <= 0) {
             ordinal = siblings.size() + 1;
         }
-        return GatewayName.defaultFor(ordinal);
+        return GatewayName.freeDefault(ordinal, this::takenOnWire);
+    }
+
+    /*
+     * Whether another peripheral on the wired network already goes by the name this one would publish under.
+     * Compared by the published form, so names that differ only by a dash and an underscore are the same.
+     */
+    private boolean takenOnWire(final String candidate) {
+        return bridge != null && bridge.peripherals().containsKey(GatewayName.peripheralName(candidate));
     }
 
     /** A ComputerCraft computer this Gateway is attached to, and when it was last heard from. */

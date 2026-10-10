@@ -458,7 +458,7 @@ public final class IsmsGameTests {
     private static IqlResultPayload run(final GameTestHelper helper, final TestWorldBuilder.CraftingNetwork net,
                                         final int window, final int tab, final int seq, final String statement) {
         return IqlPayloads.runStatement(helper.getLevel(), net.cc(), WHO,
-                new RunIqlPayload(BlockPos.ZERO, net.cc().getBlockPos(), window, tab, seq, statement));
+                new RunIqlPayload(net.cc().getBlockPos(), BlockPos.ZERO, window, tab, seq, statement));
     }
 
     private static ICliComputer.OpResult act(final TestWorldBuilder.CraftingNetwork net,

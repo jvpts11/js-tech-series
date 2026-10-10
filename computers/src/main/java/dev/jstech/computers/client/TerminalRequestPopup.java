@@ -82,7 +82,7 @@ final class TerminalRequestPopup {
         menu.setNetworkServers(List.of());   // ditto the destination picker's computer list
         start(picked);
         PacketDistributor.sendToServer(new RequestServerBreakdownPayload(
-                menu.monitorPos(), menu.hostPos(), picked.key()));
+                menu.hostPos(), menu.monitorPos(), picked.key()));
     }
 
     /** Asking the machine's own store: there is nothing to choose, only which way it goes. */

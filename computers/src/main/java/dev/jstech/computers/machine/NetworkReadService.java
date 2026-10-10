@@ -9,7 +9,6 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.NetworkStorage;
-import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliRemote;
@@ -59,12 +58,6 @@ public final class NetworkReadService {
 
     /* The rows a query of the network's machines and Operations reads back; names and keywords are data. */
     private static final TextKey ON_SERVERS = TextKey.of("jsc.network.read.on_servers", "%s servers");
-    private static final TextKey MAINFRAME = TextKey.of("jsc.network.read.mainframe", "Mainframe");
-    private static final TextKey A_SERVER = TextKey.of("jsc.network.read.server", "%s (server)");
-    private static final TextKey A_PC = TextKey.of("jsc.network.read.pc", "%s (pc)");
-    private static final TextKey A_CRAFTING_COMPUTER = TextKey.of("jsc.network.read.crafting", "%s (crafting)");
-    /* An Operation: its verb, what it moves and how it stands. */
-    private static final TextKey OPERATION = TextKey.of("jsc.network.read.operation", "%s %s [%s]");
 
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
@@ -283,56 +276,29 @@ public final class NetworkReadService {
                                                      final String server, final int limit) {
         return switch (object.toLowerCase(Locale.ROOT)) {
             case "items", "*" -> this.query(where, server, limit); // '*' means every item, like SELECT *
-            case "servers" -> this.queryServers(limit);
-            case "operations" -> this.queryOperations(limit);
-            case "computers" -> this.queryComputers(limit);
-            case "recipes" -> this.queryRecipes(limit);
-            case "disks" -> this.queryDisks(where, limit);
+            case "servers" -> this.queryRows("servers", where, limit, "name", "used", "era");
+            case "operations" -> this.queryRows("operations", where, limit, "item", "moved", "state");
+            case "computers" -> this.queryRows("computers", where, limit, "name", null, "kind");
+            case "recipes" -> this.queryRows("recipes", where, limit, "recipe", null, "where");
+            case "disks" -> this.queryRows("disks", where, limit, "disk", "used", "server");
             default -> List.of();
         };
     }
 
-    /** One row per network node: the Mainframe, then servers, personal computers, and crafting computers. */
-    private List<ICliComputer.StoredItem> queryComputers(final int limit) {
-        final NetworkUuid net = this.terminal.networkUuid();
-        if (net == null) {
-            return List.of();
-        }
-        final NetworkSystem system = NetworkSystem.get(this.level);
-        final List<ICliComputer.StoredItem> out = new ArrayList<>();
-        if (this.mainframe(net) != null) {
-            out.add(new ICliComputer.StoredItem(MAINFRAME.text(), 1L));
-        }
-        for (final ServerNode server : system.serversOf(net)) {
-            if (out.size() >= limit) {
-                break;
-            }
-            out.add(new ICliComputer.StoredItem(
-                    A_SERVER.with(NetworkLookup.serverLabel(this.level, server.nodeUuid())), 1L));
-        }
-        for (final var pc : system.personalComputersOf(net)) {
-            if (out.size() >= limit) {
-                break;
-            }
-            out.add(new ICliComputer.StoredItem(A_PC.with("PC-" + ShortId.of(pc.nodeUuid().asString())), 1L));
-        }
-        for (final var cc : system.craftingComputersOf(net)) {
-            if (out.size() >= limit) {
-                break;
-            }
-            out.add(new ICliComputer.StoredItem(
-                    A_CRAFTING_COMPUTER.with("CC-" + ShortId.of(cc.nodeUuid().asString())), 1L));
-        }
-        return out;
-    }
-
-    /** One row per disk in the network's servers: the disk, how many items it holds, and its server. */
-    private List<ICliComputer.StoredItem> queryDisks(@Nullable final IIqlCondition where, final int limit) {
-        final IqlTable table = this.queryTable("disks", where, "", limit, "", false);
+    /**
+     * The rows of one of the network's tables as a listing, so a QUERY and a SELECT read an object through the same
+     * columns and wording and a WHERE keeps the same rows in both: the name column is the row's name, the count
+     * column (when the table has one, else every row counts as one) its quantity, and the detail column its detail.
+     */
+    private List<ICliComputer.StoredItem> queryRows(final String object, @Nullable final IIqlCondition where,
+                                                    final int limit, final String nameColumn,
+                                                    @Nullable final String countColumn, final String detailColumn) {
+        final IqlTable table = this.queryTable(object, where, "", limit, "", false);
         final List<ICliComputer.StoredItem> out = new ArrayList<>(table.rows().size());
         for (int i = 0; i < table.rows().size(); i++) {
-            out.add(new ICliComputer.StoredItem(table.cell(i, "disk"),
-                    parseCount(table.cell(i, "used").english()), table.cell(i, "server")));
+            out.add(new ICliComputer.StoredItem(table.cell(i, nameColumn),
+                    countColumn == null ? 1L : parseCount(table.cell(i, countColumn).english()),
+                    table.cell(i, detailColumn)));
         }
         return out;
     }
@@ -343,67 +309,6 @@ public final class NetworkReadService {
         } catch (final NumberFormatException notACount) {
             return 0L;
         }
-    }
-
-    /** One row per craftable recipe known to the network: the result item and its output count. */
-    private List<ICliComputer.StoredItem> queryRecipes(final int limit) {
-        final MainframeBlockEntity mainframe = this.mainframe(this.terminal.networkUuid());
-        if (mainframe == null) {
-            return List.of();
-        }
-        final List<ICliComputer.StoredItem> out = new ArrayList<>();
-        for (final var pattern : mainframe.networkPatterns()) {
-            if (out.size() >= limit) {
-                break;
-            }
-            final ItemStack result = pattern.result();
-            out.add(new ICliComputer.StoredItem(GameText.of(result.getHoverName()), result.getCount()));
-        }
-        return out;
-    }
-
-    /** One row per server: its label and the total item count it stores. */
-    private List<ICliComputer.StoredItem> queryServers(final int limit) {
-        final NetworkUuid net = this.terminal.networkUuid();
-        if (net == null) {
-            return List.of();
-        }
-        final List<ICliComputer.StoredItem> out = new ArrayList<>();
-        for (final ServerNode srv : NetworkSystem.get(this.level).serversOf(net)) {
-            final long used = NetworkStorage.ofServers(this.level, List.of(srv.nodeUuid()))
-                    .query().values().stream().mapToLong(Long::longValue).sum();
-            out.add(new ICliComputer.StoredItem(NetworkLookup.serverLabel(this.level, srv.nodeUuid()), used));
-            if (out.size() >= limit) {
-                break;
-            }
-        }
-        return out;
-    }
-
-    /**
-     * One row per operation: the in-flight ones first ("VERB item [STATUS]" and how much moved so far), then
-     * the settled ones from the Mainframe's log, newest first, so a craft that finished a moment ago is still
-     * there to be read. The ones in flight are the Operations service's to hand over, because they are its own.
-     */
-    private List<ICliComputer.StoredItem> queryOperations(final int limit) {
-        final List<ICliComputer.StoredItem> out = new ArrayList<>();
-        for (final ICliComputer.ActiveOp op : this.operations.list()) {
-            out.add(new ICliComputer.StoredItem(OPERATION.with(op.type(), op.item(), op.status()), op.progress()));
-            if (out.size() >= limit) {
-                return out;
-            }
-        }
-        final MainframeBlockEntity mainframe = this.mainframe(this.terminal.networkUuid());
-        if (mainframe != null) {
-            for (final OperationRecord record : mainframe.recentOperations()) {
-                out.add(new ICliComputer.StoredItem(OPERATION.with(OperationRecord.typeName(record.type()),
-                        GameText.of(record.name()), OperationRecord.statusText(record.status())), record.moved()));
-                if (out.size() >= limit) {
-                    break;
-                }
-            }
-        }
-        return out;
     }
 
     /** Which servers hold an item, and how much each holds; a server holding none of it is left out. */

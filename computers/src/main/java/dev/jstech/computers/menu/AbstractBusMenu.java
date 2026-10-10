@@ -14,6 +14,7 @@ import dev.jstech.computers.block.part.ExportBusPart;
 import dev.jstech.computers.block.part.ExternalStorageBusPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.bus.BusAbilities;
+import dev.jstech.computers.bus.BusCondition;
 import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.computers.crafting.CraftingFloor;
 import dev.jstech.computers.gui.layout.BusLayout;
@@ -27,6 +28,7 @@ import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.menu.PlayerSlots;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -240,6 +242,11 @@ public abstract class AbstractBusMenu extends CoreMenu {
         }
         if (BusEdits.apply(part, edit, getCarried())) {
             send(player, true);
+        } else if (edit.op() == BusEditPayload.ADD_CONDITION && part.hasHoursWindow()) {
+            final BusCondition asked = BusEdits.condition(edit);
+            if (asked != null && asked.kind() == BusCondition.Kind.HOURS) {
+                player.displayClientMessage(GameText.component(BusMenuTexts.ONE_HOURS_WINDOW), true);
+            }
         }
     }
 

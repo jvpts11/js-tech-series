@@ -603,12 +603,12 @@ final class UiMutator {
      * What a program writes on a widget, kept as the widget holds it: a text as a copy of the widget's own, a number
      * within what the widget can show, and a generic component's value as a copy it alone holds.
      *
-     * @return what the write weighs in kilobytes beyond the draw every write costs: a generic component's value is
+     * @return what the write weighs in bytes beyond the draw every write costs: a generic component's value is
      *         charged by its size, and anything else weighs nothing more
      */
     long write(final Values.Obj self, final String name, final Object value, final int line) {
         final int most = UiWidgets.WIDTH.equals(name) ? UiWidgets.MOST_WIDE : UiWidgets.MOST_TALL;
-        long kilobytes = 0;
+        long bytes = 0;
         if (KEPT.contains(name)) {
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NOT_WRITABLE.with(name));
         }
@@ -623,7 +623,7 @@ final class UiMutator {
                     UiWidgets.TAB_VIEW.equals(self.type()) ? Math.min(1, count(self)) : 0, count(self)));
             case UiWidgets.AMOUNT -> self.set(name, Math.max(0, Numbers.toInt(value)));
             case UiWidgets.DONE, UiWidgets.TOTAL -> self.set(name, Math.max(0L, Numbers.toLong(value)));
-            case UiWidgets.DATA -> kilobytes = this.data(self, value, line);
+            case UiWidgets.DATA -> bytes = this.data(self, value, line);
             default -> {
                 if (value instanceof String said) {
                     this.replace(self, name, said, line);
@@ -633,7 +633,7 @@ final class UiMutator {
             }
         }
         this.changed(self);
-        return kilobytes;
+        return bytes;
     }
 
     private static int count(final Values.Obj self) {
@@ -681,7 +681,7 @@ final class UiMutator {
         }
         this.letGoAll(self.get(UiWidgets.DATA));
         self.set(UiWidgets.DATA, copied.value());
-        return (copied.bytes() + 1023) / 1024;
+        return copied.bytes();
     }
 
     /* What a window, a group box or a scroll view shows must fit with what is already there; past it, the old stays. */

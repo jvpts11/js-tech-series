@@ -30,13 +30,10 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
-import dev.jstech.core.menu.MenuValue;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.function.ToIntFunction;
-import java.util.function.ToLongFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -70,6 +67,7 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
      * say what it is on says nothing at all instead.
      */
     private final String systemName;
+    private final ComputerReadings readings;
     private int refreshTick;
     private boolean initialDataSent;
     private int activeTab;
@@ -89,42 +87,6 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
      * host with no slider (a Server/Mainframe), which the screen reads as "always public".
      */
     private List<LocalStorageSnapshotPayload.DiskInfo> diskPrivacy = List.of();
-
-    /* The 34 readings the terminal's tabs show, one MenuValue each, named for what they hold. */
-    private final MenuValue running;
-    private final MenuValue buildValid;
-    private final MenuValue networkLinkState;
-    private final MenuValue capacity;
-    private final MenuValue queues;
-    private final MenuValue ramBuffer;
-    private final MenuValue serverCount;
-    private final MenuValue installedCpus;
-    private final MenuValue cpuSlots;
-    private final MenuValue installedRam;
-    private final MenuValue ramSlots;
-    private final MenuValue installedGpus;
-    private final MenuValue gpuSlots;
-    private final MenuValue installedDisks;
-    private final MenuValue diskSlots;
-    private final MenuValue storageUsed;
-    private final MenuValue storageCapacity;
-    private final MenuValue mainframeHost;
-    private final MenuValue usableStorageSlots;
-    private final MenuValue pendingOps;
-    private final MenuValue runningOps;
-    private final MenuValue completedOps;
-    private final MenuValue pcCount;
-    private final MenuValue subframeCount;
-    private final MenuValue indexedTypes;
-    private final MenuValue indexedServers;
-    private final MenuValue activeLocks;
-    private final MenuValue networkStorageUsed;
-    private final MenuValue networkStorageTotal;
-    private final MenuValue craftComputers;
-    private final MenuValue era;
-    private final MenuValue indexHealth;
-    private final MenuValue indexHealthTypes;
-    private final MenuValue patternsHost;
 
     public static final int TAB_LOCAL = 0;
     public static final int TAB_STORAGE = 1;
@@ -195,45 +157,7 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
         final GuiLayout layout = ComputerTerminalLayout.layout();
         playerInventory(playerInventory, layout.playerInventoryAt());
 
-        this.running = flag(() -> hostFlag(IComputerTerminalHost::computerRunning));
-        this.buildValid = flag(() -> hostFlag(IComputerTerminalHost::computerBuildValid));
-        this.networkLinkState = value(() -> hostInt(IComputerTerminalHost::networkLinkState));
-        this.capacity = value(() -> hostClamped(IComputerTerminalHost::orchestrationCapacity));
-        this.queues = value(() -> hostInt(IComputerTerminalHost::computerQueues));
-        this.ramBuffer = value(() -> hostClamped(IComputerTerminalHost::computerRamBuffer));
-        this.serverCount = value(() -> hostInt(IComputerTerminalHost::networkServerCount));
-        this.installedCpus = value(() -> hostInt(IComputerTerminalHost::installedCpus));
-        this.cpuSlots = value(() -> hostInt(IComputerTerminalHost::cpuSlots));
-        this.installedRam = value(() -> hostInt(IComputerTerminalHost::installedRam));
-        this.ramSlots = value(() -> hostInt(IComputerTerminalHost::ramSlots));
-        this.installedGpus = value(() -> hostInt(IComputerTerminalHost::installedGpus));
-        this.gpuSlots = value(() -> hostInt(IComputerTerminalHost::gpuSlots));
-        this.installedDisks = value(() -> hostInt(IComputerTerminalHost::installedDisks));
-        this.diskSlots = value(() -> hostInt(IComputerTerminalHost::diskSlots));
-        this.storageUsed = value(() -> hostClamped(IComputerTerminalHost::localStorageUsed));
-        this.storageCapacity = value(() -> hostClamped(IComputerTerminalHost::localStorageCapacity));
-        this.mainframeHost = flag(() -> hostFlag(IComputerTerminalHost::isMainframeHost));
-        this.usableStorageSlots = value(() -> hostInt(IComputerTerminalHost::usableStorageSlots));
-        this.pendingOps = value(() -> hostInt(IComputerTerminalHost::pendingOperations));
-        this.runningOps = value(() -> hostInt(IComputerTerminalHost::runningOperations));
-        this.completedOps = value(() -> hostInt(IComputerTerminalHost::completedOperations));
-        this.pcCount = value(() -> hostInt(IComputerTerminalHost::networkPcCount));
-        this.subframeCount = value(() -> hostInt(IComputerTerminalHost::networkSubframeCount));
-        this.indexedTypes = value(() -> hostInt(IComputerTerminalHost::indexedTypes));
-        this.indexedServers = value(() -> hostInt(IComputerTerminalHost::indexedServers));
-        this.activeLocks = value(() -> hostInt(IComputerTerminalHost::activeLocks));
-        this.networkStorageUsed = value(() -> hostClamped(IComputerTerminalHost::networkStorageUsed));
-        this.networkStorageTotal = value(() -> hostClamped(IComputerTerminalHost::networkStorageTotal));
-        this.craftComputers = value(this::craftComputerCount);
-        // Read fresh on every poll rather than cached at open: a board swap repaints the era live.
-        this.era = value(this::eraId);
-        this.indexHealth = value(() -> hostInt(IComputerTerminalHost::indexHealthState));
-        this.indexHealthTypes = value(() -> hostInt(IComputerTerminalHost::indexHealthTypeCount));
-        /*
-         * A synced reading, not a guess from the block: the Crafting Card that makes a host teachable
-         * can be pulled while a player is looking straight at this tab.
-         */
-        this.patternsHost = flag(() -> hostFlag(ComputerTerminalMenu::teachable));
+        this.readings = new ComputerReadings(host, level, this::value, this::flag);
     }
 
     /**
@@ -317,7 +241,7 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
      * asked of the machine rather than of the system, so taking the card out takes the heading away.
      */
     public boolean patternsAvailable() {
-        return patternsHost.isSet();
+        return readings.patternsHost();
     }
 
     /**
@@ -346,7 +270,7 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
     }
 
     public boolean craftAvailable() {
-        return craftComputers.get() > 0;
+        return readings.craftComputers() > 0;
     }
 
     // Tabs
@@ -517,135 +441,135 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
     // Screen accessors (read from the synced values on the client)
 
     public boolean running() {
-        return running.isSet();
+        return readings.running();
     }
 
     public boolean buildValid() {
-        return buildValid.isSet();
+        return readings.buildValid();
     }
 
     public int networkLinkState() {
-        return networkLinkState.get();
+        return readings.networkLinkState();
     }
 
     public long capacity() {
-        return capacity.get();
+        return readings.capacity();
     }
 
     public int queues() {
-        return queues.get();
+        return readings.queues();
     }
 
     public long ramBuffer() {
-        return ramBuffer.get();
+        return readings.ramBuffer();
     }
 
     public int serverCount() {
-        return serverCount.get();
+        return readings.serverCount();
     }
 
     public int installedCpus() {
-        return installedCpus.get();
+        return readings.installedCpus();
     }
 
     public int cpuSlots() {
-        return cpuSlots.get();
+        return readings.cpuSlots();
     }
 
     public int installedRam() {
-        return installedRam.get();
+        return readings.installedRam();
     }
 
     public int ramSlots() {
-        return ramSlots.get();
+        return readings.ramSlots();
     }
 
     public int installedGpus() {
-        return installedGpus.get();
+        return readings.installedGpus();
     }
 
     public int gpuSlots() {
-        return gpuSlots.get();
+        return readings.gpuSlots();
     }
 
     public int installedDisks() {
-        return installedDisks.get();
+        return readings.installedDisks();
     }
 
     public int diskSlots() {
-        return diskSlots.get();
+        return readings.diskSlots();
     }
 
     public long storageUsed() {
-        return storageUsed.get();
+        return readings.storageUsed();
     }
 
     public long storageCapacity() {
-        return storageCapacity.get();
+        return readings.storageCapacity();
     }
 
     public boolean mainframeHost() {
-        return mainframeHost.isSet();
+        return readings.mainframeHost();
     }
 
     public int indexedTypes() {
-        return indexedTypes.get();
+        return readings.indexedTypes();
     }
 
     public int indexedServers() {
-        return indexedServers.get();
+        return readings.indexedServers();
     }
 
     public int activeLocks() {
-        return activeLocks.get();
+        return readings.activeLocks();
     }
 
     /** The index's health state, read back from the id the host synced. */
     public IndexHealth.State indexHealth() {
-        return IndexHealth.State.byId(indexHealth.get());
+        return IndexHealth.State.byId(readings.indexHealth());
     }
 
     /** How many item types the index has flagged. */
     public int indexHealthTypes() {
-        return indexHealthTypes.get();
+        return readings.indexHealthTypes();
     }
 
     public long networkStorageUsed() {
-        return networkStorageUsed.get();
+        return readings.networkStorageUsed();
     }
 
     public long networkStorageTotal() {
-        return networkStorageTotal.get();
+        return readings.networkStorageTotal();
     }
 
     public int usableStorageSlots() {
-        return usableStorageSlots.get();
+        return readings.usableStorageSlots();
     }
 
     public int pendingOps() {
-        return pendingOps.get();
+        return readings.pendingOps();
     }
 
     public int runningOps() {
-        return runningOps.get();
+        return readings.runningOps();
     }
 
     public int completedOps() {
-        return completedOps.get();
+        return readings.completedOps();
     }
 
     public int pcCount() {
-        return pcCount.get();
+        return readings.pcCount();
     }
 
     public int subframeCount() {
-        return subframeCount.get();
+        return readings.subframeCount();
     }
 
     /** The host computer's board-derived hardware era for the GUI skin, or {@code null} (STANDARD) when none. */
     @Nullable
     public HardwareEra hardwareEra() {
-        return HardwareEra.find(era.get());
+        return HardwareEra.find(readings.era());
     }
 
     /** Valid while the monitor shows this host, the player is within reach of it and the session lives. */
@@ -703,40 +627,8 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
         }
     }
 
-    private int craftComputerCount() {
-        if (host == null || host.networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
-            return 0;
-        }
-        return NetworkSystem.get(serverLevel)
-                .craftingComputersOf(host.networkUuid()).size();
-    }
-
-    private int eraId() {
-        if (host == null) {
-            return 0;
-        }
-        final HardwareEra hostEra = host.displayEra();
-        return hostEra == null ? -1 : hostEra.id();
-    }
-
-    private int hostInt(final ToIntFunction<IComputerTerminalHost> getter) {
-        return host == null ? 0 : getter.applyAsInt(host);
-    }
-
-    private int hostClamped(final ToLongFunction<IComputerTerminalHost> getter) {
-        return host == null ? 0 : clampInt(getter.applyAsLong(host));
-    }
-
-    private boolean hostFlag(final Predicate<IComputerTerminalHost> test) {
-        return host != null && test.test(host);
-    }
-
     /** Whether {@code host} can be taught a recipe: a Crafting Computer with a Crafting Card installed. */
-    private static boolean teachable(@Nullable final IComputerTerminalHost host) {
+    static boolean teachable(@Nullable final IComputerTerminalHost host) {
         return host instanceof CraftingComputerBlockEntity cc && cc.craftingCardFactor() > 0.0;
-    }
-
-    private static int clampInt(final long value) {
-        return (int) Math.min(Integer.MAX_VALUE, Math.max(0, value));
     }
 }

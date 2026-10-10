@@ -53,7 +53,7 @@ import java.util.Set;
  * The Personal Computer: the player's hands-on access point to the network, assembled on a consumer ATX board (one CPU, four RAM, four PCIe, one PSU, two disks).
  */
 public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntity
-        implements IComputerTerminalHost {
+        implements IComputerTerminalHost, IAssemblyComputer {
 
     // Slot layout, kept public so the assembly Menu and Screen address slots by name.
     public static final int MOTHERBOARD_SLOT = 0;
@@ -418,27 +418,33 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
             this::networkServerCount).toMenu();
 
     /** Whether the assembly menu should show this machine as running; mirrored to the client while it is open. */
+    @Override
     public boolean assemblyRunning() {
         return assemblyRunning.isSet();
     }
 
     /** Whether the assembly menu should show a valid build; mirrored to the client while it is open. */
+    @Override
     public boolean assemblyBuildValid() {
         return assemblyBuildValid.isSet();
     }
 
+    @Override
     public long assemblyCapacity() {
         return assemblyCapacity.getAsInt();
     }
 
+    @Override
     public long assemblyRamBuffer() {
         return assemblyRamBuffer.getAsInt();
     }
 
+    @Override
     public boolean assemblyAutoStart() {
         return assemblyAutoStart.isSet();
     }
 
+    @Override
     public boolean assemblyOnNetwork() {
         return assemblyOnNetwork.isSet();
     }

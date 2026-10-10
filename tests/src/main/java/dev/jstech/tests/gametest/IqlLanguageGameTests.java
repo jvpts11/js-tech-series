@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.engine.NetworkEngines;
+import dev.jstech.computers.machine.IqlService;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -48,6 +49,21 @@ public final class IqlLanguageGameTests {
     private static final int ROWS = 64;
 
     private IqlLanguageGameTests() {
+    }
+
+    /** A LIMIT above the item type cap, cut at the cap, is reported; a LIMIT within it, or no cut, is not. */
+    @GameTest(template = ARENA)
+    public static void isLimitCapped_onlyWhenTheLimitExceedsTheCapAndTheCapCut(final GameTestHelper helper) {
+        if (!IqlService.isLimitCapped(500, 256)) {
+            helper.fail("a LIMIT of 500 cut at 256 types must be reported");
+        }
+        if (IqlService.isLimitCapped(500, 100)) {
+            helper.fail("a LIMIT of 500 that found 100 types was not cut");
+        }
+        if (IqlService.isLimitCapped(256, 256) || IqlService.isLimitCapped(0, 256)) {
+            helper.fail("a LIMIT within the cap, or none, is not a cut to report");
+        }
+        helper.succeed();
     }
 
     /** CREATE at the prompt answers as the studio does, where it used to say "iql failed: null". */

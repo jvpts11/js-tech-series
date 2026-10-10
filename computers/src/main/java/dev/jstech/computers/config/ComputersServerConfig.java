@@ -27,14 +27,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ComputersServerConfig {
 
-    /* How fast a song comes over each cable when nothing says otherwise, in kilobytes a second. */
+    /* How fast a song comes over the Ethernet when nothing says otherwise, in kilobytes a second. */
     private static final int ETHERNET_SPEED = 512;
-    private static final int HBW_SPEED = 2_048;
-    private static final int HPC_SPEED = 8_192;
     private static final int MOST_SPEED = 1_048_576;
-    /* The two cables with a speed of their own for songs. */
-    private static final DataLink HBW = new DataLink(DataLine.BACKBONE, HardwareEra.LEGACY);
-    private static final DataLink HPC = new DataLink(DataLine.HPC, HardwareEra.STANDARD);
+    /* The cable the Ethernet speed is set for; every other line and era goes in proportion to what it carries. */
+    private static final DataLink ETHERNET = new DataLink(DataLine.ACCESS, HardwareEra.STANDARD);
 
     public static final ConfigKey<Boolean> SHOW_BOOT_MENU = ConfigKey.flag("boot.show_boot_menu", true)
             .comment("Whether a machine whose system brings a boot manager stops at it every time it starts: GRUB "
@@ -83,20 +80,9 @@ public final class ComputersServerConfig {
             .comment("How fast a song comes over the network into a computer, in kilobytes a second, by the "
                             + "slowest cable on its way. A song from the catalogue comes at the speed of the cable the "
                             + "computer itself is plugged into; the songs coming in at once share it.",
-                    "A cable with no speed of its own below carries songs at Ethernet's.")
+                    "Every other cable, in every era, carries songs in proportion to what it carries "
+                            + "in items a tick, so the faster the cable the faster the song.")
             .named("Songs over Ethernet")
-            .unit("KB/s");
-
-    public static final ConfigKey<Integer> HBW_KILOBYTES_PER_SECOND = ConfigKey.whole(
-            "soundfoundry.hbw_kilobytes_per_second", HBW_SPEED).range(1, MOST_SPEED)
-            .comment("The same over a high-bandwidth cable.")
-            .named("Songs over HBW")
-            .unit("KB/s");
-
-    public static final ConfigKey<Integer> HPC_KILOBYTES_PER_SECOND = ConfigKey.whole(
-            "soundfoundry.hpc_kilobytes_per_second", HPC_SPEED).range(1, MOST_SPEED)
-            .comment("The same over the high-performance fabric of a supercomputer.")
-            .named("Songs over HPC")
             .unit("KB/s");
 
     public static final ConfigKey<Boolean> OUTSIDE_COMPONENTS = ConfigKey.flag("programs.outside_components", false)
@@ -129,8 +115,6 @@ public final class ComputersServerConfig {
             .key(LIST_COMMANDS)
             .key(SOUNDFOUNDRY_CATALOG)
             .key(ETHERNET_KILOBYTES_PER_SECOND)
-            .key(HBW_KILOBYTES_PER_SECOND)
-            .key(HPC_KILOBYTES_PER_SECOND)
             .key(OUTSIDE_COMPONENTS)
             .build();
 
@@ -173,18 +157,20 @@ public final class ComputersServerConfig {
     }
 
     /**
-     * How fast a song comes over a way whose slowest cable is {@code link}, in bytes a second: the HBW and the HPC
-     * cables have speeds of their own for songs, and every other cable, or a way not yet known, goes at the Ethernet's.
+     * How fast a song comes over a way whose slowest cable is {@code link}, in bytes a second: the Ethernet's speed
+     * scaled by how much the cable carries a tick against the Ethernet's, in every line and era, and the Ethernet's
+     * own for a way not yet known.
      */
     public static long songBytesPerSecond(@Nullable final DataLink link) {
-        final int kilobytes;
-        if (HBW.equals(link)) {
-            kilobytes = FILE.get(HBW_KILOBYTES_PER_SECOND);
-        } else if (HPC.equals(link)) {
-            kilobytes = FILE.get(HPC_KILOBYTES_PER_SECOND);
-        } else {
-            kilobytes = FILE.get(ETHERNET_KILOBYTES_PER_SECOND);
+        return songBytesPerSecond(link, FILE.get(ETHERNET_KILOBYTES_PER_SECOND));
+    }
+
+    /** The same for a given Ethernet speed in kilobytes a second; a link that carries nothing goes at one byte. */
+    public static long songBytesPerSecond(@Nullable final DataLink link, final int ethernetKilobytes) {
+        final long base = ethernetKilobytes * 1_024L;
+        if (link == null) {
+            return base;
         }
-        return kilobytes * 1_024L;
+        return Math.max(1L, base * link.throughput() / ETHERNET.throughput());
     }
 }

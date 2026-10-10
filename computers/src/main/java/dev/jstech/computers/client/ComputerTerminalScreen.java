@@ -741,7 +741,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         selectedEntry = entry;
         menu.setServerBreakdown(List.of());
         PacketDistributor.sendToServer(new RequestServerBreakdownPayload(
-                menu.monitorPos(), menu.hostPos(), entry.key()));
+                menu.hostPos(), menu.monitorPos(), entry.key()));
     }
 
     /**

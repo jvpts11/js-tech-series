@@ -127,9 +127,10 @@ final class ProcessValues {
             throw new Halt(Halt.Reason.NO_OBJECT, line, FieldAccess.NOTHING_TO_WRITE_ON.with(name));
         }
         process.charge(SigmaCosts.DRAW);
-        final long kilobytes = process.windows0().mutator().write(widget, name, value, line);
-        if (kilobytes > 0) {
-            process.charge((int) Math.min(Integer.MAX_VALUE, kilobytes * SigmaCosts.DRAW_PER_KB));
+        final long bytes = process.windows0().mutator().write(widget, name, value, line);
+        if (bytes > 0) {
+            // The per-block part of the declared price, so the editor tooltip and the charge agree.
+            process.charge(SigmaCosts.DRAW_DATA.at(0, bytes) - SigmaCosts.DRAW_DATA.fixed());
         }
     }
 

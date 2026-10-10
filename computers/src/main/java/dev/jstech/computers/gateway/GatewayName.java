@@ -8,6 +8,7 @@
 package dev.jstech.computers.gateway;
 
 import java.util.Locale;
+import java.util.function.Predicate;
 
 /**
  * How a Network Gateway is named. A Gateway gets a default name the first time it links to a computer
@@ -30,6 +31,18 @@ public final class GatewayName {
     /** The default name of the {@code ordinal}th Gateway on a host, counted from one. */
     public static String defaultFor(final int ordinal) {
         return PREFIX + Math.max(1, ordinal);
+    }
+
+    /**
+     * The default name for the {@code ordinal}th Gateway, or the first one after it that {@code taken} does
+     * not claim, so a default never lands on a name another Gateway already publishes.
+     */
+    public static String freeDefault(final int ordinal, final Predicate<String> taken) {
+        int next = Math.max(1, ordinal);
+        while (taken.test(defaultFor(next))) {
+            next++;
+        }
+        return defaultFor(next);
     }
 
     /**

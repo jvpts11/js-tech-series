@@ -214,7 +214,7 @@ public final class CraftManagerPayloads {
             loaded++;
             if (recipe.bench().isPresent()) {
                 // A bench recipe is mirrored under crafts/ on the system disk, so it shows in the Files app.
-                writeCraftToDisk(cc, craftFileNameFor(recipe.bench().get()) + ".craft", content.get());
+                writeCraftToDisk(cc, craftFileNameFor(recipe.bench().get()), content.get());
             }
         }
         cc.setChanged();
@@ -243,7 +243,8 @@ public final class CraftManagerPayloads {
             final CraftPlaces.Place place = places.at(CraftPlaces.placeOf(ref));
             final NetworkRecipe taken = place == null ? null : place.take(CraftPlaces.entryOf(ref));
             if (taken != null && taken.bench().isPresent()) {
-                deleteCraftFromDisk(cc, craftFileNameFor(taken.bench().get()) + ".craft");
+                CraftFile.serialize(taken.bench().get(), level.registryAccess()).ifPresent(content ->
+                        deleteCraftFromDisk(cc, craftFileNameFor(taken.bench().get()), content));
             }
         }
         cc.setChanged();

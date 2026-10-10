@@ -454,7 +454,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
              */
             if (keyboard.asking()) {
                 scrollOffset = 0;
-                PacketDistributor.sendToServer(new RunCommandPayload(menu.monitorPos(), menu.hostPos(),
+                PacketDistributor.sendToServer(new RunCommandPayload(menu.hostPos(), menu.monitorPos(),
                         line.isEmpty() ? TerminalTools.ENTER : line));
             }
             return;
@@ -466,7 +466,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         }
         history.add(line);
         scrollOffset = 0;
-        PacketDistributor.sendToServer(new RunCommandPayload(menu.monitorPos(), menu.hostPos(), line));
+        PacketDistributor.sendToServer(new RunCommandPayload(menu.hostPos(), menu.monitorPos(), line));
     }
 
     // rendering
@@ -727,7 +727,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
              * History, completion and the rest belong to a prompt that is not there.
              */
             if (key == InputConstants.KEY_C && (mods & GLFW.GLFW_MOD_CONTROL) != 0) {
-                PacketDistributor.sendToServer(new RunCommandPayload(menu.monitorPos(), menu.hostPos(),
+                PacketDistributor.sendToServer(new RunCommandPayload(menu.hostPos(), menu.monitorPos(),
                         DesktopShellPayloads.INTERRUPT));
                 return true;
             }

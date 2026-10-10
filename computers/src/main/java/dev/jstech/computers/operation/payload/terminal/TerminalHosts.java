@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.terminal;
 
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.computers.operation.DataHandoff;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.peripheral.IPeripheralOwner;
@@ -51,6 +52,23 @@ public final class TerminalHosts {
             return null;
         }
         return level.getBlockEntity(menu.hostPos()) instanceof IComputerTerminalHost host ? host : null;
+    }
+
+    /**
+     * The item source a deposit payload names: the cursor when {@code slotIndex} is one of the two cursor markers,
+     * otherwise the menu slot at that index, or {@code null} when the index is outside the menu. Every slot in a
+     * terminal menu belongs to the player's inventory, so any in-range slot is a legitimate source.
+     */
+    @Nullable
+    static DataHandoff.ISource sourceOf(final ComputerTerminalMenu menu, final ServerPlayer player,
+                                        final int slotIndex, final int cursor, final int cursorOne) {
+        if (slotIndex == cursor || slotIndex == cursorOne) {
+            return DataHandoff.cursor(player);
+        }
+        if (slotIndex < 0 || slotIndex >= menu.slots.size()) {
+            return null;
+        }
+        return DataHandoff.slot(menu.getSlot(slotIndex), player);
     }
 
     /**

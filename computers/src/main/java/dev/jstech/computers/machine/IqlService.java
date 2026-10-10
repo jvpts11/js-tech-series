@@ -76,6 +76,10 @@ public final class IqlService {
     /** Safety cap on how many item types a single {@code *} statement expands to. */
     private static final int MAX_WILDCARD_TYPES = 256;
 
+    private static final TextKey LIMIT_CAPPED =
+            TextKey.of("jsc.service.iql.limit_capped", "%s item types were shown");
+    /** A result and a second line under it. */
+    private static final TextKey WITH_NOTE = TextKey.of("jsc.service.iql.with_note", "%s\n%s");
     private static final TextKey TYPES_ONE = TextKey.of("jsc.service.iql.types_one", "%s item type");
     private static final TextKey TYPES_MANY = TextKey.of("jsc.service.iql.types_many", "%s item types");
     /** How much of what: a count, or the word for all, and the item's name. */
@@ -236,12 +240,26 @@ public final class IqlService {
         }
     }
 
+    /**
+     * Whether an explicit {@code LIMIT} asked for more item types than one statement handles, and the statement was
+     * cut at the cap, so the player must be told that fewer rows than asked for were acted on.
+     */
+    public static boolean isLimitCapped(final int limit, final int keyCount) {
+        return limit > MAX_WILDCARD_TYPES && keyCount >= MAX_WILDCARD_TYPES;
+    }
+
     /** How a statement reads back: "N item types" for a {@code *}, else "qty item". */
     public static Text describe(final IqlOperation op, final List<StorageKey> keys) {
         if (op.isAnyItem()) {
             return (keys.size() == 1 ? TYPES_ONE : TYPES_MANY).with(keys.size());
         }
         return AMOUNT.with(OperationsService.qtyLabel(op.quantity()), keys.get(0).displayName().getString());
+    }
+
+    /** The result line of a queued statement, with a second line when its LIMIT was cut at the item type cap. */
+    private static Text queuedLine(final Text line, final IqlOperation op, final List<StorageKey> keys) {
+        return isLimitCapped(op.limit(), keys.size())
+                ? WITH_NOTE.with(line, LIMIT_CAPPED.with(MAX_WILDCARD_TYPES)) : line;
     }
 
     /** Applies the statement's {@code PRIORITY} to a freshly submitted Operation; a null submission passes through. */
@@ -292,8 +310,8 @@ public final class IqlService {
         if (queued == 0) {
             return ICliComputer.OpResult.fail(OperationsService.SELECT_FAILED);
         }
-        return ICliComputer.OpResult.ok(from == null ? SELECT_QUEUED.with(describe(op, keys))
-                : SELECT_QUEUED_FROM.with(describe(op, keys), op.from()));
+        return ICliComputer.OpResult.ok(queuedLine(from == null ? SELECT_QUEUED.with(describe(op, keys))
+                : SELECT_QUEUED_FROM.with(describe(op, keys), op.from()), op, keys));
     }
 
     /**
@@ -337,7 +355,7 @@ public final class IqlService {
             }
         }
         return queued == 0 ? ICliComputer.OpResult.ok(NOTHING_TO.with(verb.toLowerCase(Locale.ROOT)))
-                : ICliComputer.OpResult.ok(QUEUED.with(verb, describe(op, keys)));
+                : ICliComputer.OpResult.ok(queuedLine(QUEUED.with(verb, describe(op, keys)), op, keys));
     }
 
     /** The Mainframe of the machine's network, or null when it is on none, or none is running. */
@@ -495,8 +513,8 @@ public final class IqlService {
             }
         }
         return queued == 0 ? ICliComputer.OpResult.fail(MOVE_FAILED)
-                : ICliComputer.OpResult.ok(MOVE_QUEUED.with(describe(op, keys), op.from(),
-                        NetworkLookup.serverLabel(this.level, dest)));
+                : ICliComputer.OpResult.ok(queuedLine(MOVE_QUEUED.with(describe(op, keys), op.from(),
+                        NetworkLookup.serverLabel(this.level, dest)), op, keys));
     }
 
     /** Network to a named bus's external inventory: a timed export, the same path the Export Bus uses. */
@@ -522,7 +540,7 @@ public final class IqlService {
             }
         }
         return queued == 0 ? ICliComputer.OpResult.ok(NOTHING_TO_MOVE_TO.with(op.to()))
-                : ICliComputer.OpResult.ok(MOVE_TO_BUS_QUEUED.with(describe(op, keys), op.to()));
+                : ICliComputer.OpResult.ok(queuedLine(MOVE_TO_BUS_QUEUED.with(describe(op, keys), op.to()), op, keys));
     }
 
     /**

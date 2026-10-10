@@ -403,12 +403,23 @@ public abstract sealed class AbstractBusPart implements IFacePart
     }
 
     public boolean addCondition(final BusCondition condition, final String by) {
-        if (!can(BusFeature.CONDITIONS) || conditions.size() >= MAX_CONDITIONS) {
+        if (!can(BusFeature.CONDITIONS) || conditions.size() >= MAX_CONDITIONS
+                || condition.kind() == BusCondition.Kind.HOURS && hasHoursWindow()) {
             return false;
         }
         conditions.add(condition);
         conditionsCheckedAt = Long.MIN_VALUE;
         return changed(BusSettings.CONDITIONS, by);
+    }
+
+    /** Whether the bus already waits for an hours window; it holds only one, so a second is refused. */
+    public boolean hasHoursWindow() {
+        for (final BusCondition held : conditions) {
+            if (held.kind() == BusCondition.Kind.HOURS) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean removeCondition(final int index, final String by) {

@@ -1409,6 +1409,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Tank belongs to J's Industrial now (`jsindustrial:tank`), on its own Storage shelf and in its manual. A Tank
   placed under the old name is gone from a world made before. J's Computers' manual explains fluids on a page of
   their own, with a tank of any mod.
+- Songs come over the network at a speed in proportion to what the slowest cable on their way carries, in every
+  line and every era; the Ethernet setting sets the scale, and the two settings for HBW and HPC are gone.
 - The settings screen of the series' mods is new: a tab for the world's settings, one for the player's and one for
   every game's, each with a line saying where they are kept; each section with its count of settings, a mark while
   one of them is changed and not saved, and a line saying what it is for; a card for each setting with its whole
@@ -2124,6 +2126,21 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   pictures can no longer share one texture.
 - Clusters, routers and nodes without a name read in the player's language.
 - The Coal Generator gives the empty bucket back when it burns a lava bucket, as a furnace does.
+- A song whose length its file does not say is measured in the server's store, and one that cannot be measured keeps
+  the sound card's voices until it is stopped, where it let them go at once.
+- A bus holds one hours window: a second is refused, and the window says why.
+- Two Gateways on one ComputerCraft wired network can no longer publish the same name: a rename to a name taken is
+  refused and a default name is numbered until it is free; `a-b` and `a_b` count as the same name, as they do there.
+- An IQL statement whose `LIMIT` asks for more than 256 kinds of item says that 256 were shown.
+- `QUERY` of servers, computers, recipes and operations reads the same tables as `SELECT`, with its columns, and
+  honours `WHERE`.
+- Two recipes for the same result are mirrored on a Crafting Computer's disk under names of their own
+  (`torch.craft`, `torch_2.craft`), and removing one removes only its own file.
+- The crafting catalogue is planned once and kept while the network's patterns and storage are as they were, for a
+  second at most, where it planned every recipe again on each refresh.
+- A value handed to a generic component costs, in the editor's tooltip and when it runs alike, a draw and the price
+  of every started 4 KB of it.
+- The Time Traveller challenge says the three eras it asks for: Vintage, Legacy and Standard.
 - A Tank broken keeps its fluid in its item, which says what it holds, and gives it back when it is placed.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
