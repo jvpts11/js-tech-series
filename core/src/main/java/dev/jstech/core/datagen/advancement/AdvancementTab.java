@@ -84,11 +84,6 @@ public abstract class AdvancementTab implements AdvancementProvider.AdvancementG
         }
     }
 
-    /** Every advancement of the tab, in the order they were written down. */
-    public List<AdvancementSpec> specs() {
-        return List.copyOf(this.specs);
-    }
-
     /** The mod whose tab it is. */
     public String modid() {
         return this.modid;
@@ -155,6 +150,7 @@ public abstract class AdvancementTab implements AdvancementProvider.AdvancementG
     protected final void challengeOfAll(final String name, final String parent, final ItemLike icon,
                                         final String title, final String description,
                                         final Map<String, Supplier<Criterion<?>>> criteria) {
+        this.requireParent(name, parent);
         this.specs.add(new AdvancementSpec(name, parent, icon, AdvancementType.CHALLENGE, false, title, description,
                 new LinkedHashMap<>(criteria), null));
     }
@@ -162,8 +158,17 @@ public abstract class AdvancementTab implements AdvancementProvider.AdvancementG
     private void one(final String name, final String parent, final ItemLike icon, final AdvancementType frame,
                      final boolean hidden, final String title, final String description,
                      final Supplier<Criterion<?>> criterion, final String requiredMod) {
+        this.requireParent(name, parent);
         this.specs.add(new AdvancementSpec(name, parent, icon, frame, hidden, title, description,
                 Map.of(DONE, criterion), requiredMod));
+    }
+
+    /* A parent that was not written down earlier in this tab would be written out and then skipped by the game. */
+    private void requireParent(final String name, final String parent) {
+        if (parent != null && this.specs.stream().noneMatch(spec -> spec.name().equals(parent))) {
+            throw new IllegalArgumentException("The advancement " + name + " of the tab " + this.tab
+                    + " names the parent " + parent + ", which is not an earlier advancement of the tab");
+        }
     }
 
     private Advancement.Builder builder(final AdvancementSpec spec) {

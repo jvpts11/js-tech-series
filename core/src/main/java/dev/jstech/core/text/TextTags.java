@@ -29,7 +29,7 @@ public final class TextTags {
     private static final String ARGS = "a";
 
     /** How deeply sentences sit inside each other, past which the rest is kept as the English it reads as. */
-    private static final int MOST_DEPTH = 8;
+    private static final int MOST_DEPTH = 20;
 
     private TextTags() {
     }

@@ -56,8 +56,9 @@ public final class ModalDialog extends Screen {
     }
 
     private void resolve(final boolean confirmed) {
-        onResult.accept(confirmed);
+        // The parent goes back first so a screen the callback opens is not replaced by it.
         this.minecraft.setScreen(parent);
+        onResult.accept(confirmed);
     }
 
     @Override

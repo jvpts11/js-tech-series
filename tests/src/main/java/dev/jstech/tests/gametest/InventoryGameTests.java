@@ -59,6 +59,17 @@ public final class InventoryGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void stackSubject_equalStacksMakeEqualFilters(final GameTestHelper helper) {
+        final ItemFilter first = ItemFilter.only(ItemFilters.exactly(new ItemStack(Items.IRON_SWORD), 0));
+        final ItemFilter second = ItemFilter.only(ItemFilters.exactly(new ItemStack(Items.IRON_SWORD), 0));
+        final ItemFilter other = ItemFilter.only(ItemFilters.exactly(new ItemStack(Items.GOLDEN_SWORD), 0));
+        helper.assertTrue(first.equals(second) && first.hashCode() == second.hashCode(),
+                "two filters built from equal stacks are equal");
+        helper.assertTrue(!first.equals(other), "a filter of another item is not equal");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
     public static void filters_tellStacksApartAndComeBackFromTheSave(final GameTestHelper helper) {
         final ItemStack sword = new ItemStack(Items.IRON_SWORD);
         final ItemStack worn = new ItemStack(Items.IRON_SWORD);

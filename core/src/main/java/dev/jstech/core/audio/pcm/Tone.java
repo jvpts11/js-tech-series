@@ -18,8 +18,12 @@ package dev.jstech.core.audio.pcm;
 public record Tone(Waveform wave, double frequency, int millis, float volume) {
 
     public Tone {
-        if (frequency < 0 || frequency > 20_000) {
+        // Written as the negation of the valid range so that NaN, which compares false to everything, is refused.
+        if (!(frequency >= 0 && frequency <= 20_000)) {
             throw new IllegalArgumentException("a pitch a speaker can make: " + frequency);
+        }
+        if (Float.isNaN(volume)) {
+            throw new IllegalArgumentException("a volume from 0 to 1: " + volume);
         }
         if (millis < 1 || millis > 60_000) {
             throw new IllegalArgumentException("a note of a millisecond to a minute: " + millis);

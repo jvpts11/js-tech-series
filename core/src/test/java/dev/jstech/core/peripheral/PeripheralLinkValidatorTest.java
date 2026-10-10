@@ -526,6 +526,39 @@ class PeripheralLinkValidatorTest {
     }
 
     @Test
+    void hub_routeIsFoundEvenWhenTheDirectArrivalAtASharedCableIsOverReach() {
+        // Cables 1..9 in a line from the owner, the device beside the ninth; a hub beside the first, with cables
+        // 21..27 from it to the ninth. Straight along the line the ninth cable is a run of nine, over a reach of
+        // eight; through the hub the run counts afresh and reaches it legally.
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
+        TestHub hub = linkedHub(owner, 4);
+        TestEndpoint device = new TestEndpoint(PeripheralCableType.COMPUTING);
+        Map<Long, List<Long>> adj = new HashMap<>();
+        Map<Long, PeripheralCableType> cables = new HashMap<>();
+        adj.put(OWNER_POS, List.of(101L));
+        for (long i = 1; i <= 9; i++) {
+            cables.put(100L + i, PeripheralCableType.COMPUTING);
+        }
+        adj.put(101L, List.of(OWNER_POS, 102L, HUB_POS));
+        for (long i = 2; i <= 8; i++) {
+            adj.put(100L + i, List.of(99L + i, 101L + i));
+        }
+        adj.put(109L, List.of(108L, 207L, ENDPOINT_POS));
+        adj.put(HUB_POS, List.of(101L, 201L));
+        for (long i = 1; i <= 7; i++) {
+            cables.put(200L + i, PeripheralCableType.COMPUTING);
+            adj.put(200L + i, List.of(i == 1 ? HUB_POS : 199L + i, i == 7 ? 109L : 201L + i));
+        }
+        adj.put(ENDPOINT_POS, List.of(109L));
+
+        ILinkResult result = build(adj, owner, Map.of(HUB_POS, hub, ENDPOINT_POS, device), cables, pos -> 8)
+                .tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        assertInstanceOf(ILinkResult.Established.class, result);
+        assertEquals(HUB_POS, owner.hubOf(ENDPOINT_POS).getAsLong());
+    }
+
+    @Test
     void hubHangingFromTheTarget_isNoWayToIt() {
         // The only hub on the way is recorded as hanging from the very hub being linked: it cannot carry it.
         TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);

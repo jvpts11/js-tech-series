@@ -76,6 +76,20 @@ public final class BigPayloadGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = ARENA)
+    public static void bigPayload_refusesAtTheSenderWhatPacksPastTheLimit(final GameTestHelper helper) {
+        final RegistryAccess registries = helper.getLevel().registryAccess();
+        final byte[] tooBig = TestBigPayloads.noise(BigPayloads.MOST_PACKED + 1024 * 1024, 5L);
+        boolean refusedAtSender = false;
+        try {
+            TestBigPayloads.TO_CLIENT.pieces(tooBig, registries);
+        } catch (final IllegalArgumentException e) {
+            refusedAtSender = true;
+        }
+        helper.assertTrue(refusedAtSender, "bytes that do not pack under the limit are refused where they are sent");
+        helper.succeed();
+    }
+
     private static boolean refused(final List<BigPiecePayload> pieces, final RegistryAccess registries) {
         try {
             BigPayloads.assemble(TestBigPayloads.TO_CLIENT, pieces, registries);

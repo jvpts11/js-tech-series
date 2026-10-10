@@ -211,4 +211,19 @@ class ProportionalSplitterTest {
         assertEquals(Long.valueOf(available / 2L), result.get(1L));
         assertEquals(Long.valueOf(available / 2L), result.get(2L));
     }
+
+    @Test
+    void shortage_neverAllocatesMoreThanAvailableWhenDemandsSumPastTheLongRange() {
+        final Map<Long, Long> demand = new LinkedHashMap<>();
+        demand.put(1L, Long.MAX_VALUE);
+        demand.put(2L, Long.MAX_VALUE);
+
+        final Map<Long, Long> result = ProportionalSplitter.split(1000L, demand, Map.of());
+
+        long sum = 0L;
+        for (final Long v : result.values()) {
+            sum += v;
+        }
+        assertEquals(1000L, sum, "two huge demands share the supply, they do not each get all of it");
+    }
 }

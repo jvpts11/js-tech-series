@@ -67,6 +67,16 @@ class MediaStoreTest {
     }
 
     @Test
+    void put_replacesAFileOfTheWrongSizeKeptUnderItsName(@TempDir final Path root) throws IOException {
+        final MediaStore store = new MediaStore(root, new KeptLedger());
+        final byte[] wav = wav(RATE);
+        Files.write(store.path(MediaId.of(wav, "wav")), new byte[] {1, 2, 3});
+        final MediaId id = store.put(wav, "wav");
+        assertTrue(store.has(id));
+        assertArrayEquals(wav, Files.readAllBytes(store.path(id)));
+    }
+
+    @Test
     void has_isFalseForTheRightHashWithAnotherSize(@TempDir final Path root) throws IOException {
         final MediaStore store = new MediaStore(root, new KeptLedger());
         final MediaId kept = store.put(wav(RATE), "wav");

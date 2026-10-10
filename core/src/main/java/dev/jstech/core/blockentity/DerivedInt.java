@@ -62,8 +62,9 @@ public final class DerivedInt implements IField {
 
     @Override
     public void write(final CompoundTag tag, final HolderLookup.Provider registries) {
-        sent = value.getAsInt();
-        tag.putInt(flags.key(), sent);
+        // Writing is not sending: an update tag built between a change and the next poll must not mark the change
+        // as sent, or the players already watching would never be told. At worst one redundant update goes out.
+        tag.putInt(flags.key(), value.getAsInt());
     }
 
     @Override

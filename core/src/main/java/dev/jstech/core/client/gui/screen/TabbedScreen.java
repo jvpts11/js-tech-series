@@ -31,6 +31,10 @@ public abstract class TabbedScreen extends CoreScreen {
 
     protected void addTab(final IGuiTab tab) {
         tabs.add(tab);
+        if (tabs.size() == 1) {
+            // The first tab is shown from the start, so it is told it became active like any other.
+            tab.onSelected();
+        }
     }
 
     public int activeTabIndex() {
@@ -82,11 +86,13 @@ public abstract class TabbedScreen extends CoreScreen {
         final int tabWidth = this.width / tabs.size();
         for (int i = 0; i < tabs.size(); i++) {
             final int tabX = i * tabWidth;
+            // The last tab takes the pixels left over by the integer division.
+            final int tabEnd = i == tabs.size() - 1 ? this.width : tabX + tabWidth;
             final boolean active = i == activeTabIndex;
             // Background tint: brighter for the active tab.
             final int bg = active ? ScreenPalette.get().tabActive() : ScreenPalette.get().tabIdle();
-            Grounds.fill(graphics, tabX, 0, tabX + tabWidth, tabBarHeight, bg);
-            Draw.textCentered(graphics, this.font, tabs.get(i).title(), tabX + tabWidth / 2,
+            Grounds.fill(graphics, tabX, 0, tabEnd, tabBarHeight, bg);
+            Draw.textCentered(graphics, this.font, tabs.get(i).title(), (tabX + tabEnd) / 2,
                     (tabBarHeight - this.font.lineHeight) / 2, ScreenPalette.get().tabText());
         }
     }
@@ -96,7 +102,7 @@ public abstract class TabbedScreen extends CoreScreen {
         // Clicking the tab bar switches tabs.
         if (mouseY < tabBarHeight && !tabs.isEmpty()) {
             final int tabWidth = this.width / tabs.size();
-            final int clicked = (int) (mouseX / tabWidth);
+            final int clicked = Math.min((int) (mouseX / tabWidth), tabs.size() - 1);
             if (clicked >= 0 && clicked < tabs.size()) {
                 selectTab(clicked);
                 return true;

@@ -42,6 +42,18 @@ class PeripheralPortsTest {
     }
 
     @Test
+    void link_afterRemovalThroughTheLiveView_comesBackEnabled() {
+        final PeripheralPorts ports = new PeripheralPorts();
+        ports.link(1L, PortKind.DEVICE);
+        ports.setDisabled(1L, true);
+        ports.endpoints().remove(1L);
+
+        ports.link(1L, PortKind.DEVICE);
+
+        assertFalse(ports.disabled(1L));
+    }
+
+    @Test
     void holds_keepsThePortsOfTheFirstLinked() {
         final PeripheralPorts ports = new PeripheralPorts();
         ports.link(1L, PortKind.VIDEO);

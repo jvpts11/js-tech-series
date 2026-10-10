@@ -88,7 +88,7 @@ public enum HardwareEra implements IStableId, IStableName, IAxisStep {
         return switch (this) {
             case VINTAGE -> 16;
             case LEGACY -> 32;
-            default -> 64;
+            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> 64;
         };
     }
 
@@ -101,7 +101,7 @@ public enum HardwareEra implements IStableId, IStableName, IAxisStep {
         return switch (this) {
             case VINTAGE -> 1L;
             case LEGACY -> 16L;
-            default -> 256L;
+            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> 256L;
         };
     }
 

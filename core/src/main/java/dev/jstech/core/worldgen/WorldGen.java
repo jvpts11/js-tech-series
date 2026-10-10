@@ -288,6 +288,12 @@ public final class WorldGen {
             if (height < 16 || height % 16 != 0 || minY % 16 != 0) {
                 throw new IllegalStateException("the dimension " + id + " is a whole number of sections tall");
             }
+            if (minY < DimensionType.MIN_Y || height > DimensionType.Y_SIZE
+                    || (long) minY + height > DimensionType.MAX_Y + 1L) {
+                throw new IllegalStateException("the dimension " + id + " is from y " + minY + " for " + height
+                        + " blocks, past what the game holds: from " + DimensionType.MIN_Y + " to "
+                        + (DimensionType.MAX_Y + 1) + ", at most " + DimensionType.Y_SIZE + " tall");
+            }
             final DimensionSpec spec = new DimensionSpec(id, skylight, ceiling, fixedTime, ambientLight, minY, height,
                     effects, ultraWarm, natural, bedWorks, biome, layers, noise, runtimeOnly);
             DIMENSIONS.add(spec);

@@ -394,6 +394,13 @@ public final class BundleShape {
                         extent = Math.max(extent, Math.max(Math.abs(at[0]) + half, Math.abs(at[1]) + half));
                     }
                 }
+                if (strand.links() == 0) {
+                    // A wire that crosses nothing sits in its lane inside the block, so the housing must hold it.
+                    final double half = strand.thickness() / 2.0;
+                    extent = Math.max(extent, half);
+                    extent = Math.max(extent, Math.abs(strand.lane().across() * Lane.PITCH) + half);
+                    extent = Math.max(extent, Math.abs(strand.lane().up() * Lane.PITCH) + half);
+                }
             }
             final double half = Math.min(HOUSING_MOST, extent + HOUSING_CLEARANCE);
             final double top = MIDDLE + half;
@@ -439,7 +446,7 @@ public final class BundleShape {
                     final double[] point = new double[3];
                     point[ACROSS[0][0]] = strand.lane().across() * Lane.PITCH;
                     point[ACROSS[0][1]] = strand.lane().up() * Lane.PITCH;
-                    this.reach.get(i).add(core(point, t));
+                    jacket(i, core(point, t), 0, 0);
                 }
             }
         }

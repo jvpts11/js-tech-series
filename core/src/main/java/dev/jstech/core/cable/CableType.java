@@ -48,6 +48,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class CableType {
 
+    /* The widest a wire in an outer lane can be and still stay inside the block, half a block less the lane pitch. */
+    private static final int MOST_PIXELS_IN_A_LANE = 2 * (8 - Lane.PITCH);
+
     private final Connection line;
     private final GridKind grid;
     private final @Nullable Lane lane;
@@ -70,6 +73,11 @@ public final class CableType {
         this.grid = Objects.requireNonNull(builder.grid, "a cable is a part of a grid");
         if (!builder.alone && builder.lane == null) {
             throw new IllegalStateException("a cable that shares blocks takes a lane: " + this.line.line());
+        }
+        if (!builder.alone && builder.thickness > MOST_PIXELS_IN_A_LANE) {
+            // Past this a wire in an outer lane would stick out of the block, and wires in lanes side by side overlap.
+            throw new IllegalStateException("a cable that takes a lane is at most " + MOST_PIXELS_IN_A_LANE
+                    + " pixels thick, not " + builder.thickness + ": " + this.line.line());
         }
         this.lane = builder.alone ? null : builder.lane;
         this.straight = builder.straight;

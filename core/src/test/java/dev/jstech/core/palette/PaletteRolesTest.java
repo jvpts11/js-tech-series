@@ -67,6 +67,12 @@ class PaletteRolesTest {
     }
 
     @Test
+    void parse_aSignInPlaceOfADigit_givesNothing() {
+        assertNull(PaletteRoles.parse("#-00001"));
+        assertNull(PaletteRoles.parse("#+00001"));
+    }
+
+    @Test
     void formatThenParse_comesBackToTheSameColour() {
         assertEquals(0x14FFFFFF, PaletteRoles.parse(PaletteRoles.format(0x14FFFFFF)));
     }

@@ -41,4 +41,9 @@ public class StepperMathTest {
         assertEquals(1, StepperMath.clamp(-3, 1, 10));
         assertEquals(10, StepperMath.clamp(11, 1, 10));
     }
+
+    @Test
+    public void halved_roundsNegativeValuesDown() {
+        assertEquals(-2, StepperMath.halved(-3, -10, 10));
+    }
 }

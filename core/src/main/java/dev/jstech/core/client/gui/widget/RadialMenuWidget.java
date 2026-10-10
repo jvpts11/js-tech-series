@@ -17,7 +17,6 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
-import java.util.OptionalInt;
 
 /**
  * A radial (pie) menu of labeled segments, highlighting the one under the cursor.
@@ -58,6 +57,12 @@ public final class RadialMenuWidget extends AbstractWidget {
         return getY() + height / 2;
     }
 
+    /** The segment under a cursor position, or -1 when it is outside the ring. Pure, so input handlers can ask. */
+    public int segmentAt(final double mouseX, final double mouseY) {
+        return RadialGeometry.segmentAt(mouseX - centerX(), mouseY - centerY(), segmentLabels.size(), innerRadius,
+                outerRadius).orElse(-1);
+    }
+
     public int selectedSegment() {
         return selectedSegment;
     }
@@ -69,11 +74,7 @@ public final class RadialMenuWidget extends AbstractWidget {
             final int mouseY,
             final float partialTick) {
         // Update selection from cursor position.
-        final double dx = mouseX - centerX();
-        final double dy = mouseY - centerY();
-        final OptionalInt seg = RadialGeometry.segmentAt(
-                dx, dy, segmentLabels.size(), innerRadius, outerRadius);
-        selectedSegment = seg.orElse(-1);
+        selectedSegment = segmentAt(mouseX, mouseY);
 
         /*
          * Draw each segment's label at the midpoint angle, radius =

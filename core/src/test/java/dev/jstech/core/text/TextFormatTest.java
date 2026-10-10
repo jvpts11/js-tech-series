@@ -36,6 +36,11 @@ class TextFormatTest {
     }
 
     @Test
+    void apply_doesNotThrowForAPositionTooBigForAnInt() {
+        assertEquals("a %99999999999$s b", TextFormat.apply("a %99999999999$s b", List.of("x")));
+    }
+
+    @Test
     void apply_leavesAnyOtherMarkAsItIsWritten() {
         assertEquals("%d items and %", TextFormat.apply("%d items and %", List.of()));
     }

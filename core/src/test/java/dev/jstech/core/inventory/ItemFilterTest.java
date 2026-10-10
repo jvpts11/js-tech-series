@@ -98,6 +98,24 @@ class ItemFilterTest {
         assertEquals("all_but", ItemFilter.Mode.ALL_BUT.serializedName());
     }
 
+    @Test
+    void fuzzy_rejectsAnIdTheGameCannotRead() {
+        assertThrows(IllegalArgumentException.class, () -> new ItemFilter.Fuzzy("Iron Sword", 0));
+    }
+
+    @Test
+    void tag_rejectsAnIdTheGameCannotRead() {
+        assertThrows(IllegalArgumentException.class, () -> new ItemFilter.Tag("minecraft:Logs", 0));
+        assertThrows(IllegalArgumentException.class, () -> new ItemFilter.Tag("", 0));
+    }
+
+    @Test
+    void fuzzy_acceptsNamespacedAndBareIds() {
+        assertEquals("minecraft:iron_sword", new ItemFilter.Fuzzy("minecraft:iron_sword", 0).item());
+        assertEquals("c:ingots/iron", new ItemFilter.Tag("c:ingots/iron", 0).tag());
+        assertEquals("stick", new ItemFilter.Fuzzy("stick", 0).item());
+    }
+
     /** An item for the tests: its id, its tags, and its components written out. */
     private record Thing(String itemId, Set<String> tags, String components) implements IFilterSubject {
 

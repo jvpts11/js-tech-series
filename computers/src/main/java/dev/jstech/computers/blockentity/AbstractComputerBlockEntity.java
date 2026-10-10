@@ -79,6 +79,7 @@ import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
 import dev.jstech.core.peripheral.PeripheralPorts;
+import dev.jstech.core.peripheral.PeripheralReconciler;
 import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.Loaded;
@@ -1081,6 +1082,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     /** Moves whatever is running in front of this computer's terminal along, and tells whoever is watching. */
     public void tickTerminal(final ServerLevel level) {
         terminalFeed.tick(level);
+        PeripheralReconciler.reconcile(this, level, worldPosition.asLong());
     }
 
     /**

@@ -115,6 +115,10 @@ public class Panel extends UiComponent {
                 continue;
             }
             if (child.mouseClicked(mx, my, button)) {
+                // A click that removed its own child leaves nothing to press or to hand the keyboard to.
+                if (!children.contains(child)) {
+                    return true;
+                }
                 pressedChild = child;
                 focus(child.focusable() ? child : null);
                 return true;

@@ -14,7 +14,10 @@ import java.util.List;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
-/** What an entity wears in Accessories' slots. */
+/**
+ * What an entity wears in Accessories' slots. Accessories held inside an accessory nest count as worn, as Accessories
+ * itself treats them as equipped; its lookup cache always includes them, whatever the flag of the call.
+ */
 final class AccessoriesWornSource implements IWornSource {
 
     @Override

@@ -1991,6 +1991,63 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   file before it too, so a small file ran a machine out of memory.
 - A terminal tool that fails on an answer lets go of the terminal, and is not played the answer again when the world
   is loaded.
+- A recording whose file claims more than it holds is refused as unreadable, where it could fail the upload; one
+  that cannot be read at all ends at once, so the next song of a playlist starts. A recording kept on the server at
+  the wrong size is replaced when it is sent again, and a broken download of one can be asked for again.
+- A recording larger than any server takes is refused before it is read into memory, and one still being read when
+  the player leaves a server is not offered to the next.
+- The recordings cache keeps to its size even when one of its files cannot be removed.
+- Sounds are heard again after the game's clock is set back; a sound heard "in the future" muted it.
+- Energy a shared cable can no longer carry to one machine goes to the other machines on the same supply in the
+  same tick, and a very large demand no longer hands out more energy than there is.
+- A device joining two runs of cable stops joining them the moment it is gone or touches something else, where the
+  runs stayed joined until the next tick or for good. A device in several grids stays known to each of them until
+  the last one lets it go.
+- A wire alone in its lane of a shared cable is always inside the housing, and a cable that takes a lane cannot be
+  declared too thick to fit in one.
+- A cable no longer loads the chunk of a neighbour to look for plugs, and a change made just before a block sends
+  its data reaches the players already watching it.
+- A processing machine whose inputs change from one recipe to another starts the new one from nothing, rather than
+  finishing it on the old one's progress. It checks room for its outputs with each slot's own limit, as it puts
+  them in, and finds the tanks for a recipe of two fluids when one tank suits both. Its progress no longer shows
+  a wrong percentage on a very long recipe.
+- A transfer of several steps that fails halfway gives back what its first steps moved, and items that will not go
+  back into their slot go into another slot of the same inventory.
+- Filters built from two equal stacks are equal, and a filter naming an id the game cannot read is refused when it
+  is made rather than when it is saved.
+- A setting given a value that is not a number takes its default. A settings file that cannot be read is kept aside
+  under a name of its own each time, never over the copy kept before, and settings files are written whole, so a
+  crash mid-write leaves the old file. A hexadecimal number too large to hold is refused with the reason.
+- Making a dimension with a name already taken says so. A dimension made while the game runs takes the rules of the
+  one it copies on the players' games too, and reloaded rules reach every living thing, not only the players.
+- A compact number never shows as 1,000 of one scale: 999,999 FE is 1M FE, not 1,000K FE.
+- Text nested twenty deep, as a long list joins it, travels whole.
+- A cable whose saved network id is damaged keeps the rest of its data, and finds its network again.
+- A saved state whose file cannot be read keeps a copy of that file before it is saved over, and two states, or two
+  region indexes, that would share one file are refused as the game starts.
+- A dimension declared below or above what the game can hold is refused as it is declared.
+- A large transfer to a player's game that packs past what may be sent is refused where it is sent, and a sending
+  that stops halfway is dropped after ten seconds, where it held its memory for good.
+- An Operation step that fails on the server's thread no longer takes the tick down with it, and the Operation ends
+  as crashed with its real message, where it showed as cancelled.
+- A computer frees the port of a peripheral broken while the computer's chunk was not loaded. A peripheral reached
+  past a hub links even when the same cable is also within reach straight from the computer. A peripheral looks for
+  its link twice a second rather than every tick.
+- A vehicle a player drives spends its energy on the server too, so the battery shown and saved is the true one.
+- A projectile remembers, through a save, how many things it has already gone through.
+- Clicking another title while a menu of a menu bar is open opens that one; a checkbox changes only on a left click;
+  clicking into a text field puts the caret where it was clicked; the last tab of a tabbed screen takes the pixels
+  left over, and a click there selects it; a dialog's answer can open another screen.
+- A manual from a resource pack with a mistyped id, font or picture opens and shows the rest, where it crashed; a
+  picture or a drawn block taller than a page is fitted to it; two manual files with the same id keep the first and
+  say so; the search is worked out once each time the words change, not several times a frame.
+- Holograms of the level a player has left are not drawn in the one they arrive in.
+- A failing panel of the debug screen is left out and said once in the log, where it broke the whole screen.
+- A cell font defined in several packs takes the characters of all of them, and a font that defines a character
+  twice is refused with the line.
+- A motion file with a number where a word goes, or the other way round, is refused with the reason, and so is a
+  curve given a number that is not finite.
+- EMI's arrow for a very long recipe fills at the right speed.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

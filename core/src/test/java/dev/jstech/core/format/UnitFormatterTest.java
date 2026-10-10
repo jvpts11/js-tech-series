@@ -30,14 +30,6 @@ class UnitFormatterTest {
     }
 
     @Test
-    void allCanonicalUnits_areScalable() {
-        for (Unit unit : Unit.values()) {
-            assertTrue(unit.scalable(),
-                    "Phase 0 unit " + unit + " should be scalable");
-        }
-    }
-
-    @Test
     void full_smallValue_enUS() {
         UnitFormatter formatter = new UnitFormatter(EN);
         assertEquals("0 FE", formatter.full(0L, Unit.FE));
@@ -77,6 +69,14 @@ class UnitFormatterTest {
         assertEquals("1K FE", formatter.compact(1_000L, Unit.FE));
         assertEquals("1.5K FE", formatter.compact(1_500L, Unit.FE));
         assertEquals("999.99K FE", formatter.compact(999_990L, Unit.FE));
+    }
+
+    @Test
+    void compact_justBelowTheNextScale_roundsUpToTheNextScale() {
+        UnitFormatter formatter = new UnitFormatter(EN);
+        assertEquals("1M FE", formatter.compact(999_999L, Unit.FE));
+        assertEquals("1G FE", formatter.compact(999_999_999L, Unit.FE));
+        assertEquals("1T FE", formatter.compact(999_999_999_999L, Unit.FE));
     }
 
     @Test

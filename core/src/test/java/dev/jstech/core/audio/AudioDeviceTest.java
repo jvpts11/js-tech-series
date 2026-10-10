@@ -26,6 +26,13 @@ class AudioDeviceTest {
             new Tone(Waveform.NOISE, 1000, 30, 0.4F), Tone.beep(880, 100));
 
     @Test
+    void constructor_refusesAnIdThatNoSoundContextCanHold() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new AudioDevice("x:" + "d".repeat(SoundContext.MAX_LENGTH), NAME, Set.of(), false, 1));
+        assertThrows(IllegalArgumentException.class, () -> new AudioDevice("", NAME, Set.of(), false, 1));
+    }
+
+    @Test
     void adapt_playsEveryShapeItCannotMakeAsTheFirstItCan() {
         final AudioDevice speaker = new AudioDevice("x:speaker", NAME, Set.of(Waveform.SQUARE), false, 1);
         final List<Tone> played = speaker.adapt(TUNE);

@@ -374,6 +374,23 @@ public final class LanguageApiGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void compileResult_withoutABinaryIsNotOkAndDoesNotThrow(final GameTestHelper helper) {
+        final IProgrammingLanguage.CompileResult none = new IProgrammingLanguage.CompileResult(null, null);
+        helper.assertTrue(!none.ok(), "a build with no binary and no complaints is not a build that worked");
+        helper.assertTrue(!IProgrammingLanguage.CompileResult.of(null).ok(), "nor is one made of a null binary");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void languageRegistry_refusesAnExtensionNotInLowerCase(final GameTestHelper helper) {
+        final LanguageRegistry registry = new LanguageRegistry();
+        helper.assertTrue(!registry.register(new ToyLanguage(OTHER, Set.of("TOY"), Set.of())),
+                "a language declaring an extension in upper case is refused");
+        helper.assertTrue(registry.get(OTHER) == null && registry.sourceOf("toy") == null, "and is not there");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
     public static void languageRegistry_replacesALanguageRegisteredAgainUnderItsId(final GameTestHelper helper) {
         final LanguageRegistry registry = new LanguageRegistry();
         registry.register(new ToyLanguage());

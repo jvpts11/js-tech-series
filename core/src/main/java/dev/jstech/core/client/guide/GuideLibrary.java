@@ -102,7 +102,7 @@ public final class GuideLibrary {
         return this.manuals.values().stream().filter(manual -> manual.holds(chapter))
                 .filter(manual -> this.chapters.containsKey(chapter))
                 .min(Comparator.comparing((GuideManual manual) -> !manual.names(chapter))
-                        .thenComparingInt(manual -> -manual.priority())
+                        .thenComparing(Comparator.comparingInt(GuideManual::priority).reversed())
                         .thenComparing(GuideManual::id));
     }
 
@@ -143,7 +143,8 @@ public final class GuideLibrary {
     /** Every manual the packs hold, the highest priority first, and of two alike the one whose id sorts first. */
     public List<GuideManual> manuals() {
         final List<GuideManual> sorted = new ArrayList<>(this.manuals.values());
-        sorted.sort(Comparator.comparingInt((GuideManual manual) -> -manual.priority()).thenComparing(GuideManual::id));
+        sorted.sort(Comparator.comparingInt(GuideManual::priority).reversed()
+                .thenComparing(GuideManual::id));
         return sorted;
     }
 }

@@ -30,6 +30,17 @@ public record StackSubject(ItemStack stack) implements IFilterSubject {
         return new StackSubject(stack);
     }
 
+    /* ItemStack has identity equality, so two subjects of equal stacks compare by item and components instead. */
+    @Override
+    public boolean equals(final Object other) {
+        return other instanceof StackSubject subject && ItemStack.isSameItemSameComponents(this.stack, subject.stack);
+    }
+
+    @Override
+    public int hashCode() {
+        return ItemStack.hashItemAndComponents(this.stack);
+    }
+
     @Override
     public String itemId() {
         return BuiltInRegistries.ITEM.getKey(this.stack.getItem()).toString();

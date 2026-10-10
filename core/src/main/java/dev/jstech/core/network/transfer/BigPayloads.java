@@ -16,7 +16,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -56,6 +55,8 @@ public final class BigPayloads {
     public static final int MOST_OPEN = 8;
     /** The most bytes the server sends one player in a tick. */
     public static final int BYTES_PER_TICK = 256 * 1024;
+    /** How long a sending may go without a piece before it is dropped: ten seconds. */
+    public static final long IDLE_NANOS = 10_000_000_000L;
 
     private static final String NETWORK_VERSION = "1";
     private static final Map<ResourceLocation, BigPayload<?>> KINDS = new ConcurrentHashMap<>();
@@ -112,27 +113,27 @@ public final class BigPayloads {
     @SubscribeEvent
     public static void afterServerTick(final ServerTickEvent.Post event) {
         final MinecraftServer server = event.getServer();
-        for (final Iterator<Map.Entry<UUID, Deque<BigPiecePayload>>> it = OUTGOING.entrySet().iterator();
-             it.hasNext();) {
-            final Map.Entry<UUID, Deque<BigPiecePayload>> entry = it.next();
-            final ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+        for (final UUID id : List.copyOf(OUTGOING.keySet())) {
+            final ServerPlayer player = server.getPlayerList().getPlayer(id);
             if (player == null) {
-                it.remove();
+                OUTGOING.remove(id);
                 continue;
             }
-            int budget = BYTES_PER_TICK;
-            final Deque<BigPiecePayload> queue = entry.getValue();
-            synchronized (queue) {
-                while (budget > 0 && !queue.isEmpty()) {
-                    final BigPiecePayload piece = queue.poll();
-                    PacketDistributor.sendToPlayer(player, piece);
-                    budget -= Math.max(1, piece.data().length);
+            /* Drained and dropped under the map's lock for the key, the same one queue() adds under, so a piece
+               queued from another thread can never land in a queue that has just been removed. */
+            OUTGOING.computeIfPresent(id, (key, queue) -> {
+                int budget = BYTES_PER_TICK;
+                synchronized (queue) {
+                    while (budget > 0 && !queue.isEmpty()) {
+                        final BigPiecePayload piece = queue.poll();
+                        PacketDistributor.sendToPlayer(player, piece);
+                        budget -= Math.max(1, piece.data().length);
+                    }
+                    return queue.isEmpty() ? null : queue;
                 }
-                if (queue.isEmpty()) {
-                    it.remove();
-                }
-            }
+            });
         }
+        evictIdle(System.nanoTime());
     }
 
     @SubscribeEvent
@@ -151,9 +152,23 @@ public final class BigPayloads {
     }
 
     static void queue(final ServerPlayer player, final List<BigPiecePayload> pieces) {
-        final Deque<BigPiecePayload> queue = OUTGOING.computeIfAbsent(player.getUUID(), key -> new ArrayDeque<>());
-        synchronized (queue) {
-            queue.addAll(pieces);
+        OUTGOING.compute(player.getUUID(), (key, existing) -> {
+            final Deque<BigPiecePayload> queue = existing == null ? new ArrayDeque<>() : existing;
+            synchronized (queue) {
+                queue.addAll(pieces);
+            }
+            return queue;
+        });
+    }
+
+    /* Drops the sendings that have gone without a piece for a while, so a sender that stops halfway frees memory. */
+    private static void evictIdle(final long now) {
+        for (final Iterator<Map<String, Assembly>> it = INCOMING.values().iterator(); it.hasNext();) {
+            final Map<String, Assembly> open = it.next();
+            open.values().removeIf(assembly -> now - assembly.lastPiece > IDLE_NANOS);
+            if (open.isEmpty()) {
+                it.remove();
+            }
         }
     }
 
@@ -168,6 +183,9 @@ public final class BigPayloads {
             final UUID sender = player instanceof ServerPlayer ? player.getUUID() : SERVER;
             final Map<String, Assembly> open = INCOMING.computeIfAbsent(sender, key -> new LinkedHashMap<>());
             final String key = piece.kind() + "#" + piece.transfer();
+            final long now = System.nanoTime();
+            /* The client never runs the server tick, so its stale sendings are dropped as pieces arrive. */
+            open.values().removeIf(stale -> now - stale.lastPiece > IDLE_NANOS);
             try {
                 Assembly assembly = open.get(key);
                 if (assembly == null) {
@@ -179,7 +197,15 @@ public final class BigPayloads {
                     assembly = new Assembly(piece.count());
                     open.put(key, assembly);
                 }
+                long buffered = piece.data().length;
+                for (final Assembly other : open.values()) {
+                    buffered += other.bytes.size();
+                }
+                if (buffered > MOST_PACKED) {
+                    throw new IOException("the sender holds more than " + MOST_PACKED + " bytes of open sendings");
+                }
                 assembly.accept(piece);
+                assembly.lastPiece = now;
                 if (assembly.order.complete()) {
                     open.remove(key);
                     deliver(kind, assembly.bytes.toByteArray(), context);
@@ -202,6 +228,7 @@ public final class BigPayloads {
         private final OrderedPieces order;
         private final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         private final int count;
+        private long lastPiece = System.nanoTime();
 
         private Assembly(final int count) throws IOException {
             if (count <= 0 || (long) count * PIECE_BYTES > (long) MOST_PACKED + PIECE_BYTES) {
@@ -216,7 +243,7 @@ public final class BigPayloads {
                 throw new IOException("a piece says the sending has " + piece.count() + " pieces, not " + this.count);
             }
             this.order.accept(piece.index(), piece.data().length);
-            this.bytes.write(Objects.requireNonNull(piece.data(), "data"));
+            this.bytes.write(piece.data());
         }
     }
 }

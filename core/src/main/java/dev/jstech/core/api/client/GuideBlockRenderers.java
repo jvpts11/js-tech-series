@@ -7,11 +7,13 @@
  */
 package dev.jstech.core.api.client;
 
+import com.mojang.logging.LogUtils;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 /**
  * Where a mod says what draws its kinds of special block in the manuals, once, from its client setup:
@@ -26,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Experimental
 public final class GuideBlockRenderers {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     private static final Map<ResourceLocation, IGuideBlockRenderer> RENDERERS = new ConcurrentHashMap<>();
 
     private GuideBlockRenderers() {
@@ -37,7 +41,11 @@ public final class GuideBlockRenderers {
      * @return whether it was taken; false when the kind already has a renderer
      */
     public static boolean register(final ResourceLocation kind, final IGuideBlockRenderer renderer) {
-        return RENDERERS.putIfAbsent(kind, renderer) == null;
+        final boolean taken = RENDERERS.putIfAbsent(kind, renderer) == null;
+        if (!taken) {
+            LOGGER.warn("Guide block kind {} already has a renderer; the second one is refused", kind);
+        }
+        return taken;
     }
 
     /** What draws that kind, or null when no mod registered one. */

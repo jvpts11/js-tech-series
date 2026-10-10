@@ -32,7 +32,8 @@ public final class TextLists {
      * comma or an arrow, the same in every language.
      *
      * <p>The parts are paired off in halves rather than one after another, so a long list nests only as deep as its
-     * length's logarithm and still travels whole where the depth of a text is limited.
+     * length's logarithm and still travels whole where the depth of a text is limited. That limit is deep enough for
+     * a list of some hundreds of thousands of parts, with room left for the sentences the list sits in.
      */
     public static Text join(final String separator, final List<? extends Text> parts) {
         if (parts.isEmpty()) {

@@ -7,13 +7,9 @@
  */
 package dev.jstech.core.team;
 
-import com.mojang.authlib.GameProfile;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.scores.PlayerTeam;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The game's own teams, the ones {@code /team} makes: a player is on the scoreboard team their name is in, and on a
@@ -36,7 +32,7 @@ public final class ScoreboardTeams implements ITeamSource {
 
     @Override
     public String teamOf(final MinecraftServer server, final UUID player) {
-        final String name = nameOf(server, player);
+        final String name = CoreTeams.lastKnownName(server, player);
         if (name != null) {
             final PlayerTeam team = server.getScoreboard().getPlayersTeam(name);
             if (team != null) {
@@ -44,14 +40,5 @@ public final class ScoreboardTeams implements ITeamSource {
             }
         }
         return CoreTeams.solo(player);
-    }
-
-    private static @Nullable String nameOf(final MinecraftServer server, final UUID player) {
-        final ServerPlayer online = server.getPlayerList().getPlayer(player);
-        if (online != null) {
-            return online.getScoreboardName();
-        }
-        final GameProfileCache profiles = server.getProfileCache();
-        return profiles == null ? null : profiles.get(player).map(GameProfile::getName).orElse(null);
     }
 }

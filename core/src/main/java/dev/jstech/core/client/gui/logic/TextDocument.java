@@ -206,6 +206,8 @@ public final class TextDocument {
 
     /** Sets the anchor before a move that extends, or drops the selection before one that does not. */
     private void beginMove(final boolean extend) {
+        // A move ends the run of typing before it, so undo does not swallow what was typed on either side.
+        lastEdit = "";
         if (extend) {
             if (anchorLine < 0) {
                 anchorLine = line;
@@ -338,23 +340,31 @@ public final class TextDocument {
             final int indent = text.length() - text.stripLeading().length();
             if (adding) {
                 cur.insert(indent, marker);
-                if (i == line) {
+                if (i == line && col >= indent) {
                     col += marker.length();
                 }
-                if (i == anchorLine) {
+                if (i == anchorLine && anchorCol >= indent) {
                     anchorCol += marker.length();
                 }
             } else if (text.startsWith(marker, indent)) {
                 cur.delete(indent, indent + marker.length());
                 if (i == line) {
-                    col = Math.max(0, col - marker.length());
+                    col = afterRemoval(col, indent, marker.length());
                 }
                 if (i == anchorLine) {
-                    anchorCol = Math.max(0, anchorCol - marker.length());
+                    anchorCol = afterRemoval(anchorCol, indent, marker.length());
                 }
             }
         }
         col = Math.min(col, lines.get(line).length());
+    }
+
+    /* Where a column lands once a marker at {@code indent} is cut out: before it stays, inside it goes to its start. */
+    private static int afterRemoval(final int column, final int indent, final int length) {
+        if (column < indent) {
+            return column;
+        }
+        return column < indent + length ? indent : column - length;
     }
 
     /**

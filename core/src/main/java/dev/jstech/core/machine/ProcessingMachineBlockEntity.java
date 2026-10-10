@@ -40,6 +40,8 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
     private final IntField maxProgress;
     private final List<FieldFluidTank> inputTanks = new ArrayList<>();
     private final List<FieldFluidTank> outputTanks = new ArrayList<>();
+    /* The work in hand last tick; empty after a load, when the saved progress is taken as belonging to it. */
+    private Processing lastWork;
 
     protected ProcessingMachineBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state,
                                            final Layout layout, final int energyCapacity, final int energyMaxReceive,
@@ -138,6 +140,25 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
             fluidOutputs = fluidOutputs.stream().map(FluidStack::copy).toList();
         }
 
+        /**
+         * Whether {@code other} is the same piece of work. The stacks are compared by value because every tick builds
+         * its work anew, so the records themselves never compare equal.
+         */
+        public boolean sameWork(final Processing other) {
+            if (this.ticks != other.ticks || this.energyPerTick != other.energyPerTick
+                    || !this.takes.equals(other.takes) || !this.fluidTakes.equals(other.fluidTakes)
+                    || !ItemStack.listMatches(this.outputs, other.outputs)
+                    || this.fluidOutputs.size() != other.fluidOutputs.size()) {
+                return false;
+            }
+            for (int i = 0; i < this.fluidOutputs.size(); i++) {
+                if (!FluidStack.matches(this.fluidOutputs.get(i), other.fluidOutputs.get(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         /** One item taken from {@code slot} to make {@code output} in {@code ticks}, at the machine's energy. */
         public static Processing single(final int slot, final ItemStack output, final int ticks) {
             return new Processing(List.of(new Take(slot, 1)), List.of(), List.of(output), List.of(), ticks, 0);
@@ -229,7 +250,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
     public void describe(final List<Text> lines, final boolean details) {
         final int max = maxProgress.get();
         final int done = progress.get();
-        lines.add(done > 0 && max > 0 ? LookTexts.WORKING.with(Math.min(100, done * 100 / max))
+        lines.add(done > 0 && max > 0 ? LookTexts.WORKING.with((int) Math.min(100L, done * 100L / max))
                 : LookTexts.IDLE.text());
     }
 
@@ -247,9 +268,16 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
         final Optional<Processing> found = input.isEmpty() ? Optional.empty() : process(level, input);
         if (found.isEmpty() || !fits(found.get())) {
             progress.set(0);
+            lastWork = null;
             return;
         }
         final Processing work = found.get();
+        if (lastWork != null && !lastWork.sameWork(work)) {
+            // The inputs went from one recipe to another with no idle tick between; the old energy was spent on
+            // other work.
+            progress.set(0);
+        }
+        lastWork = work;
         final UpgradeEffect effect = upgradeEffect();
         maxProgress.set(effect.ticks(work.ticks()));
         final long perTick = effect.energyPerTick(work.energyPerTick() > 0 ? work.energyPerTick()
@@ -261,6 +289,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
         if (progress.get() >= maxProgress.get()) {
             finish(work);
             progress.set(0);
+            lastWork = null;
         }
     }
 
@@ -292,21 +321,40 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
     /* Puts what it can of {@code stack} into the output slot, and gives back what is left. */
     private ItemStack putInto(final int slot, final ItemStack stack) {
         final ItemStack held = getInventory().getStackInSlot(slot);
-        final int limit = Math.min(getInventory().getSlotLimit(slot), stack.getMaxStackSize());
-        if (held.isEmpty()) {
-            final int moved = Math.min(limit, stack.getCount());
-            getInventory().setStackInSlot(slot, stack.copyWithCount(moved));
-            return stack.copyWithCount(stack.getCount() - moved);
-        }
-        if (!ItemStack.isSameItemSameComponents(held, stack)) {
-            return stack;
-        }
-        final int moved = Math.min(limit - held.getCount(), stack.getCount());
+        final int moved = room(held, stack, slotLimit(slot, stack));
         if (moved <= 0) {
             return stack;
         }
-        getInventory().setStackInSlot(slot, held.copyWithCount(held.getCount() + moved));
+        getInventory().setStackInSlot(slot, held.isEmpty() ? stack.copyWithCount(moved)
+                : held.copyWithCount(held.getCount() + moved));
         return stack.copyWithCount(stack.getCount() - moved);
+    }
+
+    /* The most of {@code stack} an output slot holds: its own limit, and the stack's size. */
+    private int slotLimit(final int slot, final ItemStack stack) {
+        return Math.min(getInventory().getSlotLimit(slot), stack.getMaxStackSize());
+    }
+
+    /* How many of {@code incoming} fit on {@code held} up to {@code limit}; the insert and the dry run share it. */
+    private static int room(final ItemStack held, final ItemStack incoming, final int limit) {
+        if (held.isEmpty()) {
+            return Math.min(limit, incoming.getCount());
+        }
+        if (!ItemStack.isSameItemSameComponents(held, incoming)) {
+            return 0;
+        }
+        return Math.max(0, Math.min(limit - held.getCount(), incoming.getCount()));
+    }
+
+    /* How many millibuckets of {@code incoming} fit in a tank holding {@code held} up to {@code capacity}. */
+    private static int fluidRoom(final FluidStack held, final FluidStack incoming, final int capacity) {
+        if (held.isEmpty()) {
+            return Math.min(capacity, incoming.getAmount());
+        }
+        if (!FluidStack.isSameFluidSameComponents(held, incoming)) {
+            return 0;
+        }
+        return Math.max(0, Math.min(capacity - held.getAmount(), incoming.getAmount()));
     }
 
     /* Whether every output, item and fluid, finds room, as if all of them were put out at once. */
@@ -317,20 +365,19 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
         }
         for (final ItemStack output : work.outputs()) {
             int left = output.getCount();
-            final int limit = output.getMaxStackSize();
             for (int i = 0; i < slots.size() && left > 0; i++) {
                 final ItemStack held = slots.get(i);
-                if (held.isEmpty()) {
-                    final int moved = Math.min(limit, left);
-                    slots.set(i, output.copyWithCount(moved));
-                    left -= moved;
-                } else if (ItemStack.isSameItemSameComponents(held, output)) {
-                    final int moved = Math.min(limit - held.getCount(), left);
-                    if (moved > 0) {
-                        held.grow(moved);
-                        left -= moved;
-                    }
+                final int limit = slotLimit(layout.firstOutput() + i, output);
+                final int moved = room(held, output.copyWithCount(left), limit);
+                if (moved <= 0) {
+                    continue;
                 }
+                if (held.isEmpty()) {
+                    slots.set(i, output.copyWithCount(moved));
+                } else {
+                    held.grow(moved);
+                }
+                left -= moved;
             }
             if (left > 0) {
                 return false;
@@ -344,18 +391,16 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity im
             int left = output.getAmount();
             for (int i = 0; i < tanks.size() && left > 0; i++) {
                 final FluidStack held = tanks.get(i);
-                final int capacity = outputTanks.get(i).getCapacity();
-                if (held.isEmpty()) {
-                    final int moved = Math.min(capacity, left);
-                    tanks.set(i, output.copyWithAmount(moved));
-                    left -= moved;
-                } else if (FluidStack.isSameFluidSameComponents(held, output)) {
-                    final int moved = Math.min(capacity - held.getAmount(), left);
-                    if (moved > 0) {
-                        held.grow(moved);
-                        left -= moved;
-                    }
+                final int moved = fluidRoom(held, output.copyWithAmount(left), outputTanks.get(i).getCapacity());
+                if (moved <= 0) {
+                    continue;
                 }
+                if (held.isEmpty()) {
+                    tanks.set(i, output.copyWithAmount(moved));
+                } else {
+                    held.grow(moved);
+                }
+                left -= moved;
             }
             if (left > 0) {
                 return false;

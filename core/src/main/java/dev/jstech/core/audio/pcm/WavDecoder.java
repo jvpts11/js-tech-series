@@ -147,6 +147,10 @@ public final class WavDecoder implements IAudioDecoder {
 
         @Override
         public int read(final short[] into, final int offset, final int length) throws IOException {
+            if (length <= 0) {
+                // Asking for nothing takes nothing, and is not the end of the data.
+                return 0;
+            }
             final int wanted = (int) Math.min(length, remaining / bytesPerSample);
             if (wanted <= 0) {
                 remaining = 0;

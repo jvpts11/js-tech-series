@@ -275,6 +275,7 @@ public final class ModGuide {
         private int terms;
         private int notes;
         private int plans;
+        private int balloons;
         private List<GuideBlock.TableRow> rows;
         private List<GuideBlock.Callout> callouts;
         private List<Supplier<GuideBlock.PlanPart>> planParts;
@@ -523,7 +524,7 @@ public final class ModGuide {
             if (this.callouts == null) {
                 throw new IllegalStateException("a balloon follows the views it points at");
             }
-            final String key = this.key("callout" + (this.callouts.size() + 1), english);
+            final String key = this.key("callout" + (++this.balloons), english);
             this.callouts.add(new GuideBlock.Callout(number, view, u, v, key));
             return this;
         }

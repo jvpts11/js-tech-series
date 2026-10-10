@@ -13,6 +13,7 @@ import dev.jstech.computers.block.OpticalPort;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.Lane;
+import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.network.DataLine;
@@ -26,6 +27,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -194,6 +197,26 @@ public final class CableLineGameTests {
         TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         helper.assertFalse(TestCables.lay(helper.getLevel(), helper.absolutePos(new BlockPos(4, 2, 2)),
                 ComputingModule.LEASED_LINE.get()), "and no leased line in an Ethernet's block");
+        helper.succeed();
+    }
+
+    /** A cable in a lane is refused when it is too thick for the lanes, while a cable alone may be thicker. */
+    @GameTest(template = ARENA)
+    public static void thickness_ofACableInALaneIsLimitedToWhatTheLanesHold(final GameTestHelper helper) {
+        final ResourceLocation jacket = ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hbw");
+        final ResourceLocation plug = ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/hbw");
+        final Connection line = Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "thick"));
+        boolean refused = false;
+        try {
+            CableType.builder(line).lane(Lane.TOP).thickness(8).jacket(jacket).plug(plug).build(() -> Items.STRING);
+        } catch (final IllegalStateException expected) {
+            refused = true;
+        }
+        helper.assertTrue(refused, "an 8 pixel cable in a lane is refused");
+        helper.assertTrue(CableType.builder(line).lane(Lane.TOP).thickness(6).jacket(jacket).plug(plug)
+                .build(() -> Items.STRING).thickness() == 6, "a 6 pixel cable fits a lane");
+        helper.assertTrue(CableType.builder(line).alone().thickness(8).jacket(jacket).plug(plug)
+                .build(() -> Items.STRING).thickness() == 8, "a cable alone may be 8 pixels");
         helper.succeed();
     }
 

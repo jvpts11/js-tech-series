@@ -36,12 +36,9 @@ public final class CableBreaking {
             return;
         }
         final BlockPos pos = event.getPos();
-        if (!(level.getBlockEntity(pos) instanceof CableBlockEntity cable) || cable.pieces() < 2) {
-            return;
-        }
         final Player player = event.getPlayer();
-        final CableBlockEntity.Aim aim = CableBlock.aimOf(level, pos, player);
-        if (aim.isNothing()) {
+        final CableBlockEntity.Aim aim = CableBlock.strikeAimOf(level, pos, player);
+        if (aim.isNothing() || !(level.getBlockEntity(pos) instanceof CableBlockEntity cable)) {
             return;
         }
         event.setCanceled(true);

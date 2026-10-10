@@ -44,17 +44,25 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Experimental
 public abstract class SurfaceRenderer {
 
+    /** The most pixels a surface may be wide or tall; a bigger request is a mistake in the renderer (1024 each way). */
+    static final int MAX_SIZE = 1024;
+
     private final int width;
     private final int height;
     private final boolean gpu;
 
     /**
-     * A renderer of a surface of that size.
+     * A renderer of a surface of that size, from 1 to 1024 pixels each way; any other size is refused with an
+     * {@link IllegalArgumentException}, so a mistake shows when the renderer is built.
      *
      * @param gpu whether it draws on the graphics card ({@link GpuSurface}) rather than into an array of pixels
      *            ({@link PixelSurface})
      */
     protected SurfaceRenderer(final int width, final int height, final boolean gpu) {
+        if (width < 1 || height < 1 || width > MAX_SIZE || height > MAX_SIZE) {
+            throw new IllegalArgumentException("Surface size must be 1.." + MAX_SIZE + " each way, got "
+                + width + "x" + height);
+        }
         this.width = width;
         this.height = height;
         this.gpu = gpu;

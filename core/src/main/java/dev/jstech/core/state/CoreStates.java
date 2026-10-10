@@ -34,6 +34,8 @@ public final class CoreStates {
 
     private static final Map<ResourceLocation, CoreState<?>> BY_ID = new ConcurrentHashMap<>();
 
+    private static final Map<String, CoreState<?>> BY_FILE = new ConcurrentHashMap<>();
+
     private CoreStates() {
     }
 
@@ -42,6 +44,13 @@ public final class CoreStates {
         final CoreState<?> before = BY_ID.putIfAbsent(state.id(), state);
         if (before != null && before != state) {
             throw new IllegalStateException("two states are registered as " + state.id());
+        }
+        // The world's data storage hands back whatever it holds under a file name, so two states sharing one would
+        // read each other's file as their own value.
+        final CoreState<?> sharing = BY_FILE.putIfAbsent(state.fileName(), state);
+        if (sharing != null && sharing != state) {
+            throw new IllegalStateException("the states " + sharing.id() + " and " + state.id()
+                    + " would share the file " + state.fileName());
         }
         state.markRegistered();
     }

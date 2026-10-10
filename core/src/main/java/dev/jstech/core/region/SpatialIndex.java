@@ -94,7 +94,11 @@ public final class SpatialIndex<K, T> {
         return byKey.get(key);
     }
 
-    /** Every entry whose box meets {@code area}, in the order they were filed. */
+    /**
+     * Every entry whose box meets {@code area}. They come grouped by the region they are filed under, region by
+     * region, with the entries kept apart for being too wide last; only inside one region is it the order they were
+     * filed.
+     */
     public List<Entry<K, T>> within(final Box area) {
         final Set<K> found = new LinkedHashSet<>();
         if (regionsOf(area) > MOST_REGIONS) {
@@ -123,7 +127,10 @@ public final class SpatialIndex<K, T> {
         return within(Box.at(x, y, z));
     }
 
-    /** The entry nearest the block within {@code radius} blocks, or null when there is none that close. */
+    /**
+     * The entry nearest the block within {@code radius} blocks, or null when there is none that close. Of entries
+     * equally near, the first in the order {@link #within} gives wins.
+     */
     @Nullable
     public Entry<K, T> nearest(final int x, final int y, final int z, final int radius) {
         Entry<K, T> best = null;

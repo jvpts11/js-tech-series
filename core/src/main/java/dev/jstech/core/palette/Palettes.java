@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 /**
  * Every palette the series and its addons declare, by id.
@@ -27,6 +28,8 @@ public final class Palettes {
 
     private static final Map<String, Palette<?>> BY_ID = new ConcurrentHashMap<>();
     private static final AtomicInteger GENERATION = new AtomicInteger();
+    private static final Pattern NAMESPACE = Pattern.compile("[a-z0-9_.-]+");
+    private static final Pattern PATH = Pattern.compile("[a-z0-9_./-]+");
 
     private Palettes() {
     }
@@ -42,6 +45,11 @@ public final class Palettes {
      */
     public static <P extends Record> Palette<P> declare(final String namespace, final String path, final P colours) {
         PaletteRoles.roles(colours.getClass());
+        if (!NAMESPACE.matcher(namespace).matches() || !PATH.matcher(path).matches()) {
+            // Checked where it is written, because the file's resource id would only refuse it at the first load.
+            throw new IllegalArgumentException("the palette " + namespace + ":" + path
+                    + " cannot name a file: lower case letters, digits and _ - . only, and / in a path");
+        }
         final Palette<P> palette = new Palette<>(namespace, path, colours);
         if (BY_ID.putIfAbsent(palette.id(), palette) != null) {
             throw new IllegalStateException("the palette " + palette.id() + " is declared twice");

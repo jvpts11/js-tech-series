@@ -703,7 +703,9 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
                 final CompoundTag entry = (CompoundTag) element;
                 final Lane lane = Lane.byName(entry.getString(LANE));
                 if (lane != null) {
-                    CableBlockEntity.this.savedNetworks.put(lane, NetworkUuid.fromString(entry.getString(NETWORK)));
+                    // A damaged id is skipped so the cable keeps its other data; the network is found again on load.
+                    NetworkUuid.parse(entry.getString(NETWORK))
+                            .ifPresent(network -> CableBlockEntity.this.savedNetworks.put(lane, network));
                 }
             }
         }

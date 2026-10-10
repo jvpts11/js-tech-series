@@ -38,8 +38,10 @@ public final class GuideFonts {
     public static MutableComponent styled(final String text, final TextSize size, final GuideStyle style) {
         final String fontId = size == TextSize.TABLE ? style.tableFont() : style.bodyFont();
         Style look = Style.EMPTY;
-        if (!fontId.isEmpty()) {
-            look = look.withFont(ResourceLocation.parse(fontId));
+        // A font id typed wrongly in a resource pack keeps the game font instead of crashing the manual.
+        final ResourceLocation font = fontId.isEmpty() ? null : ResourceLocation.tryParse(fontId);
+        if (font != null) {
+            look = look.withFont(font);
         }
         if (bold(size)) {
             look = look.withBold(true);

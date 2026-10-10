@@ -19,6 +19,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -162,15 +163,19 @@ public final class DimensionEffects {
         }
     }
 
-    /** The rules were read again: every player feels the pull of where they stand now. */
+    /** The rules were read again: every living thing feels the pull of where it stands now. */
     static void rulesChanged() {
         final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) {
             return;
         }
         server.execute(() -> {
-            for (final ServerPlayer player : server.getPlayerList().getPlayers()) {
-                applyGravity(player);
+            for (final ServerLevel level : server.getAllLevels()) {
+                for (final Entity entity : level.getAllEntities()) {
+                    if (entity instanceof LivingEntity living) {
+                        applyGravity(living);
+                    }
+                }
             }
             SUFFERING.clear();
         });

@@ -9,6 +9,7 @@ package dev.jstech.core.uuid;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,6 +50,18 @@ class NetworkUuidTest {
     void fromString_rejectsMalformedString() {
         assertThrows(IllegalArgumentException.class,
                 () -> NetworkUuid.fromString("not-a-uuid"));
+    }
+
+    @Test
+    void parse_givesNothingForMalformedOrEmptyStrings() {
+        assertEquals(Optional.empty(), NetworkUuid.parse("not-a-uuid"));
+        assertEquals(Optional.empty(), NetworkUuid.parse(""));
+    }
+
+    @Test
+    void parse_readsCanonicalForm() {
+        var original = NetworkUuid.random();
+        assertEquals(Optional.of(original), NetworkUuid.parse(original.asString()));
     }
 
     @Test

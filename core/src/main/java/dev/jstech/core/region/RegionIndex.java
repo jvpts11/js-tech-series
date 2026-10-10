@@ -11,7 +11,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import dev.jstech.core.JsCore;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -38,8 +40,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class RegionIndex<T> {
 
+    private static final Map<String, ResourceLocation> STORAGE_NAMES = new ConcurrentHashMap<>();
+
     private final ResourceLocation id;
     private final Codec<T> codec;
+    private final String storageName;
     private final SavedData.Factory<Save<T>> factory;
 
     /** A box as its two corners, six numbers. */
@@ -53,6 +58,7 @@ public final class RegionIndex<T> {
     private RegionIndex(final ResourceLocation id, final Codec<T> codec) {
         this.id = id;
         this.codec = codec;
+        this.storageName = claimStorageName(id);
         this.factory = new SavedData.Factory<>(() -> new Save<>(codec), this::load);
     }
 
@@ -109,9 +115,23 @@ public final class RegionIndex<T> {
         return save(level).index.size();
     }
 
+    /**
+     * The saved-data name of an id. Different ids can flatten to the same name (a slash and an underscore both
+     * become an underscore), and two indexes under one name would read and overwrite each other's entries, so a
+     * second id that lands on a taken name is refused.
+     */
+    private static String claimStorageName(final ResourceLocation id) {
+        final String name = "jstech_region_" + id.getNamespace() + "_" + id.getPath().replace('/', '_');
+        final ResourceLocation owner = STORAGE_NAMES.putIfAbsent(name, id);
+        if (owner != null && !owner.equals(id)) {
+            throw new IllegalStateException("The region indexes " + owner + " and " + id
+                    + " would share the saved file " + name);
+        }
+        return name;
+    }
+
     private Save<T> save(final ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(factory,
-                "jstech_region_" + id.getNamespace() + "_" + id.getPath().replace('/', '_'));
+        return level.getDataStorage().computeIfAbsent(factory, storageName);
     }
 
     private Save<T> load(final CompoundTag tag, final HolderLookup.Provider registries) {

@@ -92,6 +92,13 @@ public final class HologramView {
         SHOWN.clear();
     }
 
+    /* Fires on respawn and on a change of dimension, where the game does not log out: the words of the old level
+       must not be drawn at their old coordinates in the new one. */
+    @SubscribeEvent
+    public static void onPlayerReplaced(final ClientPlayerNetworkEvent.Clone event) {
+        SHOWN.clear();
+    }
+
     /* Each line centred on the hologram's middle, the last one at its foot, all of them facing the camera. */
     private static void draw(final PoseStack pose, final Camera camera, final Font font,
                              final MultiBufferSource buffers, final HologramPalette.Colours colours,

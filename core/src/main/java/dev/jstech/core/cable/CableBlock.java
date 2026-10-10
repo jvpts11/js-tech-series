@@ -74,6 +74,18 @@ public final class CableBlock extends Block implements EntityBlock {
         return cable.aim(look[0], look[1]);
     }
 
+    /**
+     * What a strike on the block at {@code pos} takes out: the piece {@code player} aims at, or nothing when the block
+     * holds fewer than two pieces (it then breaks whole, as any block does). The client decides whether to hold back
+     * its own break and the server decides which piece goes with this one rule, so the two cannot disagree.
+     */
+    public static CableBlockEntity.Aim strikeAimOf(final BlockGetter level, final BlockPos pos, final Player player) {
+        if (!(level.getBlockEntity(pos) instanceof CableBlockEntity cable) || cable.pieces() < 2) {
+            return CableBlockEntity.Aim.NOTHING;
+        }
+        return aimOf(level, pos, player);
+    }
+
     @Override
     protected MapCodec<CableBlock> codec() {
         return CODEC;

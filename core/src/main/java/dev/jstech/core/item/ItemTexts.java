@@ -19,7 +19,8 @@ public final class ItemTexts {
 
     public static final TextKey MODE = TextKey.of("jscore.item.mode", "Mode: %s");
     public static final TextKey MODE_KEY = TextKey.of("key.jscore.item_mode", "Change Item Mode");
-    public static final TextKey MODE_HINT = TextKey.of("jscore.item.mode.hint", "%s changes the mode");
+    public static final TextKey MODE_HINT = TextKey.of("jscore.item.mode.hint",
+            "%s changes the mode while held in the main hand");
     public static final TextKey MODE_NO_KEY = TextKey.of("jscore.item.mode.no_key",
             "Give Change Item Mode a key to change the mode");
     public static final TextKey ENERGY = TextKey.of("jscore.item.energy", "Energy: %s of %s");

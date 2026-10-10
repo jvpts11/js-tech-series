@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Everything about one cue, said once: where it is heard from, the channel a sound bound to it plays in when the
@@ -36,7 +37,7 @@ public final class CueBuilder {
     private final ModContent content;
     private final String path;
     private SoundSpace space = SoundSpace.WORLD;
-    private AudioChannel channel = AudioChannels.MACHINES;
+    private @Nullable AudioChannel channel;
     private int range = DEFAULT_RANGE;
     private final List<SoundSet.Rule> rules = new ArrayList<>();
 
@@ -57,7 +58,6 @@ public final class CueBuilder {
     /** A cue heard from the player's own screen. */
     public CueBuilder onScreen() {
         this.space = SoundSpace.INTERFACE;
-        this.channel = AudioChannels.INTERFACE;
         return this;
     }
 
@@ -91,7 +91,10 @@ public final class CueBuilder {
 
     /** Registers the cue with the rules said so far; a cue with none is silent until a pack binds it. */
     public SoundCue register() {
-        final SoundCue cue = new SoundCue(ResourceLocation.fromNamespaceAndPath(content.modid(), path), space, channel,
+        // Resolved here so the order of onScreen(), world() and channel() in the declaration does not matter.
+        final AudioChannel mixed = channel != null ? channel
+                : space == SoundSpace.INTERFACE ? AudioChannels.INTERFACE : AudioChannels.MACHINES;
+        final SoundCue cue = new SoundCue(ResourceLocation.fromNamespaceAndPath(content.modid(), path), space, mixed,
                 range, new SoundSet(rules));
         content.declare(cue);
         return cue;

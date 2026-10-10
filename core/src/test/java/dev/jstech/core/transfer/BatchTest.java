@@ -9,6 +9,7 @@ package dev.jstech.core.transfer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -81,6 +82,17 @@ class BatchTest {
     }
 
     @Test
+    void commit_undoesTheStepsDoneWhenAStepThrows() {
+        final Store a = new Store(10);
+        final Store broken = new Store(10);
+        broken.throwsOnExecute = true;
+
+        assertThrows(IllegalStateException.class, () -> new Batch().add(a.put(2)).add(broken.put(3)).commit());
+
+        assertEquals(0, a.held, "the step done before the failure was given back");
+    }
+
+    @Test
     void fits_movesNothing() {
         final Store a = new Store(10);
         final Batch batch = new Batch().add(a.put(4));
@@ -104,6 +116,7 @@ class BatchTest {
         int held;
         boolean takesOnlyHalf;
         boolean keeps;
+        boolean throwsOnExecute;
 
         Store(final int room) {
             this(room, "", new ArrayList<>());
@@ -131,6 +144,9 @@ class BatchTest {
 
                 @Override
                 public long execute() {
+                    if (throwsOnExecute) {
+                        throw new IllegalStateException("a faulty handler");
+                    }
                     final int would = Math.min(amount, room - held);
                     this.moved = takesOnlyHalf ? would / 2 : would;
                     held += (int) this.moved;

@@ -55,7 +55,8 @@ public final class CableParts {
             final int plugged = cable.plugs(lane);
             for (final Direction face : Direction.values()) {
                 final BlockPos at = pos.relative(face);
-                if ((plugged & 1 << face.get3DDataValue()) != 0
+                // An unloaded neighbour is left out: reading its block entity would load its chunk.
+                if ((plugged & 1 << face.get3DDataValue()) != 0 && level.isLoaded(at)
                         && !(level.getBlockEntity(at) instanceof CableBlockEntity)) {
                     plugs.computeIfAbsent(root, key -> new ArrayList<>())
                             .add(new Plug(number, at, face.getOpposite()));

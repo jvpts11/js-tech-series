@@ -13,7 +13,6 @@ import dev.jstech.core.energy.IEnergyNode;
 import dev.jstech.core.energy.internal.EnergyFlowGraph;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -110,11 +109,6 @@ public final class EnergyNetwork {
 
     public boolean contains(final long pos) {
         return nodes.containsKey(pos) || cables.containsKey(pos);
-    }
-
-    public List<Long> neighborsOf(final long pos) {
-        final List<Long> n = adjacency.get(pos);
-        return n == null ? List.of() : Collections.unmodifiableList(n);
     }
 
     private void requireMember(final long pos) {

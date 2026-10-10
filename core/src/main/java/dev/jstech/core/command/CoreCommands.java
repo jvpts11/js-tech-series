@@ -32,6 +32,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 
 /**
  * The Core's own commands: {@code /jstech progress <players> <axis> [<step>]}, where players stand along a progression
@@ -61,6 +62,8 @@ public final class CoreCommands {
             "%s is not a dimension made while the game runs");
     public static final TextKey NO_TEMPLATE = TextKey.of("jscore.command.dimension.no_template",
             "No dimension is declared as %s");
+    public static final TextKey DIMENSION_EXISTS = TextKey.of("jscore.command.dimension.exists",
+            "A dimension named %s already exists");
 
     private static final String PLAYERS = "players";
     private static final String AXIS = "axis";
@@ -69,6 +72,8 @@ public final class CoreCommands {
     private static final String TEMPLATE = "template";
     private static final DynamicCommandExceptionType NO_SUCH_TEMPLATE =
             new DynamicCommandExceptionType(id -> GameText.component(NO_TEMPLATE.with(String.valueOf(id))));
+    private static final DynamicCommandExceptionType ALREADY_EXISTS =
+            new DynamicCommandExceptionType(id -> GameText.component(DIMENSION_EXISTS.with(String.valueOf(id))));
     private static final DynamicCommandExceptionType NOT_MADE =
             new DynamicCommandExceptionType(id -> GameText.component(DIMENSION_NOT_MADE.with(String.valueOf(id))));
     private static final SuggestionProvider<CommandSourceStack> TEMPLATES = (context, builder) ->
@@ -178,7 +183,11 @@ public final class CoreCommands {
         if (RuntimeDimensions.stemOf(server, template).isEmpty()) {
             throw NO_SUCH_TEMPLATE.create(template);
         }
-        RuntimeDimensions.getOrCreate(server, ResourceKey.create(Registries.DIMENSION, id), template);
+        final ResourceKey<Level> key = ResourceKey.create(Registries.DIMENSION, id);
+        if (server.getLevel(key) != null) {
+            throw ALREADY_EXISTS.create(id);
+        }
+        RuntimeDimensions.getOrCreate(server, key, template);
         context.getSource().sendSuccess(() -> GameText.component(DIMENSION_MADE.with(id.toString(),
                 template.toString())), true);
         return 1;

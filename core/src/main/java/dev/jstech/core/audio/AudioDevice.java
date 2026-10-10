@@ -49,6 +49,11 @@ public record AudioDevice(String id, TextKey name, Set<Waveform> waves, boolean 
     }
 
     public AudioDevice {
+        Objects.requireNonNull(id, "id");
+        if (id.isEmpty() || id.length() > SoundContext.MAX_LENGTH) {
+            throw new IllegalArgumentException("a device id is 1 to " + SoundContext.MAX_LENGTH
+                    + " characters: " + id);
+        }
         Objects.requireNonNull(response, "response");
         Objects.requireNonNull(timbre, "timbre");
         waves = Collections.unmodifiableSet(waves.isEmpty() ? EnumSet.noneOf(Waveform.class) : EnumSet.copyOf(waves));

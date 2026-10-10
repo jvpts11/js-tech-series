@@ -28,6 +28,7 @@ import java.util.List;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -95,6 +96,18 @@ public final class GuideGameTests {
         helper.assertTrue(TestGuide.MANUAL_ITEM.get().manual().equals(TestGuide.MANUAL)
                 && guide.declaredManuals().getFirst().style().equals(CoreGuide.BINDER),
                 "the manual item opens the test manual, drawn in the binder style");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void callout_keepsItsKeyApartAcrossTwoViewsOfOneEntry(final GameTestHelper helper) {
+        final ModGuide guide = new ModGuide("jstests");
+        final ModGuide.SectionRef section = guide.section("balloons").titled("Balloons").register();
+        guide.page("two_views", section)
+                .views(() -> Items.STONE).callout(1, GuideBlock.View.TOP, 2, 2, "The first legend")
+                .views(() -> Items.STONE).callout(1, GuideBlock.View.TOP, 4, 4, "The second legend");
+        helper.assertTrue(guide.translations().containsValue("The first legend")
+                && guide.translations().containsValue("The second legend"), "both legends keep their own key");
         helper.succeed();
     }
 

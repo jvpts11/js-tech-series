@@ -56,8 +56,8 @@ public final class RecipeViewClientTests {
         return ModList.get().isLoaded("emi");
     }
 
-    private static long shown(final ProcessingKind kind) {
-        return emi() ? CoreEmiPlugin.recipesShown(kind) : CoreJeiPlugin.recipesShown(kind);
+    private static int shown(final ProcessingKind kind) {
+        return (emi() ? CoreEmiPlugin.recipesShown(kind) : CoreJeiPlugin.recipesShown(kind)).orElse(0);
     }
 
     private static boolean show(final ProcessingKind kind) {

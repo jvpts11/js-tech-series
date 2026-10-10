@@ -38,11 +38,6 @@ public final class Timings {
         return out;
     }
 
-    /** Forgets every time kept. */
-    public void clear() {
-        this.sections.clear();
-    }
-
     /**
      * What the latest times of one piece came to.
      *

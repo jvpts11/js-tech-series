@@ -223,15 +223,6 @@ public final class NetworkSystem {
         return total;
     }
 
-    /** The capacity the network's active Subframes lend their Mainframe, without the Mainframe's own. */
-    public long subframeCapacityOf(NetworkUuid networkUuid) {
-        long total = 0L;
-        for (var subframe : subframesOf(networkUuid)) {
-            total += subframe.contributedCapacity();
-        }
-        return total;
-    }
-
     /** The dispatch queues the network's active Subframes add to their Mainframe (their GPUs). */
     public int subframeQueuesOf(NetworkUuid networkUuid) {
         int total = 0;
@@ -254,20 +245,6 @@ public final class NetworkSystem {
 
     public List<ServerRouterElement> routersOf(final NetworkUuid networkUuid) {
         return routers.of(networkUuid);
-    }
-
-    // Phase 1+ stubs, they depend on runtime topology / BlockEntities
-
-    public Optional<NodeUuid> nodeByPosition(long encodedPos) {
-        throw new UnsupportedOperationException(
-                "nodeByPosition requires runtime BlockEntity lookup, "
-                        + "deferred to Phase 1+.");
-    }
-
-    public Optional<MainframeNode> failoverPartnerOf(NetworkUuid networkUuid) {
-        throw new UnsupportedOperationException(
-                "failoverPartnerOf resolves a partner via cross-Mainframe lookup, "
-                        + "deferred to Phase 1+.");
     }
 
     public void clear() {

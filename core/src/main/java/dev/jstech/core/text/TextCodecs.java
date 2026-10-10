@@ -31,7 +31,7 @@ public final class TextCodecs {
 
     /** How many arguments a sentence carries, and how deeply sentences sit inside each other. */
     private static final int MOST_ARGS = 16;
-    private static final int MOST_DEPTH = 8;
+    private static final int MOST_DEPTH = 20;
 
     private static final byte LITERAL = 0;
     private static final byte TRANSLATED = 1;

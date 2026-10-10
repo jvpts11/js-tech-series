@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.gui.theme;
 
+import dev.jstech.core.client.GameLocale;
 import dev.jstech.core.client.gui.component.Draw;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -223,11 +224,11 @@ public final class JsTechTheme {
 
     public static String fmt(final long n) {
         if (n < 10_000L) {
-            return String.format("%,d", n);
+            return String.format(GameLocale.locale(), "%,d", n);
         }
         if (n < 1_000_000L) {
-            return String.format("%.1fk", n / 1_000.0);
+            return String.format(GameLocale.locale(), "%.1fk", n / 1_000.0);
         }
-        return String.format("%.1fM", n / 1_000_000.0);
+        return String.format(GameLocale.locale(), "%.1fM", n / 1_000_000.0);
     }
 }

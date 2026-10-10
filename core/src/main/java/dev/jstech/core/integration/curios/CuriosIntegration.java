@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.integration.curios;
 
+import dev.jstech.core.integration.accessories.AccessoriesIntegration;
 import dev.jstech.core.worn.WornItems;
 import net.neoforged.fml.ModList;
 
@@ -19,7 +20,6 @@ import net.neoforged.fml.ModList;
 public final class CuriosIntegration {
 
     public static final String MOD_ID = "curios";
-    private static final String ACCESSORIES = "accessories";
 
     private CuriosIntegration() {
     }
@@ -30,7 +30,7 @@ public final class CuriosIntegration {
 
     /** Hands the Core Curios as a source of worn things; a no-op when Curios is absent or Accessories present. */
     public static void bootstrap() {
-        if (isLoaded() && !ModList.get().isLoaded(ACCESSORIES)) {
+        if (isLoaded() && !AccessoriesIntegration.isLoaded()) {
             useCurios();
         }
     }

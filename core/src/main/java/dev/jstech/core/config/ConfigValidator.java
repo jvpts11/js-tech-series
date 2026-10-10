@@ -46,6 +46,11 @@ public final class ConfigValidator {
             return rejected(key, "'" + key.dottedPath() + "' is " + typed + ", which is not one of "
                     + key.allowed().get() + "; the default " + key.defaultValue() + " is used");
         }
+        if (key.range().isPresent() && isNotANumber(typed)) {
+            // NaN orders above every number, so the range check would clamp it to the top; it is no value at all.
+            return rejected(key, "'" + key.dottedPath() + "' is not a number; the default "
+                    + key.plain(key.defaultValue()) + " is used");
+        }
         if (key.range().isPresent()) {
             final ConfigKeyRange range = key.range().get();
             final Comparable number = (Comparable) typed;
@@ -63,6 +68,10 @@ public final class ConfigValidator {
             return new IConfigValidationResult.Repaired<>(typed, reason);
         }
         return new IConfigValidationResult.Valid<>(typed);
+    }
+
+    private static boolean isNotANumber(final Object value) {
+        return value instanceof Double d && d.isNaN() || value instanceof Float f && f.isNaN();
     }
 
     private <T> IConfigValidationResult<T> rejected(final ConfigKey<T> key, final String reason) {

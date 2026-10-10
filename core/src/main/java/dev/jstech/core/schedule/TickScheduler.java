@@ -103,7 +103,8 @@ public final class TickScheduler {
                     sinceLook = 0;
                     if (clock.getAsLong() >= deadline) {
                         this.start = (at + 1) % count;
-                        return new Outcome(spent, true);
+                        // A tick whose credits are all spent, or whose tasks all finished, was not cut short.
+                        return new Outcome(spent, left > 0 && remaining > 0);
                     }
                 }
             }

@@ -108,7 +108,7 @@ public final class TextArea extends UiComponent {
         return widest;
     }
 
-    private void followCaretAcross(final Font font) {
+    private void followCaretAcross(final Font font, final int widest) {
         final String line = doc.line(doc.cursorLine());
         final int caretX = font.width(line.substring(0, Math.min(doc.cursorCol(), line.length())));
         final int room = Math.max(8, room());
@@ -119,7 +119,7 @@ public final class TextArea extends UiComponent {
                 shift = caretX - room + 2;
             }
         }
-        shift = Math.max(0, Math.min(Math.max(0, widest(font) + 2 - room), shift));
+        shift = Math.max(0, Math.min(Math.max(0, widest + 2 - room), shift));
     }
 
     @Override
@@ -128,7 +128,8 @@ public final class TextArea extends UiComponent {
         final boolean focused = isFocused();
         ctx.skin().field(g, x(), y(), width(), height(), focused);
         followCaret();
-        followCaretAcross(ctx.font());
+        final int widest = widest(ctx.font());
+        followCaretAcross(ctx.font(), widest);
         final int visible = visibleLines();
         Draw.pushScissor(g, x() + 1, y() + 1, right() - 1, bottom() - 1);
         int ry = y() + 1;
@@ -143,10 +144,10 @@ public final class TextArea extends UiComponent {
             ry += LINE_H;
         }
         Draw.popScissor(g);
-        drawBars(g, ctx.font());
+        drawBars(g, widest);
     }
 
-    private void drawBars(final GuiGraphics g, final Font font) {
+    private void drawBars(final GuiGraphics g, final int widestLine) {
         final int rows = doc.lineCount();
         final int visible = visibleLines();
         final ComponentPalette.Colours colours = ComponentPalette.get();
@@ -158,7 +159,7 @@ public final class TextArea extends UiComponent {
             g.fill(right() - 1 - BAR, thumbY, right() - 1, thumbY + thumbH, colours.barThumb());
         }
         final int room = Math.max(8, room());
-        final int widest = widest(font) + 2;
+        final int widest = widestLine + 2;
         if (widest > room) {
             final int trackX = x() + 1;
             final int trackW = width() - 2 - BAR;

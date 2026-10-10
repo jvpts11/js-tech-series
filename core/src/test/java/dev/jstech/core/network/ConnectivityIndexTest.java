@@ -417,6 +417,22 @@ class ConnectivityIndexTest {
     }
 
     @Test
+    void forgetBridge_splitsTheRunsAndKeepsEachOnesNetwork() {
+        index.onCablePlaced(pos(0, 0, 0), Set.of());
+        index.onCablePlaced(pos(10, 0, 0), Set.of());
+        var uuid = NetworkUuid.random();
+        index.assignUuid(pos(0, 0, 0), uuid);
+        index.bridge(DEVICE, Set.of(pos(0, 0, 0), pos(10, 0, 0)));
+        assertEquals(1, index.componentCount());
+
+        index.forgetBridge(DEVICE);
+
+        assertEquals(2, index.componentCount(), "a device that is gone joins nothing");
+        assertEquals(uuid, index.joinedNetwork(pos(0, 0, 0)).orElseThrow());
+        assertEquals(uuid, index.joinedNetwork(pos(10, 0, 0)).orElseThrow());
+    }
+
+    @Test
     void bridge_preservesTheNetworkUuid() {
         index.onCablePlaced(pos(0, 0, 0), Set.of());
         index.onCablePlaced(pos(10, 0, 0), Set.of());

@@ -9,6 +9,7 @@ package dev.jstech.core.dimension;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.data.DataRegistries;
 import dev.jstech.core.worldgen.WorldGen;
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -104,6 +105,7 @@ public final class RuntimeDimensions {
         final Ledger ledger = ledger(server);
         ledger.made.put(key.location(), template);
         ledger.setDirty();
+        DataRegistries.resync(server);
         return level;
     }
 
@@ -124,6 +126,7 @@ public final class RuntimeDimensions {
         ledger.made.remove(key.location());
         ledger.setDirty();
         TEMPLATES.remove(key.location());
+        DataRegistries.resync(server);
         final ServerLevel level = server.getLevel(key);
         if (level == null) {
             return true;
@@ -172,6 +175,11 @@ public final class RuntimeDimensions {
     /** The declared dimension {@code dimension} copies, when the Core made it while this server runs. */
     public static Optional<ResourceLocation> templateOf(final ResourceLocation dimension) {
         return Optional.ofNullable(TEMPLATES.get(dimension));
+    }
+
+    /** Every dimension made while this server runs, with the declared dimension it copies. */
+    public static Map<ResourceLocation, ResourceLocation> templates() {
+        return Map.copyOf(TEMPLATES);
     }
 
     /** Makes again, as the server starts, every dimension the Core made before. */

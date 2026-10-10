@@ -116,4 +116,10 @@ class Json5ConfigFormatTest {
         final String nested = "{a: " + "[".repeat(levels) + "]".repeat(levels) + "}";
         assertTrue(ConfigFormats.JSON5.read(nested.getBytes(StandardCharsets.UTF_8)).containsKey("a"));
     }
+
+    @Test
+    void read_aHexNumberTooBigFor64Bits_isRefusedWithAConfigError() {
+        assertThrows(ConfigFormatException.class,
+                () -> ConfigFormats.JSON5.read("{a: 0x1FFFFFFFFFFFFFFFF}".getBytes(StandardCharsets.UTF_8)));
+    }
 }

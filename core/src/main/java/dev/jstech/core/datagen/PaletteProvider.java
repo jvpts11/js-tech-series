@@ -49,9 +49,8 @@ public final class PaletteProvider implements DataProvider {
             final JsonObject file = new JsonObject();
             PaletteRoles.read(palette.declared()).forEach((role, colour) ->
                     file.addProperty(role, PaletteRoles.format(colour)));
-            written.add(DataProvider.saveStable(cache, file, this.output
-                    .getOutputFolder(PackOutput.Target.RESOURCE_PACK)
-                    .resolve(palette.file().getNamespace()).resolve(palette.file().getPath())));
+            written.add(DataProvider.saveStable(cache, file,
+                    ContentFiles.resourcePackFile(this.output, palette.file())));
         }
         return CompletableFuture.allOf(written.toArray(CompletableFuture[]::new));
     }

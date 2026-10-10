@@ -11,8 +11,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiPredicate;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -172,48 +172,37 @@ public record ProcessingRecipe(ProcessingKind kind, List<SizedIngredient> inputs
      */
     @Nullable
     private static int[] assign(final List<SizedIngredient> wanted, final List<ItemStack> slots) {
-        final int[] chosen = new int[wanted.size()];
-        return place(wanted, slots, chosen, new boolean[slots.size()], 0) ? chosen : null;
+        return assignAll(wanted, slots, SizedIngredient::test);
     }
 
-    private static boolean place(final List<SizedIngredient> wanted, final List<ItemStack> slots, final int[] chosen,
-                                 final boolean[] taken, final int next) {
+    /* The same search for the fluids: an input that accepts two tanks must not claim the one a later input needs. */
+    @Nullable
+    private static int[] assignFluids(final List<SizedFluidIngredient> wanted, final List<FluidStack> tanks) {
+        return assignAll(wanted, tanks, SizedFluidIngredient::test);
+    }
+
+    @Nullable
+    private static <W, C> int[] assignAll(final List<W> wanted, final List<C> contents,
+                                          final BiPredicate<W, C> accepts) {
+        final int[] chosen = new int[wanted.size()];
+        return place(wanted, contents, accepts, chosen, new boolean[contents.size()], 0) ? chosen : null;
+    }
+
+    private static <W, C> boolean place(final List<W> wanted, final List<C> contents, final BiPredicate<W, C> accepts,
+                                        final int[] chosen, final boolean[] taken, final int next) {
         if (next == wanted.size()) {
             return true;
         }
-        for (int slot = 0; slot < slots.size(); slot++) {
-            if (!taken[slot] && wanted.get(next).test(slots.get(slot))) {
+        for (int slot = 0; slot < contents.size(); slot++) {
+            if (!taken[slot] && accepts.test(wanted.get(next), contents.get(slot))) {
                 taken[slot] = true;
                 chosen[next] = slot;
-                if (place(wanted, slots, chosen, taken, next + 1)) {
+                if (place(wanted, contents, accepts, chosen, taken, next + 1)) {
                     return true;
                 }
                 taken[slot] = false;
             }
         }
         return false;
-    }
-
-    @Nullable
-    private static int[] assignFluids(final List<SizedFluidIngredient> wanted, final List<FluidStack> tanks) {
-        final List<Integer> free = new ArrayList<>();
-        for (int tank = 0; tank < tanks.size(); tank++) {
-            free.add(tank);
-        }
-        final int[] chosen = new int[wanted.size()];
-        for (int i = 0; i < wanted.size(); i++) {
-            boolean found = false;
-            for (int j = 0; j < free.size(); j++) {
-                if (wanted.get(i).test(tanks.get(free.get(j)))) {
-                    chosen[i] = free.remove(j);
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                return null;
-            }
-        }
-        return chosen;
     }
 }

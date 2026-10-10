@@ -300,4 +300,36 @@ class TextDocumentTest {
         doc.end(true);
         assertEquals("    x = 1;", doc.selectedText());
     }
+
+    @Test
+    void undo_aCaretMoveStartsANewStep() {
+        doc.setText("");
+        doc.insert('a');
+        doc.insert('b');
+        doc.left(false);
+        doc.insert('c');
+        assertEquals("acb", doc.text());
+        assertTrue(doc.undo());
+        assertEquals("ab", doc.text(), "only the letter typed after the move is taken back");
+    }
+
+    @Test
+    void toggleLinePrefix_leavesACaretInTheIndentWhereItIs() {
+        doc.setText("    x = 1;");
+        doc.setCursor(0, 2);
+        doc.toggleLinePrefix("// ");
+        assertEquals(2, doc.cursorCol());
+        doc.toggleLinePrefix("// ");
+        assertEquals("    x = 1;", doc.text());
+        assertEquals(2, doc.cursorCol());
+    }
+
+    @Test
+    void toggleLinePrefix_removalPutsACaretInsideTheMarkerAtItsStart() {
+        doc.setText("    // x = 1;");
+        doc.setCursor(0, 6);
+        doc.toggleLinePrefix("// ");
+        assertEquals("    x = 1;", doc.text());
+        assertEquals(4, doc.cursorCol());
+    }
 }

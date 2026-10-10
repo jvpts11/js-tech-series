@@ -41,25 +41,16 @@ public final class PlayerState<T> extends CoreState<T> {
     }
 
     public T get(final MinecraftServer server, final UUID player) {
-        return file(server).value().getOrDefault(player, defaultValue());
+        return KeyedValues.get(file(server), player, defaultValue());
     }
 
     /** Keeps {@code value} for {@code player}; a value equal to the one kept changes nothing and sends nothing. */
     public void set(final MinecraftServer server, final UUID player, final T value) {
         Objects.requireNonNull(player, "player");
         Objects.requireNonNull(value, "value");
-        final StateSave<Map<UUID, T>> file = file(server);
-        final T kept = file.value().getOrDefault(player, defaultValue());
-        if (value.equals(kept)) {
-            return;
+        if (KeyedValues.set(file(server), player, value, defaultValue())) {
+            changed(player);
         }
-        if (value.equals(defaultValue())) {
-            file.value().remove(player);
-        } else {
-            file.value().put(player, value);
-        }
-        file.changed();
-        changed(player);
     }
 
     /** Keeps what {@code change} makes of {@code player}'s value, and gives it back. */
@@ -71,7 +62,7 @@ public final class PlayerState<T> extends CoreState<T> {
 
     /** Every player's value that is not the default, by player. */
     public Map<UUID, T> all(final MinecraftServer server) {
-        return Map.copyOf(file(server).value());
+        return KeyedValues.all(file(server));
     }
 
     @Override

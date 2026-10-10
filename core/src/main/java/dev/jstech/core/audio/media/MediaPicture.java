@@ -7,9 +7,10 @@
  */
 package dev.jstech.core.audio.media;
 
-import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -26,8 +27,6 @@ public final class MediaPicture {
     /** The largest picture looked for: far past any cover, well short of what memory holds. */
     public static final int MOST_BYTES = 8 * 1024 * 1024;
 
-    private static final int OGG_HEADER = 27;
-    private static final int LACING_CONTINUES = 255;
     private static final int VORBIS_COMMENT_PACKET = 3;
     private static final int VORBIS_SIGNATURE = 7;
     private static final String PICTURE_TAG = "METADATA_BLOCK_PICTURE=";
@@ -64,17 +63,24 @@ public final class MediaPicture {
                 || (comments[0] & 0xFF) != VORBIS_COMMENT_PACKET) {
             return Optional.empty();
         }
-        int at = VORBIS_SIGNATURE;
-        at += 4 + (int) le32(comments, at);
-        final long count = le32(comments, at);
-        at += 4;
+        // Sizes stay long until they are checked: a 32-bit size from a crafted file must not wrap into a valid index.
+        long position = VORBIS_SIGNATURE;
+        position += 4 + OggPages.le32(comments, (int) position);
+        if (position + 4 > comments.length) {
+            return Optional.empty();
+        }
+        final long count = OggPages.le32(comments, (int) position);
+        position += 4;
         byte[] found = null;
-        for (long i = 0; i < count && at + 4 <= comments.length; i++) {
-            final int length = (int) le32(comments, at);
-            at += 4;
-            if (length < 0 || at + length > comments.length) {
+        for (long i = 0; i < count && position + 4 <= comments.length; i++) {
+            final long size = OggPages.le32(comments, (int) position);
+            position += 4;
+            if (position + size > comments.length) {
                 return Optional.ofNullable(found);
             }
+            final int at = (int) position;
+            final int length = (int) size;
+            position += size;
             if (length > PICTURE_TAG.length() && startsWithIgnoringCase(comments, at, PICTURE_TAG)) {
                 final String encoded = new String(comments, at + PICTURE_TAG.length(),
                         length - PICTURE_TAG.length(), StandardCharsets.US_ASCII);
@@ -88,24 +94,24 @@ public final class MediaPicture {
                     }
                 }
             }
-            at += length;
         }
         return Optional.ofNullable(found);
     }
 
     /* A FLAC picture block: its type, the picture's kind and description, its size, then the picture itself. */
     private static byte[] flacPicture(final byte[] block) {
-        int at = 4;
-        at += 4 + (int) be32(block, at);
-        at += 4 + (int) be32(block, at);
+        long at = 4;
+        at += 4 + be32(block, (int) at);
+        at += 4 + be32(block, (int) at);
         at += 16;
-        final int length = (int) be32(block, at);
+        final long size = be32(block, (int) at);
         at += 4;
-        if (length <= 0 || length > MOST_BYTES || at + length > block.length) {
+        if (size <= 0 || size > MOST_BYTES || at + size > block.length) {
             return null;
         }
+        final int length = (int) size;
         final byte[] picture = new byte[length];
-        System.arraycopy(block, at, picture, 0, length);
+        System.arraycopy(block, (int) at, picture, 0, length);
         return picture;
     }
 
@@ -117,7 +123,7 @@ public final class MediaPicture {
         int at = 12;
         while (at + 8 <= content.length) {
             final String id = new String(content, at, 4, StandardCharsets.US_ASCII);
-            final long size = le32(content, at + 4);
+            final long size = OggPages.le32(content, at + 4);
             final int body = at + 8;
             if (id.equalsIgnoreCase("id3 ")) {
                 return id3(content, body, (int) Math.min(content.length, body + size));
@@ -194,43 +200,14 @@ public final class MediaPicture {
         return to;
     }
 
-    /* The second packet of the first logical stream: in Vorbis, the comments. */
+    /* The second packet of the first logical stream: in Vorbis, the comments. Null when the file has none. */
     private static byte[] secondPacket(final byte[] content) {
-        int at = 0;
-        int serial = 0;
-        boolean first = true;
-        int packets = 0;
-        final ByteArrayOutputStream packet = new ByteArrayOutputStream();
-        while (at + OGG_HEADER <= content.length && ascii(content, at, "OggS")) {
-            final int pageSerial = (int) le32(content, at + 14);
-            final int segments = content[at + 26] & 0xFF;
-            int data = at + OGG_HEADER + segments;
-            if (first) {
-                serial = pageSerial;
-                first = false;
-            }
-            for (int s = 0; s < segments && data <= content.length; s++) {
-                final int length = content[at + OGG_HEADER + s] & 0xFF;
-                if (data + length > content.length) {
-                    return null;
-                }
-                if (pageSerial == serial) {
-                    packet.write(content, data, length);
-                    if (packet.size() > MOST_BYTES * 2) {
-                        return null;
-                    }
-                    if (length < LACING_CONTINUES) {
-                        if (++packets == 2) {
-                            return packet.toByteArray();
-                        }
-                        packet.reset();
-                    }
-                }
-                data += length;
-            }
-            at = data;
+        try {
+            final List<byte[]> packets = OggPages.read(content, 2, false, MOST_BYTES * 2).packets();
+            return packets.size() < 2 ? null : packets.get(1);
+        } catch (final IOException malformed) {
+            return null;
         }
-        return null;
     }
 
     private static boolean ascii(final byte[] content, final int at, final String text) {
@@ -248,10 +225,6 @@ public final class MediaPicture {
     private static boolean startsWithIgnoringCase(final byte[] content, final int at, final String text) {
         return at + text.length() <= content.length && new String(content, at, text.length(),
                 StandardCharsets.US_ASCII).equalsIgnoreCase(text);
-    }
-
-    private static long le32(final byte[] b, final int at) {
-        return (b[at] & 0xFFL) | (b[at + 1] & 0xFFL) << 8 | (b[at + 2] & 0xFFL) << 16 | (b[at + 3] & 0xFFL) << 24;
     }
 
     private static long be32(final byte[] b, final int at) {

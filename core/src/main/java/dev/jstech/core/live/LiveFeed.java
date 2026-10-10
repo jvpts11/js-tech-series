@@ -69,8 +69,9 @@ public final class LiveFeed<T> {
         }
         if (!anyNear) {
             sent.clear();
-        } else if (sent.size() > level.players().size()) {
-            // Players who left the level altogether.
+        } else if (!sent.isEmpty()) {
+            // Players who left the level altogether. Checked by membership, not by count: one leaving as another
+            // joins leaves the count unchanged and would keep the departed player's entry.
             sent.keySet().removeIf(id -> level.getPlayerByUUID(id) == null);
         }
     }

@@ -71,11 +71,11 @@ final class KeptConfigFiles {
              * A file nobody can read is not thrown away: it is kept beside the new one, so a person who broke a
              * long file by hand can mend it, and the game goes on with the defaults meanwhile.
              */
-            final Path kept = path.resolveSibling(file.fileName() + ".unreadable");
+            final Path kept = freeKeptName(path, file.fileName());
             JsCore.LOGGER.warn("{} could not be read ({}); it is kept as {} and written again with the defaults",
                     path, unreadable.getMessage(), kept.getFileName());
             try {
-                Files.move(path, kept, StandardCopyOption.REPLACE_EXISTING);
+                Files.move(path, kept);
             } catch (final IOException e) {
                 JsCore.LOGGER.warn("{} could not be kept aside", path, e);
                 return;
@@ -92,17 +92,31 @@ final class KeptConfigFiles {
         if (file.newer()) {
             return;
         }
-        final Path partial = path.resolveSibling(file.fileName() + ".partial");
         try {
-            Files.createDirectories(path.getParent());
-            Files.write(partial, file.write());
-            try {
-                Files.move(partial, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            } catch (final AtomicMoveNotSupportedException notOnThisDisk) {
-                Files.move(partial, path, StandardCopyOption.REPLACE_EXISTING);
-            }
+            writeWhole(path, file.write());
         } catch (final IOException e) {
             JsCore.LOGGER.warn("{} could not be written", path, e);
         }
+    }
+
+    /** {@code bytes} into a file beside {@code path} first, then over it in one move, so no half file is ever seen. */
+    static void writeWhole(final Path path, final byte[] bytes) throws IOException {
+        final Path partial = path.resolveSibling(path.getFileName() + ".partial");
+        Files.createDirectories(path.getParent());
+        Files.write(partial, bytes);
+        try {
+            Files.move(partial, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (final AtomicMoveNotSupportedException notOnThisDisk) {
+            Files.move(partial, path, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    /** The first of {@code name.unreadable}, {@code name.unreadable.1}, ... that is free, so no kept copy is lost. */
+    private static Path freeKeptName(final Path path, final String fileName) {
+        Path kept = path.resolveSibling(fileName + ".unreadable");
+        for (int n = 1; Files.exists(kept); n++) {
+            kept = path.resolveSibling(fileName + ".unreadable." + n);
+        }
+        return kept;
     }
 }

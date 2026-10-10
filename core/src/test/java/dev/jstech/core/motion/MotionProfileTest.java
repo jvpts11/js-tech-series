@@ -71,6 +71,24 @@ class MotionProfileTest {
         assertThrows(IllegalArgumentException.class, () -> MotionProfile.read(file("[1, 2]")));
     }
 
+    @Test
+    void read_saturatesADurationPastTheLargestWholeNumber() {
+        final MotionProfile read = MotionProfile.read(file("""
+                {"window_close": {"style": "scale", "duration": 4294967496, "delay": 3000000000}}"""));
+        assertEquals(Integer.MAX_VALUE, read.spec(MotionKinds.WINDOW_CLOSE).duration());
+        assertEquals(Integer.MAX_VALUE, read.spec(MotionKinds.WINDOW_CLOSE).delay());
+    }
+
+    @Test
+    void read_refusesAFieldOfTheWrongType() {
+        assertThrows(IllegalArgumentException.class, () -> MotionProfile.read(file("""
+                {"window_close": {"style": "scale", "duration": "200"}}""")));
+        assertThrows(IllegalArgumentException.class, () -> MotionProfile.read(file("""
+                {"window_close": {"style": "scale", "easing": 5}}""")));
+        assertThrows(IllegalArgumentException.class, () -> MotionProfile.read(file("""
+                {"window_close": {"style": "scale", "group": 3}}""")));
+    }
+
     private static byte[] file(final String text) {
         return text.getBytes(StandardCharsets.UTF_8);
     }

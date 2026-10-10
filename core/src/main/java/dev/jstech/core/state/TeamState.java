@@ -42,7 +42,7 @@ public final class TeamState<T> extends CoreState<T> {
     }
 
     public T get(final MinecraftServer server, final String team) {
-        return file(server).value().getOrDefault(team, defaultValue());
+        return KeyedValues.get(file(server), team, defaultValue());
     }
 
     /** The value of the team {@code player} is on. */
@@ -54,18 +54,9 @@ public final class TeamState<T> extends CoreState<T> {
     public void set(final MinecraftServer server, final String team, final T value) {
         Objects.requireNonNull(team, "team");
         Objects.requireNonNull(value, "value");
-        final StateSave<Map<String, T>> file = file(server);
-        final T kept = file.value().getOrDefault(team, defaultValue());
-        if (value.equals(kept)) {
-            return;
+        if (KeyedValues.set(file(server), team, value, defaultValue())) {
+            changed(team);
         }
-        if (value.equals(defaultValue())) {
-            file.value().remove(team);
-        } else {
-            file.value().put(team, value);
-        }
-        file.changed();
-        changed(team);
     }
 
     /** Keeps what {@code change} makes of {@code team}'s value, and gives it back. */
@@ -77,7 +68,7 @@ public final class TeamState<T> extends CoreState<T> {
 
     /** Every team's value that is not the default, by team. */
     public Map<String, T> all(final MinecraftServer server) {
-        return Map.copyOf(file(server).value());
+        return KeyedValues.all(file(server));
     }
 
     @Override

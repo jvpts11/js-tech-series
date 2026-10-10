@@ -41,6 +41,9 @@ public enum ModMaterial {
     ModMaterial(final String materialName, final int tier,
                 final Set<MaterialForm> vanillaForms,
                 final Set<MaterialForm> activeModForms) {
+        if (!Collections.disjoint(vanillaForms, activeModForms)) {
+            throw new IllegalArgumentException(materialName + " lists a form as both vanilla and added by the mod");
+        }
         this.materialName = materialName;
         this.tier = tier;
         this.vanillaForms = Collections.unmodifiableSet(vanillaForms);

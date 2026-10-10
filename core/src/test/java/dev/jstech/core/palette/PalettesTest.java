@@ -39,6 +39,12 @@ class PalettesTest {
     }
 
     @Test
+    void declare_aPathThatCannotNameAFile_throws() {
+        assertThrows(IllegalArgumentException.class, () -> Palettes.declare(MOD, "Upper/Case", new Swatch(1, 2, 3)));
+        assertThrows(IllegalArgumentException.class, () -> Palettes.declare(MOD, "with space", new Swatch(1, 2, 3)));
+    }
+
+    @Test
     void declare_aRecordHoldingMoreThanColours_throws() {
         assertThrows(IllegalArgumentException.class,
                 () -> Palettes.declare(MOD, "labelled", new Labelled(1, "one")));

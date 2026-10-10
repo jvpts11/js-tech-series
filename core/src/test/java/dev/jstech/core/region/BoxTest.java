@@ -22,6 +22,19 @@ class BoxTest {
     }
 
     @Test
+    void around_stopsAtTheEndOfTheIntRangeForAHugeRadius() {
+        final Box box = Box.around(10, 0, -10, Integer.MAX_VALUE);
+        assertEquals(Integer.MAX_VALUE, box.maxX());
+        assertEquals(Integer.MIN_VALUE, box.minZ());
+        assertTrue(box.contains(0, 0, 0));
+    }
+
+    @Test
+    void around_refusesANegativeRadius() {
+        assertThrows(IllegalArgumentException.class, () -> Box.around(0, 0, 0, -1));
+    }
+
+    @Test
     void between_ordersItsCorners() {
         assertEquals(new Box(1, 2, 3, 4, 5, 6), Box.between(4, 5, 6, 1, 2, 3));
     }

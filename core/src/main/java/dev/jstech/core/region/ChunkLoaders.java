@@ -54,7 +54,10 @@ public final class ChunkLoaders {
         LOADED,
         /** The source was keeping it loaded already. */
         ALREADY,
-        /** The owner keeps as many chunks loaded as they may; nothing changed. */
+        /**
+         * The owner keeps as many chunks loaded as they may; nothing new is loaded. A source that changed owner or
+         * ticking with this request has already let go of its old chunks, as it starts again under its new terms.
+         */
         LIMIT_REACHED
     }
 

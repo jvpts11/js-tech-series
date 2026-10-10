@@ -105,6 +105,17 @@ class BundleShapeTest {
     }
 
     @Test
+    void of_drawsAndHousesAWireThatCrossesNothingBesideAnArmThatForcesAJunction() {
+        final BundleShape shape = BundleShape.of(List.of(strand(Lane.MIDDLE, UP),
+                new Strand(Lane.TOP, 4, 0, 0, false)));
+
+        assertTrue(shape.junction());
+        assertEquals(List.of(new Box(1, 1, 1, 15, 15, 15)), boxes(shape, Kind.HOUSING));
+        assertTrue(boxes(shape, Kind.JACKET).contains(new Box(6, 11, 6, 10, 15, 10)),
+                "the wire's core is drawn, not left to be picked invisibly");
+    }
+
+    @Test
     void of_ringsAStraightWireInTheMiddleOfTheBlock() {
         final BundleShape shape = BundleShape.of(List.of(new Strand(Lane.MIDDLE, 4, bits(WEST, EAST), 0, true)));
 

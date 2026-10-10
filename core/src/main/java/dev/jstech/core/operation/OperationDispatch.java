@@ -22,7 +22,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The Operation dispatcher: runs CPU-bound Operation work on virtual threads while keeping every world mutation on the main (server) thread. A task does its computation on a virtual thread and uses its {@link IOperationContext} to bounce world reads/writes back to the main thread and to wait on whole game ticks, so disk latency and throughput are paced deterministically by ticks, never by a wall clock. Multiple disks (one task per server) therefore process in parallel without ever touching the world off-thread.
@@ -38,6 +41,8 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
                     .thenComparingLong(PendingOp::sequence);
 
     private static final int MAX_TERMINAL_HISTORY = 256;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(OperationDispatch.class);
 
     /** An Operation that ran to the end and then answered with nothing at all, which is a mistake in its code. */
     private static final TextKey NO_RESULT = TextKey.of("jscore.operation.failure.no_result",
@@ -136,7 +141,12 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
         // 1. Apply everything the virtual threads asked the main thread to do since the last tick.
         Runnable action;
         while ((action = mainThreadActions.poll()) != null) {
-            action.run();
+            /* A step that throws must not take the server tick down with it, nor skip promotion and the tick clock. */
+            try {
+                action.run();
+            } catch (final RuntimeException | Error error) {
+                LOGGER.error("An Operation's main-thread step failed", error);
+            }
         }
         // 2. Promote pending Operations onto virtual threads, up to the parallel-queue capacity.
         while (running < parallelQueues) {
@@ -158,18 +168,25 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
     @Override
     public void afterTicks(final int ticks, final Runnable callback) {
         Objects.requireNonNull(callback, "callback must not be null");
+        if (closed) {
+            return; // the dispatcher shut down, so the callback is dropped like one that was waiting
+        }
         /*
          * Park a virtual thread for the disk's read time, then resume the transfer on the main thread.
          * Many disks call this at once, so their reads genuinely overlap, capped only by the latency.
          */
-        workers.execute(() -> {
-            try {
-                awaitTicks(ticks);
-            } catch (final OperationCancelledException cancelled) {
-                return; // dispatcher shut down, the Operation is being abandoned, drop the read
-            }
-            mainThreadActions.add(callback);
-        });
+        try {
+            workers.execute(() -> {
+                try {
+                    awaitTicks(ticks);
+                } catch (final OperationCancelledException cancelled) {
+                    return; // dispatcher shut down, the Operation is being abandoned, drop the read
+                }
+                mainThreadActions.add(callback);
+            });
+        } catch (final RejectedExecutionException shutDown) {
+            // close() won the race after the check above: the callback is dropped the same way
+        }
     }
 
     /**
@@ -409,8 +426,17 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
             try {
                 return future.join();
             } catch (final CompletionException joinError) {
-                if (joinError.getCause() instanceof OperationCancelledException cancelled) {
+                final Throwable cause = joinError.getCause();
+                if (cause instanceof OperationCancelledException cancelled) {
                     throw cancelled;
+                }
+                /* A real failure of the main-thread work is passed on as it is, so the Operation settles as
+                   crashed with the true type and message rather than as cancelled. */
+                if (cause instanceof RuntimeException runtime) {
+                    throw runtime;
+                }
+                if (cause instanceof Error error) {
+                    throw error;
                 }
                 throw new OperationCancelledException();
             } finally {

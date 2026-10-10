@@ -45,6 +45,14 @@ class SoundGateTest {
     }
 
     @Test
+    void allow_letsASoundThroughWhenTheClockHasGoneBack() {
+        final SoundGate gate = new SoundGate(2);
+        assertTrue(gate.allow("machine@1", "jsc:done", 90_000));
+        assertTrue(gate.allow("machine@1", "jsc:done", 100), "another world's clock starts again from a low tick");
+        assertFalse(gate.allow("machine@1", "jsc:done", 101));
+    }
+
+    @Test
     void constructor_refusesACooldownOfNothing() {
         assertThrows(IllegalArgumentException.class, () -> new SoundGate(0));
     }

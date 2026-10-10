@@ -18,9 +18,9 @@ import net.minecraft.network.chat.contents.TranslatableContents;
  * Text as the game holds it: resolved in the language this side of the game has loaded, and turned into the game's
  * own components for the screens and messages that take those.
  *
- * <p>The language loaded on a client is its player's; on a server it is English, since every mod's English file is
- * loaded there too. So what a server resolves is what a machine writes down, and what a client resolves is what its
- * player reads.
+ * <p>The language loaded on a client is its player's; on a dedicated server it is English, since every mod's English
+ * file is loaded there too (a single-player server shares its client's language). So what a server resolves is what
+ * a machine writes down, and what a client resolves is what its player reads.
  */
 public final class GameText {
 
@@ -61,7 +61,9 @@ public final class GameText {
      * A game component as text, so a name the game translates (an item's, a block's) travels as its key and is read
      * in the language of whoever it reaches, rather than in the one this side resolved it in.
      *
-     * <p>What this side reads the component as stands in for its English, for the machine's own records.
+     * <p>What this side reads the component as stands in for its English, for the machine's own records. That is
+     * English on a dedicated server; on a single-player or LAN server it is the language the player chose, so the
+     * stand-in is in that language there, while the key, and so what each player reads, is not affected.
      */
     public static Text of(final Component component) {
         if (component.getContents() instanceof TranslatableContents translatable && component.getSiblings().isEmpty()) {

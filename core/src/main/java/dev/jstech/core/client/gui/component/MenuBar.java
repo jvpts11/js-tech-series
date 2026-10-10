@@ -150,17 +150,15 @@ public final class MenuBar extends UiComponent {
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
         if (this.menu.isOpen()) {
-            final boolean taken = this.menu.mouseClicked(mx, my, button);
+            // A click on another title while one is open moves to it; the menu would only close on it.
+            final int other = titleAt(mx, my);
+            if (other >= 0 && other != this.open) {
+                open(other);
+                return true;
+            }
+            this.menu.mouseClicked(mx, my, button);
             if (!this.menu.isOpen()) {
                 this.open = -1;
-            }
-            // A click on another title while one is open moves to it rather than only closing.
-            if (!taken) {
-                final int other = titleAt(mx, my);
-                if (other >= 0) {
-                    open(other);
-                    return true;
-                }
             }
             return true;
         }

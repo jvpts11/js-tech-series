@@ -75,6 +75,11 @@ public interface IPeripheralOwner {
 
     void onEndpointUnlinked(long endpointPos);
 
+    /** Whether the endpoint at {@code endpointPos} is linked to this owner. */
+    default boolean isLinked(final long endpointPos) {
+        return linkedEndpoints().contains(endpointPos);
+    }
+
     default Set<Long> occupiedPositions(long ownerPos) {
         return Set.of(ownerPos);
     }

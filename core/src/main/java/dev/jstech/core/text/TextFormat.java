@@ -20,7 +20,8 @@ import java.util.regex.Pattern;
  */
 public final class TextFormat {
 
-    private static final Pattern MARK = Pattern.compile("%(?:(\\d+)\\$)?([A-Za-z%]|$)");
+    /* A position has at most nine digits, so it always fits an int; a longer run is no mark and stays as it is. */
+    private static final Pattern MARK = Pattern.compile("%(?:(\\d{1,9})\\$)?([A-Za-z%]|$)");
 
     private TextFormat() {
     }

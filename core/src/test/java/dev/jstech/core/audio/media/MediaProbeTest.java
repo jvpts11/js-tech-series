@@ -77,6 +77,23 @@ class MediaProbeTest {
     }
 
     @Test
+    void probe_oggWithACutShortIdentificationPacketIsAnIoError() {
+        final byte[] cut = Arrays.copyOf(id(2, RATE, 0), 10);
+        final byte[] file = concat(page(0, cut), page(0, comments(List.of("TITLE=x"))));
+        assertThrows(IOException.class, () -> MediaProbe.probe("ogg", file));
+    }
+
+    @Test
+    void probe_wavWithAnInfoChunkSizeOfFourGigabytesStillReads() throws IOException {
+        final byte[] file = wav(1, 2, 100, List.<String[]>of(new String[] {"INAM", "x"}));
+        final int at = new String(file, StandardCharsets.ISO_8859_1).indexOf("INAM");
+        for (int i = 4; i < 8; i++) {
+            file[at + i] = (byte) 0xFF;
+        }
+        assertEquals("x", MediaProbe.probe("wav", file).tags().title());
+    }
+
+    @Test
     void probe_kindWithNoReaderIsRefused() {
         assertThrows(IOException.class, () -> MediaProbe.probe("mp3", new byte[16]));
     }

@@ -113,7 +113,7 @@ public final class SoundMixerLayout {
         layout.text("count", left, COUNT_TOP, 21, 1.0F);
         layout.box("show", left + SHOW_X, FILTER_TOP, SHOW_WIDTH, CONTROL_HEIGHT);
         layout.box("all_on", left + ALL_ON_X, FILTER_TOP, ALL_ON_WIDTH, CONTROL_HEIGHT);
-        for (int row = 0; LIST_TOP + 4 + (row + 1) * ROW_HEIGHT <= listBottom(height); row++) {
+        for (int row = 0; LIST_TOP + 4 + row * ROW_HEIGHT + CONTROL_HEIGHT <= listBottom(height); row++) {
             final int y = LIST_TOP + 4 + row * ROW_HEIGHT;
             layout.box("play_" + row, left + FULL - PLAY_WIDTH - TOGGLE_WIDTH - 2, y, PLAY_WIDTH, CONTROL_HEIGHT);
             layout.box("toggle_" + row, left + FULL - TOGGLE_WIDTH, y, TOGGLE_WIDTH, CONTROL_HEIGHT);

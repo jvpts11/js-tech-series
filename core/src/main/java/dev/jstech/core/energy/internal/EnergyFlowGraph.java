@@ -208,8 +208,21 @@ public final class EnergyFlowGraph {
             }
         }
 
+        /*
+         * Shares are worked out from each way's limit before any energy moves, so a clamp to what a shared cable still
+         * carries can leave energy unsent that another receiver could take. The rest is split again among the ways
+         * that still carry; every pass that clamps fills at least one way, so the passes end.
+         */
         private void give(final long source, final EnergyNodeRole to) {
             final Map<Long, Route> reached = routesFrom(source);
+            boolean again;
+            do {
+                again = giveOnce(source, reached, to);
+            } while (again && this.supplyLeft.get(source) > 0);
+        }
+
+        /* One split of what the supplier has left; whether a clamp cut a share, so another pass may place the rest. */
+        private boolean giveOnce(final long source, final Map<Long, Route> reached, final EnergyNodeRole to) {
             final Map<Long, Long> wants = new LinkedHashMap<>();
             final Map<Long, Long> caps = new HashMap<>();
             for (final Map.Entry<Long, Long> receiver : this.demandLeft.entrySet()) {
@@ -225,17 +238,20 @@ public final class EnergyFlowGraph {
                 }
             }
             if (wants.isEmpty()) {
-                return;
+                return false;
             }
             final Map<Long, Long> shares = ProportionalSplitter.split(this.supplyLeft.get(source), wants, caps);
             long given = 0L;
+            boolean clamped = false;
             for (final Long receiver : wants.keySet()) {
                 final Route route = reached.get(receiver);
                 /*
                  * Clamped to what the way still carries: the shares were worked out from each way's limit before any
                  * energy moved, and two ways through one cable would otherwise send more than it carries together.
                  */
-                final long amount = Math.min(shares.getOrDefault(receiver, 0L), carries(route));
+                final long share = shares.getOrDefault(receiver, 0L);
+                final long amount = Math.min(share, carries(route));
+                clamped |= amount < share;
                 if (amount <= 0) {
                     continue;
                 }
@@ -257,6 +273,7 @@ public final class EnergyFlowGraph {
                 this.supplyLeft.merge(source, -given, Long::sum);
                 this.sent.merge(source, given, EnergyFlowGraph::saturatingAdd);
             }
+            return clamped && given > 0;
         }
 
         /* The most the way still carries: the least any of its cables has left this tick. */

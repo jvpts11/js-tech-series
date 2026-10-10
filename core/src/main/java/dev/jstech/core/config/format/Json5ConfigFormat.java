@@ -376,7 +376,13 @@ public final class Json5ConfigFormat implements IConfigFormat {
                 if (digits == this.at) {
                     throw new ConfigFormatException(place() + "a hexadecimal number with no digits");
                 }
-                final long value = Long.parseUnsignedLong(this.text.substring(digits, this.at), 16);
+                final long value;
+                try {
+                    value = Long.parseUnsignedLong(this.text.substring(digits, this.at), 16);
+                } catch (final NumberFormatException e) {
+                    this.at = start;
+                    throw new ConfigFormatException(place() + "a hexadecimal number too large to hold", e);
+                }
                 return JsonConfigFormat.whole(negative ? -value : value);
             }
             while (!atEnd() && (Character.isDigit(peek()) || peek() == '.' || peek() == 'e' || peek() == 'E'

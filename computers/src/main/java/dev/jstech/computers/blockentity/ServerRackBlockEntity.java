@@ -71,6 +71,7 @@ import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
 import dev.jstech.core.peripheral.PeripheralPorts;
+import dev.jstech.core.peripheral.PeripheralReconciler;
 import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.Loaded;
@@ -1091,6 +1092,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     private void tick(final ServerLevel level) {
         sounds.tick();
+        PeripheralReconciler.reconcile(this, level, worldPosition.asLong());
         final NetworkSystem system = NetworkSystem.get(level);
         final NetworkUuid network = adjacentNetwork(level, system);
         // Cached rather than worked out on every menu poll: the network lookup above bridges cable segments.

@@ -98,6 +98,14 @@ class WavDecoderTest {
     }
 
     @Test
+    void read_aRequestForNothingTakesNothingAndLeavesTheData() throws IOException {
+        final IPcmSource source = new WavDecoder().open(
+                stream(wav(fmt(PCM, 1, 22_050, 16), chunk("data", le16(1, 2, 3)))));
+        assertEquals(0, source.read(new short[3], 0, 0));
+        assertArrayEquals(new short[] {1, 2, 3}, readAll(source));
+    }
+
+    @Test
     void close_letsGoOfTheFile() throws IOException {
         final boolean[] closed = {false};
         final InputStream file = new ByteArrayInputStream(wav(fmt(PCM, 1, 22_050, 16), chunk("data", le16(1)))) {

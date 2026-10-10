@@ -55,13 +55,14 @@ public interface IProgrammingLanguage {
     /** What to call it in front of a person. */
     String displayName();
 
-    /** The extensions a person writes in, without the dot. */
+    /** The extensions a person writes in, without the dot, in lower case: the registry refuses any other. */
     Set<String> sourceExtensions();
 
     /**
      * The extensions of the files this language runs itself, without the dot: what a machine hands to {@link #start}.
      *
-     * <p>Empty for a language that only compiles, whose output is a listing the machine runs.
+     * <p>In lower case, like the source extensions. Empty for a language that only compiles, whose output is a
+     * listing the machine runs.
      */
     Set<String> binaryExtensions();
 
@@ -110,7 +111,8 @@ public interface IProgrammingLanguage {
     record CompileResult(String binary, List<Complaint> complaints) {
 
         public CompileResult {
-            complaints = List.copyOf(complaints);
+            binary = binary == null ? "" : binary;
+            complaints = complaints == null ? List.of() : List.copyOf(complaints);
         }
 
         /** Whether there is something to run at the end of it. */

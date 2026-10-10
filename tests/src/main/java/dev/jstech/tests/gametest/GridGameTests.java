@@ -11,11 +11,14 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.Grid;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.grid.GridMember;
+import dev.jstech.core.grid.GridPlace;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
+import java.util.List;
 import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -48,6 +51,23 @@ public final class GridGameTests {
                 "the data grid is the network's own");
         helper.assertTrue(GridKind.DATA.carriesNetwork() && !GridKind.POWER.carriesNetwork(),
                 "only data carries a network's identity");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void coreGridsRemove_keepsTheNumberWhileAnotherGridHoldsTheDevice(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final GridPlace device = GridPlace.whole(helper.absolutePos(new BlockPos(1, 2, 1)).asLong());
+        CoreGrids.place(level, GridKind.POWER, device, GridMember.DEVICE, List.of());
+        CoreGrids.place(level, GridKind.FLUID, device, GridMember.DEVICE, List.of());
+        final long number = CoreGrids.places(level).number(device);
+
+        CoreGrids.remove(level, GridKind.POWER, device);
+        helper.assertTrue(CoreGrids.of(level, GridKind.FLUID).contains(number), "the fluid grid keeps the device");
+        helper.assertTrue(CoreGrids.places(level).find(device).isPresent(), "the number outlives the first removal");
+
+        CoreGrids.remove(level, GridKind.FLUID, device);
+        helper.assertTrue(CoreGrids.places(level).find(device).isEmpty(), "the last removal forgets the number");
         helper.succeed();
     }
 

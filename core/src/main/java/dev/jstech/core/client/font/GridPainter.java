@@ -143,7 +143,7 @@ public final class GridPainter<S> {
     }
 
     private List<CellRect> whole(final int codePoint, final int pitch) {
-        return wholes.computeIfAbsent(((long) codePoint << 32) | pitch,
+        return wholes.computeIfAbsent(((long) codePoint << 32) | (pitch & 0xFFFFFFFFL),
                 key -> CellGlyphs.of(codePoint, cellWidth(), pitch));
     }
 

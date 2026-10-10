@@ -23,6 +23,11 @@ public record ProjectileSpec(float damage, double gravity, int pierce, double kn
                              float explosion, boolean breaksBlocks, int lifetimeTicks) {
 
     public ProjectileSpec {
+        /* Not-a-number and infinite values pass every "<" test, and would put the projectile nowhere at all. */
+        if (!Float.isFinite(damage) || !Double.isFinite(gravity) || !Double.isFinite(knockback)
+                || !Float.isFinite(fireSeconds) || !Float.isFinite(explosion)) {
+            throw new IllegalArgumentException("a projectile's numbers must be finite");
+        }
         if (damage < 0.0F || gravity < 0.0 || pierce < 0 || knockback < 0.0 || fireSeconds < 0.0F
                 || explosion < 0.0F || lifetimeTicks < 1) {
             throw new IllegalArgumentException("a projectile does no less than nothing, and flies a tick at least");

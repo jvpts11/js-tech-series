@@ -7,7 +7,10 @@
  */
 package dev.jstech.core.datagen;
 
+import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
+
+import java.nio.file.Path;
 
 /**
  * Reads a file name the way a declaration writes it.
@@ -20,5 +23,11 @@ final class ContentFiles {
     /** {@code "block/monitor_side"} is the mod's own; {@code "minecraft:block/glass"} names its namespace. */
     static ResourceLocation named(final String modid, final String name) {
         return name.indexOf(':') >= 0 ? ResourceLocation.parse(name) : ResourceLocation.fromNamespaceAndPath(modid, name);
+    }
+
+    /** Where the resource pack holds a file: its namespace's folder, then the path the id gives. */
+    static Path resourcePackFile(final PackOutput output, final ResourceLocation file) {
+        return output.getOutputFolder(PackOutput.Target.RESOURCE_PACK).resolve(file.getNamespace())
+                .resolve(file.getPath());
     }
 }

@@ -29,6 +29,12 @@ class ToneTest {
     }
 
     @Test
+    void constructor_refusesAPitchOrVolumeThatIsNotANumber() {
+        assertThrows(IllegalArgumentException.class, () -> new Tone(Waveform.SQUARE, Double.NaN, 100, 0.5F));
+        assertThrows(IllegalArgumentException.class, () -> new Tone(Waveform.SQUARE, 440, 100, Float.NaN));
+    }
+
+    @Test
     void beep_isASquareAtHalfVolume() {
         final Tone beep = Tone.beep(750, 200);
         assertEquals(Waveform.SQUARE, beep.wave());

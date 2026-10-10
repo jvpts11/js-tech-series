@@ -130,6 +130,17 @@ class TickSchedulerTest {
     }
 
     @Test
+    void run_isNotCutShortWhenTheClockPassesAsTheCreditsRunOut() {
+        final Greedy one = new Greedy();
+        final Ticking clock = new Ticking();
+        // In (0), then at the look right after the last credit is spent (1): past a deadline of 1, but nothing is left.
+        final TickScheduler.Outcome outcome = new TickScheduler().run(List.of(one), TickScheduler.CLOCK_BLOCK,
+                clock::read, 1);
+        assertEquals(TickScheduler.CLOCK_BLOCK, outcome.spent());
+        assertFalse(outcome.cutShort());
+    }
+
+    @Test
     void run_passesALowTaskOverEveryOtherRound() {
         final Greedy one = new Greedy();
         final Humble two = new Humble();

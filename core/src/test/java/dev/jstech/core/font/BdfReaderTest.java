@@ -98,6 +98,13 @@ class BdfReaderTest {
     }
 
     @Test
+    void read_refusesACodePointDefinedTwice() {
+        final String broken = small().replace("ENCODING 46", "ENCODING 65");
+        final BdfFormatException thrown = assertThrows(BdfFormatException.class, () -> BdfReader.read(broken));
+        assertTrue(thrown.getMessage().contains("defined twice"), thrown.getMessage());
+    }
+
+    @Test
     void read_readsTheWholeTerminalFont() throws IOException {
         final BitmapFont font = fixed();
         assertEquals(1597, font.glyphs().size());

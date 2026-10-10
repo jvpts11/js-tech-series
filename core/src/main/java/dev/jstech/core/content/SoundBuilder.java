@@ -35,7 +35,7 @@ public final class SoundBuilder {
     private final String path;
     private SoundSpace space = SoundSpace.WORLD;
     private boolean loop;
-    private AudioChannel channel = AudioChannels.MACHINES;
+    private @Nullable AudioChannel channel;
     private int variants = 1;
     private boolean stream;
     private int range = DEFAULT_RANGE;
@@ -62,7 +62,6 @@ public final class SoundBuilder {
     /** A sound of the player's own screen, which sits nowhere in the world. */
     public SoundBuilder onScreen() {
         this.space = SoundSpace.INTERFACE;
-        this.channel = AudioChannels.INTERFACE;
         return this;
     }
 
@@ -138,15 +137,23 @@ public final class SoundBuilder {
     /**
      * Registers the sound's event, unless it is made as it plays and so has none, and keeps what was declared.
      *
-     * @throws IllegalStateException when the sound was given no subtitle
+     * @throws IllegalStateException when the sound was given no subtitle, or several variants together with files of
+     *         its own or no file at all
      */
     public SoundKey register() {
         final ResourceLocation id = ResourceLocation.fromNamespaceAndPath(content.modid(), path);
         if (english == null) {
             throw new IllegalStateException(id + " needs a subtitle");
         }
+        if (variants > 1 && (made || !files.isEmpty())) {
+            throw new IllegalStateException(
+                    id + " asks for " + variants + " variants but has its own files or is made");
+        }
+        // Resolved here so the order of onScreen(), world() and channel() in the declaration does not matter.
+        final AudioChannel mixed = channel != null ? channel
+                : space == SoundSpace.INTERFACE ? AudioChannels.INTERFACE : AudioChannels.MACHINES;
         final List<ResourceLocation> played = made || !files.isEmpty() ? files : ownFiles(id);
-        final SoundSpec spec = new SoundSpec(space, loop, channel, played, stream, range, priority, made, stereo);
+        final SoundSpec spec = new SoundSpec(space, loop, mixed, played, stream, range, priority, made, stereo);
         final Supplier<SoundEvent> event = made ? () -> {
             throw new IllegalStateException(id + " is made as it plays and has no event");
         } : content.soundRegister().register(path, () -> SoundEvent.createFixedRangeEvent(id, range));

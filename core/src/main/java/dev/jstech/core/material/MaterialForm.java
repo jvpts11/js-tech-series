@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.material;
 
+import java.util.Locale;
+
 /**
  * The physical/chemical forms a material can take. Each form declares the {@code c:} tag folder
  * it belongs to and the item registry key suffix it contributes.
@@ -40,6 +42,6 @@ public enum MaterialForm {
 
     /** Returns the item registry key for this form of the given material, e.g. {@code "iron_dust"}. */
     public String itemKey(final String materialName) {
-        return materialName + "_" + name().toLowerCase();
+        return materialName + "_" + name().toLowerCase(Locale.ROOT);
     }
 }

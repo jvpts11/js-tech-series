@@ -176,8 +176,10 @@ public final class MediaSessions {
                     continue;
                 }
                 here.values().removeIf(session -> {
-                    if (session.pausedAt < 0 && session.duration > 0
-                            && session.position(level.getGameTime()) >= session.duration) {
+                    // A recording that cannot be read has no length to wait for, so it ends at the next look: an end
+                    // that never came would stall whatever chains the next song from it.
+                    if (session.pausedAt < 0 && (session.duration <= 0
+                            || session.position(level.getGameTime()) >= session.duration)) {
                         quiet(level, session);
                         if (session.onEnd != null) {
                             ended.add(session.onEnd);

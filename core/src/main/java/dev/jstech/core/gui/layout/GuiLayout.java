@@ -145,8 +145,13 @@ public final class GuiLayout {
     /**
      * Records a slot: a solid element of {@value #SLOT_SIZE} px whose item sits at {@code (x, y)}, which the menu
      * places its slot at and the screen draws its frame around, both reading it back by name.
+     *
+     * @throws IllegalArgumentException when a slot of that name was already recorded
      */
     public GuiLayout slot(final String name, final int x, final int y) {
+        if (slots.containsKey(name)) {
+            throw new IllegalArgumentException("duplicate slot '" + name + "'");
+        }
         box(name, x, y, SLOT_SIZE, SLOT_SIZE);
         slots.put(name, new SlotPosition(x, y));
         return this;

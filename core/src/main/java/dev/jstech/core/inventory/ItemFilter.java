@@ -134,6 +134,7 @@ public record ItemFilter(Mode mode, List<Rule> rules) {
 
         public Fuzzy {
             Objects.requireNonNull(item, "item");
+            checkId(item);
             checkAmount(amount);
         }
 
@@ -153,6 +154,7 @@ public record ItemFilter(Mode mode, List<Rule> rules) {
 
         public Tag {
             Objects.requireNonNull(tag, "tag");
+            checkId(tag);
             checkAmount(amount);
         }
 
@@ -160,6 +162,25 @@ public record ItemFilter(Mode mode, List<Rule> rules) {
         public boolean matches(final IFilterSubject subject) {
             return subject.hasTag(this.tag);
         }
+    }
+
+    /* Rejects an id the game could not read back, so saving a rule never fails later on a bad string. */
+    private static void checkId(final String id) {
+        final int colon = id.indexOf(':');
+        final String namespace = colon < 0 ? "minecraft" : id.substring(0, colon);
+        final String path = colon < 0 ? id : id.substring(colon + 1);
+        if (namespace.isEmpty() || !namespace.chars().allMatch(ItemFilter::isNamespaceChar)
+                || path.isEmpty() || !path.chars().allMatch(ItemFilter::isPathChar)) {
+            throw new IllegalArgumentException("not a valid id: " + id);
+        }
+    }
+
+    private static boolean isNamespaceChar(final int c) {
+        return c == '_' || c == '-' || c == '.' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9';
+    }
+
+    private static boolean isPathChar(final int c) {
+        return isNamespaceChar(c) || c == '/';
     }
 
     private static void checkAmount(final long amount) {

@@ -44,6 +44,8 @@ public final class ConfigScreenLayout {
     public static final int TAB_INSET = 6;
     public static final int TAB_Y = HEADER + 6;
     public static final int TAB_HEIGHT = 14;
+    /** How many tabs the rail has when every kind of file is present: the most the layout validates. */
+    public static final int TAB_COUNT = 3;
     /** A line of small text: the notes under the tabs and a section's title, a card's description and default. */
     public static final int NOTE_LINE = 7;
     public static final int SCOPE_NOTE_LINES = 2;
@@ -200,10 +202,24 @@ public final class ConfigScreenLayout {
         return controlX(width, control, unit) - CONTROL_GAP - RESET_WIDTH;
     }
 
+    /** How tall a control is: a toggle's switch is a little shorter than the other controls. */
+    public static int controlHeight(final ConfigDraft.Control control) {
+        return control == ConfigDraft.Control.TOGGLE ? SWITCH_HEIGHT : CONTROL_HEIGHT;
+    }
+
     /** The top of a control in the card at {@code cardY} that tall, centred down the card. */
     public static int controlY(final int cardY, final int cardHeight, final ConfigDraft.Control control) {
-        final int tall = control == ConfigDraft.Control.TOGGLE ? SWITCH_HEIGHT : CONTROL_HEIGHT;
-        return cardY + (cardHeight - tall) / 2;
+        return cardY + (cardHeight - controlHeight(control)) / 2;
+    }
+
+    /** Where a number control's field starts, given where the control starts: after its minus button. */
+    public static int numberFieldX(final int controlX) {
+        return controlX + STEP + CONTROL_GAP;
+    }
+
+    /** Where a number control's plus button starts, given where the control starts: after its field. */
+    public static int plusX(final int controlX) {
+        return numberFieldX(controlX) + NUMBER_FIELD + CONTROL_GAP;
     }
 
     /** How wide a card's name and description may run before its control, and its Default button when it has one. */
@@ -237,8 +253,8 @@ public final class ConfigScreenLayout {
                 .box("footer_defaults", PAD, footerButtonY(height), DEFAULTS_WIDTH, BUTTON_HEIGHT)
                 .box("footer_cancel", cancelX(width), footerButtonY(height), CANCEL_WIDTH, BUTTON_HEIGHT)
                 .box("footer_save", saveX(width), footerButtonY(height), SAVE_WIDTH, BUTTON_HEIGHT);
-        for (int tab = 0; tab < 3; tab++) {
-            layout.box("tab_" + tab, tabX(width, tab, 3), TAB_Y, tabWidth(width, 3), TAB_HEIGHT);
+        for (int tab = 0; tab < TAB_COUNT; tab++) {
+            layout.box("tab_" + tab, tabX(width, tab, TAB_COUNT), TAB_Y, tabWidth(width, TAB_COUNT), TAB_HEIGHT);
         }
         final int cardHeight = cardHeight(MOST_DESCRIPTION_LINES);
         int y = cardsTop(noteLines);
@@ -252,12 +268,10 @@ public final class ConfigScreenLayout {
             final int top = controlY(y, cardHeight, control);
             if (control == ConfigDraft.Control.NUMBER) {
                 layout.box("minus_" + card, x, top, STEP, CONTROL_HEIGHT);
-                layout.box("field_" + card, x + STEP + CONTROL_GAP, top, NUMBER_FIELD, CONTROL_HEIGHT);
-                layout.box("plus_" + card, x + STEP + CONTROL_GAP + NUMBER_FIELD + CONTROL_GAP, top, STEP,
-                        CONTROL_HEIGHT);
+                layout.box("field_" + card, numberFieldX(x), top, NUMBER_FIELD, CONTROL_HEIGHT);
+                layout.box("plus_" + card, plusX(x), top, STEP, CONTROL_HEIGHT);
             } else {
-                layout.box("control_" + card, x, top, controlWidth(control, false),
-                        control == ConfigDraft.Control.TOGGLE ? SWITCH_HEIGHT : CONTROL_HEIGHT);
+                layout.box("control_" + card, x, top, controlWidth(control, false), controlHeight(control));
             }
             y += cardHeight + CARD_GAP;
         }

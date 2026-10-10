@@ -167,6 +167,12 @@ class GuiLayoutTest {
     }
 
     @Test
+    void slot_rejectsANameRecordedTwice() {
+        final GuiLayout l = new GuiLayout(176, 166).slot("a", 10, 10);
+        assertThrows(IllegalArgumentException.class, () -> l.slot("a", 100, 10));
+    }
+
+    @Test
     void slotAt_rejectsANameTheLayoutLacks() {
         assertThrows(IllegalArgumentException.class, () -> new GuiLayout(100, 100).slotAt("missing"));
     }

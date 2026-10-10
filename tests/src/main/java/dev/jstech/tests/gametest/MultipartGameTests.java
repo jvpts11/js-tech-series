@@ -12,9 +12,13 @@ import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.multipart.CoreParts;
+import dev.jstech.core.multipart.FaceParts;
+import dev.jstech.core.multipart.IFacePart;
+import dev.jstech.core.multipart.IPartHost;
 import dev.jstech.core.multipart.PartBoxes;
 import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.persistence.SaveLayout;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import java.util.List;
@@ -25,6 +29,9 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -122,8 +129,61 @@ public final class MultipartGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = ARENA)
+    public static void faceParts_refuseAPartOfAnUnregisteredType(final GameTestHelper helper) {
+        final PartType<LoosePart> loose = new PartType<>(LoosePart::new,
+                TextKey.of("jstests.loose_part", "Loose part"),
+                ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "block/loose_part"));
+        final FaceParts parts = new FaceParts(new LooseHost());
+        boolean refused = false;
+        try {
+            parts.add(Direction.UP, loose.create());
+        } catch (final IllegalArgumentException expected) {
+            refused = true;
+        }
+        helper.assertTrue(refused, "a part whose type was never registered is refused");
+        helper.assertTrue(!parts.has(Direction.UP), "and no part is left on the face");
+        helper.succeed();
+    }
+
     private static void same(final GameTestHelper helper, final Object expected, final Object actual,
                              final String what) {
         helper.assertTrue(Objects.equals(expected, actual), what + ": expected " + expected + ", got " + actual);
+    }
+
+    /* A part whose type is never registered, to see the face refuse it. */
+    private static final class LoosePart implements IFacePart {
+
+        @Override
+        public PartType<?> type() {
+            return new PartType<>(LoosePart::new, TextKey.of("jstests.loose_part", "Loose part"),
+                    ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "block/loose_part"));
+        }
+
+        @Override
+        public void attach(final IPartHost host, final Direction face) {
+        }
+
+        @Override
+        public ItemStack partItem() {
+            return ItemStack.EMPTY;
+        }
+    }
+
+    private static final class LooseHost implements IPartHost {
+
+        @Override
+        public Level partLevel() {
+            return null;
+        }
+
+        @Override
+        public BlockPos partPos() {
+            return BlockPos.ZERO;
+        }
+
+        @Override
+        public void partChanged() {
+        }
     }
 }

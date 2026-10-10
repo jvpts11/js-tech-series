@@ -34,6 +34,12 @@ class AudioDecodersTest {
     }
 
     @Test
+    void find_isNullForAnExtensionThatIsNotThere() {
+        assertNull(AudioDecoders.find("."));
+        assertNull(AudioDecoders.find(""));
+    }
+
+    @Test
     void register_refusesASecondDecoderForTheSameExtension() {
         final IAudioDecoder first = encoded -> {
             throw new IOException("unused");

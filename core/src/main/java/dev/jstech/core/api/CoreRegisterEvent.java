@@ -50,7 +50,10 @@ public final class CoreRegisterEvent extends Event implements IModBusEvent {
     private final LanguageRegistry languages;
     private final OperationTypeRegistry operations;
 
-    /** Made and fired by the Core alone; a mod listens for it and never makes one. */
+    /**
+     * Public only because the Core builds it from another package. Only the Core fires it; a mod listens for it and
+     * never makes one, since a copy over registries of its own would run the listeners against nothing that is kept.
+     */
     public CoreRegisterEvent(final LanguageRegistry languages, final OperationTypeRegistry operations) {
         this.languages = languages;
         this.operations = operations;

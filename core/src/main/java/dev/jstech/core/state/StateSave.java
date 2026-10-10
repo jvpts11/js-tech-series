@@ -12,6 +12,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
 import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.persistence.SavedValue;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import net.minecraft.core.HolderLookup;
@@ -41,6 +42,8 @@ public final class StateSave<V> extends SavedData {
     private V value;
     /** The version a newer mod wrote the file in, until its state has kept the copy; 0 when none did. */
     private int newer;
+    /** Whether the value in the file could not be read at all, until its state has kept a copy of the file. */
+    private boolean unreadable;
     /** The value as last written or read, written again should the value ever fail to encode. */
     private @Nullable Tag lastWritten;
 
@@ -86,6 +89,13 @@ public final class StateSave<V> extends SavedData {
         return this.layout.wrap(written);
     }
 
+    /** Whether the file held a value that could not be read at all, once; false when it was already asked. */
+    boolean takeUnreadable() {
+        final boolean found = this.unreadable;
+        this.unreadable = false;
+        return found;
+    }
+
     /** Puts {@code next} in the file, to be written at the next save. */
     void replace(final V next) {
         this.value = next;
@@ -109,11 +119,15 @@ public final class StateSave<V> extends SavedData {
                                          final CompoundTag tag, final HolderLookup.Provider registries) {
         final SaveLayout.Found found = layout.unwrap(tag);
         V value = fresh.get();
+        boolean unreadable = false;
         if (found.value() != null) {
             final DynamicOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
-            value = SavedValue.read(codec.parse(ops, found.value()), LOGGER, name).map(adopt).orElse(value);
+            final Optional<V> read = SavedValue.read(codec.parse(ops, found.value()), LOGGER, name).map(adopt);
+            unreadable = read.isEmpty() && !layout.isNewer(found.version());
+            value = read.orElse(value);
         }
         final StateSave<V> save = new StateSave<>(name, codec, layout, value);
+        save.unreadable = unreadable;
         if (layout.isNewer(found.version())) {
             save.newer = found.version();
         } else {

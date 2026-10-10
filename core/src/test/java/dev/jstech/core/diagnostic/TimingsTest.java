@@ -8,7 +8,6 @@
 package dev.jstech.core.diagnostic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -64,14 +63,5 @@ class TimingsTest {
         timings.record("odd", -40L);
 
         assertEquals(0L, timings.summaries().getFirst().maxNanos());
-    }
-
-    @Test
-    void clear_forgetsEverything() {
-        final Timings timings = new Timings();
-        timings.record("grid", 100L);
-        timings.clear();
-
-        assertTrue(timings.summaries().isEmpty());
     }
 }

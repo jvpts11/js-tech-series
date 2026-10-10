@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -56,6 +57,7 @@ public final class DataRegistry<T> {
     private final String folder;
     private final Codec<T> codec;
     private final boolean synced;
+    private final Supplier<Map<ResourceLocation, T>> extras;
     private final List<Consumer<Map<ResourceLocation, T>>> listeners;
     private volatile Map<ResourceLocation, T> serverValues = Map.of();
     private volatile Map<ResourceLocation, T> clientValues = Map.of();
@@ -68,6 +70,7 @@ public final class DataRegistry<T> {
         this.folder = builder.folder;
         this.codec = builder.codec;
         this.synced = builder.synced;
+        this.extras = builder.extras;
         this.listeners = List.copyOf(builder.listeners);
     }
 
@@ -135,8 +138,10 @@ public final class DataRegistry<T> {
         final Map<ResourceLocation, T> read = new TreeMap<>();
         for (final Map.Entry<ResourceLocation, JsonElement> file : files.entrySet()) {
             final DataResult<T> value = this.codec.parse(ops, file.getValue());
-            value.resultOrPartial(problem -> JsCore.LOGGER.warn("The {} file {} does not read and is left out: {}",
-                    this.id, file.getKey(), problem)).ifPresent(parsed -> read.put(file.getKey(), parsed));
+            // Only a file that reads whole is kept: a partial value would hide that part of the file was dropped.
+            value.result().ifPresentOrElse(parsed -> read.put(file.getKey(), parsed),
+                    () -> JsCore.LOGGER.warn("The {} file {} does not read and is left out: {}", this.id,
+                            file.getKey(), value.error().map(DataResult.Error::message).orElse("no value")));
         }
         replace(read);
         JsCore.LOGGER.debug("Read {} {} files", read.size(), this.id);
@@ -146,7 +151,10 @@ public final class DataRegistry<T> {
     CompoundTag encode(final HolderLookup.Provider registries) {
         final RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
         final CompoundTag entries = new CompoundTag();
-        for (final Map.Entry<ResourceLocation, T> entry : this.serverValues.entrySet()) {
+        // What the registry adds for the players, under the files' own values, which always win.
+        final Map<ResourceLocation, T> sent = new TreeMap<>(this.extras.get());
+        sent.putAll(this.serverValues);
+        for (final Map.Entry<ResourceLocation, T> entry : sent.entrySet()) {
             this.codec.encodeStart(ops, entry.getValue())
                     .resultOrPartial(problem -> JsCore.LOGGER.warn("The {} value {} cannot be sent: {}", this.id,
                             entry.getKey(), problem))
@@ -173,10 +181,10 @@ public final class DataRegistry<T> {
             if (file == null) {
                 continue;
             }
-            this.codec.parse(ops, entries.get(key))
-                    .resultOrPartial(problem -> JsCore.LOGGER.warn("The {} value {} from the server does not read: {}",
-                            this.id, file, problem))
-                    .ifPresent(value -> read.put(file, value));
+            final DataResult<T> value = this.codec.parse(ops, entries.get(key));
+            value.result().ifPresentOrElse(parsed -> read.put(file, parsed),
+                    () -> JsCore.LOGGER.warn("The {} value {} from the server does not read: {}", this.id, file,
+                            value.error().map(DataResult.Error::message).orElse("no value")));
         }
         this.clientValues = Collections.unmodifiableMap(read);
     }
@@ -194,6 +202,7 @@ public final class DataRegistry<T> {
         private final Codec<T> codec;
         private final List<Consumer<Map<ResourceLocation, T>>> listeners = new ArrayList<>();
         private boolean synced;
+        private Supplier<Map<ResourceLocation, T>> extras = Map::of;
 
         private Builder(final ResourceLocation id, final String folder, final Codec<T> codec) {
             this.id = Objects.requireNonNull(id, "id");
@@ -204,6 +213,15 @@ public final class DataRegistry<T> {
         /** It is sent to every player as they join and after every reload. */
         public Builder<T> synced() {
             this.synced = true;
+            return this;
+        }
+
+        /**
+         * Values the players are sent besides the files', by file id: what the server knows that no file says. A file
+         * of the same id wins. They are read whenever the registry is sent, never stored.
+         */
+        public Builder<T> alsoSending(final Supplier<Map<ResourceLocation, T>> extras) {
+            this.extras = Objects.requireNonNull(extras, "extras");
             return this;
         }
 

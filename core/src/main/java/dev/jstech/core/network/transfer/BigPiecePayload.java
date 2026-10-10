@@ -9,6 +9,7 @@ package dev.jstech.core.network.transfer;
 
 import dev.jstech.core.JsCore;
 import io.netty.buffer.ByteBuf;
+import java.util.Objects;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -38,7 +39,7 @@ public record BigPiecePayload(ResourceLocation kind, int transfer, int index, in
 
     /* Copied on the way in, so the piece cannot change under whoever holds it. */
     public BigPiecePayload {
-        data = data.clone();
+        data = Objects.requireNonNull(data, "data").clone();
     }
 
     @Override

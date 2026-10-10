@@ -21,6 +21,7 @@ import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.text.GameText;
 import java.util.List;
+import java.util.OptionalInt;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -59,10 +60,11 @@ public final class CoreEmiPlugin implements EmiPlugin {
         });
     }
 
-    /** How many recipes EMI shows under that kind of machine; 0 before EMI has read them. */
-    public static int recipesShown(final ProcessingKind kind) {
+    /** How many recipes EMI shows under that kind of machine, or nothing before EMI has read them. */
+    public static OptionalInt recipesShown(final ProcessingKind kind) {
         final EmiRecipeCategory category = categoryOf(kind);
-        return category == null ? 0 : EmiApi.getRecipeManager().getRecipes(category).size();
+        return category == null ? OptionalInt.empty()
+                : OptionalInt.of(EmiApi.getRecipeManager().getRecipes(category).size());
     }
 
     /** Opens EMI's recipe screen on the recipes of that kind of machine; false before EMI has read them. */

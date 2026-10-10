@@ -37,6 +37,7 @@ public final class SurfaceHost {
     private ISurface surface;
     private long lastFrameNanos;
     private boolean failed;
+    private boolean closed;
     /** Where the picture was last drawn, so input can be turned into the surface's own pixels. */
     private int drawnX;
     private int drawnY;
@@ -69,6 +70,10 @@ public final class SurfaceHost {
      */
     public void draw(final GuiGraphics g, final Font font, final ISkin skin, final int x, final int y, final int w,
                      final int h, final boolean forOpener) {
+        if (this.closed) {
+            // A closed host draws nothing: a late draw must not rebuild the surface or ask for frames again.
+            return;
+        }
         if (this.failed) {
             placeholder(g, font, skin, x, y, w, h, SurfaceTexts.FAILED);
             return;
@@ -120,6 +125,8 @@ public final class SurfaceHost {
 
     /** Its window has closed: the renderer is told and the surface let go. */
     public void close() {
+        this.closed = true;
+        this.lastFrameNanos = 0;
         if (!this.failed) {
             this.guard(() -> {
                 this.renderer.closed();
@@ -202,7 +209,7 @@ public final class SurfaceHost {
     }
 
     private boolean live() {
-        return !this.failed && this.surface != null;
+        return !this.failed && !this.closed && this.surface != null;
     }
 
     /* Runs a call into the renderer, which may throw like its drawing: a fault stops it for good. */

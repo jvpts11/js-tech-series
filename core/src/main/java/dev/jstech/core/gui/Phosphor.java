@@ -28,7 +28,8 @@ import dev.jstech.core.palette.Palettes;
 public final class Phosphor {
 
     /** The green a P1-type tube glows: the Vintage skin's own text colour. A pack may make it an amber tube. */
-    private static final Palette<Tube> TUBE = Palettes.declare(JsCore.MODID, "gui/phosphor", new Tube(0xFF33FF66));
+    private static final Palette<PhosphorGlow> TUBE = Palettes.declare(JsCore.MODID, "gui/phosphor",
+            new PhosphorGlow(0xFF33FF66));
 
     private Phosphor() {
     }
@@ -65,6 +66,6 @@ public final class Phosphor {
         return Math.max(0, Math.min(255, Math.round(channel * amount)));
     }
 
-    private record Tube(int glow) {
+    private record PhosphorGlow(int glow) {
     }
 }

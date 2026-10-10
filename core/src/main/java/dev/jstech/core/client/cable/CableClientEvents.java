@@ -47,11 +47,10 @@ public final class CableClientEvents {
          * server's break takes the one piece. A survival player mines the block as any other, or the server would
          * never hear the break finish, and the piece taken out is drawn back the moment the server says so.
          */
-        if (!level.isClientSide() || !event.getEntity().getAbilities().instabuild
-                || !(level.getBlockEntity(event.getPos()) instanceof CableBlockEntity cable) || cable.pieces() < 2) {
+        if (!level.isClientSide() || !event.getEntity().getAbilities().instabuild) {
             return;
         }
-        if (!CableBlock.aimOf(level, event.getPos(), event.getEntity()).isNothing()) {
+        if (!CableBlock.strikeAimOf(level, event.getPos(), event.getEntity()).isNothing()) {
             event.setCanceled(true);
             event.setUseBlock(TriState.FALSE);
             event.setUseItem(TriState.FALSE);

@@ -12,6 +12,7 @@ import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.client.gui.logic.PaginationState;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
@@ -91,7 +92,11 @@ public abstract class DataTableWidget<T> extends RowListWidget<T> {
         // Header row.
         Grounds.fill(graphics, getX(), getY(), getX() + width, getY() + headerHeight, colours.tableHeader());
         for (int col = 0; col < columnHeaders.size(); col++) {
-            Draw.text(graphics, Minecraft.getInstance().font, columnHeaders.get(col), columnX(col) + 2,
+            // Clipped to the column so a long header cannot run into the next one.
+            final Font font = Minecraft.getInstance().font;
+            final String header = font.plainSubstrByWidth(columnHeaders.get(col).getString(),
+                    Math.max(0, width / columnHeaders.size() - 4));
+            Draw.text(graphics, font, header, columnX(col) + 2,
                     getY() + (headerHeight - 8) / 2, colours.tableHeaderText(), colours.tableHeader());
         }
 

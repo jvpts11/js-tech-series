@@ -211,14 +211,7 @@ public final class EraTheme {
         if (!s.doubleBevel() || !raised) {
             return;
         }
-        if (p.bevelLight() != 0) {
-            g.fill(x, y, x + w, y + 1, p.bevelLight());
-            g.fill(x, y, x + 1, y + h, p.bevelLight());
-        }
-        if (p.bevelDark() != 0) {
-            g.fill(x, y + h - 1, x + w, y + h, p.bevelDark());
-            g.fill(x + w - 1, y, x + w, y + h, p.bevelDark());
-        }
+        edges(g, x, y, w, h, p.bevelLight(), p.bevelDark());
     }
 
     /**
@@ -240,13 +233,19 @@ public final class EraTheme {
         if (!s.doubleBevel()) {
             return;
         }
-        if (p.bevelDark() != 0) {
-            g.fill(x, y, x + w, y + 1, p.bevelDark());
-            g.fill(x, y, x + 1, y + h, p.bevelDark());
+        edges(g, x, y, w, h, p.bevelDark(), p.bevelLight());
+    }
+
+    /* Draws a 1px top-left and a 1px bottom-right edge; a zero colour leaves that pair of edges out. */
+    private static void edges(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                              final int topLeft, final int bottomRight) {
+        if (topLeft != 0) {
+            g.fill(x, y, x + w, y + 1, topLeft);
+            g.fill(x, y, x + 1, y + h, topLeft);
         }
-        if (p.bevelLight() != 0) {
-            g.fill(x, y + h - 1, x + w, y + h, p.bevelLight());
-            g.fill(x + w - 1, y, x + w, y + h, p.bevelLight());
+        if (bottomRight != 0) {
+            g.fill(x, y + h - 1, x + w, y + h, bottomRight);
+            g.fill(x + w - 1, y, x + w, y + h, bottomRight);
         }
     }
 }

@@ -19,6 +19,12 @@ import org.junit.jupiter.api.Test;
 class MotionSpecTest {
 
     @Test
+    void with_refusesANameThatIsAFieldOfTheMotion() {
+        assertThrows(IllegalArgumentException.class, () -> MotionSpec.NONE.with("duration", 5.0));
+        assertThrows(IllegalArgumentException.class, () -> MotionSpec.NONE.with("delay", 5.0));
+    }
+
+    @Test
     void constructor_refusesANegativeTime() {
         assertThrows(IllegalArgumentException.class,
                 () -> new MotionSpec(MotionStyles.SCALE, -1, 0, IEasing.LINEAR, "", Map.of()));

@@ -101,7 +101,7 @@ public final class MediaStore {
     public MediaId put(final byte[] content, final String format) throws IOException {
         final MediaId id = MediaId.of(content, format);
         final Path target = path(id);
-        if (!Files.exists(target)) {
+        if (!has(id)) {
             final MediaInfo info = MediaProbe.probe(id.format(), content);
             final Path temporary = Files.createTempFile(incoming, id.hash(), ".part");
             Files.write(temporary, content);
@@ -120,7 +120,7 @@ public final class MediaStore {
     public MediaId adopt(final Path arrived, final MediaId id) throws IOException {
         try {
             final Path target = path(id);
-            if (!Files.exists(target)) {
+            if (!has(id)) {
                 final MediaInfo info = MediaProbe.probe(id.format(), Files.readAllBytes(arrived));
                 move(arrived, target);
                 infos.put(id.hash(), info);

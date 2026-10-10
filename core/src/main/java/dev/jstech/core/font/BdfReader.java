@@ -127,6 +127,9 @@ public final class BdfReader {
                         }
                         final BitSet pixels = bitmap(glyphBox[0], glyphBox[1]);
                         if (codePoint >= 0) {
+                            if (glyphs.containsKey(codePoint)) {
+                                throw new BdfFormatException(line, "code point " + codePoint + " is defined twice");
+                            }
                             glyphs.put(codePoint, new BitmapGlyph(codePoint, glyphBox[0], glyphBox[1], glyphBox[2],
                                     glyphBox[3], advance >= 0 ? advance : glyphBox[0], pixels));
                         }

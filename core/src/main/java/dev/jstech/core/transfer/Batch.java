@@ -54,15 +54,29 @@ public final class Batch {
         return true;
     }
 
-    /** Moves every step, or none: what came of it. */
+    /**
+     * Moves every step, or none: what came of it. A step that throws has the steps before it undone, and the
+     * exception goes on to the caller.
+     */
     public Outcome commit() {
         if (!fits()) {
             return Outcome.REFUSED;
         }
         final List<IStep> done = new ArrayList<>(this.steps.size());
         for (final IStep step : this.steps) {
-            final long moved = step.execute();
+            // The step counts as done before it runs: one that throws may have moved some, and undoing gives it back.
             done.add(step);
+            final long moved;
+            try {
+                moved = step.execute();
+            } catch (final RuntimeException broken) {
+                try {
+                    undo(done);
+                } catch (final RuntimeException alsoBroken) {
+                    broken.addSuppressed(alsoBroken);
+                }
+                throw broken;
+            }
             if (moved < step.wants()) {
                 return undo(done);
             }

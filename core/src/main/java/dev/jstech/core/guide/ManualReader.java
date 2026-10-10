@@ -255,8 +255,7 @@ public final class ManualReader {
                 case GuideBlock.Paragraph paragraph -> pieces.add(new Piece.Paragraph(
                         this.linked(paragraph.key(), linked), Tone.PLAIN));
                 case GuideBlock.Heading heading -> pieces.add(new Piece.Heading(this.text.text(heading.key()),
-                        GuideTexts.WHAT_CAN_GO_WRONG.key().equals(heading.key())
-                                || GuideTexts.IF_SOMETHING_GOES_WRONG.key().equals(heading.key())));
+                        heading.leadsIntoTrouble()));
                 case GuideBlock.Figure figure -> {
                     figures++;
                     pieces.add(new Piece.Picture(figure.item(), this.text.text(GuideTexts.FIGURE.key(),
@@ -271,7 +270,7 @@ public final class ManualReader {
                     tables++;
                     final List<Row> rows = new ArrayList<>();
                     for (final GuideBlock.TableRow row : table.rows()) {
-                        rows.add(new Row(this.text.text(row.labelKey()), this.value(row.value())));
+                        rows.add(new Row(this.text.text(row.labelKey()), this.text.valueText(row.value())));
                     }
                     pieces.add(new Piece.Table(this.text.text(GuideTexts.TABLE.key(), chapterNo + "-" + tables)
                             + " " + this.text.text(table.captionKey()), rows));
@@ -364,14 +363,6 @@ public final class ManualReader {
             final Node node = this.nodes.get(target);
             return node == null ? null : node.number();
         });
-    }
-
-    private String value(final GuideBlock.GuideValue value) {
-        return switch (value) {
-            case GuideBlock.GuideValue.Words words -> this.text.text(words.key());
-            case GuideBlock.GuideValue.Amount amount -> this.text.amount(amount.value(), amount.unit());
-            case GuideBlock.GuideValue.Literal literal -> literal.text();
-        };
     }
 
     /** What a node of the manual is. */

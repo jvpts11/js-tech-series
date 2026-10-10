@@ -69,6 +69,9 @@ public final class CoreConfigScreen extends Screen {
     private final Map<ConfigFile, ConfigDraft> drafts = new LinkedHashMap<>();
     private final List<RowField> fields = new ArrayList<>();
     private final List<Card> cards = new ArrayList<>();
+    /* What rebuild() worked out, kept so a frame reads it instead of searching and wrapping again. */
+    private List<FormattedCharSequence> note = List.of();
+    private int shownCount;
     private int scope;
     private int selected;
     private int scroll;
@@ -220,7 +223,7 @@ public final class CoreConfigScreen extends Screen {
         if (mouseX < ConfigScreenLayout.contentLeft(width)) {
             return false;
         }
-        final int most = Math.max(0, shownRows().size() - 1);
+        final int most = Math.max(0, shownCount - 1);
         final int next = Math.max(0, Math.min(most, scroll - (int) Math.signum(scrollY)));
         if (next != scroll && (scrollY > 0 || !lastShown())) {
             scroll = next;
@@ -335,7 +338,9 @@ public final class CoreConfigScreen extends Screen {
         cards.clear();
         final List<Row> rows = shownRows();
         scroll = Math.max(0, Math.min(scroll, Math.max(0, rows.size() - 1)));
-        int y = ConfigScreenLayout.cardsTop(sectionNote().size()) + (lockedHere()
+        shownCount = rows.size();
+        note = sectionNote();
+        int y = ConfigScreenLayout.cardsTop(note.size()) + (lockedHere()
                 ? ConfigScreenLayout.LOCK_HEIGHT + ConfigScreenLayout.CARD_GAP : 0);
         for (int i = scroll; i < rows.size(); i++) {
             final Row row = rows.get(i);
@@ -372,7 +377,7 @@ public final class CoreConfigScreen extends Screen {
         }
         final int left = ConfigScreenLayout.controlX(width, control, hasUnit(key));
         final int x = control == ConfigDraft.Control.NUMBER
-                ? left + ConfigScreenLayout.STEP + ConfigScreenLayout.CONTROL_GAP + 3 : left + 3;
+                ? ConfigScreenLayout.numberFieldX(left) + 3 : left + 3;
         final int w = (control == ConfigDraft.Control.NUMBER ? ConfigScreenLayout.NUMBER_FIELD
                 : ConfigScreenLayout.TEXT_WIDTH) - 6;
         final int y = ConfigScreenLayout.controlY(card.y(), card.height(), control) + 3;
@@ -584,7 +589,6 @@ public final class CoreConfigScreen extends Screen {
         final float scale = crisp(TITLE_SCALE);
         Draw.textScaled(g, font, Texts.clip(font, heading, (int) ((right - left) / scale)), left,
                 ConfigScreenLayout.titleY(), JsTechTheme.text(), scale);
-        final List<FormattedCharSequence> note = sectionNote();
         for (int line = 0; line < note.size(); line++) {
             drawSmall(g, note.get(line), left, ConfigScreenLayout.sectionNoteY() + line * ConfigScreenLayout.NOTE_LINE,
                     JsTechTheme.dim());
@@ -700,9 +704,9 @@ public final class CoreConfigScreen extends Screen {
             }
             case NUMBER -> {
                 drawStep(g, x, y, MINUS, editable, mouseX, mouseY);
-                final int fx = x + ConfigScreenLayout.STEP + ConfigScreenLayout.CONTROL_GAP;
+                final int fx = ConfigScreenLayout.numberFieldX(x);
                 drawField(g, fx, y, ConfigScreenLayout.NUMBER_FIELD, focused(key));
-                final int px = fx + ConfigScreenLayout.NUMBER_FIELD + ConfigScreenLayout.CONTROL_GAP;
+                final int px = ConfigScreenLayout.plusX(x);
                 drawStep(g, px, y, PLUS, editable, mouseX, mouseY);
                 if (hasUnit(key)) {
                     JsTechTheme.textS(g, font, Texts.clip(font, unitOf(key),
@@ -755,12 +759,12 @@ public final class CoreConfigScreen extends Screen {
     }
 
     private void drawScrollbar(final GuiGraphics g) {
-        final int total = shownRows().size();
+        final int total = shownCount;
         if (total <= cards.size() || total == 0) {
             return;
         }
         final int x = ConfigScreenLayout.scrollbarX(width);
-        final int top = ConfigScreenLayout.cardsTop(sectionNote().size());
+        final int top = ConfigScreenLayout.cardsTop(note.size());
         final int bottom = ConfigScreenLayout.cardsBottom(height);
         g.fill(x, top, x + ConfigScreenLayout.SCROLLBAR, bottom, JsTechTheme.track());
         final int span = bottom - top;
@@ -923,16 +927,14 @@ public final class CoreConfigScreen extends Screen {
         }
         final int left = ConfigScreenLayout.controlX(width, control, unit);
         final int top = ConfigScreenLayout.controlY(card.y(), card.height(), control);
-        final int tall = control == ConfigDraft.Control.TOGGLE ? ConfigScreenLayout.SWITCH_HEIGHT
-                : ConfigScreenLayout.CONTROL_HEIGHT;
+        final int tall = ConfigScreenLayout.controlHeight(control);
         if (y < top || y >= top + tall || x < left || x >= left + ConfigScreenLayout.controlWidth(control, unit)) {
             return false;
         }
         switch (control) {
             case TOGGLE -> draft.toggle((ConfigKey<Boolean>) key);
             case NUMBER -> {
-                final int plus = left + ConfigScreenLayout.STEP + ConfigScreenLayout.CONTROL_GAP
-                        + ConfigScreenLayout.NUMBER_FIELD + ConfigScreenLayout.CONTROL_GAP;
+                final int plus = ConfigScreenLayout.plusX(left);
                 if (x < left + ConfigScreenLayout.STEP) {
                     draft.step(key, -1, big);
                 } else if (x >= plus && x < plus + ConfigScreenLayout.STEP) {
@@ -998,7 +1000,7 @@ public final class CoreConfigScreen extends Screen {
 
     /* Whether the last setting is already on the screen, past which the wheel does not scroll. */
     private boolean lastShown() {
-        return cards.isEmpty() || scroll + cards.size() >= shownRows().size();
+        return cards.isEmpty() || scroll + cards.size() >= shownCount;
     }
 
     /* A number stepped from its buttons, or put back to its default, shows in its field at once. */
@@ -1017,7 +1019,9 @@ public final class CoreConfigScreen extends Screen {
 
     /* A value as its field shows it: a number with a fraction without the zeros after its last digit. */
     private static String shown(final Object value) {
-        return value instanceof Double fraction ? BigDecimal.valueOf(fraction).stripTrailingZeros().toPlainString()
+        // NaN and the infinities have no decimal form; they are shown as they print.
+        return value instanceof Double fraction && Double.isFinite(fraction)
+                ? BigDecimal.valueOf(fraction).stripTrailingZeros().toPlainString()
                 : String.valueOf(value);
     }
 

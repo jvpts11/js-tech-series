@@ -127,6 +127,42 @@ class GridTest {
     }
 
     @Test
+    void forgetBridge_splitsTheRunsTheDeviceJoined() {
+        grid.place(1, ACCESS, List.of());
+        grid.place(2, BACKBONE, List.of());
+        grid.bridge(100, List.of(1L, 2L));
+
+        grid.forgetBridge(100);
+
+        assertFalse(grid.connected(1, 2));
+        assertEquals(2, grid.componentCount());
+    }
+
+    @Test
+    void forgetBridge_keepsTheJoinsOfTheOtherDevices() {
+        grid.place(1, ACCESS, List.of());
+        grid.place(2, BACKBONE, List.of());
+        grid.bridge(100, List.of(1L, 2L));
+        grid.bridge(101, List.of(1L, 2L));
+
+        grid.forgetBridge(100);
+
+        assertTrue(grid.connected(1, 2));
+    }
+
+    @Test
+    void remove_keepsTheJoinsOfTheDevicesStillStanding() {
+        grid.place(1, ACCESS, List.of());
+        grid.place(2, BACKBONE, List.of());
+        grid.place(3, ACCESS, List.of(1L));
+        grid.bridge(100, List.of(1L, 2L));
+
+        grid.remove(3);
+
+        assertTrue(grid.connected(1, 2));
+    }
+
+    @Test
     void slowestBetween_takesTheWayWhoseSlowestCableIsFastest() {
         // A slow way 1-2-3 over access, and a fast way 1-4-5-3 over backbone, joined at each end by devices.
         grid.place(1, GridMember.DEVICE, List.of());
@@ -192,6 +228,11 @@ class GridTest {
     void member_refusesANegativeGenerationOrRange() {
         assertThrows(IllegalArgumentException.class, () -> GridMember.cable("test:bad", -1, 1, 0));
         assertThrows(IllegalArgumentException.class, () -> GridMember.cable("test:bad", 0, 1, -1));
+    }
+
+    @Test
+    void member_refusesANegativeThroughput() {
+        assertThrows(IllegalArgumentException.class, () -> GridMember.cable("test:bad", 0, -1, 0));
     }
 
     /* Cables of {@code member} at {@code first} to {@code last}, each joined to the one before. */

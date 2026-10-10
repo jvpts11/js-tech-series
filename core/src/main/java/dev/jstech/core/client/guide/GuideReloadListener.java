@@ -65,9 +65,19 @@ public final class GuideReloadListener extends SimplePreparableReloadListener<Gu
     private static <T> Map<String, T> readAll(final ResourceManager resources, final String folder,
                                               final Codec<T> codec, final Function<T, String> id) {
         final Map<String, T> read = new HashMap<>();
+        final Map<String, ResourceLocation> firstFile = new HashMap<>();
         for (final Map.Entry<ResourceLocation, Resource> file : resources.listResources(ROOT + "/" + folder,
                 path -> path.getPath().endsWith(".json")).entrySet()) {
-            read(file, codec).ifPresent(value -> read.put(id.apply(value), value));
+            read(file, codec).ifPresent(value -> {
+                final String key = id.apply(value);
+                // The listing is sorted by path, so the first file to declare an id is the one kept.
+                final ResourceLocation kept = firstFile.putIfAbsent(key, file.getKey());
+                if (kept == null) {
+                    read.put(key, value);
+                } else {
+                    LOGGER.warn("The manual file {} repeats the id {} of {} and is ignored", file.getKey(), key, kept);
+                }
+            });
         }
         return read;
     }

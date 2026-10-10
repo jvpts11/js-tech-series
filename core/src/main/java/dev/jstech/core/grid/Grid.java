@@ -255,6 +255,8 @@ public final class Grid {
                 }
             }
         }
+        // The union-find cannot split a join, so the parts are worked out again from the cables and the devices left.
+        rebuild(new LinkedHashSet<>(this.posToId.keySet()));
     }
 
     /** Every position reached from {@code start} along the grid without stepping on any of {@code blocked}. */
@@ -347,15 +349,26 @@ public final class Grid {
         for (final long pos : survivors) {
             this.posToId.put(pos, this.dsu.makeSet());
         }
-        /*
-         * Only the cables' own joins are rebuilt: a bridging device joins its runs again the next time it reports them,
-         * which it does each tick, so a run cut away from it shows as cut until then.
-         */
         for (final long pos : survivors) {
             for (final long neighbour : this.adjacency.getOrDefault(pos, Set.of())) {
                 final Integer neighbourId = this.posToId.get(neighbour);
                 if (neighbourId != null) {
                     this.dsu.union(this.posToId.get(pos), neighbourId);
+                }
+            }
+        }
+        // The devices still standing keep their joins; only the ones that are gone stop joining.
+        for (final Set<Long> touched : this.bridges.values()) {
+            Integer first = null;
+            for (final long pos : touched) {
+                final Integer id = this.posToId.get(pos);
+                if (id == null) {
+                    continue;
+                }
+                if (first == null) {
+                    first = id;
+                } else {
+                    this.dsu.union(first, id);
                 }
             }
         }

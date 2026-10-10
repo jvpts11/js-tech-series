@@ -47,7 +47,13 @@ public class CoreEventDispatcher {
         if (listeners == null) {
             return;
         }
-        listeners.removeIf(existing -> existing == listener);
+        // One call takes away one registration: a listener subscribed twice keeps the other.
+        for (int i = 0; i < listeners.size(); i++) {
+            if (listeners.get(i) == listener) {
+                listeners.remove(i);
+                break;
+            }
+        }
         if (listeners.isEmpty()) {
             listenersByClass.remove(eventClass);
         }

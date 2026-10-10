@@ -227,6 +227,10 @@ public final class ConnectivityIndex {
      * @param device where the device stands, which is no position of this index
      */
     public void bridge(final long device, final Collection<Long> positions) {
+        if (!Set.copyOf(positions).equals(grid.bridgedBy(device))) {
+            // A device that touches something else now stops joining what it touched before.
+            forgetBridge(device);
+        }
         final Set<Integer> rootsBefore = new LinkedHashSet<>();
         NetworkUuid surviving = null;
         for (final long pos : positions) {
@@ -262,7 +266,22 @@ public final class ConnectivityIndex {
 
     /** The device at {@code device} is gone: it joins nothing any more on a way through the network. */
     public void forgetBridge(final long device) {
+        if (grid.bridgedBy(device).isEmpty()) {
+            return;
+        }
+        // The grid works its parts out again, which numbers them anew: carry each cable's network over by position.
+        final Map<Long, NetworkUuid> uuidByPos = new HashMap<>();
+        for (final long pos : grid.positions()) {
+            final NetworkUuid uuid = joinedUuid(pos);
+            if (uuid != null) {
+                uuidByPos.put(pos, uuid);
+            }
+        }
         grid.forgetBridge(device);
+        rootToUuid.clear();
+        for (final Map.Entry<Long, NetworkUuid> entry : uuidByPos.entrySet()) {
+            rootToUuid.put(grid.rootOf(entry.getKey()), entry.getValue());
+        }
     }
 
     public void assignUuid(final long encodedPos, final NetworkUuid uuid) {

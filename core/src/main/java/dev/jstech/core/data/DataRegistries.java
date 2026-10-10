@@ -14,9 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Stream;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -56,19 +58,12 @@ public final class DataRegistries {
 
     @SubscribeEvent
     public static void onDatapackSync(final OnDatapackSyncEvent event) {
-        final MinecraftServer server = event.getPlayerList().getServer();
-        for (final DataRegistry<?> registry : ALL) {
-            if (registry.synced()) {
-                final DataRegistryPayload payload = new DataRegistryPayload(registry.id(),
-                        registry.encode(server.registryAccess()));
-                /*
-                 * Only to a game that took the payload when it joined: a player made by a test, or by another mod,
-                 * stands on a connection that agreed on nothing, and sending it what it does not know is an error.
-                 */
-                event.getRelevantPlayers().filter(player -> player.connection.hasChannel(DataRegistryPayload.TYPE))
-                        .forEach(player -> PacketDistributor.sendToPlayer(player, payload));
-            }
-        }
+        send(event.getPlayerList().getServer(), event.getRelevantPlayers());
+    }
+
+    /** Sends every synced registry to all the players again, for values that changed without a reload. */
+    public static void resync(final MinecraftServer server) {
+        send(server, server.getPlayerList().getPlayers().stream());
     }
 
     @SubscribeEvent
@@ -87,6 +82,22 @@ public final class DataRegistries {
             throw new IllegalStateException("the data registry " + registry.id() + " is declared twice");
         }
         ALL.add(registry);
+    }
+
+    private static void send(final MinecraftServer server, final Stream<ServerPlayer> players) {
+        final List<ServerPlayer> receiving = players.toList();
+        for (final DataRegistry<?> registry : ALL) {
+            if (registry.synced()) {
+                final DataRegistryPayload payload = new DataRegistryPayload(registry.id(),
+                        registry.encode(server.registryAccess()));
+                /*
+                 * Only to a game that took the payload when it joined: a player made by a test, or by another mod,
+                 * stands on a connection that agreed on nothing, and sending it what it does not know is an error.
+                 */
+                receiving.stream().filter(player -> player.connection.hasChannel(DataRegistryPayload.TYPE))
+                        .forEach(player -> PacketDistributor.sendToPlayer(player, payload));
+            }
+        }
     }
 
     /* Runs on a player's game: the payload is only ever sent to one. */

@@ -126,6 +126,11 @@ public class TextField extends UiComponent {
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
         final boolean focused = isFocused();
+        // Recorded unfocused too, so the click that gives the field the keyboard can place the caret.
+        this.font = ctx.font();
+        if (!focused) {
+            this.offset = 0;
+        }
         ctx.skin().field(g, x(), y(), width(), height(), focused);
         final String shown = focused ? state.edit() : state.value();
         final int textY = y() + (height() - 7) / 2;
@@ -142,7 +147,6 @@ public class TextField extends UiComponent {
             while (offset < caret && ctx.font().width(shown.substring(offset, caret)) > avail) {
                 offset++;
             }
-            this.font = ctx.font();
             this.offset = offset;
             final String visible = Texts.clip(ctx.font(), shown.substring(offset), avail);
             if (state.hasSelection()) {
@@ -207,7 +211,7 @@ public class TextField extends UiComponent {
      */
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
-        if (button == 0 && this.font != null && isFocused()) {
+        if (button == 0 && this.font != null) {
             state.moveTo(indexAt(mx), Screen.hasShiftDown());
         }
         return true;

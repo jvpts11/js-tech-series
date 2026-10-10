@@ -19,6 +19,7 @@ import java.io.Reader;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
@@ -53,10 +54,18 @@ public final class PaletteReloadListener implements ResourceManagerReloadListene
         }
     }
 
-    /** The colours a palette file gives, by role; a value that is no colour is left out and said so. */
+    /**
+     * The colours a palette file gives, by role; a value that is no colour, or a name that is no role of the
+     * palette, is left out and said so.
+     */
     private static Map<String, Integer> colours(final Palette<?> palette, final JsonObject file) {
         final Map<String, Integer> out = new LinkedHashMap<>();
+        final Set<String> known = PaletteRoles.read(palette.declared()).keySet();
         for (final Map.Entry<String, JsonElement> role : file.entrySet()) {
+            if (!known.contains(role.getKey())) {
+                JsCore.LOGGER.warn("The palette {} names a role it does not have: {}", palette.id(), role.getKey());
+                continue;
+            }
             final Integer colour = role.getValue().isJsonPrimitive()
                     ? PaletteRoles.parse(role.getValue().getAsString()) : null;
             if (colour == null) {

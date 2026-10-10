@@ -32,8 +32,11 @@ public abstract class CoreProjectile extends ThrowableProjectile {
     /* What it has passed through, so it never hits one thing twice. */
     private final IntSet passedThrough = new IntOpenHashSet();
     private int age;
+    /* How many things it has passed through. Saved as a count, since entity ids last only for one session. */
+    private int pierced;
 
     private static final String SAVED_AGE = "Age";
+    private static final String SAVED_PIERCED = "Pierced";
 
     protected CoreProjectile(final EntityType<? extends CoreProjectile> type, final Level level) {
         super(type, level);
@@ -80,7 +83,8 @@ public abstract class CoreProjectile extends ThrowableProjectile {
             final Vec3 push = getDeltaMovement().multiply(1.0, 0.0, 1.0).normalize();
             living.knockback(spec.knockback(), -push.x, -push.z);
         }
-        if (passedThrough.size() < spec.pierce()) {
+        if (pierced < spec.pierce()) {
+            pierced++;
             passedThrough.add(target.getId());
         } else {
             end();
@@ -99,12 +103,14 @@ public abstract class CoreProjectile extends ThrowableProjectile {
     protected void addAdditionalSaveData(final CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt(SAVED_AGE, age);
+        tag.putInt(SAVED_PIERCED, pierced);
     }
 
     @Override
     protected void readAdditionalSaveData(final CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         age = tag.getInt(SAVED_AGE);
+        pierced = tag.getInt(SAVED_PIERCED);
     }
 
     /* Its end: a blast when it has one, then gone. */

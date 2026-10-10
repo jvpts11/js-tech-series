@@ -43,15 +43,21 @@ public final class WornItems {
                 out.add(armour);
             }
         }
-        for (final IWornSource source : SOURCES) {
-            source.collect(entity, out);
-        }
+        collectFromSources(entity, out);
         return out;
     }
 
     /** The first thing {@code entity} wears that {@code test} accepts, or none. */
     public static Optional<ItemStack> firstWorn(final LivingEntity entity, final Predicate<ItemStack> test) {
-        for (final ItemStack stack : worn(entity)) {
+        /* Armour is tested before any source is asked, so a match there costs no list at all. */
+        for (final ItemStack armour : entity.getArmorSlots()) {
+            if (!armour.isEmpty() && test.test(armour)) {
+                return Optional.of(armour);
+            }
+        }
+        final List<ItemStack> fromSources = new ArrayList<>();
+        collectFromSources(entity, fromSources);
+        for (final ItemStack stack : fromSources) {
             if (test.test(stack)) {
                 return Optional.of(stack);
             }
@@ -62,5 +68,18 @@ public final class WornItems {
     /** Whether {@code entity} wears anything {@code test} accepts. */
     public static boolean wears(final LivingEntity entity, final Predicate<ItemStack> test) {
         return firstWorn(entity, test).isPresent();
+    }
+
+    /* Asks every source, then drops any empty stack one wrote, so the no-empty-stacks promise never rests on them. */
+    private static void collectFromSources(final LivingEntity entity, final List<ItemStack> out) {
+        final int before = out.size();
+        for (final IWornSource source : SOURCES) {
+            source.collect(entity, out);
+        }
+        for (int i = out.size() - 1; i >= before; i--) {
+            if (out.get(i).isEmpty()) {
+                out.remove(i);
+            }
+        }
     }
 }

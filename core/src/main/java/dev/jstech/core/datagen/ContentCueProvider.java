@@ -40,9 +40,8 @@ public final class ContentCueProvider implements DataProvider {
     public CompletableFuture<?> run(final CachedOutput cache) {
         final List<CompletableFuture<?>> written = new ArrayList<>();
         for (final SoundCue cue : content.declaredCues()) {
-            written.add(DataProvider.saveStable(cache, SoundSetJson.write(cue.defaults()), output
-                    .getOutputFolder(PackOutput.Target.RESOURCE_PACK)
-                    .resolve(cue.file().getNamespace()).resolve(cue.file().getPath())));
+            written.add(DataProvider.saveStable(cache, SoundSetJson.write(cue.defaults()),
+                    ContentFiles.resourcePackFile(output, cue.file())));
         }
         return CompletableFuture.allOf(written.toArray(CompletableFuture[]::new));
     }

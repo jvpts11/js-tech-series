@@ -110,6 +110,10 @@ public final class CoreModels {
                     (location, model) -> new CableBakedModel(new MultipartBakedModel(model)));
         }
         for (final Supplier<? extends Block> block : MULTIPART) {
+            if (block.get() == CoreCables.BLOCK.get()) {
+                // Already wrapped above; wrapping it again would draw every part and plug twice.
+                continue;
+            }
             for (final BlockState state : block.get().getStateDefinition().getPossibleStates()) {
                 models.computeIfPresent(BlockModelShaper.stateToModelLocation(state),
                         (location, model) -> new MultipartBakedModel(model));

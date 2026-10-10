@@ -80,6 +80,9 @@ public final class GuideRecipes {
         if (recipe instanceof ProcessingRecipe processing) {
             final List<List<ItemStack>> inputs = new ArrayList<>();
             for (final SizedIngredient input : processing.inputs()) {
+                if (inputs.size() >= MOST_INPUTS) {
+                    break;
+                }
                 inputs.add(Arrays.asList(input.getItems()));
             }
             final Component energy = processing.energyPerTick() <= 0 ? Component.empty()

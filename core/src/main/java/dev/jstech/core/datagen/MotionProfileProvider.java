@@ -44,9 +44,8 @@ public final class MotionProfileProvider implements DataProvider {
         for (final DeclaredMotion motion : MotionProfiles.of(modid)) {
             final JsonElement file = JsonParser.parseString(new String(motion.declared().json(),
                     StandardCharsets.UTF_8));
-            written.add(DataProvider.saveStable(cache, file, output
-                    .getOutputFolder(PackOutput.Target.RESOURCE_PACK)
-                    .resolve(motion.file().getNamespace()).resolve(motion.file().getPath())));
+            written.add(DataProvider.saveStable(cache, file,
+                    ContentFiles.resourcePackFile(output, motion.file())));
         }
         return CompletableFuture.allOf(written.toArray(CompletableFuture[]::new));
     }

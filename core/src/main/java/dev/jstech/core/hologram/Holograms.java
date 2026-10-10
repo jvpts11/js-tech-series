@@ -31,6 +31,10 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  *
  * <p>A hologram is the server's word only; nothing of it is saved, so a mod that wants one standing after a restart
  * shows it again when its machine loads.
+ *
+ * <p>It reaches the players whose games hold its chunk at the moment it is sent, and no others: the server keeps no
+ * record of what is standing, so a player who arrives later sees it only when the mod shows it again, as a machine
+ * does on a timer or whenever its state changes.
  */
 @EventBusSubscriber(modid = JsCore.MODID)
 public final class Holograms {
@@ -42,7 +46,8 @@ public final class Holograms {
 
     /**
      * Puts up, or rewrites, the hologram {@code id} at {@code at} for every player near it, saying {@code lines} for
-     * {@code ticks} ticks, or for as long as they are near with 0.
+     * {@code ticks} ticks, or for as long as they are near with 0. Only the players tracking its chunk now are told;
+     * show it again for those who arrive later.
      */
     public static void show(final ServerLevel level, final ResourceLocation id, final Vec3 at, final List<Text> lines,
                             final int ticks) {

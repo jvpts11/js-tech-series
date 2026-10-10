@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.audio.media;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -25,12 +24,11 @@ import java.util.Map;
  */
 public final class MediaProbe {
 
-    private static final byte[] OGG_CAPTURE = {'O', 'g', 'g', 'S'};
-    private static final int OGG_HEADER = 27;
     private static final int VORBIS_ID_PACKET = 1;
     private static final int VORBIS_COMMENT_PACKET = 3;
     private static final int VORBIS_SIGNATURE = 7;
-    private static final int LACING_CONTINUES = 255;
+    /* The identification packet is read up to its nominal bit rate, which ends at byte 24. */
+    private static final int VORBIS_ID_LENGTH = 24;
     private static final int WAV_PCM = 1;
     private static final int WAV_EXTENSIBLE = 0xFFFE;
     private static final int YEAR_DIGITS = 4;
@@ -45,73 +43,39 @@ public final class MediaProbe {
      * @throws IOException when it is not a file of that kind this can read
      */
     public static MediaInfo probe(final String format, final byte[] content) throws IOException {
-        return switch (format.toLowerCase(Locale.ROOT)) {
-            case "ogg" -> ogg(content);
-            case "wav" -> wav(content);
-            default -> throw new IOException("no reader for ." + format + " files");
-        };
+        try {
+            return switch (format.toLowerCase(Locale.ROOT)) {
+                case "ogg" -> ogg(content);
+                case "wav" -> wav(content);
+                default -> throw new IOException("no reader for ." + format + " files");
+            };
+        } catch (final IndexOutOfBoundsException | IllegalArgumentException malformed) {
+            // A file that claims more than it holds is unreadable, whatever way it overreaches.
+            throw new IOException("a recording that claims more than the file holds", malformed);
+        }
     }
 
     /* Ogg Vorbis: the identification and comment packets of the first stream, and the end of its last page. */
     private static MediaInfo ogg(final byte[] content) throws IOException {
-        int at = 0;
-        int serial = 0;
-        boolean first = true;
-        long lastGranule = -1L;
-        int packets = 0;
-        int channels = 0;
-        int rate = 0;
-        int nominal = 0;
-        MediaTags tags = MediaTags.EMPTY;
-        final ByteArrayOutputStream packet = new ByteArrayOutputStream();
-        while (at + OGG_HEADER <= content.length) {
-            if (!startsWith(content, at, OGG_CAPTURE)) {
-                throw new IOException("not an Ogg page at byte " + at);
-            }
-            final long granule = le64(content, at + 6);
-            final int pageSerial = (int) le32(content, at + 14);
-            final int segments = content[at + 26] & 0xFF;
-            int data = at + OGG_HEADER + segments;
-            if (data > content.length) {
-                throw new IOException("an Ogg page runs past the end of the file");
-            }
-            if (first) {
-                serial = pageSerial;
-                first = false;
-            }
-            final boolean ours = pageSerial == serial;
-            for (int s = 0; s < segments; s++) {
-                final int length = content[at + OGG_HEADER + s] & 0xFF;
-                if (data + length > content.length) {
-                    throw new IOException("an Ogg segment runs past the end of the file");
-                }
-                if (ours && packets < 2) {
-                    packet.write(content, data, length);
-                    if (length < LACING_CONTINUES) {
-                        final byte[] whole = packet.toByteArray();
-                        packet.reset();
-                        if (packets == 0) {
-                            requireVorbis(whole, VORBIS_ID_PACKET);
-                            channels = whole[11] & 0xFF;
-                            rate = (int) le32(whole, 12);
-                            nominal = (int) le32(whole, 20);
-                        } else {
-                            requireVorbis(whole, VORBIS_COMMENT_PACKET);
-                            tags = vorbisTags(whole);
-                        }
-                        packets++;
-                    }
-                }
-                data += length;
-            }
-            if (ours && granule >= 0) {
-                lastGranule = granule;
-            }
-            at = data;
-        }
-        if (packets < 2 || rate <= 0 || channels <= 0) {
+        final OggPages.Result pages = OggPages.read(content, 2, true, content.length);
+        if (pages.packets().size() < 2) {
             throw new IOException("not an Ogg Vorbis recording");
         }
+        final byte[] identification = pages.packets().get(0);
+        requireVorbis(identification, VORBIS_ID_PACKET);
+        if (identification.length < VORBIS_ID_LENGTH) {
+            throw new IOException("an Ogg Vorbis identification packet that is cut short");
+        }
+        final int channels = identification[11] & 0xFF;
+        final int rate = (int) OggPages.le32(identification, 12);
+        final int nominal = (int) OggPages.le32(identification, 20);
+        final byte[] comments = pages.packets().get(1);
+        requireVorbis(comments, VORBIS_COMMENT_PACKET);
+        final MediaTags tags = vorbisTags(comments);
+        if (rate <= 0 || channels <= 0) {
+            throw new IOException("not an Ogg Vorbis recording");
+        }
+        final long lastGranule = pages.lastGranule();
         final long millis = lastGranule <= 0 ? 0L : lastGranule * 1000L / rate;
         final int kbps = nominal > 0 ? nominal / 1000 : kbpsOf(content.length, millis);
         return new MediaInfo(millis, rate, channels, kbps, tags);
@@ -126,20 +90,27 @@ public final class MediaProbe {
 
     /* The comments of a Vorbis comment packet: a vendor string, then KEY=value pairs. */
     private static MediaTags vorbisTags(final byte[] packet) throws IOException {
-        int at = VORBIS_SIGNATURE;
-        final long vendor = le32(packet, at);
-        at += 4 + (int) vendor;
-        final long count = le32(packet, at);
+        // Sizes stay long until they are checked: a 32-bit size from a crafted file must not wrap into a valid index.
+        long at = VORBIS_SIGNATURE;
+        final long vendor = OggPages.le32(packet, (int) at);
+        at += 4 + vendor;
+        if (at + 4 > packet.length) {
+            throw new IOException("a Vorbis comment packet that is cut short");
+        }
+        final long count = OggPages.le32(packet, (int) at);
         at += 4;
         final Map<String, String> found = new HashMap<>();
         for (long i = 0; i < count; i++) {
-            final long length = le32(packet, at);
-            at += 4;
-            if (length < 0 || at + length > packet.length) {
+            if (at + 4 > packet.length) {
                 throw new IOException("a Vorbis comment runs past its packet");
             }
-            final String comment = new String(packet, at, (int) length, StandardCharsets.UTF_8);
-            at += (int) length;
+            final long length = OggPages.le32(packet, (int) at);
+            at += 4;
+            if (at + length > packet.length) {
+                throw new IOException("a Vorbis comment runs past its packet");
+            }
+            final String comment = new String(packet, (int) at, (int) length, StandardCharsets.UTF_8);
+            at += length;
             final int equals = comment.indexOf('=');
             if (equals > 0) {
                 found.putIfAbsent(comment.substring(0, equals).toUpperCase(Locale.ROOT), comment.substring(equals + 1));
@@ -152,8 +123,8 @@ public final class MediaProbe {
 
     /* WAV: the format chunk, the size of the data chunk, and an INFO list when there is one. */
     private static MediaInfo wav(final byte[] content) throws IOException {
-        if (content.length < 12 || !startsWith(content, 0, new byte[] {'R', 'I', 'F', 'F'})
-                || !startsWith(content, 8, new byte[] {'W', 'A', 'V', 'E'})) {
+        if (content.length < 12 || !OggPages.startsWith(content, 0, new byte[] {'R', 'I', 'F', 'F'})
+                || !OggPages.startsWith(content, 8, new byte[] {'W', 'A', 'V', 'E'})) {
             throw new IOException("not a WAV file");
         }
         int at = 12;
@@ -165,7 +136,7 @@ public final class MediaProbe {
         MediaTags tags = MediaTags.EMPTY;
         while (at + 8 <= content.length) {
             final String id = new String(content, at, 4, StandardCharsets.US_ASCII);
-            final long size = le32(content, at + 4);
+            final long size = OggPages.le32(content, at + 4);
             final int body = at + 8;
             final long end = Math.min(content.length, body + size);
             switch (id) {
@@ -175,13 +146,13 @@ public final class MediaProbe {
                         throw new IOException("a WAV file of samples other than plain PCM");
                     }
                     channels = le16(content, body + 2);
-                    rate = (int) le32(content, body + 4);
-                    byteRate = (int) le32(content, body + 8);
+                    rate = (int) OggPages.le32(content, body + 4);
+                    byteRate = (int) OggPages.le32(content, body + 8);
                     blockAlign = le16(content, body + 12);
                 }
                 case "data" -> dataBytes = size == 0xFFFFFFFFL ? content.length - body : end - body;
                 case "LIST" -> {
-                    if (end - body >= 4 && startsWith(content, body, new byte[] {'I', 'N', 'F', 'O'})) {
+                    if (end - body >= 4 && OggPages.startsWith(content, body, new byte[] {'I', 'N', 'F', 'O'})) {
                         tags = wavTags(content, body + 4, (int) end);
                     }
                 }
@@ -205,15 +176,16 @@ public final class MediaProbe {
         int at = from;
         while (at + 8 <= to) {
             final String id = new String(content, at, 4, StandardCharsets.US_ASCII);
-            final int size = (int) le32(content, at + 4);
+            // A 32-bit unsigned size is kept long so a huge one clamps to the list instead of going negative.
+            final long size = OggPages.le32(content, at + 4);
             final int body = at + 8;
-            final int end = Math.min(to, body + size);
+            final int end = (int) Math.min(to, body + size);
             int stop = body;
             while (stop < end && content[stop] != 0) {
                 stop++;
             }
             found.put(id, new String(content, body, stop - body, StandardCharsets.UTF_8));
-            at = body + size + (size & 1);
+            at = (int) Math.min(to, body + size + (size & 1L));
         }
         return new MediaTags(found.get("INAM"), found.get("IART"), found.get("IPRD"),
                 yearOf(found.getOrDefault("ICRD", "")), trackOf(found.getOrDefault("ITRK", "")));
@@ -252,30 +224,7 @@ public final class MediaProbe {
         return millis <= 0 ? 0 : (int) (bytes * 8L / millis);
     }
 
-    private static boolean startsWith(final byte[] content, final int at, final byte[] prefix) {
-        if (at + prefix.length > content.length) {
-            return false;
-        }
-        for (int i = 0; i < prefix.length; i++) {
-            if (content[at + i] != prefix[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     private static int le16(final byte[] b, final int at) {
         return at + 2 > b.length ? 0 : (b[at] & 0xFF) | (b[at + 1] & 0xFF) << 8;
-    }
-
-    private static long le32(final byte[] b, final int at) {
-        if (at + 4 > b.length) {
-            return 0L;
-        }
-        return (b[at] & 0xFFL) | (b[at + 1] & 0xFFL) << 8 | (b[at + 2] & 0xFFL) << 16 | (b[at + 3] & 0xFFL) << 24;
-    }
-
-    private static long le64(final byte[] b, final int at) {
-        return le32(b, at) | le32(b, at + 4) << 32;
     }
 }

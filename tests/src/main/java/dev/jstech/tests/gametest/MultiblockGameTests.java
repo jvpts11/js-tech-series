@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest;
 
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
+import dev.jstech.core.multiblock.BlockMatch;
 import dev.jstech.core.multiblock.IMatchResult;
 import dev.jstech.core.multiblock.MultiblockPattern;
 import dev.jstech.core.multiblock.MultiblockPatterns;
@@ -104,6 +105,42 @@ public final class MultiblockGameTests {
         helper.assertTrue(pattern.charAt(1, 1, 0) == MultiblockPattern.IGNORE_CHAR, "air is left free");
         helper.assertTrue(pattern.ports().get(pattern.charAt(0, 0, 0)) == PortKind.ITEM_INPUT,
                 "the part is a port of the kind named for its block");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void structure_rejectsABadPaletteIndexOrPosition(final GameTestHelper helper) {
+        for (final int[] bad : new int[][] {{0, 0, 0, 9}, {5, 0, 0, 0}}) {
+            final CompoundTag structure = new CompoundTag();
+            structure.put("size", ints(3, 2, 1));
+            final ListTag palette = new ListTag();
+            palette.add(named("jstests:test_furnace_part"));
+            structure.put("palette", palette);
+            final ListTag blocks = new ListTag();
+            blocks.add(block(bad[0], bad[1], bad[2], bad[3]));
+            structure.put("blocks", blocks);
+            boolean refused = false;
+            try {
+                MultiblockPatterns.fromStructure("bad", structure, "jstests:test_furnace_controller", Map.of());
+            } catch (final IllegalArgumentException expected) {
+                refused = expected.getMessage().contains("bad");
+            }
+            helper.assertTrue(refused, "a block outside the palette or the size is refused naming the structure");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void declare_rejectsAnIdTheGameCannotRead(final GameTestHelper helper) {
+        final MultiblockPattern pattern = MultiblockPattern.builder("bad_tag").layer("#A")
+                .where('A', BlockMatch.tag("Not A Tag")).build();
+        boolean refused = false;
+        try {
+            MultiblockPatterns.declare(ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "bad_tag"), pattern);
+        } catch (final IllegalArgumentException expected) {
+            refused = true;
+        }
+        helper.assertTrue(refused, "a tag that is not an id is refused when the pattern is declared");
         helper.succeed();
     }
 

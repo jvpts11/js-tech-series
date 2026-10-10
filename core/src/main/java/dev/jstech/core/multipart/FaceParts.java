@@ -7,12 +7,12 @@
  */
 package dev.jstech.core.multipart;
 
+import dev.jstech.core.JsCore;
 import dev.jstech.core.blockentity.IFieldPart;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -20,7 +20,6 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.Containers;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
@@ -85,14 +84,23 @@ public final class FaceParts implements IFieldPart {
         return kind == NONE ? null : CoreParts.REGISTRY.byId(kind);
     }
 
-    /** Mounts {@code part} on {@code face}, which has to be free. */
+    /**
+     * Mounts {@code part} on {@code face}, which has to be free.
+     *
+     * @throws IllegalArgumentException when the part's type is not registered
+     */
     public void add(final Direction face, final IFacePart part) {
         if (has(face)) {
             throw new IllegalStateException("the " + face + " face already holds a part");
         }
+        // An unregistered type has no number, and the registry answers -1, which is also the mark of an empty face.
+        final int kind = CoreParts.REGISTRY.getId(part.type());
+        if (kind < 0) {
+            throw new IllegalArgumentException("the part type " + part.type() + " is not registered");
+        }
         part.attach(this.host, face);
         this.parts[face.get3DDataValue()] = part;
-        this.kinds[face.get3DDataValue()] = CoreParts.REGISTRY.getId(part.type());
+        this.kinds[face.get3DDataValue()] = kind;
         this.host.partChanged();
     }
 
@@ -124,20 +132,6 @@ public final class FaceParts implements IFieldPart {
             if (part != null) {
                 part.dropContents(level);
             }
-        }
-    }
-
-    /** Drops what every part holds and the part itself, and takes them all off. */
-    public void dropAll(final ServerLevel level, final BlockPos pos) {
-        for (int i = 0; i < FACES; i++) {
-            final IFacePart part = this.parts[i];
-            if (part == null) {
-                continue;
-            }
-            part.dropContents(level);
-            Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), part.partItem());
-            this.parts[i] = null;
-            this.kinds[i] = NONE;
         }
     }
 
@@ -202,6 +196,9 @@ public final class FaceParts implements IFieldPart {
             final ResourceLocation id = ResourceLocation.tryParse(entry.getString(TYPE));
             final PartType<?> type = id == null ? null : CoreParts.REGISTRY.get(id);
             if (index >= FACES || type == null) {
+                // A part of a mod that is gone is not kept: the next save writes the block without it.
+                JsCore.LOGGER.warn("Dropping the part of type {} on face {}: no such part type is registered",
+                        entry.getString(TYPE), index);
                 continue;
             }
             final IFacePart part = type.create();

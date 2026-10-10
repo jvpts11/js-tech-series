@@ -30,6 +30,7 @@ public final class KeyActions {
     private static final String NETWORK_VERSION = "1";
     private static final List<KeyAction> ALL = new CopyOnWriteArrayList<>();
     private static final Map<ResourceLocation, KeyAction> BY_ID = new ConcurrentHashMap<>();
+    private static volatile boolean frozen;
 
     private KeyActions() {
     }
@@ -37,15 +38,28 @@ public final class KeyActions {
     /**
      * Declares an action.
      *
-     * @throws IllegalStateException when an action of that id was declared already
+     * @throws IllegalStateException when an action of that id was declared already, or the player's game has made its
+     *         key bindings and so can no longer give this one a binding
      */
     public static KeyAction declare(final KeyAction.Builder builder) {
         final KeyAction action = builder.build();
+        if (frozen) {
+            throw new IllegalStateException(
+                    "the key action " + action.id() + " is declared after the key bindings were made");
+        }
         if (BY_ID.putIfAbsent(action.id(), action) != null) {
             throw new IllegalStateException("the key action " + action.id() + " is declared twice");
         }
         ALL.add(action);
         return action;
+    }
+
+    /**
+     * Closes the declarations: the player's game calls it as it makes its key bindings, which an action declared
+     * later would miss. A dedicated server never calls it.
+     */
+    public static void freeze() {
+        frozen = true;
     }
 
     /** Every declared action, in the order they were declared. */

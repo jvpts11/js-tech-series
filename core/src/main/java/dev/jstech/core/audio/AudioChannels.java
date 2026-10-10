@@ -11,8 +11,8 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
@@ -81,7 +81,7 @@ public final class AudioChannels {
 
     /** Every channel, in the order they were declared. */
     public static synchronized Collection<AudioChannel> all() {
-        return Collections.unmodifiableCollection(CHANNELS.values());
+        return List.copyOf(CHANNELS.values());
     }
 
     /** The channel with that id, or null when nothing declared one. */

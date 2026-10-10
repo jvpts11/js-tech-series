@@ -25,9 +25,14 @@ import java.util.OptionalLong;
  */
 public final class PeripheralLink {
 
+    /** How many ticks a peripheral waits between two searches of its cables. */
+    public static final int SEARCH_INTERVAL_TICKS = 10;
+
     private final ValueField<Long> owner;
     private final PeripheralCableType type;
     private final ILinkWorld world;
+    /* Ticks left before the next search; not saved, so a loaded peripheral checks its link at once. */
+    private int cooldown;
 
     public PeripheralLink(final BlockEntityFields fields, final PeripheralCableType type, final ILinkWorld world) {
         this.owner = fields.nullable("LinkedOwner", Codec.LONG).save().toClient();
@@ -67,7 +72,17 @@ public final class PeripheralLink {
      * whose port the owner no longer has (its card taken out), to wait for a free one.
      */
     public void tick(final ServerLevel level, final BlockPos self) {
+        /*
+         * The cable searches walk the whole reachable network, so they are not paid for on every tick: after one, the
+         * next waits a few ticks, spread by position so peripherals do not all search on the same tick. A peripheral
+         * just placed has not searched yet and links at once.
+         */
+        if (cooldown > 0) {
+            cooldown--;
+            return;
+        }
         final long here = self.asLong();
+        cooldown = SEARCH_INTERVAL_TICKS + (int) Math.floorMod(here, 4L);
         final Long at = owner.get();
         if (at == null) {
             final OptionalLong found = world.discoverOwner(level, here);

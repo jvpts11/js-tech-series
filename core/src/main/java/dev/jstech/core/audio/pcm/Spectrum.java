@@ -26,6 +26,9 @@ public final class Spectrum {
     /* How far below full scale reads as nothing, in decibels. */
     private static final double FLOOR_DB = 60.0;
 
+    /* The window of the last length asked for: a frame is measured every render, always over the same length. */
+    private static volatile double[] cachedWindow = new double[0];
+
     private Spectrum() {
     }
 
@@ -35,11 +38,7 @@ public final class Spectrum {
      */
     public static void bands(final float[] samples, final int rate, final float[] out) {
         final int n = samples.length;
-        // A window that tapers the ends, so the edges of the stretch do not ring in every band.
-        final double[] tapered = new double[n];
-        for (int i = 0; i < n; i++) {
-            tapered[i] = samples[i] * (0.5 - 0.5 * Math.cos(2.0 * Math.PI * i / Math.max(1, n - 1)));
-        }
+        final double[] window = windowOf(n);
         for (int b = 0; b < out.length; b++) {
             final double frequency = middleOf(b, out.length);
             if (n == 0 || frequency >= rate / 2.0) {
@@ -50,7 +49,7 @@ public final class Spectrum {
             double before = 0.0;
             double last = 0.0;
             for (int i = 0; i < n; i++) {
-                final double now = tapered[i] + coefficient * last - before;
+                final double now = samples[i] * window[i] + coefficient * last - before;
                 before = last;
                 last = now;
             }
@@ -68,5 +67,19 @@ public final class Spectrum {
             return LOWEST;
         }
         return LOWEST * Math.pow(HIGHEST / LOWEST, band / (double) (count - 1));
+    }
+
+    /* A window that tapers the ends, so the edges of the stretch do not ring in every band. */
+    private static double[] windowOf(final int n) {
+        final double[] kept = cachedWindow;
+        if (kept.length == n) {
+            return kept;
+        }
+        final double[] window = new double[n];
+        for (int i = 0; i < n; i++) {
+            window[i] = 0.5 - 0.5 * Math.cos(2.0 * Math.PI * i / Math.max(1, n - 1));
+        }
+        cachedWindow = window;
+        return window;
     }
 }

@@ -106,11 +106,15 @@ public final class ProcessingRecipeBuilder {
     /**
      * Hands the recipe to the provider's output under {@code id}.
      *
-     * @throws IllegalStateException when it takes nothing or makes nothing
+     * @throws IllegalStateException when it takes nothing or makes nothing, or its time or energy is out of range
      */
     public void save(final RecipeOutput output, final ResourceLocation id) {
         if (inputs.isEmpty() && fluidInputs.isEmpty() || outputs.isEmpty() && fluidOutputs.isEmpty()) {
             throw new IllegalStateException("the processing recipe " + id + " takes something and makes something");
+        }
+        if (ticks < 1 || energyPerTick < 0) {
+            throw new IllegalStateException("the processing recipe " + id + " needs at least one tick and no negative"
+                    + " energy, not " + ticks + " ticks at " + energyPerTick);
         }
         output.accept(id, build(), null);
     }

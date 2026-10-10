@@ -65,7 +65,11 @@ public final class QueueArbiter {
         for (int i = 0; i < ready.size(); i++) {
             order.add(i);
         }
-        order.sort((a, b) -> level(ready.get(b), agingTicks).compareTo(level(ready.get(a), agingTicks)));
+        final OperationPriority[] levels = new OperationPriority[ready.size()];
+        for (int i = 0; i < levels.length; i++) {
+            levels[i] = level(ready.get(i), agingTicks);
+        }
+        order.sort((a, b) -> levels[b].compareTo(levels[a]));
         final boolean[] granted = new boolean[ready.size()];
         for (int i = 0; i < Math.min(slots, order.size()); i++) {
             granted[order.get(i)] = true;

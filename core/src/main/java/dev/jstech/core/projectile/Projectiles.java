@@ -25,6 +25,7 @@ public final class Projectiles {
      *
      * @return the projectile, already in the world
      * @throws IllegalArgumentException when the type makes no projectile in that level
+     * @throws IllegalStateException    when the level refuses the projectile, as a client level does
      */
     public static <T extends CoreProjectile> T fire(final Level level, @Nullable final Entity owner,
                                                     final EntityType<T> type, final Vec3 from, final Vec3 direction,
@@ -36,7 +37,9 @@ public final class Projectiles {
         projectile.setOwner(owner);
         projectile.setPos(from);
         projectile.shoot(direction.x, direction.y, direction.z, speed, 0.0F);
-        level.addFreshEntity(projectile);
+        if (!level.addFreshEntity(projectile)) {
+            throw new IllegalStateException("the projectile was not added to the level");
+        }
         return projectile;
     }
 

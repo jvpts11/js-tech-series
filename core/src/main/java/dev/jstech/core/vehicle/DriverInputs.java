@@ -8,6 +8,7 @@
 package dev.jstech.core.vehicle;
 
 import java.util.function.Function;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,10 @@ public final class DriverInputs {
         }
         if (driver instanceof Player player && player.isLocalPlayer()) {
             return localPlayer.apply(player);
+        }
+        if (driver instanceof ServerPlayer player) {
+            /* The player's own game sends these keys to the server while they ride, as it does for a boat. */
+            return new DriverInput(player.zza, player.xxa, false, player.isShiftKeyDown());
         }
         return DriverInput.NONE;
     }

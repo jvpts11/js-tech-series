@@ -98,6 +98,8 @@ public final class MediaCache {
             incoming.receiver.accept(piece.index(), piece.data());
         } catch (final IOException broken) {
             LOGGER.warn("Recording {} arrived out of order: {}", incoming.media.fileName(), broken.getMessage());
+            // Left registered, the dead transfer would swallow every later fetch of this recording as a waiter.
+            INCOMING.remove(piece.hash());
             discard(incoming);
             return;
         }
@@ -155,31 +157,43 @@ public final class MediaCache {
 
     /* Throws away the recordings heard longest ago until the cache is inside its size again. */
     private static void keepToLimit() {
-        final List<Path> kept = new ArrayList<>();
+        final List<Cached> kept = new ArrayList<>();
         long total = 0L;
         try (Stream<Path> files = Files.list(root())) {
             for (final Path file : files.filter(f -> !f.getFileName().toString().endsWith(".part")).toList()) {
-                kept.add(file);
-                total += Files.size(file);
-            }
-            kept.sort(Comparator.comparing(MediaCache::lastHeard));
-            for (final Path oldest : kept) {
-                if (total <= LIMIT_BYTES) {
-                    break;
+                // Size and time are read once per file, so sorting does not go back to the disk on every comparison.
+                final Cached cached = describe(file);
+                if (cached != null) {
+                    kept.add(cached);
+                    total += cached.size();
                 }
-                total -= Files.size(oldest);
-                Files.deleteIfExists(oldest);
             }
         } catch (final IOException cannotList) {
             LOGGER.warn("Could not keep the recording cache to its size: {}", cannotList.getMessage());
+            return;
+        }
+        kept.sort(Comparator.comparing(Cached::heard));
+        for (final Cached oldest : kept) {
+            if (total <= LIMIT_BYTES) {
+                break;
+            }
+            try {
+                Files.deleteIfExists(oldest.file());
+                total -= oldest.size();
+            } catch (final IOException cannotDelete) {
+                // One file that will not go must not keep the others from making room.
+                LOGGER.warn("Could not remove cached recording {}: {}", oldest.file().getFileName(),
+                        cannotDelete.getMessage());
+            }
         }
     }
 
-    private static FileTime lastHeard(final Path file) {
+    /* What the cache needs to know of a file, or null when it cannot be read (gone, or locked). */
+    private static Cached describe(final Path file) {
         try {
-            return Files.getLastModifiedTime(file);
-        } catch (final IOException gone) {
-            return FileTime.fromMillis(0L);
+            return new Cached(file, Files.size(file), Files.getLastModifiedTime(file));
+        } catch (final IOException unreadable) {
+            return null;
         }
     }
 
@@ -190,6 +204,10 @@ public final class MediaCache {
         } catch (final IOException ignored) {
             // A part file left behind is only a few bytes of a cache folder the player may clear.
         }
+    }
+
+    /** A recording kept on disk, with its size and the time it was last heard, read once. */
+    private record Cached(Path file, long size, FileTime heard) {
     }
 
     /** One recording on its way here, the file it is written to and who waits for it. */

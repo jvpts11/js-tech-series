@@ -104,4 +104,9 @@ public interface IPeripheralOwnerSupport extends IPeripheralOwner {
             markPeripheralChange();
         }
     }
+
+    @Override
+    default boolean isLinked(final long endpointPos) {
+        return peripheralPorts().kindOf(endpointPos) != null;
+    }
 }

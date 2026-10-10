@@ -81,7 +81,7 @@ final class SpecConfigFiles {
             final int version = found instanceof Number number ? number.intValue() : 0;
             if (version < file.version()) {
                 file.read(plain);
-                Files.write(path, file.write());
+                KeptConfigFiles.writeWhole(path, file.write());
                 file.reset();
             }
         } catch (final ConfigFormatException | IOException e) {

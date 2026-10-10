@@ -57,6 +57,7 @@ class IEasingTest {
         assertThrows(IllegalArgumentException.class, () -> IEasing.named("bouncy"));
         assertThrows(IllegalArgumentException.class, () -> IEasing.named("cubic-bezier(0, 0, 1)"));
         assertThrows(IllegalArgumentException.class, () -> IEasing.named("cubic-bezier(a, 0, 1, 1)"));
+        assertThrows(IllegalArgumentException.class, () -> IEasing.named("cubic-bezier(0, 1e999, 1, 1)"));
         assertThrows(IllegalArgumentException.class, () -> IEasing.named("steps(x)"));
         assertThrows(IllegalArgumentException.class, () -> IEasing.named("steps(0)"));
     }

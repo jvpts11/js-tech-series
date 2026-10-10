@@ -13,6 +13,7 @@ import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.machine.ProcessingKind;
 import dev.jstech.core.machine.ProcessingRecipe;
 import java.util.List;
+import java.util.OptionalInt;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.gui.handlers.IGuiContainerHandler;
@@ -95,13 +96,15 @@ public final class CoreJeiPlugin implements IModPlugin {
         runtime = null;
     }
 
-    /** How many recipes JEI shows under that kind of machine, or -1 while JEI is not running. */
-    public static long recipesShown(final ProcessingKind kind) {
+    /** How many recipes JEI shows under that kind of machine, or nothing while JEI is not running. */
+    public static OptionalInt recipesShown(final ProcessingKind kind) {
         final IJeiRuntime running = runtime;
         if (running == null) {
-            return -1;
+            return OptionalInt.empty();
         }
-        return running.getRecipeManager().createRecipeLookup(ProcessingCategory.typeOf(kind)).get().count();
+        final long count = running.getRecipeManager().createRecipeLookup(ProcessingCategory.typeOf(kind)).get()
+                .count();
+        return OptionalInt.of((int) Math.min(count, Integer.MAX_VALUE));
     }
 
     /** Opens JEI's recipe screen on the recipes of that kind of machine; false while JEI is not running. */

@@ -136,6 +136,9 @@ public abstract sealed class CoreState<T> permits ServerState, DimensionState, P
         if (newer > 0) {
             SaveFiles.keepNewerCopy(level, this.fileName, newer);
         }
+        if (save.takeUnreadable()) {
+            SaveFiles.keepUnreadableCopy(level, this.fileName);
+        }
         return save;
     }
 

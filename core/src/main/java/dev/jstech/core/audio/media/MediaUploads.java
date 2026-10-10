@@ -121,7 +121,7 @@ public final class MediaUploads {
             final MediaReceipt done = HANDLERS.get(offer.purpose()).received(player, offer.context(), offer.name(),
                     kept, store.get().info(kept));
             end(player, theirs, incoming, done.accepted(), done.message());
-        } catch (final IOException unreadable) {
+        } catch (final IOException | RuntimeException unreadable) {
             end(player, theirs, incoming, false, MediaTexts.UNREADABLE.text());
         }
     }

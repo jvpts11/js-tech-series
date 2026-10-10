@@ -35,6 +35,14 @@ class SoundMixerLayoutTest {
     }
 
     @Test
+    void sounds_recordsTheRowThatFitsExactlyAtTheSmallestHeight() {
+        final GuiLayout layout = SoundMixerLayout.sounds(SoundMixerLayout.SMALLEST_WIDTH,
+                SoundMixerLayout.SMALLEST_HEIGHT);
+        assertEquals("play_4", layout.boxAt("play_4").name());
+        assertEquals("toggle_4", layout.boxAt("toggle_4").name());
+    }
+
+    @Test
     void options_fitWithoutColliding() {
         assertClean(SoundMixerLayout.options(SoundMixerLayout.SMALLEST_WIDTH, SoundMixerLayout.SMALLEST_HEIGHT, 3));
         assertClean(SoundMixerLayout.options(640, 360, 2));

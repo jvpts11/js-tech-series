@@ -115,6 +115,36 @@ public final class BatchGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = ARENA)
+    public static void batch_undoOfAnExtractTriesOtherSlotsWhenItsOwnRefuses(final GameTestHelper helper) {
+        final ItemStackHandler source = new ItemStackHandler(3) {
+            @Override
+            public ItemStack insertItem(final int slot, final ItemStack stack, final boolean simulate) {
+                return slot == 0 ? stack : super.insertItem(slot, stack, simulate);
+            }
+        };
+        source.setStackInSlot(0, new ItemStack(Items.IRON_INGOT, 4));
+        final HandlerSteps.Recoverable take = HandlerSteps.extract(source, new ItemStack(Items.IRON_INGOT), 4);
+        take.execute();
+        helper.assertTrue(take.undo(), "the items found a place in another slot");
+        helper.assertTrue(source.getStackInSlot(1).getCount() == 4 && take.unreturnedItems().isEmpty(),
+                "all four are back, and none is reported lost");
+
+        final ItemStackHandler full = new ItemStackHandler(1) {
+            @Override
+            public ItemStack insertItem(final int slot, final ItemStack stack, final boolean simulate) {
+                return stack;
+            }
+        };
+        full.setStackInSlot(0, new ItemStack(Items.IRON_INGOT, 4));
+        final HandlerSteps.Recoverable stuck = HandlerSteps.extract(full, new ItemStack(Items.IRON_INGOT), 4);
+        stuck.execute();
+        helper.assertTrue(!stuck.undo() && stuck.unreturnedItems().size() == 1
+                && stuck.unreturnedItems().getFirst().getCount() == 4,
+                "what no slot takes back is handed to the caller, not destroyed");
+        helper.succeed();
+    }
+
     private static IItemHandler chest(final GameTestHelper helper, final BlockPos at) {
         helper.setBlock(at, Blocks.CHEST);
         final IItemHandler handler = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK,

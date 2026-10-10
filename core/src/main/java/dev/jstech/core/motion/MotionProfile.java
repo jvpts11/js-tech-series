@@ -121,18 +121,42 @@ public record MotionProfile(Map<String, MotionSpec> kinds) {
         final Map<String, Double> params = new TreeMap<>();
         for (final Map.Entry<?, ?> field : entry.entrySet()) {
             final String name = String.valueOf(field.getKey());
-            if (!name.equals(DURATION) && !name.equals(DELAY) && field.getValue() instanceof Number number) {
+            if (!MotionSpec.RESERVED.contains(name) && field.getValue() instanceof Number number) {
                 params.put(name, number.doubleValue());
             }
         }
-        return new MotionSpec(style, Math.max(0, whole(entry.get(DURATION))), Math.max(0, whole(entry.get(DELAY))),
-                entry.get(EASING) instanceof String easing ? IEasing.named(easing) : IEasing.LINEAR,
-                entry.get(GROUP) instanceof String group ? group : "", params);
+        final String easing = text(kind, entry, EASING);
+        return new MotionSpec(style, whole(kind, entry, DURATION), whole(kind, entry, DELAY),
+                easing == null ? IEasing.LINEAR : IEasing.named(easing), text(kind, entry, GROUP, ""), params);
     }
 
-    /** A whole number of milliseconds, or none where the file gives none. */
-    private static int whole(final Object value) {
-        return value instanceof Number number ? (int) Math.round(number.doubleValue()) : 0;
+    /** A whole number of milliseconds, none where the file gives none, from 0 up and saturating, never wrapping. */
+    private static int whole(final String kind, final Map<?, ?> entry, final String field) {
+        final Object value = entry.get(field);
+        if (value == null) {
+            return 0;
+        }
+        if (!(value instanceof Number number)) {
+            throw new IllegalArgumentException("the " + field + " of the motion of " + kind + " is not a number");
+        }
+        return (int) Math.max(0L, Math.min(Integer.MAX_VALUE, Math.round(number.doubleValue())));
+    }
+
+    /** A text field, or null where the file gives none. */
+    private static String text(final String kind, final Map<?, ?> entry, final String field) {
+        final Object value = entry.get(field);
+        if (value == null) {
+            return null;
+        }
+        if (!(value instanceof String text)) {
+            throw new IllegalArgumentException("the " + field + " of the motion of " + kind + " is not a text");
+        }
+        return text;
+    }
+
+    private static String text(final String kind, final Map<?, ?> entry, final String field, final String fallback) {
+        final String text = text(kind, entry, field);
+        return text == null ? fallback : text;
     }
 
     /** A profile being put together, one kind at a time, in the order the kinds are given. */

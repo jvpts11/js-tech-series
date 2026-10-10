@@ -40,6 +40,12 @@ public sealed interface GuideBlock {
         public Heading {
             Objects.requireNonNull(key, "key");
         }
+
+        /** Whether the heading leads into what can go wrong, which stands out in the style's accent. */
+        public boolean leadsIntoTrouble() {
+            return GuideTexts.WHAT_CAN_GO_WRONG.key().equals(this.key)
+                    || GuideTexts.IF_SOMETHING_GOES_WRONG.key().equals(this.key);
+        }
     }
 
     /**

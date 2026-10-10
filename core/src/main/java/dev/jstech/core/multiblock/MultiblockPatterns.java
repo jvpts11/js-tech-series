@@ -64,7 +64,12 @@ public final class MultiblockPatterns {
             .apply(instance, RawMatch::new))
             .flatXmap(raw -> raw.blocks().isEmpty() && raw.tags().isEmpty()
                             ? DataResult.error(() -> "a slot names at least one block or tag")
-                            : DataResult.success(new BlockMatch(raw.blocks(), raw.tags())),
+                            : DataResult.success(new BlockMatch(raw.blocks(), raw.tags())).flatMap(match -> {
+                                final String bad = unreadableId(match);
+                                return bad == null ? DataResult.success(match)
+                                        : DataResult.<BlockMatch>error(() -> "a slot names \"" + bad
+                                                + "\", which is not an id");
+                            }),
                     match -> DataResult.success(new RawMatch(match.blocks(), match.tags())));
 
     private static final Codec<Character> LETTER = Codec.STRING.flatXmap(
@@ -101,9 +106,18 @@ public final class MultiblockPatterns {
     /**
      * Declares a mod's pattern, which a file of the same id replaces.
      *
-     * @throws IllegalStateException when a pattern of that id is declared already
+     * @throws IllegalStateException    when a pattern of that id is declared already
+     * @throws IllegalArgumentException when a slot of the pattern names a block or a tag by an id the game cannot read,
+     *                                  which would otherwise leave the structure unable to form with no message
      */
     public static MultiblockPattern declare(final ResourceLocation id, final MultiblockPattern pattern) {
+        for (final IBlockMatcher matcher : pattern.mapping().values()) {
+            final String bad = matcher instanceof BlockMatch match ? unreadableId(match) : null;
+            if (bad != null) {
+                throw new IllegalArgumentException("the multiblock pattern " + id + " names \"" + bad
+                        + "\", which is not an id");
+            }
+        }
         if (DECLARED.putIfAbsent(id, pattern) != null) {
             throw new IllegalStateException("the multiblock pattern " + id + " is declared twice");
         }
@@ -197,7 +211,17 @@ public final class MultiblockPatterns {
         for (int i = 0; i < blocks.size(); i++) {
             final CompoundTag block = blocks.getCompound(i);
             final ListTag pos = block.getList("pos", Tag.TAG_INT);
-            final String id = paletteIds.get(block.getInt("state"));
+            final int state = block.getInt("state");
+            if (state < 0 || state >= paletteIds.size()) {
+                throw new IllegalArgumentException(name + " has a block of palette entry " + state + ", and the palette"
+                        + " holds " + paletteIds.size());
+            }
+            if (pos.size() != 3 || pos.getInt(0) < 0 || pos.getInt(0) >= sx || pos.getInt(1) < 0
+                    || pos.getInt(1) >= sy || pos.getInt(2) < 0 || pos.getInt(2) >= sz) {
+                throw new IllegalArgumentException(name + " has a block outside its own size of " + sx + " by " + sy
+                        + " by " + sz);
+            }
+            final String id = paletteIds.get(state);
             if (id.equals("minecraft:air") || id.equals("minecraft:structure_void")) {
                 continue;
             }
@@ -255,6 +279,22 @@ public final class MultiblockPatterns {
         } catch (final IllegalArgumentException unreadable) {
             throw new IOException(unreadable.getMessage(), unreadable);
         }
+    }
+
+    /* The first block or tag id of the match that cannot be read as an id, or null when all of them can. */
+    @Nullable
+    private static String unreadableId(final BlockMatch match) {
+        for (final String id : match.blocks()) {
+            if (ResourceLocation.tryParse(id) == null) {
+                return id;
+            }
+        }
+        for (final String id : match.tags()) {
+            if (ResourceLocation.tryParse(id) == null) {
+                return id;
+            }
+        }
+        return null;
     }
 
     private static Block blockIn(final BlockGetter level, final long encodedPos) {

@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.content;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -108,7 +107,7 @@ public final class EntityBuilder<E extends Entity> {
                     .clientTrackingRange(range).updateInterval(interval);
             return (immune ? builder.fireImmune() : builder).build(key.toString());
         });
-        content.declare(Objects.requireNonNull(entry));
+        content.declare(entry);
         return entry;
     }
 }

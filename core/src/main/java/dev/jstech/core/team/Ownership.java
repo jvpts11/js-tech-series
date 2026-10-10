@@ -85,11 +85,7 @@ public record Ownership(UUID owner, Access access) {
 
     /** The owner's name as the server last knew it, or their id when it never did. */
     public String ownerName(final MinecraftServer server) {
-        final ServerPlayer online = server.getPlayerList().getPlayer(owner);
-        if (online != null) {
-            return online.getGameProfile().getName();
-        }
-        return server.getProfileCache() == null ? owner.toString()
-                : server.getProfileCache().get(owner).map(profile -> profile.getName()).orElse(owner.toString());
+        final String name = CoreTeams.lastKnownName(server, owner);
+        return name != null ? name : owner.toString();
     }
 }

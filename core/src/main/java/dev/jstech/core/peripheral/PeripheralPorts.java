@@ -51,12 +51,14 @@ public final class PeripheralPorts {
     /** Links the peripheral at {@code pos} on one of the owner's own ports of {@code kind}; whether that changed. */
     public boolean link(final long pos, final PortKind kind) {
         final boolean wasHubbed = this.hubs.remove(pos) != null;
+        forgetStaleDisabled(pos);
         return this.linked.put(pos, kind) != kind || wasHubbed;
     }
 
     /** Links the peripheral at {@code pos} on a port of {@code kind} of the hub at {@code hub}; whether it changed. */
     public boolean linkThrough(final long pos, final PortKind kind, final long hub) {
         final Long before = this.hubs.put(pos, hub);
+        forgetStaleDisabled(pos);
         return this.linked.put(pos, kind) != kind || before == null || before != hub;
     }
 
@@ -234,6 +236,13 @@ public final class PeripheralPorts {
             if (this.linked.containsKey(pos)) {
                 this.disabled.add(pos);
             }
+        }
+    }
+
+    /* A peripheral taken out through the live view leaves its disabled flag behind; one linked anew comes back on. */
+    private void forgetStaleDisabled(final long pos) {
+        if (!this.linked.containsKey(pos)) {
+            this.disabled.remove(pos);
         }
     }
 }

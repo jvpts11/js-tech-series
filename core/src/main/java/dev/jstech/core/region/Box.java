@@ -25,9 +25,16 @@ public record Box(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
         return new Box(x, y, z, x, y, z);
     }
 
-    /** The box of every block within {@code radius} of a block, along each axis. */
+    /**
+     * The box of every block within {@code radius} of a block, along each axis; a corner that would pass the end of
+     * the int range stops at it, so a huge radius covers the whole world instead of failing.
+     */
     public static Box around(final int x, final int y, final int z, final int radius) {
-        return new Box(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius);
+        if (radius < 0) {
+            throw new IllegalArgumentException("a radius is not negative: " + radius);
+        }
+        return new Box(low(x, radius), low(y, radius), low(z, radius), high(x, radius), high(y, radius),
+                high(z, radius));
     }
 
     /** The box between two corners, given in any order. */
@@ -51,6 +58,14 @@ public record Box(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
         final long dy = gap(y, minY, maxY);
         final long dz = gap(z, minZ, maxZ);
         return dx * dx + dy * dy + dz * dz;
+    }
+
+    private static int low(final int value, final int radius) {
+        return (int) Math.max(Integer.MIN_VALUE, (long) value - radius);
+    }
+
+    private static int high(final int value, final int radius) {
+        return (int) Math.min(Integer.MAX_VALUE, (long) value + radius);
     }
 
     private static long gap(final int value, final int min, final int max) {

@@ -114,6 +114,12 @@ public sealed interface IEasing permits IEasing.Linear, IEasing.CubicBezier, IEa
     record CubicBezier(double x1, double y1, double x2, double y2) implements IEasing {
 
         public CubicBezier {
+            // Infinity gets in through exponent overflow ("1e999"); a NaN or infinite control point would make every
+            // mid-range progress NaN, so a curve built from one is refused instead.
+            if (!Double.isFinite(x1) || !Double.isFinite(y1) || !Double.isFinite(x2) || !Double.isFinite(y2)) {
+                throw new IllegalArgumentException("a cubic-bezier needs finite numbers: " + x1 + ", " + y1 + ", "
+                        + x2 + ", " + y2);
+            }
             x1 = clamp(x1);
             x2 = clamp(x2);
         }

@@ -56,6 +56,9 @@ public final class Checkbox extends UiComponent {
 
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
+        if (button != 0) {
+            return false;
+        }
         onToggle.run();
         return true;
     }

@@ -8,27 +8,21 @@
 package dev.jstech.core.format;
 
 public enum Unit {
-    FE(" FE", true),
+    FE(" FE"),
 
-    FE_PER_TICK(" FE/t", true),
+    FE_PER_TICK(" FE/t"),
 
-    MB(" MB", true),
+    MB(" MB"),
 
-    IT_PER_TICK(" it/t", true);
+    IT_PER_TICK(" it/t");
 
     private final String suffix;
-    private final boolean scalable;
 
-    Unit(final String suffix, final boolean scalable) {
+    Unit(final String suffix) {
         this.suffix = suffix;
-        this.scalable = scalable;
     }
 
     public String suffix() {
         return suffix;
-    }
-
-    public boolean scalable() {
-        return scalable;
     }
 }

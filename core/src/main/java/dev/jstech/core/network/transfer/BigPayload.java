@@ -78,6 +78,12 @@ public final class BigPayload<T> {
                         + " bytes is too large to send");
             }
             final byte[] packed = Compression.pack(raw);
+            // The receiver refuses a sending whose packed size passes this, and only logs it; so it is refused here,
+            // where the sender is told.
+            if (packed.length > BigPayloads.MOST_PACKED) {
+                throw new IllegalArgumentException("a " + this.id + " packs to " + packed.length
+                        + " bytes, more than may be sent");
+            }
             final int count = Pieces.count(packed.length, BigPayloads.PIECE_BYTES);
             final int transfer = BigPayloads.nextTransfer();
             final List<BigPiecePayload> pieces = new ArrayList<>(count);

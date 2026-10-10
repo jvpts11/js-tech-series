@@ -10,6 +10,8 @@ package dev.jstech.core.transfer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.LongSupplier;
+import java.util.function.LongUnaryOperator;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -27,133 +29,69 @@ public final class HandlerSteps {
     }
 
     /** Puts all of {@code stack} into {@code handler}, slot after slot. */
-    public static Batch.IStep insert(final IItemHandler handler, final ItemStack stack) {
+    public static Recoverable insert(final IItemHandler handler, final ItemStack stack) {
         return new Insert(Objects.requireNonNull(handler, "handler"), stack.copy());
     }
 
     /** Takes {@code count} items like {@code like} (the same item and components) out of {@code handler}. */
-    public static Batch.IStep extract(final IItemHandler handler, final ItemStack like, final int count) {
+    public static Recoverable extract(final IItemHandler handler, final ItemStack like, final int count) {
         return new Extract(Objects.requireNonNull(handler, "handler"), like.copyWithCount(1), count);
     }
 
     /** Fills {@code handler} with all of {@code fluid}. */
-    public static Batch.IStep fill(final IFluidHandler handler, final FluidStack fluid) {
+    public static Recoverable fill(final IFluidHandler handler, final FluidStack fluid) {
         final FluidStack wanted = fluid.copy();
-        return new Batch.IStep() {
-            private int moved;
-
-            @Override
-            public long wants() {
-                return wanted.getAmount();
-            }
-
-            @Override
-            public long simulate() {
-                return handler.fill(wanted.copy(), IFluidHandler.FluidAction.SIMULATE);
-            }
-
-            @Override
-            public long execute() {
-                this.moved = handler.fill(wanted.copy(), IFluidHandler.FluidAction.EXECUTE);
-                return this.moved;
-            }
-
-            @Override
-            public boolean undo() {
-                return this.moved == 0 || handler.drain(wanted.copyWithAmount(this.moved),
-                        IFluidHandler.FluidAction.EXECUTE).getAmount() == this.moved;
-            }
-        };
+        return new FluidStep(wanted,
+                () -> handler.fill(wanted.copy(), IFluidHandler.FluidAction.SIMULATE),
+                () -> handler.fill(wanted.copy(), IFluidHandler.FluidAction.EXECUTE),
+                moved -> handler.drain(wanted.copyWithAmount((int) moved), IFluidHandler.FluidAction.EXECUTE)
+                        .getAmount());
     }
 
     /** Drains all of {@code fluid} out of {@code handler}. */
-    public static Batch.IStep drain(final IFluidHandler handler, final FluidStack fluid) {
+    public static Recoverable drain(final IFluidHandler handler, final FluidStack fluid) {
         final FluidStack wanted = fluid.copy();
-        return new Batch.IStep() {
-            private int moved;
-
-            @Override
-            public long wants() {
-                return wanted.getAmount();
-            }
-
-            @Override
-            public long simulate() {
-                return handler.drain(wanted.copy(), IFluidHandler.FluidAction.SIMULATE).getAmount();
-            }
-
-            @Override
-            public long execute() {
-                this.moved = handler.drain(wanted.copy(), IFluidHandler.FluidAction.EXECUTE).getAmount();
-                return this.moved;
-            }
-
-            @Override
-            public boolean undo() {
-                return this.moved == 0 || handler.fill(wanted.copyWithAmount(this.moved),
-                        IFluidHandler.FluidAction.EXECUTE) == this.moved;
-            }
-        };
+        return new FluidStep(wanted,
+                () -> handler.drain(wanted.copy(), IFluidHandler.FluidAction.SIMULATE).getAmount(),
+                () -> handler.drain(wanted.copy(), IFluidHandler.FluidAction.EXECUTE).getAmount(),
+                moved -> handler.fill(wanted.copyWithAmount((int) moved), IFluidHandler.FluidAction.EXECUTE));
     }
 
     /** Gives {@code storage} {@code amount} FE. */
-    public static Batch.IStep receive(final IEnergyStorage storage, final int amount) {
-        return new Batch.IStep() {
-            private int moved;
-
-            @Override
-            public long wants() {
-                return amount;
-            }
-
-            @Override
-            public long simulate() {
-                return storage.receiveEnergy(amount, true);
-            }
-
-            @Override
-            public long execute() {
-                this.moved = storage.receiveEnergy(amount, false);
-                return this.moved;
-            }
-
-            @Override
-            public boolean undo() {
-                return this.moved == 0 || storage.extractEnergy(this.moved, false) == this.moved;
-            }
-        };
+    public static Recoverable receive(final IEnergyStorage storage, final int amount) {
+        return new AmountStep(amount,
+                () -> storage.receiveEnergy(amount, true),
+                () -> storage.receiveEnergy(amount, false),
+                moved -> storage.extractEnergy((int) moved, false));
     }
 
     /** Takes {@code amount} FE out of {@code storage}. */
-    public static Batch.IStep extract(final IEnergyStorage storage, final int amount) {
-        return new Batch.IStep() {
-            private int moved;
+    public static Recoverable extract(final IEnergyStorage storage, final int amount) {
+        return new AmountStep(amount,
+                () -> storage.extractEnergy(amount, true),
+                () -> storage.extractEnergy(amount, false),
+                moved -> storage.receiveEnergy((int) moved, false));
+    }
 
-            @Override
-            public long wants() {
-                return amount;
-            }
+    /**
+     * A step that can tell what it could not put back when it was undone, so the caller can place it somewhere
+     * instead of letting it vanish.
+     */
+    public interface Recoverable extends Batch.IStep {
 
-            @Override
-            public long simulate() {
-                return storage.extractEnergy(amount, true);
-            }
+        /** The items the last undo could not give back to where they came from; empty when it all went back. */
+        default List<ItemStack> unreturnedItems() {
+            return List.of();
+        }
 
-            @Override
-            public long execute() {
-                this.moved = storage.extractEnergy(amount, false);
-                return this.moved;
-            }
-
-            @Override
-            public boolean undo() {
-                return this.moved == 0 || storage.receiveEnergy(this.moved, false) == this.moved;
-            }
-        };
+        /** The fluid the last undo could not give back to where it came from; empty when it all went back. */
+        default FluidStack unreturnedFluid() {
+            return FluidStack.EMPTY;
+        }
     }
 
     /* Puts a stack in slot after slot, remembering how many went into each. */
-    private static final class Insert implements Batch.IStep {
+    private static final class Insert implements Recoverable {
 
         private final IItemHandler handler;
         private final ItemStack stack;
@@ -205,13 +143,14 @@ public final class HandlerSteps {
     }
 
     /* Takes items like a stack out slot after slot, remembering how many came from each. */
-    private static final class Extract implements Batch.IStep {
+    private static final class Extract implements Recoverable {
 
         private final IItemHandler handler;
         private final ItemStack like;
         private final int count;
         private final List<ItemStack> taken = new ArrayList<>();
         private final List<Integer> from = new ArrayList<>();
+        private final List<ItemStack> unreturned = new ArrayList<>();
 
         private Extract(final IItemHandler handler, final ItemStack like, final int count) {
             this.handler = handler;
@@ -239,6 +178,7 @@ public final class HandlerSteps {
         public long execute() {
             this.taken.clear();
             this.from.clear();
+            this.unreturned.clear();
             int found = 0;
             for (int slot = 0; slot < this.handler.getSlots() && found < this.count; slot++) {
                 if (ItemStack.isSameItemSameComponents(this.handler.getStackInSlot(slot), this.like)) {
@@ -257,11 +197,92 @@ public final class HandlerSteps {
         public boolean undo() {
             boolean whole = true;
             for (int i = this.taken.size() - 1; i >= 0; i--) {
-                whole &= this.handler.insertItem(this.from.get(i), this.taken.get(i), false).isEmpty();
+                // The slot it came from may refuse it now (an output-only slot, or one that filled up again), so any
+                // other slot gets a try before the items count as not returned.
+                ItemStack left = this.handler.insertItem(this.from.get(i), this.taken.get(i), false);
+                for (int slot = 0; slot < this.handler.getSlots() && !left.isEmpty(); slot++) {
+                    left = this.handler.insertItem(slot, left, false);
+                }
+                if (!left.isEmpty()) {
+                    this.unreturned.add(left);
+                    whole = false;
+                }
             }
             this.taken.clear();
             this.from.clear();
             return whole;
+        }
+
+        @Override
+        public List<ItemStack> unreturnedItems() {
+            return List.copyOf(this.unreturned);
+        }
+    }
+
+    /* A step over a quantity: one call to ask, one to move, one to give back what moved. */
+    private static class AmountStep implements Recoverable {
+
+        private final long wanted;
+        private final LongSupplier simulate;
+        private final LongSupplier execute;
+        private final LongUnaryOperator giveBack;
+        private long moved;
+        private long unreturned;
+
+        private AmountStep(final long wanted, final LongSupplier simulate, final LongSupplier execute,
+                           final LongUnaryOperator giveBack) {
+            this.wanted = wanted;
+            this.simulate = simulate;
+            this.execute = execute;
+            this.giveBack = giveBack;
+        }
+
+        @Override
+        public long wants() {
+            return this.wanted;
+        }
+
+        @Override
+        public long simulate() {
+            return this.simulate.getAsLong();
+        }
+
+        @Override
+        public long execute() {
+            this.unreturned = 0;
+            this.moved = this.execute.getAsLong();
+            return this.moved;
+        }
+
+        @Override
+        public boolean undo() {
+            if (this.moved == 0) {
+                return true;
+            }
+            this.unreturned = Math.max(0, this.moved - this.giveBack.applyAsLong(this.moved));
+            this.moved = 0;
+            return this.unreturned == 0;
+        }
+
+        protected long unreturned() {
+            return this.unreturned;
+        }
+    }
+
+    /* A step over a fluid, which can say how much of it the last undo left unreturned. */
+    private static final class FluidStep extends AmountStep {
+
+        private final FluidStack fluid;
+
+        private FluidStep(final FluidStack fluid, final LongSupplier simulate, final LongSupplier execute,
+                          final LongUnaryOperator giveBack) {
+            super(fluid.getAmount(), simulate, execute, giveBack);
+            this.fluid = fluid;
+        }
+
+        @Override
+        public FluidStack unreturnedFluid() {
+            return unreturned() > 0 ? this.fluid.copyWithAmount((int) unreturned()) : FluidStack.EMPTY;
         }
     }
 }

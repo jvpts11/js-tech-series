@@ -38,6 +38,9 @@ public record GridMember(@Nullable String line, int generation, int colour, long
         if (generation < 0) {
             throw new IllegalArgumentException("a line's generation counts from 0, not " + generation);
         }
+        if (throughput < 0) {
+            throw new IllegalArgumentException("a cable carries nothing below 0: " + throughput);
+        }
         if (range < 0) {
             throw new IllegalArgumentException("a range is never below 0: " + range);
         }

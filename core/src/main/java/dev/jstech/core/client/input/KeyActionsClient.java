@@ -83,6 +83,7 @@ public final class KeyActionsClient {
 
     @SubscribeEvent
     public static void onRegisterKeys(final RegisterKeyMappingsEvent event) {
+        KeyActions.freeze();
         for (final KeyAction action : KeyActions.all()) {
             final int key = action.defaultKey() == KeyAction.NO_KEY ? InputConstants.UNKNOWN.getValue()
                     : action.defaultKey();

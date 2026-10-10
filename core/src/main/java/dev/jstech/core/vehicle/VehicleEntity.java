@@ -14,6 +14,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -77,6 +78,14 @@ public abstract class VehicleEntity extends Entity implements IEnergyHolder {
         if (isControlledByLocalInstance()) {
             drive(input());
             move(MoverType.SELF, getDeltaMovement());
+        } else if (!level().isClientSide() && getControllingPassenger() instanceof ServerPlayer) {
+            /*
+             * A player's game drives the vehicle, so the server never runs drive() for it; it still takes the energy
+             * of every tick the player's keys ask for, so the battery the server saves and shows is the true one.
+             */
+            if (input().moving()) {
+                spend(spec().energyPerTick());
+            }
         }
     }
 

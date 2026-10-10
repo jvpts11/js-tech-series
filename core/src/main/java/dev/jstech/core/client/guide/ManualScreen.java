@@ -81,6 +81,10 @@ public final class ManualScreen extends Screen {
     private int spread = -1;
     private boolean searching;
     private EditBox searchField;
+    /** What the search found the last time it was asked, for the book and the words it was asked with. */
+    private List<GuideBook.IndexLine> foundCache = List.of();
+    private GuideBook foundBook;
+    private String foundWords;
     private ItemStack hoveredItem = ItemStack.EMPTY;
     private Component hoveredWords;
 
@@ -248,13 +252,20 @@ public final class ManualScreen extends Screen {
     public List<GuideBook.IndexLine> found() {
         final String wanted = this.searchField == null ? "" : this.searchField.getValue().strip()
                 .toLowerCase(Locale.ROOT);
+        // Asked several times a frame while the search is open, yet it only changes when the player types.
+        if (this.foundBook == this.book && wanted.equals(this.foundWords)) {
+            return this.foundCache;
+        }
         final List<GuideBook.IndexLine> found = new ArrayList<>();
         for (final GuideBook.IndexLine line : this.book.index()) {
             if (wanted.isEmpty() || line.text().toLowerCase(Locale.ROOT).contains(wanted)) {
                 found.add(line);
             }
         }
-        return found;
+        this.foundCache = List.copyOf(found);
+        this.foundBook = this.book;
+        this.foundWords = wanted;
+        return this.foundCache;
     }
 
     @Override
@@ -381,6 +392,8 @@ public final class ManualScreen extends Screen {
 
     private void resolveColours() {
         this.colours.clear();
+        // The binder's colours are the ground every role falls back on, read once here and not on each frame.
+        this.colours.putAll(PaletteRoles.read(GuidePalettes.BINDER.get()));
         if (!this.style.palette().isEmpty()) {
             this.colours.putAll(PaletteLookup.roles(this.style.palette()));
         }
@@ -406,9 +419,8 @@ public final class ManualScreen extends Screen {
         if (colour != null) {
             return colour;
         }
-        // A style that names no colour for a role is drawn in the binder's, so nothing is ever left unpainted.
-        final Integer binder = PaletteRoles.read(GuidePalettes.BINDER.get()).get(role);
-        return binder == null ? GuidePalettes.BINDER.get().ink() : binder;
+        // A role not even the binder names is drawn in ink, so nothing is ever left unpainted.
+        return GuidePalettes.BINDER.get().ink();
     }
 
     private int colour(final String role) {
@@ -508,9 +520,10 @@ public final class ManualScreen extends Screen {
     private void drawWords(final GuiGraphics g, final int centre, final int top, final int ground, final int room,
                            final int titleRoom) {
         int y = top;
-        if (!this.manual.icon().isEmpty()) {
-            final ResourceLocation mark = ResourceLocation.parse(this.manual.icon()).withPrefix("textures/")
-                    .withSuffix(".png");
+        final ResourceLocation icon = this.manual.icon().isEmpty() ? null
+                : ResourceLocation.tryParse(this.manual.icon());
+        if (icon != null) {
+            final ResourceLocation mark = icon.withPrefix("textures/").withSuffix(".png");
             g.blit(mark, centre - MARK / 2, y, 0, 0, MARK, MARK, MARK, MARK);
             y += MARK + 10;
         }
@@ -788,7 +801,7 @@ public final class ManualScreen extends Screen {
                     my);
             case GuidePiece.Recipes rows -> this.drawRecipes(g, x, y, rows, chapter, mx, my);
             case GuidePiece.Custom custom -> {
-                final IGuideBlockRenderer renderer = GuideBlockRenderers.get(ResourceLocation.parse(custom.type()));
+                final IGuideBlockRenderer renderer = rendererOf(custom.type());
                 if (renderer != null) {
                     renderer.draw(g, this.font, x, y, custom.width(), custom.height(), this.dataOf(custom.data()),
                             mx + this.left, my + this.top);
@@ -825,13 +838,16 @@ public final class ManualScreen extends Screen {
     private void drawPicture(final GuiGraphics g, final int x, final int y, final GuidePiece.Picture picture,
                              final int mx, final int my) {
         if (!picture.image().isEmpty()) {
-            final ResourceLocation image = ResourceLocation.parse(picture.image()).withPrefix("textures/")
-                    .withSuffix(".png");
+            final ResourceLocation named = ResourceLocation.tryParse(picture.image());
+            if (named == null) {
+                return;
+            }
+            final ResourceLocation image = named.withPrefix("textures/").withSuffix(".png");
             Draw.blended(() -> g.blit(image, x, y, picture.width(), picture.height(), 0.0F, 0.0F, picture.width(),
                     picture.height(), picture.width(), picture.height()));
             return;
         }
-        final IGuideBlockRenderer renderer = GuideBlockRenderers.get(ResourceLocation.parse(picture.drawing()));
+        final IGuideBlockRenderer renderer = rendererOf(picture.drawing());
         if (renderer != null) {
             renderer.draw(g, this.font, x, y, picture.width(), picture.height(), this.dataOf(picture.data()),
                     mx + this.left, my + this.top);
@@ -1130,7 +1146,14 @@ public final class ManualScreen extends Screen {
         if (item.isEmpty()) {
             return ItemStack.EMPTY;
         }
-        return new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.parse(item)));
+        final ResourceLocation id = ResourceLocation.tryParse(item);
+        return id == null ? ItemStack.EMPTY : new ItemStack(BuiltInRegistries.ITEM.get(id));
+    }
+
+    /* The renderer a pack names, or none when the name is not a valid id. */
+    private static IGuideBlockRenderer rendererOf(final String type) {
+        final ResourceLocation id = ResourceLocation.tryParse(type);
+        return id == null ? null : GuideBlockRenderers.get(id);
     }
 
     private CompoundTag dataOf(final String json) {

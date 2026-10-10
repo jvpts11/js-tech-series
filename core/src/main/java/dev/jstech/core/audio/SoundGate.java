@@ -43,7 +43,7 @@ public final class SoundGate {
         prune(now);
         final String key = source + '|' + sound;
         final Long last = lastHeard.get(key);
-        if (last != null && now - last < cooldownTicks) {
+        if (last != null && now >= last && now - last < cooldownTicks) {
             return false;
         }
         lastHeard.put(key, now);

@@ -452,10 +452,12 @@ public final class GuideLayout {
             case GuideBlock.Views views -> this.views(views);
             case GuideBlock.Plan plan -> this.plan(plan);
             case GuideBlock.Custom custom -> {
-                this.ensure(custom.height());
-                this.place(new GuidePiece.Custom(this.x(), this.y, this.width, custom.height(), custom.type(),
+                // A block taller than the text area would run past the page foot, so it is cut to the area.
+                final int height = Math.min(custom.height(), this.bottom() - this.top);
+                this.ensure(height);
+                this.place(new GuidePiece.Custom(this.x(), this.y, this.width, height, custom.type(),
                         custom.data()));
-                this.y += custom.height() + BLOCK_GAP;
+                this.y += height + BLOCK_GAP;
             }
         }
     }
@@ -468,7 +470,7 @@ public final class GuideLayout {
             this.y += TITLE_GAP;
         }
         // What can go wrong stands out in the style's accent, so a reader in trouble finds it at a glance.
-        final String colour = troubles(heading.key()) ? GuideStyle.ACCENT : GuideStyle.HEADING;
+        final String colour = heading.leadsIntoTrouble() ? GuideStyle.ACCENT : GuideStyle.HEADING;
         this.lines(this.upper(this.text.text(heading.key())), 0, this.width, size, colour, "");
         if (this.style.decor().smallText()) {
             this.y += 1;
@@ -494,9 +496,14 @@ public final class GuideLayout {
         this.figures++;
         final String label = this.text.text(GuideTexts.FIGURE.key(), this.chapterNumber + "-" + this.figures);
         final List<String> caption = this.captionLines(label, picture.captionKey());
-        final int pictureWidth = picture.width() == 0 ? this.width : Math.min(this.width, picture.width());
-        final int pictureHeight = picture.width() == 0 || picture.width() <= this.width ? picture.height()
+        final int askedWidth = picture.width() == 0 ? this.width : Math.min(this.width, picture.width());
+        final int askedHeight = picture.width() == 0 || picture.width() <= this.width ? picture.height()
                 : picture.height() * this.width / picture.width();
+        // A picture taller than a column with its caption would run past the page foot, so it is scaled down to fit.
+        final int room = Math.max(1, this.bottom() - this.top - CAPTION_GAP - this.captionHeight(label, caption));
+        final int pictureHeight = Math.min(askedHeight, room);
+        final int pictureWidth = pictureHeight == askedHeight ? askedWidth
+                : Math.max(1, askedWidth * pictureHeight / askedHeight);
         this.ensure(pictureHeight + CAPTION_GAP + this.captionHeight(label, caption));
         this.place(new GuidePiece.Picture(this.x() + (this.width - pictureWidth) / 2, this.y, pictureWidth,
                 pictureHeight, picture.image(), picture.drawing(), picture.data()));
@@ -527,7 +534,7 @@ public final class GuideLayout {
             final int rowValueX = rowX + this.width * TABLE_LABEL_SHARE / 100;
             final List<String> labels = wrap(this.text.text(cells.labelKey()), rowValueX - rowX - 2 * TABLE_PAD,
                     TextSize.TABLE, this.text);
-            final List<String> values = wrap(this.value(cells.value()), valueRoom, TextSize.TABLE, this.text);
+            final List<String> values = wrap(this.text.valueText(cells.value()), valueRoom, TextSize.TABLE, this.text);
             final int lines = Math.max(labels.size(), values.size());
             if (this.y + lines * row + 2 > this.bottom()) {
                 this.nextColumn();
@@ -549,14 +556,6 @@ public final class GuideLayout {
             this.place(new GuidePiece.Rule(at, this.y, this.width, GuideStyle.RULE));
         }
         this.y += BLOCK_GAP;
-    }
-
-    private String value(final GuideBlock.GuideValue value) {
-        return switch (value) {
-            case GuideBlock.GuideValue.Words words -> this.text.text(words.key());
-            case GuideBlock.GuideValue.Amount amount -> this.text.amount(amount.value(), amount.unit());
-            case GuideBlock.GuideValue.Literal literal -> literal.text();
-        };
     }
 
     private void recipes(final GuideBlock.Recipes recipes) {
@@ -913,12 +912,6 @@ public final class GuideLayout {
             out.append(run.text());
         }
         return out.toString();
-    }
-
-    /** Whether a heading leads into what can go wrong, which stands out in the style's accent. */
-    private static boolean troubles(final String headingKey) {
-        return GuideTexts.WHAT_CAN_GO_WRONG.key().equals(headingKey)
-                || GuideTexts.IF_SOMETHING_GOES_WRONG.key().equals(headingKey);
     }
 
     /** Moves on to the next column when what comes next is taller than the room left in this one. */

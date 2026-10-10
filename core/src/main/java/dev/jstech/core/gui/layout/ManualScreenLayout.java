@@ -89,9 +89,9 @@ public final class ManualScreenLayout {
     }
 
     /**
-     * The binder's solid parts as a layout a test checks: the pages, the buttons, the arrows and every tab. The tabs
-     * stand over the right page's edge on purpose, as divider tabs do, so they are checked against each other and the
-     * arrows rather than against the page.
+     * The binder's solid parts as a layout a test checks: the pages, the buttons, the arrows and every tab, each as
+     * drawn. The tabs start at the page's right edge, so they are checked against each other and the arrows as well
+     * as the pages.
      */
     public static GuiLayout layout(final Geometry geometry, final int margin) {
         final GuiLayout layout = new GuiLayout(geometry.width(), geometry.height());
@@ -104,8 +104,7 @@ public final class ManualScreenLayout {
         box(layout, "previous", geometry.previous());
         box(layout, "next", geometry.next());
         for (int i = 0; i < geometry.tabs(); i++) {
-            final Rect tab = tab(geometry, i);
-            box(layout, "tab" + i, new Rect(geometry.coverRight(), tab.y(), tab.width() - COVER, tab.height()));
+            box(layout, "tab" + i, tab(geometry, i));
         }
         final Rect field = searchField(geometry, margin);
         layout.text("search field", field.x(), field.y(), (field.width() - 4) / 6, 1.0F);

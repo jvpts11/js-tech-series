@@ -8,8 +8,9 @@
 package dev.jstech.core.peripheral;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -214,7 +215,7 @@ public final class PeripheralLinkValidator {
             final IWayFilter ways) {
 
         final int maxLength = requiredType.maxLength();
-        final Set<Long> visited = new HashSet<>();
+        final Map<Long, Map<Long, List<int[]>>> seen = new HashMap<>();
         final Deque<Step> queue = new ArrayDeque<>();
         IPathSearchResult missed = new IPathSearchResult.NotFound();
 
@@ -223,8 +224,8 @@ public final class PeripheralLinkValidator {
                 .map(owner -> owner.occupiedPositions(source))
                 .filter(positions -> !positions.isEmpty())
                 .orElseGet(() -> Set.of(source));
-        visited.addAll(sources);
         for (final long src : sources) {
+            arrives(seen, src, null, 0, Integer.MAX_VALUE);
             queue.addLast(new Step(src, 0, Integer.MAX_VALUE, 0, null));
         }
 
@@ -243,19 +244,42 @@ public final class PeripheralLinkValidator {
                     }
                     continue;
                 }
-                if (!visited.add(neighbor)) {
-                    continue;
-                }
+                /*
+                 * A place is visited once per state that could still do better, not once in all: the same cable
+                 * reached over its reach straight from the owner must not hide the legal way to it past a hub, where
+                 * the run counts afresh.
+                 */
                 if (enters(neighbor, at.pos(), requiredType)) {
-                    queue.addLast(new Step(neighbor, at.run() + 1,
-                            Math.min(at.limit(), reach(neighbor, maxLength)), at.cables() + 1, at.hub()));
-                } else if (at.run() <= at.limit() && passesThrough(neighbor, at.pos(), source, target, kind)) {
+                    final int limit = Math.min(at.limit(), reach(neighbor, maxLength));
+                    if (arrives(seen, neighbor, at.hub(), at.run() + 1, limit)) {
+                        queue.addLast(new Step(neighbor, at.run() + 1, limit, at.cables() + 1, at.hub()));
+                    }
+                } else if (at.run() <= at.limit() && passesThrough(neighbor, at.pos(), source, target, kind)
+                        && arrives(seen, neighbor, neighbor, 0, Integer.MAX_VALUE)) {
                     queue.addLast(new Step(neighbor, 0, Integer.MAX_VALUE, at.cables(), neighbor));
                 }
             }
         }
 
         return missed;
+    }
+
+    /*
+     * Records an arrival at {@code pos} by way of {@code hub} with {@code run} cables in the current run under a reach
+     * of {@code limit}, and says whether it is worth following: not when an earlier arrival at the same place by the
+     * same hub had a run no longer and a reach no shorter, since it can do everything this one could.
+     */
+    private static boolean arrives(final Map<Long, Map<Long, List<int[]>>> seen, final long pos,
+                                   @Nullable final Long hub, final int run, final int limit) {
+        final List<int[]> states = seen.computeIfAbsent(pos, p -> new HashMap<>())
+                .computeIfAbsent(hub, h -> new ArrayList<>());
+        for (final int[] state : states) {
+            if (state[0] <= run && state[1] >= limit) {
+                return false;
+            }
+        }
+        states.add(new int[] {run, limit});
+        return true;
     }
 
     /* Whether a path steps from {@code from} into a cable of {@code type} at {@code pos} that leads back to it. */
@@ -300,7 +324,7 @@ public final class PeripheralLinkValidator {
     private boolean hasRoom(final IPeripheralOwner owner, final long endpointPos, final PortKind kind,
                             @Nullable final Long hub) {
         final OptionalLong now = owner.hubOf(endpointPos);
-        final boolean linked = owner.linkedEndpoints().contains(endpointPos);
+        final boolean linked = owner.isLinked(endpointPos);
         if (hub == null) {
             return (linked && now.isEmpty()) || owner.portsInUse(kind) < owner.ports(kind);
         }

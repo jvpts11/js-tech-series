@@ -25,6 +25,11 @@ class EnergyNetworkTest {
     private static final long CABLE_1 = 10_000_000L;
     private static final long CABLE_2 = 11_000_000L;
     private static final long CABLE_3 = 12_000_000L;
+    private static final long CONS_C = 5_000_000L;
+    // Throughputs a cable can have in these tests.
+    private static final long COPPER = 500L;
+    private static final long HIGH_CAPACITY = 8_000L;
+    private static final long UNLIMITED = Long.MAX_VALUE;
 
     @Test
     void emptyNetwork_returnsEmpty() {
@@ -82,7 +87,7 @@ class EnergyNetworkTest {
     @Test
     void t3WithSufficientSupply_deliversFullDemand() {
         EnergyNetwork net = singlePathNetwork(
-                1000L, 600L, EnergyTier.T3_HIGH_CAPACITY);
+                1000L, 600L, HIGH_CAPACITY);
 
         EnergyDistributionResult result = net.tickDistribute();
 
@@ -97,7 +102,7 @@ class EnergyNetworkTest {
     @Test
     void t1Cable_capsThroughputAt500() {
         EnergyNetwork net = singlePathNetwork(
-                10000L, 10000L, EnergyTier.T1_COPPER);
+                10000L, 10000L, COPPER);
 
         EnergyDistributionResult result = net.tickDistribute();
 
@@ -110,7 +115,7 @@ class EnergyNetworkTest {
     @Test
     void t7Cable_carriesUnlimitedThroughput() {
         EnergyNetwork net = singlePathNetwork(
-                1_000_000L, 1_000_000L, EnergyTier.T7_SINGULARITY);
+                1_000_000L, 1_000_000L, UNLIMITED);
 
         EnergyDistributionResult result = net.tickDistribute();
 
@@ -123,9 +128,9 @@ class EnergyNetworkTest {
         // GEN -> T3 -> T1 -> T3 -> CONS, middle T1 caps at 500.
         EnergyNetwork net = new EnergyNetwork();
         net.addNode(GEN_A, TestNode.generator(1000L));
-        net.addCable(CABLE_1, new TestCable(EnergyTier.T3_HIGH_CAPACITY));
-        net.addCable(CABLE_2, new TestCable(EnergyTier.T1_COPPER));
-        net.addCable(CABLE_3, new TestCable(EnergyTier.T3_HIGH_CAPACITY));
+        net.addCable(CABLE_1, new TestCable(HIGH_CAPACITY));
+        net.addCable(CABLE_2, new TestCable(COPPER));
+        net.addCable(CABLE_3, new TestCable(HIGH_CAPACITY));
         net.addNode(CONS_A, TestNode.consumer(1000L));
         net.connect(GEN_A, CABLE_1);
         net.connect(CABLE_1, CABLE_2);
@@ -146,7 +151,7 @@ class EnergyNetworkTest {
         // GEN(1000) -> T7 -> CONS_A(600), CONS_B(600) → each gets 500
         EnergyNetwork net = new EnergyNetwork();
         net.addNode(GEN_A, TestNode.generator(1000L));
-        net.addCable(CABLE_1, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addCable(CABLE_1, new TestCable(UNLIMITED));
         net.addNode(CONS_A, TestNode.consumer(600L));
         net.addNode(CONS_B, TestNode.consumer(600L));
         net.connect(GEN_A, CABLE_1);
@@ -170,7 +175,7 @@ class EnergyNetworkTest {
          */
         EnergyNetwork net = new EnergyNetwork();
         net.addNode(GEN_A, TestNode.generator(100_000L));
-        net.addCable(CABLE_1, new TestCable(EnergyTier.T1_COPPER));
+        net.addCable(CABLE_1, new TestCable(COPPER));
         net.addNode(CONS_A, TestNode.consumer(100_000L));
         net.addNode(CONS_B, TestNode.consumer(100_000L));
         net.connect(GEN_A, CABLE_1);
@@ -179,7 +184,7 @@ class EnergyNetworkTest {
 
         EnergyDistributionResult result = net.tickDistribute();
 
-        final long cap = EnergyTier.T1_COPPER.maxThroughput();
+        final long cap = COPPER;
         final long usage = result.perCableUsage().getOrDefault(CABLE_1, 0L);
         assertTrue(usage <= cap,
                 "shared cable usage " + usage + " must not exceed its throughput " + cap);
@@ -188,10 +193,34 @@ class EnergyNetworkTest {
     }
 
     @Test
+    void clampedShare_isOfferedToReceiversWhoseWayIsStillFree() {
+        // 100 FE; A and B want 100 each through one cable of 60; C wants 40 through a cable with no limit.
+        EnergyNetwork net = new EnergyNetwork();
+        net.addNode(GEN_A, TestNode.generator(100L));
+        net.addCable(CABLE_1, new TestCable(60L));
+        net.addCable(CABLE_2, new TestCable(UNLIMITED));
+        net.addNode(CONS_A, TestNode.consumer(100L));
+        net.addNode(CONS_B, TestNode.consumer(100L));
+        net.addNode(CONS_C, TestNode.consumer(40L));
+        net.connect(GEN_A, CABLE_1);
+        net.connect(CABLE_1, CONS_A);
+        net.connect(CABLE_1, CONS_B);
+        net.connect(GEN_A, CABLE_2);
+        net.connect(CABLE_2, CONS_C);
+
+        EnergyDistributionResult result = net.tickDistribute();
+
+        assertEquals(Long.valueOf(40L), result.perConsumerDelivered().get(CONS_C),
+                "the free way gets what it asked for");
+        assertEquals(100L, result.totalDelivered(), "nothing is left in the generator while a way can take it");
+        assertEquals(Long.valueOf(60L), result.perCableUsage().get(CABLE_1));
+    }
+
+    @Test
     void oneGeneratorTwoConsumers_proportionalWithUnevenDemands() {
         EnergyNetwork net = new EnergyNetwork();
         net.addNode(GEN_A, TestNode.generator(1000L));
-        net.addCable(CABLE_1, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addCable(CABLE_1, new TestCable(UNLIMITED));
         net.addNode(CONS_A, TestNode.consumer(300L));
         net.addNode(CONS_B, TestNode.consumer(900L));
         net.connect(GEN_A, CABLE_1);
@@ -209,7 +238,7 @@ class EnergyNetworkTest {
     void demandBelowSupply_eachConsumerGetsFullDemand() {
         EnergyNetwork net = new EnergyNetwork();
         net.addNode(GEN_A, TestNode.generator(1000L));
-        net.addCable(CABLE_1, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addCable(CABLE_1, new TestCable(UNLIMITED));
         net.addNode(CONS_A, TestNode.consumer(100L));
         net.addNode(CONS_B, TestNode.consumer(200L));
         net.connect(GEN_A, CABLE_1);
@@ -231,8 +260,8 @@ class EnergyNetworkTest {
         TestNode genB = TestNode.generator(500L);
         net.addNode(GEN_A, genA);
         net.addNode(GEN_B, genB);
-        net.addCable(CABLE_1, new TestCable(EnergyTier.T7_SINGULARITY));
-        net.addCable(CABLE_2, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addCable(CABLE_1, new TestCable(UNLIMITED));
+        net.addCable(CABLE_2, new TestCable(UNLIMITED));
         net.addNode(CONS_A, TestNode.consumer(1000L));
         net.connect(GEN_A, CABLE_1);
         net.connect(CABLE_1, CONS_A);
@@ -255,8 +284,8 @@ class EnergyNetworkTest {
         TestNode genB = TestNode.generator(1000L);
         net.addNode(GEN_A, genA);
         net.addNode(GEN_B, genB);
-        net.addCable(CABLE_1, new TestCable(EnergyTier.T7_SINGULARITY));
-        net.addCable(CABLE_2, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addCable(CABLE_1, new TestCable(UNLIMITED));
+        net.addCable(CABLE_2, new TestCable(UNLIMITED));
         net.addNode(CONS_A, TestNode.consumer(1500L));
         net.connect(GEN_A, CABLE_1);
         net.connect(CABLE_1, CONS_A);
@@ -283,7 +312,7 @@ class EnergyNetworkTest {
         assertThrows(IllegalStateException.class, () ->
                 net.addNode(GEN_A, TestNode.generator(200L)));
         assertThrows(IllegalStateException.class, () ->
-                net.addCable(GEN_A, new TestCable(EnergyTier.T1_COPPER)));
+                net.addCable(GEN_A, new TestCable(COPPER)));
     }
 
     @Test
@@ -299,7 +328,7 @@ class EnergyNetworkTest {
         EnergyNetwork net = new EnergyNetwork();
         TestNode storage = TestNode.storage(500L, 0L);
         net.addNode(GEN_A, storage);
-        net.addCable(CABLE_1, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addCable(CABLE_1, new TestCable(UNLIMITED));
         net.addNode(CONS_A, TestNode.consumer(500L));
         net.connect(GEN_A, CABLE_1);
         net.connect(CABLE_1, CONS_A);
@@ -316,7 +345,7 @@ class EnergyNetworkTest {
         TestNode gen = TestNode.generator(1000L);
         TestNode cons = TestNode.consumer(500L);
         net.addNode(GEN_A, gen);
-        net.addCable(CABLE_1, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addCable(CABLE_1, new TestCable(UNLIMITED));
         net.addNode(CONS_A, cons);
         net.connect(GEN_A, CABLE_1);
         net.connect(CABLE_1, CONS_A);
@@ -394,9 +423,9 @@ class EnergyNetworkTest {
     void route_amongEquallyLossyWaysTakesTheShortest() {
         EnergyNetwork net = new EnergyNetwork();
         net.addNode(GEN_A, TestNode.generator(1000L));
-        net.addCable(CABLE_1, new TestCable(EnergyTier.T7_SINGULARITY));
-        net.addCable(CABLE_2, new TestCable(EnergyTier.T7_SINGULARITY));
-        net.addCable(CABLE_3, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addCable(CABLE_1, new TestCable(UNLIMITED));
+        net.addCable(CABLE_2, new TestCable(UNLIMITED));
+        net.addCable(CABLE_3, new TestCable(UNLIMITED));
         net.addNode(CONS_A, TestNode.consumer(100L));
         net.connect(GEN_A, CABLE_2);
         net.connect(CABLE_2, CABLE_3);
@@ -417,7 +446,7 @@ class EnergyNetworkTest {
         TestNode cons = TestNode.consumer(60L);
         TestNode storage = TestNode.storage(0L, 1000L);
         net.addNode(GEN_A, gen);
-        net.addCable(CABLE_1, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addCable(CABLE_1, new TestCable(UNLIMITED));
         net.addNode(CONS_A, cons);
         net.addNode(CONS_B, storage);
         net.connect(GEN_A, CABLE_1);
@@ -438,7 +467,7 @@ class EnergyNetworkTest {
         TestNode cons = TestNode.consumer(100L);
         TestNode storage = TestNode.storage(500L, 1000L);
         net.addNode(GEN_A, gen);
-        net.addCable(CABLE_1, new TestCable(EnergyTier.T7_SINGULARITY));
+        net.addCable(CABLE_1, new TestCable(UNLIMITED));
         net.addNode(CONS_A, cons);
         net.addNode(GEN_B, storage);
         net.connect(GEN_A, CABLE_1);
@@ -454,7 +483,7 @@ class EnergyNetworkTest {
 
     @Test
     void route_isKeptUntilTheShapeChanges() {
-        EnergyNetwork net = singlePathNetwork(1000L, 100L, EnergyTier.T7_SINGULARITY);
+        EnergyNetwork net = singlePathNetwork(1000L, 100L, UNLIMITED);
         assertEquals(100L, net.tickDistribute().totalDelivered());
 
         net.remove(CABLE_1);
@@ -463,10 +492,10 @@ class EnergyNetworkTest {
     }
 
     private static EnergyNetwork singlePathNetwork(
-            long supply, long demand, EnergyTier tier) {
+            long supply, long demand, long throughput) {
         EnergyNetwork net = new EnergyNetwork();
         net.addNode(GEN_A, TestNode.generator(supply));
-        net.addCable(CABLE_1, new TestCable(tier));
+        net.addCable(CABLE_1, new TestCable(throughput));
         net.addNode(CONS_A, TestNode.consumer(demand));
         net.connect(GEN_A, CABLE_1);
         net.connect(CABLE_1, CONS_A);
@@ -532,12 +561,7 @@ class EnergyNetworkTest {
     /**
      * Trivial test-only IEnergyCable.
      */
-    private record TestCable(EnergyTier tier) implements IEnergyCable {
-
-        @Override
-        public long maxThroughput() {
-            return tier.maxThroughput();
-        }
+    private record TestCable(long maxThroughput) implements IEnergyCable {
     }
 
     /**

@@ -94,6 +94,12 @@ public final class PaletteRoles {
         if (hex.length() != 6 && hex.length() != 8) {
             return null;
         }
+        // Long.parseLong would take a leading sign as part of the number, and a sign is no part of a colour.
+        for (int i = 0; i < hex.length(); i++) {
+            if (Character.digit(hex.charAt(i), 16) < 0) {
+                return null;
+            }
+        }
         try {
             final long value = Long.parseLong(hex, 16);
             return (int) (hex.length() == 6 ? 0xFF000000L | value : value);

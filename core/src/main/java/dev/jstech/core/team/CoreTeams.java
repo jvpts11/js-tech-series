@@ -7,10 +7,14 @@
  */
 package dev.jstech.core.team;
 
+import com.mojang.authlib.GameProfile;
 import com.mojang.logging.LogUtils;
 import java.util.Objects;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.GameProfileCache;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 /**
@@ -53,5 +57,15 @@ public final class CoreTeams {
     /** The id of {@code player}'s team of their own, the team of a player on no other. */
     public static String solo(final UUID player) {
         return SOLO + player;
+    }
+
+    /** The name the server last knew {@code player} by, online or not; null when it never knew one. */
+    static @Nullable String lastKnownName(final MinecraftServer server, final UUID player) {
+        final ServerPlayer online = server.getPlayerList().getPlayer(player);
+        if (online != null) {
+            return online.getScoreboardName();
+        }
+        final GameProfileCache profiles = server.getProfileCache();
+        return profiles == null ? null : profiles.get(player).map(GameProfile::getName).orElse(null);
     }
 }

@@ -10,6 +10,7 @@ package dev.jstech.core.motion;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -32,7 +33,15 @@ public record MotionSpec(String style, int duration, int delay, IEasing easing, 
     /** Nothing moves: what happens happens at once. */
     public static final MotionSpec NONE = new MotionSpec(MotionStyles.NONE, 0, 0, IEasing.LINEAR, "", Map.of());
 
+    /** The names a motion file keeps for its own fields, which a style's number cannot take. */
+    static final Set<String> RESERVED = Set.of("style", "duration", "delay", "easing", "group");
+
     public MotionSpec {
+        for (final String name : params.keySet()) {
+            if (RESERVED.contains(name)) {
+                throw new IllegalArgumentException("'" + name + "' is a field of a motion, not a number of its style");
+            }
+        }
         if (duration < 0 || delay < 0) {
             throw new IllegalArgumentException("a motion cannot last " + duration + " ms after " + delay + " ms");
         }

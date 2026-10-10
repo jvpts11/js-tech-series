@@ -8,8 +8,8 @@
 package dev.jstech.core.audio;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +36,6 @@ public final class AmbientFields {
     }
 
     public static synchronized Collection<AmbientField> all() {
-        return Collections.unmodifiableCollection(FIELDS.values());
+        return List.copyOf(FIELDS.values());
     }
 }

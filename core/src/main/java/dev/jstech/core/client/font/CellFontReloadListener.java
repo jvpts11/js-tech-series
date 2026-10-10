@@ -40,7 +40,9 @@ public final class CellFontReloadListener implements ResourceManagerReloadListen
                 final BitSet characters = new BitSet();
                 for (final Resource file : manager.getResourceStack(font.definition())) {
                     try (Reader reader = file.openAsReader()) {
-                        read(GsonHelper.parse(reader), characters);
+                        final BitSet listed = new BitSet();
+                        read(GsonHelper.parse(reader), listed);
+                        characters.or(listed);
                     } catch (final IOException | RuntimeException unreadable) {
                         JsCore.LOGGER.warn("The font {} could not be read from {}, so the game's font draws what it "
                                 + "lists: {}", font.id(), file.sourcePackId(), unreadable.getMessage());

@@ -77,6 +77,12 @@ public final class CoreGrids {
                 grid.remove(number.getAsLong());
             }
         }
+        // A device in several grids is one number in each: it is forgotten only when no grid still holds it.
+        for (final GridKind other : GridKind.values()) {
+            if (of(level, other).contains(number.getAsLong())) {
+                return;
+            }
+        }
         places.forget(place);
     }
 

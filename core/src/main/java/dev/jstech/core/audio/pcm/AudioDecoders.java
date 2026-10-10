@@ -47,6 +47,10 @@ public final class AudioDecoders {
     /** The decoder for files with that extension, or null when none reads them. */
     @Nullable
     public static IAudioDecoder find(final String extension) {
+        if (extension.isEmpty() || ".".equals(extension)) {
+            // Nothing reads an extension that is not there, which is not the same as one registered wrongly.
+            return null;
+        }
         return BY_EXTENSION.get(normalise(extension));
     }
 

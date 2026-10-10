@@ -10,6 +10,7 @@ package dev.jstech.core.client.audio.media;
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaOfferPayload;
 import dev.jstech.core.audio.media.MediaOfferReplyPayload;
+import dev.jstech.core.audio.media.MediaTexts;
 import dev.jstech.core.audio.media.MediaUploadDonePayload;
 import dev.jstech.core.audio.media.MediaUploadPiecePayload;
 import dev.jstech.core.network.transfer.Pieces;
@@ -33,9 +34,14 @@ import net.neoforged.neoforge.network.PacketDistributor;
  */
 public final class MediaUploader {
 
+    /** The largest file the server's own setting can ever allow, so nothing bigger is worth reading into memory. */
+    private static final int MOST_FILE_MEGABYTES = 1024;
+    private static final long BYTES_PER_MEGABYTE = 1024L * 1024L;
+
     private static final Map<Integer, Outgoing> OUTGOING = new HashMap<>();
 
     private static int nextToken;
+    private static int generation;
 
     private MediaUploader() {
     }
@@ -63,29 +69,37 @@ public final class MediaUploader {
         final String name = file.getFileName().toString();
         final int dot = name.lastIndexOf('.');
         final String format = dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
-        CompletableFuture.supplyAsync(() -> {
-            try {
-                return Files.readAllBytes(file);
-            } catch (final IOException unreadable) {
+        final int started = generation;
+        CompletableFuture.supplyAsync(() -> read(file), Util.ioPool()).handleAsync((loaded, failure) -> {
+            if (failure != null || loaded == null) {
+                // Anything that went wrong while reading, an out-of-memory error included, still ends the upload
+                // for whoever waits on it.
+                listener.finished(false, Text.literal(name));
                 return null;
             }
-        }, Util.ioPool()).thenAcceptAsync(bytes -> {
-            if (bytes == null) {
-                listener.finished(false, Text.literal(name));
-                return;
+            if (loaded.tooBig()) {
+                listener.finished(false, MediaTexts.TOO_BIG.with(MOST_FILE_MEGABYTES));
+                return null;
             }
+            if (started != generation || Minecraft.getInstance().getConnection() == null) {
+                // The player left the server while the file was being read: it is not offered to the next one.
+                listener.finished(false, Text.literal(name));
+                return null;
+            }
+            final byte[] bytes = loaded.bytes();
             final MediaId media;
             try {
                 media = MediaId.of(bytes, format);
             } catch (final IllegalArgumentException notAKind) {
                 listener.finished(false, Text.literal(name));
-                return;
+                return null;
             }
             final int token = ++nextToken;
             OUTGOING.put(token, new Outgoing(bytes, listener));
             PacketDistributor.sendToServer(new MediaOfferPayload(token, media,
                     TextBounds.clip(name, MediaOfferPayload.MAX_NAME), purpose,
                     TextBounds.clip(context, MediaOfferPayload.MAX_CONTEXT)));
+            return null;
         }, Minecraft.getInstance());
     }
 
@@ -143,6 +157,24 @@ public final class MediaUploader {
     /** The player left the server: nothing more is sent. */
     public static void clear() {
         OUTGOING.clear();
+        // A file still being read finds the number changed and is dropped instead of offered to the next server.
+        generation++;
+    }
+
+    /* Reads the file, or says it is too big to; null when it cannot be read. */
+    private static Loaded read(final Path file) {
+        try {
+            if (Files.size(file) > MOST_FILE_MEGABYTES * BYTES_PER_MEGABYTE) {
+                return new Loaded(null, true);
+            }
+            return new Loaded(Files.readAllBytes(file), false);
+        } catch (final IOException unreadable) {
+            return null;
+        }
+    }
+
+    /** What reading a file came to: its bytes, or that it is larger than any server can be set to take. */
+    private record Loaded(byte[] bytes, boolean tooBig) {
     }
 
     /** One recording on its way to the server. */

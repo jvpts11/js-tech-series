@@ -70,7 +70,9 @@ final class ProcessingEmiRecipe extends BasicEmiRecipe {
             final ProcessingViewLayout.Point at = layout.output(index++);
             widgets.addSlot(output, at.x(), at.y()).recipeContext(this);
         }
-        widgets.addFillingArrow(layout.arrow().x(), layout.arrow().y(), recipe.ticks() * MILLIS_PER_TICK);
+        // Widened first: a long recipe time in ticks times 50 would wrap an int.
+        final int millis = (int) Math.min((long) recipe.ticks() * MILLIS_PER_TICK, Integer.MAX_VALUE);
+        widgets.addFillingArrow(layout.arrow().x(), layout.arrow().y(), millis);
         widgets.addText(ProcessingRecipeViews.workLine(recipe), layout.textLine().x(), layout.textLine().y(),
                 RecipeViewPalette.get().text(), false);
     }

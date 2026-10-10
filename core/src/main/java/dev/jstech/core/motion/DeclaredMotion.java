@@ -17,12 +17,15 @@ public final class DeclaredMotion {
 
     private final String namespace;
     private final String name;
+    private final ResourceLocation file;
     private final MotionProfile declared;
     private volatile MotionProfile current;
 
     DeclaredMotion(final String namespace, final String name, final MotionProfile declared) {
         this.namespace = namespace;
         this.name = name;
+        // Built now so a name a resource location refuses fails where the motion is declared, not at the first reload.
+        this.file = ResourceLocation.fromNamespaceAndPath(namespace, "motions/" + name + ".json");
         this.declared = declared;
         this.current = declared;
     }
@@ -47,7 +50,7 @@ public final class DeclaredMotion {
 
     /** Its file, {@code assets/<namespace>/motions/<name>.json}. */
     public ResourceLocation file() {
-        return ResourceLocation.fromNamespaceAndPath(namespace, "motions/" + name + ".json");
+        return file;
     }
 
     /** Puts a pack's profile in force. */

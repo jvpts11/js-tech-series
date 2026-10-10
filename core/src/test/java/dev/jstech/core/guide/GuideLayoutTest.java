@@ -322,6 +322,18 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_cutsASpecialBlockTallerThanThePageToThePage() {
+        final GuideEntry tall = entry("alpha:tall", new GuideBlock.Custom("test:thing", 5000, "{}"));
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", tall))));
+
+        final GuidePiece.Custom custom = book.pages().stream().flatMap(page -> page.pieces().stream())
+                .filter(piece -> piece instanceof GuidePiece.Custom).map(piece -> (GuidePiece.Custom) piece)
+                .findFirst().orElseThrow();
+        assertTrue(custom.height() < 201, "the block is cut to the text area, not left at 5000");
+        assertTrue(custom.y() + custom.height() <= 201, "the block ends before the page foot");
+    }
+
+    @Test
     void roman_writesSmallRomanNumerals() {
         assertEquals("i", GuideLayout.roman(1));
         assertEquals("iv", GuideLayout.roman(4));

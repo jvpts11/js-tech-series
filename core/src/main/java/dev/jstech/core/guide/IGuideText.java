@@ -28,6 +28,15 @@ public interface IGuideText {
     /** An amount written the reader's way, with its unit after it: "12,000 FE". */
     String amount(long value, String unit);
 
+    /** A table value as the reader sees it: its words translated, its amount written with the unit, or its literal. */
+    default String valueText(final GuideBlock.GuideValue value) {
+        return switch (value) {
+            case GuideBlock.GuideValue.Words words -> text(words.key());
+            case GuideBlock.GuideValue.Amount amount -> amount(amount.value(), amount.unit());
+            case GuideBlock.GuideValue.Literal literal -> literal.text();
+        };
+    }
+
     /**
      * The name of an item, {@code namespace:path}, in the reader's language. Whoever knows no better names it by its
      * path, as a test does.
