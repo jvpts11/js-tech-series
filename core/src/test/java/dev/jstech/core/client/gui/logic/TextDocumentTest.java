@@ -30,6 +30,18 @@ class TextDocumentTest {
     }
 
     @Test
+    void backspace_afterAShiftEndThatWentNowhereLeavesNoSelectionPastTheLine() {
+        // Shift+End at the end of a line left an anchor on the caret, which outlived the backspace and cut past the
+        // line when the next key was typed.
+        type("abc");
+        doc.end(true);
+        doc.backspace();
+        doc.insert('x');
+        assertEquals("abx", doc.text());
+        assertFalse(doc.hasSelection());
+    }
+
+    @Test
     void insert_appendsAtTheCaretAndMovesIt() {
         type("abc");
         assertEquals("abc", doc.text());

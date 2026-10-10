@@ -47,6 +47,10 @@ public final class CalcEngine {
         private final String s;
         private final boolean degrees;
         private int pos;
+        private int depth;
+
+        /* How deep an expression nests; far past anything typed on purpose. */
+        private static final int MOST_DEPTH = 256;
 
         Parser(final String s, final boolean degrees) {
             this.s = s;
@@ -103,19 +107,32 @@ public final class CalcEngine {
             }
         }
 
-        // unary := ('+' | '-') unary | power
+        /*
+         * unary := ('+' | '-') unary | power
+         *
+         * Every way the grammar nests passes through here, a bracket and a function's argument as well as a sign, so
+         * the depth is counted here: a few thousand '(' or '-' typed in a row overflowed the game's stack instead of
+         * reading as an error.
+         */
         private double parseUnary() {
-            skipWs();
-            final char c = peek();
-            if (c == '-') {
-                pos++;
-                return -parseUnary();
+            if (++depth > MOST_DEPTH) {
+                throw new CalcException("Nested too deep");
             }
-            if (c == '+') {
-                pos++;
-                return parseUnary();
+            try {
+                skipWs();
+                final char c = peek();
+                if (c == '-') {
+                    pos++;
+                    return -parseUnary();
+                }
+                if (c == '+') {
+                    pos++;
+                    return parseUnary();
+                }
+                return parsePower();
+            } finally {
+                depth--;
             }
-            return parsePower();
         }
 
         // power := postfix ('^' unary)?   (right-associative, and the exponent may carry its own sign)

@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.core.text.Text;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -24,9 +25,12 @@ public final class FileSaves {
     private FileSaves() {
     }
 
-    /** Sends the file to be saved; false, with nothing sent, when it is longer than a file holds. */
+    /**
+     * Sends the file to be saved; false, with nothing sent, when it is longer than a file holds or its path longer
+     * than a disk's paths go, which a program's own save path can be.
+     */
     public static boolean send(final BlockPos host, final String path, final String content) {
-        if (content.length() > SaveFilePayload.MAX_CONTENT) {
+        if (content.length() > SaveFilePayload.MAX_CONTENT || path.length() > FsPaths.MAX_PATH_LENGTH) {
             return false;
         }
         PacketDistributor.sendToServer(new SaveFilePayload(host, path, content));
@@ -36,5 +40,11 @@ public final class FileSaves {
     /** What the player is told about a file too long to save. */
     public static Text tooLong(final String content) {
         return EditorTexts.TOO_LONG.with(content.length(), SaveFilePayload.MAX_CONTENT);
+    }
+
+    /** What the player is told about a file {@link #send} refused: its path too long, or else its content. */
+    public static Text tooLong(final String path, final String content) {
+        return path.length() > FsPaths.MAX_PATH_LENGTH
+                ? EditorTexts.PATH_TOO_LONG.with(path.length(), FsPaths.MAX_PATH_LENGTH) : tooLong(content);
     }
 }

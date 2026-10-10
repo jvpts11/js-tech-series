@@ -43,7 +43,7 @@ public record DiskFilesPayload(String dir, List<WireFile> files,
 
     public static final StreamCodec<RegistryFriendlyByteBuf, DiskFilesPayload> STREAM_CODEC =
             StreamCodec.composite(
-                    ByteBufCodecs.stringUtf8(128), DiskFilesPayload::dir,
+                    PayloadCodecs.PATH, DiskFilesPayload::dir,
                     WireFile.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES)), DiskFilesPayload::files,
                     WireVolume.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_VOLUMES)), DiskFilesPayload::volumes,
                     DiskFilesPayload::new);
@@ -96,15 +96,15 @@ public record DiskFilesPayload(String dir, List<WireFile> files,
         // Written by hand: composite() tops out at six pairs, and an entry now carries seven fields.
         public static final StreamCodec<RegistryFriendlyByteBuf, WireFile> STREAM_CODEC =
                 StreamCodec.of((buf, f) -> {
-                    buf.writeUtf(f.path(), 160);
+                    PayloadCodecs.PATH.encode(buf, f.path());
                     buf.writeUtf(f.ext(), 16);
                     buf.writeVarLong(f.weight());
                     buf.writeBoolean(f.readOnly());
                     buf.writeBoolean(f.directory());
                     buf.writeUtf(f.itemId(), 96);
                     buf.writeVarLong(f.count());
-                }, buf -> new WireFile(buf.readUtf(160), buf.readUtf(16), buf.readVarLong(), buf.readBoolean(),
-                        buf.readBoolean(), buf.readUtf(96), buf.readVarLong()));
+                }, buf -> new WireFile(PayloadCodecs.PATH.decode(buf), buf.readUtf(16), buf.readVarLong(),
+                        buf.readBoolean(), buf.readBoolean(), buf.readUtf(96), buf.readVarLong()));
 
         /** Whether this entry projects a stored item. */
         public boolean projectsItem() {

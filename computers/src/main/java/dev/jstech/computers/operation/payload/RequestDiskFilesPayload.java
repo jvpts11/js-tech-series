@@ -9,7 +9,6 @@ package dev.jstech.computers.operation.payload;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -26,7 +25,7 @@ public record RequestDiskFilesPayload(BlockPos hostPos, String dir) implements C
     public static final StreamCodec<RegistryFriendlyByteBuf, RequestDiskFilesPayload> STREAM_CODEC =
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, RequestDiskFilesPayload::hostPos,
-                    ByteBufCodecs.stringUtf8(128), RequestDiskFilesPayload::dir,
+                    PayloadCodecs.PATH, RequestDiskFilesPayload::dir,
                     RequestDiskFilesPayload::new);
 
     @Override

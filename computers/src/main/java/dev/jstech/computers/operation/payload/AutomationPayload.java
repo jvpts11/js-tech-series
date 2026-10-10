@@ -68,7 +68,7 @@ public record AutomationPayload(boolean engineOnline, Text engineLabel, List<Job
                     ByteBufCodecs.BOOL, AutomationPayload::engineOnline,
                     TextCodecs.STREAM_CODEC, AutomationPayload::engineLabel,
                     JobRow.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_JOBS)), AutomationPayload::jobs,
-                    ByteBufCodecs.stringUtf8(FsPaths.MAX_PATH_LENGTH).apply(ByteBufCodecs.list(MAX_FILES)),
+                    PayloadCodecs.PATH.apply(ByteBufCodecs.list(MAX_FILES)),
                     AutomationPayload::iqlFiles,
                     AutomationPayload::new);
 

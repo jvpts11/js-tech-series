@@ -89,10 +89,10 @@ public record DesktopShellOutputPayload(boolean clear, boolean busy, String prom
     private static void write(final RegistryFriendlyByteBuf buf, final DesktopShellOutputPayload payload) {
         ByteBufCodecs.BOOL.encode(buf, payload.clear());
         ByteBufCodecs.BOOL.encode(buf, payload.busy());
-        ByteBufCodecs.stringUtf8(TerminalWire.MAX_PROMPT).encode(buf, payload.prompt());
+        TerminalWire.PROMPT.encode(buf, payload.prompt());
         TerminalWire.LINES_CODEC.encode(buf, payload.lines());
-        ByteBufCodecs.stringUtf8(TerminalWire.MAX_EDITOR).encode(buf, payload.editor());
-        ByteBufCodecs.stringUtf8(TerminalWire.MAX_EDITOR_PATH).encode(buf, payload.editorPath());
+        TerminalWire.EDITOR.encode(buf, payload.editor());
+        PayloadCodecs.PATH.encode(buf, payload.editorPath());
         ByteBufCodecs.VAR_INT.encode(buf, payload.session());
         ByteBufCodecs.BOOL.encode(buf, payload.replaceLast());
         ByteBufCodecs.BOOL.encode(buf, payload.informational());
@@ -102,10 +102,10 @@ public record DesktopShellOutputPayload(boolean clear, boolean busy, String prom
     private static DesktopShellOutputPayload read(final RegistryFriendlyByteBuf buf) {
         final boolean clear = ByteBufCodecs.BOOL.decode(buf);
         final boolean busy = ByteBufCodecs.BOOL.decode(buf);
-        final String prompt = ByteBufCodecs.stringUtf8(TerminalWire.MAX_PROMPT).decode(buf);
+        final String prompt = TerminalWire.PROMPT.decode(buf);
         final List<WireLine> lines = TerminalWire.LINES_CODEC.decode(buf);
-        final String editor = ByteBufCodecs.stringUtf8(TerminalWire.MAX_EDITOR).decode(buf);
-        final String editorPath = ByteBufCodecs.stringUtf8(TerminalWire.MAX_EDITOR_PATH).decode(buf);
+        final String editor = TerminalWire.EDITOR.decode(buf);
+        final String editorPath = PayloadCodecs.PATH.decode(buf);
         final int session = ByteBufCodecs.VAR_INT.decode(buf);
         final boolean replaceLast = ByteBufCodecs.BOOL.decode(buf);
         final boolean informational = ByteBufCodecs.BOOL.decode(buf);

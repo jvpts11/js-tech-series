@@ -85,6 +85,13 @@ public final class Lowerer {
      * is kept here rather than asked again at every line that stores something.
      */
     private final Set<IExpr> copied = Collections.newSetFromMap(new IdentityHashMap<>());
+    /*
+     * The expressions already walked. A call's long way is made over the very values handed to the call, so walking
+     * it walks them again; a long way nested in another's values is then walked twice for every level above it, and
+     * thirty levels of calls written inside one another took the server's thread for good. A second walk changes
+     * nothing, so it is not made.
+     */
+    private final Set<IExpr> walked = Collections.newSetFromMap(new IdentityHashMap<>());
 
     private int locksOpen;
     /** What the lambdas of the method being walked keep, which is what makes a variable not a slot. */
@@ -426,6 +433,9 @@ public final class Lowerer {
 
     /** Walks an expression, putting the simpler shape in place of anything written in a richer one. */
     private void replaceIn(final IExpr expression) {
+        if (expression != null && !this.walked.add(expression)) {
+            return;
+        }
         switch (expression) {
             case null -> { }
             case IExpr.Unary unary -> {

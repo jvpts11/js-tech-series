@@ -38,14 +38,20 @@ public record AsmMethod(String name, String returns, List<String> parameters, bo
     /** The name of the static method that puts a type's static fields in place before anything else of it runs. */
     public static final String TYPE_SET_UP = ".cctor";
 
+    /**
+     * The most places a method can need, as many as a Java method may have locals. Every frame of a call holds this
+     * many, in the memory of the machine running the game, so a listing asking for more is refused when it is read.
+     */
+    public static final int MOST_SLOTS = 65_535;
+
     public AsmMethod {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(returns, "returns");
         parameters = List.copyOf(parameters);
         body = body == null ? null : List.copyOf(body);
         lines = lines == null ? List.of() : List.copyOf(lines);
-        if (slots < 0) {
-            throw new IllegalArgumentException("a method cannot need a negative number of places");
+        if (slots < 0 || slots > MOST_SLOTS) {
+            throw new IllegalArgumentException("a method cannot need " + slots + " places");
         }
     }
 

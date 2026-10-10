@@ -268,6 +268,9 @@ public final class DiskFilesystem {
             return WriteResult.INVALID_PATH;
         }
         final FilesystemContents updated = current.with(new StoredFile(path, type, content, now));
+        if (overfull(updated)) {
+            return WriteResult.DISK_FULL;
+        }
         disk.set(ComputingComponents.FILESYSTEM.get(), updated);
         return WriteResult.OK;
     }
@@ -311,7 +314,11 @@ public final class DiskFilesystem {
         if (!holdsItsKind(type, content)) {
             return WriteResult.READ_ONLY;
         }
-        disk.set(ComputingComponents.FILESYSTEM.get(), current.with(new StoredFile(path, type, content, now)));
+        final FilesystemContents updated = current.with(new StoredFile(path, type, content, now));
+        if (overfull(updated)) {
+            return WriteResult.DISK_FULL;
+        }
+        disk.set(ComputingComponents.FILESYSTEM.get(), updated);
         return WriteResult.OK;
     }
 
@@ -416,7 +423,11 @@ public final class DiskFilesystem {
         if (fs.files().containsKey(path) || fs.hasDir(path)) {
             return false;
         }
-        disk.set(ComputingComponents.FILESYSTEM.get(), fs.withDir(path));
+        final FilesystemContents updated = fs.withDir(path);
+        if (overfull(updated)) {
+            return false;
+        }
+        disk.set(ComputingComponents.FILESYSTEM.get(), updated);
         return true;
     }
 
@@ -622,6 +633,15 @@ public final class DiskFilesystem {
         return fs.hasDir(path) || fs.files().keySet().stream().anyMatch(p -> FsPaths.isUnder(path, p));
     }
 
+    /*
+     * Whether a disk would hold more files or folders than its contents can be sent to the players holding it. Past
+     * that, every time the disk was sent, the player holding it was dropped from the game, so a disk is full there.
+     */
+    private static boolean overfull(final FilesystemContents fs) {
+        return fs.files().size() > FilesystemContents.MOST_FILES
+                || fs.directories().size() > FilesystemContents.MOST_DIRS;
+    }
+
     /**
      * Whether a proper ancestor of {@code path} is a stored file, so nothing can be put at {@code path}: the disk
      * would hold one name as both a file and a folder.
@@ -747,8 +767,12 @@ public final class DiskFilesystem {
             if (file.weight(eraOf(disk)) > freeWeight) {
                 return false;
             }
-            disk.set(ComputingComponents.FILESYSTEM.get(),
-                    fs.with(new StoredFile(dest, file.type(), file.content(), file.modified())));
+            final FilesystemContents copied = fs.with(new StoredFile(dest, file.type(), file.content(),
+                    file.modified()));
+            if (overfull(copied)) {
+                return false;
+            }
+            disk.set(ComputingComponents.FILESYSTEM.get(), copied);
             return true;
         }
 
@@ -783,6 +807,9 @@ public final class DiskFilesystem {
                 final StoredFile sf = fs.files().get(f);
                 updated = updated.with(new StoredFile(dest + f.substring(src.length()), sf.type(), sf.content(), sf.modified()));
             }
+        }
+        if (overfull(updated)) {
+            return false;
         }
         disk.set(ComputingComponents.FILESYSTEM.get(), updated);
         return true;

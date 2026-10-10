@@ -68,20 +68,20 @@ public record CommandOutputPayload(boolean clear, String prompt, List<WireLine> 
 
     private static void write(final RegistryFriendlyByteBuf buf, final CommandOutputPayload payload) {
         ByteBufCodecs.BOOL.encode(buf, payload.clear());
-        ByteBufCodecs.stringUtf8(TerminalWire.MAX_PROMPT).encode(buf, payload.prompt());
+        TerminalWire.PROMPT.encode(buf, payload.prompt());
         TerminalWire.LINES_CODEC.encode(buf, payload.lines());
-        ByteBufCodecs.stringUtf8(TerminalWire.MAX_EDITOR).encode(buf, payload.editor());
-        ByteBufCodecs.stringUtf8(TerminalWire.MAX_EDITOR_PATH).encode(buf, payload.editorPath());
+        TerminalWire.EDITOR.encode(buf, payload.editor());
+        PayloadCodecs.PATH.encode(buf, payload.editorPath());
         ByteBufCodecs.BOOL.encode(buf, payload.replaceLast());
         TerminalKeyboard.STREAM_CODEC.encode(buf, payload.keyboard());
     }
 
     private static CommandOutputPayload read(final RegistryFriendlyByteBuf buf) {
         final boolean clear = ByteBufCodecs.BOOL.decode(buf);
-        final String prompt = ByteBufCodecs.stringUtf8(TerminalWire.MAX_PROMPT).decode(buf);
+        final String prompt = TerminalWire.PROMPT.decode(buf);
         final List<WireLine> lines = TerminalWire.LINES_CODEC.decode(buf);
-        final String editor = ByteBufCodecs.stringUtf8(TerminalWire.MAX_EDITOR).decode(buf);
-        final String editorPath = ByteBufCodecs.stringUtf8(TerminalWire.MAX_EDITOR_PATH).decode(buf);
+        final String editor = TerminalWire.EDITOR.decode(buf);
+        final String editorPath = PayloadCodecs.PATH.decode(buf);
         final boolean replaceLast = ByteBufCodecs.BOOL.decode(buf);
         return new CommandOutputPayload(clear, prompt, lines, editor, editorPath, replaceLast,
                 TerminalKeyboard.STREAM_CODEC.decode(buf));

@@ -208,9 +208,16 @@ public final class PrintDialog implements IDesktopApp {
         final int total = pageCount();
         final int first = pagesOnly ? Math.max(1, parse(from.value(), 1)) : 0;
         final int last = pagesOnly ? Math.min(total, parse(to.value(), total)) : 0;
-        PacketDistributor.sendToServer(new PrintPayload(host, printer.pos(), document.title(), document.program(),
-                document.text(), document.picture(), document.pictureName(), (int) copies.amount(), lying, first,
-                last));
+        /*
+         * Each part within what the message carries, since one longer than its cap is not cut on the way but drops the
+         * player from the game: a name of 65 letters from Save As did. Words are cut where they stop fitting; a picture
+         * too big to carry is left off rather than cut through.
+         */
+        final String picture = document.picture().length() > PrintedDocument.MAX_PICTURE ? "" : document.picture();
+        PacketDistributor.sendToServer(new PrintPayload(host, printer.pos(),
+                clip(document.title(), PrintedDocument.MAX_NAME), clip(document.program(), PrintedDocument.MAX_NAME),
+                clip(document.text(), PrintPayload.MAX_TEXT), picture,
+                clip(document.pictureName(), PrintedDocument.MAX_NAME), (int) copies.amount(), lying, first, last));
         close();
     }
 
@@ -540,6 +547,11 @@ public final class PrintDialog implements IDesktopApp {
         } catch (final NumberFormatException e) {
             return fallback;
         }
+    }
+
+    /* The text cut where it stops fitting {@code most} characters. */
+    private static String clip(final String text, final int most) {
+        return text.length() > most ? text.substring(0, most) : text;
     }
 
     /**

@@ -98,6 +98,33 @@ class ObjectMakingTest {
     }
 
     @Test
+    void copyOf_endsOnACycleAndKeepsItsShape() {
+        // Copied without remembering what it had copied, a struct holding itself overflowed the server's stack.
+        final ObjectMaking objects = objects(process());
+        final Values.Obj line = new Values.Obj(typeNamed("Line"));
+        line.set("A", line);
+
+        final Values.Obj copy = (Values.Obj) objects.copyOf(line, 1);
+
+        assertNotSame(line, copy);
+        assertSame(copy, copy.get("A"), "the copy holds itself where the original held itself");
+    }
+
+    @Test
+    void copyOf_keepsAStructSharedByTwoFieldsShared() {
+        final ObjectMaking objects = objects(process());
+        final Values.Obj point = new Values.Obj(typeNamed("Point"));
+        final Values.Obj line = new Values.Obj(typeNamed("Line"));
+        line.set("A", point);
+        line.set("B", point);
+
+        final Values.Obj copy = (Values.Obj) objects.copyOf(line, 1);
+
+        assertSame(copy.get("A"), copy.get("B"));
+        assertNotSame(point, copy.get("A"));
+    }
+
+    @Test
     void copyOf_handsBackAClassObjectANumberOrNothingAsItIs() {
         final ObjectMaking objects = objects(process());
         final Values.Obj box = new Values.Obj(typeNamed("Box"));

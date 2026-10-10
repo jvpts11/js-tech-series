@@ -9,7 +9,6 @@ package dev.jstech.computers.operation.payload;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -30,9 +29,9 @@ public record ExtractArchivePayload(BlockPos hostPos, String archivePath, String
     public static final StreamCodec<RegistryFriendlyByteBuf, ExtractArchivePayload> STREAM_CODEC =
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, ExtractArchivePayload::hostPos,
-                    ByteBufCodecs.stringUtf8(160), ExtractArchivePayload::archivePath,
-                    ByteBufCodecs.stringUtf8(160), ExtractArchivePayload::entry,
-                    ByteBufCodecs.stringUtf8(160), ExtractArchivePayload::intoDir,
+                    PayloadCodecs.PATH, ExtractArchivePayload::archivePath,
+                    PayloadCodecs.PATH, ExtractArchivePayload::entry,
+                    PayloadCodecs.PATH, ExtractArchivePayload::intoDir,
                     ExtractArchivePayload::new);
 
     @Override

@@ -247,6 +247,10 @@ final class ProgramEvents {
      * Queues a handler's calls when there is room for them and for what their arguments hold, each call
      * counted with all of them, and only then builds the arguments, so a call turned away leaves nothing
      * behind on the heap. False when there was no room; a handler with nothing to call always fits.
+     *
+     * <p>Room means room on the heap as well as in the queue: the arguments are built outside any instruction, so a
+     * program too full to hold them would otherwise stop the tick of the machine running it rather than itself. Such a
+     * call is turned away like one with no place in the queue.
      */
     private boolean offer(final Values.DelegateValue handler, final long bytes,
                           final Supplier<List<Object>> arguments) {
@@ -254,10 +258,15 @@ final class ProgramEvents {
         if (queued.isEmpty()) {
             return true;
         }
-        if (!this.callbacks.fits(queued.size(), bytes * queued.size())) {
+        if (!this.callbacks.fits(queued.size(), bytes * queued.size()) || this.heap.free() < bytes) {
             return false;
         }
-        final List<Object> handed = arguments.get();
+        final List<Object> handed;
+        try {
+            handed = arguments.get();
+        } catch (final Halt noRoom) {
+            return false;
+        }
         for (final Frame call : queued) {
             CallDispatch.fill(call, handed);
             this.callbacks.add(call, bytes);

@@ -1048,8 +1048,9 @@ public final class SigmaTextWindows {
     }
 
     private static String bar(final int value, final int least, final int mostAsked, final int width) {
-        final int most = Math.max(least + 1, mostAsked);
-        final int filled = (int) ((long) Math.max(0, width) * (Math.clamp(value, least, most) - least)
+        // In longs: a least of the largest int, which a program can set, made least + 1 wrap below it and threw.
+        final long most = Math.max((long) least + 1, mostAsked);
+        final int filled = (int) ((long) Math.max(0, width) * (Math.clamp((long) value, least, most) - least)
                 / (most - least));
         return "▓".repeat(Math.max(0, filled)) + "░".repeat(Math.max(0, width - filled));
     }

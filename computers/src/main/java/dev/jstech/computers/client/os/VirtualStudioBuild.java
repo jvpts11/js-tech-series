@@ -317,7 +317,7 @@ final class VirtualStudioBuild {
             if (!FileSaves.send(this.host, outputPath, result.binary())) {
                 // A listing longer than a file holds is not written, and the build is not called a success.
                 PacketDistributor.sendToServer(new MachineSoundPayload(this.host, SystemSound.ERROR));
-                print(FileSaves.tooLong(result.binary()), Tone.FAILED);
+                print(FileSaves.tooLong(outputPath, result.binary()), Tone.FAILED);
                 print(VirtualStudioTexts.BUILD_FAILED_NAMED.with(what, 1), Tone.FAILED);
                 this.workspace.say(GameText.resolve(VirtualStudioTexts.BUILD_FAILED));
                 this.buildQueue.clear();

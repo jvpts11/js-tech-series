@@ -50,11 +50,22 @@ public final class IqlEngine {
     private final int queryRowLimit;
     /** Whether the engine running this keeps views and procedures; one that does not refuses Layer 2. */
     private final boolean savedObjects;
+    /** How many more statements the request being run may run, its procedures' and views' included. */
+    private int statementsLeft;
+    /** Whether a request is being run, so a statement that runs another does not start the count again. */
+    private boolean running;
 
     private static final int RECURSION_GUARD = 32;
+    /*
+     * The most statements one request runs. Depth alone does not bound the work: thirty procedures each running the
+     * next one twice are thirty deep and run two billion statements, all on the server's thread.
+     */
+    private static final int MOST_STATEMENTS = 4_096;
 
     private static final TextKey TOO_DEEP = TextKey.of("jsc.service.iql.too_deep",
             "IQL recursion too deep (a procedure or view referencing itself?)");
+    private static final TextKey TOO_MANY = TextKey.of("jsc.service.iql.too_many",
+            "IQL stopped after %s statements for one request (procedures running others too many times?)");
     private static final TextKey SYNTAX = TextKey.of("jsc.service.iql.syntax", "syntax: %s");
     private static final TextKey NO_SAVED_OBJECTS = TextKey.of("jsc.service.iql.no_saved_objects",
             "the network's engine keeps no views, procedures or jobs");
@@ -167,7 +178,18 @@ public final class IqlEngine {
     }
 
     public Outcome run(final String statement) {
-        final Outcome outcome = run(statement, 0);
+        final Outcome outcome;
+        if (this.running) {
+            outcome = run(statement, 0);
+        } else {
+            this.running = true;
+            this.statementsLeft = MOST_STATEMENTS;
+            try {
+                outcome = run(statement, 0);
+            } finally {
+                this.running = false;
+            }
+        }
         // Somebody's statement, not a job firing on its own: those run with nobody acting.
         if (outcome.ok()) {
             JscEvents.awardActing(mainframe.getLevel(), JscEvents.IQL_QUERY, "");
@@ -178,6 +200,9 @@ public final class IqlEngine {
     private Outcome run(final String statement, final int depth) {
         if (depth > RECURSION_GUARD) {
             return Outcome.fail(TOO_DEEP.text());
+        }
+        if (--this.statementsLeft < 0) {
+            return Outcome.fail(TOO_MANY.with(MOST_STATEMENTS));
         }
         final IqlParseResult parsed = IqlParser.tryParse(statement);
         if (!parsed.ok()) {

@@ -48,7 +48,7 @@ public record FileContentPayload(String path, String content, boolean exists,
 
     public static final StreamCodec<RegistryFriendlyByteBuf, FileContentPayload> STREAM_CODEC =
             StreamCodec.composite(
-                    ByteBufCodecs.stringUtf8(160), FileContentPayload::path,
+                    PayloadCodecs.PATH, FileContentPayload::path,
                     ByteBufCodecs.stringUtf8(MAX_CONTENT), FileContentPayload::content,
                     ByteBufCodecs.BOOL, FileContentPayload::exists,
                     ByteBufCodecs.BOOL, FileContentPayload::tooLarge,

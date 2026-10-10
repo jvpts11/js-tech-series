@@ -43,7 +43,7 @@ public record MediumTransferPayload(BlockPos hostPos, BlockPos monitorPos, Strin
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, MediumTransferPayload::hostPos,
                     BlockPos.STREAM_CODEC, MediumTransferPayload::monitorPos,
-                    ByteBufCodecs.stringUtf8(160), MediumTransferPayload::datPath,
+                    PayloadCodecs.PATH, MediumTransferPayload::datPath,
                     ByteBufCodecs.stringUtf8(64), MediumTransferPayload::mediaVolumeKey,
                     MediumTransferPayload::new);
 

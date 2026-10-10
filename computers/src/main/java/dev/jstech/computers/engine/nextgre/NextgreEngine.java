@@ -56,6 +56,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -159,19 +160,22 @@ public final class NextgreEngine implements INetworkEngine {
 
     @Override
     public ICraftPlanning planner(final MainframeBlockEntity core) {
+        /*
+         * What a weighing captures from the world does not depend on the item asked for, and a catalog asks for one
+         * plan per pattern: it is gathered once and shared by every ask. It is gathered here, where the planner is
+         * made on the server's thread, and not on the first ask: a preview is weighed on a virtual thread, which must
+         * never read the world while the server changes it. The item it is gathered for is a stand-in that each ask
+         * puts its own item in place of.
+         */
+        final Gathered world = gather(core, StorageKey.of(Items.AIR), 1L, false,
+                new NextgreStatement(false, false, "", List.of()));
         return new ICraftPlanning() {
-            /*
-             * What a weighing captures from the world does not depend on the item asked for, and a catalog asks
-             * for one plan per pattern: it is gathered once, on the first ask, and shared by the asks that follow.
-             */
-            private Gathered gathered;
 
             @Override
             public CraftPlanner.Plan plan(final StorageKey key, final long quantity,
                                           final List<CraftingPattern> patterns,
                                           final List<ProcessingPattern> machines, final Map<StorageKey, Long> stock) {
-                final NextgrePlanner.Candidate best = previewOf(gathered(key, quantity, false), key, quantity, false,
-                        patterns, machines, stock);
+                final NextgrePlanner.Candidate best = previewOf(world, key, quantity, false, patterns, machines, stock);
                 return best != null ? best.plan()
                         : ICraftPlanning.REFERENCE.plan(key, quantity, patterns, machines, stock);
             }
@@ -179,18 +183,9 @@ public final class NextgreEngine implements INetworkEngine {
             @Override
             public long maxFeasible(final StorageKey key, final long quantity, final List<CraftingPattern> patterns,
                                     final List<ProcessingPattern> machines, final Map<StorageKey, Long> stock) {
-                final NextgrePlanner.Candidate best = previewOf(gathered(key, quantity, true), key, quantity, true,
-                        patterns, machines, stock);
+                final NextgrePlanner.Candidate best = previewOf(world, key, quantity, true, patterns, machines, stock);
                 return best != null ? best.target()
                         : ICraftPlanning.REFERENCE.maxFeasible(key, quantity, patterns, machines, stock);
-            }
-
-            private Gathered gathered(final StorageKey key, final long quantity, final boolean partial) {
-                if (gathered == null) {
-                    gathered = gather(core, key, quantity, partial,
-                            new NextgreStatement(false, false, "", List.of()));
-                }
-                return gathered;
             }
         };
     }

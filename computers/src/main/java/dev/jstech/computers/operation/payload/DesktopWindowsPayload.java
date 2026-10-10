@@ -102,9 +102,13 @@ public record DesktopWindowsPayload(BlockPos host, List<WireWindow> windows, int
         return out;
     }
 
-    /* Copied on the way in, so what the desktop is handed cannot change under it after it arrives. */
+    /*
+     * Copied on the way in, so what the desktop is handed cannot change under it after it arrives. As many as a machine
+     * keeps and no more: a desktop with more windows open than that would otherwise drop its player at every save of
+     * its layout, and the machine keeps only that many anyway.
+     */
     public DesktopWindowsPayload {
-        windows = List.copyOf(windows);
+        windows = List.copyOf(windows.size() > OpenWindow.MAX ? windows.subList(0, OpenWindow.MAX) : windows);
         workspace = WorkspaceSet.clampIndex(workspace);
     }
 

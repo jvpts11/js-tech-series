@@ -30,7 +30,7 @@ public record WallpaperImagePayload(String path, String content) implements Cust
 
     public static final StreamCodec<RegistryFriendlyByteBuf, WallpaperImagePayload> STREAM_CODEC =
             StreamCodec.composite(
-                    ByteBufCodecs.stringUtf8(160), WallpaperImagePayload::path,
+                    PayloadCodecs.PATH, WallpaperImagePayload::path,
                     ByteBufCodecs.stringUtf8(MAX_CONTENT), WallpaperImagePayload::content,
                     WallpaperImagePayload::new);
 

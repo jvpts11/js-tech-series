@@ -1023,6 +1023,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
      * forms with, so a later pull reads as a degraded array rather than a smaller one.
      */
     public boolean setRaidMode(final int serverSlot, final RaidMode mode) {
+        // No unit to set it on, as when a firmware screen left open asks after its rack's only server was pulled.
+        if (serverSlot < 0 || serverSlot >= servers.getSlots()) {
+            return false;
+        }
         return arrays.setMode(serverSlot, mode);
     }
 

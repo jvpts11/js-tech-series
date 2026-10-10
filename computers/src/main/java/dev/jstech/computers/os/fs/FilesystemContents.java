@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * The filesystem contents of a disk volume: an immutable, path-keyed map of {@link StoredFile}
@@ -41,6 +42,10 @@ public record FilesystemContents(Map<String, StoredFile> files, Set<String> dire
 
     /** An empty filesystem (no files and no directories). */
     public static final FilesystemContents EMPTY = new FilesystemContents(Map.of(), Set.of());
+    /** The most files a disk keeps: as many as its contents can be sent with to the players who hold it. */
+    public static final int MOST_FILES = 16_384;
+    /** The most folders a disk keeps made on their own, for the same reason. */
+    public static final int MOST_DIRS = 4_096;
 
     /** Compact constructor: defensive copy and unmodifiable wrapping of both collections. */
     public FilesystemContents {
@@ -93,6 +98,10 @@ public record FilesystemContents(Map<String, StoredFile> files, Set<String> dire
         return new FilesystemContents(map, new LinkedHashSet<>(dirs));
     }
 
+    private static <T> List<T> first(final List<T> all, final int most) {
+        return all.size() > most ? all.subList(0, most) : all;
+    }
+
     private static List<Line> toLines(final FilesystemContents contents) {
         final List<Line> lines = new ArrayList<>(contents.files.size());
         contents.files.forEach((path, file) ->
@@ -110,11 +119,19 @@ public record FilesystemContents(Map<String, StoredFile> files, Set<String> dire
             Codec.STRING.listOf().optionalFieldOf("dirs", List.of()).forGetter(FilesystemContents::toDirs)
     ).apply(builder, FilesystemContents::fromParts));
 
-    /** Network stream codec (packet sync). */
+    /**
+     * Network stream codec (packet sync). A disk saved with more than it may hold, before the limits were kept, is
+     * sent with what fits: a list longer than its cap is not cut on the way but drops the player from the game, and a
+     * disk sits in an inventory that is sent again at every login.
+     */
     public static final StreamCodec<RegistryFriendlyByteBuf, FilesystemContents> STREAM_CODEC =
             StreamCodec.composite(
-                    Line.STREAM_CODEC.apply(ByteBufCodecs.list(16384)), FilesystemContents::toLines,
-                    ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(4096)), FilesystemContents::toDirs,
+                    Line.STREAM_CODEC.apply(ByteBufCodecs.list(MOST_FILES))
+                            .map(Function.identity(), lines -> first(lines, MOST_FILES)),
+                    FilesystemContents::toLines,
+                    ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(MOST_DIRS))
+                            .map(Function.identity(), dirs -> first(dirs, MOST_DIRS)),
+                    FilesystemContents::toDirs,
                     FilesystemContents::fromParts);
 
     // Space accounting

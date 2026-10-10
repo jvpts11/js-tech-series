@@ -33,6 +33,9 @@ import java.util.Optional;
  */
 public final class CraftFile {
 
+    /* Lists and compounds inside one another: an item's components nest a dozen deep at most. */
+    private static final int MOST_NESTING = 128;
+
     private CraftFile() {
     }
 
@@ -70,22 +73,12 @@ public final class CraftFile {
      */
     public static Optional<CraftingPattern> parse(final String content,
                                                    final HolderLookup.Provider registries) {
-        final Tag tag;
-        try {
-            tag = TagParser.parseTag(content);
-        } catch (final Exception e) {
-            JsComputers.LOGGER.warn("Failed to parse .craft file content as SNBT: {}",
-                    e.getMessage());
+        final Optional<Tag> tag = tagOf(content);
+        if (tag.isEmpty()) {
             return Optional.empty();
         }
         final RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
-        final var result = CraftingPattern.CODEC.parse(ops, tag);
-        if (result.isError()) {
-            JsComputers.LOGGER.warn("Failed to decode CraftingPattern from .craft: {}",
-                    result.error().map(e -> e.message()).orElse("unknown"));
-            return Optional.empty();
-        }
-        return Optional.of(result.getOrThrow());
+        return decode(CraftingPattern.CODEC, ops, tag.get());
     }
 
     /*
@@ -115,12 +108,9 @@ public final class CraftFile {
 
     /** The recipe kind a {@code .craft} holds: "proc", "multi", or "craft" for the legacy untagged bench pattern. */
     public static String typeOf(final String content) {
-        try {
-            if (TagParser.parseTag(content) instanceof CompoundTag c && c.contains("type")) {
-                return c.getString("type");
-            }
-        } catch (final Exception ignored) {
-            // not parseable as a tagged compound, treat as legacy bench
+        // Anything not readable as a tagged compound is taken for the legacy bench pattern.
+        if (tagOf(content).orElse(null) instanceof CompoundTag c && c.contains("type")) {
+            return c.getString("type");
         }
         return "craft";
     }
@@ -142,16 +132,74 @@ public final class CraftFile {
 
     private static <T> Optional<T> unwrap(final String content, final String type, final Codec<T> codec,
                                           final HolderLookup.Provider registries) {
-        final Tag tag;
-        try {
-            tag = TagParser.parseTag(content);
-        } catch (final Exception e) {
-            return Optional.empty();
-        }
-        if (!(tag instanceof CompoundTag c) || !type.equals(c.getString("type"))) {
+        if (!(tagOf(content).orElse(null) instanceof CompoundTag c) || !type.equals(c.getString("type"))
+                || c.get("data") == null) {
             return Optional.empty();
         }
         final RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
-        return codec.parse(ops, c.get("data")).result();
+        return decode(codec, ops, c.get("data"));
+    }
+
+    /*
+     * The text of a file read as SNBT, or nothing when it is not SNBT. The game's reader goes one call deeper for every
+     * list or compound it opens and has no limit of its own, so a file that is a long run of brackets, which any player
+     * can write and rename, would overflow the server's stack; one nested deeper than any pattern is refused first.
+     */
+    private static Optional<Tag> tagOf(final String content) {
+        if (content == null || nestsTooDeep(content)) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(TagParser.parseTag(content));
+        } catch (final Exception e) {
+            JsComputers.LOGGER.debug("A .craft file is not SNBT: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /*
+     * A value decoded from a tag, or nothing when the tag does not hold one. A record that checks itself as it is made
+     * throws rather than answering with an error, and a file a player wrote must never get that far.
+     */
+    private static <T> Optional<T> decode(final Codec<T> codec, final RegistryOps<Tag> ops, final Tag tag) {
+        try {
+            final var result = codec.parse(ops, tag);
+            if (result.isError()) {
+                JsComputers.LOGGER.debug("A .craft file does not hold a pattern: {}",
+                        result.error().map(e -> e.message()).orElse("unknown"));
+            }
+            return result.result();
+        } catch (final RuntimeException malformed) {
+            JsComputers.LOGGER.debug("A .craft file does not hold a pattern: {}", malformed.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /* Whether the text opens more lists and compounds inside one another than any pattern does, quoted text aside. */
+    private static boolean nestsTooDeep(final String content) {
+        int depth = 0;
+        char quote = 0;
+        boolean escaped = false;
+        for (int i = 0; i < content.length(); i++) {
+            final char c = content.charAt(i);
+            if (quote != 0) {
+                if (escaped) {
+                    escaped = false;
+                } else if (c == '\\') {
+                    escaped = true;
+                } else if (c == quote) {
+                    quote = 0;
+                }
+            } else if (c == '"' || c == '\'') {
+                quote = c;
+            } else if (c == '[' || c == '{') {
+                if (++depth > MOST_NESTING) {
+                    return true;
+                }
+            } else if (c == ']' || c == '}') {
+                depth = Math.max(0, depth - 1);
+            }
+        }
+        return false;
     }
 }

@@ -50,8 +50,11 @@ public record MediaVolume(long readerPos, int bay) {
         }
     }
 
-    /** The path within its volume, without the volume's key and its slash. */
+    /** The path within its volume, without the volume's key and its slash; empty for a path on no volume. */
     public static String subPath(final String path) {
+        if (!path.startsWith(PREFIX)) {
+            return "";
+        }
         final String rest = path.substring(PREFIX.length());
         final int slash = rest.indexOf('/');
         return slash < 0 ? "" : rest.substring(slash + 1);

@@ -9,7 +9,6 @@ package dev.jstech.computers.operation.payload;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -28,8 +27,8 @@ public record CopyFilePayload(BlockPos hostPos, String src, String destDir) impl
     public static final StreamCodec<RegistryFriendlyByteBuf, CopyFilePayload> STREAM_CODEC =
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, CopyFilePayload::hostPos,
-                    ByteBufCodecs.stringUtf8(160), CopyFilePayload::src,
-                    ByteBufCodecs.stringUtf8(160), CopyFilePayload::destDir,
+                    PayloadCodecs.PATH, CopyFilePayload::src,
+                    PayloadCodecs.PATH, CopyFilePayload::destDir,
                     CopyFilePayload::new);
 
     @Override

@@ -467,6 +467,16 @@ public final class IsmsProfilerApp implements IDesktopApp, CodeFileReplies.IRead
         scroll = 0;
     }
 
+    /*
+     * Copies the selected row, as it stands when Copy is clicked: a trace still running can have pushed it off the top
+     * since the menu was opened.
+     */
+    private void copySelected() {
+        if (selected >= 0 && selected < rows.size()) {
+            Minecraft.getInstance().keyboardHandler.setClipboard(String.join(TAB, cells(rows.get(selected))));
+        }
+    }
+
     private void chooseOpen() {
         files.openFile(IsmsTexts.OPEN_FILE.text(), "", List.of(FileDialog.Filter.of(IsmsTexts.TRACES, EXTENSION),
                 FileDialog.Filter.ALL), file -> {
@@ -812,8 +822,7 @@ public final class IsmsProfilerApp implements IDesktopApp, CodeFileReplies.IRead
 
     private List<ContextMenu.Item> editMenu() {
         return List.of(
-                keyed(IsmsTexts.COPY, IsmsMenus.COPY_KEYS, selected >= 0, () -> Minecraft.getInstance()
-                        .keyboardHandler.setClipboard(String.join(TAB, cells(rows.get(selected))))),
+                keyed(IsmsTexts.COPY, IsmsMenus.COPY_KEYS, selected >= 0, this::copySelected),
                 item(IsmsProfilerTexts.CLEAR_WINDOW, !rows.isEmpty(), this::clear),
                 keyed(IsmsTexts.FIND, IsmsMenus.FIND_KEYS, true, () -> findOpen = true),
                 item(IsmsProfilerTexts.FIND_NEXT, !finding.edit().isEmpty(), this::findNext));

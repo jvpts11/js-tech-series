@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.sigma.LanguageLevel;
@@ -23,6 +24,7 @@ import dev.jstech.computers.vm.program.IHost;
 import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.Values;
+import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -127,6 +129,20 @@ class BareFunctionsTest {
             assertEquals("printf".equals(function.name()) ? SigmaVersions.FIRST : 2, function.since(),
                     function.name());
         }
+    }
+
+    @Test
+    void compile_callsNestedInOneAnotherCompileInTimeLinearInTheirDepth() {
+        /*
+         * A call's long way is made over the values handed to it, and each was walked again with every long way
+         * around it: forty calls nested this way doubled the work forty times and held the server's thread for good.
+         */
+        String nested = "\"a\"";
+        for (int i = 0; i < 40; i++) {
+            nested = "strstr(\"x\" + " + nested + ", \"y\")";
+        }
+        final String body = "int i = " + nested + ";";
+        assertTimeoutPreemptively(Duration.ofSeconds(20), () -> listing(body, LanguageLevel.SIGMA));
     }
 
     @Test

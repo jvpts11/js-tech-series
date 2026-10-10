@@ -192,6 +192,11 @@ public final class TextDocument {
     /** Removes what is selected, the caret landing where it was; false when nothing was selected. */
     public boolean deleteSelection() {
         if (!hasSelection()) {
+            /*
+             * An anchor left on the caret by a move that went nowhere (Shift+End at the end of a line) is no selection,
+             * but outlived the edit that follows and pointed past the line it shortened: dropped before any edit.
+             */
+            anchorLine = -1;
             return false;
         }
         final Spot from = selectionStart();

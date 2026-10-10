@@ -55,6 +55,24 @@ class IProphetStatementTest {
     }
 
     @Test
+    void parse_watchFindsItsActionInAnItemNameThatGrowsWhenUpperCased() {
+        // Found in an upper-cased copy, "ß" became "SS" and the place of the action ran past the end of the text.
+        final IProphetStatement.Watch watch = assertInstanceOf(IProphetStatement.Watch.class,
+                IProphetStatement.parse("WATCH ßß < 5 DO A"));
+
+        assertEquals("ßß", watch.item());
+        assertEquals("A", watch.action());
+    }
+
+    @Test
+    void parse_watchOfAnItemNamedDoTakesTheActionAfterTheRealDo() {
+        final IProphetStatement.Watch watch = assertInstanceOf(IProphetStatement.Watch.class,
+                IProphetStatement.parse("WATCH do < 5 DO CRAFT do TO 10"));
+
+        assertEquals("CRAFT do TO 10", watch.action());
+    }
+
+    @Test
     void parse_aWatchWithNoActionIsMalformed() {
         assertEquals(new IProphetStatement.Malformed(IProphetStatement.BAD_WATCH),
                 IProphetStatement.parse("WATCH redstone < 500 DO"));

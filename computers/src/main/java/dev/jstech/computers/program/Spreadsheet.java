@@ -45,6 +45,12 @@ public final class Spreadsheet {
     /** What a cell shows when it asks the network for something the machine has not said anything about. */
     public static final String UNKNOWN = "#NONE";
 
+    /*
+     * How deep a formula nests, and how long a chain of cells naming one another goes: far past any sheet built on
+     * purpose, and short of what the game's stack holds when the sheet is drawn.
+     */
+    private static final int MOST_DEPTH = 256;
+
     /**
      * What the machine last said about the network, which is what the asking functions are answered from.
      *
@@ -251,6 +257,11 @@ public final class Spreadsheet {
             return already;
         }
         final int key = row * COLUMNS + column;
+        // A chain of cells each naming the next is worked out one inside another, so it is as deep as it is long.
+        if (visiting.size() >= MOST_DEPTH) {
+            lastError = ERROR;
+            return null;
+        }
         if (!visiting.add(key)) {
             lastError = CIRCULAR;
             return null;
@@ -363,6 +374,7 @@ public final class Spreadsheet {
         private final String text;
         private final Set<Integer> visiting;
         private int at;
+        private int depth;
 
         Parser(final String formula, final Set<Integer> alreadyVisiting) {
             this.text = formula;
@@ -428,14 +440,27 @@ public final class Spreadsheet {
             return null;
         }
 
+        /*
+         * Every way a formula nests passes through here, a bracket as well as a sign, so its depth is counted here: a
+         * cell of a few thousand '(' or '-' overflowed the game's stack while the sheet was drawn.
+         */
         private Double unary() {
-            skipSpace();
-            if (at < text.length() && text.charAt(at) == '-') {
-                at++;
-                final Double value = unary();
-                return value == null ? null : -value;
+            depth++;
+            try {
+                if (depth > MOST_DEPTH) {
+                    lastError = ERROR;
+                    return null;
+                }
+                skipSpace();
+                if (at < text.length() && text.charAt(at) == '-') {
+                    at++;
+                    final Double value = unary();
+                    return value == null ? null : -value;
+                }
+                return atom();
+            } finally {
+                depth--;
             }
-            return atom();
         }
 
         private Double atom() {

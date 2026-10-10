@@ -208,9 +208,10 @@ final class SigmaPainter {
     private void bar(final GuiGraphics g, final OsSkin skin, final UiLayout.Rect rect, final int value,
                      final int least, final int mostAsked) {
         skin.panel(g, rect.x(), rect.y(), rect.w(), rect.h());
-        final int most = Math.max(least + 1, mostAsked);
+        // In longs: a least of the largest int, which a program can set, made least + 1 wrap below it and threw.
+        final long most = Math.max((long) least + 1, mostAsked);
         final int room = rect.w() - 4;
-        final int filled = (int) ((long) room * (Math.clamp(value, least, most) - least) / (most - least));
+        final int filled = (int) ((long) room * (Math.clamp((long) value, least, most) - least) / (most - least));
         if (filled > 0) {
             g.fill(rect.x() + 2, rect.y() + 2, rect.x() + 2 + filled, rect.y() + rect.h() - 2, skin.progressFill());
         }
@@ -316,7 +317,8 @@ final class SigmaPainter {
         final int barX = rect.x() + rect.w() - UiLayout.SCROLLBAR;
         g.fill(barX, rect.y() + 1, barX + UiLayout.SCROLLBAR - 1, rect.y() + rect.h() - 1, skin.fieldBg());
         final int room = Math.max(1, this.ui.rooms.getOrDefault(widget.id(), 0));
-        final int span = rect.h() - 2;
+        // A view laid out lower than its frame has no span to scroll in, and once divided by nothing.
+        final int span = Math.max(0, rect.h() - 2);
         final int thumb = Math.max(8, span * span / (span + room));
         final int top = rect.y() + 1 + (span - thumb) * Math.min(this.ui.scroll(widget.id()), room) / room;
         skin.scrollThumb(g, barX + 1, top, UiLayout.SCROLLBAR - 3, thumb);

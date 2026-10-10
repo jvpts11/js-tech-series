@@ -2188,6 +2188,33 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Open with's Choose another program lists every program on the computer that opens files.
 - A mono laser printer prints a picture in greys, its dots growing a pixel at a time, where every middle tone came
   out as the same dot. The printer's queue keeps its lines apart, and its track counts sheets.
+- Nothing a player can save, type or build sends the game more than a packet carries any more, which dropped the
+  connection. A Save As or Open dialog (Exceed's and Exposure's among them), an editor's Save and the Virtual Studio
+  refuse a name or a folder too long for one, and say so; the print dialog keeps its fields to their length. A desktop
+  listing a folder of a great many files, a terminal with a long scroll behind it, many windows open at once and a
+  Mainframe with a long list of operations reach the screen cut to what it can show.
+- A disk holds at most 16,384 files and 4,096 folders, so that what it holds can always be listed; a write, a copy or
+  a new folder past that is refused like one on a full disk.
+- Setting a RAID mode in the firmware of a rack with no single server to set it on no longer drops the connection.
+- A Sigma program no longer stops the server's thread, or takes the machine's tick down with it, when it copies an
+  object that holds itself, nests thousands of `=` or `? :` in one line, writes thirty calls inside one another,
+  calls itself deep with a method of a great many locals, is sent a message with its memory full, or stops another
+  program as it leaves. A listing whose method claims more places than any method has is refused when it is read.
+- A crafting pattern whose grid is not nine cells, which a tampered item or file could carry, is refused as it is
+  read, and a `.craft` file nested over a hundred deep is refused rather than read to the end of the stack.
+- IQL stops a request after 4,096 statements, its procedures' and views' counted, and says why: procedures running
+  one another over and over held the server's thread.
+- A Prophet `WATCH` naming an item spelt with a letter that grows in capitals, such as "ß", or an item called "do",
+  reads its action from the right place, where it failed or took the wrong words.
+- A craft whose planning failed no longer waits in the Mainframe's list for ever; it is turned down as a craft with no
+  way to make it. Nextgre weighs a preview from what it saw of the world on the server's thread, never reading the
+  world from the thread that weighs it.
+- The Network Interactor, the craft manager and the file windows ignore requests only a tampered client sends (a count
+  below none, a recipe before the first, a file renamed from a medium onto a disk), which failed on the server.
+- On the client: a line drawn far off a Sigma window, a bar or a scroll with values near the largest a number holds,
+  ISMS's profiler copying a selection, deleting a selection in a text field whose anchor had been left behind, and a
+  calculator or a spreadsheet formula nested hundreds deep no longer crash the game. The calculator takes 256
+  characters, and a formula past that depth is an error in its cell.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

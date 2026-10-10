@@ -197,7 +197,7 @@ final class VirtualStudioLoader {
         if (FileSaves.send(this.host, path, content)) {
             FilesApps.diskChanged();
         } else {
-            this.workspace.say(GameText.resolve(FileSaves.tooLong(content)));
+            this.workspace.say(GameText.resolve(FileSaves.tooLong(path, content)));
         }
     }
 

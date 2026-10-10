@@ -231,6 +231,11 @@ public final class AsmReader {
         final int slotsAt = body.lastIndexOf(" slots ");
         if (slotsAt >= 0) {
             slots = this.number(body.substring(slotsAt + " slots ".length()).trim(), line, 0);
+            if (slots < 0 || slots > AsmMethod.MOST_SLOTS) {
+                // Reported rather than built: a method may not need fewer than none, nor more than a frame can hold.
+                this.report(line, ListingError.MALFORMED_OPERAND, rest, ".method");
+                return;
+            }
             body = body.substring(0, slotsAt).trim();
             hasBody = true;
         }

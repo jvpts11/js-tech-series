@@ -281,6 +281,15 @@ class AsmRoundTripTest {
     }
 
     @Test
+    void read_reportsAMethodNeedingFewerPlacesThanNoneOrMoreThanAFrameHolds() {
+        // A count below none threw out of the reader; two billion places ran the server out of memory on the call.
+        for (final String slots : List.of("-1", "2000000000", String.valueOf(AsmMethod.MOST_SLOTS + 1))) {
+            this.read(".asm 2\n.class C\n.method void M() slots " + slots + "\n    ret\n");
+            assertTrue(this.reader.hasProblems(), "slots " + slots + " was taken");
+        }
+    }
+
+    @Test
     void read_reportsALineItDoesNotKnow() {
         this.read(".asm 2\n.class C\n.method void M() slots 0\n    nonsense\n");
         assertEquals(List.of("A4003"), this.codes());

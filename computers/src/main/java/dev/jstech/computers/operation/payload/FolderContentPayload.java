@@ -34,7 +34,7 @@ public record FolderContentPayload(String dir, List<WireFile> files) implements 
 
         public static final StreamCodec<RegistryFriendlyByteBuf, WireFile> STREAM_CODEC =
                 StreamCodec.composite(
-                        ByteBufCodecs.stringUtf8(160), WireFile::path,
+                        PayloadCodecs.PATH, WireFile::path,
                         ByteBufCodecs.stringUtf8(MAX_TEXT), WireFile::text,
                         WireFile::new);
     }
@@ -44,7 +44,7 @@ public record FolderContentPayload(String dir, List<WireFile> files) implements 
 
     public static final StreamCodec<RegistryFriendlyByteBuf, FolderContentPayload> STREAM_CODEC =
             StreamCodec.composite(
-                    ByteBufCodecs.stringUtf8(160), FolderContentPayload::dir,
+                    PayloadCodecs.PATH, FolderContentPayload::dir,
                     WireFile.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES)), FolderContentPayload::files,
                     FolderContentPayload::new);
 

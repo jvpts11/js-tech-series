@@ -31,7 +31,7 @@ public record SaveFilePayload(BlockPos hostPos, String path, String content) imp
     public static final StreamCodec<RegistryFriendlyByteBuf, SaveFilePayload> STREAM_CODEC =
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, SaveFilePayload::hostPos,
-                    ByteBufCodecs.stringUtf8(160), SaveFilePayload::path,
+                    PayloadCodecs.PATH, SaveFilePayload::path,
                     ByteBufCodecs.stringUtf8(MAX_CONTENT), SaveFilePayload::content,
                     SaveFilePayload::new);
 

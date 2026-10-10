@@ -201,6 +201,10 @@ public final class FileEditPayloads {
             return;
         }
         final boolean media = oldPath.startsWith("media:");
+        // A name is changed within its own place: a file on a medium keeps to that medium, a disk's file to the disk.
+        if (media != newPath.startsWith("media:")) {
+            return;
+        }
         final ItemStack vol = volumeOf(level, computer, oldPath);
         if (vol.isEmpty()) {
             return;

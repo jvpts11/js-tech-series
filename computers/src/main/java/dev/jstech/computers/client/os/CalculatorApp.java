@@ -50,6 +50,8 @@ public final class CalculatorApp implements IDesktopApp {
     private static final int COLS = 5;
     private static final int GAP = 2;
     private static final int DISPLAY_H = 30;
+    /* The longest expression the line takes. */
+    private static final int MOST_INPUT = 256;
 
     private OsSkin skin = OsSkin.fallback();
     private String input = "";
@@ -197,7 +199,10 @@ public final class CalculatorApp implements IDesktopApp {
             }
             justResult = false;
         }
-        input += isFunction(key) ? key + "(" : key;
+        // As long as a calculator's line goes; past it, a key does nothing, as on the real one.
+        if (input.length() < MOST_INPUT) {
+            input += isFunction(key) ? key + "(" : key;
+        }
     }
 
     private void evaluate() {

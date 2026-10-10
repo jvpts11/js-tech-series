@@ -76,6 +76,20 @@ class ProgramEventsTest {
     }
 
     @Test
+    void deliverMessage_toAProgramTooFullToHoldItIsTurnedAwayNotThrown() {
+        // Built outside any instruction, the message ran the heap out and stopped the tick of the machine running it.
+        final Process process = process();
+        final Values.Obj self = process.create(PROGRAM.entryPoint());
+        final ProgramEvents events = process.events();
+        process.listeners().hearMessages(events.handlerFor(self, "Hear"));
+        process.heap0().allocate(new Object(), process.heap0().free() - 1, 0);
+        final int before = process.waiting();
+
+        assertFalse(events.deliverMessage(4, "a message longer than the one byte left", 20L));
+        assertEquals(before, process.waiting());
+    }
+
+    @Test
     void deliverUiEvent_refusesAWindowTheProgramDoesNotHave() {
         assertFalse(process().events().deliverUiEvent(99L, 1L, "click", List.of()));
     }

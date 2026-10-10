@@ -11,6 +11,7 @@ import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -54,19 +55,7 @@ final class ObjectMaking {
      * that is not a struct, null included, is handed back as it is, since there is nothing to copy.
      */
     Object copyOf(final Object value, final int line) {
-        if (!(value instanceof Values.Obj original)) {
-            return value;
-        }
-        final TypeImage known = this.program.type(original.type());
-        if (known == null || known.kind() != AsmType.Kind.STRUCT) {
-            return value;
-        }
-        final Values.Obj made = new Values.Obj(original.type());
-        this.heap.allocate(made, known.instanceSize(), line);
-        for (final Map.Entry<String, Object> field : original.all().entrySet()) {
-            made.set(field.getKey(), this.copyOf(field.getValue(), line));
-        }
-        return made;
+        return this.copyOf(value, line, new IdentityHashMap<>());
     }
 
     /**
@@ -138,5 +127,31 @@ final class ObjectMaking {
             return array;
         }
         throw new Halt(Halt.Reason.NO_OBJECT, line, NO_ARRAY.text());
+    }
+
+    /*
+     * The copy of a struct, keeping the copies already made: a struct met a second time, through a field that points
+     * back at one being copied or at one copied before, is the copy made of it, so a cycle ends and what two fields
+     * shared they still share.
+     */
+    private Object copyOf(final Object value, final int line, final Map<Values.Obj, Values.Obj> copies) {
+        if (!(value instanceof Values.Obj original)) {
+            return value;
+        }
+        final TypeImage known = this.program.type(original.type());
+        if (known == null || known.kind() != AsmType.Kind.STRUCT) {
+            return value;
+        }
+        final Values.Obj already = copies.get(original);
+        if (already != null) {
+            return already;
+        }
+        final Values.Obj made = new Values.Obj(original.type());
+        this.heap.allocate(made, known.instanceSize(), line);
+        copies.put(original, made);
+        for (final Map.Entry<String, Object> field : original.all().entrySet()) {
+            made.set(field.getKey(), this.copyOf(field.getValue(), line, copies));
+        }
+        return made;
     }
 }

@@ -43,8 +43,8 @@ final class SigmaCanvas {
                 case "FillRect" -> g.fill(rect.x() + 1 + stroke.x(), rect.y() + 1 + stroke.y(),
                         rect.x() + 1 + stroke.x() + Math.max(0, stroke.x2()),
                         rect.y() + 1 + stroke.y() + Math.max(0, stroke.y2()), colour);
-                case "DrawLine" -> line(g, rect.x() + 1 + stroke.x(), rect.y() + 1 + stroke.y(),
-                        rect.x() + 1 + stroke.x2(), rect.y() + 1 + stroke.y2(), colour);
+                case "DrawLine" -> inside(g, rect, (long) rect.x() + 1 + stroke.x(), (long) rect.y() + 1 + stroke.y(),
+                        (long) rect.x() + 1 + stroke.x2(), (long) rect.y() + 1 + stroke.y2(), colour);
                 case "DrawText" -> Draw.text(g, font, stroke.text(), rect.x() + 1 + stroke.x(),
                         rect.y() + 1 + stroke.y(), colour);
                 case "SetPixel" -> g.fill(rect.x() + 1 + stroke.x(), rect.y() + 1 + stroke.y(),
@@ -73,5 +73,44 @@ final class SigmaCanvas {
             final int y = y1 + (y2 - y1) * i / steps;
             g.fill(x, y, x + 1, y + 1, colour);
         }
+    }
+
+    /*
+     * A program's line, cut to the part inside the canvas first. A line is drawn a pixel at a time, and one a program
+     * asked to run two billion pixels long held the game's drawing for minutes every frame; the part inside is never
+     * longer than the canvas is wide and tall.
+     */
+    private static void inside(final GuiGraphics g, final UiLayout.Rect rect, final long x1, final long y1,
+                               final long x2, final long y2, final int colour) {
+        final double left = rect.x() + 1;
+        final double top = rect.y() + 1;
+        final double right = rect.x() + rect.w() - 2;
+        final double bottom = rect.y() + rect.h() - 2;
+        final double dx = x2 - x1;
+        final double dy = y2 - y1;
+        // The part of the line, from 0 at its start to 1 at its end, that lies on the canvas (Liang and Barsky).
+        double from = 0.0;
+        double to = 1.0;
+        final double[] toward = {-dx, dx, -dy, dy};
+        final double[] room = {x1 - left, right - x1, y1 - top, bottom - y1};
+        for (int side = 0; side < 4; side++) {
+            if (toward[side] == 0.0) {
+                if (room[side] < 0.0) {
+                    return;
+                }
+                continue;
+            }
+            final double at = room[side] / toward[side];
+            if (toward[side] < 0.0) {
+                from = Math.max(from, at);
+            } else {
+                to = Math.min(to, at);
+            }
+        }
+        if (from > to) {
+            return;
+        }
+        line(g, (int) Math.round(x1 + from * dx), (int) Math.round(y1 + from * dy),
+                (int) Math.round(x1 + to * dx), (int) Math.round(y1 + to * dy), colour);
     }
 }

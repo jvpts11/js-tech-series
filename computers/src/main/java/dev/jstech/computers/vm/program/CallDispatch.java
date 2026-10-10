@@ -29,6 +29,8 @@ final class CallDispatch {
 
     /** The most calls one thread may have in progress at once; one call more halts the program. */
     static final int DEEPEST = 1_024;
+    /** The most places one thread's calls may hold together, about four megabytes of the server's memory. */
+    static final long STACK_PLACES = 1L << 20;
 
     private static final TextKey NOT_ANSWERED = TextKey.of("jsc.vm.call_dispatch.not_answered",
             "the runtime does not answer for %s");
@@ -233,12 +235,14 @@ final class CallDispatch {
      * Starts a call the running thread makes, unless its calls already go as deep as a thread's may.
      *
      * <p>A method that calls itself without end would otherwise keep adding calls, each held in the server's
-     * memory, for as long as the program runs; no program that ends is anywhere near this deep.
+     * memory, for as long as the program runs; no program that ends is anywhere near this deep. The places the calls
+     * hold are bounded too, reckoned as if every call held as many as this one: a method of tens of thousands of
+     * places calling itself a thousand deep would hold the server's memory long before its depth stopped it.
      */
     private void pushCall(final Frame frame, final int line) {
         final Deque<Frame> frames = this.process.current().frames;
-        if (frames.size() >= DEEPEST) {
-            throw new Halt(Halt.Reason.STACK_DEPTH, line, TOO_DEEP.with(DEEPEST, frame.method.describe()));
+        if (frames.size() >= DEEPEST || (long) (frames.size() + 1) * frame.slots.length > STACK_PLACES) {
+            throw new Halt(Halt.Reason.STACK_DEPTH, line, TOO_DEEP.with(frames.size(), frame.method.describe()));
         }
         frames.push(frame);
     }

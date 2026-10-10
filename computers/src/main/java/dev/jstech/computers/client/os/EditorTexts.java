@@ -36,6 +36,8 @@ final class EditorTexts {
     static final TextKey SAVE_AS_FIRST = TextKey.of("jsc.editor.save_as_first", "Save As first");
     static final TextKey CANNOT_SAVE_DAT = TextKey.of("jsc.editor.cannot_save_dat", "Cannot save a .dat file");
     static final TextKey TOO_LONG = TextKey.of("jsc.editor.too_long", "Too long to save: %s of %s characters");
+    static final TextKey PATH_TOO_LONG =
+            TextKey.of("jsc.editor.path_too_long", "Path too long to save to: %s of %s characters");
     static final TextKey SAVING = TextKey.of("jsc.editor.saving", "Saving...");
     static final TextKey TOO_LARGE = TextKey.of("jsc.editor.too_large", "%s is too large to open here");
     static final TextKey LINE_AND_COLUMN = TextKey.of("jsc.editor.line_and_column", "Ln %s, Col %s");

@@ -153,7 +153,8 @@ final class ExpressionParser {
             return left;
         }
         final Token at = this.cursor.advance();
-        final IExpr value = this.parseAssignment();
+        // Through the depth budget, as every nesting is: a chain of thousands of '=' would overflow the stack.
+        final IExpr value = this.parseExpression();
         if (!isAssignable(left)) {
             this.diagnostics.error(at.line(), at.column(), SigmaError.INVALID_ASSIGNMENT_TARGET);
         }
@@ -189,9 +190,10 @@ final class ExpressionParser {
             return condition;
         }
         this.cursor.advance();
-        final IExpr whenTrue = this.parseAssignment();
+        // Each branch counts against the depth budget, so a long chain of '?:' ends in an error, not a stack overflow.
+        final IExpr whenTrue = this.parseExpression();
         this.cursor.expect(TokenKind.COLON);
-        final IExpr whenFalse = this.parseAssignment();
+        final IExpr whenFalse = this.parseExpression();
         return new IExpr.Conditional(condition, whenTrue, whenFalse,
                 condition == null ? this.cursor.peek().line() : condition.line(),
                 condition == null ? this.cursor.peek().column() : condition.column());

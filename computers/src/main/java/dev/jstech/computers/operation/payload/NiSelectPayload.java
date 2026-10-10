@@ -66,7 +66,8 @@ public record NiSelectPayload(BlockPos host, BlockPos monitorPos, StorageKey key
                         final BlockPos monitor = BlockPos.STREAM_CODEC.decode(buf);
                         final StorageKey key = StorageKey.STREAM_CODEC.decode(buf);
                         final long quantity = buf.readVarLong();
-                        final int count = Math.min(buf.readVarInt(), MAX_SERVERS);
+                        // Bounded both ways: a count below none, which only a tampered client sends, reads as none.
+                        final int count = Math.max(0, Math.min(buf.readVarInt(), MAX_SERVERS));
                         final List<String> sources = new ArrayList<>(count);
                         for (int i = 0; i < count; i++) {
                             sources.add(ByteBufCodecs.stringUtf8(KEY_LENGTH).decode(buf));

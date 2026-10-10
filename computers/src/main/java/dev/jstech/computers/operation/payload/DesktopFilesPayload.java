@@ -119,9 +119,10 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             StreamCodec.of(DesktopFilesPayload::encode, DesktopFilesPayload::decode);
 
     private static void encode(final RegistryFriendlyByteBuf buf, final DesktopFilesPayload payload) {
+        // Cut to what the packet carries rather than refused: this packet is what puts a desktop in front of somebody.
         DiskFilesPayload.WireFile.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES))
-                .encode(buf, payload.files);
-        buf.writeUtf(payload.wallpaper, 48);
+                .encode(buf, payload.files.size() > MAX_FILES ? payload.files.subList(0, MAX_FILES) : payload.files);
+        buf.writeUtf(TextBounds.clip(payload.wallpaper, 48), 48);
         buf.writeUtf(TextBounds.clip(payload.cdeStyle, CdeStyle.MOST_LETTERS), CdeStyle.MOST_LETTERS);
         /*
          * A name as long as a name may be. Written at that length, and cut to it rather than refused: this

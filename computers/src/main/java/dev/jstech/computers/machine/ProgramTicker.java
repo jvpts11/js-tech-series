@@ -151,10 +151,19 @@ final class ProgramTicker {
         }
     }
 
-    /** Sorts the programs into those that get a share of this tick and those that leave the machine now. */
+    /**
+     * Sorts the programs into those that get a share of this tick and those that leave the machine now.
+     *
+     * <p>It goes through the programs as they stood when it began: a farewell, and a service's tick, run the program's
+     * own code, which can start or stop other programs, and the table they are kept in may not change under a walk.
+     */
     private void sort(final Predicate<IProgramParent.Remote> waiting, final List<ProgramEntry<IMachineRuntime>> ready,
                       final List<ProgramEntry<IMachineRuntime>> done) {
-        for (final ProgramEntry<IMachineRuntime> one : this.table.running()) {
+        for (final ProgramEntry<IMachineRuntime> one : List.copyOf(this.table.running())) {
+            if (this.table.byId(one.id()) != one) {
+                // Stopped by an earlier program's farewell in this same walk: it is gone already.
+                continue;
+            }
             final ILanguageProcess.State state = one.process().state();
             if (!one.process().isService() && !this.focus.holds(one.id()) && one.process().waitingForInput()) {
                 /*

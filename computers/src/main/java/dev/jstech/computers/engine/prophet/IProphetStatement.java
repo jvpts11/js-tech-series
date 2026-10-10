@@ -9,6 +9,8 @@ package dev.jstech.computers.engine.prophet;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -83,9 +85,17 @@ public sealed interface IProphetStatement {
         if (comparison == null || threshold < 0) {
             return new Malformed(BAD_WATCH);
         }
-        // The action is the rest of the statement as written, from the word after DO.
-        final int doAt = text.toUpperCase(Locale.ROOT).indexOf(" DO ");
-        final String action = doAt < 0 ? "" : text.substring(doAt + 4).strip();
+        /*
+         * The action is the rest of the statement as written, from the word after DO, found by counting words in the
+         * text itself: a place found in an upper-cased copy is off wherever a letter grows when upper-cased (an
+         * item named with an "ß" put it past the end), and an item named "do" is not the DO before the action.
+         */
+        final Matcher word = Pattern.compile("\\S+").matcher(text);
+        int actionAt = text.length();
+        for (int i = 0; i < 5 && word.find(); i++) {
+            actionAt = word.end();
+        }
+        final String action = text.substring(actionAt).strip();
         return action.isEmpty() ? new Malformed(BAD_WATCH) : new Watch(words[1], comparison, threshold, action);
     }
 

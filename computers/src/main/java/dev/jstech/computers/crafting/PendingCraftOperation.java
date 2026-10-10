@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.crafting;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.INetworkOperation;
@@ -93,8 +94,19 @@ public final class PendingCraftOperation implements INetworkOperation {
                       @Nullable final Consumer<NetworkCraftOperation> delivered) {
         this.onDelivered = delivered;
         dispatch.submit(context -> {
-            final CraftPlanning.Routed routed = planning.get();
-            context.onMainThread(() -> deliver(routed));
+            CraftPlanning.Routed routed;
+            try {
+                routed = planning.get();
+            } catch (final RuntimeException planningFailed) {
+                /*
+                 * A plan that could not be made is a craft with no way to make it. Thrown out of here it was only
+                 * marked on the dispatcher's side, and this craft stayed waiting in the Mainframe's list for ever.
+                 */
+                JsComputers.LOGGER.warn("Planning a craft of {} failed", key.displayName().getString(), planningFailed);
+                routed = new CraftPlanning.Routed(null, CraftRouting.NONE);
+            }
+            final CraftPlanning.Routed made = routed;
+            context.onMainThread(() -> deliver(made));
             return IOperationResult.success();
         }, priority);
     }

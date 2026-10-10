@@ -61,6 +61,9 @@ class ParserTest {
             "class C { void M() { " + "{".repeat(deep) + "}".repeat(deep) + " } }",
             "class C { " + "List<".repeat(deep) + "int" + ">".repeat(deep) + " field; }",
             "class C { " + "class D { ".repeat(deep) + "}".repeat(deep) + " }",
+            // A chain of conditionals or of assignments nests to the right without a bracket.
+            "class C { int M(bool b) { return " + "b ? 1 : ".repeat(deep) + "0; } }",
+            "class C { void M() { int x = 0; " + "x = ".repeat(deep) + "1; } }",
         };
         for (final String source : sources) {
             final SigmaFrontEnd.Result result = parse(source);

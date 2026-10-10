@@ -11,6 +11,7 @@ import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.MkdirPayload;
 import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
+import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
@@ -288,6 +289,11 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     /* Where it is */
 
     private void request(final String target) {
+        // A longer path than a disk holds could not even be sent: writing it would drop the player from the game.
+        if (target.length() > FsPaths.MAX_PATH_LENGTH) {
+            this.message = FileDialogTexts.PATH_TOO_LONG.with(FsPaths.MAX_PATH_LENGTH);
+            return;
+        }
         this.dir = target;
         this.listed.clear();
         this.rows.setSelected(-1);
@@ -710,6 +716,9 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             return;
         }
         final String newPath = join(parentOf(this.renaming), newName);
+        if (tooLong(newName, newPath)) {
+            return;
+        }
         if (!newPath.equals(this.renaming)) {
             PacketDistributor.sendToServer(new RenameFilePayload(this.host, this.renaming, newPath));
             FilesApps.diskChanged();
@@ -752,6 +761,23 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         return dir.isEmpty() ? fileName : dir + "/" + fileName;
     }
 
+    /*
+     * Whether a name or the path it makes is longer than a disk holds, saying so on the window when it is. The disk
+     * would refuse it anyway; the point is that it is never sent, since a message longer than its cap is not cut on
+     * the way but drops the player from the game.
+     */
+    private boolean tooLong(final String fileName, final String path) {
+        if (fileName.length() > FsPaths.MAX_NAME_LENGTH) {
+            this.message = FileDialogTexts.NAME_TOO_LONG.with(FsPaths.MAX_NAME_LENGTH);
+            return true;
+        }
+        if (path.length() > FsPaths.MAX_PATH_LENGTH) {
+            this.message = FileDialogTexts.PATH_TOO_LONG.with(FsPaths.MAX_PATH_LENGTH);
+            return true;
+        }
+        return false;
+    }
+
     /** The path the way the desktop shows it, for the status line. */
     private String shown(final String path) {
         if (this.posix) {
@@ -771,7 +797,9 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             final Entry picked = selectedEntry();
             final String chosen = picked != null && picked.file() != null && picked.file().directory()
                     ? picked.file().path() : (typed.isEmpty() ? this.dir : join(this.dir, typed));
-            finish(chosen);
+            if (!tooLong(leaf(chosen), chosen)) {
+                finish(chosen);
+            }
             return;
         }
         if (typed.isEmpty()) {
@@ -803,6 +831,9 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         }
         final String fileName = this.mode == Mode.SAVE ? withKind(leaf) : leaf;
         final String path = join(this.dir, fileName);
+        if (tooLong(fileName, path)) {
+            return;
+        }
         if (this.mode == Mode.OPEN_FILE) {
             if (!has(fileName)) {
                 this.message = FileDialogTexts.NOT_FOUND.with(fileName);

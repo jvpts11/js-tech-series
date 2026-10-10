@@ -70,6 +70,10 @@ final class FileDialogTexts {
     static final TextKey NO_SUCH_DRIVE = TextKey.of("jsc.file_dialog.no_such_drive", "No such drive: %s");
     static final TextKey NOT_FOUND = TextKey.of("jsc.file_dialog.not_found", "Not found: %s");
     static final TextKey EXISTS = TextKey.of("jsc.file_dialog.exists", "%s exists. Replace it?");
+    static final TextKey NAME_TOO_LONG =
+            TextKey.of("jsc.file_dialog.name_too_long", "A name holds at most %s characters");
+    static final TextKey PATH_TOO_LONG =
+            TextKey.of("jsc.file_dialog.path_too_long", "A path holds at most %s characters");
 
     private FileDialogTexts() {
     }

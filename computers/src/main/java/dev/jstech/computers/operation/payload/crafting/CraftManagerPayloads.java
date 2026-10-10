@@ -262,7 +262,7 @@ public final class CraftManagerPayloads {
         final CraftPlaces.Place to = places.at(payload.place());
         final int entry = CraftPlaces.entryOf(payload.ref());
         Text status = Text.EMPTY;
-        if (from != null && to != null && from != to && entry < from.recipes().size()) {
+        if (from != null && to != null && from != to && entry >= 0 && entry < from.recipes().size()) {
             final NetworkRecipe recipe = from.recipes().get(entry);
             final boolean fits = to.isCard() == recipe.bench().isPresent() && to.used() < to.capacity()
                     && to.recipes().stream().noneMatch(held -> held.sameRecipe(recipe));
@@ -314,7 +314,7 @@ public final class CraftManagerPayloads {
         for (final int ref : payload.romIndices()) {
             final CraftPlaces.Place place = places.at(CraftPlaces.placeOf(ref));
             final int entry = CraftPlaces.entryOf(ref);
-            if (place == null || entry >= place.recipes().size()) {
+            if (place == null || entry < 0 || entry >= place.recipes().size()) {
                 continue;
             }
             final NetworkRecipe recipe = place.recipes().get(entry);
