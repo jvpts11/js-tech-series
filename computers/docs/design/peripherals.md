@@ -206,6 +206,9 @@ Controller bay gadget ([Servers and racks](servers-and-racks.md)).
 
 - **The Dock Station only takes disks of its era or older** in its trays ([Eras](eras.md)). Today it takes disks of any
   era.
+- **Decided for Carbon, and designed when Carbon opens:** a vinyl record reader and a vinyl record writer, to copy the
+  game's music discs and record them; and a book scanner, enchanted books included, with enchanted books printed in
+  bulk.
 - **Cards still to build**, each designed with its system and existing per era:
   - the Wi-Fi cards ([Wireless](wireless.md));
   - the WAN Interface Cards and the Network Anchor Card ([The network](network.md));

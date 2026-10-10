@@ -55,6 +55,8 @@ describes it.
 - Recipes for every part, by J's Computers' simple path and J's Industrial's industrial path. [Eras](eras.md)
 - Disks only in machines of their era or newer, and the Dock Station only taking disks of its era or older.
   [Eras](eras.md), [Peripherals](peripherals.md)
+- Decided for Carbon and designed then: a vinyl record reader and writer for the game's music discs, and a book
+  scanner with enchanted books printed in bulk. [Peripherals](peripherals.md)
 - The hardware era a player has reached, moved by building a working computer. [Eras](eras.md)
 - Motherboards with expansion slots in groups, and PCI sound cards on Legacy boards. [Hardware](hardware.md)
 - Real byte capacities for removable media. [Storage devices](storage-devices.md)
