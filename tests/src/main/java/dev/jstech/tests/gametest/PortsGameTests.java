@@ -7,11 +7,8 @@
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.hardware.DiskSize;
-import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.os.MachineMemory;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -21,6 +18,7 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TerminalAt;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -29,7 +27,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * FreeBSD's ports, on a machine ticking in a world: the tree fetched from the Mirror and laid out on the disk as
@@ -267,22 +264,7 @@ public final class PortsGameTests {
 
     /** A powered Mainframe with a full build and a disk, with FreeBSD installed on it. */
     private static MainframeBlockEntity freebsd(final GameTestHelper helper, final BlockPos pos) {
-        helper.setBlock(pos, ComputingModule.MAINFRAME.get());
-        if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
-            throw new IllegalStateException("no MainframeBlockEntity at " + pos);
-        }
-        final ItemStackHandler inv = mainframe.getInventory();
-        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
-        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START, new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START, new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
-        inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
-        mainframe.togglePower();
-        if (!mainframe.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "freebsd"))) {
-            throw new IllegalStateException("failed to install FreeBSD on the test Mainframe");
-        }
-        return mainframe;
+        return TestWorldBuilder.forGameTest(helper).placeMainframeWithSystem(pos,
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "freebsd"));
     }
 }

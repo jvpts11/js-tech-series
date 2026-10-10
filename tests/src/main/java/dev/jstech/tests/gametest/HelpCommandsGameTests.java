@@ -17,7 +17,6 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.man.ManualEntries;
 import dev.jstech.tests.JsTests;
@@ -30,6 +29,8 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.text;
 
 /**
  * The help each system has for the manuals of the series, worked from its prompt: MC-DOS's and MC-NET's HELP taking
@@ -171,14 +172,6 @@ public final class HelpCommandsGameTests {
                                          final String line) {
         final ServerCliComputer cli = new ServerCliComputer(mainframe, helper.getLevel());
         return CliCommands.newShell(cli.shellFamily(), WIDTH).run(line, cli);
-    }
-
-    private static String text(final CliShell.Response response) {
-        final StringBuilder out = new StringBuilder();
-        for (final CliLine line : response.lines()) {
-            out.append(line.text()).append('\n');
-        }
-        return out.toString();
     }
 
     private static MainframeBlockEntity mainframe(final GameTestHelper helper, final BlockPos pos,

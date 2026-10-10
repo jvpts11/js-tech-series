@@ -21,6 +21,7 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.StorageNetworkFixture;
+import dev.jstech.tests.testkit.TestCli;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -34,7 +35,6 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * The Mainframe hands its queue slots out by priority: a HIGH request runs before MEDIUM ones submitted
@@ -162,12 +162,6 @@ public final class OperationSchedulingGameTests {
                 .thenSucceed();
     }
 
-    private static boolean cliContains(final CliShell.Response response, final String needle) {
-        final String lower = needle.toLowerCase(Locale.ROOT);
-        return response.lines().stream()
-                .anyMatch(line -> line.text().toLowerCase(Locale.ROOT).contains(lower));
-    }
-
     @GameTest(template = ARENA)
     public static void priority_iqlClauseSchedulesTheStatementAtThatLevel(final GameTestHelper helper) {
         final BlockPos hbw = new BlockPos(2, 2, 2);
@@ -195,7 +189,7 @@ public final class OperationSchedulingGameTests {
                     final ServerCliComputer cli = new ServerCliComputer((IComputerTerminalHost) computer, helper.getLevel());
                     final CliShell shell = CliCommands.newShell(50);
 
-                    helper.assertTrue(cliContains(shell.run("operation select 30 cobblestone priority high", cli),
+                    helper.assertTrue(TestCli.contains(shell.run("operation select 30 cobblestone priority high", cli),
                             "SELECT queued"), "a SELECT with a PRIORITY clause queues");
                     final List<OperationRecord> records = mainframe.activeOperationRecords();
                     helper.assertTrue(records.size() == 1, "one op in flight; got " + records.size());
@@ -204,13 +198,15 @@ public final class OperationSchedulingGameTests {
                     helper.assertTrue(records.get(0).priority() == OperationPriority.HIGH,
                             "the statement's level reached the operation; got " + records.get(0).priority());
 
-                    helper.assertTrue(cliContains(shell.run("operation select 30 cobblestone", cli), "SELECT queued"),
+                    helper.assertTrue(
+                            TestCli.contains(shell.run("operation select 30 cobblestone", cli), "SELECT queued"),
                             "a SELECT without the clause queues too");
                     final List<OperationRecord> both = mainframe.activeOperationRecords();
                     helper.assertTrue(both.size() == 2 && both.get(1).priority() == OperationPriority.MEDIUM,
                             "the default level is MEDIUM; got " + both);
 
-                    helper.assertTrue(cliContains(shell.run("operation select 30 cobblestone priority urgent", cli),
+                    helper.assertTrue(
+                            TestCli.contains(shell.run("operation select 30 cobblestone priority urgent", cli),
                             "unknown priority level"), "an unknown level is a syntax error, not a queued op");
                     helper.assertTrue(mainframe.activeOperationRecords().size() == 2,
                             "the rejected statement queued nothing");

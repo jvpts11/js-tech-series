@@ -45,7 +45,6 @@ import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.tier.HardwareEra;
@@ -59,6 +58,8 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
+
+import static dev.jstech.tests.testkit.TestShell.text;
 
 /**
  * FreeBSD is a system of its own and not a Linux under another name.
@@ -637,15 +638,6 @@ public final class FreeBsdGameTests {
         final StringBuilder out = new StringBuilder();
         for (final BootSequence.Line line : sequence.lines()) {
             out.append(line.label().english()).append(" | ");
-        }
-        return out.toString();
-    }
-
-    /** All of a shell response's lines joined with newlines. */
-    private static String text(final CliShell.Response response) {
-        final StringBuilder out = new StringBuilder();
-        for (final CliLine line : response.lines()) {
-            out.append(line.text()).append('\n');
         }
         return out.toString();
     }

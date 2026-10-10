@@ -7,25 +7,20 @@
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.hardware.DiskSize;
-import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.vm.system.CallCost;
 import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.SystemApi;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * What the machine charges a program, against what the editors tell the player it will charge.
@@ -46,24 +41,8 @@ public final class SigmaCostGameTests {
 
     /** A computer good enough to answer, with a disk in it and a system on it. */
     private static CraftingComputerBlockEntity computer(final GameTestHelper helper, final BlockPos at) {
-        helper.setBlock(at, ComputingModule.CRAFTING_COMPUTER.get());
-        if (!(helper.getBlockEntity(at) instanceof CraftingComputerBlockEntity computer)) {
-            helper.fail("no computer at " + at);
-            return null;
-        }
-        final ItemStackHandler hw = computer.getHardware();
-        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
-                new ItemStack(ComputingModule.PSU_650G.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
-        computer.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp"));
-        return computer;
+        return TestWorldBuilder.forGameTest(helper).placeCraftingComputer(at,
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp"));
     }
 
     /** Being told about something costs nothing, which is the whole reason to prefer it to asking. */

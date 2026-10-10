@@ -20,6 +20,7 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.operation.OperationStatistics;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.StorageNetworkFixture;
+import dev.jstech.tests.testkit.TestCli;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -32,7 +33,6 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * The scheduler times every Operation (ticks queued or waiting, ticks running), stamps the log record with
@@ -109,12 +109,6 @@ public final class OperationStatisticsGameTests {
                 .thenSucceed();
     }
 
-    private static boolean cliContains(final CliShell.Response response, final String needle) {
-        final String lower = needle.toLowerCase(Locale.ROOT);
-        return response.lines().stream()
-                .anyMatch(line -> line.text().toLowerCase(Locale.ROOT).contains(lower));
-    }
-
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void cli_statsListsTheHourByType(final GameTestHelper helper) {
         final BlockPos hbw = new BlockPos(2, 2, 2);
@@ -137,16 +131,17 @@ public final class OperationStatisticsGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 200))
                 .thenExecuteAfter(2, () -> {
-                    helper.assertTrue(cliContains(shell.run("interac stats", cli), "no operations settled"),
+                    helper.assertTrue(TestCli.contains(shell.run("interac stats", cli), "no operations settled"),
                             "an idle network has nothing to report");
-                    helper.assertTrue(cliContains(shell.run("operation select 30 cobblestone", cli), "SELECT queued"),
+                    helper.assertTrue(
+                            TestCli.contains(shell.run("operation select 30 cobblestone", cli), "SELECT queued"),
                             "the pull queues");
                 })
                 .thenExecuteAfter(30, () -> {
                     final CliShell.Response stats = shell.run("interac stats", cli);
-                    helper.assertTrue(cliContains(stats, "SELECT") && cliContains(stats, "1 ops"),
+                    helper.assertTrue(TestCli.contains(stats, "SELECT") && TestCli.contains(stats, "1 ops"),
                             "stats lists the settled SELECT; got " + stats.lines());
-                    helper.assertTrue(cliContains(stats, "peak 1 in flight"), "the day's peak is reported");
+                    helper.assertTrue(TestCli.contains(stats, "peak 1 in flight"), "the day's peak is reported");
                 })
                 .thenSucceed();
     }

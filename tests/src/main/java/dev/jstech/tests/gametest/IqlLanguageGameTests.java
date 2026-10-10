@@ -16,7 +16,6 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IqlDefinition;
@@ -34,6 +33,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.text;
 
 /**
  * The network's language as it is read now: a definition typed at the prompt or written in a file is the engine's
@@ -197,14 +198,6 @@ public final class IqlLanguageGameTests {
 
     private static String names(final List<ICliComputer.StoredItem> rows) {
         return rows.stream().map(row -> row.name().english() + " " + row.quantity()).toList().toString();
-    }
-
-    private static String text(final CliShell.Response response) {
-        final StringBuilder out = new StringBuilder();
-        for (final CliLine line : response.lines()) {
-            out.append(line.text()).append('\n');
-        }
-        return out.toString();
     }
 
     /** A running Mainframe, a cable and a rack with one server, the rack behind the cable. */

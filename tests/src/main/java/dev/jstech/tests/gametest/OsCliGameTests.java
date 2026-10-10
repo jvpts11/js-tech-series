@@ -44,6 +44,8 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import java.util.ArrayList;
 import java.util.List;
 
+import static dev.jstech.tests.testkit.TestShell.text;
+
 /**
  * In-world integration tests for the filesystem CLI commands (dir, type, del, run).
  *
@@ -1516,15 +1518,6 @@ public final class OsCliGameTests {
             throw new IllegalStateException("failed to install " + osId + " on the test Mainframe");
         }
         return mainframe;
-    }
-
-    /** All of a shell response's lines joined with newlines. */
-    private static String text(final dev.jstech.computers.program.cli.CliShell.Response response) {
-        final StringBuilder sb = new StringBuilder();
-        for (final var line : response.lines()) {
-            sb.append(line.text()).append('\n');
-        }
-        return sb.toString();
     }
 
     /**

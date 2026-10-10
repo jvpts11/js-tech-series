@@ -8,7 +8,6 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -114,24 +113,8 @@ public final class SigmaProcessGameTests {
 
     /** A computer with enough hardware to run and a system on it. */
     private static CraftingComputerBlockEntity computer(final GameTestHelper helper, final BlockPos at) {
-        helper.setBlock(at, ComputingModule.CRAFTING_COMPUTER.get());
-        if (!(helper.getBlockEntity(at) instanceof CraftingComputerBlockEntity computer)) {
-            helper.fail("no computer at " + at);
-            return null;
-        }
-        final ItemStackHandler hw = computer.getHardware();
-        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
-                new ItemStack(ComputingModule.PSU_650G.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
-        computer.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp"));
-        return computer;
+        return TestWorldBuilder.forGameTest(helper).placeCraftingComputer(at,
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp"));
     }
 
     private static IMachineRuntime only(final MachinePrograms programs) {

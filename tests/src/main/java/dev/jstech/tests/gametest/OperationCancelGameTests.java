@@ -31,6 +31,7 @@ import dev.jstech.tests.TestMachineBlockEntity;
 import dev.jstech.tests.TestMachines;
 import dev.jstech.tests.testkit.CraftingRig;
 import dev.jstech.tests.testkit.StorageNetworkFixture;
+import dev.jstech.tests.testkit.TestCli;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -46,7 +47,6 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -158,12 +158,6 @@ public final class OperationCancelGameTests {
                 .thenSucceed();
     }
 
-    private static boolean cliContains(final CliShell.Response response, final String needle) {
-        final String lower = needle.toLowerCase(Locale.ROOT);
-        return response.lines().stream()
-                .anyMatch(line -> line.text().toLowerCase(Locale.ROOT).contains(lower));
-    }
-
     @GameTest(template = ARENA)
     public static void cli_opsListsTheIdAndCancelStopsTheOperation(final GameTestHelper helper) {
         final BlockPos hbw = new BlockPos(2, 2, 2);
@@ -194,25 +188,28 @@ public final class OperationCancelGameTests {
                  */
                 .thenExecuteAfter(SETTLE + 6, () -> rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 200))
                 .thenExecuteAfter(2, () -> {
-                    helper.assertTrue(cliContains(shell.run("operation select 30 cobblestone", cli), "SELECT queued"),
+                    helper.assertTrue(
+                            TestCli.contains(shell.run("operation select 30 cobblestone", cli), "SELECT queued"),
                             "the pull queues");
                     final List<OperationRecord> live = mainframe.activeOperationRecords();
                     helper.assertTrue(live.size() == 1, "one op in flight; got " + live.size());
                     helper.assertTrue(live.get(0).status() != OperationRecord.STATUS_FAILED,
                             "the pull is live, not failed; got " + live.get(0).status());
                     shortId[0] = ShortId.of(live.get(0).id().toString());
-                    helper.assertTrue(cliContains(shell.run("interac ops", cli), shortId[0]),
+                    helper.assertTrue(TestCli.contains(shell.run("interac ops", cli), shortId[0]),
                             "ops lists the operation by its short id " + shortId[0]);
-                    helper.assertTrue(cliContains(shell.run("interac cancel nope", cli), "no operation"),
+                    helper.assertTrue(TestCli.contains(shell.run("interac cancel nope", cli), "no operation"),
                             "an unknown id is reported");
-                    helper.assertTrue(cliContains(shell.run("interac cancel " + shortId[0], cli), "cancelled SELECT"),
+                    helper.assertTrue(
+                            TestCli.contains(shell.run("interac cancel " + shortId[0], cli), "cancelled SELECT"),
                             "cancel by short id stops the pull");
                     // Settled but not yet logged: it leaves the in-flight list on the Mainframe's next tick.
-                    helper.assertTrue(cliContains(shell.run("interac cancel " + shortId[0], cli), "already settled"),
+                    helper.assertTrue(
+                            TestCli.contains(shell.run("interac cancel " + shortId[0], cli), "already settled"),
                             "a second cancel in the same tick finds it settled");
                 })
                 .thenExecuteAfter(2, () -> {
-                    helper.assertTrue(cliContains(shell.run("interac cancel " + shortId[0], cli), "no operation"),
+                    helper.assertTrue(TestCli.contains(shell.run("interac cancel " + shortId[0], cli), "no operation"),
                             "the settled operation is no longer in flight");
                     final List<OperationRecord> log = mainframe.recentOperations();
                     helper.assertTrue(!log.isEmpty() && log.get(0).status() == OperationRecord.STATUS_DISCARDED,

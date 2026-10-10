@@ -12,15 +12,12 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.interac.InteracScreen;
 import dev.jstech.computers.program.cli.interac.InteracState;
 import dev.jstech.computers.program.cli.interac.InteracView;
-import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -28,6 +25,9 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.says;
+import static dev.jstech.tests.testkit.TestShell.shell;
 
 /**
  * The network at the prompt, on a real network: what it holds, where, what a thing is, and the holds put on
@@ -308,19 +308,5 @@ public final class InteracGameTests {
     /** The view as it opens, on a glass the size of the one these tests read. */
     private static InteracState opening() {
         return InteracState.OPENING.on(WIDTH, HEIGHT);
-    }
-
-    private static List<String> shell(final GameTestHelper helper, final IComputerTerminalHost on,
-                                      final String command) {
-        final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
-        final List<String> out = new ArrayList<>();
-        for (final CliLine line : CliCommands.shellFor(computer, WIDTH).run(command, computer).lines()) {
-            out.add(line.text());
-        }
-        return out;
-    }
-
-    private static boolean says(final List<String> lines, final String text) {
-        return lines.stream().anyMatch(line -> line.contains(text));
     }
 }

@@ -34,6 +34,9 @@ import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
+import static dev.jstech.tests.testkit.TestShell.fullShell;
+import static dev.jstech.tests.testkit.TestShell.says;
+
 /**
  * The shell commands whose machine side nothing else exercised, run on a real network the way a player types them:
  * finding and holding stock, describing the machine and the network, the Mainframe's services, the other machines
@@ -104,18 +107,18 @@ public final class ShellCoverageGameTests {
         final Fleet fleet = wire(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final List<String> found = shell(helper, fleet.lab(), "interac where minecraft:oak_log");
+                    final List<String> found = fullShell(helper, fleet.lab(), "interac where minecraft:oak_log");
                     helper.assertTrue(says(found, "640"), "it names where the 640 logs are; got " + found);
 
-                    final List<String> locked = shell(helper, fleet.lab(), "interac lock minecraft:oak_log");
+                    final List<String> locked = fullShell(helper, fleet.lab(), "interac lock minecraft:oak_log");
                     helper.assertTrue(says(locked, "LOCK held") && says(locked, "Oak Log"),
                             "lock holds the logs; got " + locked);
-                    final List<String> held = shell(helper, fleet.lab(), "interac locks");
+                    final List<String> held = fullShell(helper, fleet.lab(), "interac locks");
                     helper.assertTrue(says(held, "Oak Log"), "locks lists them; got " + held);
 
-                    final List<String> released = shell(helper, fleet.lab(), "interac unlock minecraft:oak_log");
+                    final List<String> released = fullShell(helper, fleet.lab(), "interac unlock minecraft:oak_log");
                     helper.assertTrue(says(released, "UNLOCK released"), "unlock lets them go; got " + released);
-                    final List<String> none = shell(helper, fleet.lab(), "interac locks");
+                    final List<String> none = fullShell(helper, fleet.lab(), "interac locks");
                     helper.assertTrue(says(none, "no items are locked"), "and nothing is held after; got " + none);
                 })
                 .thenSucceed();
@@ -128,13 +131,13 @@ public final class ShellCoverageGameTests {
         TestWorldBuilder.forGameTest(helper).placeMonitor(new BlockPos(6, 2, 2), Direction.EAST);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final List<String> net = shell(helper, fleet.lab(), "net");
+                    final List<String> net = fullShell(helper, fleet.lab(), "net");
                     helper.assertTrue(says(net, "mainframe") && says(net, "present") && says(net, "servers"),
                             "net summarises the network with its Mainframe; got " + net);
-                    final List<String> programs = shell(helper, fleet.lab(), "programs");
+                    final List<String> programs = fullShell(helper, fleet.lab(), "programs");
                     helper.assertTrue(says(programs, "cmd"), "programs lists what the system ships; got " + programs);
                 })
-                .thenWaitUntil(() -> helper.assertTrue(says(shell(helper, fleet.lab(), "devices"), " @ "),
+                .thenWaitUntil(() -> helper.assertTrue(says(fullShell(helper, fleet.lab(), "devices"), " @ "),
                         "devices lists the linked monitor"))
                 .thenSucceed();
     }
@@ -147,18 +150,18 @@ public final class ShellCoverageGameTests {
                     // The engine comes with the Mainframe; the Mirror is put on by hand.
                     fleet.mainframe().installMirror();
 
-                    final List<String> elsewhere = shell(helper, fleet.lab(), "iqlengine status");
+                    final List<String> elsewhere = fullShell(helper, fleet.lab(), "iqlengine status");
                     helper.assertTrue(says(elsewhere, "command not found"),
                             "a service of the network is worked from the machine that runs it; got " + elsewhere);
 
-                    final List<String> status = shell(helper, fleet.mainframe(), "iqlengine status");
+                    final List<String> status = fullShell(helper, fleet.mainframe(), "iqlengine status");
                     helper.assertTrue(says(status, "Midsoft IQL Server: running"), "the engine runs; got " + status);
-                    final List<String> stopped = shell(helper, fleet.mainframe(), "iqlengine stop");
+                    final List<String> stopped = fullShell(helper, fleet.mainframe(), "iqlengine stop");
                     helper.assertTrue(says(stopped, "Midsoft IQL Server stopped"), "it stops; got " + stopped);
-                    final List<String> started = shell(helper, fleet.mainframe(), "iqlengine start");
+                    final List<String> started = fullShell(helper, fleet.mainframe(), "iqlengine start");
                     helper.assertTrue(says(started, "Midsoft IQL Server started"), "and starts again; got " + started);
 
-                    final List<String> services = shell(helper, fleet.mainframe(), "services");
+                    final List<String> services = fullShell(helper, fleet.mainframe(), "services");
                     helper.assertTrue(says(services, "Midsoft IQL Server") && says(services, "running")
                                     && says(services, "Mirror") && says(services, "serving"),
                             "services lists both with their state; got " + services);
@@ -171,7 +174,7 @@ public final class ShellCoverageGameTests {
         final Fleet fleet = wire(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final List<String> hosts = shell(helper, fleet.lab(), "ssh");
+                    final List<String> hosts = fullShell(helper, fleet.lab(), "ssh");
                     helper.assertTrue(says(hosts, "Reachable hosts:") && says(hosts, "desk"),
                             "ssh with no host lists the other machines; got " + hosts);
                     final String hostname = new ServerCliComputer(fleet.lab(), helper.getLevel()).hostname();
@@ -186,7 +189,7 @@ public final class ShellCoverageGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     fleet.mainframe().installMirror();
-                    final List<String> updated = shell(helper, fleet.lab(), "pckmgr update");
+                    final List<String> updated = fullShell(helper, fleet.lab(), "pckmgr update");
                     helper.assertTrue(!says(updated, "could not resolve")
                                     && (says(updated, "up to date") || says(updated, "Updated")),
                             "pckmgr update reaches the Mirror and reports; got " + updated);
@@ -206,14 +209,14 @@ public final class ShellCoverageGameTests {
                     fleet.lab().console().install(SigmaCommands.COMPILER);
                     fleet.lab().console().setInstalledVersion(SigmaCommands.COMPILER, "1.0");
                     new ServerCliComputer(fleet.lab(), helper.getLevel()).writeFile("Beeper.sgs", BEEPER);
-                    final List<String> old = shell(helper, fleet.lab(), "sgsc Beeper.sgs");
+                    final List<String> old = fullShell(helper, fleet.lab(), "sgsc Beeper.sgs");
                     helper.assertTrue(says(old, "Σ# Compiler 1.0") && says(old, "'Sound' needs Σ# 2"),
                             "an sgsc of 1.0 knows Σ# 1; got " + old);
                     fleet.mainframe().installMirror();
-                    final List<String> upgraded = shell(helper, fleet.lab(), "pckmgr upgrade");
+                    final List<String> upgraded = fullShell(helper, fleet.lab(), "pckmgr upgrade");
                     helper.assertTrue(says(upgraded, "Setting up sgsc (2.0)"),
                             "the upgrade brings the compiler to 2.0; got " + upgraded);
-                    final List<String> built = shell(helper, fleet.lab(), "sgsc Beeper.sgs");
+                    final List<String> built = fullShell(helper, fleet.lab(), "sgsc Beeper.sgs");
                     helper.assertTrue(says(built, "Σ# Compiler 2.0") && says(built, "wrote Beeper.asm"),
                             "and the program builds with Σ# 2; got " + built);
                 })
@@ -291,19 +294,5 @@ public final class ShellCoverageGameTests {
                     "'" + command + "' wrote " + line.text().length() + " columns onto a glass of "
                             + NARROW + ": [" + line.text() + "]");
         }
-    }
-
-    private static List<String> shell(final GameTestHelper helper, final IComputerTerminalHost on,
-                                      final String command) {
-        final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
-        final List<String> out = new ArrayList<>();
-        for (final CliLine line : CliCommands.newShell(80).run(command, computer).lines()) {
-            out.add(line.text());
-        }
-        return out;
-    }
-
-    private static boolean says(final List<String> lines, final String text) {
-        return lines.stream().anyMatch(line -> line.contains(text));
     }
 }

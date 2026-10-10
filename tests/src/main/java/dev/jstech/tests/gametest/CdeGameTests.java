@@ -36,7 +36,6 @@ import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
@@ -52,6 +51,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.text;
 
 /**
  * CDE is a desktop like the others are: a package that turns a terminal system into a graphical one. What is
@@ -320,14 +321,6 @@ public final class CdeGameTests {
     /* A translated text by its key, which is all of it that crosses the wire; anything else by its words. */
     private static String keyOf(final Text text) {
         return text instanceof Text.Translated translated ? translated.key().key() : text.english();
-    }
-
-    private static String text(final CliShell.Response response) {
-        final StringBuilder out = new StringBuilder();
-        for (final CliLine line : response.lines()) {
-            out.append(line.text()).append('\n');
-        }
-        return out.toString();
     }
 
     /** A powered machine with a full build, a graphics card for its ports, and that system on its disk. */

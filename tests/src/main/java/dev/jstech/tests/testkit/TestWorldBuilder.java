@@ -147,6 +147,18 @@ public final class TestWorldBuilder extends ScenarioBuilder {
         return be;
     }
 
+    /** Places a Mainframe with the valid build and a 500 GB hard drive, powers it on and installs {@code os}. */
+    public MainframeBlockEntity placeMainframeWithSystem(final BlockPos relative, final ResourceLocation os) {
+        setBlock(relative, ComputingModule.MAINFRAME.get());
+        final MainframeBlockEntity be = blockEntity(relative, MainframeBlockEntity.class);
+        installMainframeBuild(be, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        be.togglePower();
+        if (!be.installOs(os)) {
+            throw new IllegalStateException("could not install " + os + " on the test Mainframe");
+        }
+        return be;
+    }
+
     /** Places a Personal Computer next to a cable (rear toward it), installs its hardware and powers it on. */
     public PersonalComputerBlockEntity placeRunningPersonalComputer(final BlockPos relative) {
         return placeRunningPersonalComputer(relative, DESKTOP_OS);
@@ -292,6 +304,29 @@ public final class TestWorldBuilder extends ScenarioBuilder {
         for (final ResourceLocation program : programs) {
             cc.console().install(program.toString());
         }
+    }
+
+    /**
+     * Places an unpowered Crafting Computer with the plain hardware a program test needs (a standard board, a
+     * 4790K, 8 GB of DDR3, a 650 W supply and a 500 GB hard drive, no Crafting Card) and installs {@code os} on it.
+     */
+    public CraftingComputerBlockEntity placeCraftingComputer(final BlockPos relative, final ResourceLocation os) {
+        setBlock(relative, ComputingModule.CRAFTING_COMPUTER.get());
+        final CraftingComputerBlockEntity be = blockEntity(relative, CraftingComputerBlockEntity.class);
+        final ItemStackHandler hw = be.getHardware();
+        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
+                new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
+                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
+                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        if (!be.installOs(os)) {
+            throw new IllegalStateException("could not install " + os + " on the Crafting Computer");
+        }
+        return be;
     }
 
     /** Places a Monitor facing {@code facing}; it links itself to an adjacent computer within a few ticks. */

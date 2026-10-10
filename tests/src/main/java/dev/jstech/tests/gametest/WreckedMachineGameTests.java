@@ -13,12 +13,8 @@ import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
-import dev.jstech.computers.program.ServerCliComputer;
-import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -26,6 +22,8 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.shell;
 
 /**
  * Wrecking your own computer, and what it costs you.
@@ -219,16 +217,6 @@ public final class WreckedMachineGameTests {
     /** A DOS path for a file the disk keeps under slashes, which is how a player writes it at the prompt. */
     private static String dos(final String path) {
         return "C:\\" + path.replace('/', '\\');
-    }
-
-    private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on,
-                                      final String command) {
-        final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
-        final List<String> out = new ArrayList<>();
-        for (final CliLine line : CliCommands.shellFor(computer, 80).run(command, computer).lines()) {
-            out.add(line.text());
-        }
-        return out;
     }
 
     /** Installing over it writes the loader back, which is how a wrecked machine is repaired. */

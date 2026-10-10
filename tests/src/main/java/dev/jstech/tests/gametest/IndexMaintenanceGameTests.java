@@ -18,6 +18,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.StorageNetworkFixture;
+import dev.jstech.tests.testkit.TestCli;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -28,7 +29,6 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-import java.util.Locale;
 
 /**
  * A REINDEX reads the disks on its tick and builds the catalog off it: the swap lands a tick or two later,
@@ -76,12 +76,6 @@ public final class IndexMaintenanceGameTests {
                 .thenSucceed();
     }
 
-    private static boolean cliContains(final CliShell.Response response, final String needle) {
-        final String lower = needle.toLowerCase(Locale.ROOT);
-        return response.lines().stream()
-                .anyMatch(line -> line.text().toLowerCase(Locale.ROOT).contains(lower));
-    }
-
     @GameTest(template = ARENA, timeoutTicks = 100)
     public static void cli_reindexStartsTheRebuildAndReturnsAtOnce(final GameTestHelper helper) {
         final BlockPos hbw = new BlockPos(2, 2, 2);
@@ -105,7 +99,7 @@ public final class IndexMaintenanceGameTests {
                     // The maintenance verbs run on the Mainframe's own prompt.
                     final ServerCliComputer cli = new ServerCliComputer((IComputerTerminalHost) mainframe, helper.getLevel());
                     final CliShell shell = CliCommands.newShell(50);
-                    helper.assertTrue(cliContains(shell.run("reindex", cli), "REINDEX started"),
+                    helper.assertTrue(TestCli.contains(shell.run("reindex", cli), "REINDEX started"),
                             "the prompt answers at once and the rebuild runs on");
                 })
                 .thenExecuteAfter(3, () -> helper.assertTrue(mainframe.networkIndex().available(COBBLE) == 200,

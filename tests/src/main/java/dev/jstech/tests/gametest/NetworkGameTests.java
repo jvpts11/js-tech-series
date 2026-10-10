@@ -54,6 +54,7 @@ import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NetworkUuidState;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
+import dev.jstech.tests.testkit.TestCli;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -1322,18 +1323,21 @@ public final class NetworkGameTests {
                             helper.getLevel());
                     final var shell = dev.jstech.computers.program.cli.CliCommands.newShell(50);
 
-                    helper.assertTrue(cliContains(shell.run("whoami", cli), "Personal Computer"),
+                    helper.assertTrue(TestCli.contains(shell.run("whoami", cli), "Personal Computer"),
                             "whoami should report the computer kind");
-                    helper.assertTrue(cliContains(shell.run("status", cli), "ONLINE"),
+                    helper.assertTrue(TestCli.contains(shell.run("status", cli), "ONLINE"),
                             "status should report the running computer as online");
-                    helper.assertTrue(cliContains(shell.run("operation query items", cli), "cobblestone"),
+                    helper.assertTrue(TestCli.contains(shell.run("operation query items", cli), "cobblestone"),
                             "operation query items should list the network's cobblestone");
                     helper.assertTrue(
-                            cliContains(shell.run("operation query items WHERE name contains diamond", cli), "no rows"),
+                            TestCli.contains(
+                                    shell.run("operation query items WHERE name contains diamond", cli), "no rows"),
                             "operation query with a non-matching filter should say so");
-                    helper.assertTrue(cliContains(shell.run("operation select 50 cobblestone", cli), "SELECT queued"),
+                    helper.assertTrue(
+                            TestCli.contains(shell.run("operation select 50 cobblestone", cli), "SELECT queued"),
                             "operation select should queue an operation through the network");
-                    helper.assertTrue(cliContains(shell.run("operation select 50 not_a_real_item", cli), "unknown item"),
+                    helper.assertTrue(
+                            TestCli.contains(shell.run("operation select 50 not_a_real_item", cli), "unknown item"),
                             "operation select of an unknown item should be reported, not crash");
                 })
                 .thenSucceed();
@@ -1517,14 +1521,6 @@ public final class NetworkGameTests {
     private static IqlEngine.Outcome runIql(final MainframeBlockEntity mainframe, final ICliComputer machine,
                                             final String statement) {
         return mainframe.networkOperations().query(IqlEngine.viewOf(machine), statement, 64);
-    }
-
-    private static boolean cliContains(
-            final dev.jstech.computers.program.cli.CliShell.Response response,
-            final String needle) {
-        final String lower = needle.toLowerCase(java.util.Locale.ROOT);
-        return response.lines().stream()
-                .anyMatch(line -> line.text().toLowerCase(java.util.Locale.ROOT).contains(lower));
     }
 
     @GameTest(template = ARENA)

@@ -7,12 +7,9 @@
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.gui.term.TermBuffer;
-import dev.jstech.computers.hardware.DiskSize;
-import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
@@ -25,10 +22,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.List;
 
@@ -150,24 +145,7 @@ public final class ScreenfetchGameTests {
     }
 
     private static MainframeBlockEntity withSystem(final GameTestHelper helper, final String system) {
-        helper.setBlock(WHERE, ComputingModule.MAINFRAME.get());
-        if (!(helper.getBlockEntity(WHERE) instanceof MainframeBlockEntity mainframe)) {
-            throw new IllegalStateException("no Mainframe at " + WHERE);
-        }
-        final ItemStackHandler inv = mainframe.getInventory();
-        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
-        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
-        inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
-        mainframe.togglePower();
-        if (!mainframe.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, system))) {
-            throw new IllegalStateException("failed to install " + system + " on the test Mainframe");
-        }
-        return mainframe;
+        return TestWorldBuilder.forGameTest(helper).placeMainframeWithSystem(WHERE,
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, system));
     }
 }

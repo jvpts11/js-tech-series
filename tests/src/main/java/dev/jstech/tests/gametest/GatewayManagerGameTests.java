@@ -17,10 +17,7 @@ import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.GatewayManagerActionPayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
-import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.core.text.Text;
-import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.ArrayList;
@@ -33,6 +30,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.fullShell;
+import static dev.jstech.tests.testkit.TestShell.says;
 
 /**
  * The Gateway Manager's server side and the {@code gateway} command: listing the host's Gateways,
@@ -165,43 +165,30 @@ public final class GatewayManagerGameTests {
                 .thenSucceed();
     }
 
-    private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on, final String command) {
-        final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
-        final List<String> out = new ArrayList<>();
-        for (final CliLine line : CliCommands.newShell(80).run(command, computer).lines()) {
-            out.add(line.text());
-        }
-        return out;
-    }
-
-    private static boolean says(final List<String> lines, final String text) {
-        return lines.stream().anyMatch(line -> line.contains(text));
-    }
-
     @GameTest(template = ARENA)
     public static void gatewayCommand_printsAndSetsTheSameThings(final GameTestHelper helper) {
         final Fleet fleet = wire(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> {
-                    List<String> lines = shell(helper, fleet.host(), "gateway list");
+                    List<String> lines = fullShell(helper, fleet.host(), "gateway list");
                     helper.assertTrue(says(lines, "gateway-1") && says(lines, "up"), "list names the Gateway and its link; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway gateway-1 rename farm-link");
+                    lines = fullShell(helper, fleet.host(), "gateway gateway-1 rename farm-link");
                     helper.assertTrue(says(lines, "renamed gateway-1 to farm-link"), "rename answers; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway farm-link set operations off");
+                    lines = fullShell(helper, fleet.host(), "gateway farm-link set operations off");
                     helper.assertTrue(says(lines, "denied"), "set operations answers; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway farm-link set cap 16");
+                    lines = fullShell(helper, fleet.host(), "gateway farm-link set cap 16");
                     helper.assertTrue(says(lines, "16 calls"), "set cap answers; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway farm-link perms");
+                    lines = fullShell(helper, fleet.host(), "gateway farm-link perms");
                     helper.assertTrue(says(lines, "operations: off") && says(lines, "calls a tick: 16"),
                             "perms prints the knobs; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway farm-link status");
+                    lines = fullShell(helper, fleet.host(), "gateway farm-link status");
                     helper.assertTrue(says(lines, "linked to desk, adjacent") && says(lines, "jsc_gateway_farm_link"),
                             "status prints both sides; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway farm-link log");
+                    lines = fullShell(helper, fleet.host(), "gateway farm-link log");
                     helper.assertTrue(says(lines, "rename gateway-1 to farm-link"), "log prints what happened; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway nowhere");
+                    lines = fullShell(helper, fleet.host(), "gateway nowhere");
                     helper.assertTrue(says(lines, "no gateway named nowhere"), "an unknown name is refused; got " + lines);
-                    lines = shell(helper, fleet.lab(), "gateway list");
+                    lines = fullShell(helper, fleet.lab(), "gateway list");
                     helper.assertTrue(says(lines, "no gateways"), "a computer without one says so; got " + lines);
                 })
                 .thenSucceed();

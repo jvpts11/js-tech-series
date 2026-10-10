@@ -16,7 +16,6 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.ProgramView;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
@@ -29,6 +28,8 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
+
+import static dev.jstech.tests.testkit.TestShell.text;
 
 /**
  * A Vintage machine runs what {@code scc} compiled directly, by its own name at the prompt, exactly as a program
@@ -409,14 +410,6 @@ public final class SccRunGameTests {
     private static String listing(final String isa, final String className) {
         return ".asm 3\n.arch " + isa + "\n.start Programs." + className + " console\n\n.class Programs."
                 + className + "\n\n.method static void Main() slots 0\n    ret\n";
-    }
-
-    private static String text(final CliShell.Response response) {
-        final StringBuilder out = new StringBuilder();
-        for (final CliLine line : response.lines()) {
-            out.append(line.text()).append('\n');
-        }
-        return out.toString();
     }
 
     /** Whether the client is told the machine's hard drive is seeking, read from what it is sent. */

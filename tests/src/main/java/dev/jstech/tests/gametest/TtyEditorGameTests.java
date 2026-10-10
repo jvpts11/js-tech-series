@@ -14,7 +14,6 @@ import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.ICliCommand;
 import dev.jstech.computers.os.ShellFamily;
@@ -30,6 +29,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import static dev.jstech.tests.testkit.TestShell.text;
 
 /**
  * Handing a terminal to an editor, over the wire and through the shell.
@@ -206,15 +207,6 @@ public final class TtyEditorGameTests {
                             "UNIX with no CDE bundles no Workstation Info either; got " + unixBin);
                 })
                 .thenSucceed();
-    }
-
-    /** All of a shell response's lines joined with newlines. */
-    private static String text(final CliShell.Response response) {
-        final StringBuilder out = new StringBuilder();
-        for (final CliLine line : response.lines()) {
-            out.append(line.text()).append('\n');
-        }
-        return out.toString();
     }
 
     /** The whole file names a listing prints, split so one name is never mistaken for a substring of another. */
