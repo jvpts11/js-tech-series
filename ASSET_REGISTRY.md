@@ -31,13 +31,13 @@ Language files (`lang/`) are text, not assets, and are not listed; the language 
 
 | Asset | What it is | Where and how it is used | Origin | Made by |
 | --- | --- | --- | --- | --- |
-| `docs/brand/*.png` | The logos and square icons of the series and of each mod | The READMEs and the repository's pages | AI-generated | AI assistant, with a generator script |
+| `docs/brand/*.png` | The logos and square icons of the series and of each mod | The READMEs and the repository's pages | AI-generated | AI assistant, with a generator script; the letters of the logos and of the series icon are the Minercraftory font by Jayvee D. Enaguas (GrandChaos9000), CC BY-SA 3.0, https://www.dafont.com/minercraftory.font, and those images are shared under CC BY-SA 3.0 too |
 
 ## J's Core
 
 | Asset | What it is | Where and how it is used | Origin | Made by |
 | --- | --- | --- | --- | --- |
-| `core/src/main/resources/jscore_{logo,icon}.png` | J's Core's logo and square icon | The mods list: the logo drawn over the series logo, the icon in lists that show one | AI-generated | AI assistant, with a generator script |
+| `core/src/main/resources/jscore_{logo,icon}.png` | J's Core's logo and square icon | The mods list: the logo drawn over the series logo, the icon in lists that show one | AI-generated | AI assistant, with a generator script; the logo's letters are the Minercraftory font by Jayvee D. Enaguas (GrandChaos9000), CC BY-SA 3.0, https://www.dafont.com/minercraftory.font, and the logo is shared under CC BY-SA 3.0 too |
 | `core/src/main/resources/assets/jscore/textures/item/*.png` | The material items: iron dust, iron and copper plates; and the Technical Reference, a navy ring binder with its label | Flat item textures of the material items and of the series' manual | AI-generated | AI assistant, with a generator script, to be replaced |
 | `core/src/main/resources/assets/jscore/textures/block/cable/housing.png` | Flat swatches of the junction box: its housing, the seam below its lid, its screws, and the white a ring is dyed from | The junction box where wires change places in the shared cable block, and the ring that marks a dyed wire; the particle of the cable block | AI-generated | AI assistant, with a generator script, to be replaced |
 | `core/src/main/resources/assets/jscore/shaders/core/tube.*` | A shader that shows a picture as a monitor's tube does: one phosphor lit by each pixel's brightness, or the nearest of sixteen colours | Every screen shown on a monitor, on the player's own monitor and in the world | AI-generated | AI assistant, written by hand |
@@ -50,7 +50,7 @@ Language files (`lang/`) are text, not assets, and are not listed; the language 
 
 | Asset | What it is | Where and how it is used | Origin | Made by |
 | --- | --- | --- | --- | --- |
-| `computers/src/main/resources/jsc_{logo,icon}.png` | J's Computers' logo and square icon | The mods list: the logo drawn over the series logo, the icon in lists that show one | AI-generated | AI assistant, with a generator script |
+| `computers/src/main/resources/jsc_{logo,icon}.png` | J's Computers' logo and square icon | The mods list: the logo drawn over the series logo, the icon in lists that show one | AI-generated | AI assistant, with a generator script; the logo's letters are the Minercraftory font by Jayvee D. Enaguas (GrandChaos9000), CC BY-SA 3.0, https://www.dafont.com/minercraftory.font, and the logo is shared under CC BY-SA 3.0 too |
 | `computers/src/main/resources/assets/jsc/textures/block/computer/*.png` | The cases of the Personal Computer, the Crafting Computer and the Cluster Management Computer: the tower of each age up to the Transition and the three cases of the Standard and Advanced ages, an atlas for each machine in each case, and a particle for each case | Painted on their GeckoLib models; a particle is what a case scatters when it breaks | AI-generated | AI assistant, with a generator script, from photographs of real cases of each age |
 | `computers/src/main/resources/assets/jsc/textures/block/monitor/*.png` | The eight monitors (Mono I, Mono II, Amber, CGA, Legacy, Transition, Standard, Color), each drawn from a real monitor of its time: front, side, top, back with the era's video port, and the power button dark and lit | Faces of the block models; the live picture is drawn over the front's glass, the button stands out of the bezel | AI-generated | AI assistant, with a generator script |
 | `computers/src/main/resources/assets/jsc/textures/block/network_gateway_*.png` | The Network Gateway: front, lit front, back with the serial DE-9 port in its middle, side and top | Faces of the gateway block; the lit front replaces the plain one while the gateway is lit | AI-generated | AI assistant, with a generator script |
@@ -160,7 +160,7 @@ Language files (`lang/`) are text, not assets, and are not listed; the language 
 
 | Asset | What it is | Where and how it is used | Origin | Made by |
 | --- | --- | --- | --- | --- |
-| `industrial/src/main/resources/jsindustrial_{logo,icon}.png` | J's Industrial's logo and square icon | The mods list: the logo drawn over the series logo, the icon in lists that show one | AI-generated | AI assistant, with a generator script |
+| `industrial/src/main/resources/jsindustrial_{logo,icon}.png` | J's Industrial's logo and square icon | The mods list: the logo drawn over the series logo, the icon in lists that show one | AI-generated | AI assistant, with a generator script; the logo's letters are the Minercraftory font by Jayvee D. Enaguas (GrandChaos9000), CC BY-SA 3.0, https://www.dafont.com/minercraftory.font, and the logo is shared under CC BY-SA 3.0 too |
 | `industrial/src/main/resources/assets/jsindustrial/textures/block/*.png` | The Coal Generator, Compressor, Electric Furnace and Macerator: front, side and top; and a grey metal plate, the Tank's casing | Faces of the machine blocks, and the top and bottom of the Tank | AI-generated | AI assistant, with a generator script |
 | `industrial/src/main/resources/assets/jsindustrial/textures/block/cable/energy.png` | The Energy Cable's jacket: red, wound, with copper at the cut end | Laid on the energy wires in the Core's cable block, and on the cable's item | AI-generated | AI assistant, with a generator script, to be replaced |
 | `industrial/src/main/resources/assets/jsindustrial/textures/block/cable/plugs.png` | A flat swatch of the energy plug's dark red | The plug an energy wire ends in where it meets a machine | AI-generated | AI assistant, with a generator script, to be replaced |

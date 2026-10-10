@@ -91,3 +91,7 @@ to replace it; if you draw, model or record, that is a good place to start. Bug 
 
 [LGPL-3.0-only](COPYING.LESSER), © jvpts11. The LGPL adds its permissions to the GPL, whose text is in
 [COPYING](COPYING).
+
+The logos of the series and of its mods are drawn with the Minercraftory font by Jayvee D. Enaguas
+(GrandChaos9000), under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), and the logo images are
+shared under the same licence.
