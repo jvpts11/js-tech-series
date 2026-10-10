@@ -14,6 +14,7 @@ import dev.jstech.computers.program.ComputerSettings;
 import dev.jstech.computers.program.ThemePreset;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -106,7 +107,12 @@ public final class MachineConfigService {
         final String k = key == null ? "" : key.toLowerCase(Locale.ROOT).trim();
         switch (k) {
             case "name" -> {
-                console.setComputerName(value == null ? "" : value.trim());
+                // The machine's name, not the system's alone: the assembly screen says it too.
+                if (machine instanceof IOsHost host) {
+                    host.setCustomName(value == null ? "" : value.trim());
+                } else {
+                    console.setComputerName(value == null ? "" : value.trim());
+                }
                 machine.setChanged();
                 return ICliComputer.OpResult.ok(SET.with(k));
             }

@@ -494,6 +494,13 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                     stack.get(ComputingComponents.SERVER_CONSOLE.get());
             if (saved != null) {
                 state.console.load(saved);
+                // One name for the server and its system: the server's own wins, and a system that carries a
+                // name gives it to a server that has none.
+                if (!ServerItem.customName(stack).isEmpty()) {
+                    state.console.setComputerName(ServerItem.customName(stack));
+                } else if (!state.console.computerName().isEmpty()) {
+                    ServerItem.setCustomName(stack, state.console.computerName());
+                }
                 // Absent keys mean a machine that was never brought up, which still needs POST.
                 state.phases.setNeedsPost(!saved.contains("NeedsPost") || saved.getBoolean("NeedsPost"));
                 state.bootDiskSlot = saved.contains("BootDiskSlot") ? saved.getInt("BootDiskSlot") : -1;
@@ -2025,6 +2032,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         final ItemStack stack = soleServerStack();
         if (stack.getItem() instanceof ServerItem) {
             ServerItem.setCustomName(stack, name);
+            // The system on the server carries the same name, so renaming on either side renames both.
+            final ComputerConsoleState console = consoleOf(soleComputerSlot());
+            if (console != null) {
+                console.setComputerName(ServerItem.customName(stack));
+            }
             setChanged();
         }
     }

@@ -132,7 +132,7 @@ public final class DesktopPayloads {
                                               final ServerLevel level) {
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
             computer.console().desktop().setWallpaper(payload.wallpaper());
-            computer.console().setComputerName(payload.computerName());
+            computer.setCustomName(payload.computerName());
             computer.setChanged();
         }
     }

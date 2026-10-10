@@ -285,10 +285,13 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
         return null;
     }
 
-    /** The player-given machine name, or an empty string. */
+    /** The player-given machine name, or an empty string. The system on the machine goes by the same name. */
     String customName();
 
-    /** Renames the machine (an empty name clears it). */
+    /**
+     * Renames the machine (an empty name clears it), and the system on it with it: the assembly screen, the
+     * system's settings, the prompt and the installer all name the one machine.
+     */
     void setCustomName(String name);
 
     /** How many CPUs the current build carries. */

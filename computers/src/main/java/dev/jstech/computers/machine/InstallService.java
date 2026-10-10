@@ -282,8 +282,9 @@ public final class InstallService {
             return;
         }
         if (!state.chosenName().isEmpty()) {
-            // The name the installer was given is the name the prompt and the network use from here on.
-            console.setComputerName(state.chosenName());
+            // The name the installer was given is the machine's from here on: the prompt, the network and the
+            // assembly screen all say it.
+            computer.setCustomName(state.chosenName());
         }
         for (final String pkg : state.askedFor()) {
             final ProgramSpec program = Programs.get(ResourceLocation.tryParse(

@@ -2218,6 +2218,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The JSC Technologies mark on a modern machine's self-test and Frames 11's start, and the logos Frames 95 and
   Frames XP come up behind, stand in the middle of the glass, where they stood well left of it. In Frames XP's
   setup the lockup in the side panel's header starts in line with the steps listed under it.
+- A computer has one name. Renaming it in its system's settings, at its prompt or in its installer renames it on
+  the assembly screen, and the other way round; the two kept names of their own and showed different ones. A disk
+  put into a machine with no name of its own names it, as a disk sold with a system does, and a machine with a
+  name keeps it over the disk's. A server in a rack and its system are named the same way.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

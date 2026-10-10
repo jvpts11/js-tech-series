@@ -83,5 +83,16 @@ final class DiskConsole {
         if (saved != null) {
             this.console.load(saved);
         }
+        /*
+         * One name for the machine and its system. The machine's own wins, and a disk that comes from another
+         * machine, or was sold with a system on it, names a machine that has none yet. Written onto the console
+         * only: it reaches the disk with the next flush, as everything else on the console does.
+         */
+        final String machineName = this.machine.customName();
+        if (!machineName.isEmpty()) {
+            this.console.setComputerName(machineName);
+        } else if (!this.console.computerName().isEmpty()) {
+            this.machine.setCustomName(this.console.computerName());
+        }
     }
 }

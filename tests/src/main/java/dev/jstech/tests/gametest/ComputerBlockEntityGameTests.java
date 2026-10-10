@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -128,6 +129,59 @@ public final class ComputerBlockEntityGameTests {
 
                     pc.loadWithComponents(saved, registries);
                     helper.assertTrue(pc.isRunning(), "read back in the world, the computer is still switched on");
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * One name for the machine and its system, whichever side it is typed on: the assembly screen names the
+     * machine's console, and the prompt's setting names the machine. Each used to keep a name of its own.
+     */
+    @GameTest(template = ARENA)
+    public static void name_isTheSameOnTheAssemblyScreenAndInTheSystem(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    pc.setCustomName("Desk");
+                    helper.assertTrue("Desk".equals(pc.console().computerName()),
+                            "named on the assembly screen, the system says it: " + pc.console().computerName());
+
+                    final ServerCliComputer cli = new ServerCliComputer(pc, helper.getLevel());
+                    helper.assertTrue(cli.setConfig("name", "Lab").ok(), "the prompt sets the name");
+                    helper.assertTrue("Lab".equals(pc.customName()),
+                            "named at the prompt, the assembly screen says it: " + pc.customName());
+                    helper.assertTrue("Lab".equals(pc.console().computerName()),
+                            "and the system does too: " + pc.console().computerName());
+                })
+                .thenSucceed();
+    }
+
+    /* A disk from a named machine names an unnamed one, and a machine with a name keeps it over the disk's. */
+    @GameTest(template = ARENA)
+    public static void name_travelsOnTheDiskToAMachineWithNoneAndYieldsToOneWithItsOwn(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final PersonalComputerBlockEntity named = world.placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        final PersonalComputerBlockEntity blank = world.placeRunningPersonalComputer(new BlockPos(2, 2, 5));
+        final PersonalComputerBlockEntity other = world.placeRunningPersonalComputer(new BlockPos(5, 2, 5));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    named.setCustomName("Desk");
+                    named.setChanged(); // writes the console, the name on it, onto the disk
+                    final ItemStack travelling = named.systemDisk().copy();
+
+                    blank.getHardware().setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START, travelling);
+                    helper.assertTrue("Desk".equals(blank.console().computerName())
+                                    && "Desk".equals(blank.customName()),
+                            "the disk names the machine that had no name; got " + blank.customName());
+
+                    other.setCustomName("Lab");
+                    other.getHardware().setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
+                            travelling.copy());
+                    helper.assertTrue("Lab".equals(other.customName())
+                                    && "Lab".equals(other.console().computerName()),
+                            "a machine with a name keeps it, and its system takes it; got "
+                                    + other.console().computerName());
                 })
                 .thenSucceed();
     }

@@ -153,7 +153,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     /** What the programs running on it play: their tunes, their beeps and their recordings. */
     private final ProgramSounds programSounds = new ProgramSounds(this);
 
-    /** The name a player gave this computer: the machine's own, and no part's; the players who see it are sent it. */
+    /**
+     * The name a player gave this computer: the machine's own, and no part's; the players who see it are sent it.
+     * The system on the disk carries a copy, kept the same by {@link #setCustomName} and by the console as it is
+     * read off a disk.
+     */
     private final ValueField<String> computerName;
 
     /*
@@ -963,9 +967,17 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return computerName.get();
     }
 
+    /**
+     * Names the machine, and its system with it.
+     *
+     * <p>The machine has one name, whichever side it was typed on: the assembly screen, the system's settings,
+     * the prompt or the installer all end here. The system keeps a copy on its disk, so a disk moved to a machine
+     * that has no name of its own brings the name along; a machine that has one keeps it over the disk's.
+     */
     public void setCustomName(final String name) {
         final String trimmed = name.strip();
         computerName.set(trimmed.length() > 32 ? trimmed.substring(0, 32) : trimmed);
+        console().setComputerName(computerName.get());
     }
 
     /*
