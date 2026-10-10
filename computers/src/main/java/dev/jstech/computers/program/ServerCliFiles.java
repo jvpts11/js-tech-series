@@ -173,6 +173,11 @@ abstract class ServerCliFiles extends ServerCliShell {
     }
 
     @Override
+    public List<String> fileNames(final String folder) {
+        return files().list(folder);
+    }
+
+    @Override
     public FsResult listDisk(final String dir) {
         return files().listDisk(dir);
     }

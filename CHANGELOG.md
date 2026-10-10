@@ -2041,8 +2041,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - An Operation step that fails on the server's thread no longer takes the tick down with it, and the Operation ends
   as crashed with its real message, where it showed as cancelled.
 - A computer frees the port of a peripheral broken while the computer's chunk was not loaded. A peripheral reached
-  past a hub links even when the same cable is also within reach straight from the computer. A peripheral looks for
-  its link twice a second rather than every tick.
+  past a hub links even when the same cable is also within reach straight from the computer. An unlinked peripheral
+  looks for a computer twice a second rather than every tick; a linked one still sees a cut cable at once.
 - A vehicle a player drives spends its energy on the server too, so the battery shown and saved is the true one.
 - A projectile remembers, through a save, how many things it has already gone through.
 - Clicking another title while a menu of a menu bar is open opens that one; a checkbox changes only on a left click;

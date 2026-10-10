@@ -72,19 +72,20 @@ public final class PeripheralLink {
      * whose port the owner no longer has (its card taken out), to wait for a free one.
      */
     public void tick(final ServerLevel level, final BlockPos self) {
-        /*
-         * The cable searches walk the whole reachable network, so they are not paid for on every tick: after one, the
-         * next waits a few ticks, spread by position so peripherals do not all search on the same tick. A peripheral
-         * just placed has not searched yet and links at once.
-         */
-        if (cooldown > 0) {
-            cooldown--;
-            return;
-        }
         final long here = self.asLong();
-        cooldown = SEARCH_INTERVAL_TICKS + (int) Math.floorMod(here, 4L);
         final Long at = owner.get();
         if (at == null) {
+            /*
+             * Looking for an owner walks the whole reachable network, so an unlinked peripheral does not pay for it on
+             * every tick: after a search the next waits a few ticks, spread by position so peripherals do not all
+             * search on the same tick. A peripheral just placed searches at once, and a linked one checks its link
+             * every tick, so a cut cable is seen the moment it is cut.
+             */
+            if (cooldown > 0) {
+                cooldown--;
+                return;
+            }
+            cooldown = SEARCH_INTERVAL_TICKS + (int) Math.floorMod(here, 4L);
             final OptionalLong found = world.discoverOwner(level, here);
             if (found.isPresent()) {
                 world.validator(level).tryEstablishLink(found.getAsLong(), here);

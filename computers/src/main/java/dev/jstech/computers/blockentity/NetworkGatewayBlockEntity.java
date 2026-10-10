@@ -615,10 +615,12 @@ public class NetworkGatewayBlockEntity extends SyncedBlockEntity implements IPer
 
     /*
      * Whether another peripheral on the wired network already goes by the name this one would publish under.
-     * Compared by the published form, so names that differ only by a dash and an underscore are the same.
+     * Compared by the published form, so names that differ only by a dash and an underscore are the same. The name
+     * this Gateway still publishes is its own, not another's, until the next tick publishes the new one.
      */
     private boolean takenOnWire(final String candidate) {
-        return bridge != null && bridge.peripherals().containsKey(GatewayName.peripheralName(candidate));
+        final String published = GatewayName.peripheralName(candidate);
+        return bridge != null && !published.equals(publishedAs) && bridge.peripherals().containsKey(published);
     }
 
     /** A ComputerCraft computer this Gateway is attached to, and when it was last heard from. */

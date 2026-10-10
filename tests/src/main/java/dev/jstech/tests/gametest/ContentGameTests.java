@@ -189,7 +189,10 @@ public final class ContentGameTests {
         report(helper, wrong, "in no creative tab");
     }
 
-    /** A block that drops itself drops just its own item, mined with the best tool; one that drops nothing, nothing. */
+    /**
+     * A block that drops itself drops just its own item, mined with the best tool, and so does one that keeps its
+     * contents in the item (empty here, with no block entity behind it); one that drops nothing, nothing.
+     */
     @GameTest(template = ARENA)
     public static void declaredBlocks_dropWhatTheyDeclare(final GameTestHelper helper) {
         final List<String> wrong = new ArrayList<>();
@@ -199,7 +202,7 @@ public final class ContentGameTests {
                         new LootParams.Builder(helper.getLevel())
                                 .withParameter(LootContextParams.ORIGIN, Vec3.ZERO)
                                 .withParameter(LootContextParams.TOOL, new ItemStack(Items.NETHERITE_PICKAXE)));
-                final boolean right = block.drops() == Drops.SELF
+                final boolean right = block.drops() != Drops.NONE
                         ? drops.size() == 1 && drops.getFirst().is(block.item()) && drops.getFirst().getCount() == 1
                         : drops.isEmpty();
                 if (!right) {

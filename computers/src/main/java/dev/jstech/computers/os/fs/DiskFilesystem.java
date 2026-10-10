@@ -318,17 +318,6 @@ public final class DiskFilesystem {
     // delete
 
     /**
-     * Deletes a real file at {@code path} from the disk.
-     *
-     * <p>Returns {@code false}, without mutation, if the path does not exist as a real stored
-     * file or if the path corresponds to a {@code .dat} virtual projection (items cannot be removed
-     * this way; use the Network Interactor instead).
-     *
-     * @param disk the disk {@link ItemStack} to modify
-     * @param path the full path of the file to delete
-     * @return true if the file was found and removed; false otherwise
-     */
-    /**
      * Whether {@code volume} is an install medium: a stamp on blank media whose whole listing is a
      * projection. Nothing is ever written to, removed from or moved on one, so a setup disc can neither
      * be damaged nor turned into a place to hide files.
@@ -343,6 +332,17 @@ public final class DiskFilesystem {
                 && MediaItem.payload(volume) != null;
     }
 
+    /**
+     * Deletes a real file at {@code path} from the disk.
+     *
+     * <p>Returns {@code false}, without mutation, if the path does not exist as a real stored
+     * file or if the path corresponds to a {@code .dat} virtual projection (items cannot be removed
+     * this way; use the Network Interactor instead).
+     *
+     * @param disk the disk {@link ItemStack} to modify
+     * @param path the full path of the file to delete
+     * @return true if the file was found and removed; false otherwise
+     */
     public static boolean delete(final ItemStack disk, final String path) {
         if (installerLocked(disk)) {
             return false;

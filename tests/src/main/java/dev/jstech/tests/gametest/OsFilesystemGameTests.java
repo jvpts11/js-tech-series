@@ -22,10 +22,12 @@ import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FilesystemContents;
+import dev.jstech.computers.os.fs.RecordingFile;
 import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.program.DesktopLayout;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -860,18 +862,26 @@ public final class OsFilesystemGameTests {
         helper.succeed();
     }
 
-    /** A recording's lines are never kept as another kind of file, and appending them is no way around that. */
+    /**
+     * A recording's lines are never kept as another kind of file, and appending them is no way around that. Lines
+     * added after other text are no recording file, which must start with its mark, so only a text that ends up as
+     * the lines alone is refused.
+     */
     @GameTest(template = ARENA)
     public static void fs_appendingRecordingLinesToTextIsRefused(final GameTestHelper helper) {
         final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
         final FilesystemKind kind = FilesystemKind.HIERARCHICAL;
-        final String lines = "JSREC1\nmedia song.ogg 1000\n";
+        // The media line names the recording by the SHA-256 of its bytes; without a real one it is no recording's line.
+        final String lines = RecordingFile.MAGIC + "\nmedia " + "0".repeat(MediaId.HASH_DIGITS) + ".ogg 1000\n";
 
         helper.assertTrue(DiskFilesystem.append(disk, "song.txt", FileType.TXT, lines, Long.MAX_VALUE, kind, 0L)
                 == DiskFilesystem.WriteResult.READ_ONLY, "recording lines are not appended to a new text file");
-        DiskFilesystem.write(disk, "notes.txt", FileType.TXT, "notes", Long.MAX_VALUE, kind);
+        DiskFilesystem.write(disk, "empty.txt", FileType.TXT, "", Long.MAX_VALUE, kind);
+        helper.assertTrue(DiskFilesystem.append(disk, "empty.txt", FileType.TXT, lines, Long.MAX_VALUE, kind, 0L)
+                == DiskFilesystem.WriteResult.READ_ONLY, "nor to an empty text file that is there");
+        DiskFilesystem.write(disk, "notes.txt", FileType.TXT, "notes\n", Long.MAX_VALUE, kind);
         helper.assertTrue(DiskFilesystem.append(disk, "notes.txt", FileType.TXT, lines, Long.MAX_VALUE, kind, 0L)
-                == DiskFilesystem.WriteResult.READ_ONLY, "nor to a text file that is there");
+                == DiskFilesystem.WriteResult.OK, "after other text they are only text, and are kept");
         helper.succeed();
     }
 
