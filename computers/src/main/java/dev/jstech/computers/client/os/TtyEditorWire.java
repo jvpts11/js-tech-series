@@ -8,7 +8,6 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
-import dev.jstech.computers.operation.payload.SaveFilePayload;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -35,9 +34,12 @@ public final class TtyEditorWire implements TtyEditor.IHost {
     }
 
     @Override
-    public void save(final String path, final String text) {
-        PacketDistributor.sendToServer(new SaveFilePayload(this.machine.get(), path, text));
+    public boolean save(final String path, final String text) {
+        if (!FileSaves.send(this.machine.get(), path, text)) {
+            return false;
+        }
         FilesApps.diskChanged();
+        return true;
     }
 
     @Override

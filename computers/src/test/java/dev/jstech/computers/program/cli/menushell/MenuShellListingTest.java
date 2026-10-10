@@ -12,6 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.os.fs.StoredFile;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -28,6 +30,22 @@ class MenuShellListingTest {
                 List.of(new MenuShellListing.Program("Sigma Runtime", "sigma")),
                 List.of("C:\\DOS\\README.TXT"));
         assertEquals(listing, MenuShellListing.read(listing.write()));
+    }
+
+    @Test
+    void write_staysWithinWhatAFileHolds() {
+        final MenuShellListing listing = new MenuShellListing("C:\\", true, false, List.of(), manyFolders(2_000),
+                manyEntries(2_000), List.of(), List.of());
+        assertTrue(listing.write().length() <= StoredFile.MOST_CHARS, "a listing past a file's cap is refused whole");
+    }
+
+    @Test
+    void write_keepsTheFilesBeforeTheTree() {
+        final MenuShellListing listing = new MenuShellListing("C:\\", true, false, List.of(), manyFolders(2_000),
+                manyEntries(40), List.of(), List.of());
+        final MenuShellListing read = MenuShellListing.read(listing.write());
+        assertEquals(40, read.entries().size(), "every file of the folder is listed");
+        assertTrue(read.tree().size() < 2_000, "and it is the far end of the tree that does not fit");
     }
 
     @Test
@@ -59,5 +77,21 @@ class MenuShellListingTest {
     void fullName_putsTheExtensionAfterADot() {
         assertEquals("AUTOEXEC.BAT", new MenuShellListing.Entry("AUTOEXEC", "BAT", 1L, "", false, false).fullName());
         assertEquals("DOS", new MenuShellListing.Entry("DOS", "", 0L, "", true, false).fullName());
+    }
+
+    private static List<String> manyFolders(final int count) {
+        final List<String> folders = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            folders.add("C:\\PROJECTS\\ARCHIVE" + i);
+        }
+        return folders;
+    }
+
+    private static List<MenuShellListing.Entry> manyEntries(final int count) {
+        final List<MenuShellListing.Entry> entries = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            entries.add(new MenuShellListing.Entry("REPORT" + i, "TXT", 1L, "09-29-87  10:42", false, false));
+        }
+        return entries;
     }
 }

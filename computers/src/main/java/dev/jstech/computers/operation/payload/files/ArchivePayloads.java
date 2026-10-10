@@ -170,6 +170,9 @@ public final class ArchivePayloads {
             case DISK_FULL -> {
                 return Outcome.refused(FileSavedPayload.NO_ROOM.text());
             }
+            case TOO_LARGE -> {
+                return Outcome.refused(ArchiveTexts.TOO_MUCH.text());
+            }
             case INVALID_PATH -> {
                 return Outcome.refused(ArchiveTexts.INVALID_NAME.text());
             }

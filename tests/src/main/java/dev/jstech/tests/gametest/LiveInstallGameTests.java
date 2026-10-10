@@ -286,7 +286,8 @@ public final class LiveInstallGameTests {
                 "which is not there yet, so it opens as a new one");
         helper.assertTrue(FilePayloads.readDiskFile(helper.getLevel(), computer, "live:/root/install.txt")
                 .orElse("").contains("emerge"), "while the medium's own guide opens with its text");
-        helper.assertTrue(LiveSessionFiles.write(computer, term.givenAwayOn(), "the table wants the root's UUID"),
+        helper.assertTrue(
+                LiveSessionFiles.write(computer, term.givenAwayOn(), "the table wants the root's UUID") == null,
                 "saving writes into the session");
         helper.assertTrue(term.type("cat /root/notes.txt").contains("the table wants the root's UUID"),
                 "and the shell reads back what the editor wrote");

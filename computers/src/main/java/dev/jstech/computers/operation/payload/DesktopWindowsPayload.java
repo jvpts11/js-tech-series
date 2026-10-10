@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.WorkspaceSet;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -51,7 +52,7 @@ public record DesktopWindowsPayload(BlockPos host, List<WireWindow> windows, int
          */
         public static final StreamCodec<RegistryFriendlyByteBuf, WireWindow> STREAM_CODEC = StreamCodec.of(
                 (buf, window) -> {
-                    buf.writeUtf(clip(window.key(), 64), 64);
+                    buf.writeUtf(TextBounds.clip(window.key(), 64), 64);
                     buf.writeVarInt(window.x());
                     buf.writeVarInt(window.y());
                     buf.writeVarInt(window.w());
@@ -63,10 +64,6 @@ public record DesktopWindowsPayload(BlockPos host, List<WireWindow> windows, int
                 buf -> new WireWindow(buf.readUtf(64), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
                         buf.readVarInt(), buf.readVarInt(), buf.readUtf(OpenWindow.STATE_MAX),
                         buf.readVarInt()));
-
-        private static String clip(final String text, final int max) {
-            return text.length() <= max ? text : text.substring(0, max);
-        }
 
         public static WireWindow of(final OpenWindow window) {
             return new WireWindow(window.key(), window.x(), window.y(), window.w(), window.h(),

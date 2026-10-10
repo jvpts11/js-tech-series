@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -43,8 +44,7 @@ public record RunIqlPayload(BlockPos monitorPos, BlockPos hostPos, int window, i
                     RunIqlPayload::new);
 
     public RunIqlPayload {
-        statement = statement == null ? "" : statement.length() > MAX_LEN ? statement.substring(0, MAX_LEN)
-                : statement;
+        statement = TextBounds.clip(statement, MAX_LEN);
     }
 
     @Override

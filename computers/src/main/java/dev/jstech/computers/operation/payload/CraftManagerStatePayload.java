@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -215,6 +216,6 @@ public record CraftManagerStatePayload(String mediaVolumeKey, Text mediaLabel, L
     }
 
     private static String cut(final String value) {
-        return value.length() > MAX_TEXT ? value.substring(0, MAX_TEXT) : value;
+        return TextBounds.clip(value, MAX_TEXT);
     }
 }

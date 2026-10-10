@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -57,6 +58,6 @@ public record DesktopBalloonPayload(BlockPos hostPos, Text title, Text body, Str
 
     /* Cut rather than refused: a notice about a machine with a very long name should still be said. */
     private static String clip(final String text) {
-        return text.length() <= MAX_TEXT ? text : text.substring(0, MAX_TEXT);
+        return TextBounds.clip(text, MAX_TEXT);
     }
 }

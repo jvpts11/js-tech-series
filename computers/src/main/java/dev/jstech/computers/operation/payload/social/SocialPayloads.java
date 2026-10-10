@@ -26,6 +26,7 @@ import dev.jstech.computers.program.MessengerLog;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -154,9 +155,9 @@ public final class SocialPayloads {
         final List<String> rooms = log.rooms();
         return new MessengerStatePayload(
                 new MessengerStatePayload.Service(true,
-                        cut(host.name(), MessengerStatePayload.Service.MAX_HOST),
+                        TextBounds.clip(host.name(), MessengerStatePayload.Service.MAX_HOST),
                         log.historyBytes(), log.ramMb()),
-                names(connected), names(rooms), cut(room, MessengerStatePayload.MAX_NAME_LETTERS), lines);
+                names(connected), names(rooms), TextBounds.clip(room, MessengerStatePayload.MAX_NAME_LETTERS), lines);
     }
 
     /** As many names as the packet lists, each as long as it carries one. */
@@ -166,7 +167,7 @@ public final class SocialPayloads {
             if (out.size() >= MessengerStatePayload.MAX_NAMES) {
                 break;
             }
-            out.add(cut(value, MessengerStatePayload.MAX_NAME_LETTERS));
+            out.add(TextBounds.clip(value, MessengerStatePayload.MAX_NAME_LETTERS));
         }
         return out;
     }
@@ -261,7 +262,7 @@ public final class SocialPayloads {
                     revision.message(), file == null ? "" : file));
         }
         return new KnotStatePayload(
-                new KnotStatePayload.Service(true, cut(host.name(), KnotStatePayload.Service.MAX_HOST),
+                new KnotStatePayload.Service(true, TextBounds.clip(host.name(), KnotStatePayload.Service.MAX_HOST),
                         repository.bytes(), note),
                 clip(repository.files(), KnotStatePayload.MAX_FILES),
                 revisions, shown, diffOf(repository, shown));
@@ -338,17 +339,6 @@ public final class SocialPayloads {
      * than being shown short.
      */
     private static String clipLine(final String text) {
-        return cut(text, MAX_DIFF_LINE);
-    }
-
-    /**
-     * Cuts a string to what its field carries.
-     *
-     * <p>Every one of these fields refuses what it is handed by throwing rather than by shortening it, so a
-     * machine named at length, or a note built out of a long file name, would take the whole window down
-     * instead of simply reading short. Cut where the answer is built, once, for each field that can grow.
-     */
-    private static String cut(final String text, final int most) {
-        return text.length() > most ? text.substring(0, most) : text;
+        return TextBounds.clip(text, MAX_DIFF_LINE);
     }
 }

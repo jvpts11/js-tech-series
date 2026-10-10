@@ -36,6 +36,7 @@ import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLink;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.text.TextTags;
@@ -301,12 +302,14 @@ public class NetworkGatewayBlockEntity extends SyncedBlockEntity implements IPer
 
     /** The same, asked by a computer that goes by its name or its id, which read the same in every language. */
     public void logged(final String who, final Text what, final Text result, final GatewayLog.Tone tone) {
-        logged(Text.literal(who), what, result, tone);
+        logged(Text.literal(TextBounds.clip(who, GatewayLog.TEXT_LENGTH)), what, result, tone);
     }
 
     /** Records a request as it was asked, which reads the same in every language, and how it went. */
     public void logged(final String who, final String asked, final Text result, final GatewayLog.Tone tone) {
-        logged(Text.literal(who), Text.literal(asked), result, tone);
+        // A request carries the caller's own names, of any length, and the log is saved and sent.
+        logged(Text.literal(TextBounds.clip(who, GatewayLog.TEXT_LENGTH)),
+                Text.literal(TextBounds.clip(asked, GatewayLog.TEXT_LENGTH)), result, tone);
     }
 
     /** Records that a ComputerCraft computer said something to this side. */

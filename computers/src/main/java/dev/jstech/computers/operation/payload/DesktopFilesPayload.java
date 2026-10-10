@@ -12,6 +12,7 @@ import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.program.ComputerSettings;
 import dev.jstech.computers.program.StartTiles;
+import dev.jstech.core.text.TextBounds;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -120,13 +121,13 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         DiskFilesPayload.WireFile.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES))
                 .encode(buf, payload.files);
         buf.writeUtf(payload.wallpaper, 48);
-        buf.writeUtf(clip(payload.cdeStyle, CdeStyle.MOST_LETTERS), CdeStyle.MOST_LETTERS);
+        buf.writeUtf(TextBounds.clip(payload.cdeStyle, CdeStyle.MOST_LETTERS), CdeStyle.MOST_LETTERS);
         /*
          * A name as long as a name may be. Written at that length, and cut to it rather than refused: this
          * packet is what puts a desktop in front of somebody, and a name a letter too long used to throw here
          * and leave them with no desktop at all.
          */
-        buf.writeUtf(clip(payload.computerName, InstallerFlow.MOST_NAME_LETTERS),
+        buf.writeUtf(TextBounds.clip(payload.computerName, InstallerFlow.MOST_NAME_LETTERS),
                 InstallerFlow.MOST_NAME_LETTERS);
         ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PROGRAMS)).encode(buf, payload.programs);
         ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PROGRAMS)).encode(buf, payload.sourceBuilt);
@@ -136,9 +137,9 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         for (int i = 0; i < payload.community.size() && i < MAX_COMMUNITY; i++) {
             final WireCommunity one = payload.community.get(i);
             // Cut, never refused: a cap on writeUtf drops the connection, and these names are the player's.
-            buf.writeUtf(clip(one.name(), 32), 32);
-            buf.writeUtf(clip(one.icon(), 16), 16);
-            buf.writeUtf(clip(one.entry(), 128), 128);
+            buf.writeUtf(TextBounds.clip(one.name(), 32), 32);
+            buf.writeUtf(TextBounds.clip(one.icon(), 16), 16);
+            buf.writeUtf(TextBounds.clip(one.entry(), 128), 128);
         }
         ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PINNED)).encode(buf, payload.pinned);
         ByteBufCodecs.stringUtf8(40).apply(ByteBufCodecs.list(MAX_TILES)).encode(buf, payload.startTiles);
@@ -148,8 +149,8 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             if (written++ == MAX_DEFAULT_APPS) {
                 break;
             }
-            buf.writeUtf(clip(one.getKey(), 32), 32);
-            buf.writeUtf(clip(one.getValue(), 64), 64);
+            buf.writeUtf(TextBounds.clip(one.getKey(), 32), 32);
+            buf.writeUtf(TextBounds.clip(one.getValue(), 64), 64);
         }
         buf.writeBoolean(payload.trashFull);
         buf.writeVarInt(Math.min(payload.versions.size(), MAX_PROGRAMS));
@@ -158,15 +159,10 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             if (versioned++ == MAX_PROGRAMS) {
                 break;
             }
-            buf.writeUtf(clip(one.getKey(), 32), 32);
-            buf.writeUtf(clip(one.getValue(), 16), 16);
+            buf.writeUtf(TextBounds.clip(one.getKey(), 32), 32);
+            buf.writeUtf(TextBounds.clip(one.getValue(), 16), 16);
         }
         buf.writeFloat(payload.loadMbPerSecond);
-    }
-
-    private static String clip(final String text, final int max) {
-        final String s = text == null ? "" : text;
-        return s.length() <= max ? s : s.substring(0, max);
     }
 
     private static DesktopFilesPayload decode(final RegistryFriendlyByteBuf buf) {

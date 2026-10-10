@@ -7,10 +7,13 @@
  */
 package dev.jstech.computers.operation.payload.files;
 
+import dev.jstech.computers.operation.payload.FileSavedPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.core.text.Text;
 import java.util.Optional;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The files of a by-hand install, for an editor that asks the machine for one.
@@ -40,16 +43,19 @@ public final class LiveSessionFiles {
     /**
      * Writes the file, which is what the steps that come after will read.
      *
-     * @return false when the machine has no session to write it into
+     * @return why it was not written: the machine has no session, or the session has no room left; null when it was
      */
-    public static boolean write(final IOsHost computer, final String path, final String content) {
+    @Nullable
+    public static Text write(final IOsHost computer, final String path, final String content) {
         final LiveInstallState live = sessionOf(computer);
         if (live == null) {
-            return false;
+            return FileSavedPayload.NO_LIVE_MEDIUM.text();
         }
-        live.writeFileAt(typed(path), content);
+        if (!live.writeFileAt(typed(path), content)) {
+            return FileSavedPayload.NO_ROOM.text();
+        }
         computer.setChanged();
-        return true;
+        return null;
     }
 
     private static LiveInstallState sessionOf(final IOsHost computer) {

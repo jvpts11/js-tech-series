@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.crafting.CraftingLog;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 
@@ -130,6 +131,6 @@ public record CraftingView(List<Line> lines, List<Pick> picks, List<CraftingLog.
     }
 
     private static String cut(final String text) {
-        return text.length() > MOST_TEXT * 2 ? text.substring(0, MOST_TEXT * 2) : text;
+        return TextBounds.clip(text, MOST_TEXT * 2);
     }
 }

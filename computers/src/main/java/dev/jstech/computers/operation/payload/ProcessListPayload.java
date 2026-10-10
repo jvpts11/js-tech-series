@@ -7,9 +7,11 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -52,9 +54,12 @@ public record ProcessListPayload(List<ProcessLine> processes) implements CustomP
                     ProcessLine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX)), ProcessListPayload::processes,
                     ProcessListPayload::new);
 
-    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    /*
+     * Copied on the way in, so what the client is handed cannot change under it after it arrives, and no longer
+     * than the list the message carries, which past that would throw as it is written.
+     */
     public ProcessListPayload {
-        processes = List.copyOf(processes);
+        processes = List.copyOf(processes.size() > MAX ? processes.subList(0, MAX) : processes);
     }
 
     @Override
@@ -106,12 +111,21 @@ public record ProcessListPayload(List<ProcessLine> processes) implements CustomP
      */
     public record ProcessLine(int kind, String name, ProcessState state, Text detail) {
 
+        /** The longest name a line carries: a job's, which is the longest a process goes by. */
+        public static final int MAX_NAME = IqlDefinition.MAX_NAME;
+
         public static final StreamCodec<RegistryFriendlyByteBuf, ProcessLine> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.VAR_INT, ProcessLine::kind,
-                        ByteBufCodecs.stringUtf8(48), ProcessLine::name,
+                        ByteBufCodecs.stringUtf8(MAX_NAME), ProcessLine::name,
                         StableCodecs.byId(ProcessState.class, ProcessState.STOPPED), ProcessLine::state,
                         TextCodecs.STREAM_CODEC, ProcessLine::detail,
                         ProcessLine::new);
+
+        public ProcessLine {
+            // Every name is made to fit where it is created; this only stops one that slipped by from dropping the
+            // player as the whole list is written.
+            name = TextBounds.clip(name, MAX_NAME);
+        }
     }
 }

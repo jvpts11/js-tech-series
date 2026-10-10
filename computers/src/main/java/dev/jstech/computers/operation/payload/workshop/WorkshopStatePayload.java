@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.workshop;
 
 import dev.jstech.computers.workshop.Workshop;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import java.util.ArrayList;
 import java.util.List;
@@ -100,7 +101,7 @@ public record WorkshopStatePayload(int cards, List<ItemStack> slots, ItemStack c
         ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, anvilResult);
         buf.writeVarInt(anvilLevels);
         buf.writeVarInt(anvilCost);
-        buf.writeUtf(anvilName.length() <= MAX_NAME ? anvilName : anvilName.substring(0, MAX_NAME), MAX_NAME);
+        buf.writeUtf(TextBounds.clip(anvilName, MAX_NAME), MAX_NAME);
         buf.writeVarInt(level);
         buf.writeFloat(progress);
         TextCodecs.STREAM_CODEC.encode(buf, status);

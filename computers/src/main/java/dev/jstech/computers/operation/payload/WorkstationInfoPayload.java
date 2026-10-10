@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.WorkstationFacts;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -41,7 +42,7 @@ public record WorkstationInfoPayload(BlockPos hostPos, WorkstationFacts facts) i
         buf.writeBlockPos(p.hostPos());
         for (final String text : new String[] {f.userName(), f.hostName(), f.network(), f.system(),
             f.architecture(), f.windowSystem()}) {
-            buf.writeUtf(text.length() <= MAX_TEXT ? text : text.substring(0, MAX_TEXT), MAX_TEXT);
+            buf.writeUtf(TextBounds.clip(text, MAX_TEXT), MAX_TEXT);
         }
         TextCodecs.STREAM_CODEC.encode(buf, f.processor());
         buf.writeVarInt(f.processorMhz());

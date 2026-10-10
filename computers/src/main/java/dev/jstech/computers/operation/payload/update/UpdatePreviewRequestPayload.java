@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.update;
 
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -38,7 +39,7 @@ public record UpdatePreviewRequestPayload(BlockPos monitorPos, BlockPos hostPos,
                     UpdatePreviewRequestPayload::new);
 
     public UpdatePreviewRequestPayload {
-        name = name == null ? "" : name.length() > MAX_NAME ? name.substring(0, MAX_NAME) : name;
+        name = TextBounds.clip(name, MAX_NAME);
     }
 
     @Override

@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -52,7 +53,7 @@ public record OpenPostPayload(BlockPos host, BlockPos monitorPos, int firmwareKi
         // A declared sentence is put together at the other end; only words that are data are cut here.
         TextCodecs.STREAM_CODEC.encode(buf, payload.complaint instanceof Text.Literal literal
                 && literal.value().length() > MOST_LETTERS
-                ? Text.literal(literal.value().substring(0, MOST_LETTERS)) : payload.complaint);
+                ? Text.literal(TextBounds.clip(literal.value(), MOST_LETTERS)) : payload.complaint);
     }
 
     private static OpenPostPayload decode(final RegistryFriendlyByteBuf buf) {

@@ -14,6 +14,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.text.LongText;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -149,7 +150,16 @@ public final class DataRegistry<T> {
             this.codec.encodeStart(ops, entry.getValue())
                     .resultOrPartial(problem -> JsCore.LOGGER.warn("The {} value {} cannot be sent: {}", this.id,
                             entry.getKey(), problem))
-                    .ifPresent(tag -> entries.put(entry.getKey().toString(), tag));
+                    .ifPresent(tag -> {
+                        // One string past what a tag holds would throw as the message is written and drop every
+                        // joining player, so that one value stays behind instead.
+                        if (LongText.fits(tag)) {
+                            entries.put(entry.getKey().toString(), tag);
+                        } else {
+                            JsCore.LOGGER.warn("The {} value {} holds a string too long to send and is left out",
+                                    this.id, entry.getKey());
+                        }
+                    });
         }
         return entries;
     }

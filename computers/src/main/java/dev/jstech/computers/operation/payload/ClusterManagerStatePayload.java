@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -96,16 +97,29 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
 
     public record WireNode(long rackPos, int rackIndex, int row, String name, String osLabel, String programs,
                            int phiModel, boolean bayOn, int slotIndex, int code, long used, long total, int state) {
+
+        /** The longest name and system label a node carries, and the longest list of its programs. */
+        public static final int MAX_NAME = 64;
+        public static final int MAX_PROGRAMS = 160;
+
         public static final StreamCodec<RegistryFriendlyByteBuf, WireNode> STREAM_CODEC = StreamCodec.of(
                 (buf, n) -> {
-                    buf.writeVarLong(n.rackPos()).writeVarInt(n.rackIndex()).writeVarInt(n.row()).writeUtf(n.name(), 64)
-                            .writeUtf(n.osLabel(), 64).writeUtf(n.programs(), 160).writeVarInt(n.phiModel())
+                    buf.writeVarLong(n.rackPos()).writeVarInt(n.rackIndex()).writeVarInt(n.row())
+                            .writeUtf(n.name(), MAX_NAME).writeUtf(n.osLabel(), MAX_NAME)
+                            .writeUtf(n.programs(), MAX_PROGRAMS).writeVarInt(n.phiModel())
                             .writeBoolean(n.bayOn()).writeVarInt(n.slotIndex()).writeVarInt(n.code())
                             .writeVarLong(n.used()).writeVarLong(n.total()).writeVarInt(n.state());
                 },
-                buf -> new WireNode(buf.readVarLong(), buf.readVarInt(), buf.readVarInt(), buf.readUtf(64),
-                        buf.readUtf(64), buf.readUtf(160), buf.readVarInt(), buf.readBoolean(), buf.readVarInt(),
-                        buf.readVarInt(), buf.readVarLong(), buf.readVarLong(), buf.readVarInt()));
+                buf -> new WireNode(buf.readVarLong(), buf.readVarInt(), buf.readVarInt(), buf.readUtf(MAX_NAME),
+                        buf.readUtf(MAX_NAME), buf.readUtf(MAX_PROGRAMS), buf.readVarInt(), buf.readBoolean(),
+                        buf.readVarInt(), buf.readVarInt(), buf.readVarLong(), buf.readVarLong(), buf.readVarInt()));
+
+        public WireNode {
+            // A text past its cap would throw as the state is written and drop the player watching it.
+            name = TextBounds.clip(name, MAX_NAME);
+            osLabel = TextBounds.clip(osLabel, MAX_NAME);
+            programs = TextBounds.clip(programs, MAX_PROGRAMS);
+        }
     }
 
     /** One craft in a supercomputer's queue: what it makes, read in the player's language, and who asked. */

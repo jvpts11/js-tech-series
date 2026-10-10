@@ -747,6 +747,23 @@ class LiveInstallStateTest {
     }
 
     @Test
+    void writeFileAt_pastWhatTheSessionHolds_writesNothing() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        assertTrue(st.writeFileAt("/root/notes.txt", "x".repeat(LiveFiles.MOST_CHARS)), "up to the ceiling it takes");
+        assertFalse(st.writeFileAt("/root/more.txt", "x"), "one letter past it, nothing");
+        assertNull(st.fileAt("/root/more.txt"));
+    }
+
+    @Test
+    void echo_intoAFullSession_saysThereIsNoSpaceLeft() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        st.writeFileAt("/root/notes.txt", "x".repeat(LiveFiles.MOST_CHARS));
+        final LiveTurn r = step(st, "echo more >> /root/notes.txt");
+        assertFalse(r.ok());
+        assertTrue(r.text().contains("No space left on device"), r.text());
+    }
+
+    @Test
     void aVerbOfTheOtherDistribution_isCommandNotFound() {
         assertTrue(step(new LiveInstallState(LiveInstallState.Distro.GENTOO), "pacstrap /mnt base").text()
                 .contains("command not found"));

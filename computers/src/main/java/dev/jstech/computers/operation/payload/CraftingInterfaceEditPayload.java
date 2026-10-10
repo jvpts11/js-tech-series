@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -47,7 +48,7 @@ public record CraftingInterfaceEditPayload(int action, int pattern, int input, i
                     CraftingInterfaceEditPayload::new);
 
     public CraftingInterfaceEditPayload {
-        text = text == null ? "" : text.length() > MOST_TEXT ? text.substring(0, MOST_TEXT) : text;
+        text = TextBounds.clip(text, MOST_TEXT);
     }
 
     /** A change that names nothing. */

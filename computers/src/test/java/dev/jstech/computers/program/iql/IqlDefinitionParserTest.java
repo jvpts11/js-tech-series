@@ -89,6 +89,19 @@ class IqlDefinitionParserTest {
     }
 
     @Test
+    void parse_createWithANameLongerThanTheCap_throws() {
+        final String name = "j".repeat(IqlDefinition.MAX_NAME + 1);
+        assertThrows(IllegalArgumentException.class,
+                () -> IqlDefinitionParser.tryParse("CREATE JOB " + name + " AS restock EVERY 30s"));
+    }
+
+    @Test
+    void parse_createWithANameAtTheCap_keepsItWhole() {
+        final String name = "j".repeat(IqlDefinition.MAX_NAME);
+        assertEquals(name, IqlDefinitionParser.tryParse("CREATE JOB " + name + " AS restock EVERY 30s").name());
+    }
+
+    @Test
     void parse_jobWithoutTrigger_throws() {
         assertThrows(IllegalArgumentException.class,
                 () -> IqlDefinitionParser.tryParse("CREATE JOB j AS restock"));

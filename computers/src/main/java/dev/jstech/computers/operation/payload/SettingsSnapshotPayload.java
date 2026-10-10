@@ -12,6 +12,7 @@ import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.core.audio.StereoSide;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -180,15 +181,15 @@ public record SettingsSnapshotPayload(
      */
     private static void encode(final RegistryFriendlyByteBuf buf, final SettingsSnapshotPayload p) {
         buf.writeBlockPos(p.hostPos);
-        buf.writeUtf(clip(p.wallpaper, LABEL_MAX), LABEL_MAX);
-        buf.writeUtf(clip(p.computerName, InstallerFlow.MOST_NAME_LETTERS), InstallerFlow.MOST_NAME_LETTERS);
+        buf.writeUtf(TextBounds.clip(p.wallpaper, LABEL_MAX), LABEL_MAX);
+        buf.writeUtf(TextBounds.clip(p.computerName, InstallerFlow.MOST_NAME_LETTERS), InstallerFlow.MOST_NAME_LETTERS);
         buf.writeInt(p.accent);
         buf.writeBoolean(p.clock12h);
         buf.writeVarInt(p.guiScale);
         buf.writeVarInt(p.brightness);
-        buf.writeUtf(clip(p.saveDrive, 4), 4);
+        buf.writeUtf(TextBounds.clip(p.saveDrive, 4), 4);
         buf.writeBoolean(p.removableAutoOpen);
-        buf.writeUtf(clip(p.themePreset, 32), 32);
+        buf.writeUtf(TextBounds.clip(p.themePreset, 32), 32);
         buf.writeBoolean(p.taskbarCentered);
         buf.writeBoolean(p.darkMode);
         buf.writeVarInt(p.netshare);
@@ -197,11 +198,11 @@ public record SettingsSnapshotPayload(
         TextCodecs.STREAM_CODEC.encode(buf, p.cpuArch);
         buf.writeVarInt(p.ramMb);
         buf.writeVarInt(p.vramMb);
-        buf.writeUtf(clip(p.osLabel, LABEL_MAX), LABEL_MAX);
-        buf.writeUtf(clip(p.platform, 24), 24);
+        buf.writeUtf(TextBounds.clip(p.osLabel, LABEL_MAX), LABEL_MAX);
+        buf.writeUtf(TextBounds.clip(p.platform, 24), 24);
         buf.writeVarInt(Math.min(p.installed.size(), MAX));
         for (int i = 0; i < p.installed.size() && i < MAX; i++) {
-            buf.writeUtf(clip(p.installed.get(i), 96), 96);
+            buf.writeUtf(TextBounds.clip(p.installed.get(i), 96), 96);
         }
         buf.writeVarInt(Math.min(p.disks.size(), MAX));
         for (int i = 0; i < p.disks.size() && i < MAX; i++) {
@@ -215,30 +216,30 @@ public record SettingsSnapshotPayload(
         buf.writeVarInt(Math.min(p.ramUses.size(), MAX));
         for (int i = 0; i < p.ramUses.size() && i < MAX; i++) {
             final RamUse r = p.ramUses.get(i);
-            buf.writeUtf(clip(r.label(), LABEL_MAX), LABEL_MAX);
+            buf.writeUtf(TextBounds.clip(r.label(), LABEL_MAX), LABEL_MAX);
             buf.writeVarInt(r.mb());
             buf.writeVarLong(r.heldBytes());
-            buf.writeUtf(clip(r.kind(), 16), 16);
+            buf.writeUtf(TextBounds.clip(r.kind(), 16), 16);
             buf.writeVarInt(r.id());
         }
         buf.writeVarInt(Math.min(p.shares.size(), MAX));
         for (int i = 0; i < p.shares.size() && i < MAX; i++) {
             final ShareRow s = p.shares.get(i);
-            buf.writeUtf(clip(s.name(), LABEL_MAX), LABEL_MAX);
-            buf.writeUtf(clip(s.path(), 128), 128);
+            buf.writeUtf(TextBounds.clip(s.name(), LABEL_MAX), LABEL_MAX);
+            buf.writeUtf(TextBounds.clip(s.path(), 128), 128);
             buf.writeBoolean(s.writable());
         }
         buf.writeBoolean(p.remoteAllowed);
         final Sound sound = p.sound;
         buf.writeVarInt(sound.volume());
         buf.writeBoolean(sound.muted());
-        buf.writeUtf(clip(sound.output(), 16), 16);
+        buf.writeUtf(TextBounds.clip(sound.output(), 16), 16);
         TextCodecs.STREAM_CODEC.encode(buf, sound.hardware());
         buf.writeBoolean(sound.plays());
         buf.writeVarInt(Math.min(sound.speakers().size(), MAX));
         for (int i = 0; i < sound.speakers().size() && i < MAX; i++) {
             final SpeakerRow speaker = sound.speakers().get(i);
-            buf.writeUtf(clip(speaker.name(), SPEAKER_NAME_MAX), SPEAKER_NAME_MAX);
+            buf.writeUtf(TextBounds.clip(speaker.name(), SPEAKER_NAME_MAX), SPEAKER_NAME_MAX);
             buf.writeVarInt(speaker.side().id());
         }
         writeGpu(buf, p.gpu);
@@ -249,11 +250,6 @@ public record SettingsSnapshotPayload(
         buf.writeVarInt(index.graphics());
         buf.writeVarInt(index.gaming());
         buf.writeVarInt(index.disk());
-    }
-
-    private static String clip(final String text, final int max) {
-        final String s = text == null ? "" : text;
-        return s.length() <= max ? s : s.substring(0, max);
     }
 
     private static SettingsSnapshotPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -323,7 +319,7 @@ public record SettingsSnapshotPayload(
         TextCodecs.STREAM_CODEC.encode(buf, gpu.card());
         buf.writeVarInt(gpu.cores());
         buf.writeVarInt(gpu.mhz());
-        buf.writeUtf(clip(gpu.slot(), LABEL_MAX), LABEL_MAX);
+        buf.writeUtf(TextBounds.clip(gpu.slot(), LABEL_MAX), LABEL_MAX);
         buf.writeVarLong(gpu.totalKb());
         buf.writeVarLong(gpu.monitorsKb());
         buf.writeVarLong(gpu.windowsKb());

@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload;
 import dev.jstech.computers.os.boot.BootManager;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -59,8 +60,7 @@ public record OpenBootMenuPayload(BlockPos hostPos, BlockPos monitorPos, BootMen
         for (final BootMenu.Entry entry : entries) {
             TextCodecs.STREAM_CODEC.encode(buf, cut(entry.label()));
             buf.writeVarInt(entry.slot());
-            buf.writeUtf(entry.osId().length() <= MAX_LABEL ? entry.osId()
-                    : entry.osId().substring(0, MAX_LABEL), MAX_LABEL);
+            buf.writeUtf(TextBounds.clip(entry.osId(), MAX_LABEL), MAX_LABEL);
         }
     }
 
@@ -88,6 +88,6 @@ public record OpenBootMenuPayload(BlockPos hostPos, BlockPos monitorPos, BootMen
      */
     private static Text cut(final Text text) {
         return text instanceof Text.Literal literal && literal.value().length() > MAX_LABEL
-                ? Text.literal(literal.value().substring(0, MAX_LABEL)) : text;
+                ? Text.literal(TextBounds.clip(literal.value(), MAX_LABEL)) : text;
     }
 }

@@ -11,6 +11,7 @@ import dev.jstech.computers.bus.BusActivity;
 import dev.jstech.computers.bus.BusCondition;
 import dev.jstech.computers.bus.BusSettings;
 import dev.jstech.core.id.StableIds;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -183,7 +184,7 @@ public record BusStatePayload(int containerId, BusSettings settings, List<ItemSt
 
     /* A text cut to what the payload carries, so a long one is shortened rather than failing the whole window. */
     private static void writeText(final FriendlyByteBuf buf, final String value) {
-        buf.writeUtf(value.length() > MAX_TEXT ? value.substring(0, MAX_TEXT) : value, MAX_TEXT);
+        buf.writeUtf(TextBounds.clip(value, MAX_TEXT), MAX_TEXT);
     }
 
     private static List<String> readStrings(final FriendlyByteBuf buf) {

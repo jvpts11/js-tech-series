@@ -7,7 +7,10 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.fs.FsPaths;
+import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -46,11 +49,15 @@ public record AutomationPayload(boolean engineOnline, Text engineLabel, List<Job
     public record JobRow(String name, Text type, Text trigger, boolean paused) {
         public static final StreamCodec<RegistryFriendlyByteBuf, JobRow> STREAM_CODEC =
                 StreamCodec.composite(
-                        ByteBufCodecs.STRING_UTF8, JobRow::name,
+                        ByteBufCodecs.stringUtf8(IqlDefinition.MAX_NAME), JobRow::name,
                         TextCodecs.STREAM_CODEC, JobRow::type,
                         TextCodecs.STREAM_CODEC, JobRow::trigger,
                         ByteBufCodecs.BOOL, JobRow::paused,
                         JobRow::new);
+
+        public JobRow {
+            name = TextBounds.clip(name, IqlDefinition.MAX_NAME);
+        }
     }
 
     public static final CustomPacketPayload.Type<AutomationPayload> TYPE =
@@ -61,13 +68,18 @@ public record AutomationPayload(boolean engineOnline, Text engineLabel, List<Job
                     ByteBufCodecs.BOOL, AutomationPayload::engineOnline,
                     TextCodecs.STREAM_CODEC, AutomationPayload::engineLabel,
                     JobRow.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_JOBS)), AutomationPayload::jobs,
-                    ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(MAX_FILES)), AutomationPayload::iqlFiles,
+                    ByteBufCodecs.stringUtf8(FsPaths.MAX_PATH_LENGTH).apply(ByteBufCodecs.list(MAX_FILES)),
+                    AutomationPayload::iqlFiles,
                     AutomationPayload::new);
 
-    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    /*
+     * Copied on the way in, so what the client is handed cannot change under it after it arrives, and held to what
+     * the message carries, which past its caps would throw as it is written.
+     */
     public AutomationPayload {
-        jobs = List.copyOf(jobs);
-        iqlFiles = List.copyOf(iqlFiles);
+        jobs = List.copyOf(jobs.size() > MAX_JOBS ? jobs.subList(0, MAX_JOBS) : jobs);
+        iqlFiles = (iqlFiles.size() > MAX_FILES ? iqlFiles.subList(0, MAX_FILES) : iqlFiles).stream()
+                .map(file -> TextBounds.clip(file, FsPaths.MAX_PATH_LENGTH)).toList();
     }
 
     @Override

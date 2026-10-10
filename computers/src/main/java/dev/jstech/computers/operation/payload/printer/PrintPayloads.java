@@ -12,6 +12,7 @@ import dev.jstech.computers.client.os.PrintReplies;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.fs.PixImage;
 import dev.jstech.computers.printer.PrintedDocument;
 import dev.jstech.computers.printer.Printers;
 import java.util.ArrayList;
@@ -62,6 +63,12 @@ public final class PrintPayloads {
 
     private static void handlePrint(final PrintPayload payload, final ServerPlayer player, final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost host)) {
+            return;
+        }
+        // The picture is kept on the printed sheet as it came, so what does not read as a picture is not printed.
+        if (!payload.picture().isEmpty() && PixImage.decode(payload.picture()) == null) {
+            PacketDistributor.sendToPlayer(player, new PrintedPayload(payload.hostPos(), false,
+                    Printers.NOTHING.text()));
             return;
         }
         final String machine = Printers.machineName(host);

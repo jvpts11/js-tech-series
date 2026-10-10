@@ -60,6 +60,10 @@ final class PatternStudioTexts {
             TextKey.of("jsc.pattern_studio.encoder_bay_empty", "The encoder's bay is empty");
     static final TextKey ENCODER_QUEUE_FULL =
             TextKey.of("jsc.pattern_studio.encoder_queue_full", "The encoder's queue is full");
+    static final TextKey TOO_LARGE_TO_BURN =
+            TextKey.of("jsc.pattern_studio.too_large_to_burn", "Too large to burn: a file holds %s characters");
+    static final TextKey PIPELINE_FULL =
+            TextKey.of("jsc.pattern_studio.pipeline_full", "A pipeline holds at most %s stages");
     static final TextKey SENT = TextKey.of("jsc.pattern_studio.sent", "Sent to the encoder: %s.craft");
     /* A drive and the medium in it: "CD Drive: Blank CD-RW". */
     static final TextKey DRIVE_MEDIUM = TextKey.of("jsc.pattern_studio.drive_medium", "%s: %s");

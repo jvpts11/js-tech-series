@@ -64,9 +64,11 @@ public final class TextTags {
 
     private static CompoundTag write(final Text text, final int depth) {
         final CompoundTag tag = new CompoundTag();
+        // Cut to what the wire carries: a program can log a string of any length, and a string tag past its cap
+        // is saved as nothing at all.
         if (text instanceof Text.Translated translated && depth < MOST_DEPTH) {
-            tag.putString(KEY, translated.key().key());
-            tag.putString(ENGLISH, translated.key().english());
+            tag.putString(KEY, TextBounds.clip(translated.key().key(), TextCodecs.MOST_KEY_LETTERS));
+            tag.putString(ENGLISH, TextBounds.clip(translated.key().english(), TextCodecs.MOST_LETTERS));
             if (!translated.args().isEmpty()) {
                 final ListTag args = new ListTag();
                 for (final Text arg : translated.args()) {
@@ -76,7 +78,7 @@ public final class TextTags {
             }
             return tag;
         }
-        tag.putString(LITERAL, text.english());
+        tag.putString(LITERAL, TextBounds.clip(text.english(), TextCodecs.MOST_LETTERS));
         return tag;
     }
 

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.fs.StoredFile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -21,7 +22,8 @@ import net.minecraft.resources.ResourceLocation;
  */
 public record SaveFilePayload(BlockPos hostPos, String path, String content) implements CustomPacketPayload {
 
-    public static final int MAX_CONTENT = 32768;
+    /** The most a file holds, and so the most a save or a read carries. */
+    public static final int MAX_CONTENT = StoredFile.MOST_CHARS;
 
     public static final CustomPacketPayload.Type<SaveFilePayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "save_file"));

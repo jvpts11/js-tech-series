@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
+import dev.jstech.core.text.LongText;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -89,7 +90,7 @@ final class ServiceStateNbt {
                 one.putString("By", revision.author());
                 one.putString("Msg", revision.message());
                 one.putLong("At", revision.at());
-                one.putString("Body", revision.content());
+                LongText.put(one, "Body", revision.content());
                 revisions.add(one);
             }
             entry.put("Revisions", revisions);
@@ -117,7 +118,7 @@ final class ServiceStateNbt {
                     continue;
                 }
                 kept.add(new KnotRepository.Revision(number, author, one.getString("Msg"),
-                        one.getLong("At"), one.getString("Body")));
+                        one.getLong("At"), LongText.get(one, "Body")));
             }
             repository.restore(file, kept);
         }

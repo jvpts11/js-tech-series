@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.printer;
 
+import dev.jstech.computers.os.fs.StoredFile;
+import dev.jstech.core.text.TextBounds;
 import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
@@ -36,29 +38,29 @@ public record PrintedDocument(String title, String from, String program, String 
     public static final int MAX_PAGE_CHARS = 4096;
     /** The most characters of a title, a machine's or a program's name. */
     public static final int MAX_NAME = 64;
-    /** The most characters of a picture as Paint saves it. */
-    public static final int MAX_PICTURE = 65_536;
+    /** The most characters of a picture as Paint saves it: a picture is a file, and holds no more than one. */
+    public static final int MAX_PICTURE = StoredFile.MOST_CHARS;
     /** A sheet with nothing on it. */
     public static final PrintedDocument EMPTY = new PrintedDocument("", "", "", "", List.of(""), "", "");
 
     public PrintedDocument {
-        title = clip(title, MAX_NAME);
-        from = clip(from, MAX_NAME);
-        program = clip(program, MAX_NAME);
-        printer = clip(printer, MAX_NAME);
+        title = TextBounds.clip(title, MAX_NAME);
+        from = TextBounds.clip(from, MAX_NAME);
+        program = TextBounds.clip(program, MAX_NAME);
+        printer = TextBounds.clip(printer, MAX_NAME);
         final List<String> kept = new ArrayList<>();
         for (final String page : pages == null ? List.<String>of() : pages) {
             if (kept.size() >= MAX_PAGES) {
                 break;
             }
-            kept.add(clip(page, MAX_PAGE_CHARS));
+            kept.add(TextBounds.clip(page, MAX_PAGE_CHARS));
         }
         if (kept.isEmpty()) {
             kept.add("");
         }
         pages = List.copyOf(kept);
         picture = picture == null || picture.length() > MAX_PICTURE ? "" : picture;
-        pictureName = clip(pictureName, MAX_NAME);
+        pictureName = TextBounds.clip(pictureName, MAX_NAME);
     }
 
     /** A document of text, its pages already laid out. */
@@ -120,12 +122,5 @@ public record PrintedDocument(String title, String from, String program, String 
             total += page.length();
         }
         return total;
-    }
-
-    private static String clip(@Nullable final String value, final int most) {
-        if (value == null) {
-            return "";
-        }
-        return value.length() > most ? value.substring(0, most) : value;
     }
 }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -51,7 +52,7 @@ public record ProphetActionPayload(BlockPos hostPos, int window, int action, Str
                     ProphetActionPayload::new);
 
     public ProphetActionPayload {
-        arg = arg == null ? "" : arg.length() > MAX_ARG ? arg.substring(0, MAX_ARG) : arg;
+        arg = TextBounds.clip(arg, MAX_ARG);
     }
 
     @Override

@@ -25,9 +25,9 @@ public final class TextCodecs {
 
     public static final StreamCodec<ByteBuf, Text> STREAM_CODEC = StreamCodec.of(TextCodecs::write, TextCodecs::read);
 
-    /** The longest words of data that travel, and the longest key. */
-    private static final int MOST_LETTERS = 8_192;
-    private static final int MOST_KEY_LETTERS = 256;
+    /** The longest words of data that travel, and the longest key; a save holds text to the same lengths. */
+    static final int MOST_LETTERS = 8_192;
+    static final int MOST_KEY_LETTERS = 256;
 
     /** How many arguments a sentence carries, and how deeply sentences sit inside each other. */
     private static final int MOST_ARGS = 16;
@@ -46,7 +46,7 @@ public final class TextCodecs {
     private static void write(final ByteBuf buf, final Text text, final int depth) {
         if (text instanceof Text.Translated translated && depth < MOST_DEPTH) {
             buf.writeByte(TRANSLATED);
-            Utf8String.write(buf, cut(translated.key().key(), MOST_KEY_LETTERS), MOST_KEY_LETTERS);
+            Utf8String.write(buf, TextBounds.clip(translated.key().key(), MOST_KEY_LETTERS), MOST_KEY_LETTERS);
             final List<Text> args = translated.args();
             final int count = Math.min(args.size(), MOST_ARGS);
             VarInt.write(buf, count);
@@ -57,7 +57,7 @@ public final class TextCodecs {
         }
         buf.writeByte(LITERAL);
         // A sentence nested past the depth travels as the English it reads as, which is still something to read.
-        Utf8String.write(buf, cut(text.resolve(ITextLanguage.ENGLISH), MOST_LETTERS), MOST_LETTERS);
+        Utf8String.write(buf, TextBounds.clip(text.resolve(ITextLanguage.ENGLISH), MOST_LETTERS), MOST_LETTERS);
     }
 
     private static Text read(final ByteBuf buf) {
@@ -81,9 +81,5 @@ public final class TextCodecs {
         } catch (final IllegalArgumentException notAKey) {
             return Text.literal(key);
         }
-    }
-
-    private static String cut(final String text, final int most) {
-        return text.length() <= most ? text : text.substring(0, most);
     }
 }

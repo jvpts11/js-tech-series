@@ -170,7 +170,7 @@ public final class MusicImports implements IMediaUploadHandler {
         return switch (result) {
             case OK -> MediaReceipt.accepted(KEPT.with(FsPaths.fileName(path), dir));
             case DISK_FULL -> MediaReceipt.refused(NO_ROOM.with(name));
-            case INVALID_PATH, READ_ONLY -> MediaReceipt.refused(NOT_WRITTEN.with(name, dir));
+            case INVALID_PATH, READ_ONLY, TOO_LARGE -> MediaReceipt.refused(NOT_WRITTEN.with(name, dir));
         };
     }
 

@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -36,8 +37,7 @@ public record SoundfoundryCoverRequestPayload(BlockPos hostPos, String key) impl
 
     /* Cut to what the wire takes, since a string past its cap throws as it is sent. */
     public SoundfoundryCoverRequestPayload {
-        key = key.length() <= SoundfoundryCoverPayload.MAX_KEY ? key
-                : key.substring(0, SoundfoundryCoverPayload.MAX_KEY);
+        key = TextBounds.clip(key, SoundfoundryCoverPayload.MAX_KEY);
     }
 
     @Override

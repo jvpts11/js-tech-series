@@ -50,6 +50,12 @@ final class LiveFiles {
     private static final String GUIDE = HOME + "/install.txt";
 
     /*
+     * The most text the files the session writes hold together. The session is kept in the machine's save, and
+     * without a ceiling a line like cat f >> f, run again and again, doubles it every time.
+     */
+    static final int MOST_CHARS = 131_072;
+
+    /*
      * What the shell and its tools say when a path is wrong. The tool's name and the path go in front as data,
      * the way the tools print them; only what went wrong is a sentence.
      */
@@ -64,6 +70,8 @@ final class LiveFiles {
     private static final TextKey USAGE = TextKey.of("jsc.install.live_files.usage", "Usage: %s <file>");
     private static final TextKey SYNTAX_ERROR = TextKey.of("jsc.install.live_files.syntax_error",
             "bash: syntax error near unexpected token `newline'");
+    private static final TextKey NO_SPACE = TextKey.of("jsc.install.live_files.no_space",
+            "%s: No space left on device");
 
     /**
      * @param root  where the new system's disk is mounted, which is this distribution's own choice of place
@@ -152,6 +160,17 @@ final class LiveFiles {
             this.dirs.add(at);
         }
         this.dirs.add("/");
+    }
+
+    /** Whether that content, written at that path, keeps the session's files within what the session holds. */
+    boolean roomFor(final String whole, final String content) {
+        long total = content.length();
+        for (final Map.Entry<String, String> file : this.files.entrySet()) {
+            if (!file.getKey().equals(whole) && !file.getKey().equals(GUIDE)) {
+                total += file.getValue().length();
+            }
+        }
+        return total <= MOST_CHARS;
     }
 
     void makeDir(final String whole) {
@@ -263,7 +282,11 @@ final class LiveFiles {
             return LiveTurn.refused(IS_A_DIRECTORY.with("bash: " + target));
         }
         final String had = after ? this.files.get(whole) : null;
-        this.write(whole, had == null || had.isEmpty() ? text : had + "\n" + text);
+        final String content = had == null || had.isEmpty() ? text : had + "\n" + text;
+        if (!this.roomFor(whole, content)) {
+            return LiveTurn.refused(NO_SPACE.with("bash: " + target));
+        }
+        this.write(whole, content);
         return LiveTurn.silent();
     }
 

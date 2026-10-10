@@ -15,6 +15,7 @@ import dev.jstech.core.audio.media.MediaTags;
 import dev.jstech.core.id.StableNames;
 import dev.jstech.core.network.DataLink;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import java.util.ArrayList;
 import java.util.List;
@@ -128,25 +129,25 @@ public record SoundfoundryShareStatePayload(BlockPos hostPos, Optional<List<Foun
             buf.writeVarInt(count);
             for (int i = 0; i < count; i++) {
                 final Found one = found.get(i);
-                buf.writeUtf(clip(one.title(), MAX_PATH), MAX_PATH);
-                buf.writeUtf(clip(one.artist(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
+                buf.writeUtf(TextBounds.clip(one.title(), MAX_PATH), MAX_PATH);
+                buf.writeUtf(TextBounds.clip(one.artist(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
                 buf.writeVarLong(one.bytes());
-                buf.writeUtf(clip(one.from(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
+                buf.writeUtf(TextBounds.clip(one.from(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
                 buf.writeLong(one.source());
-                buf.writeUtf(clip(one.path(), MAX_PATH), MAX_PATH);
-                buf.writeUtf(clip(one.link(), MAX_NAME), MAX_NAME);
+                buf.writeUtf(TextBounds.clip(one.path(), MAX_PATH), MAX_PATH);
+                buf.writeUtf(TextBounds.clip(one.link(), MAX_NAME), MAX_NAME);
             }
         }
         final int downloads = Math.min(p.downloads.size(), SoundfoundryState.MAX_DOWNLOADS);
         buf.writeVarInt(downloads);
         for (int i = 0; i < downloads; i++) {
             final Fetch one = p.downloads.get(i);
-            buf.writeUtf(clip(one.name(), MAX_PATH), MAX_PATH);
+            buf.writeUtf(TextBounds.clip(one.name(), MAX_PATH), MAX_PATH);
             buf.writeVarLong(one.bytes());
             buf.writeVarLong(one.done());
-            buf.writeUtf(clip(one.from(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
-            buf.writeUtf(clip(one.link(), MAX_NAME), MAX_NAME);
-            buf.writeUtf(clip(one.status(), MAX_NAME), MAX_NAME);
+            buf.writeUtf(TextBounds.clip(one.from(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
+            buf.writeUtf(TextBounds.clip(one.link(), MAX_NAME), MAX_NAME);
+            buf.writeUtf(TextBounds.clip(one.status(), MAX_NAME), MAX_NAME);
             buf.writeVarLong(one.millisLeft() + 1L);
             TextCodecs.STREAM_CODEC.encode(buf, one.trouble());
         }
@@ -156,14 +157,14 @@ public record SoundfoundryShareStatePayload(BlockPos hostPos, Optional<List<Foun
             final int count = Math.min(shared.size(), MAX_SHARED);
             buf.writeVarInt(count);
             for (int i = 0; i < count; i++) {
-                buf.writeUtf(clip(shared.get(i), MAX_PATH), MAX_PATH);
+                buf.writeUtf(TextBounds.clip(shared.get(i), MAX_PATH), MAX_PATH);
             }
         }
-        buf.writeUtf(clip(p.sharedFolder, MAX_PATH), MAX_PATH);
+        buf.writeUtf(TextBounds.clip(p.sharedFolder, MAX_PATH), MAX_PATH);
         buf.writeVarInt(p.sharing);
         buf.writeVarInt(p.computers);
         buf.writeBoolean(p.store);
-        buf.writeUtf(clip(p.ownLink, MAX_NAME), MAX_NAME);
+        buf.writeUtf(TextBounds.clip(p.ownLink, MAX_NAME), MAX_NAME);
         TextCodecs.STREAM_CODEC.encode(buf, p.trouble);
     }
 
@@ -204,9 +205,5 @@ public record SoundfoundryShareStatePayload(BlockPos hostPos, Optional<List<Foun
         final Text trouble = TextCodecs.STREAM_CODEC.decode(buf);
         return new SoundfoundryShareStatePayload(host, found, downloads, shared, sharedFolder, sharing, computers,
                 store, ownLink, trouble);
-    }
-
-    private static String clip(final String text, final int max) {
-        return text.length() <= max ? text : text.substring(0, max);
     }
 }

@@ -38,6 +38,7 @@ import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -54,7 +55,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.jetbrains.annotations.Nullable;
 
-import static dev.jstech.computers.operation.payload.WireStrings.wire;
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.craftFileNameFor;
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.deleteCraftFromDisk;
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.reconcileCraftsFolder;
@@ -366,7 +366,8 @@ public final class CraftManagerPayloads {
                 if (mediaVolumeKey.isEmpty() || !files.isEmpty()) {
                     mediaVolumeKey = "media:" + endpoint;
                     final String label = VolumeLabel.of(m, "");
-                    mediaLabel = label.isEmpty() ? CraftTexts.REMOVABLE_DRIVE.text() : Text.literal(wire(label, 64));
+                    mediaLabel = label.isEmpty() ? CraftTexts.REMOVABLE_DRIVE.text()
+                            : Text.literal(TextBounds.clip(label, 64));
                     mediaFiles = files;
                 }
                 if (!files.isEmpty()) {

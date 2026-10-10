@@ -14,6 +14,7 @@ import dev.jstech.core.audio.media.MediaUploadDonePayload;
 import dev.jstech.core.audio.media.MediaUploadPiecePayload;
 import dev.jstech.core.network.transfer.Pieces;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -82,8 +83,9 @@ public final class MediaUploader {
             }
             final int token = ++nextToken;
             OUTGOING.put(token, new Outgoing(bytes, listener));
-            PacketDistributor.sendToServer(new MediaOfferPayload(token, media, clip(name, MediaOfferPayload.MAX_NAME),
-                    purpose, clip(context, MediaOfferPayload.MAX_CONTEXT)));
+            PacketDistributor.sendToServer(new MediaOfferPayload(token, media,
+                    TextBounds.clip(name, MediaOfferPayload.MAX_NAME), purpose,
+                    TextBounds.clip(context, MediaOfferPayload.MAX_CONTEXT)));
         }, Minecraft.getInstance());
     }
 
@@ -141,10 +143,6 @@ public final class MediaUploader {
     /** The player left the server: nothing more is sent. */
     public static void clear() {
         OUTGOING.clear();
-    }
-
-    private static String clip(final String text, final int max) {
-        return text.length() <= max ? text : text.substring(0, max);
     }
 
     /** One recording on its way to the server. */

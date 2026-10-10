@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.crafting.RecipeChoice;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -102,8 +103,7 @@ public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
     }
 
     private static String clip(final String text) {
-        final String s = text == null ? "" : text;
-        return s.length() <= MAX_TEXT ? s : s.substring(0, MAX_TEXT);
+        return TextBounds.clip(text, MAX_TEXT);
     }
 
     private static <T> List<T> first(final List<T> items, final int max) {

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -35,8 +36,8 @@ public record GameWonPayload(BlockPos hostPos, String game, String board) implem
                     GameWonPayload::new);
 
     public GameWonPayload {
-        game = PayloadText.clip(game, NAME_LENGTH);
-        board = PayloadText.clip(board, NAME_LENGTH);
+        game = TextBounds.clip(game, NAME_LENGTH);
+        board = TextBounds.clip(board, NAME_LENGTH);
     }
 
     @Override

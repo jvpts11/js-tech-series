@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -128,13 +129,8 @@ public record PatternStudioEditPayload(BlockPos host, BlockPos monitorPos, int a
 
     public static PatternStudioEditPayload text(final BlockPos host, final BlockPos monitorPos, final int action,
                                                 final int index, final String text, final String text2) {
-        return new PatternStudioEditPayload(host, monitorPos, action, index, 0L, clip(text, MAX_TEXT),
-                clip(text2, MAX_TEXT2), ItemStack.EMPTY);
-    }
-
-    private static String clip(final String s, final int max) {
-        final String v = s == null ? "" : s;
-        return v.length() <= max ? v : v.substring(0, max);
+        return new PatternStudioEditPayload(host, monitorPos, action, index, 0L, TextBounds.clip(text, MAX_TEXT),
+                TextBounds.clip(text2, MAX_TEXT2), ItemStack.EMPTY);
     }
 
     @Override

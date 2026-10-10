@@ -19,6 +19,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.text.LongText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -539,7 +540,7 @@ public final class MachinePrograms {
                 final CompoundTag envelope = new CompoundTag();
                 envelope.putString(LANGUAGE, language.id().toString());
                 envelope.putInt(VERSION, language.stateVersion());
-                envelope.putString(BINARY, one.binary());
+                LongText.put(envelope, BINARY, one.binary());
                 each.put(HOSTED, envelope);
             }
             each.putInt(HEAP, one.heapMb());
@@ -567,7 +568,7 @@ public final class MachinePrograms {
         for (final Map.Entry<String, String> listing : listings.entrySet()) {
             final CompoundTag each = new CompoundTag();
             each.putString(CHECKSUM, listing.getKey());
-            each.putString(TEXT, listing.getValue());
+            LongText.put(each, TEXT, listing.getValue());
             kept.add(each);
         }
         tag.putInt(FORMAT_KEY, FORMAT);
@@ -602,7 +603,7 @@ public final class MachinePrograms {
             final IMachineRuntime process;
             if (each.contains(HOSTED, Tag.TAG_COMPOUND)) {
                 final CompoundTag envelope = each.getCompound(HOSTED);
-                binary = envelope.getString(BINARY);
+                binary = LongText.get(envelope, BINARY);
                 process = restoreHosted(name, envelope, each.getCompound(STATE), each.getInt(HEAP), machine);
             } else {
                 binary = listings.get(each.getString(LISTING));
@@ -632,7 +633,7 @@ public final class MachinePrograms {
         final Map<String, String> listings = new LinkedHashMap<>();
         for (int i = 0; i < kept.size(); i++) {
             final CompoundTag each = kept.getCompound(i);
-            final String text = each.getString(TEXT);
+            final String text = LongText.get(each, TEXT);
             if (!ProgramImage.checksumOf(text).equals(each.getString(CHECKSUM))) {
                 return null;
             }
@@ -671,7 +672,7 @@ public final class MachinePrograms {
         }
         final HostedView view = new HostedView(machine, (long) Math.clamp(heapMb, 1, MAX_HEAP_MB) * 1024 * 1024);
         final ILanguageProcess restored =
-                language.restore(envelope.getString(BINARY), state, envelope.getInt(VERSION), view);
+                language.restore(LongText.get(envelope, BINARY), state, envelope.getInt(VERSION), view);
         if (restored == null) {
             LOGGER.warn("The program '{}' on the machine at {} was left out: {} did not bring it back", name,
                     where(machine), named);

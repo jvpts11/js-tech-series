@@ -131,8 +131,8 @@ public final class TtyEditor {
     /** What an editor asked the terminal to do for it. */
     public interface IHost {
 
-        /** Put the text back on the disk under that name. */
-        void save(String path, String text);
+        /** Put the text back on the disk under that name; false, with nothing sent, when it is too long to save. */
+        boolean save(String path, String text);
 
         /** Fetch another file of the same machine, for an editor that can pull one into the one it has open. */
         void read(String path, IFound then);
@@ -329,7 +329,11 @@ public final class TtyEditor {
 
     /** Puts the text back on the disk. */
     public void save() {
-        this.host.save(this.path, this.doc.text());
+        final String text = this.doc.text();
+        if (!this.host.save(this.path, text)) {
+            say(FileSaves.tooLong(text));
+            return;
+        }
         this.dirty = false;
         say(TtyTexts.WRITTEN.with(name()));
     }

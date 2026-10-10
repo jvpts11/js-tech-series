@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload;
 import dev.jstech.computers.os.devices.DeviceMap;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
@@ -170,6 +171,6 @@ public record DeviceMapPayload(BlockPos hostPos, DeviceMap map) implements Custo
     }
 
     private static void writeString(final RegistryFriendlyByteBuf buf, final String text) {
-        buf.writeUtf(text.length() <= MAX_TEXT ? text : text.substring(0, MAX_TEXT), MAX_TEXT);
+        buf.writeUtf(TextBounds.clip(text, MAX_TEXT), MAX_TEXT);
     }
 }

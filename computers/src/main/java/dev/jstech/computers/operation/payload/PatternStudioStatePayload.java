@@ -45,7 +45,7 @@ public record PatternStudioStatePayload(
     public static final int MAX_KEY = 96;
     public static final int MAX_FILES = 64;
     public static final int MAX_DRIVES = 8;
-    public static final int MAX_STAGES = 16;
+    public static final int MAX_STAGES = PatternWorkbench.MOST_STAGES;
 
     /** A bench cell: the ghost item, the tag it accepts, what it resolves to now, and the stock of that. */
     public record BenchCell(ItemStack stack, String tag, ItemStack resolved, long stock) {

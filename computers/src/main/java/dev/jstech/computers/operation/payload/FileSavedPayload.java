@@ -37,6 +37,8 @@ public record FileSavedPayload(boolean ok, Text message) implements CustomPacket
     public static final TextKey TYPE_READ_ONLY = TextKey.of("jsc.file_saved.type_read_only", ".%s is read-only");
     public static final TextKey INVALID_NAME = TextKey.of("jsc.file_saved.invalid_name", "Invalid file name");
     public static final TextKey NO_ROOM = TextKey.of("jsc.file_saved.no_room", "Not enough free space");
+    public static final TextKey TOO_LARGE =
+            TextKey.of("jsc.file_saved.too_large", "Longer than a file holds (%s characters)");
     public static final TextKey READ_ONLY = TextKey.of("jsc.file_saved.read_only", "Read-only");
 
     public static final CustomPacketPayload.Type<FileSavedPayload> TYPE =

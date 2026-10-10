@@ -17,6 +17,7 @@ import dev.jstech.computers.os.ShellKind;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -134,8 +135,8 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
         // Cut to what the wire takes rather than refused by it: a machine may be named at any length.
         buf.writeUtf(console.shellName(), SHORT_NAME);
         buf.writeBoolean(console.live());
-        buf.writeUtf(cut(console.hostname(), LONG_NAME), LONG_NAME);
-        buf.writeUtf(cut(console.osLabel(), LONG_NAME), LONG_NAME);
+        buf.writeUtf(TextBounds.clip(console.hostname(), LONG_NAME), LONG_NAME);
+        buf.writeUtf(TextBounds.clip(console.osLabel(), LONG_NAME), LONG_NAME);
         buf.writeUtf(console.platformName(), SHORT_NAME);
         buf.writeVarInt(console.bits());
         buf.writeVarLong(session);
@@ -234,9 +235,5 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
             return computer.isRunning() && computer.validateOsSession();
         }
         return true;
-    }
-
-    private static String cut(final String text, final int most) {
-        return text.length() <= most ? text : text.substring(0, most);
     }
 }

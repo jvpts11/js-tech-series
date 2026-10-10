@@ -1907,6 +1907,33 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   capped at sixteen and refused whole past that, so installing a seventeenth took the desktop away.
 - A system's copy that fails with a long reason shows as much of it as fits above the buttons, the last line ending
   in dots, where it ran on under them.
+- A file on a disk holds at most 32,767 characters, which is what a disk can carry to a player's game: a disk with a
+  longer file dropped whoever opened the computer it was in. A save, a copy, an addition or a burn past that is
+  refused, and says why; a file already longer is cut to it when its disk is loaded.
+- Text a save keeps whole at any length: what a running program holds, its listing, a hosted program's binary, the
+  files of an install by hand, a file's revisions in Knot, a job's script, a picture waiting at a printer and a
+  pattern waiting at the encoder. Past 65,535 bytes a save wrote such text as nothing, so it came back empty.
+- The files of an install by hand hold 131,072 characters between them, and a line that adds past that answers
+  `No space left on device`; a line such as `cat f >> f`, run again and again, grew the machine's save without end.
+- A Gateway cuts what a ComputerCraft program hands it, the level of a log line and the names in a request, to what
+  its log keeps. A long one stopped the chunk with the Gateway in it from saving. A sentence a machine keeps in its
+  save is held to the 8,192 letters it travels in.
+- A long name no longer drops the player looking at it. A job named with more than 48 letters broke the Processes
+  tab of its Mainframe, a supercomputer node with many programs installed broke the Cluster Manager, and more than 64
+  jobs broke the Automation Manager's list. A job, a view or a procedure takes a name of at most 64 letters, from
+  the Automation Manager as from IQL's `CREATE`.
+- The Virtual Studio no longer drops the connection when a program's listing is longer than a file holds: the build
+  fails and says so. The code editor and the terminal editors refuse to save a file that long, with the reason, where
+  they dropped the connection too.
+- A folder of some hundreds of files opens in the DOS Shell and in PACE. Its listing was refused whole once it was
+  longer than an answer carries; now the far end of the folder tree is what is left out, and every file is listed.
+- A pipeline in the Pattern Studio holds at most 16 stages, what its window shows, and a pattern too large for a file
+  is refused before it is sent to the encoder.
+- A printer refuses a picture that does not read as one.
+- Text cut to fit a message is never cut between the two halves of an emoji or a rare character, which reached the
+  other side as a question mark.
+- A datapack value holding a string too long to send stays on the server, with a warning in its log, instead of
+  dropping every player who joins.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

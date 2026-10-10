@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.program.SoundfoundryState;
 import dev.jstech.core.audio.media.MediaTags;
+import dev.jstech.core.text.TextBounds;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -165,43 +166,43 @@ public record SoundfoundryPagePayload(BlockPos hostPos, int page, String arg, Si
     private static void encode(final RegistryFriendlyByteBuf buf, final SoundfoundryPagePayload p) {
         BlockPos.STREAM_CODEC.encode(buf, p.hostPos);
         buf.writeVarInt(p.page);
-        buf.writeUtf(clip(p.arg, MAX_ID), MAX_ID);
+        buf.writeUtf(TextBounds.clip(p.arg, MAX_ID), MAX_ID);
         buf.writeVarInt(p.sidebar.servers().size());
         for (final Server server : p.sidebar.servers()) {
-            buf.writeUtf(clip(server.id(), MAX_ID), MAX_ID);
-            buf.writeUtf(clip(server.name(), MAX_TEXT), MAX_TEXT);
+            buf.writeUtf(TextBounds.clip(server.id(), MAX_ID), MAX_ID);
+            buf.writeUtf(TextBounds.clip(server.name(), MAX_TEXT), MAX_TEXT);
             buf.writeVarInt(server.songs());
             buf.writeVarInt(server.listeners());
         }
-        buf.writeUtf(clip(p.sidebar.chosen(), MAX_ID), MAX_ID);
+        buf.writeUtf(TextBounds.clip(p.sidebar.chosen(), MAX_ID), MAX_ID);
         buf.writeVarInt(p.sidebar.playlists().size());
         for (final String playlist : p.sidebar.playlists()) {
-            buf.writeUtf(clip(playlist, MAX_TEXT), MAX_TEXT);
+            buf.writeUtf(TextBounds.clip(playlist, MAX_TEXT), MAX_TEXT);
         }
         buf.writeBoolean(p.sidebar.catalog());
         buf.writeVarInt(p.albums.size());
         for (final Album album : p.albums) {
-            buf.writeUtf(clip(album.id(), MAX_ID), MAX_ID);
-            buf.writeUtf(clip(album.title(), MAX_TEXT), MAX_TEXT);
-            buf.writeUtf(clip(album.artist(), MAX_TEXT), MAX_TEXT);
-            buf.writeUtf(clip(album.year(), MAX_TEXT), MAX_TEXT);
+            buf.writeUtf(TextBounds.clip(album.id(), MAX_ID), MAX_ID);
+            buf.writeUtf(TextBounds.clip(album.title(), MAX_TEXT), MAX_TEXT);
+            buf.writeUtf(TextBounds.clip(album.artist(), MAX_TEXT), MAX_TEXT);
+            buf.writeUtf(TextBounds.clip(album.year(), MAX_TEXT), MAX_TEXT);
             buf.writeVarInt(album.songs());
             buf.writeVarLong(album.millis());
             buf.writeVarInt(album.downloaded());
-            buf.writeUtf(clip(album.cover(), MAX_COVER), MAX_COVER);
+            buf.writeUtf(TextBounds.clip(album.cover(), MAX_COVER), MAX_COVER);
         }
         buf.writeVarInt(p.rows.size());
         for (final Row row : p.rows) {
-            buf.writeUtf(clip(row.ref(), MAX_REF), MAX_REF);
-            buf.writeUtf(clip(row.title(), MAX_TEXT), MAX_TEXT);
-            buf.writeUtf(clip(row.artist(), MAX_TEXT), MAX_TEXT);
-            buf.writeUtf(clip(row.album(), MAX_TEXT), MAX_TEXT);
+            buf.writeUtf(TextBounds.clip(row.ref(), MAX_REF), MAX_REF);
+            buf.writeUtf(TextBounds.clip(row.title(), MAX_TEXT), MAX_TEXT);
+            buf.writeUtf(TextBounds.clip(row.artist(), MAX_TEXT), MAX_TEXT);
+            buf.writeUtf(TextBounds.clip(row.album(), MAX_TEXT), MAX_TEXT);
             buf.writeVarLong(row.millis());
-            buf.writeUtf(clip(row.from(), MAX_TEXT), MAX_TEXT);
+            buf.writeUtf(TextBounds.clip(row.from(), MAX_TEXT), MAX_TEXT);
             buf.writeVarInt(row.state());
             buf.writeVarInt(row.section());
             buf.writeBoolean(row.liked());
-            buf.writeUtf(clip(row.cover(), MAX_COVER), MAX_COVER);
+            buf.writeUtf(TextBounds.clip(row.cover(), MAX_COVER), MAX_COVER);
         }
     }
 
@@ -236,9 +237,5 @@ public record SoundfoundryPagePayload(BlockPos hostPos, int page, String arg, Si
                     buf.readVarInt(), buf.readBoolean(), buf.readUtf(MAX_COVER)));
         }
         return new SoundfoundryPagePayload(host, page, arg, sidebar, albums, rows);
-    }
-
-    private static String clip(final String text, final int max) {
-        return text.length() <= max ? text : text.substring(0, max);
     }
 }

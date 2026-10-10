@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -76,7 +77,7 @@ public record BusEditPayload(int op, int slot, long value, String text) implemen
             BusEditPayload::new);
 
     public BusEditPayload {
-        text = text == null ? "" : text.length() > MAX_TEXT ? text.substring(0, MAX_TEXT) : text;
+        text = TextBounds.clip(text, MAX_TEXT);
     }
 
     /** A change that names nothing. */

@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -77,8 +78,7 @@ public record SetupProgressPayload(BlockPos hostPos, String programId, String na
 
     /** A string never longer than the wire allows, so a long name is shortened rather than fatal. */
     private static String clip(final String text, final int max) {
-        final String s = text == null ? "" : text;
-        return s.length() <= max ? s : s.substring(0, max);
+        return TextBounds.clip(text, max);
     }
 
     /** The same for words that are data; a declared sentence is left whole. */

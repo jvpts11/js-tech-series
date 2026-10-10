@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -99,8 +100,7 @@ public record InstallerActionPayload(BlockPos hostPos, BlockPos monitorPos, int 
                                                final String name) {
         final String trimmed = name == null ? "" : name.strip();
         return new InstallerActionPayload(hostPos, monitorPos, ACTION_NAME, 0,
-                trimmed.length() <= InstallerFlow.MOST_NAME_LETTERS ? trimmed
-                        : trimmed.substring(0, InstallerFlow.MOST_NAME_LETTERS));
+                TextBounds.clip(trimmed, InstallerFlow.MOST_NAME_LETTERS));
     }
 
     @Override

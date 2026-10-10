@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.fs.StoredFile;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -28,7 +29,8 @@ public record FileContentPayload(String path, String content, boolean exists,
         this(path, content, exists, false);
     }
 
-    public static final int MAX_CONTENT = 32768;
+    /** The most a file holds, and so the most a save or a read carries. */
+    public static final int MAX_CONTENT = StoredFile.MOST_CHARS;
 
     /**
      * What a file too big to carry comes back as.

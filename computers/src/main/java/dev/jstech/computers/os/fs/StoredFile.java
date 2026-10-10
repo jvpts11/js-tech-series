@@ -28,6 +28,12 @@ import java.nio.charset.StandardCharsets;
  */
 public record StoredFile(String path, FileType type, String content, long modified) {
 
+    /**
+     * The most UTF-16 units a file holds. A disk travels to the player's game with every file on it, and the wire
+     * refuses a longer string by dropping the player, so no file grows past it.
+     */
+    public static final int MOST_CHARS = 32_767;
+
     /** A file with an unknown modification time (0). */
     public StoredFile(final String path, final FileType type, final String content) {
         this(path, type, content, 0L);

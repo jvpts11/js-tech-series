@@ -19,6 +19,7 @@ import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
+import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaBay;
 import dev.jstech.computers.os.media.MediaFormat;
@@ -36,6 +37,7 @@ import dev.jstech.core.id.StableIds;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLink;
+import dev.jstech.core.text.LongText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -261,6 +263,7 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
      */
     public boolean queueBurn(final String fileName, final String content) {
         if (queue.size() >= QUEUE_MAX || fileName == null || fileName.isBlank() || content == null
+                || content.length() > StoredFile.MOST_CHARS
                 || fileName.length() + ".craft".length() > FsPaths.MAX_NAME_LENGTH) {
             return false;
         }
@@ -610,7 +613,7 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
             for (final BurnRequest job : queue) {
                 final CompoundTag saved = new CompoundTag();
                 saved.putString("Name", job.fileName());
-                saved.putString("Content", job.content());
+                LongText.put(saved, "Content", job.content());
                 jobs.add(saved);
             }
             tag.put("Queue", jobs);
@@ -622,7 +625,7 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
             final ListTag jobs = tag.getList("Queue", Tag.TAG_COMPOUND);
             for (int i = 0; i < jobs.size() && queue.size() < QUEUE_MAX; i++) {
                 final CompoundTag job = jobs.getCompound(i);
-                queue.addLast(new BurnRequest(job.getString("Name"), job.getString("Content")));
+                queue.addLast(new BurnRequest(job.getString("Name"), LongText.get(job, "Content")));
             }
         }
     }

@@ -11,6 +11,7 @@ import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -99,7 +100,7 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
      * is wider than anything a step of a starting system has to say.
      */
     private static String clip(final String text) {
-        return text.length() <= MAX_TEXT ? text : text.substring(0, MAX_TEXT);
+        return TextBounds.clip(text, MAX_TEXT);
     }
 
     /*

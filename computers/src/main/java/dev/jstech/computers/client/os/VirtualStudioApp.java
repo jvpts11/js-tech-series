@@ -15,7 +15,6 @@ import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.FolderContentPayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.RequestFolderContentPayload;
-import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.gui.layout.StudioPropertiesLayout;
 import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.hardware.Isas;
@@ -632,16 +631,21 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         if (this.solution == null) {
             return;
         }
-        PacketDistributor.sendToServer(new SaveFilePayload(this.host,
-                join(this.solutionDir, SolutionFile.fileName(this.solution.name())), this.solution.write()));
-        FilesApps.diskChanged();
+        saveFile(join(this.solutionDir, SolutionFile.fileName(this.solution.name())), this.solution.write());
     }
 
     private void saveProject(final ProjectFile project) {
         this.projects.put(project.name(), project);
-        PacketDistributor.sendToServer(new SaveFilePayload(this.host,
-                join(projectDir(project.name()), project.fileName()), project.write()));
-        FilesApps.diskChanged();
+        saveFile(join(projectDir(project.name()), project.fileName()), project.write());
+    }
+
+    /** Sends one file of the solution to be saved, or tells the player it is too long to. */
+    private void saveFile(final String path, final String content) {
+        if (FileSaves.send(this.host, path, content)) {
+            FilesApps.diskChanged();
+        } else {
+            this.workspace.say(GameText.resolve(FileSaves.tooLong(content)));
+        }
     }
 
     /** The project that lives in that folder, or null when the folder is nobody's. */
@@ -1072,10 +1076,19 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private void finishBuild(final String what, final String outputPath, final IProgrammingLanguage.CompileResult result,
                              final Map<String, String> names) {
         if (result.ok()) {
+            if (!FileSaves.send(this.host, outputPath, result.binary())) {
+                // A listing longer than a file holds is not written, and the build is not called a success.
+                PacketDistributor.sendToServer(new MachineSoundPayload(this.host, SystemSound.ERROR));
+                print(FileSaves.tooLong(result.binary()), Tone.FAILED);
+                print(VirtualStudioTexts.BUILD_FAILED_NAMED.with(what, 1), Tone.FAILED);
+                this.workspace.say(GameText.resolve(VirtualStudioTexts.BUILD_FAILED));
+                this.buildQueue.clear();
+                this.runAfterBuild = false;
+                return;
+            }
             final int lines = result.binary().split("\n", -1).length;
             print(VirtualStudioTexts.BUILT_LISTING.with(what, outputPath, lines));
             print(VirtualStudioTexts.BUILD_SUCCEEDED_NAMED.with(what), Tone.SUCCEEDED);
-            PacketDistributor.sendToServer(new SaveFilePayload(this.host, outputPath, result.binary()));
             FilesApps.diskChanged();
             this.workspace.say(GameText.resolve(VirtualStudioTexts.BUILD_SUCCEEDED));
             // The machine sounds the end of the build once, when the last project in line has built.
@@ -1403,16 +1416,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final ProjectFile file = this.chosen.project(project);
         final SolutionFile solutionFile = (this.addingToSolution ? this.solution : new SolutionFile(sol, List.of(), ""))
                 .withProject(SolutionFile.projectPath(file));
-        PacketDistributor.sendToServer(new SaveFilePayload(this.host, join(dir, SolutionFile.fileName(sol)),
-                solutionFile.write()));
-        PacketDistributor.sendToServer(new SaveFilePayload(this.host,
-                join(join(dir, project), file.fileName()), file.write()));
+        saveFile(join(dir, SolutionFile.fileName(sol)), solutionFile.write());
+        saveFile(join(join(dir, project), file.fileName()), file.write());
         final String first = this.chosen.firstSource(project);
         if (!first.isEmpty()) {
-            PacketDistributor.sendToServer(new SaveFilePayload(this.host, join(join(dir, project), first),
-                    this.chosen.source(project)));
+            saveFile(join(join(dir, project), first), this.chosen.source(project));
         }
-        FilesApps.diskChanged();
         /*
          * The files are on their way; asking for the solution now reads them once they have landed. The
          * first source waits for the solution to be in, since one file is waited for at a time.

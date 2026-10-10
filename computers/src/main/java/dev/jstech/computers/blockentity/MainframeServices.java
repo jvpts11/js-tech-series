@@ -15,6 +15,7 @@ import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.iql.IqlCatalog;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlSavedObject;
+import dev.jstech.core.text.LongText;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -447,7 +448,7 @@ final class MainframeServices {
                 final CompoundTag entry = new CompoundTag();
                 entry.putByte("Type", (byte) object.type().id());
                 entry.putString("Name", object.name());
-                entry.putString("Body", object.body());
+                LongText.put(entry, "Body", object.body());
                 entry.putByte("Trigger", (byte) object.triggerKind().id());
                 entry.putString("Spec", object.triggerSpec());
                 objects.add(entry);
@@ -518,7 +519,7 @@ final class MainframeServices {
             final CompoundTag entry = objects.getCompound(i);
             catalog.put(new IqlSavedObject(
                     IqlDefinition.ObjectType.byId(entry.getByte("Type")),
-                    entry.getString("Name"), entry.getString("Body"),
+                    entry.getString("Name"), LongText.get(entry, "Body"),
                     IqlDefinition.TriggerKind.byId(entry.getByte("Trigger")),
                     entry.getString("Spec")));
         }

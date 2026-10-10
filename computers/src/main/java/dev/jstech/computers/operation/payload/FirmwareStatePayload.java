@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -165,7 +166,7 @@ public record FirmwareStatePayload(
             TextCodecs.STREAM_CODEC.encode(buf, e.label());
             // A model's name is cut to the column it is drawn in; a drive's kind is put together at the other end.
             TextCodecs.STREAM_CODEC.encode(buf, e.device() instanceof Text.Literal model && model.value().length() > 48
-                    ? Text.literal(model.value().substring(0, 48)) : e.device());
+                    ? Text.literal(TextBounds.clip(model.value(), 48)) : e.device());
             buf.writeUtf(e.size(), 16);
             TextCodecs.STREAM_CODEC.encode(buf, e.note());
             buf.writeBoolean(e.bootable());

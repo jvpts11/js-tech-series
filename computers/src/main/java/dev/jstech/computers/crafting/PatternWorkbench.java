@@ -55,6 +55,9 @@ public final class PatternWorkbench {
     /** Cells in each of the machine draft's input and output grids. */
     public static final int PROC_GRID = 27;
 
+    /** The most stages a pipeline holds: what the studio's window shows, and what a pattern file carries. */
+    public static final int MOST_STAGES = 16;
+
     /**
      * One machine-draft cell: a kind of data (item, fluid or chemical), the amount per run and whether that
      * amount is an estimate a recipe transfer worked out rather than one the author confirmed.
@@ -448,10 +451,15 @@ public final class PatternWorkbench {
         pipelineNote = Utf8Text.field(note, CraftingPattern.MAX_NOTE);
     }
 
+    /** Whether the pipeline already holds as many stages as one may. */
+    public boolean pipelineFull() {
+        return stages.size() >= MOST_STAGES;
+    }
+
     /** Appends the bench draft as a stage and clears the bench so the next stage starts fresh. */
     public boolean addBenchStage() {
         final CraftingPattern pattern = benchPattern();
-        if (pattern == null) {
+        if (pattern == null || pipelineFull()) {
             return false;
         }
         stages.add(MultiStagePattern.Stage.bench(pattern));
@@ -465,7 +473,7 @@ public final class PatternWorkbench {
 
     /** Appends the machine draft as a stage and clears its cells so the next stage starts fresh. */
     public boolean addProcessingStage() {
-        if (!machineComplete()) {
+        if (!machineComplete() || pipelineFull()) {
             return false;
         }
         stages.add(MultiStagePattern.Stage.proc(processingPattern()));
@@ -477,7 +485,7 @@ public final class PatternWorkbench {
 
     /** Appends a stage read from a file: a bench or machine pattern; a pipeline cannot nest another. */
     public boolean addStage(final MultiStagePattern.Stage stage) {
-        if (stage == null || (stage.bench().isEmpty() && stage.proc().isEmpty())) {
+        if (stage == null || (stage.bench().isEmpty() && stage.proc().isEmpty()) || pipelineFull()) {
             return false;
         }
         stages.add(stage);

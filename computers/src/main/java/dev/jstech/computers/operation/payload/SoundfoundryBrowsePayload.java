@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -40,7 +41,7 @@ public record SoundfoundryBrowsePayload(BlockPos hostPos, int page, String arg) 
 
     /* Cut to what the wire takes, since a string past its cap throws as it is sent. */
     public SoundfoundryBrowsePayload {
-        arg = arg.length() <= MAX_ARG ? arg : arg.substring(0, MAX_ARG);
+        arg = TextBounds.clip(arg, MAX_ARG);
     }
 
     @Override

@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.boot.WelcomeFacts;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -76,20 +77,20 @@ public record WelcomePayload(BlockPos hostPos, String machineName, Text cpuName,
 
     private static void encode(final RegistryFriendlyByteBuf buf, final WelcomePayload p) {
         buf.writeBlockPos(p.hostPos());
-        buf.writeUtf(cut(p.machineName(), MAX_NAME), MAX_NAME);
+        buf.writeUtf(TextBounds.clip(p.machineName(), MAX_NAME), MAX_NAME);
         TextCodecs.STREAM_CODEC.encode(buf, p.cpuName());
         buf.writeVarInt(p.memoryMb());
-        buf.writeUtf(cut(p.systemName(), MAX_NAME), MAX_NAME);
+        buf.writeUtf(TextBounds.clip(p.systemName(), MAX_NAME), MAX_NAME);
         buf.writeVarInt(p.systemSlot() + 1);
         TextCodecs.STREAM_CODEC.encode(buf, p.systemDisk());
         final int others = Math.min(p.others().size(), MOST_OTHERS);
         buf.writeVarInt(others);
         for (int i = 0; i < others; i++) {
-            buf.writeUtf(cut(p.others().get(i).system(), MAX_NAME), MAX_NAME);
+            buf.writeUtf(TextBounds.clip(p.others().get(i).system(), MAX_NAME), MAX_NAME);
             buf.writeVarInt(p.others().get(i).slot());
         }
-        buf.writeUtf(cut(p.networkHost(), MAX_NAME), MAX_NAME);
-        buf.writeUtf(cut(p.mirrorHost(), MAX_NAME), MAX_NAME);
+        buf.writeUtf(TextBounds.clip(p.networkHost(), MAX_NAME), MAX_NAME);
+        buf.writeUtf(TextBounds.clip(p.mirrorHost(), MAX_NAME), MAX_NAME);
         buf.writeBoolean(p.showAtStartup());
         final int tips = Math.min(p.tips().size(), WelcomeFacts.MOST_TIPS);
         buf.writeVarInt(tips);
@@ -121,13 +122,5 @@ public record WelcomePayload(BlockPos hostPos, String machineName, Text cpuName,
         }
         return new WelcomePayload(host, machineName, cpuName, memoryMb, systemName, systemSlot, systemDisk,
                 others, networkHost, mirrorHost, showAtStartup, tips);
-    }
-
-    /** A string trimmed to what the wire takes, since writing one that is too long fails outright. */
-    private static String cut(final String text, final int most) {
-        if (text == null) {
-            return "";
-        }
-        return text.length() <= most ? text : text.substring(0, most);
     }
 }

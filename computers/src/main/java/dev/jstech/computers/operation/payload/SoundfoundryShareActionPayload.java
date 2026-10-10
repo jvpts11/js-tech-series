@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.program.SoundfoundryState;
+import dev.jstech.core.text.TextBounds;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -55,8 +56,7 @@ public record SoundfoundryShareActionPayload(BlockPos hostPos, int action, int i
 
     /* Cut to what the wire takes here, since a string past its cap throws as it is sent. */
     public SoundfoundryShareActionPayload {
-        text = text.length() <= SoundfoundryActionPayload.MAX_PATH ? text
-                : text.substring(0, SoundfoundryActionPayload.MAX_PATH);
+        text = TextBounds.clip(text, SoundfoundryActionPayload.MAX_PATH);
         indexes = List.copyOf(indexes.subList(0, Math.min(indexes.size(), SoundfoundryState.MAX_DOWNLOADS)));
     }
 

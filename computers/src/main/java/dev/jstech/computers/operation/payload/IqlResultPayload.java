@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -78,7 +79,7 @@ public record IqlResultPayload(int window, int tab, int seq, boolean ok, Text me
     }
 
     private static String clip(final String text) {
-        return text == null ? "" : text.length() <= MAX_NAME ? text : text.substring(0, MAX_NAME);
+        return TextBounds.clip(text, MAX_NAME);
     }
 
     private void write(final RegistryFriendlyByteBuf buf) {

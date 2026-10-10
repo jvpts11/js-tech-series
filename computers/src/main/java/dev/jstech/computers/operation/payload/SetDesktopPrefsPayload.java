@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -31,9 +32,7 @@ public record SetDesktopPrefsPayload(BlockPos hostPos, String wallpaper, String 
      * short on the other side, not disconnect whoever typed it.
      */
     public SetDesktopPrefsPayload {
-        computerName = computerName == null ? ""
-                : computerName.length() <= InstallerFlow.MOST_NAME_LETTERS ? computerName
-                : computerName.substring(0, InstallerFlow.MOST_NAME_LETTERS);
+        computerName = TextBounds.clip(computerName, InstallerFlow.MOST_NAME_LETTERS);
     }
 
     public static final CustomPacketPayload.Type<SetDesktopPrefsPayload> TYPE =

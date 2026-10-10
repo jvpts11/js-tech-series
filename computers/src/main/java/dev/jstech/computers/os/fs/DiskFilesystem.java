@@ -105,6 +105,8 @@ public final class DiskFilesystem {
         INVALID_PATH,
         /** The file's size would exceed the available free-weight budget. */
         DISK_FULL,
+        /** The file would be longer than a file holds ({@link StoredFile#MOST_CHARS}). */
+        TOO_LARGE,
         /**
          * The requested {@link FileType} is a virtual projection ({@link FileType#virtualProjection()}
          * returns true) and cannot be written as a real file.
@@ -216,6 +218,8 @@ public final class DiskFilesystem {
      *   <li>If {@code type} is a virtual projection ({@link FileType#virtualProjection()}), or the content is not
      *       what a file of that type may hold (a recording the server does not keep, or a recording's lines under
      *       another type), returns {@link WriteResult#READ_ONLY} without mutation.</li>
+     *   <li>If the content is longer than a file holds ({@link StoredFile#MOST_CHARS}), returns
+     *       {@link WriteResult#TOO_LARGE} without mutation.</li>
      *   <li>If the file's byte cost ({@link FsPaths#sizeMbEq} of {@link StoredFile#bytesOf})
      *       exceeds {@code freeWeight}, returns {@link WriteResult#DISK_FULL} without
      *       mutation.</li>
@@ -250,6 +254,9 @@ public final class DiskFilesystem {
         }
         if (type.virtualProjection() || installerLocked(disk) || !holdsItsKind(type, content)) {
             return WriteResult.READ_ONLY;
+        }
+        if (content.length() > StoredFile.MOST_CHARS) {
+            return WriteResult.TOO_LARGE;
         }
         final long cost = FsPaths.sizeMbEq(StoredFile.bytesOf(type, content), eraOf(disk));
         if (cost > freeWeight) {
@@ -290,6 +297,9 @@ public final class DiskFilesystem {
         }
         if (namesAFolder(current, path)) {
             return WriteResult.INVALID_PATH;
+        }
+        if ((long) (had == null ? 0 : had.content().length()) + addition.length() > StoredFile.MOST_CHARS) {
+            return WriteResult.TOO_LARGE;
         }
         final long held = had == null ? 0L : had.byteSize();
         final long added = addition.getBytes(StandardCharsets.UTF_8).length;

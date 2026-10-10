@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload.update;
 import dev.jstech.computers.operation.payload.workshop.WorkshopStatePayload;
 import dev.jstech.computers.workshop.UpdateAction;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import java.util.ArrayList;
 import java.util.List;
@@ -85,7 +86,7 @@ public record UpdatePreviewPayload(ItemStack item, int cards, int accepts, Strin
     }
 
     private static String clip(final String text) {
-        return text == null ? "" : text.length() <= MAX_TEXT ? text : text.substring(0, MAX_TEXT);
+        return TextBounds.clip(text, MAX_TEXT);
     }
 
     private void write(final RegistryFriendlyByteBuf buf) {

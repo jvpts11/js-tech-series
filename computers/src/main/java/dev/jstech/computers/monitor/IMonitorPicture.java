@@ -18,6 +18,7 @@ import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
@@ -221,6 +222,6 @@ public sealed interface IMonitorPicture
     }
 
     private static String clip(final String prompt) {
-        return prompt.length() <= PROMPT_MAX ? prompt : prompt.substring(0, PROMPT_MAX);
+        return TextBounds.clip(prompt, PROMPT_MAX);
     }
 }

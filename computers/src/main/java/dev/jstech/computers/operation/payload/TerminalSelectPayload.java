@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -64,8 +65,8 @@ public record TerminalSelectPayload(BlockPos monitorPos, BlockPos hostPos, Stora
      * to what the message carries, so making one can never fail to write it.
      */
     public TerminalSelectPayload {
-        serverKeys = serverKeys.stream().limit(MAX_SERVERS).map(k -> PayloadText.clip(k, KEY_LENGTH)).toList();
-        destServer = PayloadText.clip(destServer, KEY_LENGTH);
+        serverKeys = serverKeys.stream().limit(MAX_SERVERS).map(k -> TextBounds.clip(k, KEY_LENGTH)).toList();
+        destServer = TextBounds.clip(destServer, KEY_LENGTH);
     }
 
     @Override

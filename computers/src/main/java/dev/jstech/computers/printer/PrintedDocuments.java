@@ -9,6 +9,7 @@ package dev.jstech.computers.printer;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.text.LongText;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public final class PrintedDocuments {
             Codec.STRING.optionalFieldOf("program", "").forGetter(PrintedDocument::program),
             Codec.STRING.optionalFieldOf("printer", "").forGetter(PrintedDocument::printer),
             Codec.STRING.listOf().optionalFieldOf("pages", List.of()).forGetter(PrintedDocument::pages),
-            Codec.STRING.optionalFieldOf("picture", "").forGetter(PrintedDocument::picture),
+            LongText.CODEC.optionalFieldOf("picture", "").forGetter(PrintedDocument::picture),
             Codec.STRING.optionalFieldOf("picture_name", "").forGetter(PrintedDocument::pictureName)
     ).apply(i, PrintedDocument::new));
 

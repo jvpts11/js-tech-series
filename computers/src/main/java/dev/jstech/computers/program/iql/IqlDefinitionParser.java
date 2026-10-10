@@ -75,6 +75,9 @@ public final class IqlDefinitionParser {
         if (objectName.isEmpty() || nameAndRest.length < 2) {
             throw IqlError.of(IqlError.NEEDS_NAME_AND_BODY, name(type));
         }
+        if (objectName.length() > IqlDefinition.MAX_NAME) {
+            throw IqlError.of(IqlError.NAME_TOO_LONG, IqlDefinition.MAX_NAME);
+        }
         final String afterName = nameAndRest[1].strip();
         if (!startsWithKeyword(afterName, "AS")) {
             throw IqlError.of(IqlError.EXPECTED_AS, name(type));

@@ -268,9 +268,14 @@ public final class LiveInstallState {
         return this.files.read(this.files.resolve(typed));
     }
 
-    /** Writes a file of the session, which is what an editor closed on it does. */
-    public void writeFileAt(final String typed, final String content) {
-        this.files.write(this.files.resolve(typed), content);
+    /** Writes a file of the session, which is what an editor closed on it does; false when the session is full. */
+    public boolean writeFileAt(final String typed, final String content) {
+        final String whole = this.files.resolve(typed);
+        if (!this.files.roomFor(whole, content)) {
+            return false;
+        }
+        this.files.write(whole, content);
+        return true;
     }
 
     /** Runs one command line against the installation. */

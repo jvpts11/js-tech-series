@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -59,7 +60,7 @@ public record IsmsActionPayload(BlockPos monitorPos, BlockPos hostPos, int windo
                     IsmsActionPayload::new);
 
     public IsmsActionPayload {
-        target = target == null ? "" : target.length() > MAX_TARGET ? target.substring(0, MAX_TARGET) : target;
+        target = TextBounds.clip(target, MAX_TARGET);
     }
 
     @Override

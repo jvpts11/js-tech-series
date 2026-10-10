@@ -26,6 +26,9 @@ public final class GatewayLog {
 
     public static final int CAPACITY = 40;
 
+    /** The longest name and request an entry keeps: a caller's words are cut to it before they are written down. */
+    public static final int TEXT_LENGTH = 96;
+
     /** How an entry ended, for the colour it is shown in. */
     public enum Tone implements IStableId {
         OK(0),

@@ -11,6 +11,7 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliSpan;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import java.util.ArrayList;
 import java.util.List;
@@ -128,8 +129,7 @@ public record WireLine(List<Span> spans, boolean over) {
                 break;
             }
             if (span.text() instanceof Text.Literal literal) {
-                final String kept = literal.value().length() <= room ? literal.value()
-                        : literal.value().substring(0, room);
+                final String kept = TextBounds.clip(literal.value(), room);
                 room -= kept.length();
                 out.add(kept.equals(literal.value()) ? span
                         : new Span(Text.literal(kept), span.style(), span.fillColumn(), span.closing(), span.blank()));

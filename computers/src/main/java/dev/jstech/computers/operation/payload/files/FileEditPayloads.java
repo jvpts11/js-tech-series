@@ -21,6 +21,7 @@ import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.core.text.Text;
@@ -71,9 +72,9 @@ public final class FileEditPayloads {
             final String path = payload.path();
             if (LiveSessionFiles.names(path)) {
                 // A file of a by-hand install: what is written is what the steps after it read.
-                final boolean written = LiveSessionFiles.write(computer, path, payload.content());
-                PacketDistributor.sendToPlayer(player, new FileSavedPayload(written,
-                        written ? FileSavedPayload.SAVED.with(path) : FileSavedPayload.NO_LIVE_MEDIUM.text()));
+                final Text refused = LiveSessionFiles.write(computer, path, payload.content());
+                PacketDistributor.sendToPlayer(player, new FileSavedPayload(refused == null,
+                        refused == null ? FileSavedPayload.SAVED.with(path) : refused));
                 return;
             }
             if (path.startsWith(NET_ROOT)) {
@@ -123,6 +124,7 @@ public final class FileEditPayloads {
                     }
                     case INVALID_PATH -> msg = FileSavedPayload.INVALID_NAME.text();
                     case DISK_FULL -> msg = FileSavedPayload.NO_ROOM.text();
+                    case TOO_LARGE -> msg = FileSavedPayload.TOO_LARGE.with(StoredFile.MOST_CHARS);
                     case READ_ONLY -> msg = FileSavedPayload.READ_ONLY.text();
                 }
             }

@@ -30,6 +30,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -165,8 +166,7 @@ public final class ClusterManagerPayloads {
         Text status = ClusterManagerStateBuilder.SELECT_FIRST.text();
         if (ref != null) {
             final String typed = payload.name().strip().replaceAll("\\p{Cntrl}", "");
-            final String name = typed.length() > ClusterRenamePayload.MAX_NAME
-                    ? typed.substring(0, ClusterRenamePayload.MAX_NAME) : typed;
+            final String name = TextBounds.clip(typed, ClusterRenamePayload.MAX_NAME);
             if (ref.face() != null && level.getBlockEntity(ref.anchor()) instanceof ServerRouterBlockEntity router) {
                 router.setSectionName(ref.face(), name);
                 status = name.isEmpty() ? ClusterManagerStateBuilder.SECTION_CLEARED.text()

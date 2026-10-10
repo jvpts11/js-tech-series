@@ -39,6 +39,7 @@ import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.operation.OperationStatus;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextLists;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
@@ -57,7 +58,6 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.List;
 
-import static dev.jstech.computers.operation.payload.WireStrings.wire;
 import static dev.jstech.computers.operation.payload.crafting.CraftPlanMath.estimateTicks;
 import static dev.jstech.computers.operation.payload.crafting.CraftPlanMath.planMachineRecipe;
 import static dev.jstech.computers.operation.payload.crafting.CraftPlanMath.planPreview;
@@ -143,7 +143,8 @@ public final class CraftingPayloads {
                 dot = any ? CraftCatalogPayload.DOT_AMBER : CraftCatalogPayload.DOT_RED;
             }
             entries.put(key, new CraftCatalogPayload.Entry(pattern.result().copy(), dot,
-                    mainframe.hasMultiStageRecipe(key), wire(pattern.name(), CraftCatalogPayload.MAX_LABEL)));
+                    mainframe.hasMultiStageRecipe(key),
+                    TextBounds.clip(pattern.name(), CraftCatalogPayload.MAX_LABEL)));
             if (entries.size() >= CraftCatalogPayload.MAX_ENTRIES) {
                 break;
             }
@@ -177,7 +178,7 @@ public final class CraftingPayloads {
             }
             final String label = recipe.proc().map(p -> p.name()).orElse(recipe.multi().map(m -> m.name()).orElse(""));
             entries.put(key, new CraftCatalogPayload.Entry(result, dot, recipe.multi().isPresent(),
-                    wire(label, CraftCatalogPayload.MAX_LABEL)));
+                    TextBounds.clip(label, CraftCatalogPayload.MAX_LABEL)));
         }
         return List.copyOf(entries.values());
     }

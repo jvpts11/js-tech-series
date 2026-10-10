@@ -43,7 +43,7 @@ public final class Printers {
             "No printer is connected to this computer.");
     private static final TextKey QUEUE_FULL = TextKey.of("jsc.printer.queue_full",
             "%s cannot take more documents: its queue is full.");
-    private static final TextKey NOTHING = TextKey.of("jsc.printer.nothing_to_print", "There is nothing to print.");
+    public static final TextKey NOTHING = TextKey.of("jsc.printer.nothing_to_print", "There is nothing to print.");
     private static final String PARALLEL = "LPT1";
     private static final String USB = "USB";
 

@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SoundfoundryCovers;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -39,7 +40,7 @@ public record SoundfoundryCoverPayload(String key, byte[] image) implements Cust
 
     /* Copied on the way in, and cut to what the wire takes, since a string past its cap throws as it is sent. */
     public SoundfoundryCoverPayload {
-        key = key.length() <= MAX_KEY ? key : key.substring(0, MAX_KEY);
+        key = TextBounds.clip(key, MAX_KEY);
         image = image.length <= SoundfoundryCovers.MAX_BYTES ? image.clone() : new byte[0];
     }
 

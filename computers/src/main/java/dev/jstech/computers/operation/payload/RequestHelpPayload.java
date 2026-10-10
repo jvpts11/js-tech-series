@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -37,7 +38,7 @@ public record RequestHelpPayload(BlockPos hostPos, String name) implements Custo
                     RequestHelpPayload::new);
 
     public RequestHelpPayload {
-        name = PayloadText.clip(name, NAME_MOST);
+        name = TextBounds.clip(name, NAME_MOST);
     }
 
     @Override

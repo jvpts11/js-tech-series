@@ -18,6 +18,7 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.ProgramFilesProjection;
+import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.InstallerProjection;
 import dev.jstech.computers.program.cli.CliTexts;
@@ -98,6 +99,8 @@ public final class FileService {
             "%s: file not found (cross-drive move supports files only)");
     private static final TextKey DESTINATION_READ_ONLY =
             TextKey.of("jsc.service.file.destination_read_only", "%s: the destination is read-only");
+    private static final TextKey TOO_LARGE =
+            TextKey.of("jsc.service.file.too_large", "%s: longer than a file holds (%s characters)");
     private static final TextKey NAME_TAKEN =
             TextKey.of("jsc.service.file.name_taken", "%s: a file of that name is already there");
     private static final TextKey NO_NETWORK_MOVE = TextKey.of("jsc.service.file.no_network_move",
@@ -326,6 +329,7 @@ public final class FileService {
             }
             case INVALID_PATH -> ICliComputer.FsResult.fail(INVALID_NAME.with(path));
             case DISK_FULL -> ICliComputer.FsResult.fail(DISK_FULL.with(path));
+            case TOO_LARGE -> ICliComputer.FsResult.fail(TOO_LARGE.with(path, StoredFile.MOST_CHARS));
             case READ_ONLY -> ICliComputer.FsResult.fail(TYPE_READ_ONLY.with(path, type.extension()));
         };
     }
@@ -481,6 +485,7 @@ public final class FileService {
                 yield ICliComputer.FsResult.ok(COPIED.text());
             }
             case DISK_FULL -> ICliComputer.FsResult.fail(DISK_FULL.with(dest));
+            case TOO_LARGE -> ICliComputer.FsResult.fail(TOO_LARGE.with(dest, StoredFile.MOST_CHARS));
             case INVALID_PATH -> ICliComputer.FsResult.fail(INVALID_NAME.with(dest));
             case READ_ONLY -> ICliComputer.FsResult.fail(DESTINATION_READ_ONLY.with(dest));
         };
@@ -568,6 +573,7 @@ public final class FileService {
         if (wr != DiskFilesystem.WriteResult.OK) {
             return switch (wr) {
                 case DISK_FULL -> ICliComputer.FsResult.fail(DISK_FULL.with(destDir));
+                case TOO_LARGE -> ICliComputer.FsResult.fail(TOO_LARGE.with(destDir, StoredFile.MOST_CHARS));
                 case INVALID_PATH -> ICliComputer.FsResult.fail(INVALID_NAME.with(destDir));
                 case READ_ONLY -> ICliComputer.FsResult.fail(DESTINATION_READ_ONLY.with(destDir));
                 case OK -> ICliComputer.FsResult.ok("");

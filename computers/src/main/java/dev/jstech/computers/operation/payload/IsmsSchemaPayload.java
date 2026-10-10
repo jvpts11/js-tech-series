@@ -11,6 +11,7 @@ import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -130,7 +131,7 @@ public record IsmsSchemaPayload(int window, Text network, String host, Engine en
     }
 
     private static String clip(final String text) {
-        return text == null ? "" : text.length() <= MAX_NAME ? text : text.substring(0, MAX_NAME);
+        return TextBounds.clip(text, MAX_NAME);
     }
 
     private void write(final RegistryFriendlyByteBuf buf) {
@@ -203,7 +204,7 @@ public record IsmsSchemaPayload(int window, Text network, String host, Engine en
     }
 
     private static void body(final RegistryFriendlyByteBuf buf, final String text) {
-        final String body = text == null ? "" : text.length() <= MAX_BODY ? text : text.substring(0, MAX_BODY);
+        final String body = TextBounds.clip(text, MAX_BODY);
         ByteBufCodecs.stringUtf8(MAX_BODY).encode(buf, body);
     }
 

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -88,7 +89,7 @@ public record NetworkServicesPayload(BlockPos hostPos, Engine engine, List<Engin
 
     /** {@code text} cut to what the tab is sent, so a long name never fails the whole payload. */
     public static String clip(final String text) {
-        return text == null ? "" : text.length() <= MAX_NAME ? text : text.substring(0, MAX_NAME);
+        return TextBounds.clip(text, MAX_NAME);
     }
 
     @Override

@@ -11,6 +11,7 @@ import dev.jstech.computers.vm.program.ComponentValues;
 import dev.jstech.computers.vm.program.Numbers;
 import dev.jstech.computers.vm.program.UiWidgets;
 import dev.jstech.computers.vm.program.Values;
+import dev.jstech.core.text.TextBounds;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -418,7 +419,7 @@ public record UiWindowPayload(BlockPos hostPos, int program, long window, String
             return "";
         }
         final String said = String.valueOf(value);
-        return said.length() > most ? said.substring(0, most) : said;
+        return TextBounds.clip(said, most);
     }
 
     public static final CustomPacketPayload.Type<UiWindowPayload> TYPE =

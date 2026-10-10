@@ -338,14 +338,17 @@ public final class ClusterManagerStateBuilder {
             if (spec == null || spec.preinstalled()) {
                 continue;
             }
+            final String name = spec.displayName();
+            // The list stops at the name that would not fit beside the mark saying more were left out.
+            if (out.length() + ", ".length() + name.length() + ", ...".length()
+                    > ClusterManagerStatePayload.WireNode.MAX_PROGRAMS) {
+                out.append(out.length() > 0 ? ", ..." : "...");
+                break;
+            }
             if (out.length() > 0) {
                 out.append(", ");
             }
-            out.append(spec.displayName());
-            if (out.length() > 140) {
-                out.append(", ...");
-                break;
-            }
+            out.append(name);
         }
         return out.toString();
     }

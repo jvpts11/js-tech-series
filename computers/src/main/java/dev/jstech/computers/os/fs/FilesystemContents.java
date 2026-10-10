@@ -9,6 +9,8 @@ package dev.jstech.computers.os.fs;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.text.LongText;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -63,17 +65,18 @@ public record FilesystemContents(Map<String, StoredFile> files, Set<String> dire
      * The extension is stored as a string so unknown extensions survive round-trips.
      */
     private record Line(String path, String ext, String content, long mod) {
+        // A file of multi-byte text can pass what one string tag holds well before it reaches the most a file holds.
         static final Codec<Line> CODEC = RecordCodecBuilder.create(builder -> builder.group(
                 Codec.STRING.fieldOf("path").forGetter(Line::path),
                 Codec.STRING.fieldOf("ext").forGetter(Line::ext),
-                Codec.STRING.fieldOf("content").forGetter(Line::content),
+                LongText.CODEC.fieldOf("content").forGetter(Line::content),
                 Codec.LONG.optionalFieldOf("mod", 0L).forGetter(Line::mod)
         ).apply(builder, Line::new));
 
         static final StreamCodec<RegistryFriendlyByteBuf, Line> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.STRING_UTF8, Line::path,
                 ByteBufCodecs.STRING_UTF8, Line::ext,
-                ByteBufCodecs.STRING_UTF8, Line::content,
+                ByteBufCodecs.stringUtf8(StoredFile.MOST_CHARS), Line::content,
                 ByteBufCodecs.VAR_LONG, Line::mod,
                 Line::new);
     }
@@ -83,7 +86,9 @@ public record FilesystemContents(Map<String, StoredFile> files, Set<String> dire
         for (final Line line : lines) {
             // The kind comes from the stored extension; a kind the machines do not know is stored with none.
             final FileType type = FileType.of(line.ext());
-            map.put(line.path(), new StoredFile(line.path(), type, line.content(), line.mod()));
+            // A file that grew past what a file holds before there was a cap is cut to it, so the disk travels.
+            final String content = TextBounds.clip(line.content(), StoredFile.MOST_CHARS);
+            map.put(line.path(), new StoredFile(line.path(), type, content, line.mod()));
         }
         return new FilesystemContents(map, new LinkedHashSet<>(dirs));
     }

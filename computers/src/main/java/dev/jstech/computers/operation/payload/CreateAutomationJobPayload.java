@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.program.iql.IqlDefinition;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.core.BlockPos;
@@ -53,7 +55,7 @@ public record CreateAutomationJobPayload(BlockPos host, BlockPos monitorPos, int
      * What each field may hold. They arrive from a client and are kept in a job every viewer is sent again, so
      * each is held to a size a form fills in: a name, an item or script, a bus or server, and a period.
      */
-    private static final int NAME_MOST = 64;
+    private static final int NAME_MOST = IqlDefinition.MAX_NAME;
     private static final int ITEM_MOST = 128;
     private static final int PLACE_MOST = 64;
     private static final int INTERVAL_MOST = 32;
@@ -65,11 +67,11 @@ public record CreateAutomationJobPayload(BlockPos host, BlockPos monitorPos, int
             StreamCodec.of(CreateAutomationJobPayload::encode, CreateAutomationJobPayload::decode);
 
     public CreateAutomationJobPayload {
-        name = PayloadText.clip(name, NAME_MOST);
-        item = PayloadText.clip(item, ITEM_MOST);
-        from = PayloadText.clip(from, PLACE_MOST);
-        to = PayloadText.clip(to, PLACE_MOST);
-        interval = PayloadText.clip(interval, INTERVAL_MOST);
+        name = TextBounds.clip(name, NAME_MOST);
+        item = TextBounds.clip(item, ITEM_MOST);
+        from = TextBounds.clip(from, PLACE_MOST);
+        to = TextBounds.clip(to, PLACE_MOST);
+        interval = TextBounds.clip(interval, INTERVAL_MOST);
     }
 
     private static void encode(final RegistryFriendlyByteBuf buf, final CreateAutomationJobPayload p) {

@@ -11,6 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.program.SoundfoundryState;
 import dev.jstech.core.audio.media.MediaTags;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import java.util.ArrayList;
 import java.util.List;
@@ -115,13 +116,14 @@ public record SoundfoundryStatePayload(BlockPos hostPos, int revision, Optional<
             buf.writeVarInt(count);
             for (int i = 0; i < count; i++) {
                 final Song song = songs.get(i);
-                buf.writeUtf(clip(song.path(), MAX_PATH), MAX_PATH);
-                buf.writeUtf(clip(song.title(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
-                buf.writeUtf(clip(song.artist(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
-                buf.writeUtf(clip(song.album(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
+                buf.writeUtf(TextBounds.clip(song.path(), MAX_PATH), MAX_PATH);
+                buf.writeUtf(TextBounds.clip(song.title(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
+                buf.writeUtf(TextBounds.clip(song.artist(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
+                buf.writeUtf(TextBounds.clip(song.album(), MediaTags.MAX_TEXT), MediaTags.MAX_TEXT);
                 buf.writeVarLong(song.millis());
                 buf.writeBoolean(song.present());
-                buf.writeUtf(clip(song.cover(), SoundfoundryCoverPayload.MAX_KEY), SoundfoundryCoverPayload.MAX_KEY);
+                buf.writeUtf(TextBounds.clip(song.cover(), SoundfoundryCoverPayload.MAX_KEY),
+                        SoundfoundryCoverPayload.MAX_KEY);
             }
         }
         buf.writeVarInt(p.current);
@@ -169,9 +171,5 @@ public record SoundfoundryStatePayload(BlockPos hostPos, int revision, Optional<
         final boolean stream = buf.readBoolean();
         return new SoundfoundryStatePayload(host, revision, songs, current, status, position, playing, shuffle,
                 repeat, volume, balance, device, output, trouble, stream);
-    }
-
-    private static String clip(final String text, final int max) {
-        return text.length() <= max ? text : text.substring(0, max);
     }
 }

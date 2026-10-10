@@ -381,9 +381,14 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         if (doc == null) {
             return;
         }
+        final String text = doc.area.text();
+        if (text.length() > SaveFilePayload.MAX_CONTENT) {
+            this.status = GameText.resolve(FileSaves.tooLong(text));
+            return;
+        }
         this.status = GameText.resolve(EditorTexts.SAVING);
         CodeFileReplies.expectSaved(this);
-        PacketDistributor.sendToServer(new SaveFilePayload(this.host, doc.path, doc.area.text()));
+        FileSaves.send(this.host, doc.path, text);
         FilesApps.diskChanged();
     }
 

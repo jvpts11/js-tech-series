@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload;
 import dev.jstech.computers.trace.TraceEvent;
 import dev.jstech.computers.trace.TraceEventClass;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +46,7 @@ public record IsmsTracePayload(int window, List<TraceEvent> events) implements C
     }
 
     private static String clip(final String text) {
-        return text.length() <= MAX_NAME ? text : text.substring(0, MAX_NAME);
+        return TextBounds.clip(text, MAX_NAME);
     }
 
     private void write(final RegistryFriendlyByteBuf buf) {

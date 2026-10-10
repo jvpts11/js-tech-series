@@ -35,6 +35,7 @@ import static dev.jstech.computers.operation.payload.PatternStudioTexts.NO_SYSTE
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.ONLY_CRAFTING_COMPUTER;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.OPENED;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.PIPELINE_EMPTY;
+import static dev.jstech.computers.operation.payload.PatternStudioTexts.PIPELINE_FULL;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.PIPELINE_IN_PIPELINE;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.QUEUE_CLEARED;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.SAVED;
@@ -42,6 +43,7 @@ import static dev.jstech.computers.operation.payload.PatternStudioTexts.SAVE_FAI
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.SENT;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.STAGE_ADDED;
 import static dev.jstech.computers.operation.payload.PatternStudioTexts.SYSTEM_DISK;
+import static dev.jstech.computers.operation.payload.PatternStudioTexts.TOO_LARGE_TO_BURN;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.part.CraftingInterfacePart;
@@ -68,11 +70,13 @@ import dev.jstech.computers.os.VolumeLabel;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -194,15 +198,18 @@ public final class PatternStudioPayloads {
             case PatternStudioEditPayload.PROC_CLEAR -> studio.clearMachine();
             case PatternStudioEditPayload.PIPE_ADD_BENCH -> {
                 studio.refreshPreview(level);
-                status = (studio.addBenchStage() ? BENCH_STAGE_ADDED : BENCH_NOT_RECIPE).text();
+                status = studio.pipelineFull() ? PIPELINE_FULL.with(PatternWorkbench.MOST_STAGES)
+                        : (studio.addBenchStage() ? BENCH_STAGE_ADDED : BENCH_NOT_RECIPE).text();
                 tab = 2;
             }
             case PatternStudioEditPayload.PIPE_ADD_PROC -> {
-                status = (studio.addProcessingStage() ? MACHINE_STAGE_ADDED : MACHINE_INCOMPLETE).text();
+                status = studio.pipelineFull() ? PIPELINE_FULL.with(PatternWorkbench.MOST_STAGES)
+                        : (studio.addProcessingStage() ? MACHINE_STAGE_ADDED : MACHINE_INCOMPLETE).text();
                 tab = 2;
             }
             case PatternStudioEditPayload.PIPE_ADD_FILE -> {
-                status = addStageFromFile(level, host, payload.text(), payload.text2());
+                status = studio.pipelineFull() ? PIPELINE_FULL.with(PatternWorkbench.MOST_STAGES)
+                        : addStageFromFile(level, host, payload.text(), payload.text2());
                 tab = 2;
             }
             case PatternStudioEditPayload.PIPE_REMOVE -> studio.removeStage(payload.index());
@@ -470,6 +477,9 @@ public final class PatternStudioPayloads {
             return ENCODER_BAY_EMPTY.text();
         }
         final String base = fileBaseFor(studio, kind);
+        if (content.get().length() > StoredFile.MOST_CHARS) {
+            return TOO_LARGE_TO_BURN.with(StoredFile.MOST_CHARS);
+        }
         if (!encoder.queueBurn(base, content.get())) {
             return ENCODER_QUEUE_FULL.text();
         }
@@ -512,8 +522,8 @@ public final class PatternStudioPayloads {
                 final ItemStack counted = resolved.isEmpty() ? cell : resolved;
                 count = stock.getOrDefault(StorageKey.of(counted), 0L);
             }
-            bench.add(new PatternStudioStatePayload.BenchCell(cell, wire(tag, PatternStudioStatePayload.MAX_TAG),
-                    resolved, count));
+            bench.add(new PatternStudioStatePayload.BenchCell(cell,
+                    TextBounds.clip(tag, PatternStudioStatePayload.MAX_TAG), resolved, count));
         }
 
         final List<PatternStudioStatePayload.ProcCell> inputs = new ArrayList<>();
@@ -621,21 +631,16 @@ public final class PatternStudioPayloads {
         }
 
         return new PatternStudioStatePayload(bench, studio.preview(),
-                wire(studio.benchName(), PatternStudioStatePayload.MAX_NAME),
-                wire(studio.benchNote(), PatternStudioStatePayload.MAX_NOTE),
-                wire(studio.openedFile(PatternWorkbench.Kind.BENCH), PatternStudioStatePayload.MAX_NAME),
+                TextBounds.clip(studio.benchName(), PatternStudioStatePayload.MAX_NAME),
+                TextBounds.clip(studio.benchNote(), PatternStudioStatePayload.MAX_NOTE),
+                TextBounds.clip(studio.openedFile(PatternWorkbench.Kind.BENCH), PatternStudioStatePayload.MAX_NAME),
                 inputs, outputs, studio.procTimeout(),
-                wire(studio.procName(), PatternStudioStatePayload.MAX_NAME),
-                wire(studio.procNote(), PatternStudioStatePayload.MAX_NOTE),
-                wire(studio.openedFile(PatternWorkbench.Kind.MACHINE), PatternStudioStatePayload.MAX_NAME),
-                stages, wire(studio.pipelineName(), PatternStudioStatePayload.MAX_NAME),
-                wire(studio.pipelineNote(), PatternStudioStatePayload.MAX_NOTE),
-                wire(studio.openedFile(PatternWorkbench.Kind.PIPELINE), PatternStudioStatePayload.MAX_NAME),
+                TextBounds.clip(studio.procName(), PatternStudioStatePayload.MAX_NAME),
+                TextBounds.clip(studio.procNote(), PatternStudioStatePayload.MAX_NOTE),
+                TextBounds.clip(studio.openedFile(PatternWorkbench.Kind.MACHINE), PatternStudioStatePayload.MAX_NAME),
+                stages, TextBounds.clip(studio.pipelineName(), PatternStudioStatePayload.MAX_NAME),
+                TextBounds.clip(studio.pipelineNote(), PatternStudioStatePayload.MAX_NOTE),
+                TextBounds.clip(studio.openedFile(PatternWorkbench.Kind.PIPELINE), PatternStudioStatePayload.MAX_NAME),
                 drives, encoder, craftingComputer, hasCard, romBench, romProc, romPipe, status, tabHint);
-    }
-
-    private static String wire(final String s, final int max) {
-        final String v = s == null ? "" : s;
-        return v.length() <= max ? v : v.substring(0, max);
     }
 }

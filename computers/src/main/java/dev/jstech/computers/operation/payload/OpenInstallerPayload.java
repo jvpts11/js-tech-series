@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerStyle;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -81,33 +82,34 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
         buf.writeBlockPos(p.hostPos());
         buf.writeBlockPos(p.monitorPos());
         buf.writeUtf(p.style().serializedName(), MAX_LABEL);
-        buf.writeUtf(cut(p.systemId(), MAX_ID), MAX_ID);
-        buf.writeUtf(cut(p.systemName(), MAX_LABEL), MAX_LABEL);
+        buf.writeUtf(TextBounds.clip(p.systemId(), MAX_ID), MAX_ID);
+        buf.writeUtf(TextBounds.clip(p.systemName(), MAX_LABEL), MAX_LABEL);
         buf.writeVarInt(p.footprintMb());
         buf.writeVarInt(p.copyTicks());
         buf.writeVarInt(Math.min(p.disks().size(), InstallerFlow.MOST_DISKS));
         for (int i = 0; i < Math.min(p.disks().size(), InstallerFlow.MOST_DISKS); i++) {
             final InstallerFlow.Disk disk = p.disks().get(i);
             buf.writeVarInt(disk.slot());
-            buf.writeUtf(cut(disk.label(), MAX_LABEL), MAX_LABEL);
+            buf.writeUtf(TextBounds.clip(disk.label(), MAX_LABEL), MAX_LABEL);
             buf.writeVarInt(disk.sizeMb());
             buf.writeVarInt(disk.freeMb());
-            buf.writeUtf(cut(disk.holds(), MAX_LABEL), MAX_LABEL);
+            buf.writeUtf(TextBounds.clip(disk.holds(), MAX_LABEL), MAX_LABEL);
             buf.writeVarInt(disk.speed());
         }
         buf.writeVarInt(Math.min(p.desktops().size(), InstallerFlow.MOST_DESKTOPS));
         for (int i = 0; i < Math.min(p.desktops().size(), InstallerFlow.MOST_DESKTOPS); i++) {
             final InstallerFlow.Desktop desktop = p.desktops().get(i);
-            buf.writeUtf(cut(desktop.id(), MAX_ID), MAX_ID);
-            buf.writeUtf(cut(desktop.name(), MAX_LABEL), MAX_LABEL);
+            buf.writeUtf(TextBounds.clip(desktop.id(), MAX_ID), MAX_ID);
+            buf.writeUtf(TextBounds.clip(desktop.name(), MAX_LABEL), MAX_LABEL);
             buf.writeVarInt(desktop.sizeMb());
             buf.writeVarInt(desktop.ticks());
         }
-        buf.writeUtf(cut(p.mirrorHost(), MAX_LABEL), MAX_LABEL);
+        buf.writeUtf(TextBounds.clip(p.mirrorHost(), MAX_LABEL), MAX_LABEL);
         buf.writeVarInt(p.stageIndex());
         buf.writeVarInt(p.targetSlot() + 1);
-        buf.writeUtf(cut(p.computerName(), InstallerFlow.MOST_NAME_LETTERS), InstallerFlow.MOST_NAME_LETTERS);
-        buf.writeUtf(cut(p.desktopId(), MAX_ID), MAX_ID);
+        buf.writeUtf(TextBounds.clip(p.computerName(), InstallerFlow.MOST_NAME_LETTERS),
+                InstallerFlow.MOST_NAME_LETTERS);
+        buf.writeUtf(TextBounds.clip(p.desktopId(), MAX_ID), MAX_ID);
         buf.writeVarInt(p.eraseSlot() + 1);
         buf.writeVarInt(p.ticksDone());
         buf.writeBoolean(p.portsSelected());
@@ -150,13 +152,5 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
         return new OpenInstallerPayload(host, monitor, style == null ? InstallerStyle.PLAIN : style, systemId,
                 systemName, footprintMb, copyTicks, disks, desktops, mirrorHost, stageIndex, targetSlot,
                 computerName, desktopId, eraseSlot, ticksDone, portsSelected, useMirror, cronEnabled, sshdEnabled);
-    }
-
-    /** A string trimmed to what the wire takes, since writing one that is too long fails outright. */
-    private static String cut(final String text, final int most) {
-        if (text == null) {
-            return "";
-        }
-        return text.length() <= most ? text : text.substring(0, most);
     }
 }

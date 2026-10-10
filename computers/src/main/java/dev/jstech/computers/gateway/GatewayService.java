@@ -33,6 +33,7 @@ import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -78,7 +79,7 @@ public final class GatewayService {
 
     private static final String FLUID_PREFIX = "fluid/";
     private static final String CHEMICAL_PREFIX = "chemical/";
-    private static final int WHAT_LENGTH = 96;
+    private static final int WHAT_LENGTH = GatewayLog.TEXT_LENGTH;
 
     /** The file calls that change what is on a disk rather than only reading it. */
     private static final List<String> WRITES_FILES =
@@ -487,10 +488,10 @@ public final class GatewayService {
     /** Writes a line into the Gateway's log, signed by the caller: {@code error}, {@code warn} or anything else. */
     public void log(final Caller caller, final String levelName, final String text) throws GatewayRefusedException {
         admit(caller, "log");
-        final String kind = levelName == null ? "" : levelName.toLowerCase(Locale.ROOT);
+        final String kind = TextBounds.clip(levelName, WHAT_LENGTH).toLowerCase(Locale.ROOT);
         final GatewayLog.Tone tone = kind.startsWith("err") ? GatewayLog.Tone.DENIED
                 : kind.startsWith("warn") ? GatewayLog.Tone.BUSY : GatewayLog.Tone.OK;
-        final String line = text == null ? "" : text.length() > WHAT_LENGTH ? text.substring(0, WHAT_LENGTH) : text;
+        final String line = TextBounds.clip(text, WHAT_LENGTH);
         // The level is the caller's own word for it, written down as it was given.
         gateway.logged(caller.label(), line, Text.literal(kind.isEmpty() ? "info" : kind), tone);
         charge(SigmaCosts.GLANCE_NETWORK);

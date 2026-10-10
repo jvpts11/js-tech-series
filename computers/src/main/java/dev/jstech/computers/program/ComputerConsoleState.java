@@ -15,6 +15,7 @@ import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.program.job.JobStorage;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.core.id.StableNames;
+import dev.jstech.core.text.LongText;
 import dev.jstech.core.text.TextTags;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -385,7 +386,7 @@ public final class ComputerConsoleState {
         }
         programs.save(tag);
         if (liveInstall != null) {
-            tag.putString("LiveInstall", liveInstall.serialize());
+            LongText.put(tag, "LiveInstall", liveInstall.serialize());
         }
         if (foreground.running()) {
             final CompoundTag front = new CompoundTag();
@@ -427,8 +428,8 @@ public final class ComputerConsoleState {
                     job.getBoolean("Removing"), job.getInt("Total"), job.getInt("Left"),
                     MANAGERS.find(job.getString("Via")), job.getString("Package"));
         }
-        liveInstall = tag.contains("LiveInstall")
-                ? LiveInstallState.deserialize(tag.getString("LiveInstall"))
+        liveInstall = LongText.has(tag, "LiveInstall")
+                ? LiveInstallState.deserialize(LongText.get(tag, "LiveInstall"))
                 : null;
         foreground.load(tag.getCompound("Foreground"));
         desktop.load(tag);

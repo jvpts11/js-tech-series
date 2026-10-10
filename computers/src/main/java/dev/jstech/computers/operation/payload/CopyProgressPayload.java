@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -120,6 +121,6 @@ public record CopyProgressPayload(BlockPos hostPos, long job, byte kind, String 
     }
 
     private static String clip(final String text) {
-        return text.length() > NAME_MAX ? text.substring(0, NAME_MAX) : text;
+        return TextBounds.clip(text, NAME_MAX);
     }
 }

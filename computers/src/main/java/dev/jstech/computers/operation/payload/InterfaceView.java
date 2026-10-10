@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload;
 import dev.jstech.computers.crafting.CraftingLog;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -208,6 +209,6 @@ public record InterfaceView(String name, String shortId, HardwareEra skin, boole
     }
 
     private static String cut(final String text) {
-        return text.length() > MOST_TEXT ? text.substring(0, MOST_TEXT) : text;
+        return TextBounds.clip(text, MOST_TEXT);
     }
 }

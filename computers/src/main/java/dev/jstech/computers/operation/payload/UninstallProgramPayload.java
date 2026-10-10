@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -34,7 +35,7 @@ public record UninstallProgramPayload(BlockPos hostPos, String programId) implem
                     UninstallProgramPayload::new);
 
     public UninstallProgramPayload {
-        programId = PayloadText.clip(programId, ID_MOST);
+        programId = TextBounds.clip(programId, ID_MOST);
     }
 
     @Override

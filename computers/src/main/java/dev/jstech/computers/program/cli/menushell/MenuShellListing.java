@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli.menushell;
 
+import dev.jstech.computers.os.fs.StoredFile;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,26 +77,30 @@ public record MenuShellListing(String dir, boolean found, boolean printer, List<
         return new MenuShellListing(dir, false, false, List.of(), List.of(), List.of(), List.of(), List.of());
     }
 
-    /** The listing as the lines it travels in. */
+    /**
+     * The listing as the lines it travels in, kept to what a file's content carries: a reply past that is refused
+     * whole, and the shell would show nothing. What the folder holds goes first, so a disk of many folders loses the
+     * far end of its tree before it loses a file.
+     */
     public String write() {
         final StringBuilder out = new StringBuilder();
-        line(out, "D", dir, found ? "1" : "0", printer ? "1" : "0");
+        boolean room = line(out, "D", dir, found ? "1" : "0", printer ? "1" : "0");
         for (final Drive drive : drives) {
-            line(out, "M", String.valueOf(drive.letter()), drive.ready() ? "1" : "0", Long.toString(drive.capacity()),
-                    Long.toString(drive.free()));
-        }
-        for (final String folder : tree) {
-            line(out, "T", folder);
+            room = room && line(out, "M", String.valueOf(drive.letter()), drive.ready() ? "1" : "0",
+                    Long.toString(drive.capacity()), Long.toString(drive.free()));
         }
         for (final Entry entry : entries) {
-            line(out, "F", entry.name(), entry.ext(), Long.toString(entry.weight()), entry.stamp(),
+            room = room && line(out, "F", entry.name(), entry.ext(), Long.toString(entry.weight()), entry.stamp(),
                     entry.folder() ? "1" : "0", entry.readOnly() ? "1" : "0");
         }
         for (final Program program : programs) {
-            line(out, "G", program.label(), program.command());
+            room = room && line(out, "G", program.label(), program.command());
+        }
+        for (final String folder : tree) {
+            room = room && line(out, "T", folder);
         }
         for (final String result : results) {
-            line(out, "S", result);
+            room = room && line(out, "S", result);
         }
         return out.toString();
     }
@@ -161,13 +166,19 @@ public record MenuShellListing(String dir, boolean found, boolean printer, List<
         return rest.startsWith(kind) ? rest.substring(kind.length()) : null;
     }
 
-    private static void line(final StringBuilder out, final String kind, final String... fields) {
-        out.append(kind);
+    /* Adds the line when it fits in what is left; false, and nothing added, when it does not. */
+    private static boolean line(final StringBuilder out, final String kind, final String... fields) {
+        final StringBuilder line = new StringBuilder(kind);
         for (final String field : fields) {
             // A tab or a line break inside a field would split it, so they become spaces.
-            out.append(TAB).append(field == null ? "" : field.replace('\t', ' ').replace('\n', ' '));
+            line.append(TAB).append(field == null ? "" : field.replace('\t', ' ').replace('\n', ' '));
         }
-        out.append('\n');
+        line.append('\n');
+        if (out.length() + line.length() > StoredFile.MOST_CHARS) {
+            return false;
+        }
+        out.append(line);
+        return true;
     }
 
     private static long parse(final String number) {

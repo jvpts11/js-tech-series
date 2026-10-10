@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import java.util.ArrayList;
 import java.util.List;
@@ -89,7 +90,7 @@ public record HelpPayload(BlockPos hostPos, List<Entry> entries, String page, Li
 
     /** A name no longer than one may be: a cap that throws on the way out is a dropped connection. */
     private static String clip(final String text) {
-        return text.length() <= MOST_LETTERS ? text : text.substring(0, MOST_LETTERS);
+        return TextBounds.clip(text, MOST_LETTERS);
     }
 
     @Override
