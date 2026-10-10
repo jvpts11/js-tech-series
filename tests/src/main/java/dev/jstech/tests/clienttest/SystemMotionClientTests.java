@@ -24,6 +24,7 @@ import dev.jstech.computers.os.OsMotions;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.core.motion.MotionKinds;
@@ -59,11 +60,8 @@ public final class SystemMotionClientTests {
     private static final String SETTINGS = "jsc:settings";
     /** Every motion at eight times its own length, so a test sees it under way. */
     private static final DesktopEffects SLOW = new DesktopEffects(List.of(), 800);
-    /*
-     * Four files of a megabyte each on a disk of today, so the copies run four seconds onto a floppy. Each stays under
-     * the longest word a block's saved data can hold, sixty-four kilobytes.
-     */
-    private static final int PART_CHARS = 60_000;
+    /** Four files as long as a file can be, so the copies onto a floppy run long enough to be seen under way. */
+    private static final int PART_CHARS = StoredFile.MOST_CHARS;
     private static final List<String> PARTS = List.of("part1.txt", "part2.txt", "part3.txt", "part4.txt");
     /** Long enough for a drive set beside a computer to link to it. */
     private static final int LINK_TICKS = 20;

@@ -1968,6 +1968,29 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Σ compiler says a file nests too deeply when classes sit inside each other thousands deep, and refuses a class
   or an interface that stands behind itself with error S3059, where either stopped the game.
 - A JSON5 settings file nested more than 32 deep is refused with the reason, as a YAML one already was.
+- The Soundfoundry reads the size a cover picture declares before decoding a pixel, and makes no cover from one past
+  4096 by 4096: a few bytes of picture in a recording could declare gigabytes of pixels.
+- Exceed asks before opening a sheet over one with changes that are not saved, which it threw away without a word.
+- A text box laid out with no width in a program's window no longer hangs the game.
+- Moving a file to another disk or medium that already holds a file of that name leaves both where they are, where
+  it wrote over the one there and then deleted the one moved.
+- Choosing another disk in a system's installer after agreeing to erase one takes the erase back; the copy erased
+  the disk first agreed to while installing onto the other.
+- Minesweeper no longer fails on the first open area of a board.
+- `touch` makes a file that is not there and leaves one that is as it was, where it emptied it.
+- The text tools of the Unix systems (`grep`, `wc`, `head`, `tail`, `sort`) read a file named from the root, such as
+  `grep -i error /var/log/cron`; the slash was taken for a DOS switch and the file left out.
+- `fdisk` answers a size past any disk with "Value out of range." A long run of digits threw out of the tool, and
+  was played again on every load of the world; a size in terabytes went round to below nothing.
+- The Σ compiler clears the field `dispose` names, not a field of the object it held; reads a variable a lambda uses
+  only inside a string's `{...}` from where the lambda keeps it; and no longer stops on a `$"` string whose last
+  character is a backslash at the end of the file.
+- A program asking for an array past its memory is stopped with "out of memory" before the array is made, where an
+  array of two billion places ran the game itself out of memory.
+- A file a program writes a little at a time costs its memory only what the file holds; each write kept the whole
+  file before it too, so a small file ran a machine out of memory.
+- A terminal tool that fails on an answer lets go of the terminal, and is not played the answer again when the world
+  is loaded.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

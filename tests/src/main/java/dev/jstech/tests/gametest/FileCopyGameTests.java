@@ -18,6 +18,7 @@ import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.CopyTiming;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.text.Text;
@@ -46,11 +47,8 @@ public final class FileCopyGameTests {
     private static final String ARENA = "empty";
     private static final BlockPos PC = new BlockPos(2, 2, 2);
     private static final BlockPos DRIVE = new BlockPos(3, 2, 2);
-    /*
-     * Enough words for a file to weigh a megabyte on a disk of today, a second onto a floppy, and still fit the longest
-     * word a block's saved data can hold, sixty-four kilobytes.
-     */
-    private static final int BIG_FILE_CHARS = 60_000;
+    /** The longest file there is, so its copy onto a floppy takes long enough to be seen under way. */
+    private static final int BIG_FILE_CHARS = StoredFile.MOST_CHARS;
     private static final String SOURCE = "big.txt";
     private static final String COPIED = "big - Copy.txt";
     /* A tick or two for the copy's end to be handled after its time. */
@@ -82,6 +80,37 @@ public final class FileCopyGameTests {
                     helper.assertTrue(onFloppy(helper, SOURCE), "it has arrived once its time is up");
                     helper.assertTrue(FileCopyJobs.runningOn(helper.getLevel(), helper.absolutePos(PC)) == 0,
                             "and nothing is under way any more");
+                })
+                .thenSucceed();
+    }
+
+    /** A move onto a floppy that already holds a file of that name leaves both files as they were. */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void move_ontoANameAlreadyTakenLeavesBothFilesAlone(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = withFloppy(helper);
+        final ItemStack disk = computer.systemDisk();
+        DiskFilesystem.write(disk, "note.txt", FileType.TXT, "from the disk", Long.MAX_VALUE,
+                FilesystemKind.HIERARCHICAL);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(computer.enabledEndpoints().contains(drive(helper)),
+                        "the floppy drive links to the computer"))
+                .thenExecute(() -> {
+                    final ItemStack floppy = ((MediaReaderBlockEntity) helper.getBlockEntity(DRIVE)).mediaSlot()
+                            .getStackInSlot(0);
+                    DiskFilesystem.write(floppy, "note.txt", FileType.TXT, "from the floppy", Long.MAX_VALUE,
+                            FilesystemKind.HIERARCHICAL);
+                    FileTransferPayloads.move(helper.getLevel(), player(helper), helper.absolutePos(PC), "note.txt",
+                            floppy(helper));
+                })
+                .thenWaitUntil(() -> helper.assertTrue(
+                        FileCopyJobs.runningOn(helper.getLevel(), helper.absolutePos(PC)) == 0, "the move settles"))
+                .thenExecute(() -> {
+                    final ItemStack floppy = ((MediaReaderBlockEntity) helper.getBlockEntity(DRIVE)).mediaSlot()
+                            .getStackInSlot(0);
+                    helper.assertTrue(DiskFilesystem.read(floppy, "note.txt").orElse("").equals("from the floppy"),
+                            "the floppy's own file is not written over");
+                    helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "note.txt").isPresent(),
+                            "and the file that was to move is still where it was");
                 })
                 .thenSucceed();
     }

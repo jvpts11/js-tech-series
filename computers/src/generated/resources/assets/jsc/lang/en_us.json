@@ -2919,6 +2919,7 @@
   "jsc.engine.missing_capabilities": "%s needs an engine that offers %s.",
   "jsc.engine.no_compatible": "No compatible %s was found on this network.",
   "jsc.engine.unavailable": "Network Operations Service unavailable",
+  "jsc.exceed.discard_changes": "This sheet has changes that are not saved. Open %s and lose them?",
   "jsc.exceed.live_cells": "%s live cells",
   "jsc.exceed.new_sheet": "New sheet",
   "jsc.exceed.one_live_cell": "%s live cell",

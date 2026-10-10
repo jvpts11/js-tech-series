@@ -361,7 +361,8 @@ final class StatementWriter {
                     new IOperand.Field(field.owner().qualifiedName(), field.name()));
             return;
         }
-        this.values.receiver(target);
+        // The target names the field itself, so what goes on the stack is the object that holds it.
+        this.values.receiverOf(target);
         this.body.emit(pushValue);
         this.body.emit(Opcode.STFLD, new IOperand.Field(this.body.ownerOf(field), field.name()));
     }

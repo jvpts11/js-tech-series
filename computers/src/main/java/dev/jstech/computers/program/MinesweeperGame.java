@@ -151,10 +151,13 @@ public final class MinesweeperGame {
     }
 
     private void floodReveal(final int startR, final int startC) {
-        // Iterative flood fill so a large empty region never overflows the stack.
+        // Iterative flood fill so a large empty region never overflows the stack. A cell is put on it at most once,
+        // however many of its neighbours reach it, so the board's size is all the room it ever needs.
         final int[] stack = new int[rows * cols];
+        final boolean[] queued = new boolean[rows * cols];
         int top = 0;
         stack[top++] = idx(startR, startC);
+        queued[idx(startR, startC)] = true;
         while (top > 0) {
             final int i = stack[--top];
             if (revealed[i] || flagged[i]) {
@@ -176,7 +179,8 @@ public final class MinesweeperGame {
                     final int nc = c + dc;
                     if (inBounds(nr, nc)) {
                         final int ni = idx(nr, nc);
-                        if (!revealed[ni] && !flagged[ni] && !mine[ni]) {
+                        if (!revealed[ni] && !flagged[ni] && !mine[ni] && !queued[ni]) {
+                            queued[ni] = true;
                             stack[top++] = ni;
                         }
                     }

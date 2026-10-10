@@ -529,6 +529,16 @@ class LiveInstallStateTest {
     }
 
     @Test
+    void fdisk_aSizePastAnyDisk_isOutOfRangeRatherThanAnError() {
+        // A long run of digits threw out of the tool, and a size in terabytes went round to below nothing.
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        step(st, "fdisk /dev/sda", env(true, true, false), "g", "n", "", "", "+99999999999", "n", "", "", "+3000T",
+                "q");
+        assertTrue(seen().contains("Value out of range."), seen());
+        assertFalse(seen().contains("Created a new partition"), "neither size makes a partition");
+    }
+
+    @Test
     void fdisk_aDiskTheMachineDoesNotHave_isNoSuchFile() {
         final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
         assertTrue(step(st, "fdisk /dev/sdz").text().contains("No such file or directory"));

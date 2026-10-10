@@ -123,6 +123,19 @@ class OpenFileTest {
     }
 
     @Test
+    void aFileWrittenALetterAtATime_costsOnlyWhatItHolds() {
+        // Each write charged a whole new copy of the file and kept the old one, so this ran out of a 64 KB heap.
+        final Desk desk = new Desk();
+        final Process process = run(desk, """
+                FILE w = fopen("long.txt", "w");
+                for (int i = 0; i < 5000; i++) { fputc('x', w); }
+                fclose(w);
+                """);
+        assertEquals(Process.State.FINISHED, process.state(), () -> String.valueOf(process.message()));
+        assertEquals(5000, desk.disk.get("long.txt").length());
+    }
+
+    @Test
     void fprintfAndFscanf_writeWithPrintfsFormatAndReadOneValueACall() {
         final Desk desk = new Desk();
         final Process process = run(desk, """

@@ -376,7 +376,8 @@ final class PosixFileCommands {
                 ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
-            final ICliComputer.FsResult result = ctx.computer().writeFile(dos(ctx, ctx.arg(0)), "");
+            // Adding nothing makes a missing file and stamps one that is there, and never touches what it holds.
+            final ICliComputer.FsResult result = ctx.computer().appendFile(dos(ctx, ctx.arg(0)), "");
             if (!result.ok()) {
                 ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
             }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.program.cli.sh.TextFilters;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -53,7 +54,10 @@ final class PipeCommands {
         if (ctx.hasInput() || from.isEmpty()) {
             return ctx.input();
         }
-        final ICliComputer.FsResult read = ctx.computer().readFile(from);
+        // A Unix path names the file the way the disk underneath names it only once it is put the disk's way.
+        final String path = ctx.computer().shellFamily() == ShellFamily.POSIX
+                ? PosixPath.toDos(ctx.computer().tree(), from) : from;
+        final ICliComputer.FsResult read = ctx.computer().readFile(path);
         if (!read.ok()) {
             ctx.out().error(read.message());
             return List.of();
@@ -67,11 +71,15 @@ final class PipeCommands {
         }
     }
 
-    /** The words of a line that are not switches, which is how every one of these reads its arguments. */
+    /**
+     * The words of a line that are not switches, which is how every one of these reads its arguments. Only the DOS
+     * family writes a switch with a slash; everywhere else a word that starts with one is a path from the root.
+     */
     static List<String> plainWords(final CliContext ctx) {
+        final boolean slashSwitches = ctx.computer().shellFamily() == ShellFamily.DOS;
         final List<String> words = new ArrayList<>();
         for (final String arg : ctx.args()) {
-            if (!arg.startsWith("-") && !arg.startsWith("/")) {
+            if (!arg.startsWith("-") && !(slashSwitches && arg.startsWith("/"))) {
                 words.add(arg);
             }
         }

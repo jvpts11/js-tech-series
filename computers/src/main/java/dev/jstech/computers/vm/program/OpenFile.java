@@ -163,6 +163,9 @@ public final class OpenFile {
         final int at = mode.startsWith("a") ? text.length() : Math.min(at(file), text.length());
         final String after = text.substring(Math.min(text.length(), at + piece.length()));
         file.set(TEXT, process.text(text.substring(0, at) + piece + after, line));
+        // The text it replaces is the runtime's own, which the program cannot reach, so its cost goes with it; the
+        // heap holds things by identity, so only that very copy is let go of.
+        process.heap0().release(text);
         file.set(AT, at + piece.length());
         file.set(CHANGED, true);
     }

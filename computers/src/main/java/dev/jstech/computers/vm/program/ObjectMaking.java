@@ -110,8 +110,12 @@ final class ObjectMaking {
         if (length < 0) {
             throw new Halt(Halt.Reason.OUT_OF_RANGE, line, NEGATIVE_LENGTH.with(length));
         }
+        final long bytes = Heap.HEADER + (long) Heap.sizeOf(element.name().value()) * length;
+        // The budget is asked first: an array of two billion places would be made in the game's own memory before
+        // the budget had a word, and running out of that is no halt the program can be told about.
+        this.heap.reserve(bytes, line);
         final Values.Arr made = new Values.Arr(element.name().value(), length);
-        this.heap.allocate(made, Heap.HEADER + (long) Heap.sizeOf(element.name().value()) * length, line);
+        this.heap.allocate(made, bytes, line);
         frame.push(made);
     }
 

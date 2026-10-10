@@ -114,6 +114,17 @@ public final class Heap implements IPureContext {
     }
 
     /**
+     * Halts, as {@link #allocate} would, when that many more bytes would not fit; holds nothing either way. Asked
+     * before something is built whose size the program chose, so a size past the budget is refused before the
+     * machine running the game is asked to hold it.
+     */
+    void reserve(final long bytes, final int line) {
+        if (this.used + bytes > this.budget) {
+            throw new Halt(Halt.Reason.OUT_OF_MEMORY, line, this.outOfMemory(bytes));
+        }
+    }
+
+    /**
      * Everything still held, in the order it was allocated.
      *
      * <p>The order is what makes two saves of the same program read the same; it is worked out here, when

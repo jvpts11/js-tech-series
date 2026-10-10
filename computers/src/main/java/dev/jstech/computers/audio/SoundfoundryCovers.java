@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -25,6 +26,8 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -49,6 +52,8 @@ public final class SoundfoundryCovers {
     private static final String MEDIA = "media:";
     /* A recording read further than this for its picture is not worth it: its songs come first. */
     private static final int MOST_READ = 64 * 1024 * 1024;
+    /* The largest picture a cover is made from, in pixels: far past any album art, far short of a decoded bomb. */
+    private static final long MOST_PIXELS = 4096L * 4096L;
     private static final int KEPT = 256;
     private static final Map<String, byte[]> MADE = new LinkedHashMap<>(KEPT, 0.75F, true) {
         @Override
@@ -156,7 +161,7 @@ public final class SoundfoundryCovers {
      */
     public static byte[] scaled(final byte[] picture) {
         try {
-            final BufferedImage read = ImageIO.read(new ByteArrayInputStream(picture));
+            final BufferedImage read = decoded(picture);
             if (read == null || read.getWidth() <= 0 || read.getHeight() <= 0) {
                 return NONE;
             }
@@ -228,6 +233,32 @@ public final class SoundfoundryCovers {
             }
         }
         return (int) (a / n) << 24 | (int) (r / n) << 16 | (int) (g / n) << 8 | (int) (b / n);
+    }
+
+    /*
+     * The picture's pixels, or null when it is no picture this reads or says it is larger than a cover is ever made
+     * from. The size a file declares is read before a pixel of it is: a few bytes of PNG can declare a picture whose
+     * pixels fill gigabytes, and a recording a player brought can carry one.
+     */
+    @Nullable
+    private static BufferedImage decoded(final byte[] picture) throws IOException {
+        try (ImageInputStream stream = ImageIO.createImageInputStream(new ByteArrayInputStream(picture))) {
+            if (stream == null) {
+                return null;
+            }
+            final Iterator<ImageReader> readers = ImageIO.getImageReaders(stream);
+            if (!readers.hasNext()) {
+                return null;
+            }
+            final ImageReader reader = readers.next();
+            try {
+                reader.setInput(stream, true, true);
+                final long pixels = (long) reader.getWidth(0) * reader.getHeight(0);
+                return pixels <= 0 || pixels > MOST_PIXELS ? null : reader.read(0);
+            } finally {
+                reader.dispose();
+            }
+        }
     }
 
     /* One thread, gone when there is nothing to make, so a server that never shows a cover keeps none. */

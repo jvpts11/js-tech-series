@@ -37,6 +37,16 @@ class HeapTest {
     }
 
     @Test
+    void reserve_haltsWhenTheBytesWouldNotFitAndHoldsNothingEitherWay() {
+        final Heap heap = new Heap(ROOM);
+        heap.reserve(ROOM, 1);
+        assertEquals(0, heap.used(), "asking holds nothing");
+        final Halt halt = assertThrows(Halt.class, () -> heap.reserve(ROOM + 1, 2));
+        assertEquals(Halt.Reason.OUT_OF_MEMORY, halt.reason());
+        assertEquals(0, heap.used());
+    }
+
+    @Test
     void release_givesTheBytesBackAndKeepsNothingToCatchALaterUse() {
         final Heap heap = new Heap(ROOM);
         final String copy = heap.allocate(new String("own".toCharArray()), Heap.sizeOfText("own"), 1);

@@ -604,6 +604,10 @@ public final class InstallerFlow {
     public void select(final int slot) {
         final Disk disk = this.diskAt(slot);
         if (disk != null) {
+            // An erase was agreed to for the disk chosen then; choosing another before the copy starts takes it back.
+            if (slot != this.eraseSlot && !this.started()) {
+                this.eraseSlot = NO_DISK;
+            }
             this.targetSlot = slot;
             this.timeTheCopy(disk);
             // The steps are what the page shows and what unlocks it, so they share out the copy's new length.

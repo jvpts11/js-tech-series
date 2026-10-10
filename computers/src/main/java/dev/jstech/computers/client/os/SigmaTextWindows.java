@@ -1075,12 +1075,14 @@ public final class SigmaTextWindows {
     }
 
     private static List<String> wrap(final String text, final int width) {
+        // A box laid out with no width still takes a letter a line, so the loop always moves on.
+        final int step = Math.max(1, width);
         final List<String> lines = new ArrayList<>();
         for (final String paragraph : text.split("\n", -1)) {
             String left = paragraph;
-            while (left.length() > Math.max(1, width)) {
-                lines.add(left.substring(0, width));
-                left = left.substring(width);
+            while (left.length() > step) {
+                lines.add(left.substring(0, step));
+                left = left.substring(step);
             }
             lines.add(left);
         }

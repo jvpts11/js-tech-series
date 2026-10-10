@@ -342,7 +342,7 @@ final class FdiskProcess implements ITtyProcess {
         this.stage = Stage.COMMAND;
         final int number = this.draft.size() + 1;
         final long room = this.sizeMb - this.taken();
-        if (room <= 0 || sizeMb > room) {
+        if (room <= 0 || sizeMb < 0 || sizeMb > room) {
             say(out, OUT_OF_RANGE.text(), Text.EMPTY);
             return;
         }
@@ -444,16 +444,24 @@ final class FdiskProcess implements ITtyProcess {
         return CliLine.build().plain(asked).plain(" ").done();
     }
 
-    /** A size as a person writes it at the last question: {@code +512M}, {@code +1G}, or nothing for the rest. */
+    /**
+     * A size as a person writes it at the last question: {@code +512M}, {@code +1G}, or nothing for the rest; -1 for
+     * one too large to be any disk's, which the question then refuses as out of range.
+     */
     private static int megabytesOf(final String written) {
         final String digits = written.replaceAll("[^0-9]", "");
         if (digits.isEmpty()) {
             return 0;
         }
-        final int value = Integer.parseInt(digits);
+        // Nine digits are past any disk already, and still short of what a long holds once a unit multiplies them.
+        if (digits.length() > 9) {
+            return -1;
+        }
+        final long value = Long.parseLong(digits);
         final char unit = Character.toUpperCase(written.charAt(written.length() - 1));
-        return unit == 'G' ? value * 1024 : unit == 'T' ? value * 1024 * 1024
-                : unit == 'K' ? Math.max(1, value / 1024) : value;
+        final long megabytes = unit == 'G' ? value * 1024L : unit == 'T' ? value * 1024L * 1024L
+                : unit == 'K' ? Math.max(1L, value / 1024L) : value;
+        return megabytes > Integer.MAX_VALUE ? -1 : (int) megabytes;
     }
 
     private static int numberOf(final String written) {

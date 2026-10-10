@@ -323,6 +323,11 @@ public final class Lexer {
         final int escapeLine = this.line;
         final int escapeColumn = this.column;
         this.advance();
+        // A backslash that is the last thing in the file escapes nothing; reading on would step past the text's end.
+        if (this.index >= this.source.length()) {
+            this.diagnostics.error(escapeLine, escapeColumn, SigmaError.UNTERMINATED_STRING);
+            return '\0';
+        }
         final char c = this.advance();
         switch (c) {
             case 'n':

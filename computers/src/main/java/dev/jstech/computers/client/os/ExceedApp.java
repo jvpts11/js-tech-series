@@ -229,6 +229,16 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         if (target == null || target.isEmpty()) {
             return;
         }
+        // Opening replaces the whole sheet, so cells not yet saved are only thrown away when the player says so.
+        if (this.dirty) {
+            ActiveDesktop.ask(GameText.resolve(ExceedTexts.OPEN_SHEET),
+                    GameText.resolve(ExceedTexts.DISCARD_CHANGES.with(leaf(target))), () -> request(target));
+            return;
+        }
+        request(target);
+    }
+
+    private void request(final String target) {
         CodeFileReplies.expectContent(this, target);
         PacketDistributor.sendToServer(new RequestFileContentPayload(host, target));
     }

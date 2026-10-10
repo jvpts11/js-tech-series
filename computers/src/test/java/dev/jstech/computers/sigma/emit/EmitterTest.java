@@ -211,6 +211,31 @@ class EmitterTest {
     }
 
     @Test
+    void emit_keepsAVariableALambdaReadsOnlyInsideAStringHole() {
+        // Read only through ${...}, the variable was left in a slot of the lambda's own frame, which holds nothing.
+        final String listing = compile("delegate string Label(string t);\n", """
+                    void Use(Label l) { }
+                    void M() { int count = 3; Use((t) => $"{t}: {count}"); }
+                """);
+        assertTrue(listing.contains(".class 0closure1"), listing);
+        assertTrue(listing.contains(".field int count"), listing);
+        assertTrue(bodyOf(listing, "0lambda1").contains("ldfld 0closure1.count"), listing);
+    }
+
+    @Test
+    void emit_disposingAFieldClearsTheFieldOfTheObjectThatHoldsIt() {
+        final String listing = compile("class Box { }\n", """
+                    Box held = new Box();
+                    void M() { dispose held; }
+                """);
+        // What the null is stored into is this object, not the box the field held.
+        final List<String> body = bodyOf(listing, "M");
+        final int store = body.indexOf("stfld held");
+        assertTrue(store >= 2 && body.get(store - 1).equals("ldnull") && body.get(store - 2).equals("ldthis"),
+                "the holder goes on the stack, then the null, then the store; got " + body);
+    }
+
+    @Test
     void emit_letsALambdaReachBothWhatItKeptAndTheObjectItWasWrittenIn() {
         final String listing = compile("delegate int Count(string t);\n", """
                     int threshold = 5;

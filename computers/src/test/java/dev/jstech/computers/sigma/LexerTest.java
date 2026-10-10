@@ -36,6 +36,14 @@ class LexerTest {
     }
 
     @Test
+    void tokenize_anInterpolatedStringEndingInABackslashAtTheEndOfTheFile_isUnterminated() {
+        // The backslash escapes nothing; reading on stepped past the end of the text and threw.
+        final List<Token> tokens = this.scan("$\"abc\\");
+        assertEquals(TokenKind.END_OF_FILE, tokens.getLast().kind());
+        assertFalse(this.bag.sorted().isEmpty(), "and the file is said to have a string that never ends");
+    }
+
+    @Test
     void tokenize_alwaysEndsWithEndOfFile() {
         assertEquals(List.of(TokenKind.END_OF_FILE), kinds(this.scan("")));
         assertEquals(TokenKind.END_OF_FILE, this.scan("class C { }").getLast().kind());

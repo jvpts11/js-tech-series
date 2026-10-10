@@ -179,18 +179,22 @@ public final class FileTransferPayloads {
      */
     private static void handleMoveFile(final MoveFilePayload payload, final ServerPlayer player,
                                        final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
+        move(level, player, payload.hostPos(), payload.srcPath(), payload.destDir());
+    }
+
+    /** Moves a file on the computer at {@code host}, for {@code player}, as a cut and paste in its window does. */
+    public static void move(final ServerLevel level, final ServerPlayer player, final BlockPos host,
+                            final String src, final String destDir) {
+        if (!(level.getBlockEntity(host) instanceof IOsHost computer)) {
             return;
         }
-        final String src = payload.srcPath();
-        final String destDir = payload.destDir();
         if (volumeKey(src).equals(volumeKey(destDir)) || src.startsWith(NET_ROOT) || destDir.startsWith(NET_ROOT)) {
-            moveNow(level, payload.hostPos(), src, destDir);
+            moveNow(level, host, src, destDir);
             return;
         }
         final FileCopyJobs.Copy move = CopyPlans.plan(level, computer, CopyProgressPayload.MOVE, src, destDir);
-        FileCopyJobs.start(level, payload.hostPos(), player, move, CopyTiming.ticks(move.sizeMb(),
-                move.mbPerSecond()), () -> moveNow(level, payload.hostPos(), src, destDir));
+        FileCopyJobs.start(level, host, player, move, CopyTiming.ticks(move.sizeMb(), move.mbPerSecond()),
+                () -> moveNow(level, host, src, destDir));
     }
 
     private static void moveNow(final ServerLevel level, final BlockPos host, final String src,
@@ -246,6 +250,10 @@ public final class FileTransferPayloads {
                 ? FilesystemKind.HIERARCHICAL
                 : filesystemKindOf(computer);
         final String destPath = realDstDir.isEmpty() ? name : realDstDir + "/" + name;
+        // A write replaces a file of the same name, and the source is deleted after it, so a clash is not moved.
+        if (DiskFilesystem.exists(dstVol, destPath)) {
+            return;
+        }
         final long free = dstMedia ? mediaFreeWeight(dstVol) : computer.systemDiskFreeWeight();
         if (DiskFilesystem.write(
                 dstVol, destPath, type, read.get(), free, dstKind, level.getGameTime())

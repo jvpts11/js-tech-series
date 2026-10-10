@@ -346,6 +346,17 @@ class InstallerFlowTest {
     }
 
     @Test
+    void select_anotherDiskAfterConfirmingAnErase_takesTheEraseBack() {
+        final InstallerFlow flow = frames11(List.of(EMPTY_500, FULL_WITH_UBUNTU));
+        flow.askErase(FULL_WITH_UBUNTU.slot());
+        flow.confirmErase();
+        assertEquals(FULL_WITH_UBUNTU.slot(), flow.eraseSlot());
+        flow.select(EMPTY_500.slot());
+        assertEquals(InstallerFlow.NO_DISK, flow.eraseSlot(),
+                "the erase was agreed to for the disk chosen then, not for the one installed onto now");
+    }
+
+    @Test
     void restored_carriesThePortsMirrorCronAndSshdAnswersThrough() {
         final InstallerFlow flow = InstallerFlow.restored(InstallerStyle.BSD_INSTALL, "jsc:freebsd", "FreeBSD",
                 2_048, 100, List.of(EMPTY_500), List.of(GNOME), "CORE", 0, 0, "desk", "", InstallerFlow.NO_DISK,

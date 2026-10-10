@@ -123,6 +123,17 @@ class ObjectMakingTest {
     }
 
     @Test
+    void newArray_pastTheBudget_haltsBeforeTheArrayIsMade() {
+        // Made first, an array of two billion places ran the game itself out of memory, which no program is told.
+        final ObjectMaking objects = objects(process());
+        final Frame frame = frame();
+
+        frame.push(Integer.MAX_VALUE);
+        final Halt halt = assertThrows(Halt.class, () -> objects.newArray(frame, new IOperand.Type("int"), 1));
+        assertEquals(Halt.Reason.OUT_OF_MEMORY, halt.reason());
+    }
+
+    @Test
     void storeThenLoadElement_writesAndReadsAPlace() {
         final ObjectMaking objects = objects(process());
         final Frame frame = frame();

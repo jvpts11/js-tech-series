@@ -192,6 +192,50 @@ public final class ShellPipelineGameTests {
                 .thenSucceed();
     }
 
+    /** touch makes a file that is not there and leaves one that is as it was, where it used to empty it. */
+    @GameTest(template = ARENA)
+    public static void touch_leavesWhatAFileHoldsAlone(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    file(helper, computer, "notes.txt", NOTES);
+                    shell(helper, computer, "touch notes.txt");
+                    final List<String> kept = shell(helper, computer, "cat notes.txt");
+                    helper.assertTrue(says(kept, "oak log"), "the file still holds what it did; got " + kept);
+                    shell(helper, computer, "touch fresh.txt");
+                    helper.assertTrue(says(shell(helper, computer, "ls"), "fresh.txt"), "and a new one is made");
+                })
+                .thenSucceed();
+    }
+
+    /** A file named from the root is read by the text tools, where a slash read as a DOS switch dropped it. */
+    @GameTest(template = ARENA)
+    public static void grep_readsAFileNamedFromTheRoot(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    file(helper, computer, "notes.txt", NOTES);
+                    final String here = shell(helper, computer, "pwd").get(0).strip();
+                    final List<String> found = shell(helper, computer, "grep oak " + here + "/notes.txt");
+                    helper.assertTrue(says(found, "oak log"), "grep read the file by its whole path; got " + found);
+                })
+                .thenSucceed();
+    }
+
+    /** An arrow in quotes is something to look for, not somewhere to write. */
+    @GameTest(template = ARENA)
+    public static void aQuotedArrow_isAWordForTheCommand(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    file(helper, computer, "notes.txt", NOTES);
+                    shell(helper, computer, "grep \">\" notes.txt");
+                    final List<String> kept = shell(helper, computer, "cat notes.txt");
+                    helper.assertTrue(says(kept, "oak log"), "notes.txt was searched, not written over; got " + kept);
+                })
+                .thenSucceed();
+    }
+
     private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on,
                                       final String command) {
         final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());

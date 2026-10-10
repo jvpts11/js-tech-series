@@ -222,6 +222,8 @@ final class CaptureFinder {
                 this.walk(inner.block(), depth, found);
                 this.walk(inner.body(), depth, found);
             }
+            // What a string's holes read is read like any other expression, a lambda written in one included.
+            case IExpr.Interpolation written -> Lowerer.holesOf(written).forEach(hole -> this.walk(hole, depth, found));
             default -> { }
         }
     }

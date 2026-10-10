@@ -405,8 +405,11 @@ final class ExpressionWriter {
         }
     }
 
-    /** The same, for a member expression that has not been read as a place: an event has no place. */
-    private void receiverOf(final IExpr target) {
+    /**
+     * The same, for a member expression that has not been read as a place: an event has no place, and a field a
+     * statement writes to names the field, not what holds it.
+     */
+    void receiverOf(final IExpr target) {
         this.pushHolder(new Place.Held(target instanceof IExpr.Member member ? member.target() : null, null));
     }
 

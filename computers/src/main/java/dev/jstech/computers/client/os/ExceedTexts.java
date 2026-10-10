@@ -34,6 +34,8 @@ final class ExceedTexts {
     static final TextKey ONE_LIVE_CELL = TextKey.of("jsc.exceed.one_live_cell", "%s live cell");
     static final TextKey LIVE_CELLS = TextKey.of("jsc.exceed.live_cells", "%s live cells");
     static final TextKey NEW_SHEET = TextKey.of("jsc.exceed.new_sheet", "New sheet");
+    static final TextKey DISCARD_CHANGES = TextKey.of("jsc.exceed.discard_changes",
+            "This sheet has changes that are not saved. Open %s and lose them?");
     static final TextKey TOO_LARGE_TO_SAVE = TextKey.of("jsc.exceed.too_large_to_save", "Sheet too large to save");
     static final TextKey SAVING = TextKey.of("jsc.exceed.saving", "Saving");
 
