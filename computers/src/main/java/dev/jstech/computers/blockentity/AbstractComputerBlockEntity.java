@@ -995,9 +995,6 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     /**
-     * Returns {@code true} when a bootable system disk is present in the hardware inventory.
-     */
-    /**
      * The desktop environment this computer boots into: the OS's bundled one (the Frames editions), else the
      * first desktop-environment package installed on it (a Linux distribution after {@code apt install gnome}),
      * else null (a TTY-only or network OS).
@@ -1462,27 +1459,6 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         setChanged();
     }
 
-    /**
-     * Whether the program on another machine that started one of this machine's programs is still there
-     * to read what it left.
-     *
-     * <p>It is only asked about a program that has finished and was started from elsewhere, so an ordinary
-     * tick never looks. A machine whose chunk is not loaded is not known to be gone: its programs come back
-     * with it, so what was started for them is kept until it can be asked.
-     */
-
-    /**
-     * Tells the program on another machine that started one of this machine's programs that the program has ended, so
-     * a wait on it runs again at once. A machine that is not loaded is not told: its programs look again when they
-     * come back.
-     */
-
-    /**
-     * Hands the programs on this machine whatever the ComputerCraft computers said through its Gateways.
-     *
-     * <p>A message waits on the Gateway until this tick and no longer: whoever is listening hears it now,
-     * and a machine where no program listens simply lets it go.
-     */
     /** Says a Gateway linked to this machine has something waiting for its programs. */
     public void gatewayMailWaits() {
         host.gatewayMailWaits();

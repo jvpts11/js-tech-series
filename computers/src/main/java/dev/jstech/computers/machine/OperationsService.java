@@ -143,7 +143,6 @@ public final class OperationsService {
         this.network = network;
     }
 
-    /** Whether the machine is on a network at all. */
     /** Credits whoever works this machine with a program of theirs having set an Operation going. */
     public void creditProgram() {
         if (this.terminal instanceof BlockEntity machine) {
@@ -151,6 +150,7 @@ public final class OperationsService {
         }
     }
 
+    /** Whether the machine is on a network at all. */
     public boolean onNetwork() {
         return this.network.onNetwork();
     }

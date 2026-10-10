@@ -115,12 +115,6 @@ public final class ComputerAccess {
     }
 
     /**
-     * At a screen of that machine: its desktop, its command prompt or its network terminal.
-     *
-     * <p>Which of the three does not matter to the machine, since each is the same player at the same machine through
-     * a menu the server opened, and a program can be opened in more than one of them.
-     */
-    /**
      * Near enough to see the place a payload names, {@code reach} blocks at most: a monitor's face in the world, which
      * anybody in sight of it may ask after, the way it is drawn for anybody in sight of it.
      */
@@ -128,6 +122,12 @@ public final class ComputerAccess {
         return (player, payload) -> player.distanceToSqr(Vec3.atCenterOf(place.apply(payload))) <= reach * reach;
     }
 
+    /**
+     * At a screen of that machine: its desktop, its command prompt or its network terminal.
+     *
+     * <p>Which of the three does not matter to the machine, since each is the same player at the same machine through
+     * a menu the server opened, and a program can be opened in more than one of them.
+     */
     public static <P> IPayloadGate<P> machine(final Function<P, BlockPos> host) {
         return (player, payload) -> {
             final BlockPos shown = shownBy(player.containerMenu);

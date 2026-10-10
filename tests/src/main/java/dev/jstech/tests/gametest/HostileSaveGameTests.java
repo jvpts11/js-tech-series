@@ -417,7 +417,6 @@ public final class HostileSaveGameTests {
                 .thenSucceed();
     }
 
-    /** Writes the machine to its block entity's tag and reads it back in place, the way a chunk comes back. */
     /**
      * What a Gateway spent on a machine's behalf is still owed after the world is saved and loaded, so the machine's
      * next ticks still pay it back. The save used to forget it.
@@ -433,6 +432,7 @@ public final class HostileSaveGameTests {
         helper.succeed();
     }
 
+    /** Writes the machine to its block entity's tag and reads it back in place, the way a chunk comes back. */
     private static void reload(final GameTestHelper helper, final BlockEntity machine) {
         final var registries = helper.getLevel().registryAccess();
         final CompoundTag saved = machine.saveWithFullMetadata(registries);

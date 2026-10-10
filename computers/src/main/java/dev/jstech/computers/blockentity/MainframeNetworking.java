@@ -318,7 +318,6 @@ final class MainframeNetworking {
         unregister(system);
     }
 
-    /** Takes this Mainframe off the network's register, for a caller tearing the machine down itself. */
     /** Takes this Mainframe off the network, and off every way through it: it is switched off, broken or unloaded. */
     void unregisterFrom(final NetworkSystem system) {
         unregister(system);

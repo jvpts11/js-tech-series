@@ -190,11 +190,8 @@ public final class OsFilesystemGameTests {
                 .thenSucceed();
     }
 
-    // Task 5: DiskFilesystem API tests
+    // DiskFilesystem
 
-    /**
-     * A write followed by a read must return the same content (FLAT filesystem).
-     */
     /**
      * A file never takes the name of a folder, whether the folder was made on its own or exists because files
      * sit in it. Writing, renaming or copying onto one used to leave a file and a folder of the same name.
@@ -219,6 +216,7 @@ public final class OsFilesystemGameTests {
         helper.succeed();
     }
 
+    /** A write followed by a read must return the same content (FLAT filesystem). */
     @GameTest(template = ARENA)
     public static void fs_writeThenReadRoundTrips(final GameTestHelper helper) {
         final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
@@ -283,7 +281,7 @@ public final class OsFilesystemGameTests {
                 .thenSucceed();
     }
 
-    // Task 6: StorageProjection tests
+    // StorageProjection
 
     /**
      * A disk whose storage volume holds two StorageKeys must surface two read-only .dat entries in

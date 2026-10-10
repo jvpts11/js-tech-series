@@ -12,6 +12,6 @@ import dev.jstech.core.network.NetworkCategory;
 /**
  * Contract for a {@link NetworkCategory#B Category B} node that can be INSPECTED (read-only) by the network.
  */
-public interface IMonitorable extends INetworkNodeCapability{
-    // Phase 1+: MonitorableSnapshot snapshot();
+public interface IMonitorable extends INetworkNodeCapability {
+    // What a node reports is still to come: a snapshot of its state the network can read.
 }

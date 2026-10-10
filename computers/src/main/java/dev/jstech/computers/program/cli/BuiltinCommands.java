@@ -25,7 +25,6 @@ public final class BuiltinCommands {
     private BuiltinCommands() {
     }
 
-    /** Every built-in command, in the order they appear in {@code help}. */
     /** The DOS-only verbs: everything else in {@link #all()} is shared with the POSIX shell. */
     private static final Set<String> DOS_ONLY = Set.of(
             "cls", "dir", "cd", "type", "del", "write", "run", "mkdir", "rmdir", "copy", "move", "ren",
@@ -60,6 +59,7 @@ public final class BuiltinCommands {
         return out;
     }
 
+    /** Every built-in command, in the order they appear in {@code help}. */
     public static List<ICliCommand> all() {
         final List<ICliCommand> out = new ArrayList<>(base());
         /*

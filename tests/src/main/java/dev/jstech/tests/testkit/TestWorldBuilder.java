@@ -78,11 +78,6 @@ public final class TestWorldBuilder extends ScenarioBuilder {
     // Hardware builds
 
     /**
-     * Installs the minimal valid Mainframe build: board, CPU, RAM, PSU, a disk large enough for the Network
-     * OS footprint, and the Network OS itself so Operations get dispatched. A valid build never powers on by
-     * itself; callers toggle power when they want the machine running.
-     */
-    /**
      * Runs whatever {@code host} is setting up to its end, tick by tick, the way waiting would.
      *
      * <p>A setup takes seconds of game time so a player sees it; a test that only cares what the
@@ -96,6 +91,11 @@ public final class TestWorldBuilder extends ScenarioBuilder {
         }
     }
 
+    /**
+     * Installs the minimal valid Mainframe build: board, CPU, RAM, PSU, a disk large enough for the Network
+     * OS footprint, and the Network OS itself so Operations get dispatched. A valid build never powers on by
+     * itself; callers toggle power when they want the machine running.
+     */
     public static void installMainframeBuild(final MainframeBlockEntity be) {
         /*
          * The Network OS is 8 MB, one item of a 500 GB HDD's 2 000 at 256 MB the item. The disk must be in

@@ -69,7 +69,6 @@ public final class ColumnHeader extends UiComponent {
         return this;
     }
 
-    /** The column whose span holds {@code mx}: the last column that starts at or before it. */
     /**
      * How close to a column's left edge a press has to land to take hold of it. Wide enough to hit with
      * a mouse on a desktop drawn at three quarters, where a pixel here is less than one on the screen.
@@ -119,6 +118,7 @@ public final class ColumnHeader extends UiComponent {
         return was;
     }
 
+    /** The column whose span holds {@code mx}: the last column that starts at or before it. */
     public int columnAt(final double mx) {
         int column = 0;
         for (int i = 0; i < columnX.length && i < labels.size(); i++) {

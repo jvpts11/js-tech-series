@@ -68,14 +68,14 @@ public final class PlayingCards {
         suit(g, card.suit(), x + (WIDTH - 7) / 2, y + HEIGHT - 12);
     }
 
+    /** The shortest strip that can still carry a rank, which is the game's own reason to stack this close. */
+    public static final int MIN_READABLE_STRIP = 9;
+
     /**
      * A card lying face up but mostly covered by the one below it, as a tableau run is.
      *
      * <p>Only the top strip shows, so it carries the rank and the small suit and nothing else.
      */
-    /** The shortest strip that can still carry a rank, which is the game's own reason to stack this close. */
-    public static final int MIN_READABLE_STRIP = 9;
-
     public static void faceStrip(final GuiGraphics g, final Font font, final int x, final int y,
                                  final int visible, final SolitaireGame.Card card) {
         final int h = Math.max(3, visible);

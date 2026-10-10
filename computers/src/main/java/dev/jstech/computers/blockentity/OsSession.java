@@ -351,16 +351,16 @@ final class OsSession {
         return OsDisks.systemDiskFreeWeight(disk) * diskEra(disk).mbPerItem() / StorageKey.MB_EQ_PER_ITEM;
     }
 
-    /**
-     * Installs {@code osId} onto disk slot {@code preferredSlot}, or (-1) onto the default target: a slot
-     * already carrying this system (so a re-install is idempotent), else the first disk without one, else the
-     * first disk. False when the system is unknown, no disk is present, or the footprint does not fit.
-     */
     /** Whether that system could go on that disk, asked before a copy starts rather than after it ends. */
     boolean canTakeOs(final ResourceLocation osId, final int preferredSlot) {
         return OsDisks.roomFor(this.machine.layout().diskCount(), this::diskInSlot, osId, preferredSlot);
     }
 
+    /**
+     * Installs {@code osId} onto disk slot {@code preferredSlot}, or (-1) onto the default target: a slot
+     * already carrying this system (so a re-install is idempotent), else the first disk without one, else the
+     * first disk. False when the system is unknown, no disk is present, or the footprint does not fit.
+     */
     boolean installOs(final ResourceLocation osId, final int preferredSlot) {
         /*
          * Writing back through setStackInSlot makes onContentsChanged fire (setChanged + build

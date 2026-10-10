@@ -2250,7 +2250,6 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     // actions
 
-    /** Opens a row: a folder navigates; an installer's setup runs; a text file opens in the Editor. */
     /** Opens the entry called {@code name} the way a double click on it does; false when it is not listed. */
     public boolean open(final String name) {
         for (final Row r : rows) {
@@ -2262,6 +2261,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         return false;
     }
 
+    /** Opens a row: a folder navigates; an installer's setup runs; a text file opens in the Editor. */
     private void open(final Row r) {
         switch (r.kind()) {
             case STORAGE -> go(STORAGE_PLACE);

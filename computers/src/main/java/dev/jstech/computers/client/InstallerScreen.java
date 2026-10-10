@@ -164,7 +164,6 @@ import java.util.List;
 @PaletteHolder
 public final class InstallerScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
-    /** The wash laid over the button under the cursor: enough to read as lit, not enough to change its style. */
     /** The colours the pages draw inside their frame, {@code jsc:installer/page}. */
     private static final Palette<PageColours> PAGE = Palettes.declare(JsComputers.MODID, "installer/page",
             new PageColours(0x30FFFFFF, 0xFFE3E5EE, 0xFFFFFFFF, 0xFF202434, 0xFF000000, 0xFFE3E5EE,

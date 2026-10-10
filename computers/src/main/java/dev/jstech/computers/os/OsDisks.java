@@ -141,13 +141,6 @@ public final class OsDisks {
     }
 
     /**
-     * Installs {@code osId} onto {@code preferredSlot}, or ({@code -1}) onto the default target: a
-     * slot already carrying this OS (an idempotent re-install), else the first disk without a
-     * system, else the first disk. The OS footprint must fit the chosen disk's free weight
-     * (capacity − stored items − files). On success the stamped disk is written back through
-     * {@code setDiskInSlot} so the owner's change hooks fire.
-     */
-    /**
      * Whether that system can go onto that disk at all: the same question {@link #installOs} answers on its way
      * to writing, asked on its own so a machine can refuse before it spends a minute copying rather than after.
      *
@@ -198,6 +191,13 @@ public final class OsDisks {
         return defaultInstallSlot(diskCount, diskInSlot);
     }
 
+    /**
+     * Installs {@code osId} onto {@code preferredSlot}, or ({@code -1}) onto the default target: a
+     * slot already carrying this OS (an idempotent re-install), else the first disk without a
+     * system, else the first disk. The OS footprint must fit the chosen disk's free weight
+     * (capacity − stored items − files). On success the stamped disk is written back through
+     * {@code setDiskInSlot} so the owner's change hooks fire.
+     */
     public static boolean installOs(final int diskCount, final IntFunction<ItemStack> diskInSlot,
                                     final ObjIntConsumer<ItemStack> setDiskInSlot,
                                     final ResourceLocation osId, final int preferredSlot) {

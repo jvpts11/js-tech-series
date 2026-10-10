@@ -35,10 +35,10 @@ public final class SystemLayout {
     /** The directory songs are kept in on a Frames system, made the first time one is brought. */
     public static final String MUSIC_DIR = "Users/Public/Music";
 
-    /** The ordered system directories a full desktop OS provides (parents before children). */
     /** The folder the system itself lives in, named after the system line rather than after somebody else's. */
     public static final String SYSTEM_DIR = "Frames";
 
+    /** The ordered system directories a full desktop OS provides (parents before children). */
     private static final List<String> DESKTOP_DIRECTORIES = List.of(
             "Program Files",
             "Program Files (x86)",

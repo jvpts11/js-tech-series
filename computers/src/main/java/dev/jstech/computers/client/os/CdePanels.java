@@ -60,10 +60,10 @@ final class CdePanels {
     /** The tip on show, or empty while none is. */
     private String shownTip = "";
 
-    /** How long the pointer rests on a control before its name comes up. */
     /** How big a control's picture is made and drawn. */
     private static final int PICTURE = 24;
 
+    /** How long the pointer rests on a control before its name comes up. */
     private static final long TIP_AFTER_MS = 500L;
     private static final int TIP_H = 12;
     private static final int TIP_PAD = 4;

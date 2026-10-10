@@ -223,10 +223,6 @@ public final class AudioClientTests {
     }
 
     /**
-     * The key turns off the last sound heard around the player, never their own footsteps or the screen's clicks,
-     * says which on the action bar, and brings it back when pressed again at once; everything heard is kept as recent.
-     */
-    /**
      * A sound the series started is heard until it is stopped, and stopping it stops it. The game plays what the
      * mixer made of the sound rather than the sound itself, so asking it about the one the series holds used to reach
      * nothing: a stopped sound played on to its end.
@@ -265,6 +261,10 @@ public final class AudioClientTests {
                 .thenWaitUntil(() -> !AudioEngine.voicePlaying("jstests:kept"), 20, "and it stops when it is told");
     }
 
+    /**
+     * The key turns off the last sound heard around the player, never their own footsteps or the screen's clicks,
+     * says which on the action bar, and brings it back when pressed again at once; everything heard is kept as recent.
+     */
     @ClientTest(timeoutTicks = 400)
     public static void key_turnsOffTheLastSoundAroundThePlayerAndBringsItBack(final ClientTestContext ctx) {
         final CapturingAudioSink sink = new CapturingAudioSink();

@@ -163,12 +163,12 @@ public final class CodeArea extends UiComponent {
         return this;
     }
 
-    /** What the compiler said, to show in the margin and under the words. */
     /** What the compiler said that is marked now. */
     public List<Mark> marks() {
         return this.marks;
     }
 
+    /** What the compiler said, to show in the margin and under the words. */
     public CodeArea setMarks(final List<Mark> value) {
         this.marks = value == null ? List.of() : List.copyOf(value);
         return this;
@@ -180,13 +180,13 @@ public final class CodeArea extends UiComponent {
         return this;
     }
 
-    /** Sets how many spaces the Tab key puts down, between two and eight. */
     /** Numbers the rows in the gutter, or leaves only the room for marks there. */
     public CodeArea setNumbered(final boolean value) {
         this.numbered = value;
         return this;
     }
 
+    /** Sets how many spaces the Tab key puts down, between two and eight. */
     public CodeArea setTabSize(final int value) {
         this.tabSize = Math.max(2, Math.min(8, value));
         return this;
