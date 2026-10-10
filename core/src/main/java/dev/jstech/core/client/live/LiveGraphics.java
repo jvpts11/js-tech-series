@@ -65,6 +65,11 @@ public final class LiveGraphics extends GuiGraphics {
         originY += dy;
     }
 
+    /** Texture pixels to each unit drawn in, where the game's window has its own scale. */
+    public int pixelsPerUnit() {
+        return scale;
+    }
+
     @Override
     public int guiWidth() {
         return width;

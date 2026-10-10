@@ -570,8 +570,8 @@ final class SigmaPainter {
         skin.field(g, x, y, SLOT, SLOT, over);
         final ItemStack stack = this.stackOf(item);
         if (!stack.isEmpty()) {
-            g.renderItem(stack, x + 1, y + 1);
-            g.renderItemDecorations(font, stack, x + 1, y + 1, amount > 1 ? String.valueOf(amount) : null);
+            DesktopItems.item(g, stack, x + 1, y + 1);
+            DesktopItems.count(g, font, stack, x + 1, y + 1, amount > 1 ? String.valueOf(amount) : null);
         }
     }
 

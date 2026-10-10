@@ -141,8 +141,8 @@ final class HelpPageView {
                         g.pose().pushPose();
                         g.pose().translate(x + stack.x(), y + stack.y(), 0);
                         g.pose().scale(stack.scale(), stack.scale(), 1.0f);
-                        g.renderItem(stack.stack(), 0, 0);
-                        g.renderItemDecorations(font, stack.stack(), 0, 0);
+                        DesktopItems.item(g, stack.stack(), 0, 0);
+                        DesktopItems.count(g, font, stack.stack(), 0, 0);
                         g.pose().popPose();
                     }
                 }

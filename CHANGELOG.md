@@ -2170,6 +2170,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Items dragged in a desktop window's inventory land in the cell they are let go over, the hotbar's row included.
 - The Network Interactor's Category button keeps its word clear of its arrow, "Nothing on the network." no longer
   fades where the pointer passes, and the Status tab fills the window above the inventory.
+- A chest in a desktop window, in an inventory, a grid or on the pointer, no longer shows a white line down its front
+  corner: an item drawn at the desktop's three-quarter size is laid on the screen's pixels, as at the game's own
+  sizes, so its faces meet without a gap.
 - This PC fits its hardware list's names to the longest of them, keeps a drive's bar clear of the words saying what
   is free, and marks a line it shortens.
 - `pckmgr` and the Unix package managers are there off a network too, and say they cannot reach the Mirror.

@@ -138,8 +138,7 @@ final class InventoryBand {
     void renderCarried(final GuiGraphics g, final int lmx, final int lmy) {
         final ItemStack carried = desktop.carried();
         if (!carried.isEmpty()) {
-            g.renderItem(carried, lmx - 8, lmy - 8);
-            g.renderItemDecorations(desktop.textFont(), carried, lmx - 8, lmy - 8);
+            DesktopItems.carried(g, desktop.textFont(), carried, lmx - 8, lmy - 8);
         }
     }
 

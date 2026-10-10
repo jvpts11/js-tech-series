@@ -534,6 +534,18 @@ public final class NetworkInteractorClientTests {
                         SCREEN_WAIT, "the computer's own storage to give them up",
                         level -> "local=" + TestWorldBuilder.at(level, ctx.origin())
                                 .blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class).localStore().view())
+                // A chest is drawn by its block entity's renderer rather than a baked model; it sits beside a furnace.
+                .thenServer(0, level -> {
+                    ctx.serverPlayer().getInventory().setItem(12, new ItemStack(Items.CHEST));
+                    ctx.serverPlayer().getInventory().setItem(13, new ItemStack(Items.FURNACE));
+                    ctx.give(1, new ItemStack(Items.CHEST));
+                })
+                .thenWaitUntil(() -> ctx.mc().player.getInventory().countItem(Items.CHEST) == 2, SCREEN_WAIT,
+                        "the chests to reach the client's inventory")
+                .then(1, () -> ctx.pointAtDesktop(point(ctx, interactor(ctx).gridCellCenter(0))))
+                .thenScreenshot(2, "inventory-chest")
+                .then(1, () -> ctx.pointAtDesktop(point(ctx, interactor(ctx).inventoryBandSlotCenter(3))))
+                .thenScreenshot(2, "inventory-chest-hovered")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 // Escape drops a selection first, so a second one may be needed to leave the screen.
                 .then(2, () -> {
