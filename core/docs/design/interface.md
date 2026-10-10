@@ -77,6 +77,42 @@ and pie charts (for the machines' statistics); a node graph editor; a 3D viewer 
 view; tank gauges showing the fluid's own texture, and energy bars; ghost slots; rich text with items and images in
 tooltips.
 
+### The camera
+
+In the spirit of SecurityCraft's cameras, the zoom mods and cinematic modes:
+
+- **Zoom with real magnification**: binoculars and J's Space's telescopes with true magnification and field of view,
+  the telescope showing the planets in the sky ([The world](world.md)).
+- **A chase camera** for vehicles and moving structures, which **follows the ship's turn** and rolls with it.
+- **Free look in a cockpit**: the head turns while the vehicle keeps its course.
+- **Cinematic paths**: a camera on keyframes for scenes (a rocket's launch seen from outside), which a mod starts and
+  the player can skip.
+- **Cameras in the world seen on a screen**: a camera block whose picture goes to a monitor, through the screens in the
+  world; security cameras, and what a probe sees.
+- **Seeing from somewhere else**: a periscope, a probe's camera, a robot's or a drone's.
+- **Within the game's means**: views drawn into a texture have their own resolution and rate, and a limit per player.
+
+### Notifications
+
+- **Notifications on the Core's HUD**, instead of the game's toasts, whose way of being drawn changes with every
+  version of the game.
+- **A level** (information, warning, alert), with an icon, a colour from the palette, a sound from the sound kit and a
+  duration.
+- **Grouping**: ten alike warnings become one, with a count.
+- **A history**, opened by a key, of recent notifications.
+- **Actions**: a click opens the right place (the manual's page, the machine on the map).
+- **The player chooses** where they appear, what to silence by kind and by mod, and a "do not disturb" mode.
+
+### Tooltips
+
+In the spirit of Iceberg:
+
+- **Tooltips with pictures, previews of items and of blocks in 3D**, and bars of energy, fluid and durability.
+- **Sections opened with Shift or Ctrl**, so a tooltip is never huge.
+- **A preview of what is inside** items that hold things (a disk, a backpack, a cell).
+- **Lines from different mods kept in a clear order**, with the mod's name at the end.
+- **Everything translatable and painted from the palettes**, as the rest of the Core.
+
 ### Accessibility
 
 - **Every control reached by keyboard**, in a focus order, and by game controllers (Controlify).
@@ -89,6 +125,35 @@ tooltips.
 - **World screens that can be touched**: a click on a monitor in the world and it answers. J's Computers' mirrored
   monitor becomes one use of the kit.
 - **A HUD the player arranges**: an editor to move and hide the HUD elements of every mod.
+
+### The sound kit
+
+The sound kit gathers what Sound Physics Remastered, Dynamic Surroundings, AmbientSounds and Presence Footsteps do, in
+one place, for any mod.
+
+- **Reverberation by the space**, worked out from the surroundings, their size and their materials: caves echo, the open
+  air is dry; sealed rooms give each room's exact volume ([Sealed rooms](sealed-rooms.md)).
+- **Absorption by material**: wool muffles, metal carries; **the air takes away the high notes with distance**, so a far
+  sound arrives muffled.
+- **The medium counts**: **in a vacuum there is no sound**, only what is touched, and inside a suit the breathing and
+  the radio; under water everything is muffled; in thin air, as on Mars, sounds are weaker.
+- **The speed of sound**: the flash of a far explosion is seen first, and the boom arrives after.
+- **The Doppler effect** on what moves: vehicles, rockets, shots.
+- **Big sounds heard far away**: the roar of a launch kilometres off, with a low rumble.
+- **Sound by material**: footsteps and impacts by the material of each block and entity (a chest creaks, stone is
+  rough), as data a resource pack can change.
+- **Ambience**: soundscapes by biome, weather, time, dimension, indoors or out, depth, and by what is near (a forest,
+  water, **the hum of a factory**).
+- **Music that follows the moment**: layered tracks that come and go with the context (exploring space, stepping onto a
+  new world), in sets per mod, under the game's music volume.
+- **Sound through devices**: a sound played through another place, such as radios, intercoms and a helmet's radio.
+- **Simple Voice Chat follows the same physics**, through a guarded adapter: voices are muffled by walls, and **in a
+  vacuum players hear each other only by radio**.
+- **Ringing ears**: after a close explosion everything is muffled and rings for a few seconds; ear protection prevents
+  it; a setting turns it off.
+- **Visual signs with a direction** for the sounds that matter, besides the alerts.
+- **Worked out in the background** and cached by position, so it never weighs on the game.
+- **A debugging overlay**: sound sources, occlusion rays and the reverberation of each place.
 
 ### Cost and tests
 

@@ -54,6 +54,8 @@ Core's sake: its content is there because other mods need it, and a world with t
 - **Never at the server's cost.** Work runs off the tick where it can, in near-constant time, within budgets.
 - **Explained from zero.** Every promised part has documentation that assumes the reader knows nothing about it, with
   an example that compiles.
+- **Never doing a job twice.** Where an installed mod already does what a system of the Core does, the Core steps
+  aside and hands it its data, unless a game rule of the series depends on the Core's own ([Modpacks](modpacks.md)).
 - **One loader.** The Core is for NeoForge and Java. It does not aim at other loaders or at Kotlin.
 
 ### The pages
@@ -68,16 +70,26 @@ Core's sake: its content is there because other mods need it, and a world with t
 | [Energy](energy.md) | J's Energy, voltage classes, loss, transformers, protection, the converters, the basic battery. |
 | [Cables and lines](cables-and-lines.md) | The cable block, the lines each mod registers, the basic lines, overhead lines. |
 | [Multipart](multipart.md) | Block spaces with many parts, microblocks and facades. |
+| [Conveyors](conveyors.md) | Items on belts, chutes and lifts, worked as they pass. |
+| [Mechanical power](mechanical-power.md) | Rotation in real units: shafts, gears, belts, flywheels, shear pins. |
+| [Heat](heat.md) | Temperature in kelvin, conduction, radiators in a vacuum, boilers, changes of state, thermal views. |
 | [Machines](machines.md) | The machine framework: resources, sides, upgrades, protection, repair, the standard screen. |
 | [Multiblocks](multiblocks.md) | Shapes as data, ports, formed models, variable sizes, the Structure Projector. |
 | [Networks and Operations](networks-and-operations.md) | The data network's model, the Operations framework, point-to-point links. |
+| [Redstone and signals](redstone-and-signals.md) | Sixteen channels in a cable, logic gates and circuits, signals by frequency, every sensor on redstone. |
 | [The world](world.md) | Ores and veins, reservoirs, structures, dimensions and their rules, the physics kit, chunk loading. |
 | [Hazards](hazards.md) | Radiation, contamination, dissonance and pollution. |
+| [Explosions and fire](explosions-and-fire.md) | Blasts through blocks at the speed of sound, fire by material, air and wind, and its classes. |
 | [Sealed rooms](sealed-rooms.md) | Rooms that hold an atmosphere, and the Atmosphere Detector. |
 | [Moving structures](moving-structures.md) | Structures of real blocks that move: rockets, starships, vehicles. |
 | [Entities and vehicles](entities.md) | Vehicles of one piece, robots, creatures, projectiles and worn modules. |
+| [Tools and items](tools-and-items.md) | Tools with modes, mining and building over an area, tools on energy, fuel or air, items that answer keys. |
 | [The interface](interface.md) | Screens, themes, fonts, motion, overlays, keys and sound. |
+| [Models](models.md) | Animated models of the Core's own, from Blockbench, Blender, Maya, 3ds Max and Cinema 4D. |
+| [Lighting and effects](lighting-and-effects.md) | Coloured and dynamic light, bloom, particles, beams, smoke and screen effects. |
 | [Manuals](manuals.md) | The guide framework and the series' Technical Reference. |
+| [Modpacks](modpacks.md) | Everything as data, scripts, unification, tools for packs, and stepping aside for other mods. |
+| [For those who make mods](developers.md) | Capabilities, calls from screens, work off the tick, codecs, errors that teach, inspectors, the Gradle plugin. |
 | [Low level](low-level.md) | Reaching into the game, and native animated models. |
 | [Implementation](implementation.md) | Settings, numbers and files. |
 | [The series](series.md) | Who depends on whom, and what each mod takes from the Core. |

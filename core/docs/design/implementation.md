@@ -1,6 +1,6 @@
 # Implementation
 
-Performance, the Core's settings, and how its state is kept.
+Performance, diagnostics, the Core's settings, and how its state is kept.
 
 ## What exists today
 
@@ -26,6 +26,25 @@ runs off the tick, with its result landing on the main thread.
 - **World generation** is safe across threads and always the same for the same seed.
 - **Large edits and generation in old chunks** are placed within a budget per tick.
 - **Machines tick only when they have something to do.**
+
+### Diagnostics
+
+Profiling is Spark's, which does it very well: the Core doesn't make a profiler of its own, it **names its sections in
+Spark's profiles**, through a guarded adapter, so Spark shows the Core from inside. The timings on the F3 screen stay.
+Besides that, the Core does only what Spark doesn't:
+
+- **Finding what weighs in the world**: a heat map of the cost of each machine, block entity and structure, seen in the
+  world as Observable shows it, and a command that lists the worst, with each one's owner.
+- **Network bandwidth by system**: what each system sends to each player, with a graph and the biggest senders.
+- **A watchdog for stalls**: a section of the Core that takes too long writes its stack and its system's name to the
+  log, once, and warns the server's operators.
+- **Slowing down gracefully**: a system over its budget slows itself (fields spreading more slowly, for one) instead of
+  weighing on the tick, and says so.
+- **`/jstech health`**: the state of the systems (how many networks, rooms and structures, chunks loaded per owner,
+  large edits waiting) and its warnings.
+- **Richer crash reports**: a section of the Core with the state of its systems and what was happening.
+- **A diagnostic bundle**: a command writes the settings, the list of mods, the timings and the state to a file, for a
+  player to attach to a bug report.
 
 ### Settings
 

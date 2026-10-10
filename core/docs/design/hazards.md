@@ -29,6 +29,16 @@ Every kind has its **consequence setting**, so a server can turn it off. The val
 Each kind also says **what treats it** (below) and has **death messages** of its own. Mobs suffer hazards too: animals
 sicken and die in contaminated places.
 
+### Kinds of damage and resistances
+
+- **Kinds of damage** any mod registers: radiation, electrical, cryogenic, acid, heat, blast, pressure, and those a mod
+  brings, each with its **death messages**.
+- **Resistances per worn piece and per kind**, declared by any item, added up clearly and never past 100%.
+- **The tooltip shows** each piece's resistances, and a view shows the total of what is worn.
+- **Mobs have resistances too**, by kind: a robot doesn't suffer radiation, a creature of ice suffers from heat.
+- **One language with the hazards**: the damage of each hazard is of a kind, and the hazard kit's protection and the
+  resistances speak the same language.
+
 ### Hazards of items
 
 An item can carry hazards that act **while someone carries it**, each a kind any mod registers, in the spirit of HBM's

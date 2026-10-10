@@ -111,3 +111,26 @@ The settings kit gathers what YACL, Cloth Config and Config Menus for Forge do, 
 - **On the screen**: undo and redo, and a filter that shows only what was changed; every control reached by keyboard
   and game controller ([The interface](interface.md)).
 - **For code**: a mod is told when a setting changes, to react at once.
+
+### Permissions and protection
+
+The kit gathers what PermNodes, Open Parties and Claims and FTB Chunks do with a library, in one place.
+
+- **Permission nodes for everything the Core does**: commands, opening another's machine, editing settings, using or
+  breaking what has an owner, building multiblocks. They go through NeoForge's permission API, so LuckPerms and FTB
+  Ranks work; without them, the operator levels apply.
+- **The nodes written out**: LuckPerms doesn't find NeoForge mods' nodes by itself, so `/jstech dump permissions`
+  writes the list and a **template group** ready to import.
+- **Everything the Core moves or changes respects claimed land**: robots, machines that break and place blocks, tools
+  working on the move, moving structures (a ship can't fly or crash into another's land to break it), the explosion
+  kit's explosions, fire, fluids and projectiles.
+- **One question, "may this actor do this here?"**, which every mod asks the Core, with adapters for FTB Chunks, Open
+  Parties and Claims, and the game's spawn protection.
+- **Machines act for their owner**: when a machine acts as a player, claims and permissions weigh **its owner**, never a
+  generic fake player that passes everything or is stopped by everything.
+- **A list of trusted players per thing**, beyond the team, with levels of access: use, set up, break.
+- **An audit log**, optional, of who used, changed or broke what among owned things, with a command to read it, for
+  server administrators.
+- **Limits per player** on robots, moving structures and large edits, besides loaded chunks, so nobody can bring a
+  server down on purpose.
+- **PvP and teams respected**: damage between players follows the server's PvP rule and the teams' friend or foe.

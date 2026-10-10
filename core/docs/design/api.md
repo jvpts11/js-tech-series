@@ -43,12 +43,12 @@ The parts are moved into their place domain by domain, with no big rewrite:
 | In `jstechseries` (the series' own) | Outside it (the platform) |
 | --- | --- |
 | the hardware eras and the industrial tiers | progression axes, milestones, knowledge and the knowledge gate |
-| the data network's model: the Mainframe, the categories, the members, topology elements, data lines by era | the cable block, its lines and grids, overhead lines, lines that group |
+| the data network's model: the Mainframe, the categories, the members, topology elements, data lines by era | the cable block, its lines and grids, overhead lines, lines that group, redstone and signals, conveyors |
 | the Operations framework and its kinds | state and saves, settings, teams and owners, scheduling, the event bus |
 | peripheral links between a computer and its devices; J's Energy, the series' energy, built from the kit | the energy kit: any energy, or FE, made easy (units, classes of line, ports, loss, protection, conversion); states of matter and containment |
 | the series' catalogue: the elements and isotopes as data, the elements beyond 118, the exotic forms, the shared fluids and components | the registries of materials, forms, properties, mineral families and host rocks; naming what is discovered |
-| the shared content: the basic lines, battery and wrench, the saw, the Configuration Card, the FE converters, the Space Persistor, the Atmosphere Detector, the containment blocks, the Structure Projector, the "J's Tech" creative tab | machines, multiblocks, multipart, the world kits, hazards, sealed rooms, moving structures, entities and vehicles |
-| the `/jstech` command root, the series' look (its theme), the Technical Reference | screens, themes, fonts, motion, overlays, sound, the guide framework, low level, testing |
+| the shared content: the basic lines, battery and wrench, the saw, the Configuration Card, the FE converters, the Space Persistor, the Atmosphere Detector, the containment blocks, the Structure Projector, the "J's Tech" creative tab | machines, mechanical power, heat, multiblocks, multipart, the world kits, hazards, explosions and fire, sealed rooms, moving structures, entities and vehicles, tools and items |
+| the `/jstech` command root, the series' look (its theme), the Technical Reference | screens, themes, fonts, motion, overlays, sound, models, lighting and effects, the guide framework, low level, testing, the tools for those who make mods and for modpacks |
 
 What is plainly another mod's leaves the Core: the **programming languages**, which belong with programs, move to J's
 Computers' API.

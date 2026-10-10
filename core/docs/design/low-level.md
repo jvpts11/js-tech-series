@@ -27,11 +27,5 @@ Mainframes, racks, drives and encoders) are drawn with GeckoLib, a required depe
 
 ### Native animated models
 
-GeckoLib is replaced by the Core's own models, as the series' README promises for every required dependency:
-
-- **Animated block, item and entity models**, from Blockbench, with animations driven by the state of what they show (a
-  fan turning faster with the load, a drive's lamp blinking with its work).
-- **Formed multiblocks** become one model of this kind ([Multiblocks](multiblocks.md)).
-- **What a block shows in the world never leaks into its item**, and the other way round: each keeps its own state.
-- **The models and animations J's Computers has today** come across to the new format, so nothing drawn is lost.
-- How the format is written down, and how models come across from Blockbench, is settled when the work starts.
+GeckoLib is replaced by the Core's own models, as the series' README promises for every required dependency. The
+kit has a page of its own: [Models](models.md).

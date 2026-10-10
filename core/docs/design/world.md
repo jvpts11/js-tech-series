@@ -94,6 +94,10 @@ J's Space's ruins, Enigmatic sites and cities come first, then J's Overworld's, 
 - **Landmarks**: unique, named features of a world (Olympus Mons), with a known place, which players discover.
 - **Finding things**: the nearest structure, landmark, biome or vein of a kind, answered with **levels of imprecision**,
   so an instrument can point roughly at first and exactly later.
+- **Markers on maps**: an API of markers and layers, points (structures found, machines, veins found) and areas
+  (satellite coverage, pollution, radiation, claims), shown through guarded adapters in JourneyMap, Xaero's Minimap and
+  World Map, and FTB Chunks; with no map mod, in the maps mods on the Core have, such as J's Space's Atlas; each player
+  sees what they found, and a team what it shares.
 
 ### Dimension rules by altitude
 
@@ -144,6 +148,21 @@ Where the laws depart from the normal ones, **dissonance** builds up ([Hazards](
 A player goes from one dimension to another **with what they ride**, a vehicle or a moving structure and everyone in
 it, and arrives at a safe place. A mod gives the passage a **screen of its own** instead of the game's "loading
 terrain" (the fire of a re-entry).
+
+### World events
+
+In the spirit of Lodestone's world events:
+
+- **Events on a schedule or by chance**, declared by any mod: a meteor shower, a solar storm (J's Space), an earthquake
+  (J's Geology), a heat wave.
+- **A warning first**: whoever has the right instrument (an observatory, a seismograph, a satellite) is warned ahead,
+  as J's Space's solar storms are.
+- **Effects in step for everyone**, from the sky and the sound to the screen shaking, and what the event does to the
+  world (craters, radiation, cracks), within a budget.
+- **Only where they make sense**: a solar storm strikes whoever is unsheltered in the inner Solar System, an earthquake
+  a region.
+- **Commands for operators** to start, delay or cancel an event, and a consequence setting per event.
+- **Read by the network**: J's Computers warns, and can react (putting machines in safety).
 
 ### Fields over chunks
 

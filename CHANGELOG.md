@@ -166,8 +166,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   module of the closed exo-suits.
 - The design of J's Core, in `core/docs/design`: what the library is (the platform any technology mod needs, the model
   the series' mods share, and the content several of them need as one), and one page per subject, from the platform,
-  progression, the API, materials, states of matter and energy to cables, multipart, machines, multiblocks, networks,
-  the world, hazards, sealed rooms, moving structures, entities, the interface, manuals and the low level; each page
+  progression, the API, materials, states of matter and energy to cables, redstone, multipart, conveyors, machines,
+  mechanical power, heat, multiblocks, networks, the world, hazards, explosions and fire, sealed rooms, moving
+  structures, entities, tools, the interface, models, lighting and effects, manuals, modpacks, the tools for those who
+  make mods and the low level; each page
   says what is built, links to the programmers' documentation, and ends with what is designed and still to be built,
   and the first page gives the order of building. J's Computers' design follows it: its programming languages move to
   its own API, and its numbers to its own settings file. The Core's README now says what the library holds and links
