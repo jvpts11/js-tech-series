@@ -442,6 +442,14 @@ interface DesktopInspection {
         return desktop().power().isOpen();
     }
 
+    /**
+     * Whether the power dialog is up and has been drawn. A loaded client can run several ticks between frames, and
+     * the dialog learns where its buttons stand only when it is drawn, so a click waits for this.
+     */
+    default boolean powerDialogShown() {
+        return desktop().power().shown();
+    }
+
     /** Screen position of a button of CDE's Exit dialog, by the numbers {@link CdeExitLayout} gives them. */
     default int[] exitDialogPoint(final int button) {
         final DesktopViewport view = desktop().view();

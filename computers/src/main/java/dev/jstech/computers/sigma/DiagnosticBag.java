@@ -72,7 +72,6 @@ public final class DiagnosticBag {
                 Arrays.stream(arguments).map(argument -> Text.of(argument).english()).toList()));
     }
 
-    /** Whether anything recorded here stops the compilation. */
     /** Whether none of these is an error, which is when what they came from can go on to the next stage. */
     public static boolean noErrors(final List<Diagnostic> diagnostics) {
         return diagnostics.stream().noneMatch(Diagnostic::isError);
@@ -90,6 +89,7 @@ public final class DiagnosticBag {
         return lines;
     }
 
+    /** Whether anything recorded here stops the compilation. */
     public boolean hasErrors() {
         return this.diagnostics.stream().anyMatch(Diagnostic::isError);
     }

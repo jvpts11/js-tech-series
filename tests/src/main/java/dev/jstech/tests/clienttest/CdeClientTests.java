@@ -293,7 +293,7 @@ public final class CdeClientTests {
                 .thenWaitUntil(() -> desktop(ctx).shownWindowLabels().contains("File Manager"), SCREEN_WAIT,
                         "the File Manager to open")
                 .then(SETTLE, () -> clickAt(ctx, desktop(ctx).exitPoint()))
-                .thenWaitUntil(() -> desktop(ctx).powerDialogOpen(), SCREEN_WAIT, "EXIT to ask")
+                .thenWaitUntil(() -> desktop(ctx).powerDialogShown(), SCREEN_WAIT, "EXIT to ask")
                 .thenScreenshot(SETTLE, "cde-exit")
                 .then(SETTLE, () -> clickAt(ctx, aboveTheExitButtons(ctx)))
                 .thenAssert(SETTLE, () -> desktop(ctx).powerDialogOpen(),
@@ -312,7 +312,7 @@ public final class CdeClientTests {
     public static void exit_shutDownSaysGoodbyeBeforeTheMachineGoesDark(final ClientTestContext ctx) {
         atCde(ctx)
                 .then(SETTLE, () -> clickAt(ctx, desktop(ctx).exitPoint()))
-                .thenWaitUntil(() -> desktop(ctx).powerDialogOpen(), SCREEN_WAIT, "EXIT to ask")
+                .thenWaitUntil(() -> desktop(ctx).powerDialogShown(), SCREEN_WAIT, "EXIT to ask")
                 .then(SETTLE, () -> clickAt(ctx, desktop(ctx).exitDialogPoint(CdeExitLayout.SHUT_DOWN)))
                 .thenAwaitScreen(SystemBootScreen.class, SCREEN_WAIT)
                 .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(MACHINE)) instanceof MainframeBlockEntity m

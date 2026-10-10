@@ -153,10 +153,10 @@ public final class CraftingChainClientTests {
                 .thenWaitUntil(() -> studio(ctx).timeoutFieldShown(), SCREEN_WAIT,
                         "the machine draft's timeout field to be drawn")
                 .then(0, () -> ctx.clickDesktop(studioPoint(ctx, studio(ctx).timeoutFieldCenter())))
+                // The click puts the caret where it lands, so the whole text is selected before it is replaced.
                 .then(1, () -> {
-                    for (int i = 0; i < 6; i++) {
-                        ctx.key(GLFW.GLFW_KEY_BACKSPACE);
-                    }
+                    ctx.key(GLFW.GLFW_KEY_A, GLFW.GLFW_MOD_CONTROL);
+                    ctx.key(GLFW.GLFW_KEY_BACKSPACE);
                     ctx.type("600");
                     ctx.key(GLFW.GLFW_KEY_ENTER);
                 })

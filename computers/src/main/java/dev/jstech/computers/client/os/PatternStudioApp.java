@@ -844,7 +844,6 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     // rail
 
-    /** A flat list of the rail's file rows: drive headers and files, for drawing and clicking. */
     /**
      * A cell the last frame drew, as a desktop-local rectangle with what a dropped item does there:
      * {@code kind} 0 is a bench cell, 1 a machine input, 2 a machine output; {@code index} the cell.
@@ -855,6 +854,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
     private record FileRow(String driveKey, String label, boolean header, String file) {
     }
 
+    /** A flat list of the rail's file rows: drive headers and files, for drawing and clicking. */
     private List<FileRow> fileRows() {
         return fileRows;
     }

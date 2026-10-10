@@ -36,6 +36,8 @@ final class PowerDialog {
     /* The desktop surface the dialog was centred on, so a click lands where it was drawn. */
     private int surfaceW;
     private int surfaceH;
+    /* Whether a frame has drawn the dialog since it opened; until then a click has nowhere to land. */
+    private boolean drawn;
 
     private static final int POWER_W = 190;
     private static final int ROW_H = 20;
@@ -52,6 +54,7 @@ final class PowerDialog {
 
     void open() {
         this.open = true;
+        this.drawn = false;
         this.dimming = desktop.motion().start(MotionKinds.DIM);
     }
 
@@ -61,6 +64,11 @@ final class PowerDialog {
 
     boolean isOpen() {
         return open;
+    }
+
+    /** Whether the dialog is up and a frame has drawn it, so its buttons stand where a click looks for them. */
+    boolean shown() {
+        return open && drawn;
     }
 
     /** How grey the desktop behind the dialog has gone, from 0 to 1, on a system that greys it; 0 on any other. */
@@ -79,6 +87,7 @@ final class PowerDialog {
         }
         this.surfaceW = surfaceW;
         this.surfaceH = surfaceH;
+        this.drawn = true;
         final Font font = desktop.textFont();
         if (desktop.panelStyle() == PanelStyle.CDE) {
             CdeExitDialog.render(g, font, surfaceW, surfaceH, desktop.wm().openPrograms(),

@@ -415,9 +415,12 @@ public final class NetworkInteractorClientTests {
                     ctx.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofMultiStage(line)) != null,
                             "the pipeline goes into the interface");
                 })
-                .thenServer(SETTLE, level -> ctx.assertTrue(TestWorldBuilder.at(level, ctx.origin())
+                // Waited for rather than read after a fixed delay: a loaded server can run behind the client's ticks.
+                .thenWaitUntilServer(level -> TestWorldBuilder.at(level, ctx.origin())
                                 .blockEntity(MAINFRAME, MainframeBlockEntity.class).recipesFor(StorageKey.of(Items.IRON_INGOT)).size() == 2,
-                        "the Mainframe lists both recipes for the ingot"))
+                        BOOT_WAIT, "the Mainframe to list both recipes for the ingot",
+                        level -> "recipes=" + TestWorldBuilder.at(level, ctx.origin())
+                                .blockEntity(MAINFRAME, MainframeBlockEntity.class).recipesFor(StorageKey.of(Items.IRON_INGOT)).size())
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
                 .thenRightClick(SETTLE, MONITOR)
                 .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
