@@ -131,6 +131,11 @@ integrations are decided when there is a concrete reason, always behind a guard.
 
 ## To build
 
+**J's Computers' numbers leave J's Core's file.** The disks' latency, the Subframe's share and the time programs may
+spend move from `jstech-balance.toml` to `jscomputers-server.toml`; the Operations framework's keys (how long an
+Operation waits, how it climbs in priority, how long a saved one may wait) stay in J's Core's file, which every mod of
+the series reads.
+
 The keys of the systems still to build, which come with them:
 
 ```toml

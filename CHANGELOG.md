@@ -164,6 +164,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   telemetry line, the Enigmatic hardware and networks across worlds; J's Core's basic cable, pipes and battery, which
   any mod uses on its own, and its containment of exotic matter; the dead stars that give exotic matter, and the space
   module of the closed exo-suits.
+- The design of J's Core, in `core/docs/design`: what the library is (the platform any technology mod needs, the model
+  the series' mods share, and the content several of them need as one), and one page per subject, from the platform,
+  progression, the API, materials, states of matter and energy to cables, multipart, machines, multiblocks, networks,
+  the world, hazards, sealed rooms, moving structures, entities, the interface, manuals and the low level; each page
+  says what is built, links to the programmers' documentation, and ends with what is designed and still to be built,
+  and the first page gives the order of building. J's Computers' design follows it: its programming languages move to
+  its own API, and its numbers to its own settings file. The Core's README now says what the library holds and links
+  to the design.
 - J's Core's settings screen, in its own look: a mod's files and their sections down the left, each setting with a
   switch, a number to type or step, a word to go through or a text to type, Done to keep the changes and Cancel to
   drop them. J's Core and J's Computers open it from the mods list. A world's settings are changed from inside it.

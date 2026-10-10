@@ -63,6 +63,10 @@ A power supply can be declared self-sizing (it never refuses, and its rating is 
 
 ## To build
 
+**The programming languages come home.** They belong with programs, so they leave J's Core's API for J's Computers':
+`ComputersRegisterEvent` takes the languages, and `CoreRegisterEvent` keeps the kinds of Operation, which every mod of
+the series shares.
+
 **Anyone extends J's Computers:** through the API, an add-on also declares **new eras, new hardware and new computers**,
 besides the programs and the rest that are already open.
 

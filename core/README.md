@@ -4,14 +4,17 @@
 
 The shared library of the [J's Tech Series](../README.md), and a general-purpose library for building
 technology mods: the series is built on it, and any mod may use it. Its id is `jscore`, and every mod of the
-series requires it at the same version. It adds nothing to play on its own beyond the materials every mod
-trades and the shared cable block each mod lays its cables in (the series' technical reference is on its way):
-install it because another mod asks for it, or because your own project builds on it (see
+series requires it at the same version. It holds three things: the platform any technology mod needs; the model
+the mods of the series share (the eras, the tiers, the materials, the network and its Operations); and the
+content several mods need as one and the same thing, so that none depends on another (today the materials every
+mod trades, the shared cable block each mod lays its cables in, and the series' Technical Reference). It has no
+game of its own: install it because another mod asks for it, or because your own project builds on it (see
 [Using the Core in your project](#using-the-core-in-your-project)). Everything in it is declared through
 explicit builders.
 
 Every part is explained from zero, with the code that uses it, in the
-[J's Core documentation](docs/README.md).
+[J's Core documentation](docs/README.md); what each part is for, the rules behind it and what is still to come
+are in [its design](docs/design/README.md).
 
 ## What it holds
 

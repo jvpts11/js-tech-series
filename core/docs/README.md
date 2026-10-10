@@ -65,3 +65,10 @@ says what the Core promises and what it does not yet.
   your mod's `ModContent`.
 - The API the series promises to keep is narrower than these pages: see [docs/API.md](../../docs/API.md) and
   [Getting started](GETTING_STARTED.md#what-is-promised-and-what-is-not-yet).
+
+## The design
+
+[The design of J's Core](design/README.md): one page per subject, from the platform, materials and energy to cables,
+machines, multiblocks, the world, hazards, sealed rooms, moving structures and the interface, saying what each part
+is for and the rules behind it, with what is designed and still to be built at the end of each page, and the order in
+which it will be built.
