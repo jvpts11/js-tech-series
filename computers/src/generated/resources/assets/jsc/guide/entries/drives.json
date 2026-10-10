@@ -9,6 +9,10 @@
       "text": "jsc.guide.drives.text2"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.drives.text3"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -18,6 +22,10 @@
         {
           "fix": "jsc.guide.drives.fix1",
           "problem": "jsc.guide.drives.problem1"
+        },
+        {
+          "fix": "jsc.guide.drives.fix2",
+          "problem": "jsc.guide.drives.problem2"
         }
       ]
     }

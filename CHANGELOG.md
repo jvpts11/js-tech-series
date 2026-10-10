@@ -855,8 +855,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Two Pattern Encoders for the new eras: the Transition one, a LightScribe DVD burner in silver and gloss black that
   writes DVDs and CDs, and the Advanced one, a Blu-ray writer in space grey with a white front that writes Blu-ray
   discs and, in its USB-C port, sticks. And the Blu-ray Drive, white all over with its slim tray high on the front,
-  which reads Blu-ray discs and the older DVDs and CDs. Each takes its era's cable on its back, and each opens its
-  tray with the sound the other disc drives make.
+  which reads Blu-ray discs and the older DVDs and CDs. Each takes its era's cable on its back, and each opens and
+  closes its tray with its eject button and the sound the other disc drives make.
 - A speaker for every era from the Legacy on. The Transition has the Artisan Inspira 2.1, gloss black satellites
   with a silver-framed mesh front, and its subwoofer, a block of its own with the bass port in front and the driver
   on its sides. The satellites play everything but the bass, and a subwoofer set against one of them, with no cable
@@ -1018,8 +1018,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Legacy computer beeps once when its self-test passes; a Vintage computer comes on with the noise of its fan and
   drives; a computer with a hard drive hears it spin up, turn while it runs and wind down when it goes off, while
   one with a solid-state disk stays quiet. A monitor sounds as it lights. The drives sound as media go in and come
-  out: a floppy disk slides in and is ejected, a disc rides the tray of a CD or DVD drive and of the Pattern
-  Encoder, a USB drive is plugged into and pulled out of a Dock Station, and a Floppy Drive's head is heard
+  out: a floppy disk slides in and is ejected, the tray of a disc drive and of a Pattern Encoder rides out and
+  in, a USB drive is plugged into and pulled out of a Dock Station, and a Floppy Drive's head is heard
   stepping while a system or a program installs from its disk. Each running server in a rack is heard by its fans,
   and five or more running close together, in any number of racks, are heard as the hum of the room instead.
 - Four sound cards, one for each bus of the Vintage and Legacy boards: the Artisan Tone Blaster (ISA) and Tone
@@ -1609,18 +1609,23 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   forward again, the take-up reel a little faster.
 - The Pattern Encoders are the devices of their day, each a full block: the Vintage one a beige floppy drive, the
   Legacy one a grey CD writer with a tray, the Standard one a black writer with a tray and a USB port. The medium in
-  the bay is the very item the player put in, seen where it sits: a floppy slides in and out of the slot, a disc
-  rides in and out on the tray, the eject button pressed as it comes out, a stick goes into the port, and one taken
-  out is seen on its way out. Two lamps on the front say what the encoder does: the power lamp is lit while a computer is
+  the bay is the very item the player put in, seen where it sits: a floppy slides in and out of the slot, a stick
+  goes into the port, and one taken out is seen on its way out. A disc lies on the tray, which the eject button on
+  the front opens and closes as on a real burner: the button is outlined when looked at, a disc is laid on the open
+  tray with a click and lifted off it with a sneak-click, nothing is written on it until the tray is closed, and the
+  tray stays shut while a pattern is written. The panel's Eject is the same button, and its slot takes a disc only
+  while the tray is out. Two lamps on the front say what the encoder does: the power lamp is lit while a computer is
   at the other end of its cable, and the activity lamp blinks while a pattern is written and stays lit on an error.
   The body no longer has a status screen.
 - The Floppy, CD and DVD Drives are the drives of their day, each a full block in the colours of the Pattern Encoder
   of its era: the Floppy Drive a cream external drive with its bezel low on the front, the CD Drive a pale grey
   external CD-ROM drive with darker end caps, the tray at the top and the headphone jack, the volume slider and the
   eject button under it, and the DVD Drive a black writer with a diamond-cut top and a silver trim. The medium in a
-  drive is the very item the player put in: a floppy slides in and out of the slot, and a disc rides in and out on
-  the tray. The power lamp is lit while a computer is linked, and the activity lamp blinks while the computer reads
-  the drive.
+  drive is the very item the player put in: a floppy slides in and out of the slot, and a disc lies on the tray,
+  which the eject button opens and closes. A disc goes on the tray and comes off it only while the tray is out, a
+  computer sees the drive empty while it is, and the tray stays shut while the computer reads the disc. Ejecting a
+  disc from This PC or the Pattern Studio opens the tray, and the disc waits on it for the player's hand. The power
+  lamp is lit while a computer is linked, and the activity lamp blinks while the computer reads the drive.
 - J's Core's page lists everything it holds today (the sound system, recordings, translatable text, palettes, the
   declaration of blocks and items, the slowest cable of a network) and says in plain words that anyone may use
   the Core in their own project, open or closed, free or paid, with credit, and what its licence, the LGPL 3.0,

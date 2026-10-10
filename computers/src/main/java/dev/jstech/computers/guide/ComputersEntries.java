@@ -1037,8 +1037,15 @@ final class ComputersEntries {
                         "On the Crafting Computer, open the Crafting Manager and load the pattern from the medium: a"
                                 + " crafting table pattern into the card, a machine pattern into the interface of its"
                                 + " machine.")
+                .paragraph("From the Legacy on, the encoder burns discs, which lie on a tray. Press the eject button"
+                        + " beside the tray to bring it out, put the disc on it, and press the button again: nothing"
+                        + " is burned while the tray is out, and the tray stays shut while a pattern is written."
+                        + " The Eject of the encoder's panel is the same button. A USB stick goes into its port"
+                        + " whatever the tray is doing.")
                 .ifSomethingGoesWrong("The Pattern Studio sees no encoder.",
-                        "It is not joined to that computer.")
+                        "It is not joined to that computer.",
+                        "The disc will not go in, or the burn does not start.",
+                        "The tray is closed, or still out: press the eject button.")
                 .register();
         guide.page("asking_for_a_craft", section).titled("Asking for a craft").icon(ComputingModule.CRAFTING_COMPUTER)
                 .paragraph("You ask for a craft the way you ask for anything else: in the Network program, or in IQL,"
@@ -1080,8 +1087,14 @@ final class ComputersEntries {
                         + " systems and programs, and to carry files and patterns between computers.")
                 .paragraph("Each medium goes in its own kind of drive, and a drive is joined to the computer like any"
                         + " other device ([](jsc:peripheral_cables)).")
+                .paragraph("The CD, DVD and Blu-ray Drives have a tray, as real ones do. Press the eject button"
+                        + " beside it to bring it out, put the disc on it, and press the button again to take it in;"
+                        + " sneak-click to lift a disc off the open tray. A computer sees the drive empty while the"
+                        + " tray is out, and the tray stays shut while the computer reads the disc.")
                 .ifSomethingGoesWrong("The medium will not go in.",
-                        "Each medium goes in its own kind of drive.")
+                        "Each medium goes in its own kind of drive.",
+                        "The disc will not go in, or will not come out.",
+                        "The tray is closed: press the eject button beside it.")
                 .register();
         guide.page("peripheral_cables", section).titled("Peripheral cables and hubs")
                 .icon(() -> ComputingModule.PERIPHERAL_CABLE)

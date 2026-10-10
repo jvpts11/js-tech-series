@@ -8,6 +8,8 @@
 package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.os.media.EjectButton;
+import dev.jstech.computers.os.media.ITrayBlock;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,14 +17,18 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 
+import java.util.Objects;
+
 /**
- * The floppy, CD, DVD and Blu-ray drives as a player sees them: each the drive of its day, the very medium the player put in
- * drawn in it (a floppy in the slot, a disc on the tray), a medium taken out still drawn on its way out and then
- * gone, the power lamp lit once a computer is linked, and the drive's item dark in a frame. The Dock Station beside
- * them stands with its stick in the port. Each drive is shot close up in the middle of the clip that moves its medium.
+ * The floppy, CD, DVD and Blu-ray drives as a player sees them: each the drive of its day, the very medium the player
+ * put in drawn in it (a floppy in the slot, a disc on the tray), a floppy taken out still drawn on its way out and then
+ * gone, the power lamp lit once a computer is linked, and the drive's item dark in a frame. An optical drive's eject
+ * button is outlined when looked at, and a click on it brings the tray out with its disc and takes it back in. The
+ * Dock Station beside them stands with its stick in the port. Each drive is shot close up as its medium moves.
  */
 public final class MediaDriveClientTests {
 
@@ -40,7 +46,7 @@ public final class MediaDriveClientTests {
     private MediaDriveClientTests() {
     }
 
-    @ClientTest(timeoutTicks = 1000)
+    @ClientTest(timeoutTicks = 1500)
     public static void mediaDrives_drawThePlayersOwnMediaAndSeeThemOut(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {
                     world.setBlock(FLOPPY, DeviceCloseUp.facingPlayer(ComputingModule.FLOPPY_DRIVE.get()));
@@ -68,26 +74,35 @@ public final class MediaDriveClientTests {
                 .thenAssert(0, () -> drawn(ctx, FLOPPY).is(ComputingModule.FLOPPY_DISK.get()),
                         "a floppy taken out is still drawn on its way out");
 
-        DeviceCloseUp.closeUp(ctx, CD)
-                .thenServer(SETTLE, level -> insert(ctx, level, CD, null))
+        // Looked at, the eject button is outlined on its own; a click on it brings the tray out with its disc.
+        DeviceCloseUp.aimAtEjectButton(ctx, CD, button(ComputingModule.CD_DRIVE.get()))
+                .thenScreenshot(SETTLE, "cd-eject-button");
+        DeviceCloseUp.clickCrosshair(ctx, 0)
                 .thenScreenshot(DeviceCloseUp.TRAY_OUT, "cd-tray-out")
-                .thenAssert(0, () -> drawn(ctx, CD).is(ComputingModule.CD_ROM.get()),
-                        "a disc taken out is still drawn on the open tray")
-                .thenAssert(DeviceCloseUp.AFTER_EJECT, () -> drawn(ctx, CD).isEmpty() && drawn(ctx, FLOPPY).isEmpty(),
-                        "and no longer once it is out");
+                .thenAssert(0, () -> clientDrive(ctx, CD).tray().isOpen()
+                                && drawn(ctx, CD).is(ComputingModule.CD_ROM.get()),
+                        "the eject button brings the tray out with the CD-ROM on it")
+                .thenServer(0, level -> insert(ctx, level, CD, null))
+                .thenAssert(2, () -> drawn(ctx, CD).isEmpty() && drawn(ctx, FLOPPY).isEmpty(),
+                        "a disc lifted off the tray is gone from it at once");
+        DeviceCloseUp.clickCrosshair(ctx, 0)
+                .thenScreenshot(DeviceCloseUp.TRAY_OUT, "cd-tray-closed")
+                .thenAssert(0, () -> !clientDrive(ctx, CD).tray().isOpen(), "a second press takes the tray back in");
 
-        DeviceCloseUp.closeUp(ctx, DVD)
-                .thenServer(SETTLE, level -> insert(ctx, level, DVD, null))
+        DeviceCloseUp.aimAtEjectButton(ctx, DVD, button(ComputingModule.DVD_DRIVE.get()));
+        DeviceCloseUp.clickCrosshair(ctx, SETTLE)
                 .thenScreenshot(DeviceCloseUp.TRAY_OUT, "dvd-tray-out")
-                .thenServer(DeviceCloseUp.AFTER_EJECT, level -> insert(ctx, level, DVD, ComputingModule.CD_RW.get()))
-                .thenScreenshot(30, "dvd-reads-a-cd");
+                .thenServer(0, level -> insert(ctx, level, DVD, ComputingModule.CD_RW.get()));
+        DeviceCloseUp.clickCrosshair(ctx, SETTLE)
+                .thenScreenshot(DeviceCloseUp.TRAY_OUT, "dvd-reads-a-cd");
 
         // The Blu-ray drive, white all over, its slim tray high on the front, with the BD-ROM on it.
-        DeviceCloseUp.closeUp(ctx, BLU_RAY)
-                .thenScreenshot(SETTLE, "blu-ray-loaded")
-                .thenServer(0, level -> insert(ctx, level, BLU_RAY, null))
+        DeviceCloseUp.aimAtEjectButton(ctx, BLU_RAY, button(ComputingModule.BLU_RAY_DRIVE.get()))
+                .thenScreenshot(SETTLE, "blu-ray-eject-button");
+        DeviceCloseUp.clickCrosshair(ctx, 0)
                 .thenScreenshot(DeviceCloseUp.TRAY_OUT, "blu-ray-tray-out")
-                .thenAssert(0, () -> drawn(ctx, BLU_RAY).is(ComputingModule.BD_ROM.get()),
+                .thenAssert(0, () -> clientDrive(ctx, BLU_RAY).tray().isOpen()
+                                && drawn(ctx, BLU_RAY).is(ComputingModule.BD_ROM.get()),
                         "the Blu-ray drive draws its disc on the open tray");
 
         /*
@@ -110,6 +125,10 @@ public final class MediaDriveClientTests {
                 .thenScreenshot(SETTLE, "floppy-linked")
                 .thenServer(0, level -> level.getEntitiesOfClass(ItemFrame.class,
                         new AABB(ctx.abs(FRAME_WALL.south()))).forEach(ItemFrame::discard));
+    }
+
+    private static EjectButton button(final Block drive) {
+        return Objects.requireNonNull(((ITrayBlock) drive).ejectButton(), "a drive with a tray");
     }
 
     /* Puts that medium in the drive the way its slot takes it, or empties the drive for null. */

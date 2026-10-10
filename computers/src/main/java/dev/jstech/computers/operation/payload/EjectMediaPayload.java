@@ -18,7 +18,8 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * Client to server: eject the medium in the drive at {@code readerPos}, or the disk in one tray of a Dock Station
  * there, which must be linked to the computer at {@code hostPos}. What comes out goes to the player's inventory, or
- * onto the drive when the inventory is full, the same as sneak-clicking the drive in the world.
+ * onto the drive when the inventory is full, the same as sneak-clicking the drive in the world. An optical drive
+ * instead opens its tray, as its eject button does, and the disc waits on it for the player's hand.
  *
  * @param hostPos   the computer
  * @param readerPos the drive's packed position

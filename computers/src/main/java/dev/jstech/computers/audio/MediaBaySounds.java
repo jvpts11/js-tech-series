@@ -79,9 +79,9 @@ public final class MediaBaySounds {
     }
 
     /**
-     * The sound of a medium of that format going in or coming out: a floppy disk slides in and pops out, a disc
-     * rides the tray both ways, a USB drive is pushed in and pulled out. A medium with no format of its own is
-     * silent.
+     * The sound of a medium of that format going in or coming out: a floppy disk slides in and pops out, a USB drive
+     * is pushed in and pulled out. A disc is laid on the open tray and lifted off it without a sound of its own; what
+     * is heard is the tray riding out and in. A medium with no format of its own is silent.
      */
     @Nullable
     public static SoundKey soundOf(@Nullable final MediaFormat format, final boolean in) {
@@ -90,7 +90,7 @@ public final class MediaBaySounds {
         }
         return switch (format) {
             case FLOPPY -> in ? ComputingSounds.FLOPPY_INSERT : ComputingSounds.FLOPPY_EJECT;
-            case CD, DVD, BLU_RAY -> ComputingSounds.DISC_TRAY;
+            case CD, DVD, BLU_RAY -> null;
             case USB -> in ? ComputingSounds.USB_INSERT : ComputingSounds.USB_REMOVE;
         };
     }

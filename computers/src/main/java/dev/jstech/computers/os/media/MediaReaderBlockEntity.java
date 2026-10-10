@@ -53,10 +53,12 @@ import java.util.Optional;
  * installation media in any drive linked to it. The medium, the link and whether the computer is reading the drive
  * are sent to the players who see it, and the block shows whether it holds a medium.
  *
- * <p>The floppy, CD and DVD drives are drawn as models of the drives of their day: the medium in the drive is the
- * very item the player put in, the tray or the slot plays its clip as a medium goes in or comes out, and the lamps
- * say whether a computer is linked and whether it is reading the drive. The Dock Station is a reader of a kind of its
- * own, its stick port being this slot, with trays for disks besides.
+ * <p>The floppy, CD, DVD and Blu-ray drives are drawn as models of the drives of their day: the medium in the drive
+ * is the very item the player put in, the floppy's slot plays its clip as a floppy goes in or comes out, and the lamps
+ * say whether a computer is linked and whether it is reading the drive. An optical drive has a {@link DiscTray tray}
+ * its eject button opens and closes: a disc is laid on it and lifted off it only while it is out, and a disc on an
+ * open tray is not read. The Dock Station is a reader of a kind of its own, its stick port being this slot, with
+ * trays for disks besides.
  */
 public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IAudible,
         GeoBlockEntity {
@@ -76,6 +78,8 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
      * works it out, and the client hears the drive read and sees its activity lamp blink while it is true.
      */
     private final BoolField reading = fields().flag("Reading", false).toClient();
+    /** The tray of an optical drive, which its eject button opens and closes; a floppy drive's never opens. */
+    private final DiscTray tray = new DiscTray(fields());
     /** The medium held just before an update from the server was read, on the client. */
     private ItemStack beforeUpdate = ItemStack.EMPTY;
     /** Whether the block is being broken, when the medium leaves without the sound of an eject. */
@@ -117,10 +121,10 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
         return stack.getItem() instanceof MediaItem;
     }
 
-    /** The format of the medium in the drive, or null when it is empty or the medium has no fixed format. */
+    /** The format of the medium the drive reads, or null when it reads none. */
     @Nullable
     public MediaFormat insertedFormat() {
-        return mediaStack().getItem() instanceof FormattedMediaItem media ? media.format() : null;
+        return readableMedium().getItem() instanceof FormattedMediaItem media ? media.format() : null;
     }
 
     @Override
@@ -200,6 +204,7 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
     @Override
     public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(MediaBay.controller(this, "media_drive"));
+        controllers.add(tray.controller(this, "media_drive"));
     }
 
     @Override
@@ -222,27 +227,46 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
         return bay.drawn(mediaStack(), level);
     }
 
-    /** The OS or program id the medium in the drive carries, or null when it is empty or carries none. */
+    /** The OS or program id the medium the drive reads carries, or null when it reads none or it carries none. */
     @Nullable
     public ResourceLocation insertedPayload() {
-        final ItemStack stack = mediaStack();
+        final ItemStack stack = readableMedium();
         return stack.isEmpty() ? null : MediaItem.payload(stack);
     }
 
-    /** The kind of the medium in the drive, or null when it is empty. */
+    /** The kind of the medium the drive reads, or null when it reads none. */
     @Nullable
     public MediaKind insertedKind() {
-        final ItemStack stack = mediaStack();
+        final ItemStack stack = readableMedium();
         return stack.isEmpty() ? null : MediaItem.kind(stack);
     }
 
     /**
-     * The storage snapshot of the DATA medium in the drive, or {@link ServerStorageContents#EMPTY} when it is empty
-     * or the medium holds no data.
+     * The storage snapshot of the DATA medium the drive reads, or {@link ServerStorageContents#EMPTY} when it reads
+     * none or the medium holds no data.
      */
     public ServerStorageContents insertedData() {
-        final ItemStack stack = mediaStack();
+        final ItemStack stack = readableMedium();
         return stack.isEmpty() ? ServerStorageContents.EMPTY : MediaItem.data(stack);
+    }
+
+    /**
+     * The medium the drive reads: the one in it, or nothing while it lies on an open tray, where a computer sees an
+     * empty drive.
+     */
+    public ItemStack readableMedium() {
+        final ItemStack held = mediaStack();
+        return tray.reads(held) ? held : ItemStack.EMPTY;
+    }
+
+    /** The drive's disc tray, closed for good on a drive with none. */
+    public DiscTray tray() {
+        return tray;
+    }
+
+    /** Whether the drive holds a medium, read or not. */
+    public boolean hasMedia() {
+        return !mediaStack().isEmpty();
     }
 
     /**
@@ -283,13 +307,10 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
         return slot.getStackInSlot(0);
     }
 
-    private boolean hasMedia() {
-        return !mediaStack().isEmpty();
-    }
-
     /*
      * A medium went in or came out: the drive sounds it, a USB stick is a device coming or going for the linked
-     * computer's system, and the tray or the slot plays its clip. A medium spilled as the drive breaks is silent.
+     * computer's system, and the slot plays its clip; a disc only lies on the tray. A medium spilled as the drive
+     * breaks is silent.
      */
     private void mediaMoved() {
         if (breaking) {
@@ -303,8 +324,9 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
         if (move.format() == MediaFormat.USB && level instanceof ServerLevel server) {
             deviceMoved(server, move.in());
         }
-        if (modelled()) {
-            triggerAnim(MediaBay.CONTROLLER, MediaBay.clip(move.format(), move.in()));
+        final String clip = MediaBay.clip(move.format(), move.in());
+        if (modelled() && clip != null) {
+            triggerAnim(MediaBay.CONTROLLER, clip);
         }
     }
 
@@ -314,7 +336,8 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
      */
     private boolean installingFromHere(final ServerLevel level) {
         final BlockPos owner = link.ownerPos();
-        if (owner == null || mediaStack().isEmpty() || !(Loaded.blockEntity(level, owner) instanceof IOsHost host)) {
+        if (owner == null || readableMedium().isEmpty()
+                || !(Loaded.blockEntity(level, owner) instanceof IOsHost host)) {
             return false;
         }
         final OsInstallJob job = host.installing();

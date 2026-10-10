@@ -359,7 +359,7 @@ public final class CraftManagerPayloads {
          */
         for (final long endpoint : cc.enabledEndpoints()) {
             if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader) {
-                final ItemStack m = reader.mediaSlot().getStackInSlot(0);
+                final ItemStack m = reader.readableMedium();
                 if (m.isEmpty() || !(m.getItem() instanceof FormattedMediaItem fmt) || !fmt.writable()) {
                     continue;
                 }

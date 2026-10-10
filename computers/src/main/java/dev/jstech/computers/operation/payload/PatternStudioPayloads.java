@@ -236,6 +236,12 @@ public final class PatternStudioPayloads {
                     status = NO_ENCODER.text();
                 } else if (enc.locked()) {
                     status = ENCODER_WRITING.text();
+                } else if (enc.hasTray()) {
+                    // A burner's eject opens its tray, as its button does; the disc waits on it for the player's hand.
+                    if (!enc.tray().isOpen()) {
+                        enc.tray().press(level, enc.getBlockPos());
+                    }
+                    status = (enc.hasMedia() ? EJECTED : BAY_EMPTY).text();
                 } else {
                     final ItemStack out = enc.ejectMedia();
                     if (!out.isEmpty() && !player.addItem(out)) {
@@ -565,7 +571,7 @@ public final class PatternStudioPayloads {
                 break;
             }
             if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader) {
-                final ItemStack m = reader.mediaSlot().getStackInSlot(0);
+                final ItemStack m = reader.readableMedium();
                 if (m.isEmpty() || !(m.getItem() instanceof FormattedMediaItem fmt)) {
                     continue;
                 }

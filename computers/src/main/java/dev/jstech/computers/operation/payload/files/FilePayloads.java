@@ -109,12 +109,12 @@ public final class FilePayloads {
             for (final long endpoint : computer.enabledEndpoints()) {
                 if (Loaded.blockEntity(level, BlockPos.of(endpoint))
                         instanceof MediaReaderBlockEntity reader
-                        && !reader.mediaSlot().getStackInSlot(0).isEmpty()) {
+                        && !reader.readableMedium().isEmpty()) {
                     /*
                      * An installer's drive is named for what it installs ("Frames 11 Setup"), so the
                      * tree says what is in the drive before it is opened.
                      */
-                    final ItemStack medium = reader.mediaSlot().getStackInSlot(0);
+                    final ItemStack medium = reader.readableMedium();
                     final Text fallback = InstallerProjection.facts(medium)
                             .map(f -> DiskFilesPayload.SETUP.with(f.name()))
                             .orElse(DiskFilesPayload.REMOVABLE_DRIVE.text());

@@ -100,8 +100,9 @@ public class PatternEncoderScreen extends AbstractComputerScreen<PatternEncoderM
     protected void containerTick() {
         super.containerTick();
         final PatternEncoderBlockEntity be = encoder();
-        final boolean hasMedia = !menu.mediaStack().isEmpty();
-        ejectBtn.active = hasMedia && (be == null || !be.locked());
+        // On an encoder with a tray Eject is its button, which opens an empty tray as well as a full one.
+        final boolean ejectable = !menu.mediaStack().isEmpty() || (be != null && be.hasTray());
+        ejectBtn.active = ejectable && (be == null || !be.locked());
         cancelBtn.active = be != null && (be.busy() || be.displayQueued() > 0);
     }
 

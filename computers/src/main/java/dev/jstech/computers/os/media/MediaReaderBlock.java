@@ -10,6 +10,7 @@ package dev.jstech.computers.os.media;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.DeviceFront;
 import dev.jstech.computers.block.PeripheralSockets;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
@@ -36,11 +37,15 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A media reader peripheral: a slot that holds one {@link MediaItem} whose {@link MediaFormat} this drive accepts.
  * Right-click inserts the held media; sneak-right-click ejects it. The loaded payload is available via
  * {@link MediaReaderBlockEntity#insertedPayload()}.
+ *
+ * <p>An optical drive has a disc tray instead, which a click on the eject button on its front opens and closes, as on
+ * the drives of its day: the disc is laid on the open tray with a click and lifted off it with a sneak-click.
  *
  * <p>The concrete drive (Floppy / CD / DVD / Dock) is decided by the {@link MediaDriveType} passed at registration,
  * which also controls which media formats the slot accepts.
@@ -49,7 +54,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * to the computer, which then finds installation media in it without the reader having to stand beside it.
  */
 @TextHolder
-public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
+public class MediaReaderBlock extends DeviceBlock implements IFaceConnector, ITrayBlock {
 
     private final MediaDriveType driveType;
     private final FacePorts ports;
@@ -72,6 +77,9 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
             "The drive already holds a disc - sneak-click to eject it.");
     private static final TextKey CANNOT_READ = TextKey.of("jsc.media.media_reader_block.cannot_read",
             "This %s cannot read that disc.");
+    /** What a press of the eject button is told while the computer reads the disc. */
+    private static final TextKey READING_WAIT = TextKey.of("jsc.media.media_reader_block.reading_wait",
+            "The drive is reading - wait for it to finish.");
 
     public MediaReaderBlock(final MediaDriveType driveType, final Properties properties) {
         this(driveType, properties, DEVICE);
@@ -97,6 +105,12 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
     }
 
     @Override
+    @Nullable
+    public EjectButton ejectButton() {
+        return driveType.ejectButton();
+    }
+
+    @Override
     protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
         return CODEC;
     }
@@ -117,9 +131,19 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
         if (!(level.getBlockEntity(pos) instanceof MediaReaderBlockEntity reader)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
+        // The eject button answers whatever the hand holds, as a real one does.
+        final EjectButton button = ejectButton();
+        if (button != null && DeviceFront.presses(button, state, pos, hit, player.getEyePosition())) {
+            pressEjectButton(reader, player);
+            return ItemInteractionResult.SUCCESS;
+        }
 
         if (player.isShiftKeyDown()) {
-            // Sneak-click: eject any loaded media back to the player.
+            // Sneak-click: eject any loaded media back to the player, a disc only off an open tray.
+            if (!reader.tray().reaches(reader.mediaSlot().getStackInSlot(0))) {
+                player.displayClientMessage(GameText.component(DiscTray.CLOSED), true);
+                return ItemInteractionResult.SUCCESS;
+            }
             final ItemStack ejected = reader.ejectMedia();
             if (!ejected.isEmpty() && !player.addItem(ejected)) {
                 Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, ejected);
@@ -129,6 +153,10 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
 
         // Normal click: insert held media if the slot is empty and the drive accepts its format.
         if (reader.acceptsMedia(heldStack)) {
+            if (!reader.tray().reaches(heldStack)) {
+                player.displayClientMessage(GameText.component(DiscTray.CLOSED), true);
+                return ItemInteractionResult.SUCCESS;
+            }
             final ItemStack inserted = reader.insertMedia(heldStack.copyWithCount(1));
             if (inserted.isEmpty()) {
                 heldStack.shrink(1);
@@ -155,5 +183,17 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
     protected VoxelShape getShape(final BlockState state, final BlockGetter level, final BlockPos pos,
                                   final CollisionContext context) {
         return Shapes.block();
+    }
+
+    /*
+     * The eject button pressed: the tray rides out, or back in, unless the computer is reading the disc on it, which a
+     * drive does not give up mid-read.
+     */
+    private static void pressEjectButton(final MediaReaderBlockEntity reader, final Player player) {
+        if (reader.reading()) {
+            player.displayClientMessage(GameText.component(READING_WAIT), true);
+            return;
+        }
+        reader.tray().press(reader.getLevel(), reader.getBlockPos());
     }
 }

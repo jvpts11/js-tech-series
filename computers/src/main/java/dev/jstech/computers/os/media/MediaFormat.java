@@ -72,4 +72,15 @@ public enum MediaFormat {
             case BLU_RAY -> HardwareEra.ADVANCED;
         };
     }
+
+    /**
+     * Whether a medium of this format lies on a disc tray, which the player opens to put it on and take it off, rather
+     * than going through a slot or into a port by itself: the optical discs.
+     */
+    public boolean onTray() {
+        return switch (this) {
+            case CD, DVD, BLU_RAY -> true;
+            case FLOPPY, USB -> false;
+        };
+    }
 }

@@ -62,6 +62,10 @@ public enum MediaDriveType implements IStableName {
     private static final TextKey DOCK_IN_SENTENCE = TextKey.of("jsc.media.media_reader_block.dock_station",
             "dock station");
 
+    private static final EjectButton CD_BUTTON = new EjectButton(44, 20, 52, 23, 0);
+    private static final EjectButton DVD_BUTTON = new EjectButton(53, 19, 59, 22, 0);
+    private static final EjectButton BLU_RAY_BUTTON = new EjectButton(54, 20, 60, 23, 4);
+
     private final String serializedName;
     private final Set<MediaFormat> accepted;
 
@@ -129,6 +133,20 @@ public enum MediaDriveType implements IStableName {
     /** Returns whether this drive can read media of the given format. */
     public boolean accepts(final MediaFormat format) {
         return accepted.contains(format);
+    }
+
+    /**
+     * The button that opens and closes the drive's disc tray, where its model draws it beside the tray; null for the
+     * floppy drive and the Dock, which have none. The Blu-ray drive's front is set a pixel back in its case.
+     */
+    @Nullable
+    public EjectButton ejectButton() {
+        return switch (this) {
+            case CD_DRIVE -> CD_BUTTON;
+            case DVD_DRIVE -> DVD_BUTTON;
+            case BLU_RAY_DRIVE -> BLU_RAY_BUTTON;
+            case FLOPPY_DRIVE, DOCK_STATION -> null;
+        };
     }
 
     /** The drive a name stands for, or null for a name no drive declares. */

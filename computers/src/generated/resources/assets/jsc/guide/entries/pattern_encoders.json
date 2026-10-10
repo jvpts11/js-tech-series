@@ -17,6 +17,10 @@
       ]
     },
     {
+      "type": "text",
+      "text": "jsc.guide.pattern_encoders.text3"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -26,6 +30,10 @@
         {
           "fix": "jsc.guide.pattern_encoders.fix1",
           "problem": "jsc.guide.pattern_encoders.problem1"
+        },
+        {
+          "fix": "jsc.guide.pattern_encoders.fix2",
+          "problem": "jsc.guide.pattern_encoders.problem2"
         }
       ]
     }

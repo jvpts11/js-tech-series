@@ -20,8 +20,9 @@ import software.bernie.geckolib.animation.RawAnimation;
  * animations share, the clip a medium plays going in or coming out, and, on the client, the medium drawn in it.
  *
  * <p>The medium drawn is the one in the bay, or, for a moment after one was taken out, that one. The slot is empty
- * as soon as the medium is taken, while its way out, the tray riding out or the floppy popping from its slot, is
- * still playing; the eject clip hides it at the moment it leaves the player's reach.
+ * as soon as the medium is taken, while its way out, the floppy popping from its slot or the stick sliding from its
+ * port, is still playing; the eject clip hides it at the moment it leaves the player's reach. A disc has no way out of
+ * its own: it lies on the {@link DiscTray tray} the player opened, and is gone from it the moment it is taken.
  */
 public final class MediaBay {
 
@@ -43,13 +44,12 @@ public final class MediaBay {
     /** How long a medium taken out is still drawn when its format is not known: the longest eject clip, and more. */
     public static final int LEAVING_TICKS = 40;
 
-    private static final String[] CLIPS = {"insert_tray", "eject_tray", "insert_floppy", "eject_floppy",
-            "insert_usb", "eject_usb"};
+    private static final String[] CLIPS = {"insert_floppy", "eject_floppy", "insert_usb", "eject_usb"};
 
     /**
-     * The controller of a device's bay, with a one-shot clip for every way a medium goes in and comes out, taken from
-     * {@code animations}, the file of clips the device's models share. A device only ever plays the clips of the media
-     * it takes.
+     * The controller of a device's bay, with a one-shot clip for every way a medium goes in and comes out by itself,
+     * taken from {@code animations}, the file of clips the device's models share. A device only ever plays the clips of
+     * the media it takes.
      */
     public static <T extends GeoAnimatable> AnimationController<T> controller(final T device, final String animations) {
         final AnimationController<T> bay = new AnimationController<>(device, CONTROLLER, 0, state -> PlayState.STOP);
@@ -59,14 +59,18 @@ public final class MediaBay {
         return bay;
     }
 
-    /** The clip a medium of that format plays going in or coming out: on the tray, through the slot, into the port. */
+    /**
+     * The clip a medium of that format plays going in or coming out: through the slot, into the port. Null for a disc,
+     * which the player lays on the open tray and lifts off it, and which does not move by itself.
+     */
+    @Nullable
     public static String clip(final MediaFormat format, final boolean in) {
         final String way = switch (format) {
             case FLOPPY -> "floppy";
-            case CD, DVD, BLU_RAY -> "tray";
             case USB -> "usb";
+            case CD, DVD, BLU_RAY -> null;
         };
-        return (in ? "insert_" : "eject_") + way;
+        return way == null ? null : (in ? "insert_" : "eject_") + way;
     }
 
     /**
@@ -90,11 +94,11 @@ public final class MediaBay {
         }
     }
 
-    /** How long a medium of that format takes to come out: its eject clip, in ticks. */
+    /** How long a medium of that format takes to come out: its eject clip, in ticks; none for a disc lifted off. */
     public static int ejectTicks(final MediaFormat format) {
         return switch (format) {
             case FLOPPY -> 20;
-            case CD, DVD, BLU_RAY -> 36;
+            case CD, DVD, BLU_RAY -> 0;
             case USB -> 12;
         };
     }

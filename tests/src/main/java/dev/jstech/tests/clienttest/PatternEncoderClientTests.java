@@ -9,19 +9,25 @@ package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.os.media.EjectButton;
+import dev.jstech.computers.os.media.ITrayBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 
+import java.util.Objects;
+
 /**
  * The Pattern Encoders as a player sees them: each era's device with the very medium the player put in drawn in its
- * bay (a floppy in the slot, a disc on the tray, a stick in the port), and a medium taken out still drawn on its way
- * out, then gone. Each device is shot close up in the middle of the clip that moves its medium.
+ * bay (a floppy in the slot, a disc on the tray, a stick in the port), and a floppy or a stick taken out still drawn on
+ * its way out, then gone. A burner's eject button is outlined when looked at, and a click on it brings the tray out
+ * with its disc and takes it back in. Each device is shot close up as its medium moves.
  */
 public final class PatternEncoderClientTests {
 
@@ -43,7 +49,7 @@ public final class PatternEncoderClientTests {
     private PatternEncoderClientTests() {
     }
 
-    @ClientTest(timeoutTicks = 1000)
+    @ClientTest(timeoutTicks = 1500)
     public static void patternEncoders_drawThePlayersOwnMediaAndSeeThemOut(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {
                     world.setBlock(VINTAGE, DeviceCloseUp.facingPlayer(ComputingModule.VINTAGE_PATTERN_ENCODER.get()));
@@ -73,19 +79,26 @@ public final class PatternEncoderClientTests {
                 .thenAssert(0, () -> drawn(ctx, VINTAGE).is(ComputingModule.FLOPPY_DISK.get()),
                         "a floppy taken out is still drawn on its way out");
 
-        DeviceCloseUp.closeUp(ctx, LEGACY)
-                .thenServer(SETTLE, level -> insert(ctx, level, LEGACY, null))
+        // Looked at, the eject button is outlined on its own; a click on it brings the tray out with its disc.
+        DeviceCloseUp.aimAtEjectButton(ctx, LEGACY, button(ComputingModule.LEGACY_PATTERN_ENCODER.get()))
+                .thenScreenshot(SETTLE, "legacy-eject-button");
+        DeviceCloseUp.clickCrosshair(ctx, 0)
                 .thenScreenshot(DeviceCloseUp.TRAY_OUT, "legacy-tray-out")
-                .thenAssert(0, () -> drawn(ctx, LEGACY).is(ComputingModule.CD_RW.get()),
-                        "a disc taken out is still drawn on the open tray")
-                .thenAssert(DeviceCloseUp.AFTER_EJECT,
-                        () -> drawn(ctx, LEGACY).isEmpty() && drawn(ctx, VINTAGE).isEmpty(),
-                        "and no longer once it is out");
+                .thenAssert(0, () -> clientEncoder(ctx, LEGACY).tray().isOpen()
+                                && drawn(ctx, LEGACY).is(ComputingModule.CD_RW.get()),
+                        "the eject button brings the tray out with the CD-RW on it")
+                .thenServer(0, level -> insert(ctx, level, LEGACY, null))
+                .thenAssert(2, () -> drawn(ctx, LEGACY).isEmpty() && drawn(ctx, VINTAGE).isEmpty(),
+                        "a disc lifted off the tray is gone from it at once");
+        DeviceCloseUp.clickCrosshair(ctx, 0)
+                .thenScreenshot(DeviceCloseUp.TRAY_OUT, "legacy-tray-closed");
 
-        DeviceCloseUp.closeUp(ctx, STANDARD)
-                .thenServer(SETTLE, level -> insert(ctx, level, STANDARD, null))
+        DeviceCloseUp.aimAtEjectButton(ctx, STANDARD, button(ComputingModule.PATTERN_ENCODER.get()));
+        DeviceCloseUp.clickCrosshair(ctx, SETTLE)
                 .thenScreenshot(DeviceCloseUp.TRAY_OUT, "standard-tray-out")
-                .thenServer(DeviceCloseUp.AFTER_EJECT,
+                .thenServer(0, level -> insert(ctx, level, STANDARD, null));
+        DeviceCloseUp.clickCrosshair(ctx, SETTLE)
+                .thenServer(DeviceCloseUp.TRAY_OUT,
                         level -> insert(ctx, level, STANDARD, ComputingModule.USB_FLASH_DRIVE.get()))
                 .thenScreenshot(20, "standard-usb-in")
                 .thenAssert(0, () -> drawn(ctx, STANDARD).is(ComputingModule.USB_FLASH_DRIVE.get()),
@@ -94,20 +107,21 @@ public final class PatternEncoderClientTests {
                 .thenScreenshot(USB_OUT, "standard-usb-leaving");
 
         // The Transition's LightScribe burner and the Advanced's Blu-ray writer, each with its disc on its tray.
-        DeviceCloseUp.closeUp(ctx, TRANSITION)
-                .thenScreenshot(SETTLE, "transition-loaded")
-                .thenServer(0, level -> insert(ctx, level, TRANSITION, null))
+        DeviceCloseUp.aimAtEjectButton(ctx, TRANSITION, button(ComputingModule.TRANSITION_PATTERN_ENCODER.get()));
+        DeviceCloseUp.clickCrosshair(ctx, SETTLE)
                 .thenScreenshot(DeviceCloseUp.TRAY_OUT, "transition-tray-out")
                 .thenAssert(0, () -> drawn(ctx, TRANSITION).is(ComputingModule.DVD_RW.get()),
                         "the Transition encoder draws its DVD on the open tray");
 
-        DeviceCloseUp.closeUp(ctx, ADVANCED)
-                .thenScreenshot(SETTLE, "advanced-loaded")
-                .thenServer(0, level -> insert(ctx, level, ADVANCED, null))
+        DeviceCloseUp.aimAtEjectButton(ctx, ADVANCED, button(ComputingModule.ADVANCED_PATTERN_ENCODER.get()))
+                .thenScreenshot(SETTLE, "advanced-eject-button");
+        DeviceCloseUp.clickCrosshair(ctx, 0)
                 .thenScreenshot(DeviceCloseUp.TRAY_OUT, "advanced-tray-out")
                 .thenAssert(0, () -> drawn(ctx, ADVANCED).is(ComputingModule.BD_RE.get()),
                         "the Advanced encoder draws its BD-RE on the open tray")
-                .thenServer(DeviceCloseUp.AFTER_EJECT,
+                .thenServer(0, level -> insert(ctx, level, ADVANCED, null));
+        DeviceCloseUp.clickCrosshair(ctx, SETTLE)
+                .thenServer(DeviceCloseUp.TRAY_OUT,
                         level -> insert(ctx, level, ADVANCED, ComputingModule.USB_FLASH_DRIVE.get()))
                 .thenScreenshot(20, "advanced-usb-in")
                 .thenAssert(0, () -> drawn(ctx, ADVANCED).is(ComputingModule.USB_FLASH_DRIVE.get()),
@@ -146,6 +160,10 @@ public final class PatternEncoderClientTests {
                 .thenAssert(0, () -> clientEncoder(ctx, VINTAGE).busy(), "the pattern is still being written")
                 .thenServer(0, level -> level.getEntitiesOfClass(ItemFrame.class,
                         new AABB(ctx.abs(FRAME_WALL.south()))).forEach(ItemFrame::discard));
+    }
+
+    private static EjectButton button(final Block encoder) {
+        return Objects.requireNonNull(((ITrayBlock) encoder).ejectButton(), "an encoder with a tray");
     }
 
     /* Puts that medium in the bay the way the bay's slot takes it, or empties the bay for null. */

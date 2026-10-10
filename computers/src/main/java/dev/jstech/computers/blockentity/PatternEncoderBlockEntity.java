@@ -20,7 +20,9 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.StoredFile;
+import dev.jstech.computers.os.media.DiscTray;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.ITrayBlock;
 import dev.jstech.computers.os.media.MediaBay;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.storage.StorageKey;
@@ -73,8 +75,10 @@ import java.util.Optional;
  * the medium's rate, the medium is read back and compared, and the bay stays locked until the job is over. Jobs queue
  * up, so a session's worth of recipes can be sent at once.
  *
- * <p>The encoder comes in three eras, and each writes the media of its day: a Vintage encoder writes floppy disks, a
- * Legacy one writes CDs, a Standard one writes DVDs, CDs and USB sticks (and no floppies).
+ * <p>The encoder comes in five eras, and each writes the media of its day: a Vintage encoder writes floppy disks, a
+ * Legacy one CDs, a Transition one DVDs and CDs, a Standard one DVDs, CDs and USB sticks, an Advanced one Blu-ray discs
+ * and USB sticks. A disc lies on a {@link DiscTray tray} the eject button opens and closes, and a disc on an open tray
+ * is not written: a job waits for the tray to close.
  *
  * <p>The players who see it are sent the medium, the job's phase and progress, the file, the message, the count
  * written, the link and how many jobs wait; the waiting jobs themselves stay on the server.
@@ -111,6 +115,8 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
     private final IntField completed = fields().integer("Completed", 0).save().toClient();
     private final PeripheralLink link = new PeripheralLink(fields(), PeripheralCableType.COMPUTING,
             PeripheralLinks.COMPUTING);
+    /** The tray a disc lies on, from the Legacy era on; the Vintage encoder's never opens. */
+    private final DiscTray tray = new DiscTray(fields());
     /** The medium held just before an update from the server was read, on the client. */
     private ItemStack beforeUpdate = ItemStack.EMPTY;
     /** Whether the block is being broken, when the medium leaves without the sound of an eject. */
@@ -129,6 +135,7 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
     private static final TextKey READY = TextKey.of("jsc.pattern_encoder.ready", "Ready");
     private static final TextKey STARTING = TextKey.of("jsc.pattern_encoder.starting", "Starting...");
     private static final TextKey INSERT_MEDIA = TextKey.of("jsc.pattern_encoder.insert_media", "Insert media");
+    private static final TextKey TRAY_OPEN = TextKey.of("jsc.pattern_encoder.tray_open", "Tray open");
     private static final TextKey SEEKING = TextKey.of("jsc.pattern_encoder.seeking", "Seeking");
     private static final TextKey WRITING = TextKey.of("jsc.pattern_encoder.writing", "Writing %s.craft");
     private static final TextKey VERIFYING = TextKey.of("jsc.pattern_encoder.verifying", "Verifying %s.craft");
@@ -247,6 +254,16 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
         return !mediaStack().isEmpty();
     }
 
+    /** The encoder's disc tray, closed for good on the Vintage encoder, which has none. */
+    public DiscTray tray() {
+        return tray;
+    }
+
+    /** Whether the encoder has a disc tray, which its era's model draws with an eject button beside it. */
+    public boolean hasTray() {
+        return getBlockState().getBlock() instanceof ITrayBlock block && block.ejectButton() != null;
+    }
+
     /** Puts {@code stack} in the bay if it is empty and the medium is accepted; returns what was not taken. */
     public ItemStack insertMedia(final ItemStack stack) {
         return media.insertItem(0, stack, false);
@@ -334,6 +351,10 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
 
     /** One line for a display: what the encoder is doing, or why it stopped. */
     public Text statusLine() {
+        // An open tray says so while there is no medium to write on but what lies on it; a stick in its port is written.
+        if (phase.get() == Phase.IDLE && tray.isOpen() && !(hasMedia() && tray.reads(mediaStack()))) {
+            return TRAY_OPEN.text();
+        }
         return switch (phase.get()) {
             case IDLE -> hasMedia() ? (queue.isEmpty() ? READY.text() : STARTING.text()) : INSERT_MEDIA.text();
             case SEEK -> SEEKING.text();
@@ -400,13 +421,14 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
     }
 
     /*
-     * The body's only motion is the medium going in and coming out: the tray riding out and back, a floppy sliding
-     * through its slot, a stick going into its port. Each plays once, triggered by the server when the bay's slot
-     * fills or empties; the lamps are bone visibility set by the renderer, which blinks them.
+     * The body moves in two ways. A floppy sliding through its slot or a stick going into its port plays once, triggered
+     * by the server when the bay's slot fills or empties; the tray rides out and in as its button is pressed, and stands
+     * where it was left. The lamps are bone visibility set by the renderer, which blinks them.
      */
     @Override
     public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(MediaBay.controller(this, "pattern_encoder"));
+        controllers.add(tray.controller(this, "pattern_encoder"));
     }
 
     @Override
@@ -459,8 +481,9 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
             return;
         }
         final MediaBaySounds.Move move = baySounds.changed(level, worldPosition, mediaStack());
-        if (move != null && move.format() != null) {
-            triggerAnim(MediaBay.CONTROLLER, MediaBay.clip(move.format(), move.in()));
+        final String clip = move == null || move.format() == null ? null : MediaBay.clip(move.format(), move.in());
+        if (clip != null) {
+            triggerAnim(MediaBay.CONTROLLER, clip);
         }
     }
 
@@ -470,10 +493,10 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
                 if (queue.isEmpty()) {
                     return;
                 }
-                if (!hasMedia()) {
+                if (!hasMedia() || !tray.reads(mediaStack())) {
                     /*
-                     * The job waits for a disc rather than failing: the player queued it on purpose and the display
-                     * says what is missing.
+                     * The job waits for a disc, or for the tray it lies on to close, rather than failing: the player
+                     * queued it on purpose and the display says what is missing.
                      */
                     return;
                 }

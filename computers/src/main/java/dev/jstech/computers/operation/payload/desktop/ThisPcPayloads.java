@@ -164,7 +164,7 @@ public final class ThisPcPayloads {
     private static ThisPcPayload.WireMedia mediaRow(
             final IOsHost computer, final BlockPos host,
             final long endpoint, final MediaReaderBlockEntity reader) {
-        final ItemStack m = reader.mediaSlot().getStackInSlot(0);
+        final ItemStack m = reader.readableMedium();
         final MediaKind kind = m.isEmpty() ? null : reader.insertedKind();
         final ResourceLocation pl = m.isEmpty() ? null : reader.insertedPayload();
         String payloadName = "";
@@ -355,6 +355,13 @@ public final class ThisPcPayloads {
                 && computer.enabledEndpoints().contains(payload.readerPos())
                 && Loaded.blockEntity(level, BlockPos.of(payload.readerPos()))
                         instanceof MediaReaderBlockEntity reader) {
+            // An optical drive's eject opens its tray, as its button does; the disc waits on it for the player's hand.
+            if (payload.bay() < 0 && reader.driveType().ejectButton() != null) {
+                if (!reader.reading() && !reader.tray().isOpen()) {
+                    reader.tray().press(level, reader.getBlockPos());
+                }
+                return;
+            }
             final ItemStack ejected = payload.bay() < 0 ? reader.ejectMedia()
                     : reader instanceof DockStationBlockEntity dock ? dock.ejectDisk(payload.bay()) : ItemStack.EMPTY;
             if (!ejected.isEmpty() && !player.addItem(ejected)) {

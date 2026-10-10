@@ -109,7 +109,7 @@ public final class DriveTable {
             if (!(Loaded.blockEntity(level, BlockPos.of(pos)) instanceof MediaReaderBlockEntity reader)) {
                 continue;
             }
-            final ItemStack media = reader.mediaSlot().getStackInSlot(0);
+            final ItemStack media = reader.readableMedium();
             table.add(new Drive(letter, media, FilesystemKind.HIERARCHICAL, () -> syncReader(reader)));
             letter++;
             // A dock's disks follow its stick: each one docked is an external drive of its own, top tray first.

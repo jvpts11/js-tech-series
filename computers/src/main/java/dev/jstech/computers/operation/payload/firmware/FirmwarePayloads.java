@@ -221,7 +221,7 @@ public final class FirmwarePayloads {
                 continue;
             }
             final Text drive = reader.driveType().driveName();
-            final ItemStack media = reader.mediaSlot().getStackInSlot(0);
+            final ItemStack media = reader.readableMedium();
             if (media.isEmpty()) {
                 entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint, "",
                         EMPTY_DRIVE.text(), drive, "", Text.EMPTY, false, -1));

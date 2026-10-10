@@ -26,9 +26,12 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.SlotItemHandler;
 
 /**
- * The Pattern Encoder's bay panel: the one media slot, the player's inventory, and two buttons (eject the
- * medium, cancel the queue). Everything the panel displays about the job comes off the block entity, which
- * the server keeps synced; the authoring itself happens on the linked computer's Pattern Studio.
+ * The Pattern Encoder's bay panel: the one media slot, the player's inventory, and two buttons (eject, cancel the
+ * queue). Everything the panel displays about the job comes off the block entity, which the server keeps synced; the
+ * authoring itself happens on the linked computer's Pattern Studio.
+ *
+ * <p>Eject is the encoder's own eject button: on an encoder with a disc tray it opens and closes the tray, and a disc
+ * goes into the slot or comes out of it only while the tray is out; on the Vintage encoder it hands the floppy back.
  */
 public class PatternEncoderMenu extends CoreMenu {
 
@@ -48,8 +51,13 @@ public class PatternEncoderMenu extends CoreMenu {
         final GuiLayout.SlotPosition mediaAt = layout.slotAt("media");
         final SlotGroup media = slots(new SlotItemHandler(be.media(), MEDIA_SLOT, mediaAt.x(), mediaAt.y()) {
             @Override
+            public boolean mayPlace(final ItemStack stack) {
+                return blockEntity.tray().reaches(stack) && super.mayPlace(stack);
+            }
+
+            @Override
             public boolean mayPickup(final Player player) {
-                return !blockEntity.locked();
+                return !blockEntity.locked() && blockEntity.tray().reaches(getItem());
             }
         });
         final PlayerSlots playerSlots = playerInventory(playerInventory, layout.playerInventoryAt());
@@ -77,8 +85,15 @@ public class PatternEncoderMenu extends CoreMenu {
         return slots.get(MEDIA_SLOT).getItem();
     }
 
-    /** Ejects the medium to the player, unless the bay is locked or empty; drops it when the player has no room. */
+    /**
+     * Presses the eject button of an encoder with a tray; on one without, ejects the medium to the player, unless the
+     * bay is locked or empty, dropping it when the player has no room.
+     */
     private void eject(final Player player) {
+        if (blockEntity.hasTray()) {
+            PatternEncoderBlock.pressEjectButton(blockEntity, player);
+            return;
+        }
         if (blockEntity.locked()) {
             return;
         }

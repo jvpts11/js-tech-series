@@ -12,7 +12,10 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.menu.PatternEncoderMenu;
+import dev.jstech.computers.os.media.DiscTray;
+import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.ITrayBlock;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
@@ -39,14 +42,19 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The Pattern Encoder block: the burner a computer's Pattern Studio sends finished recipe files to. One block
- * per hardware era, each writing the media of its day. A click with a disc the era accepts puts it in the bay,
+ * per hardware era, each writing the media of its day. A click with a medium the era accepts puts it in the bay,
  * a sneak-click takes it out (unless a job holds it), and a plain click opens the bay's small panel.
+ *
+ * <p>From the Legacy era on the encoder burns discs, which lie on a tray: a click on the eject button on its front
+ * opens and closes the tray, and a disc is laid on it or lifted off it only while it is out. A stick goes into its
+ * port whatever the tray is doing.
  */
 @TextHolder
-public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
+public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock, ITrayBlock {
 
     private final HardwareEra era;
     private final FacePorts ports;
@@ -79,6 +87,13 @@ public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, 
     private static final TextKey ADVANCED_ONLY = TextKey.of("jsc.pattern_encoder.advanced_only",
             "An Advanced encoder writes Blu-ray discs and USB sticks only.");
 
+    /*
+     * The eject button beside the tray, where each era's model draws it: on the Legacy burner below the tray's right
+     * end, on the later ones a little higher and further right. Each front is set a pixel back in its case.
+     */
+    private static final EjectButton LEGACY_BUTTON = new EjectButton(46, 24, 54, 27, 4);
+    private static final EjectButton LATER_BUTTON = new EjectButton(48, 23, 56, 25, 4);
+
     public PatternEncoderBlock(final Properties properties, final HardwareEra era) {
         super(properties, DEVICE);
         this.era = era;
@@ -99,6 +114,29 @@ public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, 
     @Override
     public FacePorts ports() {
         return ports;
+    }
+
+    /** The button of its tray; the Vintage encoder writes floppies, which go through a slot, and has none. */
+    @Override
+    @Nullable
+    public EjectButton ejectButton() {
+        return switch (era) {
+            case VINTAGE -> null;
+            case LEGACY -> LEGACY_BUTTON;
+            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> LATER_BUTTON;
+        };
+    }
+
+    /**
+     * The eject button pressed, from the block or from the bay's panel: the tray rides out, or back in, unless the head
+     * is on the disc, which the encoder does not give up mid-write.
+     */
+    public static void pressEjectButton(final PatternEncoderBlockEntity encoder, final Player player) {
+        if (encoder.locked()) {
+            player.displayClientMessage(GameText.component(WRITING_WAIT), true);
+            return;
+        }
+        encoder.tray().press(encoder.getLevel(), encoder.getBlockPos());
     }
 
     @Override
@@ -133,11 +171,21 @@ public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, 
         if (!(level.getBlockEntity(pos) instanceof PatternEncoderBlockEntity encoder)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
+        // The eject button answers whatever the hand holds, as a real one does.
+        final EjectButton button = ejectButton();
+        if (button != null && DeviceFront.presses(button, state, pos, hit, player.getEyePosition())) {
+            pressEjectButton(encoder, player);
+            return ItemInteractionResult.SUCCESS;
+        }
         if (player.isShiftKeyDown()) {
             eject(encoder, level, pos, player);
             return ItemInteractionResult.SUCCESS;
         }
         if (encoder.acceptsMedia(heldStack)) {
+            if (!encoder.tray().reaches(heldStack)) {
+                player.displayClientMessage(GameText.component(DiscTray.CLOSED), true);
+                return ItemInteractionResult.SUCCESS;
+            }
             final ItemStack left = encoder.insertMedia(heldStack.copyWithCount(1));
             if (left.isEmpty()) {
                 heldStack.shrink(1);
@@ -171,6 +219,10 @@ public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, 
                               final Player player) {
         if (encoder.locked()) {
             player.displayClientMessage(GameText.component(WRITING_WAIT), true);
+            return;
+        }
+        if (!encoder.tray().reaches(encoder.mediaStack())) {
+            player.displayClientMessage(GameText.component(DiscTray.CLOSED), true);
             return;
         }
         final ItemStack ejected = encoder.ejectMedia();

@@ -90,7 +90,7 @@ public final class FileAccess {
         if (volume.docked()) {
             return reader instanceof DockStationBlockEntity dock ? dock.disk(volume.bay()) : ItemStack.EMPTY;
         }
-        return reader.mediaSlot().getStackInSlot(0);
+        return reader.readableMedium();
     }
 
     /**
