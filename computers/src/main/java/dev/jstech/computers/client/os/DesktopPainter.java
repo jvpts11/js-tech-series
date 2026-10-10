@@ -124,7 +124,7 @@ final class DesktopPainter {
             g.enableScissor(ox, oy, ox + view.glassWidth(), oy + view.glassHeight());
             g.pose().pushPose();
             g.pose().translate(0, 0, POINTER_Z);
-            desktop.pointers().draw(g, lmx, lmy);
+            desktop.pointers().draw(g, desktop.pointerX(), desktop.pointerY());
             g.pose().popPose();
             g.disableScissor();
         }
@@ -175,6 +175,7 @@ final class DesktopPainter {
         final DesktopWindows wm = desktop.wm();
         final DesktopViewport view = desktop.view();
         final DesktopWindow front = wm.front();
+        final DesktopWindow focused = wm.focused();
         final double now = DesktopMotion.now();
         wm.settleClosing(now);
         final int count = wm.all().size();
@@ -189,8 +190,11 @@ final class DesktopPainter {
             if (wm.away(w) && !(moving && w.minimized() && w.on(wm.workspace()))) {
                 continue;
             }
-            w.setFocused(w == front);
-            drawWindow(g, w, DesktopZ.windowZ(i, count), moving, now, lmx, lmy, partialTick, sw, sh);
+            w.setFocused(w == focused);
+            // The pointer over a window in front is not over this one, so nothing of this one lights under it.
+            final boolean covered = coveredAt(wm, i, lmx, lmy);
+            drawWindow(g, w, DesktopZ.windowZ(i, count), moving, now, covered ? FAR : lmx, covered ? FAR : lmy,
+                    partialTick, sw, sh);
         }
         // A window just closed is drawn going away over the rest, where it stood in front of them.
         for (final DesktopWindow w : wm.closing()) {
@@ -255,6 +259,18 @@ final class DesktopPainter {
     private void poseInMotion(final GuiGraphics g, final DesktopWindow w, final double now) {
         final int[] to = w.motion().is(MotionStyles.ZOOM) ? desktop.taskbar().entryRect(w.groupKey()) : NOWHERE;
         DesktopMotion.pose(g, w.motion(), now, w.x(), w.y(), w.width(), w.height(), to[0], to[1], to[2], to[3]);
+    }
+
+    /* Whether a window on show in front of the one at {@code index} stands over the point ({@code x}, {@code y}). */
+    private static boolean coveredAt(final DesktopWindows wm, final int index, final int x, final int y) {
+        for (int j = index + 1; j < wm.all().size(); j++) {
+            final DesktopWindow above = wm.all().get(j);
+            if (!wm.away(above) && x >= above.x() && x < above.x() + above.width() && y >= above.y()
+                    && y < above.y() + above.height()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

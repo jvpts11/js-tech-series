@@ -23,6 +23,10 @@ logoBlur = true
 [modproperties.${mod_id}]
 catalogueImageIcon = "${mod_id}_icon.png"
 
+# Mixin config: the mixins live under the dev.jstech.core.mixin package.
+[[mixins]]
+config = "${mod_id}.mixins.json"
+
 [[dependencies.${mod_id}]]
 modId = "neoforge"
 type = "required"

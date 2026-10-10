@@ -9,12 +9,14 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.MkdirPayload;
+import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.ColumnHeader;
+import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
@@ -131,6 +133,9 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     /** The width of the labels in front of the name and the kind: "File name:" has to fit. */
     private static final int LABEL_W = 54;
     private static final int HISTORY_MAX = 32;
+    /** The right button's menu over the list: as wide and its rows as tall as the file manager's. */
+    private static final int MENU_W = 96;
+    private static final int MENU_ITEM_H = 11;
 
     private final BlockPos host;
     /** The program that opened this window, whose window it sits over and holds. */
@@ -174,6 +179,19 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     private String replacing = "";
     private long lastClickAt;
     private int lastClickRow = -1;
+    /** The menu the right button opens over the list: a new folder here, and a new name for the row under it. */
+    private final ContextMenu menu = new ContextMenu(MENU_W, MENU_ITEM_H);
+    /** The box a row's new name is typed into, laid over the row's name while it is renamed. */
+    private final TextField renameField;
+    /** The path of the row being renamed, or empty while none is. */
+    private String renaming = "";
+    /** A folder just made here, whose name is taken in hand as soon as the listing shows it. */
+    private String pendingRename = "";
+    /** Where the content was last drawn, which the menu keeps inside. */
+    private int contentX;
+    private int contentY;
+    private int contentW;
+    private int contentH;
 
     public FileDialog(final BlockPos host, final IDesktopApp owner) {
         this.host = host;
@@ -190,6 +208,9 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
                 GameText.resolve(FileDialogTexts.TYPE_COLUMN), GameText.resolve(FileDialogTexts.SIZE_COLUMN)))
                 .setSortable(false));
         this.rows = this.root.add(new ListView<>(this::entries, ROW_H, this::drawEntry).setOnClick(this::onRow));
+        this.renameField = this.root.add(new TextField(64).setOnCommit(this::commitRename).setRevertOnEscape(true)
+                .setOnBlur(this::endRename));
+        this.renameField.setVisible(false);
         this.nameLabel = this.root.add(new Label(() -> GameText.resolve(this.mode == Mode.OPEN_FOLDER
                 ? FileDialogTexts.FOLDER_LABEL : FileDialogTexts.FILE_NAME_LABEL), Label.Tone.DIM));
         this.name = this.root.add(new TextField(120).setOnCommit(value -> confirm()));
@@ -336,6 +357,17 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         this.volumes.clear();
         this.volumes.addAll(listing.volumes());
         this.rows.setScroll(0);
+        // A folder made a moment ago is named at once, the way the file manager does it.
+        if (!this.pendingRename.isEmpty()) {
+            final List<Entry> shown = entries();
+            for (int i = 0; i < shown.size(); i++) {
+                if (!shown.get(i).up() && shown.get(i).name().equalsIgnoreCase(this.pendingRename)) {
+                    startRename(i);
+                    break;
+                }
+            }
+            this.pendingRename = "";
+        }
     }
 
     /* The places on the left */
@@ -560,6 +592,11 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     /** A click picks the row; a second click on it within a moment goes into a folder or takes a file. */
     private void onRow(final int index, final int button, final double mx, final double my) {
         final List<Entry> list = entries();
+        // The right button opens the list's menu, on a row or on the empty part under the rows.
+        if (button == 1) {
+            openMenu(index >= 0 && index < list.size() ? index : -1, mx, my);
+            return;
+        }
         if (index < 0 || index >= list.size()) {
             return;
         }
@@ -622,17 +659,84 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         this.rows.setSelected(-1);
     }
 
-    /** Makes a folder here with the next free name and goes into it, so Select Folder picks the new one. */
+    /**
+     * Makes a folder here with the next free name and takes its name in hand, as the file manager does: the window
+     * stays where it is, so the folder can be named, then picked or gone into.
+     */
     private void makeFolder() {
         String made = GameText.resolve(DesktopTexts.NEW_FOLDER);
         int n = 2;
         while (has(made)) {
             made = GameText.resolve(DesktopTexts.NEW_FOLDER_NUMBERED.with(n++));
         }
-        final String path = join(this.dir, made);
-        PacketDistributor.sendToServer(new MkdirPayload(this.host, path));
+        PacketDistributor.sendToServer(new MkdirPayload(this.host, join(this.dir, made)));
         FilesApps.diskChanged();
-        go(path);
+        this.pendingRename = made;
+        request(this.dir);
+    }
+
+    /* The list's menu at the pointer: a new folder here, and the row's new name when it was opened on a row. */
+    private void openMenu(final int index, final double mx, final double my) {
+        final List<ContextMenu.Item> items = new ArrayList<>();
+        final List<Entry> list = entries();
+        if (index >= 0 && !list.get(index).up()) {
+            this.rows.setSelected(index);
+            items.add(new ContextMenu.Item(GameText.resolve(DesktopTexts.RENAME), true, () -> startRename(index)));
+        }
+        items.add(new ContextMenu.Item(GameText.resolve(FileDialogTexts.NEW_FOLDER), true, this::makeFolder));
+        this.menu.open(items, (int) mx, (int) my, this.contentX, this.contentY, this.contentW, this.contentH);
+    }
+
+    /* Lays the name box over the row's name and gives it the keyboard, the caret before the kind of file. */
+    private void startRename(final int index) {
+        final List<Entry> list = entries();
+        if (index < 0 || index >= list.size() || list.get(index).up()) {
+            return;
+        }
+        final Entry entry = list.get(index);
+        this.rows.setSelected(index);
+        this.renaming = entry.file().path();
+        this.renameField.set(entry.name());
+        final int dot = entry.name().lastIndexOf('.');
+        this.renameField.setCaret(dot > 0 && !entry.file().directory() ? dot : entry.name().length());
+        this.renameField.setVisible(true);
+        this.root.focus(this.renameField);
+    }
+
+    /* The name box committing: the row takes the new name, in the same folder. */
+    private void commitRename(final String typed) {
+        final String newName = typed.trim();
+        if (this.renaming.isEmpty() || newName.isEmpty()) {
+            return;
+        }
+        final String newPath = join(parentOf(this.renaming), newName);
+        if (!newPath.equals(this.renaming)) {
+            PacketDistributor.sendToServer(new RenameFilePayload(this.host, this.renaming, newPath));
+            FilesApps.diskChanged();
+            request(this.dir);
+        }
+    }
+
+    /* The name box gave up the keyboard, kept or not: it goes away. */
+    private void endRename() {
+        this.renaming = "";
+        this.renameField.setVisible(false);
+    }
+
+    /* The name box over the name of the row being renamed, as the list stands this frame. */
+    private void placeRenameField() {
+        if (this.renaming.isEmpty()) {
+            return;
+        }
+        final List<Entry> list = entries();
+        for (int i = 0; i < list.size(); i++) {
+            if (!list.get(i).up() && list.get(i).file().path().equals(this.renaming)) {
+                final int[] row = this.rows.rowRect(i);
+                final int nameX = this.header.columnX(0);
+                this.renameField.setBounds(nameX - 2, row[1] + 2, this.header.columnX(1) - nameX - 2, ROW_H - 4);
+                return;
+            }
+        }
     }
 
     private boolean has(final String fileName) {
@@ -689,14 +793,15 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
                 return;
             }
         }
-        final String fileName = leaf(typed.replace('\\', '/'));
+        final String leaf = leaf(typed.replace('\\', '/'));
         for (final DiskFilesPayload.WireFile file : this.listed) {
-            if (file.directory() && leaf(file.path()).equalsIgnoreCase(fileName)) {
+            if (file.directory() && leaf(file.path()).equalsIgnoreCase(leaf)) {
                 this.name.set("");
                 go(file.path());
                 return;
             }
         }
+        final String fileName = this.mode == Mode.SAVE ? withKind(leaf) : leaf;
         final String path = join(this.dir, fileName);
         if (this.mode == Mode.OPEN_FILE) {
             if (!has(fileName)) {
@@ -717,6 +822,23 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     private void finish(final String path) {
         close();
         this.onPick.accept(path);
+    }
+
+    /*
+     * The name a file is saved under: as typed when it ends in a kind the chosen filter shows, else with the filter's
+     * first kind after it, as every save dialog does; a picture saved as "house" is "house.pix". Without it the file had
+     * no kind, so no program would open it and Open with offered the Editor alone.
+     */
+    private String withKind(final String typed) {
+        final Filter chosen = this.filters.get(this.filter);
+        if (chosen.extensions().isEmpty()) {
+            return typed;
+        }
+        final int dot = typed.lastIndexOf('.');
+        if (dot > 0 && chosen.admits(typed.substring(dot + 1))) {
+            return typed;
+        }
+        return typed + "." + chosen.extensions().getFirst();
     }
 
     /* The window */
@@ -750,6 +872,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         this.header.setBounds(lx, y, lw, 10);
         this.header.setColumnX(lx + NAME_DX, lx + lw - SIZE_W - TYPE_W, lx + lw - SIZE_W);
         this.rows.setBounds(lx, y + 10, lw, listH - 10);
+        placeRenameField();
         y += listH + 3;
         final int primaryW = this.mode == Mode.OPEN_FOLDER ? 64 : 38;
         final int buttonsW = primaryW + 4 + 38;
@@ -817,8 +940,14 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         layout(x, y, width, height);
         this.lastMouseX = mouseX;
         this.lastMouseY = mouseY;
+        this.contentX = x;
+        this.contentY = y;
+        this.contentW = width;
+        this.contentH = height;
         g.fill(x, y, x + width, y + height, this.skin.windowBg());
-        this.root.render(g, new UiContext(this.skin, font, mouseX, mouseY, partialTick));
+        final UiContext ctx = new UiContext(this.skin, font, mouseX, mouseY, partialTick);
+        this.root.render(g, ctx);
+        this.menu.render(g, ctx);
     }
 
     /** Where the cursor was last drawn, so the wheel scrolls the list under it. */
@@ -833,6 +962,11 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     @Override
     public void mouseClicked(final DesktopWindow window, final double mx, final double my, final int button) {
+        // The list's menu takes the next click: on it, it does what it says; anywhere else it goes away.
+        if (this.menu.isOpen()) {
+            this.menu.mouseClicked(mx, my, button);
+            return;
+        }
         /*
          * A click on the address past its last crumb turns it into text; answered here rather than by
          * the trail, because the panel would then move the keyboard to what was clicked and take it
@@ -864,6 +998,15 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
 
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
+        if (this.menu.isOpen()) {
+            this.menu.keyPressed(key, scanCode, modifiers);
+            return true;
+        }
+        // A name being typed into a row takes Enter, Escape and Backspace for itself.
+        if (this.renameField.isFocused()) {
+            this.root.keyPressed(key, scanCode, modifiers);
+            return true;
+        }
         if (key == GLFW.GLFW_KEY_ESCAPE && !this.addressEdit.isFocused()) {
             close();
             return true;

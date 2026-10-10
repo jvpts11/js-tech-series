@@ -34,6 +34,11 @@ final class DesktopWindows {
     private int shown;
     /** How many windows each program has opened since the desktop came up, which is what "Most used" ranks by. */
     private final Map<String, Integer> opened = new HashMap<>();
+    /**
+     * Whether the player clicked the bare desktop since a window last came forward: the windows keep their order, but
+     * none of them has the focus, so none takes the keyboard or wears the focused look.
+     */
+    private boolean onDesktop;
 
     DesktopWindows(final DesktopState desktop) {
         this.desktop = desktop;
@@ -68,6 +73,17 @@ final class DesktopWindows {
             }
         }
         return null;
+    }
+
+    /** The window with the focus, which takes the keyboard: the one in front, or none after a click on the desktop. */
+    @Nullable
+    DesktopWindow focused() {
+        return onDesktop ? null : front();
+    }
+
+    /** Takes the focus away from every window, as a click on the bare desktop does. */
+    void focusDesktop() {
+        onDesktop = true;
     }
 
     /** Whether the front window's program has a modal dialog open, which disables everything behind it. */
@@ -150,6 +166,7 @@ final class DesktopWindows {
         opened.setWorkspaces(WorkspaceSet.only(shown));
         opened.move(desktop.motion().start(MotionKinds.WINDOW_OPEN));
         windows.add(opened);
+        onDesktop = false;
         this.opened.merge(key, 1, Integer::sum);
         // A copy's window is the system telling of a copy, not a program being loaded.
         if (!CopyWindows.KEY.equals(key)) {
@@ -202,6 +219,7 @@ final class DesktopWindows {
             return;
         }
         windows.add(w);
+        onDesktop = false;
         final List<DesktopWindow> dialogs = new ArrayList<>();
         for (final DesktopWindow other : windows) {
             if (other.owner() == w) {

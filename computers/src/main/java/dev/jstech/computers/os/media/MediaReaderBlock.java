@@ -81,7 +81,7 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
     protected MediaReaderBlock(final MediaDriveType driveType, final Properties properties, final Device<?> device) {
         super(properties, device);
         this.driveType = driveType;
-        this.ports = PeripheralSockets.back(driveType.era());
+        this.ports = PeripheralSockets.back(driveType.portEra());
         registerDefaultState(defaultBlockState().setValue(LOADED, false));
     }
 

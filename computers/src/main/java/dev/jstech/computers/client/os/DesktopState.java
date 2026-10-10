@@ -167,6 +167,9 @@ final class DesktopState {
     /** The pointer, desktop-local, as the frame being drawn has it, so a menu drawn late in it lights its row. */
     private int hoverX;
     private int hoverY;
+    /* The same to a fraction of a desktop pixel, which is where the pointer is drawn, so it moves as finely as the mouse. */
+    private double pointerX;
+    private double pointerY;
     /**
      * When a program was last started from this desktop, on the motion clock: what CDE's busy light blinks for and
      * what the working pointer shows while it lasts.
@@ -232,6 +235,17 @@ final class DesktopState {
      * kernel's crash screen is all there is to draw, until the machine reboots.
      */
     boolean paint(final GuiGraphics g, final int lmx, final int lmy, final float partialTick) {
+        return paint(g, lmx, lmy, lmx, lmy, partialTick);
+    }
+
+    /**
+     * The same, with the pointer drawn at ({@code px}, {@code py}), the point to a fraction of a desktop pixel that
+     * ({@code lmx}, {@code lmy}) rounds down, so the drawn pointer moves as finely as the mouse.
+     */
+    boolean paint(final GuiGraphics g, final int lmx, final int lmy, final double px, final double py,
+                  final float partialTick) {
+        this.pointerX = px;
+        this.pointerY = py;
         layouts.pushIfChanged();
         /*
          * Keep the inventory slots glued to the window in front this frame (per frame, so a dragged window does not
@@ -251,6 +265,15 @@ final class DesktopState {
     @Nullable
     Slot hoveredSlot() {
         return painter.hovered();
+    }
+
+    /** Where the pointer is drawn this frame, desktop-local, to a fraction of a pixel. */
+    double pointerX() {
+        return pointerX;
+    }
+
+    double pointerY() {
+        return pointerY;
     }
 
     /**

@@ -36,6 +36,7 @@ final class FileTypeNames {
     static final TextKey SGPROJ = TextKey.of("jsc.file_type.sgproj", "Σ project");
     static final TextKey OGG = TextKey.of("jsc.file_type.ogg", "Ogg Vorbis audio");
     static final TextKey WAV = TextKey.of("jsc.file_type.wav", "Wave audio");
+    static final TextKey PIX = TextKey.of("jsc.file_type.pix", "Picture");
 
     private FileTypeNames() {
     }

@@ -92,10 +92,12 @@ final class PackageCommands {
             this.kind = kind;
         }
 
-        /** Each manager is its own system's, and it reaches the Mirror over the network. */
+        /*
+         * Each manager is its own system's, and reaches the Mirror over the network; off one it is still there and
+         * says it cannot reach the Mirror, rather than being a word the prompt does not know.
+         */
         @Override public CommandScope scope() {
-            return CommandScope.on(CommandScope.UNIX_SYSTEMS).forManager(this.kind)
-                    .needing(CommandScope.Need.NETWORK);
+            return CommandScope.on(CommandScope.UNIX_SYSTEMS).forManager(this.kind);
         }
 
         @Override public String name() { return kind.command(); }

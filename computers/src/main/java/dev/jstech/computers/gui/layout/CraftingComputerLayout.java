@@ -79,10 +79,14 @@ public final class CraftingComputerLayout {
     public static final int COL_R = 126;
     public static final int COL_R_W = 110;
 
-    public static final int TILE_H = 20;
+    /*
+     * A stat tile holds its caption, then its value with the unit two pixels lower: the unit's letters end 22 pixels
+     * under the tile's top, so a tile is 24 tall to keep them inside its frame.
+     */
+    public static final int TILE_H = 24;
     public static final int TILE_Y0 = 27;  // CAPACITY
-    public static final int TILE_Y1 = 49;  // CRAFTING
-    public static final int TILE_Y2 = 71;  // RECIPE ROM
+    public static final int TILE_Y1 = 53;  // CRAFTING
+    public static final int TILE_Y2 = 79;  // RECIPE ROM
 
     public static final int BTN_H = 14;
     public static final int POWER_X = COL_R;

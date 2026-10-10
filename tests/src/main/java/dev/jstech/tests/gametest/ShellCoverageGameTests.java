@@ -183,6 +183,20 @@ public final class ShellCoverageGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * Off a network the package manager is still the system's: it says it cannot reach the Mirror, where the prompt
+     * used to answer that it found no such command.
+     */
+    @GameTest(template = ARENA)
+    public static void packages_pckmgrOffANetworkSaysItCannotReachTheMirror(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity alone = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        final List<String> install = fullShell(helper, alone, "pckmgr install screenfetch");
+        helper.assertTrue(says(install, "could not resolve mirror://") && !says(install, "not found"),
+                "pckmgr answers, and says why it cannot install; got " + install);
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void packages_pckmgrUpdateAnswersThroughTheMirror(final GameTestHelper helper) {
         final Fleet fleet = wire(helper);

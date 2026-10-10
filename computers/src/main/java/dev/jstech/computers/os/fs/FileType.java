@@ -126,7 +126,7 @@ public enum FileType {
      * <p>Not editable by hand, because it is numbers rather than words and a character changed in it moves
      * every pixel after that point. A paint program opens it.
      */
-    PIX("pix", false, false, null),
+    PIX("pix", false, false, FileTypeNames.PIX),
 
     /**
      * A song or any other sound kept as Ogg Vorbis. The file names a recording the server keeps and weighs what the
@@ -186,6 +186,14 @@ public enum FileType {
      */
     public boolean userEditable() {
         return userEditable;
+    }
+
+    /**
+     * Whether a program writes a file of this kind whole although nobody edits one by hand: a paint program saves its
+     * picture. Such a save is taken only when what it carries is one of these, so an editor cannot write words into it.
+     */
+    public boolean writtenByPrograms() {
+        return this == PIX;
     }
 
     /**

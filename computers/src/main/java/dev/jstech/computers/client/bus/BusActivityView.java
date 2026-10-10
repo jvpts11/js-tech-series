@@ -30,8 +30,7 @@ final class BusActivityView {
     private final AbstractBusMenu menu;
     private final Font font;
     private int scroll;
-
-    /** The ticks of a game day, and of one of its hours. */
+    private final ScrollGrab bar = new ScrollGrab();
 
     BusActivityView(final AbstractBusMenu menu, final Font font) {
         this.menu = menu;
@@ -64,12 +63,35 @@ final class BusActivityView {
         }
         g.disableScissor();
         BusDraw.scrollbar(g, left + BusLayout.SCROLL_X, viewTop, BusLayout.ACTIVITY_VIEW_H, scroll, content);
+        bar.drawn(left + BusLayout.SCROLL_X, viewTop, BusLayout.ACTIVITY_VIEW_H, content);
         final List<String> note = BusDraw.lines(font, GameText.resolve(credits ? BusTexts.CREDIT_NOTE
                 : BusTexts.ACTIVITY_NOTE), BusLayout.ROW_W);
         for (int i = 0; i < Math.min(BusLayout.ACTIVITY_NOTE_LINES, note.size()); i++) {
             BusDraw.small(g, font, note.get(i), left + BusLayout.LABEL_X,
                     top + BusLayout.ACTIVITY_NOTE_Y + i * BusLayout.LINE, JsTechTheme.dim());
         }
+    }
+
+    /** A press on the scrollbar takes hold of it and puts the thumb under the pointer; false for a press elsewhere. */
+    boolean pressBar(final double mx, final double my) {
+        if (!bar.press(mx, my)) {
+            return false;
+        }
+        scroll = bar.scrollAt(my);
+        return true;
+    }
+
+    /** The pointer dragged with the scrollbar held: the list follows; false while it is not held. */
+    boolean dragBar(final double my) {
+        if (!bar.held()) {
+            return false;
+        }
+        scroll = bar.scrollAt(my);
+        return true;
+    }
+
+    void releaseBar() {
+        bar.release();
     }
 
     boolean scrolled(final double mx, final double my, final double delta, final int left, final int top) {

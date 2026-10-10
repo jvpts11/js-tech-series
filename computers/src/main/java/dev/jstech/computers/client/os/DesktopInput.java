@@ -61,6 +61,10 @@ final class DesktopInput {
         if (desktop.memory().crashing()) {
             return Click.TAKEN; // the crash screen swallows input until the reboot completes
         }
+        // The monitor's frame is not the desktop: nothing on the desktop, nor a slot under it, takes a click there.
+        if (!desktop.view().onGlass(absX, absY)) {
+            return Click.TAKEN;
+        }
         if (clickedOverlay(absX, absY, button)) {
             return Click.TAKEN;
         }
@@ -189,7 +193,7 @@ final class DesktopInput {
         if (desktop.start().type(c)) {
             return true;
         }
-        final DesktopWindow w = desktop.wm().front();
+        final DesktopWindow w = desktop.wm().focused();
         return w != null && w.app().charTyped(c);
     }
 
@@ -210,7 +214,7 @@ final class DesktopInput {
                 || desktop.fileActions().isRenaming() || desktop.start().isOpen()) {
             return screen.keyPressed(key, scanCode, modifiers);
         }
-        final DesktopWindow w = desktop.wm().front();
+        final DesktopWindow w = desktop.wm().focused();
         return w != null && (key != 256 || w.app().wantsEscape()) && w.app().keyPressed(key, scanCode, modifiers);
     }
 
@@ -258,8 +262,8 @@ final class DesktopInput {
         if (desktop.start().keyPressed(key)) {
             return Click.TAKEN;
         }
-        // The program in front has first refusal, except of Escape, which closes the desktop.
-        final DesktopWindow w = desktop.wm().front();
+        // The program with the focus has first refusal, except of Escape, which closes the desktop.
+        final DesktopWindow w = desktop.wm().focused();
         if (w != null && (key != 256 || w.app().wantsEscape()) && w.app().keyPressed(key, scanCode, modifiers)) {
             return Click.TAKEN;
         }
@@ -270,9 +274,9 @@ final class DesktopInput {
         return Click.CONTAINER;
     }
 
-    /** A key let go goes to the window in front, for a program that tells a press from a release. */
+    /** A key let go goes to the window with the focus, for a program that tells a press from a release. */
     boolean keyReleased(final int key, final int scanCode, final int modifiers) {
-        final DesktopWindow w = desktop.wm().front();
+        final DesktopWindow w = desktop.wm().focused();
         return !desktop.notices().popupUp() && w != null && w.app().keyReleased(key, scanCode, modifiers);
     }
 
@@ -636,6 +640,8 @@ final class DesktopInput {
             deskMenu.mouseClicked(mouseX, mouseY, button);
             return Click.TAKEN;
         }
+        // The desktop itself takes the focus: the window that had it keeps its place but no longer has the keyboard.
+        desktop.wm().focusDesktop();
         // A click on the desktop keeps the name an icon was being given.
         if (desktop.fileActions().isRenaming()) {
             desktop.fileActions().commitRename();

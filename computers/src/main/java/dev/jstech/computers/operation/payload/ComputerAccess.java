@@ -136,6 +136,18 @@ public final class ComputerAccess {
     }
 
     /**
+     * At any screen of that machine on one of its monitors, its start, its firmware's setup or an installer as well:
+     * for the power buttons beside the glass, which work the machine's own switch whatever the glass is showing. They
+     * were drawn on every screen but refused on these, so a press there did nothing.
+     */
+    public static <P> IPayloadGate<P> machineOrSession(final Function<P, BlockPos> host) {
+        final IPayloadGate<P> atMachine = machine(host);
+        return (player, payload) -> atMachine.admits(player, payload)
+                || player.containerMenu instanceof MonitorSessionMenu session
+                && session.hostPos().equals(host.apply(payload)) && session.stillValid(player);
+    }
+
+    /**
      * At a screen of that machine shown on that monitor, for a payload that names the monitor it acts on (one that
      * reopens a screen there): the monitor a payload names is not trusted either.
      */

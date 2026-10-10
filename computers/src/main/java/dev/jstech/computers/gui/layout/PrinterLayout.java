@@ -64,8 +64,6 @@ public final class PrinterLayout {
     public static final int QUEUE_ROW = 11;
     public static final int QUEUE_ROWS = 3;
     public static final int QUEUE_H = QUEUE_ROW * QUEUE_ROWS;
-    /** Where a queue row's status sits, at its right end. */
-    public static final int QUEUE_STATUS_W = 34;
     public static final int QUEUE_TITLE_CHARS = 14;
     public static final int QUEUE_FROM_CHARS = 16;
 

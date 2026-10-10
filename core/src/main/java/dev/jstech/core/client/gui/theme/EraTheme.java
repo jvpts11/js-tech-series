@@ -144,7 +144,8 @@ public final class EraTheme {
         final EraPalette p = colours.get();
         g.fill(x - 1, y - 1, x + 17, y + 17, p.slotEdge());
         Grounds.fill(g, x, y, x + 16, y + 16, p.slotBg());
-        bevel(g, p, x, y, 18, 18, true);
+        // The bevel runs along the frame, which starts a pixel before the item.
+        bevel(g, p, x - 1, y - 1, 18, 18, true);
     }
 
     public void panel(final GuiGraphics g, final int x, final int y, final int w, final int h) {

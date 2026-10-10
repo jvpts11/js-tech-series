@@ -130,6 +130,7 @@ final class StartMenus {
     void close() {
         open = false;
         search.setLength(0);
+        linux.forgetCinnamonCategory();
     }
 
     /** What has been typed into the search box, empty when nothing has. */
@@ -481,7 +482,8 @@ final class StartMenus {
         // A period launcher is a plain list with no search box, even on the GNOME whose modern shell has one.
         final PanelStyle style = desktop.panelStyle();
         return style == PanelStyle.FRAMES_11 || style == PanelStyle.FRAMES_7 || style == PanelStyle.FRAMES_10
-                || desktop.kde4() || (style == PanelStyle.GNOME && !desktop.periodPanel() && !desktop.gnome2());
+                || style == PanelStyle.CINNAMON || desktop.kde4()
+                || (style == PanelStyle.GNOME && !desktop.periodPanel() && !desktop.gnome2());
     }
 
     /**

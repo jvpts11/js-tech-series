@@ -80,6 +80,7 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
             configure.hideFields();
         }
         imageHeight = heightOf(shown);
+        place();
     }
 
     @Override
@@ -104,9 +105,9 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
     @Override
     protected void containerTick() {
         super.containerTick();
-        if (tab == BusLayout.TAB_SOFTWARE) {
-            imageHeight = software.windowHeight();
-        }
+        // The state arrives after the screen opens, and the Configure rows it brings set how tall the window is.
+        imageHeight = heightOf(tab);
+        place();
     }
 
     @Override
@@ -182,6 +183,14 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
                     return true;
                 }
             }
+            final boolean onBar = switch (tab) {
+                case BusLayout.TAB_ACTIVITY -> activity.pressBar(mouseX, mouseY);
+                case BusLayout.TAB_SOFTWARE -> software.pressBar(mouseX, mouseY);
+                default -> configure.pressBar(mouseX, mouseY);
+            };
+            if (onBar) {
+                return true;
+            }
             if (tab == BusLayout.TAB_CONFIGURE && configure.click(mouseX, mouseY, leftPos, topPos)) {
                 setFocused(null);
                 nameBox.setFocused(false);
@@ -189,6 +198,26 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    /** A drag with a scrollbar held moves its list; any other drag is the container's. */
+    @Override
+    public boolean mouseDragged(final double mouseX, final double mouseY, final int button, final double dragX,
+                                final double dragY) {
+        final boolean onBar = button == 0 && switch (tab) {
+            case BusLayout.TAB_ACTIVITY -> activity.dragBar(mouseY);
+            case BusLayout.TAB_SOFTWARE -> software.dragBar(mouseY);
+            default -> configure.dragBar(mouseY);
+        };
+        return onBar || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(final double mouseX, final double mouseY, final int button) {
+        configure.releaseBar();
+        activity.releaseBar();
+        software.releaseBar();
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
@@ -285,6 +314,14 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
             case BusLayout.TAB_SOFTWARE -> software.windowHeight();
             default -> configureHeight();
         };
+    }
+
+    /* Centred for Configure, the tallest tab: the other tabs keep its top and end higher, or rise to stay on screen. */
+    private void place() {
+        final int moved = placeVertically(configureHeight());
+        if (nameBox != null && moved != 0) {
+            nameBox.setY(nameBox.getY() + moved);
+        }
     }
 
     private int configureHeight() {

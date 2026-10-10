@@ -145,6 +145,20 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
         }
     }
 
+    /**
+     * Stands the window where a window {@code anchorHeight} tall would be centred, lifted when the window is now
+     * taller so its bottom still ends on the screen. A screen whose height changes after it opens (its state arrived,
+     * or another tab is shown) calls this so it never runs off the bottom; returns how far the top moved, for the
+     * widgets placed once at open.
+     */
+    protected final int placeVertically(final int anchorHeight) {
+        final int centred = Math.max(0, (height - anchorHeight) / 2);
+        final int top = Math.max(0, Math.min(centred, height - imageHeight));
+        final int moved = top - topPos;
+        topPos = top;
+        return moved;
+    }
+
     /** Draws one line of a text wall with its top left corner at {@code (x, y)}. */
     protected void wall(final GuiGraphics g, final String line, final int x, final int y, final int color) {
         TextWall.draw(g, font, line, x, y, color);

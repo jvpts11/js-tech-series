@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.computers.client.MachineKeyboard;
 import dev.jstech.computers.client.monitor.MonitorTubes;
@@ -64,6 +65,8 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     static final int WIN11_ICON = 16;
     /** The width of the Frames XP Start pill, which the task buttons and its own hit-test both clear. */
     static final int XP_START_W = 58;
+    /* A desktop point no hit test takes, for a pointer that is over the monitor's frame rather than its glass. */
+    private static final int OFF_GLASS = Integer.MIN_VALUE / 2;
 
     /** The desktop that is up, the one the machine's answers and the programs' calls reach; null while none is. */
     @Nullable
@@ -203,15 +206,28 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         // What programs asked of "the desktop" is carried out by the one in front of the player.
         DesktopRequests.drain(state);
         final DesktopViewport view = state.view();
-        if (!state.paint(g, (int) Math.floor(view.localX(mouseX)), (int) Math.floor(view.localY(mouseY)),
-                partialTick)) {
+        /*
+         * The game hands render the mouse in whole pixels of its interface, which at a large interface scale are
+         * several pixels of the window apiece: the pointer drawn from them moved in steps and looked slower than the
+         * mouse. It is drawn from the mouse to a fraction of a pixel, read this frame.
+         */
+        final Window window = minecraft.getWindow();
+        final double mx = finer(mouseX, minecraft.mouseHandler.xpos(), window.getGuiScaledWidth(),
+                window.getScreenWidth());
+        final double my = finer(mouseY, minecraft.mouseHandler.ypos(), window.getGuiScaledHeight(),
+                window.getScreenHeight());
+        // Off the glass the pointer is over the monitor's frame, so nothing on the desktop lights under it.
+        final boolean onGlass = view.onGlass(mx, my);
+        final double lx = view.localX(mx);
+        final double ly = view.localY(my);
+        final int lmx = onGlass ? (int) Math.floor(lx) : OFF_GLASS;
+        final int lmy = onGlass ? (int) Math.floor(ly) : OFF_GLASS;
+        if (!state.paint(g, lmx, lmy, lx, ly, partialTick)) {
             return; // the crash screen is all there is until the machine reboots
         }
         hoveredSlot = state.hoveredSlot();
         // Over the glass the desktop draws the pointer itself, so the game's own is hidden there and only there.
-        final double lx = view.localX(mouseX);
-        final double ly = view.localY(mouseY);
-        showOsPointer(!(ownPointer() && lx >= 0 && ly >= 0 && lx < view.width() && ly < view.height()));
+        showOsPointer(!(ownPointer() && onGlass));
         // The desktop reaches the player through the monitor's tube, over the whole glass once it is drawn.
         TubeFilter.filterScreen(g, view.left(), view.top(), view.glassWidth(), view.glassHeight(),
                 MonitorTubes.tubeAt(menu.monitorPos()));
@@ -243,10 +259,16 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
                 || super.mouseDragged(view.slotX(mouseXAbs), view.slotY(mouseYAbs), button, dx, dy);
     }
 
+    /*
+     * The container finds the slot a stack is let go over the way it finds the one clicked, so the release is moved
+     * into the slots' own space too: handed over as it came, it was measured off the scaled desktop, and a stack
+     * carried from one cell landed in another one, or in none on the hotbar's row.
+     */
     @Override
     public boolean mouseReleased(final double mouseX, final double mouseY, final int button) {
+        final DesktopViewport view = state.view();
         return input.release(mouseX, mouseY, button) != DesktopInput.Click.CONTAINER
-                || super.mouseReleased(mouseX, mouseY, button);
+                || super.mouseReleased(view.slotX(mouseX), view.slotY(mouseY), button);
     }
 
     @Override
@@ -307,6 +329,16 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     /** What the desktop's pointer shows right now: arrow, busy, working or launch. */
     public String pointerState() {
         return state.pointers().state().name().toLowerCase(Locale.ROOT);
+    }
+
+    /*
+     * The mouse in interface pixels to a fraction of one, from its position on the window: the whole pixel the game
+     * gave, unless the two disagree (a screen drawn for a test at a point of its own), when the given one stands.
+     */
+    private static double finer(final int given, final double onWindow, final int interfaceSize,
+                                final int windowSize) {
+        final double fine = windowSize <= 0 ? given : onWindow * interfaceSize / windowSize;
+        return Math.abs(fine - given) < 1.0 ? fine : given;
     }
 
     /* Shows or hides the game's own pointer, telling the window only when that changes. */

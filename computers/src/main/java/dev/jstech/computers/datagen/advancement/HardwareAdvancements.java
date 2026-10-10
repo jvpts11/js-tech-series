@@ -57,11 +57,11 @@ public final class HardwareAdvancements extends JscAdvancementTab {
                 "Moore's Law Isn't Dead", "Build a working Standard computer", built(HardwareEra.STANDARD));
         final Map<String, Supplier<Criterion<?>>> everyEra = new LinkedHashMap<>();
         for (final HardwareEra era : new HardwareEra[] {HardwareEra.VINTAGE, HardwareEra.LEGACY,
-                HardwareEra.STANDARD}) {
+                HardwareEra.TRANSITION, HardwareEra.STANDARD, HardwareEra.ADVANCED}) {
             everyEra.put(HardwareMilestones.eraDetail(era), built(era));
         }
         this.challengeOfAll("time_traveller", "standard_build", Items.CLOCK, "Time Traveller",
-                "Build a working Vintage, Legacy and Standard computer", everyEra);
+                "Build a working computer of every era: Vintage, Legacy, Transition, Standard and Advanced", everyEra);
 
         this.goal("rack_em_up", "root", ComputingModule.SERVER_RACK.item(), "Rack 'Em Up",
                 "Fill every unit of a Server Rack", on(JscEvents.RACK_FILLED));

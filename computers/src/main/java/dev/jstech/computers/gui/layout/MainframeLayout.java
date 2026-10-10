@@ -48,13 +48,17 @@ public final class MainframeLayout {
 
     public static final int COL_R = 126;
     public static final int COL_R_W = 110;
+    /*
+     * A stat tile holds its caption, then its value with the unit two pixels lower: the unit's letters end 22 pixels
+     * under the tile's top, so a tile is 24 tall to keep them inside its frame.
+     */
     public static final int TILE_Y_CAPACITY = 27;
-    public static final int TILE_H_CAPACITY = 22;
-    public static final int TILE_Y_QUEUES = 52;
-    public static final int TILE_H_QUEUES = 18;
-    public static final int TILE_Y_RAM_BUFFER = 73;
-    public static final int TILE_H_RAM_BUFFER = 18;
-    public static final int TILE_Y_OPERATIONS = 108;
+    public static final int TILE_H_CAPACITY = 24;
+    public static final int TILE_Y_QUEUES = 53;
+    public static final int TILE_H_QUEUES = 24;
+    public static final int TILE_Y_RAM_BUFFER = 79;
+    public static final int TILE_H_RAM_BUFFER = 24;
+    public static final int TILE_Y_OPERATIONS = 118;
     public static final int TILE_H_OPERATIONS = 42;
 
     public static final int BTN_Y = 162;
@@ -72,7 +76,7 @@ public final class MainframeLayout {
     public static final int LABEL_ROW_1_Y = 27;
     public static final int LABEL_ROW_2_Y = 60;
     public static final int LABEL_ROW_3_Y = 111;
-    public static final int NETWORK_Y = 96;
+    public static final int NETWORK_Y = 106;
 
     /* The PSU health dot drawn next to its caption. */
     public static final int PSU_LED_X = 30;

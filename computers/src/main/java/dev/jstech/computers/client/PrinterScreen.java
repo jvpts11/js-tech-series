@@ -122,7 +122,7 @@ public class PrinterScreen extends AbstractComputerScreen<PrinterMenu> {
         LinkLamp.draw(g, x + PrinterLayout.LAMP_X, y + PrinterLayout.LAMP_Y, PrinterLayout.LAMP_SIZE, linked());
         for (final Slot slot : menu.slots) {
             if (slot.isActive()) {
-                JsTechTheme.slot(g, x + slot.x - 1, y + slot.y - 1);
+                JsTechTheme.slot(g, x + slot.x, y + slot.y);
             }
         }
         final int dim = JsTechTheme.dim();
@@ -192,7 +192,8 @@ public class PrinterScreen extends AbstractComputerScreen<PrinterMenu> {
             final String from = GameText.resolve(row.sheets() == 1 ? FROM_PAGE.with(row.from())
                     : FROM_PAGES.with(row.from(), row.sheets()));
             final int fromX = PrinterLayout.QUEUE_X + 3 + JsTechTheme.widthS(font, title) + 4;
-            small(g, from, fromX, ry + 1, JsTechTheme.dim(), right - PrinterLayout.QUEUE_STATUS_W);
+            // It ends before the state at the row's right end, however long the state's words are.
+            small(g, from, fromX, ry + 1, JsTechTheme.dim(), right - JsTechTheme.widthS(font, state) - 4);
         }
         if (shown < rows.size()) {
             small(g, GameText.resolve(MORE.with(rows.size() - shown)), PrinterLayout.QUEUE_X + 3,

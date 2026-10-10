@@ -14,6 +14,8 @@ import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.menu.DockStationMenu;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Grounds;
@@ -24,6 +26,7 @@ import dev.jstech.core.tier.HardwareEra;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -35,6 +38,7 @@ import static dev.jstech.computers.client.DockStationTexts.EMPTY;
 import static dev.jstech.computers.client.DockStationTexts.EMPTY_DISK;
 import static dev.jstech.computers.client.DockStationTexts.FULL_PERCENT;
 import static dev.jstech.computers.client.DockStationTexts.HOST;
+import static dev.jstech.computers.client.DockStationTexts.INSTALLS;
 import static dev.jstech.computers.client.DockStationTexts.LETTERED;
 import static dev.jstech.computers.client.DockStationTexts.LINKED;
 import static dev.jstech.computers.client.DockStationTexts.MOUNTED;
@@ -110,7 +114,7 @@ public class DockStationScreen extends AbstractComputerScreen<DockStationMenu> {
         LinkLamp.draw(g, x + DockLayout.LAMP_X, y + DockLayout.LAMP_Y, DockLayout.LAMP_SIZE, linked());
         for (final Slot slot : menu.slots) {
             if (slot.isActive()) {
-                JsTechTheme.slot(g, x + slot.x - 1, y + slot.y - 1);
+                JsTechTheme.slot(g, x + slot.x, y + slot.y);
             }
         }
         final int dim = JsTechTheme.dim();
@@ -171,6 +175,13 @@ public class DockStationScreen extends AbstractComputerScreen<DockStationMenu> {
             return GameText.resolve(usedMb <= 0 ? EMPTY_DISK.with(era) : USED.with(era, DiskSpec.sizeLabel(usedMb)));
         }
         if (held.getItem() instanceof FormattedMediaItem medium) {
+            final ResourceLocation payload = MediaItem.payload(held);
+            final MediaKind kind = MediaItem.kind(held);
+            if (payload != null && kind != MediaKind.DATA) {
+                // An installer holds what it installs rather than files of its own, so it says what that is.
+                final String prefix = kind == MediaKind.OS_INSTALL ? "os.jsc." : "program.jsc.";
+                return GameText.resolve(INSTALLS.with(Component.translatable(prefix + payload.getPath()).getString()));
+            }
             final long capacity = medium.format().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
             final long percent = capacity <= 0 ? 0L : (capacity - free) * 100L / capacity;
             return GameText.resolve(FULL_PERCENT.with(percent));

@@ -17,6 +17,7 @@ import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.media.DockStationBlock;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.operation.payload.files.FileAccess;
@@ -149,6 +150,25 @@ public final class DockStationGameTests {
                     heard.assertPlayed(helper, ComputingSounds.RACK_SLIDE_OUT);
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * The Dock serves the disks of every era, so its back takes every era's peripheral cable: an Advanced computer
+     * reaches it with its own cable. It used to take the Standard's and older only, and the install of an Advanced
+     * system from a stick in it failed with nothing said.
+     */
+    @GameTest(template = ARENA)
+    public static void dock_backTakesEveryErasCable(final GameTestHelper helper) {
+        helper.setBlock(DOCK, ComputingModule.DOCK_STATION.get());
+        final BlockState state = helper.getBlockState(DOCK);
+        final DockStationBlock dock = (DockStationBlock) state.getBlock();
+        final Direction back = state.getValue(HorizontalDirectionalBlock.FACING).getOpposite();
+        for (final HardwareEra era : List.of(HardwareEra.VINTAGE, HardwareEra.LEGACY, HardwareEra.TRANSITION,
+                HardwareEra.STANDARD, HardwareEra.ADVANCED)) {
+            helper.assertTrue(dock.accepts(state, back, PeripheralLine.of(era)),
+                    "the Dock's back takes the " + era.serializedName() + " cable");
+        }
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

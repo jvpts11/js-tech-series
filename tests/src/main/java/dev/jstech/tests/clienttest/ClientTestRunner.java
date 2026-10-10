@@ -152,29 +152,23 @@ public final class ClientTestRunner {
             return;
         }
         final Map<String, Integer> durations = ClientTestDurations.read(runDirectory(mc));
-        tests = ClientTestSuite.shard(SHARD, SHARDS, durations);
+        // Several names, each a part of a test's name, separated by commas: a test named like any of them runs.
+        final List<String> needles = Arrays.stream(ONLY.toLowerCase(java.util.Locale.ROOT).split(","))
+                .map(String::trim).filter(n -> !n.isEmpty()).toList();
+        // The names are matched before the suite is split, so the tests asked for are shared out over the shards.
+        tests = ClientTestSuite.shard(SHARD, SHARDS, durations, t -> needles.isEmpty()
+                || needles.stream().anyMatch(t.name().toLowerCase(java.util.Locale.ROOT)::contains));
         LOGGER.info("[JSC-CT] shard {}/{} split {}, expected to take {} ticks", SHARD, SHARDS,
                 durations.isEmpty() ? "round-robin" : "by the ticks each test took last time",
                 ClientTestSuite.expectedTicks(tests, durations));
-        if (!ONLY.isEmpty()) {
-            // Several names, each a part of a test's name, separated by commas: a test named like any of them runs.
-            final List<String> needles = Arrays.stream(ONLY.toLowerCase(java.util.Locale.ROOT).split(","))
-                    .map(String::trim).filter(n -> !n.isEmpty()).toList();
-            tests = tests.stream()
-                    .filter(t -> needles.stream().anyMatch(t.name().toLowerCase(java.util.Locale.ROOT)::contains))
-                    .toList();
-            /*
-             * A name that matches nothing is a mistake, not an empty suite: whoever typed it meant to run
-             * something. It used to leave the run with no tests at all and end on "ALL PASSED", which reads
-             * exactly like a suite that ran and was fine. The name is also matched after the suite has been
-             * split over its shards, so a name that matches only tests in another shard finds nothing here.
-             */
-            if (tests.isEmpty()) {
-                this.askedForNothing = true;
-                LOGGER.error("[JSC-CT] no test of shard {}/{} is named like \"{}\"; "
-                        + "the suite is split over its shards before the name is matched, "
-                        + "so -PclientShards=1 puts every test in this one", SHARD, SHARDS, ONLY);
-            }
+        /*
+         * A name that matches nothing is a mistake, not an empty suite: whoever typed it meant to run something. It
+         * used to leave the run with no tests at all and end on "ALL PASSED", which reads exactly like a suite that
+         * ran and was fine. With more shards than tests asked for, a shard can be left with none, which is no mistake.
+         */
+        if (!needles.isEmpty() && tests.isEmpty() && SHARD == 0) {
+            this.askedForNothing = true;
+            LOGGER.error("[JSC-CT] no test is named like \"{}\"", ONLY);
         }
         LOGGER.info("[JSC-CT] shard {}/{} runs {} tests", SHARD, SHARDS, tests.size());
         deleteOldWorld(mc);

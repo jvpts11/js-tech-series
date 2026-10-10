@@ -202,6 +202,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     private final int[][] tabHits = new int[PAGES.length][];
     private int[] bootHit;
     private int[] installHit;
+    /* Exit, drawn as a word beside the tabs or under the menu, which leaves the setup as Escape does. */
+    private int[] exitHit;
 
     // A refusal shown in the footer for a few seconds, where every firmware look draws its key hints.
     private String notice = "";
@@ -485,6 +487,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         rowHits.clear();
         bootHit = null;
         installHit = null;
+        exitHit = null;
         final int x = this.leftPos;
         final int y = this.topPos;
         MonitorFrame.renderBody(g, x, y, W, H, era(), font);
@@ -618,8 +621,11 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             px += font.width(name) + FirmwareLayout.BIOS_TAB_GAP;
         }
         final String exit = of(EXIT);
+        exitHit = new int[]{x + W - font.width(exit) - FirmwareLayout.BIOS_EXIT_MARGIN - 3,
+                y + FirmwareLayout.BIOS_TAB_Y, font.width(exit) + 6, tabHits[0][3]};
         Draw.text(g, font, exit, x + W - font.width(exit) - FirmwareLayout.BIOS_EXIT_MARGIN,
-                y + FirmwareLayout.BIOS_TAB_TEXT_DY, BIOS.get().dim());
+                y + FirmwareLayout.BIOS_TAB_TEXT_DY, in(exitHit, mouseX, mouseY) ? BIOS.get().title()
+                        : BIOS.get().dim());
         g.fill(x, y + FirmwareLayout.BIOS_RULE_Y, x + W, y + FirmwareLayout.BIOS_RULE_Y + 1, BIOS.get().border());
 
         final int top = y + FirmwareLayout.BIOS_CONTENT_TOP;
@@ -752,8 +758,15 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                     ny + FirmwareLayout.UEFI_NAV_TEXT_DY, i == page ? UEFI.get().onAccent() : UEFI.get().key());
             ny += FirmwareLayout.UEFI_NAV_ROW_PITCH;
         }
-        Draw.text(g, font, of(EXIT), navX + FirmwareLayout.UEFI_NAV_TEXT_X,
-                top + panelH - FirmwareLayout.UEFI_EXIT_BOTTOM_MARGIN, UEFI.get().dim());
+        final int exitY = top + panelH - FirmwareLayout.UEFI_EXIT_BOTTOM_MARGIN;
+        exitHit = new int[]{navX, exitY - FirmwareLayout.UEFI_NAV_TEXT_DY - FirmwareLayout.UEFI_NAV_ITEM_RISE, navW,
+                FirmwareLayout.UEFI_NAV_ITEM_H};
+        final boolean overExit = in(exitHit, mouseX, mouseY);
+        if (overExit) {
+            g.fill(exitHit[0], exitHit[1], exitHit[0] + exitHit[2], exitHit[1] + exitHit[3], UEFI.get().accent());
+        }
+        Draw.text(g, font, of(EXIT), navX + FirmwareLayout.UEFI_NAV_TEXT_X, exitY,
+                overExit ? UEFI.get().onAccent() : UEFI.get().dim());
 
         final int uefiInsetX = FirmwareLayout.UEFI_CONTENT_INSET_X;
         final int uefiInsetY = FirmwareLayout.UEFI_CONTENT_INSET_Y;
@@ -1045,6 +1058,10 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         }
         if (in(installHit, mouseX, mouseY)) {
             install();
+            return true;
+        }
+        if (in(exitHit, mouseX, mouseY)) {
+            onClose();
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);

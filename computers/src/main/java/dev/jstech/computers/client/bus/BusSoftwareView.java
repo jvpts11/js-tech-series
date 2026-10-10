@@ -33,6 +33,7 @@ final class BusSoftwareView {
     private final List<Section> sections = new ArrayList<>();
     private int contentHeight;
     private int scroll;
+    private final ScrollGrab bar = new ScrollGrab();
     /* What the sections were last laid out for: they change only when the settings or the window do. */
     private BusSettings laidOutFor;
     private BusLayout.Window laidOutWindow;
@@ -65,6 +66,29 @@ final class BusSoftwareView {
         }
         g.disableScissor();
         BusDraw.scrollbar(g, left + BusLayout.SCROLL_X, viewTop, viewH, scroll, contentHeight);
+        bar.drawn(left + BusLayout.SCROLL_X, viewTop, viewH, contentHeight);
+    }
+
+    /** A press on the scrollbar takes hold of it and puts the thumb under the pointer; false for a press elsewhere. */
+    boolean pressBar(final double mx, final double my) {
+        if (!bar.press(mx, my)) {
+            return false;
+        }
+        scroll = bar.scrollAt(my);
+        return true;
+    }
+
+    /** The pointer dragged with the scrollbar held: the list follows; false while it is not held. */
+    boolean dragBar(final double my) {
+        if (!bar.held()) {
+            return false;
+        }
+        scroll = bar.scrollAt(my);
+        return true;
+    }
+
+    void releaseBar() {
+        bar.release();
     }
 
     boolean scrolled(final double mx, final double my, final double delta, final int left, final int top) {

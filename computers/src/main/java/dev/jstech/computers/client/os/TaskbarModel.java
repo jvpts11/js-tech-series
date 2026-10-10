@@ -142,8 +142,9 @@ final class TaskbarModel {
                 list.add(new TaskbarGroups.Window(w.groupKey(), w.minimized(), w.serial()));
             }
         }
-        final DesktopWindow front = desktop.wm().front();
-        return TaskbarGroups.group(list, pinnedKeys(), front == null ? null : front.groupKey());
+        // The button of the window with the focus stands pressed; none does while the desktop has it.
+        final DesktopWindow focused = desktop.wm().focused();
+        return TaskbarGroups.group(list, pinnedKeys(), focused == null ? null : focused.groupKey());
     }
 
     /** What a task button says: the window's title, or the count and the program when there are several. */

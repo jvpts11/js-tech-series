@@ -53,6 +53,10 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
     private int scroll;
     private int activityScroll;
     private int softwareScroll;
+    /* The scrollbar of each tab, as drawn this frame, which a press takes hold of. */
+    private final ScrollGrab configureBar = new ScrollGrab();
+    private final ScrollGrab activityBar = new ScrollGrab();
+    private final ScrollGrab softwareBar = new ScrollGrab();
     private List<CraftingInterfaceLayout.Row> rows = List.of();
     private int contentHeight;
     private int softwareContent;
@@ -82,6 +86,7 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
             nameBox.setFocused(false);
         }
         imageHeight = heightOf(shown);
+        place();
     }
 
     /** The pattern picked, whose inputs show, as a click on its cell does. */
@@ -116,6 +121,7 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
     protected void containerTick() {
         super.containerTick();
         imageHeight = heightOf(tab);
+        place();
     }
 
     @Override
@@ -186,6 +192,11 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
                 return true;
             }
         }
+        final ScrollGrab bar = shownBar();
+        if (button == 0 && bar.press(mouseX, mouseY)) {
+            followBar(bar, mouseY);
+            return true;
+        }
         if (tab == CraftingInterfaceLayout.TAB_CONFIGURE && clickConfigure((int) mouseX - leftPos,
                 (int) mouseY - topPos, button)) {
             setFocused(null);
@@ -193,6 +204,26 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    /** A drag with the scrollbar held moves its list; any other drag is the container's. */
+    @Override
+    public boolean mouseDragged(final double mouseX, final double mouseY, final int button, final double dragX,
+                                final double dragY) {
+        final ScrollGrab bar = shownBar();
+        if (button == 0 && bar.held()) {
+            followBar(bar, mouseY);
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(final double mouseX, final double mouseY, final int button) {
+        configureBar.release();
+        activityBar.release();
+        softwareBar.release();
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
@@ -258,6 +289,7 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
         }
         g.disableScissor();
         BusDraw.scrollbar(g, x + CraftingInterfaceLayout.SCROLL_X, viewTop, viewH, scroll, contentHeight);
+        configureBar.drawn(x + CraftingInterfaceLayout.SCROLL_X, viewTop, viewH, contentHeight);
     }
 
     private void drawRow(final GuiGraphics g, final InterfaceView s, final CraftingInterfaceLayout.Row row,
@@ -527,6 +559,8 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
         g.disableScissor();
         BusDraw.scrollbar(g, left + CraftingInterfaceLayout.SCROLL_X, viewTop, CraftingInterfaceLayout.ACTIVITY_VIEW_H,
                 activityScroll, content);
+        activityBar.drawn(left + CraftingInterfaceLayout.SCROLL_X, viewTop, CraftingInterfaceLayout.ACTIVITY_VIEW_H,
+                content);
         final List<String> note = BusDraw.lines(font, GameText.resolve(InterfaceTexts.ACTIVITY_NOTE),
                 CraftingInterfaceLayout.ROW_W);
         for (int i = 0; i < Math.min(2, note.size()); i++) {
@@ -609,6 +643,7 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
         }
         g.disableScissor();
         BusDraw.scrollbar(g, left + CraftingInterfaceLayout.SCROLL_X, viewTop, viewH, softwareScroll, content);
+        softwareBar.drawn(left + CraftingInterfaceLayout.SCROLL_X, viewTop, viewH, content);
     }
 
     /* The Software tab: where software finds it, and the same settings in IQL and in Sigma. */
@@ -769,6 +804,36 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
             case CraftingInterfaceLayout.TAB_SOFTWARE -> CraftingInterfaceLayout.softwareHeight(softwareContent);
             default -> CraftingInterfaceLayout.configureHeight(shape());
         };
+    }
+
+    /* The scrollbar of the tab shown. */
+    private ScrollGrab shownBar() {
+        return switch (tab) {
+            case CraftingInterfaceLayout.TAB_ACTIVITY -> activityBar;
+            case CraftingInterfaceLayout.TAB_SOFTWARE -> softwareBar;
+            default -> configureBar;
+        };
+    }
+
+    /* The shown tab's list scrolled so the thumb is under the pointer. */
+    private void followBar(final ScrollGrab bar, final double mouseY) {
+        final int to = bar.scrollAt(mouseY);
+        switch (tab) {
+            case CraftingInterfaceLayout.TAB_ACTIVITY -> activityScroll = to;
+            case CraftingInterfaceLayout.TAB_SOFTWARE -> softwareScroll = to;
+            default -> scroll = to;
+        }
+    }
+
+    /*
+     * Centred for Configure, the tallest tab, as tall as its patterns now make it: it opens before its state arrives,
+     * so its first height is the smallest and the window would otherwise keep that top and run off the screen.
+     */
+    private void place() {
+        final int moved = placeVertically(CraftingInterfaceLayout.configureHeight(shape()));
+        if (nameBox != null && moved != 0) {
+            nameBox.setY(nameBox.getY() + moved);
+        }
     }
 
     private boolean linked() {

@@ -172,7 +172,19 @@ class FileOpenersTest {
         assertEquals(List.of(FileOpeners.EDITOR, "virtual_studio_code", "virtual_studio", "exposure"),
                 FileOpeners.choices("notes.txt", EVERYTHING).subList(0, 4));
         assertEquals(List.of(), FileOpeners.choices("items.dat", EVERYTHING));
-        assertEquals(List.of("crafting_manager"), FileOpeners.choices("iron.craft", EVERYTHING));
+    }
+
+    @Test
+    void choices_offerEveryProgramOnTheMachineThatOpensFilesAfterTheKindsOwn() {
+        final List<String> withPaint = List.of("paint", "virtual_studio_code", "crafting_manager");
+        final List<String> picture = FileOpeners.choices("Desktop/house.pix", withPaint);
+        assertEquals("paint", picture.getFirst(), "the picture's own program comes first");
+        assertTrue(picture.containsAll(List.of(FileOpeners.EDITOR, "virtual_studio_code", "crafting_manager")),
+                "then every other program on the machine that opens files; got " + picture);
+        assertFalse(picture.contains("exposure"), "but none the machine does not have; got " + picture);
+        final List<String> pattern = FileOpeners.choices("iron.craft", EVERYTHING);
+        assertEquals("crafting_manager", pattern.getFirst());
+        assertTrue(pattern.contains(FileOpeners.EDITOR), "a pattern can be read in the editor too; got " + pattern);
     }
 
     @Test

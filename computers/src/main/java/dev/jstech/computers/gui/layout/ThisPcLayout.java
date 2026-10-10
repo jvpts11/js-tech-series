@@ -40,6 +40,11 @@ public final class ThisPcLayout {
     /** The row icon on the left of a drive row. */
     public static final int ROW_ICON_W = 14;
     public static final int TEXT_X = 22;
+    /** The shortest a drive's bar gets, and the gap between it and the words after it on the same line. */
+    public static final int BAR_MIN_W = 40;
+    public static final int BAR_GAP = 6;
+    /** The gap between the longest name of the hardware list and the values beside the names. */
+    public static final int HW_KEY_GAP = 6;
 
     /*
      * The About-style content: what KDE's Info Center, GNOME's About and Cinnamon's System Info draw instead
@@ -63,6 +68,14 @@ public final class ThisPcLayout {
     /** The widest the text beside {@code n} buttons may be before it runs under them. */
     public static int driveTextMaxW(final int width, final int n) {
         return (n == 0 ? width - 4 : buttonX(width, 0, n) - 3) - TEXT_X;
+    }
+
+    /**
+     * How wide a drive's bar is when the words saying how much is free, {@code usageW} wide, close the same line at
+     * its right end: the bar ends a gap before them, and keeps a short length of its own when the words take the rest.
+     */
+    public static int barWidth(final int maxW, final int usageW) {
+        return Math.max(BAR_MIN_W, maxW - usageW - BAR_GAP);
     }
 
     /** How many program cells fit across the window. */

@@ -72,7 +72,7 @@ public final class MachinePayloads {
                 ServerRackMenu.class, ServerRackMenu::rackPos, RackBayPowerPayload::rackPos,
                 MachinePayloads::handleRackBayPower);
         ComputerAccess.accept(registrar, MachinePowerPayload.TYPE, MachinePowerPayload.STREAM_CODEC,
-                ComputerAccess.machine(MachinePowerPayload::hostPos), MachinePayloads::handleMachinePower);
+                ComputerAccess.machineOrSession(MachinePowerPayload::hostPos), MachinePayloads::handleMachinePower);
         ComputerAccess.accept(registrar, MachineSoundPayload.TYPE, MachineSoundPayload.STREAM_CODEC,
                 ComputerAccess.machine(MachineSoundPayload::hostPos), MachinePayloads::handleMachineSound);
         ComputerAccess.accept(registrar, TestSoundPayload.TYPE, TestSoundPayload.STREAM_CODEC,

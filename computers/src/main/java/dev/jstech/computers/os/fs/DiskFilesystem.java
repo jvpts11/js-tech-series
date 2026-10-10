@@ -600,6 +600,10 @@ public final class DiskFilesystem {
      * song, leaving a disk that holds music for nothing.
      */
     private static boolean holdsItsKind(final FileType type, final String content) {
+        // A picture is a picture: anything else written under its name would be a file no paint program can open.
+        if (type == FileType.PIX && PixImage.decode(content) == null) {
+            return false;
+        }
         final RecordingFile recording = RecordingFile.read(content);
         if (!type.recording()) {
             return recording == null;

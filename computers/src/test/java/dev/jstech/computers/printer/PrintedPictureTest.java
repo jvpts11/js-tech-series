@@ -70,6 +70,30 @@ class PrintedPictureTest {
         }
     }
 
+    @Test
+    void print_laserGivesADarkerColourMoreToner() {
+        // Any two colours of the palette far enough apart in lightness print as two different greys.
+        int checked = 0;
+        for (int light = 1; light < PixImage.COLOURS; light += 17) {
+            for (int dark = 2; dark < PixImage.COLOURS; dark += 23) {
+                if (PixImage.isTransparent(light) || PixImage.isTransparent(dark)
+                        || luma(PixImage.colourOf(light)) < luma(PixImage.colourOf(dark)) + 40) {
+                    continue;
+                }
+                final int lightToner = PrintedPicture.print(filled(24, 24, light), PrinterModel.Ink.LASER).inked();
+                final int darkToner = PrintedPicture.print(filled(24, 24, dark), PrinterModel.Ink.LASER).inked();
+                assertTrue(darkToner > lightToner, "colour " + dark + " is darker than colour " + light
+                        + " but took " + darkToner + " toner pixels against " + lightToner);
+                checked++;
+            }
+        }
+        assertTrue(checked > 10, "the palette offered too few pairs to compare: " + checked);
+    }
+
+    private static int luma(final int rgb) {
+        return (((rgb >> 16) & 0xFF) * 299 + ((rgb >> 8) & 0xFF) * 587 + (rgb & 0xFF) * 114) / 1000;
+    }
+
     private static PixImage filled(final int w, final int h, final int colour) {
         final PixImage picture = new PixImage(w, h);
         picture.fillAll(colour);

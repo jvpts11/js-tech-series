@@ -43,16 +43,20 @@ public final class PersonalComputerLayout {
 
     public static final int COL_R = 126;
     public static final int COL_R_W = 110;
+    /*
+     * A stat tile holds its caption, then its value with the unit two pixels lower: the unit's letters end 22 pixels
+     * under the tile's top, so a tile is 24 tall to keep them inside its frame.
+     */
     public static final int TILE_Y_CAPACITY = 27;
-    public static final int TILE_H_CAPACITY = 22;
-    public static final int TILE_Y_RAM_BUFFER = 52;
-    public static final int TILE_H_RAM_BUFFER = 18;
+    public static final int TILE_H_CAPACITY = 24;
+    public static final int TILE_Y_RAM_BUFFER = 54;
+    public static final int TILE_H_RAM_BUFFER = 24;
 
     public static final int BTN_H = 14;
     public static final int POWER_X = COL_R;
-    public static final int POWER_Y = 98;
+    public static final int POWER_Y = 102;
     public static final int AUTO_X = COL_R;
-    public static final int AUTO_Y = 116;
+    public static final int AUTO_Y = 120;
 
     public static final int INV_X = 8;
     public static final int INV_Y = 138;
@@ -72,8 +76,8 @@ public final class PersonalComputerLayout {
     public static final int LABEL_ROW_1_Y = 27;
     public static final int LABEL_ROW_2_Y = 60;
     public static final int LABEL_ROW_3_Y = 93;
-    public static final int NETWORK_Y = 74;
-    public static final int NETWORK_VALUE_Y = 85;
+    public static final int NETWORK_Y = 81;
+    public static final int NETWORK_VALUE_Y = 91;
 
     /* The PSU health dot drawn next to its caption. */
     public static final int PSU_LED_X = 30;

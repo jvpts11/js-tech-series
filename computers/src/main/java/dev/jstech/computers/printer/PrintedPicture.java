@@ -8,6 +8,8 @@
 package dev.jstech.computers.printer;
 
 import dev.jstech.computers.os.fs.PixImage;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * A picture as a printer puts it on paper, each its own way: the dot matrix in black dots, one pass of its head every
@@ -49,6 +51,11 @@ public final class PrintedPicture {
     /** The inkjets' black and the laser's toner, each a little warmer or cooler than a pure black. */
     private static final int BLACK_INK = argb(30, 30, 34);
     private static final int TONER = argb(28, 28, 30);
+    /*
+     * The pixels of a laser cell in the order its dot grows into them, from the middle out: a cell n of sixteen dark
+     * fills its first n, so the dots stay round and every tone from white to black has a size of its own.
+     */
+    private static final int[] DOT_ORDER = dotOrder();
 
     private PrintedPicture() {
     }
@@ -141,27 +148,43 @@ public final class PrintedPicture {
         return out;
     }
 
-    /* Toner in round dots on a grid, each as big as its cell is dark. */
+    /*
+     * Toner in round dots on a grid, each as big as its cell is dark: a cell grows its dot one pixel at a time from
+     * the middle, so a mono printer prints the picture in greys. The size is spread over neighbouring cells by the
+     * ordered pattern, so the tones between two sizes come out too. A dot was once drawn by its radius, which in a
+     * cell four pixels across takes only three sizes: every middle tone printed as the same dot.
+     */
     private static Raster laser(final PixImage picture) {
         final int[] size = fit(picture, LASER_GRID);
         final Raster out = new Raster(size[0] * LASER_CELL, size[1] * LASER_CELL);
-        final float centre = (LASER_CELL - 1) / 2F;
+        final int cells = LASER_CELL * LASER_CELL;
         for (int y = 0; y < size[1]; y++) {
             for (int x = 0; x < size[0]; x++) {
-                final double dark = 1.0 - Math.pow(luma(sample(picture, x, y, size[0], size[1])) / 255.0, 0.8);
-                final double radius = 2.2 * Math.pow(dark, 0.9);
-                if (radius <= 0.3) {
-                    continue;
-                }
-                for (int dy = 0; dy < LASER_CELL; dy++) {
-                    for (int dx = 0; dx < LASER_CELL; dx++) {
-                        final double d = Math.hypot(dx - centre, dy - centre);
-                        if (d <= radius) {
-                            out.set(x * LASER_CELL + dx, y * LASER_CELL + dy, TONER);
-                        }
-                    }
+                final float dark = 1F - luma(sample(picture, x, y, size[0], size[1])) / 255F;
+                final float spread = (BAYER[y % 4][x % 4] + 0.5F) / cells;
+                final int fill = Math.max(0, Math.min(cells, (int) Math.floor(dark * cells + spread)));
+                for (int i = 0; i < fill; i++) {
+                    final int at = DOT_ORDER[i];
+                    out.set(x * LASER_CELL + at % LASER_CELL, y * LASER_CELL + at / LASER_CELL, TONER);
                 }
             }
+        }
+        return out;
+    }
+
+    /* The cell's pixels, nearest the middle first and, between two as near, in reading order. */
+    private static int[] dotOrder() {
+        final int cells = LASER_CELL * LASER_CELL;
+        final float centre = (LASER_CELL - 1) / 2F;
+        final Integer[] order = new Integer[cells];
+        for (int i = 0; i < cells; i++) {
+            order[i] = i;
+        }
+        Arrays.sort(order, Comparator.comparingDouble(
+                (Integer i) -> Math.hypot(i % LASER_CELL - centre, i / LASER_CELL - centre)).thenComparingInt(i -> i));
+        final int[] out = new int[cells];
+        for (int i = 0; i < cells; i++) {
+            out[i] = order[i];
         }
         return out;
     }

@@ -227,7 +227,7 @@ public final class ThisPcApp implements IDesktopApp {
             if (disk != null) {
                 drawDiskIcon(g, cx + 4, cy + 5);
                 final String label = GameText.resolve(disk.label()) + (drive().isEmpty() ? "" : "  " + drive());
-                Draw.text(g, font, Texts.trim(font, label, maxW), tx, cy + 2, textColor);
+                Draw.text(g, font, Texts.clip(font, label, maxW), tx, cy + 2, textColor);
                 if (disk.system()) {
                     final String badge = GameText.resolve(disk.osPath().isEmpty() ? ThisPcTexts.SYSTEM.text()
                             : ThisPcTexts.SYSTEM_IS.with(prettyOs(disk.osPath())));
@@ -240,7 +240,9 @@ public final class ThisPcApp implements IDesktopApp {
                  * The bar is segmented by what actually takes the space, so "the disk is full" always
                  * comes with "of what": the system, the items stored on it, or its files.
                  */
-                final int barW = maxW - 70;
+                final String usage = GameText.resolve(ThisPcTexts.FREE.with(disk.freeItems(), disk.capItems()));
+                // The bar ends before the words saying what is free, which close the same line.
+                final int barW = ThisPcLayout.barWidth(maxW, font.width(usage));
                 final Colours c = PALETTE.get();
                 g.fill(tx, cy + 12, tx + barW, cy + 15, c.barTrack());
                 final long cap = Math.max(1, disk.capItems());
@@ -253,26 +255,26 @@ public final class ThisPcApp implements IDesktopApp {
                         segX += w;
                     }
                 }
-                final String usage = GameText.resolve(ThisPcTexts.FREE.with(disk.freeItems(), disk.capItems()));
                 Draw.text(g, font, usage, tx + maxW - font.width(usage), cy + 11, ctx.skin().dim());
             } else if (media != null && media.docked()) {
                 // A docked disk is an external drive: the disk's picture, its name and letter, and how full it is.
                 drawDiskIcon(g, cx + 4, cy + 5);
                 final String label = GameText.resolve(media.mediaName()) + (drive().isEmpty() ? "" : "  " + drive());
-                Draw.text(g, font, Texts.trim(font, label, maxW), tx, cy + 2, textColor);
-                final int barW = maxW - 70;
+                Draw.text(g, font, Texts.clip(font, label, maxW), tx, cy + 2, textColor);
+                final String usage = GameText.resolve(ThisPcTexts.FREE.with(media.freeItems(), media.capItems()));
+                final int barW = ThisPcLayout.barWidth(maxW, font.width(usage));
                 final Colours c = PALETTE.get();
                 g.fill(tx, cy + 12, tx + barW, cy + 15, c.barTrack());
                 final long cap = Math.max(1, media.capItems());
                 final int used = (int) Math.min(barW, barW * media.usedItems() / cap);
                 g.fill(tx, cy + 12, tx + used, cy + 15, c.segmentFiles());
-                final String usage = GameText.resolve(ThisPcTexts.FREE.with(media.freeItems(), media.capItems()));
                 Draw.text(g, font, usage, tx + maxW - font.width(usage), cy + 11, ctx.skin().dim());
             } else if (media != null) {
                 drawMediaIcon(g, cx + 4, cy + 5, media);
                 final String head = prettyDrive(media.drive()) + (drive().isEmpty() ? "" : "  " + drive()) + "   "
                         + GameText.resolve(media.loaded() ? media.mediaName() : ThisPcTexts.NO_DISC.text());
-                Draw.text(g, font, Texts.trim(font, head, maxW), tx, cy + 2, media.loaded() ? textColor : ctx.skin().dim());
+                Draw.text(g, font, Texts.clip(font, head, maxW), tx, cy + 2,
+                        media.loaded() ? textColor : ctx.skin().dim());
                 final String detail;
                 int detailColor = ctx.skin().dim();
                 if (!media.loaded()) {
@@ -288,7 +290,7 @@ public final class ThisPcApp implements IDesktopApp {
                 } else {
                     detail = GameText.resolve(ThisPcTexts.DATA_MEDIUM.with(media.stored()));
                 }
-                Draw.text(g, font, Texts.trim(font, detail, maxW), tx, cy + 11, detailColor);
+                Draw.text(g, font, Texts.clip(font, detail, maxW), tx, cy + 11, detailColor);
             }
             super.render(g, ctx);
         }
@@ -601,7 +603,7 @@ public final class ThisPcApp implements IDesktopApp {
         }
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
-        layout(x, y, width, height);
+        layout(font, x, y, width, height);
 
         // The machine's icon: a tower with a lit power dot.
         final ThisPcPayload.WireMachine m = data.machine();
@@ -887,7 +889,7 @@ public final class ThisPcApp implements IDesktopApp {
     }
 
     /** Places the card and lays the page out top to bottom, telling it how tall the whole content is. */
-    private void layout(final int x, final int y, final int width, final int height) {
+    private void layout(final Font font, final int x, final int y, final int width, final int height) {
         final int tx = x + 4 + ThisPcLayout.CARD_ICON_W + 4;
         final int textMax = width - (tx - x) - RENAME_W - 8;
         final boolean renaming = nameField.isFocused();
@@ -916,7 +918,12 @@ public final class ThisPcApp implements IDesktopApp {
         }
         hardwareHeader.setBounds(x, page.contentY(cy), width, ThisPcLayout.HEADER_H);
         cy += ThisPcLayout.HEADER_H + 1;
-        final int keyW = 52;
+        // As wide as the longest name in the list, in the language being shown, and never more than half the row.
+        int longest = 0;
+        for (final Label key : hwKeys) {
+            longest = Math.max(longest, font.width(key.text()));
+        }
+        final int keyW = Math.min(longest + ThisPcLayout.HW_KEY_GAP, (width - 16) / 2);
         for (int i = 0; i < hwKeys.size(); i++) {
             hwKeys.get(i).setBounds(x + 8, page.contentY(cy + 1), keyW, 8);
             hwValues.get(i).setBounds(x + 8 + keyW, page.contentY(cy + 1), width - 8 - keyW - 8, 8);

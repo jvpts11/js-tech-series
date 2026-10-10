@@ -16,7 +16,8 @@ final class PrinterTexts {
 
     static final TextKey PAPER = TextKey.of("jsc.printer.paper", "PAPER");
     static final TextKey NOW = TextKey.of("jsc.printer.now", "NOW");
-    static final TextKey PAGE = TextKey.of("jsc.printer.page", "PAGE");
+    /* The track counts the job's sheets, every copy's pages, so it says sheet rather than page. */
+    static final TextKey PAGE = TextKey.of("jsc.printer.page", "SHEET");
     static final TextKey QUEUE = TextKey.of("jsc.printer.queue", "QUEUE");
     static final TextKey OUT = TextKey.of("jsc.printer.out", "OUT");
     static final TextKey PAPER_NOTE_1 = TextKey.of("jsc.printer.paper_note_1", "sheets from the tray,");

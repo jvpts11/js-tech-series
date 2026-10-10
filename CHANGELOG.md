@@ -2140,8 +2140,39 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   second at most, where it planned every recipe again on each refresh.
 - A value handed to a generic component costs, in the editor's tooltip and when it runs alike, a draw and the price
   of every started 4 KB of it.
-- The Time Traveller challenge says the three eras it asks for: Vintage, Legacy and Standard.
+- The Time Traveller challenge asks for a working computer of every era: Vintage, Legacy, Transition, Standard and
+  Advanced.
 - A Tank broken keeps its fluid in its item, which says what it holds, and gives it back when it is placed.
+- An advancement's title is no longer cut short on the advancements screen; its box grows to hold it (J's Core).
+- The capacity, RAM buffer, queues and crafting tiles of the Personal Computer, Mainframe and Crafting Computer
+  assembly screens hold their values and units inside their frames.
+- The Dock Station's and the printer's slots line up with their frames, and on the eras whose slots are drawn in
+  relief the relief runs along the frame (J's Core).
+- The Crafting Interface and the bus windows stay on the screen when their state arrives or another tab is shown,
+  and their scrollbars can be taken hold of and dragged.
+- The power and restart buttons beside a monitor's glass work on every screen it shows: its start, its firmware's
+  setup and an installer too. The firmware setup's Exit is a button.
+- The Dock Station takes the peripheral cable of every era, so an Advanced computer reaches it with its own cable
+  and installs Frames 11 from a stick in it. A stick that installs a system or a program says what it installs
+  rather than "0% used", and a stick in the Dock is drawn as the stick itself, as the Pattern Encoder draws it.
+- A stick taken out of a Pattern Encoder no longer stands in its port again for a moment after it has gone.
+- On a desktop, a window's buttons light only under the window in front, a click on the bare desktop takes the
+  keyboard away from the window that had it, and a click on the monitor's frame below the glass no longer reaches
+  the taskbar. The desktop's pointer is drawn where the mouse is to a fraction of a pixel, so it moves as finely.
+- Items dragged in a desktop window's inventory land in the cell they are let go over, the hotbar's row included.
+- The Network Interactor's Category button keeps its word clear of its arrow, "Nothing on the network." no longer
+  fades where the pointer passes, and the Status tab fills the window above the inventory.
+- This PC fits its hardware list's names to the longest of them, keeps a drive's bar clear of the words saying what
+  is free, and marks a line it shortens.
+- `pckmgr` and the Unix package managers are there off a network too, and say they cannot reach the Mirror.
+- Cinnamon's menu searches as you type, lists the category chosen, and has its Quit button at the foot of the
+  favourites.
+- Paint saves its pictures, under the `.pix` name a file of their kind takes, and Files calls them pictures. A Save
+  As dialog adds the kind of file to a name typed without one, makes a new folder where it is and names it at once,
+  and its list has a menu on the right button, with New folder and Rename.
+- Open with's Choose another program lists every program on the computer that opens files.
+- A mono laser printer prints a picture in greys, its dots growing a pixel at a time, where every middle tone came
+  out as the same dot. The printer's queue keeps its lines apart, and its track counts sheets.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

@@ -48,14 +48,16 @@ public final class ComputingLooks {
     /** The Dock Station: one model, its trays marking where each disk is drawn, no clips. */
     public static final GeoLook<DockStationBlockEntity> DOCK_STATION = GeoLook.of(JsComputers.MODID, "dock",
             "dock_station", dock -> "dock_station");
-    /** The Dock Station's power lamp, each tray's lamp, and the stick standing in its port. */
+    /**
+     * The Dock Station's power lamp, each tray's lamp, and the place in its USB port where a stick plugged in is drawn,
+     * as the stick's own item, the way the Pattern Encoder draws it.
+     */
     public static final String DOCK_POWER_LAMP = "lamp_power";
     public static final List<String> DOCK_BAY_LAMPS = List.of("lamp_bay_hdd", "lamp_bay_ssd", "lamp_bay_nvme");
     public static final List<String> DOCK_BAYS = List.of("bay_hdd", "bay_ssd", "bay_nvme");
-    public static final String DOCK_STICK = "stick";
-    /** What the Dock's item does not show: its lamps and the stick. */
+    /** What the Dock's item does not show: its lamps. */
     public static final List<String> DOCK_AT_REST = List.of(DOCK_POWER_LAMP, "lamp_bay_hdd", "lamp_bay_ssd",
-            "lamp_bay_nvme", DOCK_STICK);
+            "lamp_bay_nvme");
     /** The drives, one model each: a floppy drive, a CD drive and a DVD drive are different machines. */
     public static final GeoLook<MediaReaderBlockEntity> MEDIA_DRIVE = GeoLook.of(JsComputers.MODID, "media_drive",
             "media_drive", drive -> drive.driveType().serializedName());

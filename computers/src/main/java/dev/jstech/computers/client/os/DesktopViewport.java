@@ -84,6 +84,15 @@ final class DesktopViewport {
         return top() + (int) Math.round(local * scale());
     }
 
+    /**
+     * Whether an absolute screen point is on the glass. The game hands the screen clicks from anywhere in its window,
+     * the monitor's frame and chin included, and a point there is not on the desktop even when its local coordinates
+     * fall where the taskbar is.
+     */
+    boolean onGlass(final double absX, final double absY) {
+        return absX >= left() && absX < left() + glassWidth() && absY >= top() && absY < top() + glassHeight();
+    }
+
     /** The desktop-local x of an absolute screen x, allowing for where the glass is and how it is scaled. */
     double localX(final double absX) {
         return (absX - left()) / scale();

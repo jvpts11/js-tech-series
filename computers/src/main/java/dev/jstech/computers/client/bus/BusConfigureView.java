@@ -51,6 +51,7 @@ final class BusConfigureView {
     private List<BusLayout.Row> rows = List.of();
     private int contentHeight;
     private int scroll;
+    private final ScrollGrab bar = new ScrollGrab();
     private boolean editingTag;
     private boolean editingCondition;
     private BusCondition.Kind editKind = BusCondition.Kind.STOCK;
@@ -114,7 +115,30 @@ final class BusConfigureView {
         }
         g.disableScissor();
         BusDraw.scrollbar(g, left + BusLayout.SCROLL_X, viewTop, viewH, scroll, contentHeight);
+        bar.drawn(left + BusLayout.SCROLL_X, viewTop, viewH, contentHeight);
         placeFields(left, viewTop, viewH);
+    }
+
+    /** A press on the scrollbar takes hold of it and puts the thumb under the pointer; false for a press elsewhere. */
+    boolean pressBar(final double mx, final double my) {
+        if (!bar.press(mx, my)) {
+            return false;
+        }
+        scroll = bar.scrollAt(my);
+        return true;
+    }
+
+    /** The pointer dragged with the scrollbar held: the list follows; false while it is not held. */
+    boolean dragBar(final double my) {
+        if (!bar.held()) {
+            return false;
+        }
+        scroll = bar.scrollAt(my);
+        return true;
+    }
+
+    void releaseBar() {
+        bar.release();
     }
 
     boolean click(final double mx, final double my, final int left, final int top) {

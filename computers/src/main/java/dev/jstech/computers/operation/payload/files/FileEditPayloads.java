@@ -94,7 +94,7 @@ public final class FileEditPayloads {
             if (vol.isEmpty()
                     || kind == FilesystemKind.NONE) {
                 msg = (media ? FileSavedPayload.NO_MEDIUM : FileSavedPayload.NO_SYSTEM_DISK).text();
-            } else if (!type.userEditable()) {
+            } else if (!type.userEditable() && !type.writtenByPrograms()) {
                 msg = FileSavedPayload.TYPE_READ_ONLY.with(type.extension());
             } else {
                 final long oldWeight = DiskFilesystem.weightOf(vol, real);

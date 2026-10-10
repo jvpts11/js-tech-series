@@ -35,6 +35,8 @@ public final class DockStationRenderer extends GeoBlockRenderer<DockStationBlock
     public DockStationRenderer(final BlockEntityRendererProvider.Context context) {
         super(new LookGeoModel<>(ComputingLooks.DOCK_STATION));
         addRenderLayer(new TrayDisks(this));
+        // The stick in the port is the stick's own item, as the Pattern Encoder draws it.
+        addRenderLayer(new BayMediumLayer<>(this, dock -> dock.mediaSlot().getStackInSlot(0)));
     }
 
     @Override
@@ -48,7 +50,6 @@ public final class DockStationRenderer extends GeoBlockRenderer<DockStationBlock
         for (int bay = 0; bay < DockStationBlockEntity.BAYS; bay++) {
             DeviceLamps.show(model, ComputingLooks.DOCK_BAY_LAMPS.get(bay), linked && !dock.disk(bay).isEmpty());
         }
-        DeviceLamps.show(model, ComputingLooks.DOCK_STICK, !dock.mediaSlot().getStackInSlot(0).isEmpty());
     }
 
     /** The disks in the trays' windows, each at the bone that marks its tray. */

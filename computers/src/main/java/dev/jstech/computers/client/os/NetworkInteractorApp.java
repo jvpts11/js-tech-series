@@ -239,6 +239,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     private static final int SEARCH_H = NetworkInteractorLayout.SEARCH_H;
     /** The Print button's width at the header's right end. */
     private static final int PRINT_W = 30;
+    /** The room a drop-down keeps at its right end for its caret, which its label never runs under. */
+    private static final int CARET_ROOM = 9;
     /** The Interactor's own id, whose name on the desktop its printouts say they came from. */
     private static final String PROGRAM = "jsc:network";
     private static final int CELL = NetworkInteractorLayout.CELL;
@@ -435,8 +437,11 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         search = root.add(new SearchField(48));
         search.set(lastSearch);
         search.setOnEdit(this::searchEdited);
-        modButton = root.add(new Button(this::modLabel, this::openModFilter).setLabelScale(Texts.SMALL));
-        categoryButton = root.add(new Button(this::categoryLabel, this::openCategoryFilter).setLabelScale(Texts.SMALL));
+        // The caret at each drop-down's right end keeps its own room, so a long name never runs under it.
+        modButton = root.add(new Button(this::modLabel, this::openModFilter).setLabelScale(Texts.SMALL)
+                .setLabelInsetRight(CARET_ROOM));
+        categoryButton = root.add(new Button(this::categoryLabel, this::openCategoryFilter).setLabelScale(Texts.SMALL)
+                .setLabelInsetRight(CARET_ROOM));
         sortButton = root.add(new Button(this::sortLabel, this::cycleSort).setLabelScale(Texts.SMALL));
         /*
          * The cells are drawn by the renderer over the skin's row backgrounds (hover and selection in the
@@ -797,16 +802,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         } else {
             renderCaption(g, font, x, y, z);
             skin.field(g, x + z.wellX(), y + z.wellY(), z.wellW(), z.wellH(), false);
-            // What the well says when there are no cells or rows to show, clipped to it.
-            if (z.gridH() > 0) {
+            if (z.gridH() > 0 && tab == TAB_OPS) {
                 Draw.pushScissor(g, x + z.gridX(), gridTop, x + z.gridX() + z.gridW(), gridTop + z.gridH());
-                final String msg = emptyMessage();
-                if (msg != null && shownCells > 0) {
-                    drawWrapped(g, font, msg, x + z.gridX() + 2, gridTop + 2, z.gridW() - 4, skin.dim());
-                }
-                if (tab == TAB_OPS) {
-                    ops.renderHeader(g, font, x + z.gridX(), gridTop);
-                }
+                ops.renderHeader(g, font, x + z.gridX(), gridTop);
                 Draw.popScissor(g);
             }
         }
@@ -837,6 +835,18 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         hintLabel.setBounds(x + 3, y + z.hintY(), width - 6, NetworkInteractorLayout.HINT_H);
 
         root.render(g, ctx);
+        /*
+         * What the well says when there are no cells or rows to show, clipped to it: over the empty cells, which
+         * light under the pointer and wiped the words out where it passed when they were drawn first.
+         */
+        if (tab != TAB_STATUS && z.gridH() > 0) {
+            final String msg = emptyMessage();
+            if (msg != null && shownCells > 0) {
+                Draw.pushScissor(g, x + z.gridX(), gridTop, x + z.gridX() + z.gridW(), gridTop + z.gridH());
+                drawWrapped(g, font, msg, x + z.gridX() + 2, gridTop + 2, z.gridW() - 4, skin.dim());
+                Draw.popScissor(g);
+            }
+        }
         renderToolbarMarks(g);
         if (marquee) {
             // The rubber band, over the grid: a faint fill with the accent around it.
@@ -1021,13 +1031,15 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     private String modLabel() {
         final String text = modFilter.isEmpty() ? GameText.resolve(MOD) : modName(modFilter);
-        return lastFont == null ? text : Texts.clip(lastFont, text, Texts.smallFits(NetworkInteractorLayout.MOD_W - 4));
+        return lastFont == null ? text
+                : Texts.clip(lastFont, text, Texts.smallFits(NetworkInteractorLayout.MOD_W - 4 - CARET_ROOM));
     }
 
     private String categoryLabel() {
         final String text = GameText.resolve(categoryFilter.isEmpty() ? CATEGORY.text()
                 : ItemCategories.label(categoryFilter));
-        return lastFont == null ? text : Texts.clip(lastFont, text, Texts.smallFits(NetworkInteractorLayout.CAT_W - 4));
+        return lastFont == null ? text
+                : Texts.clip(lastFont, text, Texts.smallFits(NetworkInteractorLayout.CAT_W - 4 - CARET_ROOM));
     }
 
     /** The mods that made what the active tab lists, as namespaces, sorted by their readable names. */
@@ -1586,13 +1598,14 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         final int px = x + z.wellX();
         final int py = y + z.capY();
         final int pw = contentW - 2 * NetworkInteractorLayout.INSET;
-        final int ph = z.statusY() - z.capY() - 2;
+        // It ends where the grid's well ends, above the grip and the inventory band, which are drawn on every tab.
+        final int ph = z.gripY() - 1 - z.capY();
         if (pw <= 6 || ph <= 6) {
             return;
         }
         framedPanel(g, px, py, pw, ph);
         Draw.pushScissor(g, px + 1, py + 1, px + pw - 1, py + ph - 1);
-        renderNetworkCard(g, font, px, py, Math.min(pw, 180), ph);
+        renderNetworkCard(g, font, px, py, pw, ph);
         Draw.popScissor(g);
     }
 

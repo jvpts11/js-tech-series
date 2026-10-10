@@ -111,6 +111,8 @@ neoForge {
             gameDirectory = rootProject.file('run')
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
             systemProperty 'jsc.gametests.computercraft', withoutComputerCraft ? 'absent' : 'present'
+            // -PgtOnly=<TestClass or word>[,...] runs only those GameTests (see GameTestSelection).
+            systemProperty 'jsc.gametests.only', (providers.gradleProperty('gtOnly').getOrElse(''))
             systemProperty 'jsc.gametests.ftbteams', withFtbTeams ? 'present' : 'absent'
             // -Pjfr records the run with Java Flight Recorder, for profiling the scale benchmark. Deep stacks,
             // because what is being chased sits well below the tick. Off unless asked for.

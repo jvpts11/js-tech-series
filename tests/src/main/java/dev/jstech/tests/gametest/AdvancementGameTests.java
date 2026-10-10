@@ -115,10 +115,12 @@ public final class AdvancementGameTests {
         try {
             JscEvents.award(player, JscEvents.ERA_BUILT, "vintage");
             JscEvents.award(player, JscEvents.ERA_BUILT, "legacy");
-            helper.assertTrue(done(player, "hardware/vintage_build"), "a Vintage build earns its own");
-            helper.assertFalse(done(player, "hardware/time_traveller"), "two eras of three are not every era");
+            JscEvents.award(player, JscEvents.ERA_BUILT, "transition");
             JscEvents.award(player, JscEvents.ERA_BUILT, "standard");
-            helper.assertTrue(done(player, "hardware/time_traveller"), "the third era completes Time Traveller");
+            helper.assertTrue(done(player, "hardware/vintage_build"), "a Vintage build earns its own");
+            helper.assertFalse(done(player, "hardware/time_traveller"), "four eras of five are not every era");
+            JscEvents.award(player, JscEvents.ERA_BUILT, "advanced");
+            helper.assertTrue(done(player, "hardware/time_traveller"), "the fifth era completes Time Traveller");
         } finally {
             leave(player);
         }

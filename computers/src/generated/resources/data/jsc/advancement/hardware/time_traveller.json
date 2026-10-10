@@ -1,6 +1,13 @@
 {
   "parent": "jsc:hardware/standard_build",
   "criteria": {
+    "advanced": {
+      "conditions": {
+        "detail": "advanced",
+        "event": "jsc:era_built"
+      },
+      "trigger": "jscore:event"
+    },
     "legacy": {
       "conditions": {
         "detail": "legacy",
@@ -11,6 +18,13 @@
     "standard": {
       "conditions": {
         "detail": "standard",
+        "event": "jsc:era_built"
+      },
+      "trigger": "jscore:event"
+    },
+    "transition": {
+      "conditions": {
+        "detail": "transition",
         "event": "jsc:era_built"
       },
       "trigger": "jscore:event"
@@ -44,7 +58,13 @@
       "legacy"
     ],
     [
+      "transition"
+    ],
+    [
       "standard"
+    ],
+    [
+      "advanced"
     ]
   ],
   "sends_telemetry_event": true

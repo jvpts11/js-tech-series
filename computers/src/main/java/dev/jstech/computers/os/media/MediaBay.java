@@ -27,6 +27,8 @@ public final class MediaBay {
 
     private ItemStack leaving = ItemStack.EMPTY;
     private long leftAt = Long.MIN_VALUE / 2;
+    /* How long the medium that left is drawn: as long as its own eject clip, which hides it by its end. */
+    private int leavingFor = LEAVING_TICKS;
 
     /** The controller the bay's clips play on. */
     public static final String CONTROLLER = "bay";
@@ -38,7 +40,7 @@ public final class MediaBay {
     public static final String POWER_LAMP = "led_power";
     /** The bone of the activity lamp, which blinks while the device works. */
     public static final String BUSY_LAMP = "led_busy";
-    /** How long a medium taken out is still drawn, for its way out to be seen: the longest eject clip, and more. */
+    /** How long a medium taken out is still drawn when its format is not known: the longest eject clip, and more. */
     public static final int LEAVING_TICKS = 40;
 
     private static final String[] CLIPS = {"insert_tray", "eject_tray", "insert_floppy", "eject_floppy",
@@ -67,9 +69,12 @@ public final class MediaBay {
         return (in ? "insert_" : "eject_") + way;
     }
 
-    /** The medium to draw: the one in the bay, or for a moment after one was taken out, that one. */
+    /**
+     * The medium to draw: the one in the bay, or, while its eject clip plays, the one taken out. Not a tick longer:
+     * once the clip ends the model is back at rest, and a stick still drawn then stood in its port again for a moment.
+     */
     public ItemStack drawn(final ItemStack held, @Nullable final Level level) {
-        if (!held.isEmpty() || level == null || level.getGameTime() - leftAt > LEAVING_TICKS) {
+        if (!held.isEmpty() || level == null || level.getGameTime() - leftAt >= leavingFor) {
             return held;
         }
         return leaving;
@@ -80,6 +85,17 @@ public final class MediaBay {
         if (!before.isEmpty() && now.isEmpty() && level != null) {
             leaving = before;
             leftAt = level.getGameTime();
+            leavingFor = before.getItem() instanceof FormattedMediaItem medium ? ejectTicks(medium.format())
+                    : LEAVING_TICKS;
         }
+    }
+
+    /** How long a medium of that format takes to come out: its eject clip, in ticks. */
+    public static int ejectTicks(final MediaFormat format) {
+        return switch (format) {
+            case FLOPPY -> 20;
+            case CD, DVD, BLU_RAY -> 36;
+            case USB -> 12;
+        };
     }
 }

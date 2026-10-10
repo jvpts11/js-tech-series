@@ -156,6 +156,23 @@ public final class ThisPcLayoutTest {
     }
 
     @Test
+    public void barWidth_endsBeforeTheWordsSayingWhatIsFree() {
+        // "8128 of 8192 it free" at the audit's six pixels a letter, beside none to three buttons in every width.
+        final int usageW = Math.round("8128 of 8192 it free".length() * GuiLayout.GLYPH_WIDTH);
+        for (final int width : new int[]{ThisPcLayout.MIN_W, ThisPcLayout.DEFAULT_W, 420}) {
+            for (int buttons = 0; buttons <= 3; buttons++) {
+                final int maxW = ThisPcLayout.driveTextMaxW(width, buttons);
+                final int barW = ThisPcLayout.barWidth(maxW, usageW);
+                assertTrue(barW >= ThisPcLayout.BAR_MIN_W, "the bar keeps a length of its own");
+                if (maxW - usageW - ThisPcLayout.BAR_GAP >= ThisPcLayout.BAR_MIN_W) {
+                    assertTrue(barW + ThisPcLayout.BAR_GAP <= maxW - usageW,
+                            "at " + width + " with " + buttons + " buttons the bar runs into the words");
+                }
+            }
+        }
+    }
+
+    @Test
     public void cinnamonAbout_sevenRowsFitInsideTheWindow() {
         final int lastRow = ThisPcLayout.CinnamonAbout.rowY(ThisPcLayout.CinnamonAbout.LIST_ROWS - 1);
         assertTrue(lastRow + ThisPcLayout.ABOUT_ROW_H <= ThisPcLayout.CinnamonAbout.H);

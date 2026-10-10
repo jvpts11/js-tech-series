@@ -86,8 +86,12 @@ final class SoftwareCommands {
             this.systems = systems;
         }
 
+        /*
+         * The manager is the system's own, there with or without a network: off one it says it cannot reach the
+         * Mirror, where it used to be missing and the prompt said it did not know the word.
+         */
         @Override public CommandScope scope() {
-            return CommandScope.on(this.systems).needing(CommandScope.Need.NETWORK);
+            return CommandScope.on(this.systems);
         }
 
         @Override public String name() {

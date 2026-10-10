@@ -14,7 +14,10 @@ import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
@@ -37,6 +40,8 @@ import net.minecraft.client.gui.GuiGraphics;
 final class LinuxLaunchers {
 
     private final DesktopState desktop;
+    /** The category Cinnamon's menu lists, by its place in the column; nought is All, and the menu opens on it. */
+    private int cinnamonChosen;
 
     /** KDE Plasma: a Kickoff-style launcher (places column left, app list right, header, session footer). */
     static final int KDE_MENU_W = 214;
@@ -60,6 +65,21 @@ final class LinuxLaunchers {
     /** Kickoff's places column and Cinnamon's categories, top to bottom; the first of each is the one shown. */
     private static final List<TextKey> KDE_PLACES =
             List.of(DesktopTexts.FAVORITES, DesktopTexts.ALL_APPS, DesktopTexts.SYSTEM, DesktopTexts.UTILITIES);
+    /** Where each program is filed in Cinnamon's categories, by the path of its id; one named nowhere is an accessory. */
+    private static final Map<String, TextKey> CIN_FILED = cinnamonFiling();
+    /** The quit button at the foot of Cinnamon's favourites rail: its height, and the power sign drawn on it. */
+    private static final int CIN_QUIT_H = 20;
+    private static final String[] CIN_QUIT_SIGN = {
+        "....#....",
+        "..#.#.#..",
+        ".#..#..#.",
+        "#...#...#",
+        "#.......#",
+        "#.......#",
+        ".#.....#.",
+        "..#...#..",
+        "...###..."
+    };
     private static final List<TextKey> CIN_CATEGORIES = List.of(DesktopTexts.ALL, DesktopTexts.ACCESSORIES,
             DesktopTexts.OFFICE, DesktopTexts.SYSTEM, DesktopTexts.PREFERENCES);
 
@@ -252,25 +272,35 @@ final class LinuxLaunchers {
             }
             ProgramIcons.draw(g, x + (CIN_RAIL_W - 16) / 2, fy, 16, 16, all.get(i).programId(), desktop.icons());
         }
-        // Categories.
+        // Quit, at the foot of the rail: the power dialog, as Mint's rail ends.
+        final int quitY = y + h - CIN_QUIT_H;
+        if (desktop.hoverIn(x, quitY, CIN_RAIL_W, CIN_QUIT_H)) {
+            g.fill(x + 2, quitY, x + CIN_RAIL_W - 2, quitY + CIN_QUIT_H - 2, c.hover());
+        }
+        drawSign(g, CIN_QUIT_SIGN, x + (CIN_RAIL_W - 9) / 2, quitY + (CIN_QUIT_H - 11) / 2, c.ink());
+        // Categories: the one chosen lights, the one under the pointer shows it can be.
         final int catsX = x + CIN_RAIL_W;
         g.fill(catsX + CIN_CATS_W - 1, y, catsX + CIN_CATS_W, y + h, c.categoriesRule());
         for (int i = 0; i < CIN_CATEGORIES.size(); i++) {
             final int cy = y + CIN_HEADER_H + i * 14;
-            if (i == 0) {
+            if (i == cinnamonChosen) {
                 g.fill(catsX, cy - 2, catsX + CIN_CATS_W - 1, cy + 10, desktop.themeColours().startButton());
+            } else if (desktop.hoverIn(catsX, cy - 2, CIN_CATS_W - 1, 12)) {
+                g.fill(catsX, cy - 2, catsX + CIN_CATS_W - 1, cy + 10, c.hover());
             }
             Draw.text(g, desktop.textFont(), words(CIN_CATEGORIES.get(i)), catsX + 8, cy,
-                    i == 0 ? c.chosen() : c.category());
+                    i == cinnamonChosen ? c.chosen() : c.category());
         }
-        // Search hint + app list.
+        // The search box, with what has been typed in it, and the programs it and the category leave.
         final int listX = catsX + CIN_CATS_W + 4;
         final int listW = x + w - listX - 4;
         g.fill(listX, y + 5, listX + listW, y + 17, c.search());
         desktop.drawOutline(g, listX, y + 5, listW, 12, c.searchEdge());
-        Draw.text(g, desktop.textFont(), words(DesktopTexts.SEARCH), listX + 4, y + 7, c.searchHint());
+        final String typed = desktop.start().searchText();
+        Draw.text(g, desktop.textFont(), typed.isEmpty() ? words(DesktopTexts.SEARCH)
+                : desktop.shorten(typed + "_", 18), listX + 4, y + 7, typed.isEmpty() ? c.searchHint() : c.ink());
         int my = y + CIN_HEADER_H;
-        for (final Launcher l : all) {
+        for (final Launcher l : cinnamonShown()) {
             final boolean hov = desktop.hoverIn(listX, my, listW, CIN_ROW_H);
             if (hov) {
                 g.fill(listX, my, listX + listW, my + CIN_ROW_H, c.hover());
@@ -290,6 +320,11 @@ final class LinuxLaunchers {
             return false;
         }
         if (mx < x + CIN_RAIL_W) {
+            if (my >= y + h - CIN_QUIT_H) {
+                desktop.power().open();
+                desktop.start().close();
+                return true;
+            }
             final int favN = Math.min(4, desktop.launcherList().size());
             for (int i = 0; i < favN; i++) {
                 final int fy = y + 8 + i * 22;
@@ -301,15 +336,75 @@ final class LinuxLaunchers {
             }
             return true;
         }
-        final int listX = x + CIN_RAIL_W + CIN_CATS_W + 4;
+        final int catsX = x + CIN_RAIL_W;
+        if (mx < catsX + CIN_CATS_W) {
+            final int row = Math.floorDiv(my - (y + CIN_HEADER_H) + 2, 14);
+            if (row >= 0 && row < CIN_CATEGORIES.size()) {
+                cinnamonChosen = row;
+            }
+            return true;
+        }
+        final int listX = catsX + CIN_CATS_W + 4;
         if (mx >= listX && my >= y + CIN_HEADER_H) {
+            final List<Launcher> shown = cinnamonShown();
             final int row = (my - (y + CIN_HEADER_H)) / CIN_ROW_H;
-            if (row >= 0 && row < desktop.launcherList().size()) {
-                desktop.start().choose(row);
+            if (row >= 0 && row < shown.size()) {
+                desktop.start().choose(shown.get(row));
                 desktop.start().close();
             }
         }
         return true;
+    }
+
+    /** The menu was put away: Cinnamon's opens again on All, as Mint's does. */
+    void forgetCinnamonCategory() {
+        cinnamonChosen = 0;
+    }
+
+    /* The programs Cinnamon's list shows: those whose names hold what was typed, in the category chosen. */
+    private List<Launcher> cinnamonShown() {
+        final List<Launcher> typed = desktop.start().filtered();
+        if (cinnamonChosen <= 0 || cinnamonChosen >= CIN_CATEGORIES.size()) {
+            return typed;
+        }
+        final TextKey category = CIN_CATEGORIES.get(cinnamonChosen);
+        final List<Launcher> out = new ArrayList<>();
+        for (final Launcher l : typed) {
+            if (CIN_FILED.getOrDefault(l.programId().getPath(), DesktopTexts.ACCESSORIES) == category) {
+                out.add(l);
+            }
+        }
+        return out;
+    }
+
+    /* A sign of pixels at (x, y), one cell a pixel, as a nine by nine pattern of '#'. */
+    private static void drawSign(final GuiGraphics g, final String[] sign, final int x, final int y, final int ink) {
+        for (int row = 0; row < sign.length; row++) {
+            for (int col = 0; col < sign[row].length(); col++) {
+                if (sign[row].charAt(col) == '#') {
+                    g.fill(x + col, y + row, x + col + 1, y + row + 1, ink);
+                }
+            }
+        }
+    }
+
+    /*
+     * Where Mint files each program: the office work, the system's own tools and its settings; everything else (the
+     * calculator, the editors, the games, the pictures and the music) is an accessory.
+     */
+    private static Map<String, TextKey> cinnamonFiling() {
+        final Map<String, TextKey> out = new HashMap<>();
+        for (final String id : List.of("exceed", "workshop", "crafting_manager", "pattern_studio", "craft_planner",
+                "storage_insights", "automation_manager")) {
+            out.put(id, DesktopTexts.OFFICE);
+        }
+        for (final String id : List.of("files", "this_pc", "disks", "workstation_info", "system_monitor",
+                "task_manager", "device_manager", "command_prompt", "network", "network_manager", "help_viewer",
+                "cluster_manager", "gateway_manager", "remote_control", "isms", "nextgre_studio", "prophet_console")) {
+            out.put(id, DesktopTexts.SYSTEM);
+        }
+        out.put("settings", DesktopTexts.PREFERENCES);
+        return Map.copyOf(out);
     }
 
     /** The workspace strip: the one in use, with a hint of its open windows, and an empty one beside it. */

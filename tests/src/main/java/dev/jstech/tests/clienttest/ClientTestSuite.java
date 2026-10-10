@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * The explicit list of client test classes. Tests are discovered by reflection from these classes only (
@@ -168,7 +169,16 @@ public final class ClientTestSuite {
      * slice of one split and no test runs twice or not at all.
      */
     public static List<Entry> shard(final int shard, final int shards, final Map<String, Integer> ticks) {
-        final List<Entry> all = all();
+        return shard(shard, shards, ticks, entry -> true);
+    }
+
+    /**
+     * The same, of only the tests {@code chosen} keeps: they are picked before the suite is split, so the few asked for
+     * are shared out over the shards as the whole suite is, rather than found in one shard and missing in the others.
+     */
+    public static List<Entry> shard(final int shard, final int shards, final Map<String, Integer> ticks,
+                                    final Predicate<Entry> chosen) {
+        final List<Entry> all = all().stream().filter(chosen).toList();
         final List<Entry> mine = new ArrayList<>();
         if (ticks.isEmpty()) {
             for (int i = 0; i < all.size(); i++) {

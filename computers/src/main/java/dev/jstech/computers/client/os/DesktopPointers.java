@@ -75,8 +75,11 @@ final class DesktopPointers {
         return State.ARROW;
     }
 
-    /** Draws the pointer with its hot spot at the desktop point ({@code x}, {@code y}). */
-    void draw(final GuiGraphics g, final int x, final int y) {
+    /**
+     * Draws the pointer with its hot spot at the desktop point ({@code x}, {@code y}), which may fall between two
+     * desktop pixels: it lands on the nearest pixel of the window, so it moves as finely as the mouse does.
+     */
+    void draw(final GuiGraphics g, final double x, final double y) {
         final State state = state();
         final Set set = set();
         final Art art = switch (state) {
@@ -95,12 +98,12 @@ final class DesktopPointers {
          * texel's middle, and some came out twice and some not at all: the pointer looked chewed.
          */
         final Matrix4f pose = g.pose().last().pose();
-        final float atX = pose.m00() * x + pose.m30();
-        final float atY = pose.m11() * y + pose.m31();
+        final float atX = (float) (pose.m00() * x + pose.m30());
+        final float atY = (float) (pose.m11() * y + pose.m31());
         final float snapX = (float) ((Math.round(atX * guiScale) / guiScale - atX) / pose.m00());
         final float snapY = (float) ((Math.round(atY * guiScale) / guiScale - atY) / pose.m11());
         g.pose().pushPose();
-        g.pose().translate(x + snapX, y + snapY, 0);
+        g.pose().translate((float) x + snapX, (float) y + snapY, 0);
         g.pose().scale(texel, texel, 1);
         Draw.blended(() -> g.blit(art.texture(), -art.hotX(), -art.hotY(), frame * art.w(), 0, art.w(), art.h(),
                 art.frames() * art.w(), art.h()));
