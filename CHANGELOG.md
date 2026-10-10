@@ -2176,6 +2176,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   sizes, so its faces meet without a gap.
 - This PC fits its hardware list's names to the longest of them, keeps a drive's bar clear of the words saying what
   is free, and marks a line it shortens.
+- The Device Manager has an icon of its own in every system, a monitor with a gear before it, where it showed none.
+- The Standard Pattern Encoder's USB port can be seen: a USB 3 socket standing on end, the size of a stick's plug,
+  where it was charcoal on its charcoal panel.
 - `pckmgr` and the Unix package managers are there off a network too, and say they cannot reach the Mirror.
 - Cinnamon's menu searches as you type, lists the category chosen, and has its Quit button at the foot of the
   favourites.
