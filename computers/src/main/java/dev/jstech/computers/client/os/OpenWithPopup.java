@@ -161,7 +161,7 @@ public final class OpenWithPopup extends Popup {
             color = skin.listRowText(selected);
         }
         ProgramIcons.draw(g, x + OpenWithLayout.ICON_X, y + (h - ProgramIcons.SIZE) / 2, ProgramIcons.SIZE,
-                ProgramIcons.SIZE, ResourceLocation.fromNamespaceAndPath("jsc", programId), iconSet);
+                ProgramIcons.SIZE, ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, programId), iconSet);
         Draw.text(g, ctx.font(), ActiveDesktop.openerName(programId), x + OpenWithLayout.ROW_TEXT_X,
                 y + (h - OpenWithLayout.LINE_H) / 2, color);
     }

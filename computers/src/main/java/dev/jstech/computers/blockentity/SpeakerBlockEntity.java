@@ -40,7 +40,7 @@ import java.util.Optional;
  * screen, it is taken when the screen closes, and one another speaker already has is refused, the speaker keeping the
  * name it had.
  */
-public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint {
+public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, INamedDevice {
 
     private final PeripheralLink link = new PeripheralLink(fields(), PeripheralCableType.COMPUTING,
             PeripheralLinks.COMPUTING);
@@ -123,6 +123,7 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
     }
 
     /** The name a player gave it; empty while it has none. */
+    @Override
     public String name() {
         return name.get();
     }
@@ -169,7 +170,12 @@ public class SpeakerBlockEntity extends SyncedBlockEntity implements IPeripheral
      * empty name gives it back its default and never clashes.
      */
     public void takeAskedName() {
-        if (asked != null && !clash.get()) {
+        /*
+         * The flag was worked out as the name was typed; another speaker may have taken the name since, so the
+         * name is checked again at the moment it is given.
+         */
+        if (asked != null && !clash.get() && !(!asked.isEmpty() && level instanceof ServerLevel server
+                && anotherSpeakerIsCalled(server, asked))) {
             name.set(asked);
         }
         asked = null;

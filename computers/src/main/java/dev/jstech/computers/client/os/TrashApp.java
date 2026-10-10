@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.TrashItem;
 import dev.jstech.computers.gui.layout.TrashLayout;
 import dev.jstech.computers.operation.payload.RequestTrashPayload;
@@ -20,9 +21,11 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.client.gui.Font;
@@ -50,6 +53,8 @@ public final class TrashApp implements IDesktopApp {
     private List<TrashItem> arrived = List.of();
     private List<TrashItem> items = List.of();
     private final Set<String> selected = new LinkedHashSet<>();
+    /** The picture each item name opens with, kept until the next listing so it is not worked out every frame. */
+    private final Map<String, ResourceLocation> icons = new HashMap<>();
     private int scroll;
     private Order order = Order.AS_DELETED;
     private OsSkin skin = OsSkin.fallback();
@@ -328,14 +333,16 @@ public final class TrashApp implements IDesktopApp {
 
     /** The picture of the program that opens an item, which is how the desktops showed a file. */
     ResourceLocation iconOf(final TrashItem item) {
-        final String program = item.directory() ? "files"
-                : FileOpeners.defaultFor(item.name(), ActiveDesktop.installedProgramIds());
-        return ResourceLocation.fromNamespaceAndPath("jsc", program.isEmpty() ? "generic" : program);
+        return this.icons.computeIfAbsent((item.directory() ? "/" : "") + item.name(), key -> {
+            final String program = item.directory() ? "files"
+                    : FileOpeners.defaultFor(item.name(), ActiveDesktop.installedProgramIds());
+            return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, program.isEmpty() ? "generic" : program);
+        });
     }
 
     /** The picture the trash itself wears on this desktop, empty or full. */
     ResourceLocation trashIcon() {
-        return ResourceLocation.fromNamespaceAndPath("jsc", this.items.isEmpty() ? "trash" : "trash_full");
+        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, this.items.isEmpty() ? "trash" : "trash_full");
     }
 
     /** The icon set of the desktop the window is on. */
@@ -381,6 +388,7 @@ public final class TrashApp implements IDesktopApp {
         }
         this.arrived = List.copyOf(built);
         this.items = ordered(this.arrived);
+        this.icons.clear();
         // A selection outlives a listing only as far as what it names is still there.
         this.selected.removeIf(stored -> this.items.stream().noneMatch(item -> item.stored().equals(stored)));
         this.scroll = Math.min(this.scroll, this.look.scrollLimit());

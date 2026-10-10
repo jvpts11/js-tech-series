@@ -9,6 +9,7 @@ package dev.jstech.computers.printer;
 
 import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.core.text.TextBounds;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
@@ -115,11 +116,11 @@ public record PrintedDocument(String title, String from, String program, String 
     /** How many bytes of text it holds, as {@code lpstat} gives a request's size. */
     public int bytes() {
         if (isPicture()) {
-            return picture.length();
+            return picture.getBytes(StandardCharsets.UTF_8).length;
         }
         int total = 0;
         for (final String page : pages) {
-            total += page.length();
+            total += page.getBytes(StandardCharsets.UTF_8).length;
         }
         return total;
     }

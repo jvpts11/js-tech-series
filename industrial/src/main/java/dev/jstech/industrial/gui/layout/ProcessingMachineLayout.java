@@ -16,27 +16,21 @@ import dev.jstech.core.gui.layout.GuiLayout;
  */
 public final class ProcessingMachineLayout {
 
-    public static final int WIDTH = 176;
-    public static final int HEIGHT = 166;
+    public static final int WIDTH = MachineFrame.WIDTH;
+    public static final int HEIGHT = MachineFrame.HEIGHT;
     /** Where the inventory's label sits, just above the grid. */
-    public static final int INVENTORY_LABEL_Y = HEIGHT - 94;
+    public static final int INVENTORY_LABEL_Y = MachineFrame.INVENTORY_LABEL_Y;
     /** The longest title the screen shows, the Electric Furnace's, in characters. */
     private static final int TITLE_CHARS = 16;
-    /** The inventory's label, in characters. */
-    private static final int INVENTORY_CHARS = 9;
 
     private ProcessingMachineLayout() {
     }
 
     public static GuiLayout layout() {
-        final GuiLayout layout = new GuiLayout(WIDTH, HEIGHT);
-        layout.text("title", 8, 6, TITLE_CHARS, 1.0f);
-        layout.box("energy", 8, 16, 10, 52);
+        final GuiLayout layout = MachineFrame.begin(TITLE_CHARS);
         layout.slot("input", 56, 35);
         layout.box("progress", 79, 38, 24, 8);
         layout.slot("output", 116, 35);
-        layout.text("inventory", 8, INVENTORY_LABEL_Y, INVENTORY_CHARS, 1.0f);
-        layout.playerInventory(8, 84);
-        return layout;
+        return MachineFrame.finish(layout);
     }
 }

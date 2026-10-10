@@ -14,7 +14,6 @@ import net.neoforged.neoforge.event.level.ChunkEvent;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,13 +39,6 @@ public final class ChunkLoadWatch {
     /** Starts watching, on the game's bus. */
     public static void register() {
         NeoForge.EVENT_BUS.addListener(ChunkLoadWatch::onLoad);
-    }
-
-    /** The lines that loaded chunks so far, each with how many. */
-    public static Map<String, Integer> offenders() {
-        final Map<String, Integer> out = new TreeMap<>();
-        BY_LINE.forEach((line, count) -> out.put(line, count.get()));
-        return out;
     }
 
     private static void onLoad(final ChunkEvent.Load event) {

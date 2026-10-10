@@ -17,6 +17,7 @@ import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.StorageNetworkFixture;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -46,10 +47,10 @@ public final class IndexMaintenanceGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 100)
     public static void reindexAsync_swapsTheCatalogOnALaterTick(final GameTestHelper helper) {
-        final MainframeBlockEntity mainframe = OperationSchedulingGameTests.storageNetwork(helper);
+        final MainframeBlockEntity mainframe = StorageNetworkFixture.storageNetwork(helper);
         final boolean[] done = {false};
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + 4, () -> OperationSchedulingGameTests.rack(helper)
+                .thenExecuteAfter(SETTLE + 4, () -> StorageNetworkFixture.rack(helper)
                         .getServerStorage(0).insert(Items.COBBLESTONE, 100))
                 .thenExecuteAfter(2, () -> {
                     helper.assertTrue(mainframe.networkIndex().available(COBBLE) == 100,

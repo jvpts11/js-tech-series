@@ -50,7 +50,7 @@ public record WorkshopStatePayload(int cards, List<ItemStack> slots, ItemStack c
                                    String anvilName, int level, float progress, Text status)
         implements CustomPacketPayload {
 
-    private static final int MAX_NAME = 64;
+    private static final int MAX_NAME = Workshop.MAX_NAME;
     private static final int MAX_OFFERS = 3;
 
     public static final CustomPacketPayload.Type<WorkshopStatePayload> TYPE =
@@ -60,7 +60,8 @@ public record WorkshopStatePayload(int cards, List<ItemStack> slots, ItemStack c
             StreamCodec.of((buf, state) -> state.write(buf), WorkshopStatePayload::read);
 
     public WorkshopStatePayload {
-        slots = List.copyOf(slots);
+        // write() sends the count and read() takes at most SLOTS, so more would leave the stream misaligned.
+        slots = List.copyOf(slots.size() > Workshop.SLOTS ? slots.subList(0, Workshop.SLOTS) : slots);
         offers = List.copyOf(offers);
         anvilName = anvilName == null ? "" : anvilName;
         status = status == null ? Text.EMPTY : status;

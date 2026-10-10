@@ -477,7 +477,14 @@ public final class FirmwarePayloads {
                     } else {
                         final int target = payload.target() >= 0 ? payload.target() : computer.defaultInstallSlot();
                         if (installOsFromReader(level, computer, payload.ref(), target)) {
-                            computer.setBootDiskSlot(target);
+                            /*
+                             * A machine that keeps its installations is only copying now, and the installer lets
+                             * the player pick another disk or quit, so the boot disk is set when the install
+                             * finishes. Only a host that wrote the system on the spot boots from the target.
+                             */
+                            if (!computer.keepsInstalls()) {
+                                computer.setBootDiskSlot(target);
+                            }
                             // Whatever the machine is doing now, which on a machine that keeps its installations
                             // is the installer it just began rather than the boot target it had before.
                             MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
@@ -495,7 +502,8 @@ public final class FirmwarePayloads {
     /**
      * Installs the OS from the medium in the reader at {@code readerPos} (or from any linked installer medium
      * when {@code -1}) onto disk slot {@code targetSlot} ({@code -1} = the default target). Unlike the legacy
-     * no-OS path this allows a second system beside an installed one (dual boot). Returns whether it installed.
+     * no-OS path this allows a second system beside an installed one (dual boot). Returns whether the install
+     * started: on a machine that keeps its installations the copy is only queued, and finishes later.
      */
     public static boolean installOsFromReader(final ServerLevel level, final IOsHost computer,
                                               final long readerPos, final int targetSlot) {
@@ -627,71 +635,6 @@ public final class FirmwarePayloads {
         } else {
             MonitorBlock.openBootTarget(
                     player, level, payload.monitorPos(), payload.hostPos());
-        }
-    }
-
-    /**
-     * Scans the computer's linked peripheral endpoints for a {@link MediaReaderBlockEntity}
-     * holding an OS installer medium. Takes the first match whose OS passes the era gate and
-     * whose footprint fits the computer's free storage, then calls
-     * {@link IOsHost#installOs(ResourceLocation)}.
-     *
-     * <p>The reader must be linked to the computer over the COMPUTING peripheral cable system
-     * (same way a monitor links). Only readers that are already auto-linked endpoints are
-     * considered; a reader placed in the world but not yet linked on the peripheral system
-     * will not be found here.
-     *
-     * <p>All gating conditions must be satisfied in order:
-     * <ol>
-     *   <li>The computer block entity must be an {@link IOsHost} with no OS yet.</li>
-     *   <li>A linked endpoint must resolve to a {@link MediaReaderBlockEntity} holding a medium
-     *       of kind {@link MediaKind#OS_INSTALL} whose payload names a registered {@link OsDef}.</li>
-     *   <li>{@link OsGating#canInstall} must accept the OS on the computer's hardware era.</li>
-     * </ol>
-     * A silent no-op is the correct outcome when any condition is unmet; the firmware screen will
-     * remain open and the player can fix the configuration before trying again.
-     *
-     * @param level       the server level the computer lives in
-     * @param computerPos the position of the computer to install the OS onto
-     */
-    public static void installOsFromLinkedReader(final ServerLevel level, final BlockPos computerPos) {
-        if (!(level.getBlockEntity(computerPos) instanceof IOsHost computer)) {
-            return;
-        }
-        if (computer.hasOs()) {
-            return; // already installed; nothing to do
-        }
-        final HardwareEra hostEra = computer.installedEra() != null
-                ? computer.installedEra()
-                : HardwareEra.STANDARD;
-
-        // Walk every enabled peripheral endpoint and look for a media reader with an OS installer.
-        for (final long endpointLong : computer.enabledEndpoints()) {
-            final BlockPos endpointPos = BlockPos.of(endpointLong);
-            if (!(Loaded.blockEntity(level, endpointPos) instanceof MediaReaderBlockEntity reader)) {
-                continue;
-            }
-            if (reader.insertedKind() != MediaKind.OS_INSTALL) {
-                continue;
-            }
-            final ResourceLocation osId = reader.insertedPayload();
-            if (osId == null) {
-                continue;
-            }
-            final OsDef def = OsRegistry.getOs(osId);
-            if (def == null) {
-                continue;
-            }
-            if (!OsGating.canInstall(def.minEra(), hostEra)) {
-                continue;
-            }
-            // Live/source media (Arch, Gentoo) install only by hand through their booted shell.
-            if (def.installMode() != InstallMode.GUIDED) {
-                continue;
-            }
-            // installOs checks the footprint against free storage; false means it did not fit.
-            computer.installOs(osId);
-            return; // first valid linked reader wins
         }
     }
 }

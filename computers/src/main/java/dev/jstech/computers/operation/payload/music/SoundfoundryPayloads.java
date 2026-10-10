@@ -250,6 +250,9 @@ public final class SoundfoundryPayloads {
         final String folder = FsPaths.parentDir(source);
         final List<String> songs = new ArrayList<>();
         for (final String line : content.split("\n")) {
+            if (songs.size() >= SoundfoundryState.MAX_SONGS) {
+                break; // the state would drop the rest anyway
+            }
             final String entry = line.strip();
             if (entry.isEmpty() || entry.startsWith("#")) {
                 continue;

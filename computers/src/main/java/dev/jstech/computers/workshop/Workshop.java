@@ -36,8 +36,10 @@ import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
+import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
@@ -61,6 +63,9 @@ public final class Workshop {
     private final ValueField<Integer> progress;
     private final ValueField<Float> experience;
     private final ValueField<String> anvilName;
+    /** Remembers the last smelting recipe found, so a furnace whose input stays the same does not scan them all. */
+    private final RecipeManager.CachedCheck<SingleRecipeInput, SmeltingRecipe> furnaceCheck =
+            RecipeManager.createCheck(RecipeType.SMELTING);
 
     /** The nine cells of the crafting grid start here, row by row. */
     public static final int GRID = 0;
@@ -199,7 +204,7 @@ public final class Workshop {
     /** Whether slot {@code slot} takes {@code stack}: the furnace what smelts, the enchanting card what takes it. */
     public boolean accepts(final Level level, final int slot, final ItemStack stack) {
         return switch (slot) {
-            case FURNACE_IN -> smelting(level, stack) != null;
+            case FURNACE_IN -> furnaceRecipe(level, stack) != null;
             case FURNACE_OUT -> false;
             case ENCHANT_ITEM -> stack.isEnchantable() || stack.is(Items.BOOK);
             default -> true;
@@ -267,7 +272,13 @@ public final class Workshop {
     public int craft(final ServerPlayer player, final boolean all) {
         final Level level = player.level();
         int made = 0;
-        while (true) {
+        /*
+         * No run can need more crafts than the fullest cell holds plus the refills the inventory can make. The bound
+         * stops a recipe whose leftover is its own ingredient, which puts the item straight back into the cell, so
+         * the grid never empties and the refill never has anything to fetch.
+         */
+        final int limit = all ? mostInCell() + moreFromInventory(player) + 1 : 1;
+        while (made < limit) {
             final RecipeHolder<CraftingRecipe> recipe = recipe(level);
             if (recipe == null) {
                 break;
@@ -299,7 +310,8 @@ public final class Workshop {
      */
     public boolean tickFurnace(final ServerLevel level, final int speed) {
         final ItemStack input = slots.getStackInSlot(FURNACE_IN);
-        final RecipeHolder<? extends AbstractCookingRecipe> recipe = input.isEmpty() ? null : smelting(level, input);
+        final RecipeHolder<? extends AbstractCookingRecipe> recipe = input.isEmpty() ? null
+                : furnaceRecipe(level, input);
         if (recipe == null || speed <= 0) {
             if (progressTicks() != 0) {
                 progress.set(0);
@@ -308,8 +320,7 @@ public final class Workshop {
         }
         final ItemStack made = recipe.value().assemble(new SingleRecipeInput(input), level.registryAccess());
         final ItemStack output = slots.getStackInSlot(FURNACE_OUT);
-        if (!output.isEmpty() && (!ItemStack.isSameItemSameComponents(output, made)
-                || output.getCount() + made.getCount() > output.getMaxStackSize())) {
+        if (!hasRoomFor(output, made)) {
             return false;
         }
         final int needed = WorkshopRates.ticksPerItem(recipe.value().getCookingTime(), speed);
@@ -329,21 +340,22 @@ public final class Workshop {
 
     /** How far the item now in the furnace is, in ticks. */
     public int progressTicks() {
-        final Integer ticks = progress.get();
-        return ticks == null ? 0 : ticks;
+        return ticksOf(progress);
     }
 
     /** The ticks one item of the furnace's input takes at {@code speed}, or 0 with nothing that smelts in it. */
     public int ticksPerItem(final Level level, final int speed) {
         final ItemStack input = slots.getStackInSlot(FURNACE_IN);
-        final RecipeHolder<? extends AbstractCookingRecipe> recipe = input.isEmpty() ? null : smelting(level, input);
+        final RecipeHolder<? extends AbstractCookingRecipe> recipe = input.isEmpty() ? null
+                : furnaceRecipe(level, input);
         return recipe == null ? 0 : WorkshopRates.ticksPerItem(recipe.value().getCookingTime(), speed);
     }
 
     /** What the furnace's input smelts into, or an empty stack. */
     public ItemStack smeltsInto(final Level level) {
         final ItemStack input = slots.getStackInSlot(FURNACE_IN);
-        final RecipeHolder<? extends AbstractCookingRecipe> recipe = input.isEmpty() ? null : smelting(level, input);
+        final RecipeHolder<? extends AbstractCookingRecipe> recipe = input.isEmpty() ? null
+                : furnaceRecipe(level, input);
         return recipe == null ? ItemStack.EMPTY
                 : recipe.value().assemble(new SingleRecipeInput(input), level.registryAccess());
     }
@@ -365,9 +377,31 @@ public final class Workshop {
     /** What {@code input} smelts into, the ticks a furnace takes and what it earns; null for what does not smelt. */
     @Nullable
     public static Smelt smelt(final Level level, final ItemStack input) {
-        final RecipeHolder<? extends AbstractCookingRecipe> recipe = input.isEmpty() ? null : smelting(level, input);
-        return recipe == null ? null : new Smelt(recipe.value().assemble(new SingleRecipeInput(input),
-                level.registryAccess()), recipe.value().getCookingTime(), recipe.value().getExperience());
+        return smeltOf(level, input, input.isEmpty() ? null : smelting(level, input));
+    }
+
+    /**
+     * Like {@link #smelt}, but finds the recipe through this card's cache, for the network's smelting that runs on
+     * every tick while a card holds the same item.
+     */
+    @Nullable
+    public Smelt smeltCached(final Level level, final ItemStack input) {
+        return smeltOf(level, input, input.isEmpty() ? null : furnaceRecipe(level, input));
+    }
+
+    /**
+     * Whether {@code made} fits on {@code output}: it is the same item and the stack has room, or the output is empty.
+     * The one rule the furnace and the network's smelting share.
+     */
+    public static boolean hasRoomFor(final ItemStack output, final ItemStack made) {
+        return output.isEmpty() || ItemStack.isSameItemSameComponents(output, made)
+                && output.getCount() + made.getCount() <= output.getMaxStackSize();
+    }
+
+    /** The ticks a smelting progress field holds, 0 when it holds nothing yet. */
+    public static int ticksOf(final ValueField<Integer> progress) {
+        final Integer ticks = progress.get();
+        return ticks == null ? 0 : ticks;
     }
 
     // enchanting
@@ -563,6 +597,14 @@ public final class Workshop {
         }
     }
 
+    private int mostInCell() {
+        int most = 0;
+        for (int i = GRID; i < GRID + GRID_SIZE; i++) {
+            most = Math.max(most, slots.getStackInSlot(i).getCount());
+        }
+        return most;
+    }
+
     private List<ItemStack> grid() {
         final List<ItemStack> grid = new ArrayList<>(GRID_SIZE);
         for (int i = GRID; i < GRID + GRID_SIZE; i++) {
@@ -646,6 +688,18 @@ public final class Workshop {
             }
         }
         return have;
+    }
+
+    @Nullable
+    private static Smelt smeltOf(final Level level, final ItemStack input,
+                                 @Nullable final RecipeHolder<? extends AbstractCookingRecipe> recipe) {
+        return recipe == null ? null : new Smelt(recipe.value().assemble(new SingleRecipeInput(input),
+                level.registryAccess()), recipe.value().getCookingTime(), recipe.value().getExperience());
+    }
+
+    @Nullable
+    private RecipeHolder<SmeltingRecipe> furnaceRecipe(final Level level, final ItemStack stack) {
+        return furnaceCheck.getRecipeFor(new SingleRecipeInput(stack), level).orElse(null);
     }
 
     @Nullable

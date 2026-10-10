@@ -62,6 +62,9 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
     public static final int SLOT_OFFLINE = 3;
     public static final int SLOT_OK_BASE = 4;
 
+    /** Upper bound on cable blocks the fabric survey visits; nodes past it are not discovered. */
+    private static final int MAX_SURVEY_STEPS = 256;
+
     /**
      * One surveyed cluster slot: the rack the node sits in, its row, and what it contributes.
      */
@@ -151,7 +154,7 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
         queue.add(new Reach(worldPosition, null));
         visited.add(worldPosition);
         int steps = 0;
-        while (!queue.isEmpty() && steps++ < 256) {
+        while (!queue.isEmpty() && steps++ < MAX_SURVEY_STEPS) {
             final Reach current = queue.poll();
             for (final Direction direction : Direction.values()) {
                 final BlockPos neighbor = current.pos().relative(direction);
@@ -258,7 +261,7 @@ public class HbwInterfaceBlockEntity extends SyncedBlockEntity {
     /** The rack a block belongs to (the controller itself or any part of the cabinet), or null. */
     @Nullable
     private static ServerRackBlockEntity cabinetAt(final ServerLevel level, final BlockPos pos) {
-        final BlockEntity be = level.getBlockEntity(pos);
+        final BlockEntity be = Loaded.blockEntity(level, pos);
         if (be instanceof ServerRackBlockEntity rack) {
             return rack;
         }

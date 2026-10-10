@@ -205,14 +205,8 @@ public class CraftingComputerScreen extends AbstractAssemblyScreen<CraftingCompu
 
     @Override
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
-        // Computer rename field interaction.
-        if (nameBox != null) {
-            if (nameBox.isMouseOver(mouseX, mouseY)) {
-                setFocused(nameBox);
-                nameBox.setFocused(true);
-                return nameBox.mouseClicked(mouseX, mouseY, button);
-            }
-            nameBox.setFocused(false);
+        if (clickNameBox(mouseX, mouseY, button)) {
+            return true;
         }
         if (button == 0) {
             if (!menu.isAutoStart() && hover((int) mouseX, (int) mouseY, CraftingComputerLayout.POWER_X,

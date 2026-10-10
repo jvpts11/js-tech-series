@@ -372,34 +372,16 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         return out;
     }
 
-    /** A medium's name with its drive letter after it, or on its own where the desktop has no letters. */
     private static String onDrive(final String label, final String letter) {
-        return letter.isEmpty() ? label : GameText.resolve(FileDialogTexts.ON_DRIVE.with(label, letter));
+        return DrivePaths.onDrive(label, letter);
     }
 
     private static String parentOf(final String path) {
-        final int slash = path.lastIndexOf('/');
-        return slash >= 0 ? path.substring(0, slash) : "";
+        return DrivePaths.parentOf(path);
     }
 
-    /** The drive letter of a volume: the system disk is C:, then the media in the order the tree lists them. */
     private String letterOf(final String key) {
-        if (this.posix) {
-            return "";
-        }
-        if (key.isEmpty()) {
-            return "C:";
-        }
-        int n = 0;
-        for (final DiskFilesPayload.WireVolume volume : this.volumes) {
-            if (volume.removable()) {
-                n++;
-                if (volume.key().equals(key)) {
-                    return (char) ('C' + n) + ":";
-                }
-            }
-        }
-        return "";
+        return DrivePaths.letterOf(this.posix, this.volumes, key);
     }
 
     private void drawPlace(final GuiGraphics g, final UiContext ctx, final Place place, final int index,

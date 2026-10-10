@@ -59,7 +59,7 @@ public record NiSelectPayload(BlockPos host, BlockPos monitorPos, StorageKey key
                             ByteBufCodecs.stringUtf8(KEY_LENGTH).encode(buf, p.serverKeys().get(i));
                         }
                         ByteBufCodecs.stringUtf8(KEY_LENGTH).encode(buf, p.destKey());
-                        NiGridClickPayload.PRIORITY_CODEC.encode(buf, p.priority());
+                        PayloadCodecs.PRIORITY.encode(buf, p.priority());
                     },
                     buf -> {
                         final BlockPos host = BlockPos.STREAM_CODEC.decode(buf);
@@ -72,7 +72,7 @@ public record NiSelectPayload(BlockPos host, BlockPos monitorPos, StorageKey key
                             sources.add(ByteBufCodecs.stringUtf8(KEY_LENGTH).decode(buf));
                         }
                         final String destKey = ByteBufCodecs.stringUtf8(KEY_LENGTH).decode(buf);
-                        final OperationPriority priority = NiGridClickPayload.PRIORITY_CODEC.decode(buf);
+                        final OperationPriority priority = PayloadCodecs.PRIORITY.decode(buf);
                         return new NiSelectPayload(host, monitor, key, quantity, List.copyOf(sources), destKey,
                                 priority);
                     });

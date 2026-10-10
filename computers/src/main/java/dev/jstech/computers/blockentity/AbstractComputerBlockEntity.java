@@ -591,6 +591,14 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         setChanged();
     }
 
+    @Override
+    public void markUnsaved() {
+        // The save part flushes the console itself, so the chunk only has to be told it has something to write.
+        if (level != null) {
+            level.blockEntityChanged(worldPosition);
+        }
+    }
+
     /** The system being copied onto a disk right now, or nothing. */
     @Override
     @Nullable
@@ -1142,15 +1150,12 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     /**
-     * A disk carrying a system was just formatted: everything the software layer remembered lived on it,
-     * so the console's history, session location and installed-program set go with it. Subclasses hosting
-     * software services (the Mainframe) extend this to switch those off too.
+     * A disk carrying a system was just formatted. The console that lived on it has already been wiped by the
+     * caller, which still held it; asking for the console here would give the one of whatever system boots now,
+     * which on a dual-boot machine is another disk's. Subclasses hosting software services (the Mainframe)
+     * extend this to switch those off too.
      */
     protected void onSystemErased() {
-        final ComputerConsoleState console = console();
-        if (console != null) {
-            console.wipeSoftware();
-        }
     }
 
     /**
@@ -1501,6 +1506,17 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
          */
         diskConsole.flush();
         super.setChanged();
+    }
+
+    /**
+     * Marks the chunk as needing a save without writing the console back to the system disk. For state that
+     * changes every tick and lives outside the console (the progress of running operations), where the console
+     * flush would rebuild its whole tag for nothing.
+     */
+    public void markDirtyOnly() {
+        if (level != null) {
+            level.blockEntityChanged(worldPosition);
+        }
     }
 
     // Persistence: each part is declared in the constructor, and the players are sent what each part says

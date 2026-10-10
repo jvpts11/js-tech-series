@@ -525,6 +525,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     /** Opens a plain folder, with no solution around it: the files are the tree. */
     public void openFolder(final String dir) {
+        this.loading.clear();
+        CodeFileReplies.forget(this);
         this.solution = null;
         this.solutionDir = dir;
         this.projects.clear();
@@ -563,6 +565,10 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         if (next != null) {
             CodeFileReplies.expectContent(this, next);
             PacketDistributor.sendToServer(new RequestFileContentPayload(this.host, next));
+            return;
+        }
+        if (this.solution == null) {
+            // The solution was closed or replaced while a late reply was still on its way.
             return;
         }
         // Everything is read: the tree can be built, and the folders are asked for their outputs.
@@ -672,6 +678,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private void closeSolution() {
+        this.loading.clear();
+        CodeFileReplies.forget(this);
         this.solution = null;
         this.projects.clear();
         this.solutionDir = "";
@@ -685,11 +693,13 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private List<Node> nodes() {
         final List<Node> out = new ArrayList<>();
+        // The listing is rebuilt on every call, so it is taken once and shared by every project.
+        final List<CodeWorkspace.TreeRow> tree = this.workspace.tree();
         if (this.solution == null) {
             // A plain folder: what is in it, the way an explorer shows it.
             out.add(new Node(0, shortName(this.solutionDir).isEmpty() ? "C:\\" : shortName(this.solutionDir),
                     NodeKind.SOLUTION, "", this.solutionDir));
-            for (final CodeWorkspace.TreeRow row : this.workspace.tree()) {
+            for (final CodeWorkspace.TreeRow row : tree) {
                 final String mark = row.file().directory()
                         ? (this.workspace.isExpanded(row.file().path()) ? "v " : "> ") : "";
                 out.add(new Node(row.depth() + 1, mark + shortName(row.file().path()), NodeKind.FOLDER_FILE, "",
@@ -722,7 +732,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                 out.add(new Node(2, source, NodeKind.SOURCE, project.name(), join(projectDir(project.name()), source)));
             }
             final String buildDir = join(projectDir(project.name()), "build");
-            for (final CodeWorkspace.TreeRow row : this.workspace.tree()) {
+            for (final CodeWorkspace.TreeRow row : tree) {
                 if (!row.file().directory() && row.file().path().startsWith(buildDir + "/")) {
                     out.add(new Node(2, "build/" + shortName(row.file().path()), NodeKind.OUTPUT, project.name(),
                             row.file().path()));
@@ -1404,7 +1414,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     /** The solution file, the project file and the first source, then the solution opens. */
     private void create(final ProjectTemplate.Offer template, final String project, final String sol,
                         final boolean intoSolution) {
-        if (project.isEmpty() || project.contains("/") || project.contains("\\") || project.contains(" ")) {
+        if (!ProjectTemplate.isValidProjectName(project)) {
             this.workspace.say(GameText.resolve(VirtualStudioTexts.ONE_WORD));
             return;
         }

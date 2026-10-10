@@ -16,7 +16,6 @@ import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.AsmWriter;
 import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.Opcode;
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -43,7 +42,7 @@ public final class SigmaCompiler {
 
         /** Whether there is a listing to run. */
         public boolean ok() {
-            return this.assembly != null && this.diagnostics.stream().noneMatch(Diagnostic::isError);
+            return this.assembly != null && DiagnosticBag.noErrors(this.diagnostics);
         }
 
         /**
@@ -51,14 +50,7 @@ public final class SigmaCompiler {
          * file or a log.
          */
         public List<String> lines() {
-            final List<String> lines = new ArrayList<>();
-            for (final Diagnostic diagnostic : this.diagnostics) {
-                lines.add(diagnostic.format());
-            }
-            if (this.truncated) {
-                lines.add(DiagnosticBag.TOO_MANY.text().english());
-            }
-            return lines;
+            return DiagnosticBag.lines(this.diagnostics, this.truncated);
         }
     }
 
@@ -95,8 +87,9 @@ public final class SigmaCompiler {
      */
     public static Result compile(final List<SourceFile> sources, final String isa, final LanguageLevel level,
                                  final int version) {
-        final DiagnosticBag bag = new DiagnosticBag(sources.isEmpty() ? "" : sources.getFirst().name());
-        final SigmaSemantics.Analysis analysis = SigmaSemantics.analyse(sources, bag, true, false, level, version);
+        final DiagnosticBag bag = new DiagnosticBag("");
+        final SigmaSemantics.Analysis analysis = SigmaSemantics.analyse(sources, bag,
+                SigmaSemantics.Options.program(level, version));
         if (bag.hasErrors()) {
             return new Result(null, bag.sorted(), bag.wasCapped());
         }

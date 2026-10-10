@@ -11,7 +11,6 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.ExposureApp;
-import dev.jstech.computers.client.os.IDesktopApp;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -45,17 +44,11 @@ public final class ExposureClientTests {
     }
 
     private static ExposureApp exposure(final ClientTestContext ctx) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
-        final var window = desktop == null ? null : desktop.windowFor(LAUNCHER);
-        final IDesktopApp app = window == null ? null : window.app();
-        return app instanceof ExposureApp e ? e : null;
+        return DesktopSteps.app(ctx, LAUNCHER, ExposureApp.class);
     }
 
     private static void launch(final ClientTestContext ctx, final String label) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
-        ctx.click(desktop.startButtonX(), desktop.startButtonY());
-        final int item = desktop.launcherLabels().indexOf(label);
-        ctx.click(desktop.startMenuItemX(item), desktop.startMenuItemY(item));
+        DesktopSteps.launch(ctx, label);
     }
 
     private static String diskText(final ClientTestContext ctx, final ServerLevel level, final String path) {

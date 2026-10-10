@@ -54,7 +54,8 @@ public final class TermPainter {
      *
      * @param pitch   how far apart the rows are, in the same units as the pose
      * @param colorOf the colour a style has on this glass, which a one-colour tube answers differently
-     * @param ground  the colour of the glass the rows are on, which a shadow under them would be worked out against
+     * @param ground  the colour of the glass the rows are on; the grid painter takes it but does not use it yet, as
+     *                text is drawn without a shadow, so it changes nothing that is drawn
      */
     public void draw(final GuiGraphics g, final Font font, final List<TermRow> rows, final int x, final int y,
                      final int pitch, final ToIntFunction<CliStyle> colorOf, final int ground) {

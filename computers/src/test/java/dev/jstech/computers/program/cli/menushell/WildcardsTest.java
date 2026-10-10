@@ -32,6 +32,15 @@ class WildcardsTest {
     }
 
     @Test
+    void matches_letsNameStarTakeANameWithNoExtension() {
+        assertTrue(Wildcards.matches("FOO.*", "FOO"));
+        assertTrue(Wildcards.matches("FOO.*", "FOO.TXT"));
+        assertTrue(Wildcards.matches("F*.*", "foo"));
+        assertFalse(Wildcards.matches("FOO.*", "FOOD"));
+        assertFalse(Wildcards.matches("FOO.*", "BAR"));
+    }
+
+    @Test
     void matches_wantsTheWholeName() {
         assertFalse(Wildcards.matches("READ", "README.TXT"));
         assertTrue(Wildcards.matches("readme.txt", "README.TXT"));

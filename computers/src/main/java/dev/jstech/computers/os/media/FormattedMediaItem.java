@@ -32,6 +32,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A {@link MediaItem} with a fixed physical {@link MediaFormat} (floppy, CD, DVD, USB). The format is
@@ -111,82 +112,85 @@ public class FormattedMediaItem extends MediaItem {
             return;
         }
 
-        final ResourceLocation payload = MediaItem.payload(stack);
         switch (MediaItem.kind(stack)) {
-            case OS_INSTALL -> {
-                final OsDef os =
-                        payload == null ? null : OsRegistry.getOs(payload);
-                if (payload != null) {
-                    tooltip.add(Component.translatable("os.jsc." + payload.getPath())
-                            .withStyle(ChatFormatting.AQUA)
-                            .append(os == null ? Component.empty() : Component.literal("  "
-                                    + os.house().name() + " · "
-                                    + Branding.osYear(os.displayName(), os.minEra()))
-                                    .withStyle(ChatFormatting.GRAY)));
-                    tooltip.add(GameText.component(os == null ? BOOTABLE.text()
-                                    : BOOTABLE_ERA.with(MinSpecTooltip.eraLabel(os.minEra())))
-                            .withStyle(ChatFormatting.GREEN));
-                    tooltip.addAll(MinSpecTooltip.osMinSpec(payload));
-                    // The id a shell or a manifest names it by, so a stick on a shelf is enough to know it.
-                    tooltip.add(GameText.component(PACKAGE.with(payload.getPath())).withStyle(ChatFormatting.GOLD));
-                    tooltip.add(GameText.component(OS_HINT.with(insertHint(format)))
-                            .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
-                } else {
-                    tooltip.add(GameText.component(BLANK).withStyle(ChatFormatting.DARK_GRAY));
-                }
-            }
-            case PROGRAM_INSTALL -> {
-                if (payload != null) {
-                    final ProgramSpec spec =
-                            OsRegistry.getProgram(payload);
-                    /*
-                     * Lead with the program's friendly, translated name, then its house and the year it was
-                     * written. A disc of a bundled program has no shipper to lean on, so it says Midsoft.
-                     */
-                    tooltip.add(Component.translatable("program.jsc." + payload.getPath())
-                            .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
-                            .append(spec == null ? Component.empty() : Component.literal("  "
-                                    + spec.houseOr(SoftwareHouse.MIDSOFT).name()
-                                    + " · " + Branding.year(spec.era()))
-                                    .withStyle(ChatFormatting.GRAY)));
-                    tooltip.add(GameText.component(spec != null
-                            && spec.kind().runsInBackground()
-                            ? SERVICE_DISC : PROGRAM_DISC).withStyle(ChatFormatting.YELLOW));
-                    // What it actually does, so a disc is not just a name on a shelf.
-                    tooltip.add(Component.translatable("program.jsc." + payload.getPath() + ".desc")
-                            .withStyle(ChatFormatting.GRAY));
-                    tooltip.addAll(MinSpecTooltip.programMinSpec(payload));
-                    if (spec != null) {
-                        /*
-                         * The package id and the command that installs it: the only other place to learn
-                         * either was the Mirror's listing on a Mainframe.
-                         */
-                        tooltip.add(GameText.component(PACKAGE.with(spec.commandName()))
-                                .withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.literal(String.join(" · ", installCommands(spec)))
-                                .withStyle(ChatFormatting.DARK_GRAY));
-                    }
-                    // The setup program's file name is data, the same on every machine.
-                    final Text setup = Text.literal(spec != null && Platform.onlyUnixLike(spec.platforms())
-                            ? "install.sh" : format == MediaFormat.FLOPPY || format == MediaFormat.CD
-                                    ? "SETUP.EXE" : "setup.exe");
-                    tooltip.add(GameText.component(PROGRAM_HINT.with(insertHint(format), setup))
-                            .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
-                } else {
-                    tooltip.add(GameText.component(BLANK).withStyle(ChatFormatting.DARK_GRAY));
-                }
-            }
-            case DATA -> {
-                final ServerStorageContents data = MediaItem.data(stack);
-                if (data.total() > 0) {
-                    tooltip.add(GameText.component(DATA_MEDIUM.with(data.total()))
-                            .withStyle(ChatFormatting.GREEN));
-                } else {
-                    tooltip.add(GameText.component(BLANK).withStyle(ChatFormatting.DARK_GRAY));
-                }
-            }
+            case OS_INSTALL -> appendOsInstallerLines(MediaItem.payload(stack), tooltip);
+            case PROGRAM_INSTALL -> appendProgramInstallerLines(MediaItem.payload(stack), tooltip);
+            case DATA -> appendDataLines(MediaItem.data(stack), tooltip);
         }
         super.appendHoverText(stack, context, tooltip, flag);
+    }
+
+    private void appendOsInstallerLines(@Nullable final ResourceLocation payload, final List<Component> tooltip) {
+        if (payload == null) {
+            tooltip.add(GameText.component(BLANK).withStyle(ChatFormatting.DARK_GRAY));
+            return;
+        }
+        final OsDef os = OsRegistry.getOs(payload);
+        tooltip.add(Component.translatable("os.jsc." + payload.getPath())
+                .withStyle(ChatFormatting.AQUA)
+                .append(os == null ? Component.empty() : Component.literal("  "
+                        + os.house().name() + " · "
+                        + Branding.osYear(os.displayName(), os.minEra()))
+                        .withStyle(ChatFormatting.GRAY)));
+        tooltip.add(GameText.component(os == null ? BOOTABLE.text()
+                        : BOOTABLE_ERA.with(MinSpecTooltip.eraLabel(os.minEra())))
+                .withStyle(ChatFormatting.GREEN));
+        tooltip.addAll(MinSpecTooltip.osMinSpec(payload));
+        // The id a shell or a manifest names it by, so a stick on a shelf is enough to know it.
+        tooltip.add(GameText.component(PACKAGE.with(payload.getPath())).withStyle(ChatFormatting.GOLD));
+        tooltip.add(GameText.component(OS_HINT.with(insertHint(format)))
+                .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+    }
+
+    private void appendProgramInstallerLines(@Nullable final ResourceLocation payload,
+                                             final List<Component> tooltip) {
+        if (payload == null) {
+            tooltip.add(GameText.component(BLANK).withStyle(ChatFormatting.DARK_GRAY));
+            return;
+        }
+        final ProgramSpec spec = OsRegistry.getProgram(payload);
+        /*
+         * Lead with the program's friendly, translated name, then its house and the year it was
+         * written. A disc of a bundled program has no shipper to lean on, so it says Midsoft.
+         */
+        tooltip.add(Component.translatable("program.jsc." + payload.getPath())
+                .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                .append(spec == null ? Component.empty() : Component.literal("  "
+                        + spec.houseOr(SoftwareHouse.MIDSOFT).name()
+                        + " · " + Branding.year(spec.era()))
+                        .withStyle(ChatFormatting.GRAY)));
+        tooltip.add(GameText.component(spec != null
+                && spec.kind().runsInBackground()
+                ? SERVICE_DISC : PROGRAM_DISC).withStyle(ChatFormatting.YELLOW));
+        // What it actually does, so a disc is not just a name on a shelf.
+        tooltip.add(Component.translatable("program.jsc." + payload.getPath() + ".desc")
+                .withStyle(ChatFormatting.GRAY));
+        tooltip.addAll(MinSpecTooltip.programMinSpec(payload));
+        if (spec != null) {
+            /*
+             * The package id and the command that installs it: the only other place to learn
+             * either was the Mirror's listing on a Mainframe.
+             */
+            tooltip.add(GameText.component(PACKAGE.with(spec.commandName()))
+                    .withStyle(ChatFormatting.GOLD));
+            tooltip.add(Component.literal(String.join(" · ", installCommands(spec)))
+                    .withStyle(ChatFormatting.DARK_GRAY));
+        }
+        // The setup program's file name is data, the same on every machine.
+        final Text setup = Text.literal(spec != null && Platform.onlyUnixLike(spec.platforms())
+                ? "install.sh" : format == MediaFormat.FLOPPY || format == MediaFormat.CD
+                        ? "SETUP.EXE" : "setup.exe");
+        tooltip.add(GameText.component(PROGRAM_HINT.with(insertHint(format), setup))
+                .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+    }
+
+    private static void appendDataLines(final ServerStorageContents data, final List<Component> tooltip) {
+        if (data.total() > 0) {
+            tooltip.add(GameText.component(DATA_MEDIUM.with(data.total()))
+                    .withStyle(ChatFormatting.GREEN));
+        } else {
+            tooltip.add(GameText.component(BLANK).withStyle(ChatFormatting.DARK_GRAY));
+        }
     }
 
     /** Where this medium goes, in the drive's own name: a stick is plugged, a disc is inserted. */

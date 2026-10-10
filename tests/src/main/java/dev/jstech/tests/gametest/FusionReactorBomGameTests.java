@@ -15,7 +15,6 @@ import dev.jstech.tests.JsTests;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -50,61 +49,15 @@ public final class FusionReactorBomGameTests {
         return MekanismRig.item(MekanismRig.generators(path));
     }
 
-    private static List<ItemStack> grid() {
-        final List<ItemStack> grid = new ArrayList<>(CraftingPattern.GRID_SIZE);
-        for (int i = 0; i < CraftingPattern.GRID_SIZE; i++) {
-            grid.add(ItemStack.EMPTY);
-        }
-        return grid;
-    }
-
-    /** A 3x3 bench pattern from a 9-character layout and a key map (' ' = empty). */
-    private static CraftingPattern bench(final String layout, final Map<Character, Item> keys, final Item result, final int count) {
-        final List<ItemStack> grid = grid();
-        for (int i = 0; i < 9; i++) {
-            final char c = layout.charAt(i);
-            if (c != ' ') {
-                grid.set(i, new ItemStack(keys.get(c)));
-            }
-        }
-        return new CraftingPattern(grid, new ItemStack(result, count));
-    }
-
-    private static ProcessingPattern infuse(final Item in, final Item extra, final long extraCount, final Item out) {
-        return new ProcessingPattern(
-                List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(in), 1),
-                        new ProcessingPattern.ProcessingInput(StorageKey.of(extra), extraCount)),
-                List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(out), 1, 100)),
-                400);
-    }
-
     private static List<ProcessingPattern> machines() {
-        return List.of(
-                infuse(Items.COPPER_INGOT, Items.REDSTONE, 1, mek("alloy_infused")),
-                infuse(mek("alloy_infused"), mek("dust_diamond"), 2, mek("alloy_reinforced")),
-                infuse(mek("alloy_reinforced"), mek("dust_refined_obsidian"), 4, mek("alloy_atomic")),
-                // Basic circuit: osmium + 20 mB of redstone (two dusts).
-                infuse(mek("ingot_osmium"), Items.REDSTONE, 2, mek("basic_control_circuit")),
-                // Enriched iron: iron + 10 mB of carbon (one coal).
-                infuse(Items.IRON_INGOT, Items.COAL, 1, mek("enriched_iron")));
+        return MekanismRig.shellMachines();
     }
 
+    /** The shared shell benches plus the laser focus matrix, which only this test plans. */
     private static List<CraftingPattern> benches() {
-        final Item frame = gen("fusion_reactor_frame");
-        final Item atomic = mek("alloy_atomic");
-        final Item ultimate = mek("ultimate_control_circuit");
-        final List<CraftingPattern> patterns = new ArrayList<>();
-        patterns.add(bench("A#A#X#A#A", Map.of('A', atomic, '#', mek("pellet_polonium"), 'X', mek("steel_casing")), frame, 4));
-        patterns.add(bench("ACA      ", Map.of('A', atomic, 'C', mek("elite_control_circuit")), ultimate, 1));
-        patterns.add(bench("ACA      ", Map.of('A', mek("alloy_reinforced"), 'C', mek("advanced_control_circuit")), mek("elite_control_circuit"), 1));
-        patterns.add(bench("ACA      ", Map.of('A', mek("alloy_infused"), 'C', mek("basic_control_circuit")), mek("advanced_control_circuit"), 1));
-        patterns.add(bench("AOAO OAOA", Map.of('A', mek("alloy_infused"), 'O', mek("ingot_osmium")), mek("basic_chemical_tank"), 1));
-        patterns.add(bench("CGCFTFFFF", Map.of('C', ultimate, 'G', Items.GLASS_PANE, 'F', frame, 'T', mek("basic_chemical_tank")),
-                gen("fusion_reactor_controller"), 1));
-        patterns.add(bench(" F FCF F ", Map.of('F', frame, 'C', ultimate), gen("fusion_reactor_port"), 2));
-        patterns.add(bench(" R RFR R ", Map.of('F', frame, 'R', Items.REDSTONE), gen("fusion_reactor_logic_adapter"), 1));
-        patterns.add(bench("SISIGISIS", Map.of('S', mek("enriched_iron"), 'I', mek("ingot_lead"), 'G', Items.GLASS), gen("reactor_glass"), 4));
-        patterns.add(bench(" G GRG G ", Map.of('G', gen("reactor_glass"), 'R', Items.REDSTONE_BLOCK), gen("laser_focus_matrix"), 2));
+        final List<CraftingPattern> patterns = new ArrayList<>(MekanismRig.shellBenches());
+        patterns.add(MekanismRig.bench(" G GRG G ",
+                Map.of('G', gen("reactor_glass"), 'R', Items.REDSTONE_BLOCK), gen("laser_focus_matrix"), 2));
         return patterns;
     }
 

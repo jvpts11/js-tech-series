@@ -52,6 +52,16 @@ public enum MediaDriveType implements IStableName {
     private static final TextKey BLU_RAY_NAME = TextKey.of("jsc.media.media_drive_type.blu_ray_drive",
             "Blu-ray drive");
 
+    /** The same drives named for the middle of a sentence, so they read in lower case where a name would not. */
+    private static final TextKey FLOPPY_IN_SENTENCE = TextKey.of("jsc.media.media_reader_block.floppy_drive",
+            "floppy drive");
+    private static final TextKey CD_IN_SENTENCE = TextKey.of("jsc.media.media_reader_block.cd_drive", "CD drive");
+    private static final TextKey DVD_IN_SENTENCE = TextKey.of("jsc.media.media_reader_block.dvd_drive", "DVD drive");
+    private static final TextKey BLU_RAY_IN_SENTENCE = TextKey.of("jsc.media.media_reader_block.blu_ray_drive",
+            "Blu-ray drive");
+    private static final TextKey DOCK_IN_SENTENCE = TextKey.of("jsc.media.media_reader_block.dock_station",
+            "dock station");
+
     private final String serializedName;
     private final Set<MediaFormat> accepted;
 
@@ -81,6 +91,17 @@ public enum MediaDriveType implements IStableName {
         };
     }
 
+    /** What a message calls this drive in the middle of a sentence, such as "This floppy drive cannot read that". */
+    public Text inSentence() {
+        return switch (this) {
+            case FLOPPY_DRIVE -> FLOPPY_IN_SENTENCE.text();
+            case CD_DRIVE -> CD_IN_SENTENCE.text();
+            case DVD_DRIVE -> DVD_IN_SENTENCE.text();
+            case DOCK_STATION -> DOCK_IN_SENTENCE.text();
+            case BLU_RAY_DRIVE -> BLU_RAY_IN_SENTENCE.text();
+        };
+    }
+
     /**
      * The era the drive is of, which decides the port on its back and so the peripheral cables it takes: the floppy
      * drive the Vintage's parallel port, the CD drive the Legacy's USB, the DVD drive and the Dock the Standard's
@@ -98,11 +119,6 @@ public enum MediaDriveType implements IStableName {
     /** Returns whether this drive can read media of the given format. */
     public boolean accepts(final MediaFormat format) {
         return accepted.contains(format);
-    }
-
-    /** Returns an unmodifiable view of the formats this drive accepts. */
-    public Set<MediaFormat> acceptedFormats() {
-        return EnumSet.copyOf(accepted);
     }
 
     /** The drive a name stands for, or null for a name no drive declares. */

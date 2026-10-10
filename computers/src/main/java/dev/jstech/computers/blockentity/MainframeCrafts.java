@@ -24,6 +24,7 @@ import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.util.Sizes;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,7 +77,7 @@ final class MainframeCrafts {
         int total = 0;
         for (final BlockPos pos : supercomputers()) {
             if (mainframe.getLevel() != null
-                    && mainframe.getLevel().getBlockEntity(pos) instanceof HbwInterfaceBlockEntity sc
+                    && Loaded.blockEntity(mainframe.getLevel(), pos) instanceof HbwInterfaceBlockEntity sc
                     && sc.clusterOnline()) {
                 total += (int) sc.parallelCrafts();
                 used += sc.craftSlotsInUse();
@@ -459,7 +460,7 @@ final class MainframeCrafts {
         final List<CraftingComputerBlockEntity> out = new ArrayList<>();
         for (final BlockPos pos : craftingComputers()) {
             if (mainframe.getLevel() != null
-                    && mainframe.getLevel().getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc
+                    && Loaded.blockEntity(mainframe.getLevel(), pos) instanceof CraftingComputerBlockEntity cc
                     && cc.isRunning()) {
                 out.add(cc);
             }

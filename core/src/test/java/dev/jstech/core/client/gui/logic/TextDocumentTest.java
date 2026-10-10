@@ -332,4 +332,30 @@ class TextDocumentTest {
         assertEquals("    x = 1;", doc.text());
         assertEquals(4, doc.cursorCol());
     }
+
+    @Test
+    void revision_movesOnEveryChangeToTheText() {
+        long seen = doc.revision();
+        type("a");
+        assertTrue(doc.revision() != seen);
+        seen = doc.revision();
+        doc.backspace();
+        assertTrue(doc.revision() != seen);
+        seen = doc.revision();
+        doc.setText("fresh");
+        assertTrue(doc.revision() != seen);
+        type("x");
+        seen = doc.revision();
+        doc.undo();
+        assertTrue(doc.revision() != seen);
+    }
+
+    @Test
+    void revision_staysPutWhenOnlyTheCaretMoves() {
+        doc.setText("abc");
+        final long seen = doc.revision();
+        doc.setCursor(0, 2);
+        doc.left();
+        assertEquals(seen, doc.revision());
+    }
 }

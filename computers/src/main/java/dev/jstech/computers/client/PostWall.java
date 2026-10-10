@@ -88,6 +88,13 @@ public final class PostWall {
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "firmware/post_wall",
             new Colours(0xFFFFE14D));
 
+    /**
+     * The lines built for the last state drawn. Everything on the wall but the memory count is the same from one
+     * frame to the next, so it is built once and only that count is worked out again.
+     */
+    private static Key builtFor;
+    private static Built built;
+
     private PostWall() {
     }
 
@@ -134,7 +141,15 @@ public final class PostWall {
                             final String machineName, final String booting, final List<String> noBoot,
                             final int x, final int y, final int w, final int ticks, final boolean finished,
                             final int text, final int dim, final int accent) {
-        final List<Line> lines = lines(kind, era, state, machineName, booting, noBoot, ticks, finished);
+        final Key key = new Key(kind, era, state, machineName, booting, List.copyOf(noBoot), finished);
+        if (!key.equals(builtFor)) {
+            built = lines(kind, era, state, machineName, booting, noBoot, finished);
+            builtFor = key;
+        }
+        final List<Line> lines = built.lines();
+        if (built.memoryAt() >= 0 && state != null) {
+            lines.set(built.memoryAt(), Line.of(memoryLine(state.machine(), kind == FirmwareKind.BLUE_BIOS, ticks)));
+        }
         final int left = x + MARGIN;
         final int right = x + w - MARGIN;
         int ty = y + 10;
@@ -224,10 +239,9 @@ public final class PostWall {
     }
 
     /** What this machine's firmware prints while it tests itself. */
-    private static List<Line> lines(final FirmwareKind kind, final HardwareEra era,
-                                    @Nullable final FirmwareStatePayload state, final String machineName,
-                                    final String booting, final List<String> noBoot, final int ticks,
-                                    final boolean finished) {
+    private static Built lines(final FirmwareKind kind, final HardwareEra era,
+                               @Nullable final FirmwareStatePayload state, final String machineName,
+                               final String booting, final List<String> noBoot, final boolean finished) {
         final boolean legacy = kind == FirmwareKind.BLUE_BIOS;
         final String title = title(state, machineName);
         final List<Line> out = new ArrayList<>();
@@ -236,7 +250,7 @@ public final class PostWall {
         out.add(Line.blank());
         if (state == null) {
             out.add(Line.of(of(READING_CONFIG)));
-            return out;
+            return new Built(out, -1);
         }
         final FirmwareStatePayload.Machine machine = state.machine();
         if (legacy) {
@@ -253,7 +267,9 @@ public final class PostWall {
         if (!legacy) {
             out.add(Line.of(of(BOARD.with(machine.boardName().isEmpty() ? NOT_DETECTED.text() : machine.boardName()))));
         }
-        out.add(Line.of(memoryLine(machine, legacy, ticks)));
+        // The count is filled in at every frame, since it is the one line that moves.
+        final int memoryAt = out.size();
+        out.add(Line.of(memoryLine(machine, legacy, 0)));
         out.add(Line.of(of((legacy ? VIDEO_ADAPTER : VIDEO)
                 .with(machine.gpuName().isEmpty() ? NONE.text() : machine.gpuName()))));
         out.add(Line.blank());
@@ -273,7 +289,7 @@ public final class PostWall {
                 }
             }
         }
-        return out;
+        return new Built(out, memoryAt);
     }
 
     /** Every drive the firmware found, up to the room the glass has for them. */
@@ -326,6 +342,15 @@ public final class PostWall {
             return of(MEMORY_OLD.with(amount)) + (modules.isEmpty() ? "" : "  " + modules);
         }
         return of(MEMORY.with(amount)) + (modules.isEmpty() ? "" : "      " + modules);
+    }
+
+    /** What a built wall depends on: everything its lines are made of but the memory count. */
+    private record Key(FirmwareKind kind, HardwareEra era, @Nullable FirmwareStatePayload state,
+                       String machineName, String booting, List<String> noBoot, boolean finished) {
+    }
+
+    /** The lines of a wall, and which of them is the memory count (negative when there is none). */
+    private record Built(List<Line> lines, int memoryAt) {
     }
 
     /** The amber a key is lifted out of a hint sentence with. */

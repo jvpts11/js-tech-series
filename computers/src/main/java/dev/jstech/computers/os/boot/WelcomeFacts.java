@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.os.boot;
 
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;

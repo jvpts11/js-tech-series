@@ -49,7 +49,7 @@ public final class MachineOperators {
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
             DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, JsComputers.MODID);
 
-    private static final UUID NOBODY = new UUID(0L, 0L);
+    static final UUID NOBODY = new UUID(0L, 0L);
 
     /** The layout the operator is saved in; a machine saved before it had one holds the bare id. */
     public static final SaveLayout LAYOUT = SaveLayout.of(JsComputers.MODID + ":operator");
@@ -100,11 +100,6 @@ public final class MachineOperators {
         }
         final UUID id = machine.getExistingDataOrNull(OPERATOR);
         return id == null ? Optional.empty() : online(level.getServer(), id);
-    }
-
-    /** The operator of the machine standing at {@code pos}. */
-    public static Optional<ServerPlayer> at(final Level level, final BlockPos pos) {
-        return of(level.getBlockEntity(pos));
     }
 
     /** A block with a machine in it is operated first by whoever put it there. */

@@ -141,12 +141,16 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     private int holding;
 
     /** Lines to run at the terminal, one after the other as each finishes. */
-    private final Deque<String> queue = new ArrayDeque<>();
+    private final Deque<Queued> queue = new ArrayDeque<>();
 
     /** The clickable lines of the Welcome page, laid out as it is drawn. */
     private final List<Link> links = new ArrayList<>();
 
     private record Link(int x, int y, int width, int height, Runnable action) {
+    }
+
+    /** A line waiting for the terminal, and whether it is a run that must not follow a line that failed. */
+    private record Queued(String line, boolean skipAfterFailure) {
     }
 
     /** One row of the side panel: the folder's name at the top, or an entry of its tree. */
@@ -751,7 +755,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         }
         focusTerminal();
         // Each language is built by its own compiler, so a Σ source is held to what Σ has.
-        enqueue(level.compiler() + " " + doc.path() + " -o " + outputFor(doc.path()));
+        enqueue(level.compiler() + " " + doc.path() + " -o " + outputFor(doc.path()), false);
     }
 
     private void runFile() {
@@ -760,7 +764,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             return;
         }
         buildFile();
-        enqueue("sigma run " + outputFor(doc.path()));
+        enqueue("sigma run " + outputFor(doc.path()), true);
     }
 
     private void buildFolder() {
@@ -790,24 +794,28 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         final String stem = folder.isEmpty() ? "programs" : shortName(folder);
         line.append(" -o ").append(folder.isEmpty() ? "" : folder + "/").append("build/").append(stem).append(".asm");
         focusTerminal();
-        enqueue(line.toString());
+        enqueue(line.toString(), false);
     }
 
     /**
      * Runs lines at the terminal one after the other, the next only once the machine has answered the
      * one before, since the console runs one command at a time and the run needs the build to be done.
      */
-    private void enqueue(final String line) {
-        this.queue.add(line);
+    private void enqueue(final String line, final boolean skipAfterFailure) {
+        this.queue.add(new Queued(line, skipAfterFailure));
         if (!this.terminal.busy() && this.queue.size() == 1) {
             runNext();
         }
     }
 
     private void runNext() {
-        final String next = this.queue.poll();
+        Queued next = this.queue.poll();
+        // A run behind a build that printed an error would start whatever listing an earlier build left.
+        while (next != null && next.skipAfterFailure() && this.terminal.failedLastRun()) {
+            next = this.queue.poll();
+        }
         if (next != null) {
-            this.terminal.run(next);
+            this.terminal.run(next.line());
         }
     }
 

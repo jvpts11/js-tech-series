@@ -241,8 +241,11 @@ public final class PortsVoices {
         final double kb = sizeMb * 1024.0;
         final long rate = Math.max(1L, Math.round(kb / seconds));
         if (progress >= 1.0) {
+            final long total = Math.round(seconds);
+            final String took = total < 60 ? String.format(Locale.ROOT, "%02ds", total)
+                    : String.format(Locale.ROOT, "%02dm%02ds", total / 60, total % 60);
             return CliLine.plain(Text.literal(String.format(Locale.ROOT, "%-" + NAME_COLUMNS
-                    + "s %8s %5d kBps    %02ds", file, size(kb), rate, Math.round(seconds) % 60)));
+                    + "s %8s %5d kBps    %s", file, size(kb), rate, took)));
         }
         final long left = (long) Math.ceil(seconds * (1.0 - progress));
         return CliLine.plain(Text.literal(String.format(Locale.ROOT, "%-" + NAME_COLUMNS

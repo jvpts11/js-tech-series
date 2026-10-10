@@ -38,6 +38,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
@@ -423,21 +424,33 @@ public final class SoundPassGameTests {
     /** The sounds the server plays at one block, heard from the moment it is made until it is stopped. */
     private static final class Heard implements Consumer<PlayLevelSoundEvent.AtPosition> {
 
+        /** Longer than any test of this class may run, so a listener left behind by a failed test lets go. */
+        private static final long LIFETIME_TICKS = 500;
+
         private final Vec3 at;
+        private final ServerLevel level;
+        private final long born;
         private final List<ResourceLocation> sounds = new ArrayList<>();
 
-        private Heard(final Vec3 at) {
+        private Heard(final Vec3 at, final ServerLevel level) {
             this.at = at;
+            this.level = level;
+            this.born = level.getGameTime();
         }
 
         static Heard at(final GameTestHelper helper, final BlockPos local) {
-            final Heard heard = new Heard(Vec3.atCenterOf(helper.absolutePos(local)));
+            final Heard heard = new Heard(Vec3.atCenterOf(helper.absolutePos(local)), helper.getLevel());
             NeoForge.EVENT_BUS.addListener(heard);
             return heard;
         }
 
         @Override
         public void accept(final PlayLevelSoundEvent.AtPosition event) {
+            // An assertion that fails before stop() would leave this listener on the bus for the rest of the run.
+            if (level.getGameTime() - born > LIFETIME_TICKS) {
+                stop();
+                return;
+            }
             if (event.getSound() != null && event.getPosition().distanceToSqr(at) < 0.01) {
                 sounds.add(event.getSound().value().getLocation());
             }

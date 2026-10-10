@@ -19,7 +19,6 @@ import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.menu.CoreMenu;
-import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,8 +56,6 @@ public class CraftingInterfaceMenu extends CoreMenu {
     private InterfaceView state;
     private int sinceChecked;
 
-    /** How far a player may stand from the cable and keep this menu open, in blocks. */
-    private static final double REACH_BLOCKS = 8.0;
     /** How often, in ticks, the server looks for a change to send. */
     private static final int CHECK_EVERY = 5;
 
@@ -94,15 +91,13 @@ public class CraftingInterfaceMenu extends CoreMenu {
     public record Opening(BlockPos pos, Direction face, String name, HardwareEra era) {
 
         public void write(final FriendlyByteBuf buf) {
-            buf.writeBlockPos(pos);
-            buf.writeByte(face.get3DDataValue());
-            buf.writeUtf(name, CraftingInterfacePart.MAX_NAME_LENGTH);
-            buf.writeVarInt(era.level());
+            new AbstractBusMenu.Opening(pos, face, name, era).write(buf, CraftingInterfacePart.MAX_NAME_LENGTH);
         }
 
         public static Opening read(final FriendlyByteBuf buf) {
-            return new Opening(buf.readBlockPos(), Direction.from3DDataValue(buf.readByte()),
-                    buf.readUtf(CraftingInterfacePart.MAX_NAME_LENGTH), HardwareEra.fromLevel(buf.readVarInt()));
+            final AbstractBusMenu.Opening read =
+                    AbstractBusMenu.Opening.read(buf, CraftingInterfacePart.MAX_NAME_LENGTH);
+            return new Opening(read.pos(), read.face(), read.name(), read.era());
         }
 
         /** The opening of the window on {@code part}, on {@code cable}'s face {@code face}. */
@@ -221,8 +216,6 @@ public class CraftingInterfaceMenu extends CoreMenu {
      */
     private static Predicate<Player> validity(final Level level, final BlockPos cablePos, final Direction face,
                                               final CraftingInterfacePart part) {
-        return MenuValidity.near(level, cablePos, REACH_BLOCKS)
-                .and(player -> level.getBlockEntity(cablePos) instanceof CableBlockEntity cable
-                        && cable.getPart(face) == part);
+        return AbstractBusMenu.validity(level, cablePos, face, part);
     }
 }

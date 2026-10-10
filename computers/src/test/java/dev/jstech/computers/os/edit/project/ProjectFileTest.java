@@ -34,8 +34,8 @@ class ProjectFileTest {
         final String text = stockWatch().write();
         assertTrue(text.contains("name: StockWatch\n"));
         assertTrue(text.contains("kind: script\n"));
-        assertTrue(text.contains("sources: StockWatch.sgs, Helpers.sgs\n"));
-        assertTrue(text.contains("references: Helpers\n"));
+        assertTrue(text.contains("source: StockWatch.sgs\nsource: Helpers.sgs\n"));
+        assertTrue(text.contains("reference: Helpers\n"));
         assertTrue(text.contains("entry: build/StockWatch.asm\n"));
         assertTrue(text.contains("platform: jsc:x86\n"));
     }
@@ -119,6 +119,13 @@ class ProjectFileTest {
     void read_trimsListsAndDropsEmptyEntries() {
         final ProjectFile file = ProjectFile.read("sources:  a.sgs ,, b.sgs , \n");
         assertEquals(List.of("a.sgs", "b.sgs"), file.sources());
+    }
+
+    @Test
+    void write_thenRead_keepsANameWithACommaAsOneSource() {
+        final ProjectFile file = new ProjectFile("Sorter,v2", ProjectFile.Kind.CONSOLE, "jsc:sigma_sharp",
+                List.of("Sorter,v2.sgs", "a, b.sgs"), List.of("Lib,1"), "build/Sorter,v2.asm");
+        assertEquals(file, ProjectFile.read(file.write()));
     }
 
     @Test

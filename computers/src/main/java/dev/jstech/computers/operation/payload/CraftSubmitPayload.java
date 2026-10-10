@@ -49,7 +49,7 @@ public record CraftSubmitPayload(BlockPos monitorPos, BlockPos hostPos,
                         buf.writeVarLong(p.quantity());
                         buf.writeBoolean(p.partial());
                         buf.writeBoolean(p.multiStage());
-                        NiGridClickPayload.PRIORITY_CODEC.encode(buf, p.priority());
+                        PayloadCodecs.PRIORITY.encode(buf, p.priority());
                         buf.writeVarInt(p.recipe());
                     },
                     buf -> new CraftSubmitPayload(
@@ -59,7 +59,7 @@ public record CraftSubmitPayload(BlockPos monitorPos, BlockPos hostPos,
                             buf.readVarLong(),
                             buf.readBoolean(),
                             buf.readBoolean(),
-                            NiGridClickPayload.PRIORITY_CODEC.decode(buf),
+                            PayloadCodecs.PRIORITY.decode(buf),
                             buf.readVarInt()));
 
     @Override

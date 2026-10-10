@@ -18,6 +18,7 @@ import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.operation.OperationStatus;
 import dev.jstech.core.operation.OperationType;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.StorageNetworkFixture;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Items;
@@ -61,7 +62,7 @@ public final class OperationLifecycleGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void events_followASelectFromCreatedToCompleted(final GameTestHelper helper) {
-        final MainframeBlockEntity mainframe = OperationSchedulingGameTests.storageNetwork(helper);
+        final MainframeBlockEntity mainframe = StorageNetworkFixture.storageNetwork(helper);
         final ItemStackHandler dest = new ItemStackHandler(9);
         final List<IOperationLifecycleEvent> seen = new ArrayList<>();
         final NetworkSelectOperation[] op = new NetworkSelectOperation[1];
@@ -76,36 +77,36 @@ public final class OperationLifecycleGameTests {
         };
         JsCore.events().subscribe(IOperationLifecycleEvent.class, listener);
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + 4, () -> OperationSchedulingGameTests.rack(helper)
+                .thenExecuteAfter(SETTLE + 4, () -> StorageNetworkFixture.rack(helper)
                         .getServerStorage(0).insert(Items.COBBLESTONE, 100))
-                .thenExecuteAfter(2, () -> {
+                .thenExecuteAfter(2, () -> guarded(listener, () -> {
                     op[0] = mainframe.submitNetworkSelect(Items.COBBLESTONE, 30,
-                            OperationSchedulingGameTests.port(dest), "events");
+                            StorageNetworkFixture.port(dest), "events");
                     helper.assertTrue(op[0] != null, "the pull is accepted");
                     helper.assertTrue(seen.size() == 1 && seen.get(0) instanceof IOperationLifecycleEvent.Created c
                             && c.operationId().equals(op[0].operationId())
                             && c.typeId().equals(ComputingOperations.SELECT),
                             "Created is posted on submission; seen=" + seen);
-                })
-                .thenExecuteAfter(2, () -> helper.assertTrue(seen.size() == 2
+                }))
+                .thenExecuteAfter(2, () -> guarded(listener, () -> helper.assertTrue(seen.size() == 2
                                 && seen.get(1) instanceof IOperationLifecycleEvent.Started s
                                 && s.operationId().equals(op[0].operationId()),
-                        "Started is posted the first tick it runs; seen=" + seen))
-                .thenExecuteAfter(40, () -> {
+                        "Started is posted the first tick it runs; seen=" + seen)))
+                .thenExecuteAfter(40, () -> guarded(listener, () -> {
                     JsCore.events().unsubscribe(IOperationLifecycleEvent.class, listener);
-                    helper.assertTrue(OperationSchedulingGameTests.count(dest) == 30, "the pull delivered");
+                    helper.assertTrue(StorageNetworkFixture.count(dest) == 30, "the pull delivered");
                     helper.assertTrue(seen.size() == 3
                                     && seen.get(2) instanceof IOperationLifecycleEvent.Completed done
                                     && done.operationId().equals(op[0].operationId())
                                     && done.durationTicks() >= 10,
                             "Completed closes the life with its duration; seen=" + seen);
-                })
+                }))
                 .thenSucceed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void events_aCancelledOperationIsDiscarded(final GameTestHelper helper) {
-        final MainframeBlockEntity mainframe = OperationSchedulingGameTests.storageNetwork(helper);
+        final MainframeBlockEntity mainframe = StorageNetworkFixture.storageNetwork(helper);
         final ItemStackHandler dest = new ItemStackHandler(9);
         final List<IOperationLifecycleEvent> seen = new ArrayList<>();
         final NetworkSelectOperation[] op = new NetworkSelectOperation[1];
@@ -116,21 +117,21 @@ public final class OperationLifecycleGameTests {
         };
         JsCore.events().subscribe(IOperationLifecycleEvent.class, listener);
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + 4, () -> OperationSchedulingGameTests.rack(helper)
+                .thenExecuteAfter(SETTLE + 4, () -> StorageNetworkFixture.rack(helper)
                         .getServerStorage(0).insert(Items.COBBLESTONE, 100))
-                .thenExecuteAfter(2, () -> {
+                .thenExecuteAfter(2, () -> guarded(listener, () -> {
                     op[0] = mainframe.submitNetworkSelect(Items.COBBLESTONE, 30,
-                            OperationSchedulingGameTests.port(dest), "events");
+                            StorageNetworkFixture.port(dest), "events");
                     helper.assertTrue(op[0] != null, "the pull is accepted");
-                })
-                .thenExecuteAfter(3, () -> helper.assertTrue(mainframe.cancelOperation(op[0].operationId()),
-                        "the pull is cancelled mid-seek"))
-                .thenExecuteAfter(3, () -> {
+                }))
+                .thenExecuteAfter(3, () -> guarded(listener, () -> helper.assertTrue(
+                        mainframe.cancelOperation(op[0].operationId()), "the pull is cancelled mid-seek")))
+                .thenExecuteAfter(3, () -> guarded(listener, () -> {
                     JsCore.events().unsubscribe(IOperationLifecycleEvent.class, listener);
                     final IOperationLifecycleEvent last = seen.isEmpty() ? null : seen.get(seen.size() - 1);
                     helper.assertTrue(last instanceof IOperationLifecycleEvent.Discarded d
                             && d.operationId().equals(op[0].operationId()), "Discarded closes a cancelled life; seen=" + seen);
-                })
+                }))
                 .thenSucceed();
     }
 
@@ -140,15 +141,15 @@ public final class OperationLifecycleGameTests {
      */
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void events_anOperationInFlightIsSettledWhenTheSystemGoesAway(final GameTestHelper helper) {
-        final MainframeBlockEntity mainframe = OperationSchedulingGameTests.storageNetwork(helper);
+        final MainframeBlockEntity mainframe = StorageNetworkFixture.storageNetwork(helper);
         final ItemStackHandler dest = new ItemStackHandler(9);
         final NetworkSelectOperation[] op = new NetworkSelectOperation[1];
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + 4, () -> OperationSchedulingGameTests.rack(helper)
+                .thenExecuteAfter(SETTLE + 4, () -> StorageNetworkFixture.rack(helper)
                         .getServerStorage(0).insert(Items.COBBLESTONE, 100))
                 .thenExecuteAfter(2, () -> {
                     op[0] = mainframe.submitNetworkSelect(Items.COBBLESTONE, 30,
-                            OperationSchedulingGameTests.port(dest), "system gone");
+                            StorageNetworkFixture.port(dest), "system gone");
                     helper.assertTrue(op[0] != null, "the pull is accepted");
                 })
                 .thenExecuteAfter(2, () -> {
@@ -166,21 +167,21 @@ public final class OperationLifecycleGameTests {
                 .thenExecuteAfter(2, () -> {
                     helper.assertTrue(op[0].isDone(), "the pull in flight is settled, not frozen");
                     helper.assertTrue(mainframe.activeOperationRecords().isEmpty(), "nothing is left running");
-                    final long left = OperationSchedulingGameTests.rack(helper).getServerStorage(0)
+                    final long left = StorageNetworkFixture.rack(helper).getServerStorage(0)
                             .count(Items.COBBLESTONE);
-                    helper.assertTrue(left + OperationSchedulingGameTests.count(dest) == 100,
+                    helper.assertTrue(left + StorageNetworkFixture.count(dest) == 100,
                             "and not an item is lost; stored " + left + ", delivered "
-                                    + OperationSchedulingGameTests.count(dest));
+                                    + StorageNetworkFixture.count(dest));
                 })
                 .thenSucceed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void registry_handlerSubmitsThroughTheMainframe(final GameTestHelper helper) {
-        final MainframeBlockEntity mainframe = OperationSchedulingGameTests.storageNetwork(helper);
+        final MainframeBlockEntity mainframe = StorageNetworkFixture.storageNetwork(helper);
         final ItemStackHandler dest = new ItemStackHandler(9);
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + 4, () -> OperationSchedulingGameTests.rack(helper)
+                .thenExecuteAfter(SETTLE + 4, () -> StorageNetworkFixture.rack(helper)
                         .getServerStorage(0).insert(Items.COBBLESTONE, 100))
                 .thenExecuteAfter(2, () -> {
                     // Another mod would drive the network like this: look the type up, hand it typed arguments.
@@ -188,15 +189,25 @@ public final class OperationLifecycleGameTests {
                     final OperationType<ComputingOperations.PullArgs> select = (OperationType<ComputingOperations.PullArgs>)
                             JsCore.operations().get(ComputingOperations.SELECT).orElseThrow();
                     final OperationStatus status = select.handler().execute(new ComputingOperations.PullArgs(
-                            mainframe, StorageKey.of(Items.COBBLESTONE), 30L, OperationSchedulingGameTests.port(dest),
+                            mainframe, StorageKey.of(Items.COBBLESTONE), 30L, StorageNetworkFixture.port(dest),
                             "addon", null, OperationPriority.HIGH));
                     helper.assertTrue(status == OperationStatus.PENDING, "a timed Operation is accepted as PENDING; got " + status);
                     final var live = mainframe.activeOperationRecords();
                     helper.assertTrue(live.size() == 1 && live.get(0).priority() == OperationPriority.HIGH,
                             "the handler submitted it at the level asked; got " + live);
                 })
-                .thenExecuteAfter(40, () -> helper.assertTrue(OperationSchedulingGameTests.count(dest) == 30,
-                        "the Operation ran through the Mainframe; got " + OperationSchedulingGameTests.count(dest)))
+                .thenExecuteAfter(40, () -> helper.assertTrue(StorageNetworkFixture.count(dest) == 30,
+                        "the Operation ran through the Mainframe; got " + StorageNetworkFixture.count(dest)))
                 .thenSucceed();
+    }
+
+    /** Runs one step of a test and lets go of its listener before a failure in it ends the test. */
+    private static void guarded(final Consumer<IOperationLifecycleEvent> listener, final Runnable step) {
+        try {
+            step.run();
+        } catch (final RuntimeException | Error failure) {
+            JsCore.events().unsubscribe(IOperationLifecycleEvent.class, listener);
+            throw failure;
+        }
     }
 }

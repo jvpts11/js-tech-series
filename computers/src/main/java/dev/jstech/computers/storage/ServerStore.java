@@ -8,13 +8,11 @@
 package dev.jstech.computers.storage;
 
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.rack.RaidMode;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -60,9 +58,17 @@ public final class ServerStore implements IWeightedStore {
     }
 
     public long capacity() {
+        return capacity(drives());
+    }
+
+    public long capacityWeight() {
+        return capacity() * StorageKey.MB_EQ_PER_ITEM;
+    }
+
+    private long capacity(final LocalStore drives) {
         final RaidMode mode = rack.raidModeOf(serverSlot);
         if (mode == RaidMode.NONE) {
-            return drives().capacity();
+            return drives.capacity();
         }
         if (rack.raidFailed(serverSlot)) {
             return 0L; // the array lost more members than its mode tolerates
@@ -71,21 +77,12 @@ public final class ServerStore implements IWeightedStore {
          * A configured array presents ONE logical volume whose size its mode decides; the drives
          * behind it are members, not separate disks.
          */
-        final List<Long> sizes = new ArrayList<>();
-        for (final ItemStack drive : rack.claimedDriveStacks(serverSlot)) {
-            if (drive.getItem() instanceof DiskItem disk) {
-                sizes.add(disk.spec().capacityItems());
-            }
-        }
+        final List<Long> sizes = rack.raidDriveSizes(serverSlot);
         /*
          * A degraded array still presents the volume it promised, so the size is charged against the
-         * member count it was formed with rather than what is left in the bay right now.
+         * member count and the size it was formed with rather than what is left in the bay right now.
          */
-        return mode.usableCapacity(sizes, rack.raidMemberCount(serverSlot));
-    }
-
-    public long capacityWeight() {
-        return capacity() * StorageKey.MB_EQ_PER_ITEM;
+        return mode.volumeOf(sizes, rack.raidMemberCount(serverSlot), rack.raidPromisedVolume(serverSlot));
     }
 
     /**
@@ -109,11 +106,7 @@ public final class ServerStore implements IWeightedStore {
     }
 
     public long freeWeight() {
-        /*
-         * Bounded by the logical volume, not by the raw drives: a mirror's spare members are
-         * redundancy, never extra room.
-         */
-        return Math.max(0L, Math.min(capacityWeight() - usedWeight(), drives().freeWeight()));
+        return freeWeight(drives());
     }
 
     public long used() {
@@ -154,8 +147,9 @@ public final class ServerStore implements IWeightedStore {
          * Never write past the logical volume: with an array configured the usable size is the
          * mode's, so the surplus physical room stays reserved for redundancy.
          */
-        final long roomNative = freeWeight() / key.weight(1L);
-        return roomNative <= 0L ? 0L : drives().insert(key, Math.min(amount, roomNative));
+        final LocalStore drives = drives();
+        final long roomNative = freeWeight(drives) / key.weight(1L);
+        return roomNative <= 0L ? 0L : drives.insert(key, Math.min(amount, roomNative));
     }
 
     public long insert(final Item item, final long amount) {
@@ -168,5 +162,14 @@ public final class ServerStore implements IWeightedStore {
 
     public long extract(final Item item, final long amount) {
         return extract(StorageKey.of(item), amount);
+    }
+
+    private long freeWeight(final LocalStore drives) {
+        /*
+         * Bounded by the logical volume, not by the raw drives: a mirror's spare members are
+         * redundancy, never extra room.
+         */
+        return Math.max(0L, Math.min(capacity(drives) * StorageKey.MB_EQ_PER_ITEM - drives.usedWeight(),
+                drives.freeWeight()));
     }
 }

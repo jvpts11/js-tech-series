@@ -92,7 +92,16 @@ public final class TestPlanner {
 
                 @Override
                 public void apply(final String value, final PlanCandidate candidate) {
-                    candidate.addCost(Long.parseLong(value.strip()), Component.literal("boosted by " + value));
+                    // The value is what a player typed, so a word where a number belongs sets the plan aside
+                    // instead of throwing on the server's thread.
+                    final long ticks;
+                    try {
+                        ticks = Long.parseLong(value.strip());
+                    } catch (final NumberFormatException notANumber) {
+                        candidate.setAside(Component.literal("not a number of ticks: " + value));
+                        return;
+                    }
+                    candidate.addCost(ticks, Component.literal("boosted by " + value));
                 }
             });
             event.plannerStatistic(new IPlannerStatistic() {

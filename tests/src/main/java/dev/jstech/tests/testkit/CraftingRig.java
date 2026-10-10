@@ -178,7 +178,7 @@ public final class CraftingRig {
                     for (final CraftingFloor.Site router : reach.routers()) {
                         final CraftingRouterPart routerPart = router.part(world.level(), CraftingRouterPart.class);
                         if (routerPart != null && takes(world, router, routerPart, input)
-                                && (chosen == null || used.contains(chosen) && !used.contains(routerPart))) {
+                                && (chosen == null || (used.contains(chosen) && !used.contains(routerPart)))) {
                             chosen = routerPart;
                         }
                     }

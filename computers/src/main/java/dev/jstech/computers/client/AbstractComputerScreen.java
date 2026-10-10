@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.client;
 
-import dev.jstech.computers.client.monitor.PowerStrip;
+import dev.jstech.computers.client.monitor.MonitorTubes;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.menu.IMonitorMenu;
 import dev.jstech.core.client.live.TubeFilter;
@@ -234,7 +234,7 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
          */
         if (menu instanceof IMonitorMenu at) {
             TubeFilter.filterScreen(graphics, leftPos, topPos, imageWidth, imageHeight,
-                    PowerStrip.tubeAt(at.monitorPos()));
+                    MonitorTubes.tubeAt(at.monitorPos()));
         }
     }
 }

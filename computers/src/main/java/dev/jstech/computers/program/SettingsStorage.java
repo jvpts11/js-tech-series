@@ -95,9 +95,9 @@ final class SettingsStorage {
         settings.setMuted(s.getBoolean("Muted"));
         settings.setSoundOutput(SoundOutput.byId(s.getString("SoundOutput")));
         final String saveDrive = s.getString("SaveDrive");
-        if (!saveDrive.isEmpty()) {
-            settings.setDefaultSaveDrive(saveDrive.charAt(0));
-        }
+        // A tag without the keys below is a blank disk, which starts from the defaults rather than inheriting
+        // what the disk read before it had set.
+        settings.setDefaultSaveDrive(saveDrive.isEmpty() ? 'C' : saveDrive.charAt(0));
         settings.setRemovableAutoOpen(!s.contains("RemovableAutoOpen") || s.getBoolean("RemovableAutoOpen"));
         settings.setRemoteAllowed(!s.contains("RemoteAllowed") || s.getBoolean("RemoteAllowed"));
         settings.setCronEnabled(!s.contains("CronEnabled") || s.getBoolean("CronEnabled"));
@@ -108,9 +108,13 @@ final class SettingsStorage {
                 : ComputerSettings.EFFECT_SPEED_NORMAL);
         if (s.contains("Pinned")) {
             settings.setPinned(strings(s.getList("Pinned", Tag.TAG_STRING)));
+        } else {
+            settings.setPinned(List.of(ComputerSettings.DEFAULT_PINNED));
         }
         if (s.contains("StartTiles")) {
             settings.startTiles().setEncoded(strings(s.getList("StartTiles", Tag.TAG_STRING)));
+        } else {
+            settings.startTiles().restoreDefaults();
         }
         settings.setFavourites(strings(s.getList("Favourites", Tag.TAG_STRING)));
         final List<ComputerSettings.Share> shares = new ArrayList<>();

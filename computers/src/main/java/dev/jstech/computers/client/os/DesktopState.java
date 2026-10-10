@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
@@ -815,7 +816,7 @@ final class DesktopState {
                 return w.app().iconId();
             }
         }
-        return ResourceLocation.fromNamespaceAndPath("jsc", "generic");
+        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "generic");
     }
 
     /** Leaves the desktop without touching the machine, which is what logging off is. */

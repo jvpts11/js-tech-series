@@ -1959,6 +1959,11 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         return services.jobPaused(jobName);
     }
 
+    /** Deletes a job along with its pause and trigger state; false when no such job was saved. */
+    public boolean deleteJob(final String jobName) {
+        return services.deleteJob(jobName);
+    }
+
     /** Pauses a job (a resumable "End"): the agent stops firing it until it is restarted. */
     public void pauseJob(final String jobName) {
         services.pauseJob(jobName);

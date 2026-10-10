@@ -147,14 +147,15 @@ public final class MediaClientTests {
         // Eighty seconds of 16-bit samples at 8 kHz, over a megabyte, so a share of one megabyte cannot take it.
         final byte[] wav = TestMedia.wav(80_000, "share " + System.nanoTime());
         final Object[] end = {null, null};
+        // The default share comes back also when the upload never ends.
+        ctx.afterTest(() -> ctx.server().submit(() -> MediaBalance.setPlayerQuotaMegabytes(
+                MediaBalance.DEFAULT_PLAYER_QUOTA_MEGABYTES)));
         ctx.thenServer(0, level -> {
                     TestMedia.register();
                     MediaBalance.setPlayerQuotaMegabytes(1);
                 })
                 .then(0, () -> upload(write(wav), end))
                 .thenWaitUntil(() -> end[0] != null, WAIT, "the upload to end")
-                .thenServer(0, level -> MediaBalance.setPlayerQuotaMegabytes(
-                        MediaBalance.DEFAULT_PLAYER_QUOTA_MEGABYTES))
                 .thenAssert(0, () -> Boolean.FALSE.equals(end[0]) && end[1] instanceof Text.Translated said
                                 && said.key().key().equals(MediaTexts.QUOTA_FULL.key()),
                         "it is refused, and the player is told their share is full");
@@ -172,6 +173,10 @@ public final class MediaClientTests {
         final String key = "jstests:channel";
         final String channel = TestSounds.BEEP.spec().channel().id().toString();
         final AudioPrefs prefs = AudioPrefsStore.prefs();
+        ctx.afterTest(() -> {
+            prefs.setVolume(channel, 1.0F);
+            AudioMixer.refreshVolumes();
+        });
         ctx.thenTeleport(SETTLE, STAND, Direction.SOUTH)
                 .thenServer(0, level -> {
                     try {

@@ -32,7 +32,7 @@ public record DesktopShellOutputPayload(boolean clear, boolean busy, String prom
                                         boolean informational, TerminalKeyboard keyboard)
         implements CustomPacketPayload {
 
-    public static final int MAX_LINES = 256;
+    public static final int MAX_LINES = TerminalWire.MAX_LINES;
 
     /** A reply that only printed, which is what nearly every command does. */
     public DesktopShellOutputPayload(final boolean clear, final boolean busy, final String prompt,
@@ -82,9 +82,6 @@ public record DesktopShellOutputPayload(boolean clear, boolean busy, String prom
     public static final CustomPacketPayload.Type<DesktopShellOutputPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "desktop_shell_output"));
 
-    private static final StreamCodec<RegistryFriendlyByteBuf, List<WireLine>> LINES_CODEC =
-            WireLine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES));
-
     /* Nine fields is past what the composite form takes, so the two halves are written by hand. */
     public static final StreamCodec<RegistryFriendlyByteBuf, DesktopShellOutputPayload> STREAM_CODEC =
             StreamCodec.of(DesktopShellOutputPayload::write, DesktopShellOutputPayload::read);
@@ -92,10 +89,10 @@ public record DesktopShellOutputPayload(boolean clear, boolean busy, String prom
     private static void write(final RegistryFriendlyByteBuf buf, final DesktopShellOutputPayload payload) {
         ByteBufCodecs.BOOL.encode(buf, payload.clear());
         ByteBufCodecs.BOOL.encode(buf, payload.busy());
-        ByteBufCodecs.stringUtf8(256).encode(buf, payload.prompt());
-        LINES_CODEC.encode(buf, payload.lines());
-        ByteBufCodecs.stringUtf8(32).encode(buf, payload.editor());
-        ByteBufCodecs.stringUtf8(160).encode(buf, payload.editorPath());
+        ByteBufCodecs.stringUtf8(TerminalWire.MAX_PROMPT).encode(buf, payload.prompt());
+        TerminalWire.LINES_CODEC.encode(buf, payload.lines());
+        ByteBufCodecs.stringUtf8(TerminalWire.MAX_EDITOR).encode(buf, payload.editor());
+        ByteBufCodecs.stringUtf8(TerminalWire.MAX_EDITOR_PATH).encode(buf, payload.editorPath());
         ByteBufCodecs.VAR_INT.encode(buf, payload.session());
         ByteBufCodecs.BOOL.encode(buf, payload.replaceLast());
         ByteBufCodecs.BOOL.encode(buf, payload.informational());
@@ -105,10 +102,10 @@ public record DesktopShellOutputPayload(boolean clear, boolean busy, String prom
     private static DesktopShellOutputPayload read(final RegistryFriendlyByteBuf buf) {
         final boolean clear = ByteBufCodecs.BOOL.decode(buf);
         final boolean busy = ByteBufCodecs.BOOL.decode(buf);
-        final String prompt = ByteBufCodecs.stringUtf8(256).decode(buf);
-        final List<WireLine> lines = LINES_CODEC.decode(buf);
-        final String editor = ByteBufCodecs.stringUtf8(32).decode(buf);
-        final String editorPath = ByteBufCodecs.stringUtf8(160).decode(buf);
+        final String prompt = ByteBufCodecs.stringUtf8(TerminalWire.MAX_PROMPT).decode(buf);
+        final List<WireLine> lines = TerminalWire.LINES_CODEC.decode(buf);
+        final String editor = ByteBufCodecs.stringUtf8(TerminalWire.MAX_EDITOR).decode(buf);
+        final String editorPath = ByteBufCodecs.stringUtf8(TerminalWire.MAX_EDITOR_PATH).decode(buf);
         final int session = ByteBufCodecs.VAR_INT.decode(buf);
         final boolean replaceLast = ByteBufCodecs.BOOL.decode(buf);
         final boolean informational = ByteBufCodecs.BOOL.decode(buf);

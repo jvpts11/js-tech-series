@@ -39,9 +39,9 @@ public record ExperienceIndex(int processor, int memory, int graphics, int gamin
     /** The graphics score video memory allows, by the memory: under 128 MB no effects at all. */
     private static final int[][] VRAM_CAPS = {{128, 29}, {256, 49}, {512, 59}, {1024, 69}};
     /** The disks' scores by their kind: a spinning disk, a solid one, one on the processor's own lanes. */
-    private static final int HDD = 56;
-    private static final int SSD = 74;
-    private static final int NVME = 79;
+    private static final int DISK_SCORE_HDD = 56;
+    private static final int DISK_SCORE_SSD = 74;
+    private static final int DISK_SCORE_NVME = 79;
     private static final double ROUNDING = 1e-9;
 
     public ExperienceIndex {
@@ -110,9 +110,9 @@ public record ExperienceIndex(int processor, int memory, int graphics, int gamin
             return LOWEST;
         }
         return switch (build.fastestDiskTier()) {
-            case HDD -> HDD;
-            case SSD -> SSD;
-            case NVME -> NVME;
+            case HDD -> DISK_SCORE_HDD;
+            case SSD -> DISK_SCORE_SSD;
+            case NVME -> DISK_SCORE_NVME;
         };
     }
 

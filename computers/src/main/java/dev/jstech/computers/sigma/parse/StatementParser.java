@@ -308,7 +308,6 @@ final class StatementParser {
      * expression. This is the one place the grammar genuinely needs more than one token of lookahead.
      */
     private boolean looksLikeDeclaration() {
-        final int after = this.types.scanType(this.cursor.at());
-        return after > this.cursor.at() && this.cursor.kindAt(after) == TokenKind.IDENTIFIER;
+        return this.types.typedNameAhead();
     }
 }

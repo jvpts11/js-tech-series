@@ -247,4 +247,27 @@ class KnotRepositoryTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new KnotRepository.Revision(1, "ada", "m", 1L, null));
     }
+
+    @Test
+    void diff_keepsSharedEndsAsContextAroundTheChange() {
+        final List<DiffLine> lines = KnotRepository.diff("a\nb\nc", "a\nx\nc");
+        assertEquals(List.of(
+                new DiffLine(DiffLine.Kind.CONTEXT, "a"),
+                new DiffLine(DiffLine.Kind.REMOVED, "b"),
+                new DiffLine(DiffLine.Kind.ADDED, "x"),
+                new DiffLine(DiffLine.Kind.CONTEXT, "c")), lines);
+    }
+
+    @Test
+    void diff_hugeRewriteReadsAsRemovedThenAddedWithoutATable() {
+        final StringBuilder before = new StringBuilder();
+        final StringBuilder after = new StringBuilder();
+        for (int i = 0; i < 3000; i++) {
+            before.append("old").append(i).append('\n');
+            after.append("new").append(i).append('\n');
+        }
+        final List<DiffLine> lines = KnotRepository.diff(before.toString(), after.toString());
+        assertEquals(DiffLine.Kind.REMOVED, lines.get(0).kind());
+        assertEquals(DiffLine.Kind.ADDED, lines.get(lines.size() - 2).kind());
+    }
 }

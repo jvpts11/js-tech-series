@@ -69,7 +69,7 @@ public final class DiskVoices {
         final int groups = (int) Math.min(Integer.MAX_VALUE, figures.groups());
         final TtyScript.Builder script = TtyScript.script()
                 .say(MKE2FS_VERSION)
-                .pause(share(ticks, 6))
+                .pause(Tint.share(ticks, 6))
                 .say(CREATING.with(figures.blocks(), figures.inodes()))
                 .say(FILESYSTEM_UUID.with(Ext4Figures.uuid(device, seed)));
         if (!figures.backups().isEmpty()) {
@@ -77,15 +77,15 @@ public final class DiskVoices {
             script.sayAll(backupLines(figures.backups()));
         }
         script.say("")
-                .redraw(share(ticks, 10), p -> Bars.counting(GROUP_TABLES.text(), p, groups, DONE.text()))
-                .redraw(share(ticks, 40), p -> Bars.counting(INODE_TABLES.text(), p, groups, DONE.text()));
+                .redraw(Tint.share(ticks, 10), p -> Bars.counting(GROUP_TABLES.text(), p, groups, DONE.text()))
+                .redraw(Tint.share(ticks, 40), p -> Bars.counting(INODE_TABLES.text(), p, groups, DONE.text()));
         if (figures.journal() > 0) {
             /* The journal is the one step with no count to watch: the line stands there, and then it is done. */
             final Text label = JOURNAL.with(figures.journal());
-            script.redraw(share(ticks, 22), p -> p >= 1.0 ? Tint.line(label, " ", DONE) : Tint.line(label, " "));
+            script.redraw(Tint.share(ticks, 22), p -> p >= 1.0 ? Tint.line(label, " ", DONE) : Tint.line(label, " "));
         }
         return script
-                .redraw(share(ticks, 22), p -> Bars.counting(SUPERBLOCKS.text(), p, groups, DONE.text()))
+                .redraw(Tint.share(ticks, 22), p -> Bars.counting(SUPERBLOCKS.text(), p, groups, DONE.text()))
                 .say("")
                 .effect(made)
                 .done();
@@ -134,11 +134,6 @@ public final class DiskVoices {
             return trimmed(sizeMb / 1024.0) + "G";
         }
         return sizeMb + "M";
-    }
-
-    /** A share of the time a tool has, in hundredths, and never none of it. */
-    private static int share(final int ticks, final int hundredths) {
-        return Math.max(1, ticks * hundredths / 100);
     }
 
     /** The spare superblocks, a tab in and so many to a line, a comma after every one but the last. */

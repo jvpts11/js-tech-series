@@ -19,9 +19,7 @@ import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -71,9 +69,7 @@ import static dev.jstech.computers.gui.layout.RedstoneInterfaceLayout.cellX;
  */
 public final class RedstoneInterfaceScreen extends AbstractComputerScreen<RedstoneInterfaceMenu> {
 
-    private EditBox nameBox;
-
-    private static final long CARET_BLINK_MILLIS = 500L;
+    private NameField nameField;
 
     public RedstoneInterfaceScreen(final RedstoneInterfaceMenu menu, final Inventory inventory,
                                    final Component title) {
@@ -91,8 +87,7 @@ public final class RedstoneInterfaceScreen extends AbstractComputerScreen<Redsto
     @Override
     public boolean keyPressed(final int key, final int scan, final int mods) {
         // While a name is typed every key goes to it, so the inventory key types instead of closing the screen.
-        if (nameBox.isFocused() && key != GLFW.GLFW_KEY_ESCAPE) {
-            nameBox.keyPressed(key, scan, mods);
+        if (nameField.keyPressed(key, scan, mods)) {
             return true;
         }
         return super.keyPressed(key, scan, mods);
@@ -100,8 +95,8 @@ public final class RedstoneInterfaceScreen extends AbstractComputerScreen<Redsto
 
     @Override
     public boolean charTyped(final char c, final int mods) {
-        if (nameBox.isFocused()) {
-            return nameBox.charTyped(c, mods);
+        if (nameField.charTyped(c, mods)) {
+            return true;
         }
         return super.charTyped(c, mods);
     }
@@ -171,15 +166,11 @@ public final class RedstoneInterfaceScreen extends AbstractComputerScreen<Redsto
          * The box takes the keyboard and the click that focuses it, but is never drawn: vanilla draws its text with a
          * dark copy of the letters as the shadow, a smear on a light era's field. The field is drawn in renderLabels.
          */
-        nameBox = new EditBox(font, leftPos + MARGIN + 2, topPos + NAME_Y, WIDTH - 2 * MARGIN - 4, NAME_H,
-                GameText.component(RedstoneInterfaceTexts.NAME_FIELD));
-        nameBox.setBordered(false);
-        nameBox.setTextShadow(false);
-        nameBox.setMaxLength(RedstoneInterfaceBlockEntity.MAX_NAME);
-        nameBox.setValue(menu.opening().name());
-        nameBox.setResponder(name ->
+        nameField = new NameField(font, leftPos + MARGIN + 2, topPos + NAME_Y, WIDTH - 2 * MARGIN - 4, NAME_H,
+                GameText.component(RedstoneInterfaceTexts.NAME_FIELD), RedstoneInterfaceBlockEntity.MAX_NAME,
+                menu.opening().name(), name ->
                 PacketDistributor.sendToServer(new RenameRedstoneInterfacePayload(menu.sensorPos(), name)));
-        addWidget(nameBox);
+        addWidget(nameField.widget());
     }
 
     @Override
@@ -310,36 +301,15 @@ public final class RedstoneInterfaceScreen extends AbstractComputerScreen<Redsto
         }
     }
 
-    /*
-     * The name being typed, or the word for it dimmed while there is none, with a caret where the next letter goes. A
-     * name wider than the field shows the part around the caret.
-     */
+    /* The name being typed, or the word for it dimmed while there is none, with a caret where the next letter goes. */
     private void renderName(final GuiGraphics g) {
-        final int room = WIDTH - 2 * MARGIN - 4;
-        final int x = MARGIN + 2;
-        final int y = NAME_Y + 3;
-        final String value = nameBox.getValue();
-        final int cursor = Math.min(nameBox.getCursorPosition(), value.length());
-        final String before = Texts.tail(font, value.substring(0, cursor), room);
-        String after = value.substring(cursor);
-        while (!after.isEmpty() && font.width(before + after) > room) {
-            after = after.substring(0, after.length() - 1);
-        }
-        if (value.isEmpty()) {
-            Draw.text(g, font, GameText.resolve(RedstoneInterfaceBlockEntity.DEFAULT_NAME), x, y, JsTechTheme.dim(),
-                    JsTechTheme.slotBg());
-        } else {
-            Draw.text(g, font, before + after, x, y, JsTechTheme.text(), JsTechTheme.slotBg());
-        }
-        if (nameBox.isFocused() && Util.getMillis() / CARET_BLINK_MILLIS % 2 == 0) {
-            final int caretX = x + font.width(before);
-            g.fill(caretX, y - 1, caretX + 1, y + 9, JsTechTheme.text());
-        }
+        nameField.render(g, font, MARGIN + 2, NAME_Y + 3, WIDTH - 2 * MARGIN - 4,
+                GameText.resolve(RedstoneInterfaceBlockEntity.DEFAULT_NAME));
     }
 
     /* The name a program finds it by now: the one being typed, or the word for it while there is none. */
     private String shownName() {
-        final String typed = nameBox == null ? menu.opening().name() : nameBox.getValue().strip();
+        final String typed = nameField == null ? menu.opening().name() : nameField.value().strip();
         return typed.isEmpty() ? RedstoneInterfaceBlockEntity.DEFAULT_NAME.text().english() : typed;
     }
 

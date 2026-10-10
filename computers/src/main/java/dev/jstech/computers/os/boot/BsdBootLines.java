@@ -74,7 +74,7 @@ final class BsdBootLines {
         if (machine.console() != null && machine.console().settings().remoteAllowed()) {
             out.line(Text.literal("Starting sshd."));
         }
-        final String desktop = desktopOf(machine);
+        final String desktop = BootLines.desktopOf(machine);
         if (!desktop.isEmpty()) {
             out.line(Text.literal("Starting " + desktop + " display manager."));
         }
@@ -88,7 +88,7 @@ final class BsdBootLines {
      */
     static BootSequence down(final IOsHost machine, final boolean restarting) {
         final BootSequence.Builder out = new BootSequence.Builder().title(Text.EMPTY).subtitle(Text.EMPTY);
-        final String desktop = desktopOf(machine);
+        final String desktop = BootLines.desktopOf(machine);
         if (!desktop.isEmpty()) {
             out.line(Text.literal("Stopping " + desktop + " display manager."));
         }
@@ -109,11 +109,5 @@ final class BsdBootLines {
         out.line(Text.literal("All buffers synced."));
         out.line(Text.literal(restarting ? "Rebooting..." : "The operating system has halted."));
         return out.build();
-    }
-
-    /** The desktop installed on the machine as its startup names it, or nothing for a machine at a terminal. */
-    private static String desktopOf(final IOsHost machine) {
-        return machine.installedDesktopId() == null ? ""
-                : machine.installedDesktopId().getPath().replace('_', ' ');
     }
 }

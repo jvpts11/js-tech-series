@@ -126,4 +126,11 @@ class IqlBusStatementTest {
     private static IqlBusStatement.Change change(final String statement) {
         return IqlBusStatement.parse(statement).change();
     }
+
+    @Test
+    void parse_refusesCountsThatDoNotFitAnIntOrAreNegative() {
+        assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x MAX 4294967297"));
+        assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x KEEP -1"));
+        assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x PRIORITY -1"));
+    }
 }

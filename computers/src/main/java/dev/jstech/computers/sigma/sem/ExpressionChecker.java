@@ -295,7 +295,7 @@ final class ExpressionChecker {
         final ITypeSymbol combined = this.scope.rules().binaryResult(assign.operator(), target, value);
         if (combined == null || !this.scope.rules().isAssignable(combined, target)) {
             this.scope.report(assign.line(), assign.column(), SigmaError.OPERATOR_ON_TYPES,
-                    assign.operator().text() + "=", target.describe(), value.describe());
+                    assign.operator().assignmentText(), target.describe(), value.describe());
         }
         return target;
     }
@@ -303,7 +303,7 @@ final class ExpressionChecker {
     private ITypeSymbol subscribe(final IExpr.Assign assign, final IMemberSymbol.EventSymbol event) {
         if (assign.operator() != Operator.ADD && assign.operator() != Operator.SUBTRACT) {
             this.scope.report(assign.line(), assign.column(), SigmaError.OPERATOR_ON_TYPE,
-                    assign.operator().text() + "=", event.delegateType().name());
+                    assign.operator().assignmentText(), event.delegateType().name());
             this.check(assign.value(), event.delegateType());
             return ITypeSymbol.Special.ERROR;
         }
@@ -365,7 +365,11 @@ final class ExpressionChecker {
                 this.scope.expect(body, shape.returnType(), lambda.body());
             }
         }
-        this.scope.checkOutParameters(lambda.parameters(), lambda.block(), lambda);
+        if (lambda.block() != null) {
+            this.scope.checkOutParameters(lambda.parameters(), lambda.block(), lambda);
+        } else {
+            this.scope.checkOutParameters(lambda.parameters(), lambda.body(), lambda);
+        }
         this.scope.scope(saved);
         this.scope.returnType(savedReturn);
         return expected;
@@ -443,6 +447,9 @@ final class ExpressionChecker {
                 ? List.of() : BodyScope.lookup(this.scope.currentType(), argument.name());
         if (!found.isEmpty()) {
             if (found.getFirst() instanceof IMemberSymbol.FieldSymbol field && !field.isReadOnly()) {
+                if (!this.members.checkAccess(argument, field, BodyScope.Access.IMPLICIT)) {
+                    return ITypeSymbol.Special.ERROR;
+                }
                 this.scope.model().setBinding(argument, new IBinding.Member(field, field.type()));
                 return field.type();
             }

@@ -1230,7 +1230,7 @@ public final class ThisPcApp implements IDesktopApp {
             return parsed;
         }
         final String path = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
-        return ResourceLocation.fromNamespaceAndPath("jsc", path);
+        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
     }
 
     private static ResourceLocation programIdOf(final String id) {

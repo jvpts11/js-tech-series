@@ -205,9 +205,15 @@ public final class CalculatorApp implements IDesktopApp {
             return;
         }
         try {
-            result = format(CalcEngine.evaluate(input, degrees));
-            input = result;
-            justResult = true;
+            final double value = CalcEngine.evaluate(input, degrees);
+            result = format(value);
+            if (Double.isNaN(value) || Double.isInfinite(value)) {
+                // The error text is not a number, so it must not become part of the next expression.
+                justResult = false;
+            } else {
+                input = result;
+                justResult = true;
+            }
         } catch (final RuntimeException ex) {
             result = GameText.resolve(CalculatorTexts.ERROR);
             justResult = false;

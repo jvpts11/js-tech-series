@@ -38,6 +38,7 @@ import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerRouterElement;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
@@ -230,7 +231,8 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
 
     /** The name a supercomputer goes by: the player's, or its number in registry order (SC-1, SC-2 ...). */
     public static String supercomputerName(final HbwInterfaceBlockEntity hub, final int index) {
-        return hub.customName().isEmpty() ? "SC-" + (index + 1) : hub.customName();
+        return hub.customName().isEmpty()
+                ? GameText.resolve(ClusterJobTexts.SUPERCOMPUTER_NAME.with(index + 1)) : hub.customName();
     }
 
     /** A datacenter section the machine can address, with the label the router gives it. */
@@ -261,7 +263,8 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
                 if (refresh) {
                     routerBe.recomputeNow();
                 }
-                final String routerName = routerBe.customName().isEmpty() ? "Router" : routerBe.customName();
+                final String routerName = routerBe.customName().isEmpty()
+                        ? GameText.resolve(ClusterJobTexts.ROUTER_NAME) : routerBe.customName();
                 for (final DatacenterSection section : routerBe.sections()) {
                     final String custom = routerBe.sectionName(section.face());
                     refs.add(new SectionRef(BlockPos.of(router.pos()), section.face(), custom.isEmpty()
@@ -607,7 +610,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
             lastJobSummary = j.skipped() > 0 ? ClusterJobTexts.WITH_SKIPPED.with(summary, j.skipped()) : summary;
             job = null;
         }
-        setChanged();
+        // Nothing to mark: an install job and its summary are transient and never saved.
     }
 
     /** Why a node is left out of a job, or null when it takes the install. */
@@ -676,7 +679,8 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
             return custom;
         }
         final RackChassis chassis = ServerItem.chassisOf(stack);
-        return chassis != null && chassis.isSupercomputerNode() ? "node" : "server";
+        return GameText.resolve(chassis != null && chassis.isSupercomputerNode()
+                ? ClusterJobTexts.NODE_KIND : ClusterJobTexts.SERVER_KIND);
     }
 
     // local storage, like a PC: what is on the installed disks

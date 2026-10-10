@@ -432,11 +432,11 @@ public final class ProphetConsoleApp implements IDesktopApp {
         final int barW = Math.max(10, w - font.width("0000000"));
         final long top = ProphetConsoleLayout.graphTop(row.lower(), row.upper(), row.held() + row.inFlight());
         g.fill(x, y + 2, x + barW, y + 6, c.track());
-        final int bandFrom = x + (int) (row.lower() * barW / top);
-        final int bandTo = x + (int) (Math.min(row.upper(), top) * barW / top);
+        final int bandFrom = x + ProphetConsoleLayout.scaled(row.lower(), top, barW);
+        final int bandTo = x + ProphetConsoleLayout.scaled(row.upper(), top, barW);
         g.fill(bandFrom, y + 2, Math.max(bandFrom + 1, bandTo), y + 6, c.band());
         g.fill(bandFrom, y + 1, bandFrom + 1, y + 7, c.bandEdge());
-        final int mark = x + (int) (Math.min(row.held(), top) * barW / top);
+        final int mark = x + ProphetConsoleLayout.scaled(row.held(), top, barW);
         g.fill(mark, y, mark + 1, y + 8, c.marker());
         Draw.text(g, font, Long.toString(row.held()), x + barW + 3, y, skin.text(), ground, SMALL);
     }

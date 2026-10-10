@@ -43,7 +43,10 @@ public enum ListingError {
     UNKNOWN_MEMBER(TextKey.of("jsc.vm.listing.a4013", "nothing answers '%s'")),
     READ_ONLY_VALUE(TextKey.of("jsc.vm.listing.a4014", "'%s' can be read but not written")),
     /* Nothing is wrong with the listing here: it is the machine it was brought to that will not run it. */
-    ISA_MISMATCH(TextKey.of("jsc.vm.listing.a4015", "built for %s; this machine is %s"));
+    ISA_MISMATCH(TextKey.of("jsc.vm.listing.a4015", "built for %s; this machine is %s")),
+    NO_BODY_TO_HOLD(TextKey.of("jsc.vm.listing.a4016", "this method has no slots line, so it has no body")),
+    SLOT_OUT_OF_RANGE(TextKey.of("jsc.vm.listing.a4017", "place %s does not exist: this method has %s")),
+    DUPLICATE_LABEL(TextKey.of("jsc.vm.listing.a4018", "'%s' labels more than one line of this method"));
 
     private final TextKey text;
 

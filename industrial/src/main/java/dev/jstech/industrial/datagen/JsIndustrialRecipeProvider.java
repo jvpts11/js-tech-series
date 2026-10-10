@@ -7,13 +7,10 @@
  */
 package dev.jstech.industrial.datagen;
 
-import dev.jstech.core.machine.ProcessingRecipeBuilder;
 import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
 import dev.jstech.core.material.ModMaterial;
-import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.JsIndustrial;
-import dev.jstech.industrial.blockentity.MaceratorBlockEntity;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;
@@ -21,7 +18,6 @@ import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -36,9 +32,6 @@ import java.util.concurrent.CompletableFuture;
  * metal. All machine recipe ingredients use {@code c:} common tags for interop with other mods.
  */
 public class JsIndustrialRecipeProvider extends RecipeProvider {
-
-    /** How long grinding an ore takes at Tier 1, in ticks. */
-    private static final int MACERATING_TICKS = 200;
 
     public JsIndustrialRecipeProvider(final PackOutput output,
                                       final CompletableFuture<HolderLookup.Provider> registries) {
@@ -83,13 +76,11 @@ public class JsIndustrialRecipeProvider extends RecipeProvider {
     }
 
     private static TagKey<Item> c(final String path) {
-        return ItemTags.create(ResourceLocation.fromNamespaceAndPath("c", path));
+        return MaterialFormRecipes.cTag(path);
     }
 
     private static void macerating(final RecipeOutput recipeOutput, final Ingredient ingredient,
                                    final ItemStack result, final String name) {
-        ProcessingRecipeBuilder.of(IndustrialModule.MACERATING).input(ingredient, 1).output(result)
-                .ticks(MACERATING_TICKS).energyPerTick(MaceratorBlockEntity.FE_PER_TICK)
-                .save(recipeOutput, ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID, "macerating/" + name));
+        MaterialFormRecipes.macerating(recipeOutput, ingredient, result, name);
     }
 }

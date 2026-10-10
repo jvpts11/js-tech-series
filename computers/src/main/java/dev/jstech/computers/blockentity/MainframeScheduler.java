@@ -340,7 +340,7 @@ final class MainframeScheduler {
             return;
         }
         // Progress lives in the Operations themselves and is saved with the block entity.
-        mainframe.setChanged();
+        mainframe.markDirtyOnly();
         statistics.observeConcurrency(mainframe.gameTime(), inFlight.size());
         /*
          * A queue processes at most the RAM buffer per tick: a buffer smaller than the CPU leaves the CPU idle

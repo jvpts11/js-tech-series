@@ -29,11 +29,11 @@ public final class MonitorGlass {
 
     /** How wide the glass is in a window that wide: all of it, or what the window leaves. */
     public static int width(final int windowWidth) {
-        return Math.min(windowWidth - BESIDE, WIDTH);
+        return Math.max(0, Math.min(windowWidth - BESIDE, WIDTH));
     }
 
     /** How tall the glass is in a window that tall. */
     public static int height(final int windowHeight) {
-        return Math.min(windowHeight - ABOVE_AND_BELOW, HEIGHT);
+        return Math.max(0, Math.min(windowHeight - ABOVE_AND_BELOW, HEIGHT));
     }
 }

@@ -14,11 +14,10 @@ import dev.jstech.computers.vm.program.Values;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.BenchReport;
+import dev.jstech.tests.testkit.BenchSupport;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import io.netty.buffer.Unpooled;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +27,6 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -163,7 +161,7 @@ public final class ProgramBenchmarkGameTests {
         }
         report.put("build_ms", (System.nanoTime() - buildStart) / 1_000_000.0);
         helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> guarded(() -> {
+                .thenExecuteAfter(SETTLE, () -> BenchSupport.guarded(() -> {
                     for (int i = 0; i < PROGRAM_COUNTS.length; i++) {
                         final PersonalComputerBlockEntity pc = machines.get(i);
                         final int count = PROGRAM_COUNTS[i];
@@ -196,7 +194,7 @@ public final class ProgramBenchmarkGameTests {
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
         report.put("build_ms", (System.nanoTime() - buildStart) / 1_000_000.0);
         helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> guarded(() -> {
+                .thenExecuteAfter(SETTLE, () -> BenchSupport.guarded(() -> {
                     final MachinePrograms sigma = pc.programs();
                     final MachinePrograms.Started live = sigma.start("live.sgs", LIVE, 1, pc);
                     final MachinePrograms.Started still = sigma.start("still.sgs", STILL, 1, pc);
@@ -250,7 +248,7 @@ public final class ProgramBenchmarkGameTests {
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
         report.put("build_ms", (System.nanoTime() - buildStart) / 1_000_000.0);
         helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> guarded(() -> {
+                .thenExecuteAfter(SETTLE, () -> BenchSupport.guarded(() -> {
                     final MachinePrograms sigma = pc.programs();
                     for (int p = 0; p < SAVED_PROGRAMS; p++) {
                         final MachinePrograms.Started started = sigma.start("holder.sgs", HOLDER, 1, pc);
@@ -286,7 +284,7 @@ public final class ProgramBenchmarkGameTests {
                             "every program comes back; got " + loaded.view().size());
                     report.put("programs", SAVED_PROGRAMS);
                     report.put("save_ms", saveMs);
-                    report.put("save_bytes", nbtBytes(saved));
+                    report.put("save_bytes", BenchSupport.nbtBytes(saved));
                     report.put("load_ms", loadMs);
                     finish(helper, report);
                 }))
@@ -308,18 +306,19 @@ public final class ProgramBenchmarkGameTests {
         report.put("machines", MACHINES);
         final double[] first = {Double.NaN};
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + TICK_AVERAGE_WINDOW + 20, () -> first[0] = averageTickMs(server))
+                .thenExecuteAfter(SETTLE + TICK_AVERAGE_WINDOW + 20,
+                        () -> first[0] = BenchSupport.averageTickMs(server))
                 // The better of two consecutive windows, so an autosave inside one of them is not read as the cost.
-                .thenExecuteAfter(TICK_AVERAGE_WINDOW, () -> guarded(() -> {
-                    report.put("idle_ms", Math.min(first[0], averageTickMs(server)));
+                .thenExecuteAfter(TICK_AVERAGE_WINDOW, () -> BenchSupport.guarded(() -> {
+                    report.put("idle_ms", Math.min(first[0], BenchSupport.averageTickMs(server)));
                     for (final PersonalComputerBlockEntity pc : machines) {
                         final MachinePrograms.Started started = pc.programs().start("busy.sgs", BUSY, 1, pc);
                         helper.assertTrue(started.ok(), "a busy program starts on every machine: " + started.message());
                     }
                 }))
-                .thenExecuteAfter(TICK_AVERAGE_WINDOW + 20, () -> first[0] = averageTickMs(server))
-                .thenExecuteAfter(TICK_AVERAGE_WINDOW, () -> guarded(() -> {
-                    final double busy = Math.min(first[0], averageTickMs(server));
+                .thenExecuteAfter(TICK_AVERAGE_WINDOW + 20, () -> first[0] = BenchSupport.averageTickMs(server))
+                .thenExecuteAfter(TICK_AVERAGE_WINDOW, () -> BenchSupport.guarded(() -> {
+                    final double busy = Math.min(first[0], BenchSupport.averageTickMs(server));
                     for (final PersonalComputerBlockEntity pc : machines) {
                         assertAllAlive(helper, pc.programs(), 1);
                     }
@@ -374,31 +373,6 @@ public final class ProgramBenchmarkGameTests {
         }
     }
 
-    private static long nbtBytes(final CompoundTag tag) {
-        final long[] count = new long[1];
-        final OutputStream counter = new OutputStream() {
-            @Override
-            public void write(final int b) {
-                count[0]++;
-            }
-
-            @Override
-            public void write(final byte[] b, final int off, final int len) {
-                count[0] += len;
-            }
-        };
-        try {
-            NbtIo.write(tag, new DataOutputStream(counter));
-        } catch (final IOException e) {
-            throw new GameTestAssertException("could not measure the save: " + e);
-        }
-        return count[0];
-    }
-
-    private static double averageTickMs(final MinecraftServer server) {
-        return server.getAverageTickTimeNanos() / 1_000_000.0;
-    }
-
     /** Writes the run and fails when a timed metric is slower than its baseline beyond the noise tolerance. */
     private static void finish(final GameTestHelper helper, final BenchReport report) {
         try {
@@ -410,14 +384,4 @@ public final class ProgramBenchmarkGameTests {
         }
     }
 
-    /** A step's crash becomes this test's failure instead of bringing the whole test server down. */
-    private static void guarded(final Runnable step) {
-        try {
-            step.run();
-        } catch (final GameTestAssertException e) {
-            throw e;
-        } catch (final RuntimeException e) {
-            throw new GameTestAssertException("benchmark step crashed: " + e);
-        }
-    }
 }

@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TermBufferTest {
@@ -169,5 +170,17 @@ class TermBufferTest {
         final CliLine said = CliLine.plain("a line so long that it has to take three rows of the glass");
         this.glass.push(said);
         assertEquals(List.of(said), this.glass.lines());
+    }
+
+    @Test
+    void push_aLineEndingInALongRunOfSpaces_addsNoBlankRow() {
+        this.glass.push(CliLine.plain("a" + " ".repeat(30)));
+        assertEquals(1, this.glass.rows().size());
+    }
+
+    @Test
+    void rows_cannotBeChangedByAReader() {
+        this.glass.push(CliLine.plain("x"));
+        assertThrows(UnsupportedOperationException.class, () -> this.glass.rows().clear());
     }
 }

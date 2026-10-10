@@ -142,13 +142,29 @@ public final class ProphetConsoleLayout {
         if (top <= 0) {
             return height;
         }
+        return height - scaled(level, top, height);
+    }
+
+    /**
+     * How far along an {@code extent} long axis a level falls when the axis ends at {@code top}: nought for a
+     * level at or below nought, the whole extent for a level at or past the top.
+     *
+     * <p>The ratio is taken in floating point because a level can be near the largest long, and multiplying it by
+     * the extent first would wrap around and draw the mark in the wrong place.
+     */
+    public static int scaled(final long level, final long top, final int extent) {
+        if (top <= 0) {
+            return 0;
+        }
         final long clamped = Math.max(0L, Math.min(level, top));
-        return height - (int) (clamped * height / top);
+        return (int) Math.min(extent, (double) clamped * extent / top);
     }
 
     /** What the top of a graph stands for: a little above the highest of the band and the levels shown. */
     public static long graphTop(final long lower, final long upper, final long highest) {
         final long ceiling = upper == Long.MAX_VALUE ? lower + lower / 2 : upper;
-        return Math.max(1L, Math.max(ceiling, highest) * 11 / 10);
+        final long most = Math.max(ceiling, highest);
+        // A tenth more would pass the largest long for the biggest bounds a statement can set, so it stops there.
+        return Math.max(1L, most > Long.MAX_VALUE - most / 10 ? Long.MAX_VALUE : most + most / 10);
     }
 }

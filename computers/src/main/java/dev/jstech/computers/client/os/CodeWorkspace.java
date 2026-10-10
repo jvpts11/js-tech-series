@@ -95,6 +95,10 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         }
     }
 
+    /** A save on its way: the file, the text that was sent, and whether the tab closes once it is safe. */
+    private record PendingSave(Doc doc, String text, boolean closeAfter) {
+    }
+
     private final BlockPos host;
     private final List<DiskFilesPayload.WireFile> files = new ArrayList<>();
     private final List<Doc> docs = new ArrayList<>();
@@ -121,6 +125,12 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
 
     /** Folders still to be asked for, one at a time, since one listing is waited for at once. */
     private final ArrayDeque<String> toList = new ArrayDeque<>();
+
+    /** The saves sent and not yet answered, oldest first, since the machine answers them in order. */
+    private final ArrayDeque<PendingSave> pendingSaves = new ArrayDeque<>();
+
+    /** The folder whose listing was asked for and has not come back, or null when none is outstanding. */
+    private String inFlight;
 
     public CodeWorkspace(final BlockPos host) {
         this.host = host;
@@ -149,6 +159,8 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     /** Asks the machine what the folder holds, and what every opened subfolder holds. */
     public void refresh() {
         this.toList.clear();
+        // The waiter is replaced by the next request, so a listing still on its way is not expected any more.
+        this.inFlight = null;
         this.toList.add(this.folder);
         this.toList.addAll(this.expanded);
         askNext();
@@ -159,6 +171,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         if (dir == null) {
             return;
         }
+        this.inFlight = dir;
         CodeFileReplies.expectListing(this, dir);
         PacketDistributor.sendToServer(new RequestDiskFilesPayload(this.host, dir));
     }
@@ -169,7 +182,8 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
             this.expanded.add(dir);
             if (!this.listings.containsKey(dir)) {
                 this.toList.add(dir);
-                if (this.toList.size() == 1) {
+                // Only one listing is waited for at once; the reply to the one in flight asks for the next.
+                if (this.inFlight == null) {
                     askNext();
                 }
             }
@@ -219,6 +233,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
 
     @Override
     public void onListing(final DiskFilesPayload listing) {
+        this.inFlight = null;
         this.listings.put(listing.dir(), List.copyOf(listing.files()));
         if (listing.dir().equals(this.folder)) {
             this.files.clear();
@@ -377,6 +392,19 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
 
     /** Puts the file being edited back on the disk. */
     public void save() {
+        send(false);
+    }
+
+    /**
+     * Puts the file at {@code index} back on the disk and closes its tab once the machine says it is
+     * saved; if the save is refused the tab stays open, since it holds the only copy of the text.
+     */
+    public void saveAndClose(final int index) {
+        setCurrent(index);
+        send(true);
+    }
+
+    private void send(final boolean closeAfter) {
         final Doc doc = current();
         if (doc == null) {
             return;
@@ -387,6 +415,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
             return;
         }
         this.status = GameText.resolve(EditorTexts.SAVING);
+        this.pendingSaves.add(new PendingSave(doc, text, closeAfter));
         CodeFileReplies.expectSaved(this);
         FileSaves.send(this.host, doc.path, text);
         FilesApps.diskChanged();
@@ -395,13 +424,24 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     @Override
     public void onSaved(final boolean ok, final Text message) {
         this.status = GameText.resolve(message);
-        final Doc doc = current();
-        if (ok && doc != null) {
-            doc.dirty = false;
+        final PendingSave pending = this.pendingSaves.poll();
+        if (!this.pendingSaves.isEmpty()) {
+            // A reply hands over the waiter, so the next one has to be waited for again.
+            CodeFileReplies.expectSaved(this);
+        }
+        if (ok && pending != null) {
+            final Doc doc = pending.doc();
+            // Text edited after the save was sent is not on the disk, so the tab stays marked as changed.
+            if (doc.area.text().equals(pending.text())) {
+                doc.dirty = false;
+            }
             // A save can be a file the folder did not have; the list and the survey read the disk again.
             refresh();
             if (this.surveyed.contains(dirOf(doc.path))) {
                 surveyFolder(dirOf(doc.path));
+            }
+            if (pending.closeAfter() && !doc.dirty) {
+                close(this.docs.indexOf(doc));
             }
         }
     }
@@ -417,6 +457,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
 
     /** Stops the machine's answers arriving after the window is gone. */
     public void release() {
+        this.pendingSaves.clear();
         CodeFileReplies.forget(this);
     }
 

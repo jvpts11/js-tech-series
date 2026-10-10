@@ -55,4 +55,12 @@ class MachineJobsTest {
         final List<MachineJobs.Job> due = this.jobs.due(0L, true);
         assertEquals(1, due.size(), "switching cron back on runs the job at the hour it is still due");
     }
+
+    @Test
+    void restore_neverHandsOutAnIdAKeptJobAlreadyHas() {
+        this.jobs.restore(List.of(new MachineJobs.Job(7, "a.sh", JobWhen.AT_ONCE, -1L)), 1);
+
+        assertEquals(8, this.jobs.nextId());
+        assertEquals(8, this.jobs.add("b.sh", JobWhen.AT_ONCE).id());
+    }
 }

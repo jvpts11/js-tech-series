@@ -108,7 +108,7 @@ final class ComputerAudioHost implements IAudioHost {
             final boolean subwoofer = hasSubwoofer(speakers);
             for (final SpeakerBlockEntity speaker : speakers) {
                 outputs.add(new AudioOutput(Vec3.atCenterOf(speaker.getBlockPos()),
-                        sideOf(speaker.getBlockPos(), speakers.size()), speaker.response(subwoofer)));
+                        sideOf(speaker.getBlockPos(), speakers.size(), monitors), speaker.response(subwoofer)));
             }
         }
         if (outputs.isEmpty()) {
@@ -207,15 +207,14 @@ final class ComputerAudioHost implements IAudioHost {
 
     /** Which side of a stereo recording the speaker at {@code speaker} plays for this machine. */
     StereoSide sideOf(final BlockPos speaker) {
-        return sideOf(speaker, speakerCount());
+        return sideOf(speaker, speakerCount(), monitors());
     }
 
     /*
      * The side, by where the speaker stands against the first monitor: the one on the left of someone sitting at the
      * screen plays the left. The monitor faces away from whoever placed it, so they look along its facing.
      */
-    private StereoSide sideOf(final BlockPos speaker, final int speakers) {
-        final List<BlockPos> monitors = monitors();
+    private StereoSide sideOf(final BlockPos speaker, final int speakers, final List<BlockPos> monitors) {
         final Level level = machine.getLevel();
         if (speakers < 2 || monitors.isEmpty() || level == null) {
             return StereoSide.BOTH;

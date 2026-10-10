@@ -439,6 +439,13 @@ final class OsSession {
      * actually formatted comes back.
      */
     boolean formatDisk(final int slot) {
+        /*
+         * The console in memory belongs to the disk the machine runs from. It is taken before the format because
+         * afterwards the running disk is a different stack, or another system's disk, and asking for the console
+         * then would hand back that one and wipe the wrong software.
+         */
+        final boolean runningDisk = slot >= 0 && !diskInSlot(slot).isEmpty() && diskInSlot(slot) == systemDisk();
+        final ComputerConsoleState runningConsole = runningDisk ? this.machine.console() : null;
         // Write back through the handler so onContentsChanged fires (setChanged + build invalidation).
         final OsDisks.FormatResult result = OsDisks.formatDisk(
                 this.machine.layout().diskCount(), this::diskInSlot, this::putDisk, slot);
@@ -449,6 +456,9 @@ final class OsSession {
             this.bootDisk = -1;
         }
         if (result == OsDisks.FormatResult.ERASED_SYSTEM) {
+            if (runningConsole != null) {
+                runningConsole.wipeSoftware();
+            }
             this.machine.onSystemErased();
         }
         this.machine.setChanged();

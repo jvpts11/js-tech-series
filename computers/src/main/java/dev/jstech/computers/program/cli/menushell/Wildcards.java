@@ -27,6 +27,15 @@ public final class Wildcards {
         if (EVERY_NAME.equals(p)) {
             return true;
         }
-        return Glob.matches(p, name, true);
+        if (Glob.matches(p, name, true)) {
+            return true;
+        }
+        /*
+         * DOS compares the name and the extension apart, so FOO.* also takes a FOO that has no extension: the
+         * extension half of the pattern matches the empty extension. Only a name with no dot of its own can be
+         * that bare name.
+         */
+        return p.endsWith(".*") && name.indexOf('.') < 0
+                && Glob.matches(p.substring(0, p.length() - 2), name, true);
     }
 }

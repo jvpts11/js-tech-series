@@ -20,10 +20,10 @@ import org.jetbrains.annotations.Nullable;
  *
  * <ul>
  *   <li>{@link MediaKind#OS_INSTALL}, boots an OS installer; the target OS is identified by the
- *       {@link ComputingModule#MEDIA_PAYLOAD} component (a {@link ResourceLocation}).</li>
+ *       {@link ComputingComponents#MEDIA_PAYLOAD} component (a {@link ResourceLocation}).</li>
  *   <li>{@link MediaKind#PROGRAM_INSTALL}, installs an add-on program; same payload component.</li>
  *   <li>{@link MediaKind#DATA}, carries a portable item/fluid snapshot stored in the
- *       {@link ComputingModule#MEDIA_DATA} component.</li>
+ *       {@link ComputingComponents#MEDIA_DATA} component.</li>
  * </ul>
  *
  * All state is stored in data components so it survives serialization and network sync without

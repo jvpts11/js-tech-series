@@ -15,13 +15,11 @@ import dev.jstech.computers.operation.payload.BusStatePayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * The Activity tab of a bus's window: what the bus did lately, newest first, each move as the Operation it was and each
@@ -34,10 +32,6 @@ final class BusActivityView {
     private int scroll;
 
     /** The ticks of a game day, and of one of its hours. */
-    private static final long DAY = 24_000L;
-    private static final long HOUR = 1_000L;
-    private static final int HOURS_BEFORE_DAWN = 6;
-    private static final int MINUTES = 60;
 
     BusActivityView(final AbstractBusMenu menu, final Font font) {
         this.menu = menu;
@@ -93,7 +87,7 @@ final class BusActivityView {
     /* One line of the log: when and what on the first, why and how it ended on the second. */
     private void drawEntry(final GuiGraphics g, final BusActivity.Entry entry, final int left, final int y) {
         BusDraw.bar(g, left + BusLayout.LABEL_X, y, BusLayout.ROW_W, BusLayout.ENTRY_H - 1, false);
-        final String time = clock(entry.time());
+        final String time = BusDraw.clock(entry.time());
         final int x = left + BusLayout.LABEL_X + 3;
         BusDraw.small(g, font, time, x, y + 2, JsTechTheme.dim());
         final int whatX = x + BusDraw.width(font, time) + 5;
@@ -110,7 +104,7 @@ final class BusActivityView {
     /* One arrival a Receiving Bus credited: when and what on the first line, where it went on the second. */
     private void drawCredit(final GuiGraphics g, final CraftingLog.Entry entry, final int left, final int y) {
         BusDraw.bar(g, left + BusLayout.LABEL_X, y, BusLayout.ROW_W, BusLayout.ENTRY_H - 1, false);
-        final String time = clock(entry.time());
+        final String time = BusDraw.clock(entry.time());
         final int x = left + BusLayout.LABEL_X + 3;
         BusDraw.small(g, font, time, x, y + 2, JsTechTheme.dim());
         final int whatX = x + BusDraw.width(font, time) + 5;
@@ -139,18 +133,6 @@ final class BusActivityView {
     private List<CraftingLog.Entry> creditEntries() {
         final BusStatePayload state = menu.state();
         return state == null ? List.of() : state.crafting().log();
-    }
-
-    /** The hour of the day {@code time} was, as the clock read: what happened at a game time, read on today's. */
-    private static String clock(final long time) {
-        final Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
-            return "--:--";
-        }
-        final long day = Math.floorMod(mc.level.getDayTime() - (mc.level.getGameTime() - time), DAY);
-        final long hour = (day / HOUR + HOURS_BEFORE_DAWN) % 24L;
-        final long minute = day % HOUR * MINUTES / HOUR;
-        return String.format(Locale.ROOT, "%02d:%02d", hour, minute);
     }
 
     private static String what(final BusActivity.Entry entry) {

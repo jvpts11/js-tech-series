@@ -115,6 +115,44 @@ public final class FileCopyGameTests {
                 .thenSucceed();
     }
 
+    /** When every numbered name up to 99 is taken, the copy is refused instead of writing over the last one. */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void copy_withEveryCopyNameTakenWritesNothing(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = withFloppy(helper);
+        DiskFilesystem.write(computer.systemDisk(), "note.txt", FileType.TXT, "from the disk", Long.MAX_VALUE,
+                FilesystemKind.HIERARCHICAL);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(computer.enabledEndpoints().contains(drive(helper)),
+                        "the floppy drive links to the computer"))
+                .thenExecute(() -> {
+                    final ItemStack floppy = ((MediaReaderBlockEntity) helper.getBlockEntity(DRIVE)).mediaSlot()
+                            .getStackInSlot(0);
+                    DiskFilesystem.write(floppy, "note.txt", FileType.TXT, "kept", Long.MAX_VALUE,
+                            FilesystemKind.HIERARCHICAL);
+                    DiskFilesystem.write(floppy, "note - Copy.txt", FileType.TXT, "kept", Long.MAX_VALUE,
+                            FilesystemKind.HIERARCHICAL);
+                    for (int n = 2; n <= 99; n++) {
+                        DiskFilesystem.write(floppy, "note - Copy (" + n + ").txt", FileType.TXT, "kept",
+                                Long.MAX_VALUE, FilesystemKind.HIERARCHICAL);
+                    }
+                    FileTransferPayloads.copy(helper.getLevel(), player(helper), helper.absolutePos(PC), "note.txt",
+                            floppy(helper));
+                })
+                .thenWaitUntil(() -> helper.assertTrue(
+                        FileCopyJobs.runningOn(helper.getLevel(), helper.absolutePos(PC)) == 0, "the copy settles"))
+                .thenExecute(() -> {
+                    final ItemStack floppy = ((MediaReaderBlockEntity) helper.getBlockEntity(DRIVE)).mediaSlot()
+                            .getStackInSlot(0);
+                    helper.assertTrue(DiskFilesystem.read(floppy, "note - Copy (99).txt").orElse("").equals("kept"),
+                            "the last numbered name is not written over");
+                    helper.assertTrue(DiskFilesystem.read(floppy, "note.txt").orElse("").equals("kept"),
+                            "and neither is the first");
+                    helper.assertTrue(!DiskFilesystem.exists(floppy, "note - Copy (100).txt"),
+                            "no name past the bound is invented");
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 600)
     public static void copies_onOneMachineGoOneAfterAnother(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = withFloppy(helper);

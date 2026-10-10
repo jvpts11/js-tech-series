@@ -16,6 +16,9 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.core.cable.CableBlock;
 import dev.jstech.core.gametest.ScenarioBuilder;
 import net.minecraft.core.BlockPos;
@@ -25,6 +28,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -84,16 +88,42 @@ public final class TestWorldBuilder extends ScenarioBuilder {
      * <p>A setup takes seconds of game time so a player sees it; a test that only cares what the
      * machine looks like afterwards ticks the job itself rather than sleeping through the bar.
      */
-    public static void finishSetup(final dev.jstech.computers.os.IOsHost host, final ServerLevel level,
+    public static void finishSetup(final IOsHost host, final ServerLevel level,
                                    final BlockPos pos) {
-        final int most = dev.jstech.computers.os.install.SetupTiming.MAX_SECONDS
-                * dev.jstech.computers.os.install.SetupTiming.TICKS_PER_SECOND + 1;
+        final int most = SetupTiming.MAX_SECONDS * SetupTiming.TICKS_PER_SECOND + 1;
         for (int i = 0; i < most && host.console() != null && host.console().setup() != null; i++) {
-            dev.jstech.computers.os.install.SetupRunner.tick(host, level, pos);
+            SetupRunner.tick(host, level, pos);
         }
     }
 
     public static void installMainframeBuild(final MainframeBlockEntity be) {
+        /*
+         * The Network OS is 8 MB, one item of a 500 GB HDD's 2 000 at 256 MB the item. The disk must be in
+         * place before installOs() so the footprint check passes.
+         */
+        installMainframeBuild(be, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        be.installOs(NETWORK_OS);
+    }
+
+    /**
+     * Sets the parts of a working Mainframe into its inventory, with a 500 GB disk of {@code disk}'s kind and a
+     * graphics card when {@code withGpu} (which is what gives it the peripheral ports a monitor links to). No
+     * system is installed and the machine is not powered, so a caller can pick its own system first.
+     */
+    public static void installMainframeParts(final MainframeBlockEntity be, final StorageTier disk,
+                                             final boolean withGpu) {
+        installMainframeBuild(be, new ItemStack(ComputingModule.disk(disk, DiskSize.GB_500)));
+        if (withGpu) {
+            be.getInventory().setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
+                    new ItemStack(ComputingModule.GPU_HD_7970.get()));
+        }
+    }
+
+    /**
+     * The standard Mainframe hardware (board, CPU, RAM, power supply) with {@code disk} in the first disk slot, or
+     * no disk when it is null. No system is installed, so a test can put its own on the disk afterwards.
+     */
+    public static void installMainframeBuild(final MainframeBlockEntity be, final ItemStack disk) {
         final ItemStackHandler inv = be.getInventory();
         inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
@@ -103,13 +133,9 @@ public final class TestWorldBuilder extends ScenarioBuilder {
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT,
                 new ItemStack(ComputingModule.PSU_650G.get()));
-        /*
-         * The Network OS is 8 MB, one item of a 500 GB HDD's 2 000 at 256 MB the item. The disk must be in
-         * place before installOs() so the footprint check passes.
-         */
-        inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
-        be.installOs(NETWORK_OS);
+        if (disk != null) {
+            inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START, disk);
+        }
     }
 
     /** Places a Mainframe controller, installs the valid build and powers it on. */
@@ -164,28 +190,12 @@ public final class TestWorldBuilder extends ScenarioBuilder {
      * Crafting Card, and powers it on.
      */
     public CraftingComputerBlockEntity placeRunningCraftingComputer(final BlockPos relative) {
-        setBlock(relative, ComputingModule.CRAFTING_COMPUTER.get());
-        faceRearTowardCable(relative);
-        final CraftingComputerBlockEntity be = blockEntity(relative, CraftingComputerBlockEntity.class);
-        final ItemStackHandler hw = be.getHardware();
-        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
-                new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1,
-                new ItemStack(ComputingModule.GPU_HD_7970.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
-                new ItemStack(ComputingModule.PSU_650G.get()));
-        // Solid state for the same reason as the personal computer above: the disk decides how long it takes.
-        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
-        be.installOs(DESKTOP_OS);
-        be.togglePower();
-        return be;
+        return placeRunningCrafting(relative, new CraftingParts(ComputingModule.CRAFTING_COMPUTER.get(),
+                HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get(), HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get(),
+                ComputingModule.RAM_DDR3_8192.get(), ComputingModule.GPU_HD_7970.get(),
+                ComputingModule.PSU_650G.get(),
+                // Solid state for the same reason as the personal computer above: the disk decides how long it takes.
+                StorageTier.SSD), DESKTOP_OS);
     }
 
     /**
@@ -201,27 +211,10 @@ public final class TestWorldBuilder extends ScenarioBuilder {
      * every caller so far wants a machine that can also do something.
      */
     public CraftingComputerBlockEntity placeRunningLegacyCraftingComputer(final BlockPos relative) {
-        setBlock(relative, ComputingModule.LEGACY_CRAFTING_COMPUTER.get());
-        faceRearTowardCable(relative);
-        final CraftingComputerBlockEntity be = blockEntity(relative, CraftingComputerBlockEntity.class);
-        final ItemStackHandler hw = be.getHardware();
-        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_PENTIX_4_560.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR_1024.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
-                new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1,
-                new ItemStack(HardwareItems.GPU_VERTEX_6600_GT.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_500B.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
-        be.installOs(DESKTOP_OS);
-        be.togglePower();
-        return be;
+        return placeRunningCrafting(relative, new CraftingParts(ComputingModule.LEGACY_CRAFTING_COMPUTER.get(),
+                HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get(), HardwareItems.CPU_INTEGRA_PENTIX_4_560.get(),
+                HardwareItems.RAM_DDR_1024.get(), HardwareItems.GPU_VERTEX_6600_GT.get(),
+                HardwareItems.PSU_500B.get(), StorageTier.SSD), DESKTOP_OS);
     }
 
     /**
@@ -230,27 +223,10 @@ public final class TestWorldBuilder extends ScenarioBuilder {
      */
     public CraftingComputerBlockEntity placeRunningTransitionCraftingComputer(final BlockPos relative,
                                                                               final ResourceLocation os) {
-        setBlock(relative, ComputingModule.TRANSITION_CRAFTING_COMPUTER.get());
-        faceRearTowardCable(relative);
-        final CraftingComputerBlockEntity be = blockEntity(relative, CraftingComputerBlockEntity.class);
-        final ItemStackHandler hw = be.getHardware();
-        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(HardwareItems.MOTHERBOARD_ATX_TRANSITION_775.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
-                new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
-                new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1,
-                new ItemStack(HardwareItems.GPU_VERTEX_8600_GT.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
-                new ItemStack(HardwareItems.PSU_450B.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
-        be.installOs(os);
-        be.togglePower();
-        return be;
+        return placeRunningCrafting(relative, new CraftingParts(ComputingModule.TRANSITION_CRAFTING_COMPUTER.get(),
+                HardwareItems.MOTHERBOARD_ATX_TRANSITION_775.get(), HardwareItems.CPU_INTEGRA_CENTRO_2_DUO_E6600.get(),
+                HardwareItems.RAM_DDR2_2048.get(), HardwareItems.GPU_VERTEX_8600_GT.get(),
+                HardwareItems.PSU_450B.get(), StorageTier.HDD), os);
     }
 
     /** Seeds slot 0 of the rack at {@code relative} with the default server and its bay drives. */
@@ -378,5 +354,31 @@ public final class TestWorldBuilder extends ScenarioBuilder {
             computers.add(placeRunningCraftingComputer(new BlockPos(5, 2 + i, 2)));
         }
         return computers;
+    }
+
+    /** Places a crafting computer of {@code parts} with a Crafting Card, installs {@code os} and powers it on. */
+    private CraftingComputerBlockEntity placeRunningCrafting(final BlockPos relative, final CraftingParts parts,
+                                                             final ResourceLocation os) {
+        setBlock(relative, parts.block());
+        faceRearTowardCable(relative);
+        final CraftingComputerBlockEntity be = blockEntity(relative, CraftingComputerBlockEntity.class);
+        final ItemStackHandler hw = be.getHardware();
+        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(parts.board()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT, new ItemStack(parts.cpu()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START, new ItemStack(parts.ram()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
+                new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1, new ItemStack(parts.gpu()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT, new ItemStack(parts.psu()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
+                new ItemStack(ComputingModule.disk(parts.disk(), DiskSize.GB_500)));
+        be.installOs(os);
+        be.togglePower();
+        return be;
+    }
+
+    /* What one crafting computer is built from, apart from the Crafting Card every one of them carries. */
+    private record CraftingParts(Block block, ItemLike board, ItemLike cpu, ItemLike ram, ItemLike gpu, ItemLike psu,
+                                 StorageTier disk) {
     }
 }

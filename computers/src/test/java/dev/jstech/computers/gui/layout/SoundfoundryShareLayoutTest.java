@@ -51,4 +51,14 @@ class SoundfoundryShareLayoutTest {
         assertEquals(1, SoundfoundryShareLayout.listDownloadAt(30, top + 5));
         assertEquals(-1, SoundfoundryShareLayout.listDownloadAt(30, SoundfoundryShareLayout.STATUS.y()));
     }
+
+    @Test
+    void listDownloadAt_hitsARowOnItsFirstAndLastDrawnPixelRows() {
+        for (int row = 0; row < 2; row++) {
+            final int fillTop = SoundfoundryShareLayout.listDownloadTop(row) - 2;
+            assertEquals(row, SoundfoundryShareLayout.listDownloadAt(30, fillTop));
+            assertEquals(row, SoundfoundryShareLayout.listDownloadAt(30,
+                    fillTop + SoundfoundryShareLayout.DOWNLOAD_H - 2));
+        }
+    }
 }

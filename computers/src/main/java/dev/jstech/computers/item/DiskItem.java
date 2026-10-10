@@ -29,6 +29,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A storage-disk component item.
@@ -49,6 +50,10 @@ public class DiskItem extends SpecItem<DiskSpec> {
     private static final TextKey DESKTOP = TextKey.of("jsc.item.disk.desktop", "Desktop: %s");
     private static final TextKey PROGRAMS_ONE = TextKey.of("jsc.item.disk.programs_one", "%s program installed");
     private static final TextKey PROGRAMS_MANY = TextKey.of("jsc.item.disk.programs_many", "%s programs installed");
+
+    /** The software facts of the disk whose tooltip was gathered last. */
+    @Nullable
+    private static volatile SoftwareFacts lastFacts;
 
     public DiskItem(final Properties properties, final DiskSpec spec) {
         super(properties, spec);
@@ -120,21 +125,42 @@ public class DiskItem extends SpecItem<DiskSpec> {
         if (software == null) {
             return;
         }
-        final ComputerConsoleState state =
-                new ComputerConsoleState();
-        state.load(software);
-        final ResourceLocation desktop =
-                OsDisks.installedDesktopId(os, state);
+        final SoftwareFacts facts = factsOf(software, os);
+        final ResourceLocation desktop = facts.desktop();
         if (desktop != null) {
             final var def = OsRegistry.getDesktop(desktop);
             tooltip.add(GameText.component(DESKTOP.with(def != null ? def.displayName() : desktop.getPath()))
                     .withStyle(ChatFormatting.DARK_AQUA));
         }
-        final int programs = state.installed().size();
+        final int programs = facts.programs();
         if (programs > 0) {
             tooltip.add(GameText.component((programs == 1 ? PROGRAMS_ONE : PROGRAMS_MANY).with(programs))
                     .withStyle(ChatFormatting.DARK_AQUA));
         }
+    }
+
+    /*
+     * What the tooltip shows of a disk's software. The tooltip is gathered every frame while the cursor rests on the
+     * stack, and reading the whole software state is far more than it needs, so the answer for the last disk looked at
+     * is kept: a component's tag is replaced when it changes, never edited in place, so the same tag is the same
+     * answer.
+     */
+    private static SoftwareFacts factsOf(final CompoundTag software, @Nullable final OsDef os) {
+        final SoftwareFacts last = lastFacts;
+        if (last != null && last.source() == software && last.os() == os) {
+            return last;
+        }
+        final ComputerConsoleState state = new ComputerConsoleState();
+        state.load(software);
+        final SoftwareFacts read = new SoftwareFacts(software, os, OsDisks.installedDesktopId(os, state),
+                state.installed().size());
+        lastFacts = read;
+        return read;
+    }
+
+    /** The desktop and the program count read from one disk's software, with what they were read from. */
+    private record SoftwareFacts(CompoundTag source, @Nullable OsDef os, @Nullable ResourceLocation desktop,
+                                 int programs) {
     }
 
     /**

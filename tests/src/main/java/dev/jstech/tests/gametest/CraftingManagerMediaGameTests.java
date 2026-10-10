@@ -8,12 +8,21 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload;
 import dev.jstech.computers.operation.payload.crafting.CraftManagerPayloads;
+import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.CraftFiles;
 import dev.jstech.tests.testkit.TestWorldBuilder;
+import io.netty.buffer.Unpooled;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
@@ -100,29 +109,29 @@ public final class CraftingManagerMediaGameTests {
         CraftFiles.writeBench(dvd, CraftFiles.oakPlanks(), helper.getLevel().registryAccess());
 
         // The explorer lets a player rename a file to anything up to the filesystem's limit.
-        final String longName = "a".repeat(dev.jstech.computers.os.fs.FsPaths.MAX_NAME_LENGTH - 6)
+        final String longName = "a".repeat(FsPaths.MAX_NAME_LENGTH - 6)
                 + ".craft";
         String written = null;
-        for (final dev.jstech.computers.os.fs.DiskFilesystem.FileEntry entry
-                : dev.jstech.computers.os.fs.DiskFilesystem.list(dvd, "",
-                        dev.jstech.computers.os.FilesystemKind.HIERARCHICAL)) {
-            if (entry.type() == dev.jstech.computers.os.fs.FileType.CRAFT) {
+        for (final DiskFilesystem.FileEntry entry
+                : DiskFilesystem.list(dvd, "",
+                        FilesystemKind.HIERARCHICAL)) {
+            if (entry.type() == FileType.CRAFT) {
                 written = entry.path();
             }
         }
         helper.assertTrue(written != null, "the craft is on the disc");
-        helper.assertTrue(dev.jstech.computers.os.fs.DiskFilesystem.rename(dvd, written, longName,
-                        dev.jstech.computers.os.FilesystemKind.HIERARCHICAL),
+        helper.assertTrue(DiskFilesystem.rename(dvd, written, longName,
+                        FilesystemKind.HIERARCHICAL),
                 "the craft takes the longest name the filesystem allows");
         world.blockEntity(DVD_DRIVE, MediaReaderBlockEntity.class).mediaSlot().setStackInSlot(0, dvd);
 
         // A ROM pattern whose result carries a name longer than the wire field.
-        final java.util.List<ItemStack> grid = new java.util.ArrayList<>(java.util.Collections.nCopies(9, ItemStack.EMPTY));
+        final List<ItemStack> grid = new ArrayList<>(Collections.nCopies(9, ItemStack.EMPTY));
         grid.set(0, new ItemStack(Items.OAK_LOG));
         final ItemStack renamed = new ItemStack(Items.OAK_PLANKS, 4);
         renamed.set(DataComponents.CUSTOM_NAME, Component.literal("n".repeat(70)));
         helper.assertTrue(net.cc().loadPattern(
-                        new dev.jstech.computers.crafting.CraftingPattern(grid, renamed)),
+                        new CraftingPattern(grid, renamed)),
                 "the renamed pattern goes into the ROM");
 
         helper.startSequence()
@@ -130,7 +139,7 @@ public final class CraftingManagerMediaGameTests {
                     final CraftManagerStatePayload state =
                             CraftManagerPayloads.buildCraftManagerState(net.cc(), helper.getLevel());
                     final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(
-                            io.netty.buffer.Unpooled.buffer(), helper.getLevel().registryAccess());
+                            Unpooled.buffer(), helper.getLevel().registryAccess());
                     CraftManagerStatePayload.STREAM_CODEC.encode(buf, state); // must not throw
                     final CraftManagerStatePayload decoded = CraftManagerStatePayload.STREAM_CODEC.decode(buf);
                     helper.assertTrue(decoded.mediaFiles().contains(longName),
@@ -151,20 +160,20 @@ public final class CraftingManagerMediaGameTests {
     @GameTest(template = ARENA)
     public static void uniquePath_keepsARecipeAlreadyOnTheDiscUnderThatName(final GameTestHelper helper) {
         final ItemStack dvd = new ItemStack(ComputingModule.DVD_RW.get());
-        final dev.jstech.computers.os.FilesystemKind kind =
-                dev.jstech.computers.os.FilesystemKind.HIERARCHICAL;
-        final String first = dev.jstech.computers.os.fs.DiskFilesystem.uniquePath(
+        final FilesystemKind kind =
+                FilesystemKind.HIERARCHICAL;
+        final String first = DiskFilesystem.uniquePath(
                 dvd, "oak_planks", ".craft", "recipe A");
         helper.assertTrue(first.equals("oak_planks.craft"), "an empty disc takes the plain name; got " + first);
-        helper.assertTrue(dev.jstech.computers.os.fs.DiskFilesystem.write(dvd, first,
-                        dev.jstech.computers.os.fs.FileType.CRAFT, "recipe A", 1_000_000L, kind)
-                        == dev.jstech.computers.os.fs.DiskFilesystem.WriteResult.OK,
+        helper.assertTrue(DiskFilesystem.write(dvd, first,
+                        FileType.CRAFT, "recipe A", 1_000_000L, kind)
+                        == DiskFilesystem.WriteResult.OK,
                 "the first recipe is written");
-        final String second = dev.jstech.computers.os.fs.DiskFilesystem.uniquePath(
+        final String second = DiskFilesystem.uniquePath(
                 dvd, "oak_planks", ".craft", "recipe B");
         helper.assertTrue(second.equals("oak_planks_2.craft"),
                 "a different recipe with the same name takes the next suffix; got " + second);
-        final String again = dev.jstech.computers.os.fs.DiskFilesystem.uniquePath(
+        final String again = DiskFilesystem.uniquePath(
                 dvd, "oak_planks", ".craft", "recipe A");
         helper.assertTrue(again.equals("oak_planks.craft"), "the same recipe lands on its own file; got " + again);
         helper.succeed();

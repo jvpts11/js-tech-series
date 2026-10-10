@@ -74,6 +74,9 @@ public final class SoundfoundryCatalog {
     private static final Logger LOGGER = LogUtils.getLogger();
     /* The largest song read into the catalogue: far past any real one, well short of what memory holds. */
     private static final long MOST_BYTES = 1L << 30;
+/* The largest notes file and cover read: real ones are a few kilobytes, so a bigger one is not what it claims. */
+    private static final long NOTES_MOST_BYTES = 1L << 20;
+    private static final long COVER_MOST_BYTES = 16L << 20;
     private static final String FROM_CONFIG = "config";
     /* The keys an album's notes are written under. */
     private static final String NOTES_TITLE = "title";
@@ -129,17 +132,22 @@ public final class SoundfoundryCatalog {
         CompletableFuture.supplyAsync(() -> load(folder, resources, store), Util.ioPool())
                 .exceptionally(failed -> {
                     LOGGER.error("The Soundfoundry catalogue could not be read", failed);
-                    return Snapshot.EMPTY;
+                    // A failed reading leaves the catalogue that was there rather than emptying it.
+                    return null;
                 })
                 .thenAcceptAsync(read -> {
-                    if (reading == READING.get()) {
+                    if (reading != READING.get()) {
+                        // A later reading took over, so these counts are of a catalogue nobody will see.
+                        return;
+                    }
+                    if (read != null) {
                         current = read;
                         SoundfoundryCovers.forget();
                         LOGGER.info("Soundfoundry catalogue: {} albums, {} songs, {} files passed over",
                                 read.albums().size(), read.songs(), read.skipped());
                     }
                     if (done != null) {
-                        done.accept(read);
+                        done.accept(current);
                     }
                 }, server);
     }
@@ -201,18 +209,9 @@ public final class SoundfoundryCatalog {
         CatalogAssembly.Notes notes = CatalogAssembly.Notes.NONE;
         try (Stream<Path> listed = Files.list(album)) {
             for (final Path file : listed.filter(Files::isRegularFile).sorted().toList()) {
-                final String fileName = file.getFileName().toString();
-                if (fileName.equalsIgnoreCase(NOTES)) {
-                    notes = notesOf(Files.readString(file, StandardCharsets.UTF_8), file.toString());
-                } else if (isCover(fileName)) {
-                    reading.cover(FROM_CONFIG + "/" + name, Files.readAllBytes(file), file.toString());
-                } else if (songKind(fileName) != null) {
-                    if (Files.size(file) > MOST_BYTES) {
-                        reading.tooLarge(file.toString());
-                        continue;
-                    }
-                    reading.keep(found, fileName, Files.readAllBytes(file), file.toString());
-                }
+                // A file that cannot be read is passed over on its own, so the files after it still count.
+                notes = dispatch(file.getFileName().toString(), file.toString(), FROM_CONFIG + "/" + name,
+                        most -> Files.size(file) > most ? null : Files.readAllBytes(file), reading, found, notes);
             }
         } catch (final IOException unreadable) {
             reading.passOver(album.toString(), unreadable.getMessage());
@@ -240,24 +239,48 @@ public final class SoundfoundryCatalog {
             files.sort(Map.Entry.comparingByKey());
             for (final Map.Entry<ResourceLocation, Resource> file : files) {
                 final String path = file.getKey().getPath();
-                final String fileName = path.substring(path.lastIndexOf('/') + 1);
-                try (InputStream in = file.getValue().open()) {
-                    final byte[] bytes = in.readNBytes((int) Math.min(Integer.MAX_VALUE - 8L, MOST_BYTES + 1L));
-                    if (fileName.equalsIgnoreCase(NOTES)) {
-                        notes = notesOf(new String(bytes, StandardCharsets.UTF_8), file.getKey().toString());
-                    } else if (isCover(fileName)) {
-                        reading.cover(id, bytes, file.getKey().toString());
-                    } else if (bytes.length > MOST_BYTES) {
-                        reading.tooLarge(file.getKey().toString());
-                    } else {
-                        reading.keep(found, fileName, bytes, file.getKey().toString());
+                notes = dispatch(path.substring(path.lastIndexOf('/') + 1), file.getKey().toString(), id, most -> {
+                    try (InputStream in = file.getValue().open()) {
+                        // Reads one byte past the cap and no further, so a huge file never fills memory.
+                        final byte[] bytes = in.readNBytes((int) Math.min(Integer.MAX_VALUE - 8L, most + 1L));
+                        return bytes.length > most ? null : bytes;
                     }
-                } catch (final IOException unreadable) {
-                    reading.passOver(file.getKey().toString(), unreadable.getMessage());
-                }
+                }, reading, found, notes);
             }
             reading.add(id, id.substring(id.indexOf('/') + 1), notes, found);
         }
+    }
+
+    /*
+     * What to do with one file of an album, whichever place it came from: its notes are read, its cover is made
+     * small, a song is kept, and anything else is ignored. The place only supplies the bytes. Returns the notes the
+     * album has afterwards.
+     */
+    private static CatalogAssembly.Notes dispatch(final String fileName, final String where, final String albumId,
+                                                  final Bytes source, final Reading reading,
+                                                  final List<CatalogAssembly.Found> found,
+                                                  final CatalogAssembly.Notes notes) {
+        final boolean isNotes = fileName.equalsIgnoreCase(NOTES);
+        final boolean isCover = !isNotes && isCover(fileName);
+        if (!isNotes && !isCover && songKind(fileName) == null) {
+            return notes;
+        }
+        final long most = isNotes ? NOTES_MOST_BYTES : isCover ? COVER_MOST_BYTES : MOST_BYTES;
+        try {
+            final byte[] bytes = source.read(most);
+            if (bytes == null) {
+                reading.tooLarge(where);
+            } else if (isNotes) {
+                return notesOf(new String(bytes, StandardCharsets.UTF_8), where);
+            } else if (isCover) {
+                reading.cover(albumId, bytes, where);
+            } else {
+                reading.keep(found, fileName, bytes, where);
+            }
+        } catch (final IOException unreadable) {
+            reading.passOver(where, unreadable.getMessage());
+        }
+        return notes;
     }
 
     private static boolean wanted(final String path) {
@@ -325,6 +348,14 @@ public final class SoundfoundryCatalog {
         }
     }
 
+    /* Where the bytes of one file come from: null when the file is larger than {@code most}, without holding it. */
+    @FunctionalInterface
+    private interface Bytes {
+
+        @Nullable
+        byte[] read(long most) throws IOException;
+    }
+
     /** What one reading has found so far. */
     private static final class Reading {
 
@@ -367,7 +398,8 @@ public final class SoundfoundryCatalog {
 
         void tooLarge(final String where) {
             skipped++;
-            LOGGER.warn("Soundfoundry catalogue: {} was passed over: it is larger than a gigabyte", where);
+            LOGGER.warn("Soundfoundry catalogue: {} was passed over: it is larger than the most a file of its kind"
+                    + " may be", where);
         }
 
         void add(final String id, final String folder, final CatalogAssembly.Notes notes,

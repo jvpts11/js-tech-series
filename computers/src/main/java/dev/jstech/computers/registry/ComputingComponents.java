@@ -9,6 +9,7 @@ package dev.jstech.computers.registry;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.crafting.CraftingEras;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.os.DiskSystems;
 import dev.jstech.computers.os.fs.FilesystemContents;
@@ -85,6 +86,12 @@ public final class ComputingComponents {
             RAID_MEMBERS = COMPONENTS.registerComponentType("raid_members", b -> b
                     .persistent(Codec.INT)
                     .networkSynchronized(ByteBufCodecs.VAR_INT));
+
+    /* The size of the volume a RAID Controller's array was formed with, kept so a degraded array does not resize. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>>
+            RAID_VOLUME = COMPONENTS.registerComponentType("raid_volume", b -> b
+                    .persistent(Codec.LONG)
+                    .networkSynchronized(ByteBufCodecs.VAR_LONG));
 
     /*
      * A rack server's software state (console history, installed programs, settings) persists WITH
@@ -197,7 +204,8 @@ public final class ComputingComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<CraftingPattern>>>
             RECIPE_ROM = COMPONENTS.registerComponentType("recipe_rom", b -> b
                     .persistent(CraftingPattern.CODEC.listOf())
-                    .networkSynchronized(CraftingPattern.STREAM_CODEC.apply(ByteBufCodecs.list(16))));
+                    .networkSynchronized(CraftingPattern.STREAM_CODEC.apply(
+                            ByteBufCodecs.list(CraftingEras.MAX_ROM_PER_CARD))));
 
     private ComputingComponents() {
     }

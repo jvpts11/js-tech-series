@@ -345,6 +345,15 @@ public final class HelpPages {
             }
             final StringBuilder packed = new StringBuilder();
             for (final String cell : cells) {
+                if (voice.headingIndent + cell.length() > width - 1) {
+                    // A cell too wide for the glass on its own is wrapped like the other voices wrap it.
+                    if (!packed.isEmpty()) {
+                        lines.add(HelpLine.of(voice.headingIndent, packed.toString(), HelpLine.Ink.TABLE));
+                        packed.setLength(0);
+                    }
+                    lines.addAll(wrapped(cell, voice.headingIndent, width, HelpLine.Ink.TABLE));
+                    continue;
+                }
                 final String joint = packed.isEmpty() ? "" : "   ";
                 if (!packed.isEmpty() && voice.headingIndent + packed.length() + joint.length() + cell.length()
                         > width - 1) {

@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.program.Programs;
@@ -104,6 +105,8 @@ final class RackArrays {
         final ItemStack stack = rack.frontSlot(controller);
         RackGadgetItem.setRaidMode(stack, mode);
         stack.set(ComputingComponents.RAID_MEMBERS.get(), mode == RaidMode.NONE ? 0 : drives);
+        stack.set(ComputingComponents.RAID_VOLUME.get(),
+                mode == RaidMode.NONE ? 0L : mode.usableCapacity(driveSizes(serverSlot), drives));
         rack.markStorageChanged(serverSlot);
         rack.setChanged();
         return true;
@@ -117,6 +120,27 @@ final class RackArrays {
         }
         final Integer members = rack.frontSlot(controller).get(ComputingComponents.RAID_MEMBERS.get());
         return members == null ? 0 : members;
+    }
+
+    /** The size of the volume the unit's array was formed with (0 when it runs no array or none was kept). */
+    long promisedVolume(final int serverSlot) {
+        final int controller = controllerSlot(serverSlot);
+        if (controller < 0) {
+            return 0L;
+        }
+        final Long volume = rack.frontSlot(controller).get(ComputingComponents.RAID_VOLUME.get());
+        return volume == null ? 0L : volume;
+    }
+
+    /** The capacity in items of each disk in the unit's bay. */
+    List<Long> driveSizes(final int serverSlot) {
+        final List<Long> sizes = new ArrayList<>();
+        for (final ItemStack drive : rack.claimedDriveStacks(serverSlot)) {
+            if (drive.getItem() instanceof DiskItem disk) {
+                sizes.add(disk.spec().capacityItems());
+            }
+        }
+        return sizes;
     }
 
     /** Whether the unit's array is missing members but still serving data. */

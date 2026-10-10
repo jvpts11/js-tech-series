@@ -67,4 +67,9 @@ class PrintedDocumentTest {
     void bytes_countThePrint() {
         assertEquals(7, PrintedDocument.text("t", "", "", List.of("abc", "defg")).bytes());
     }
+
+    @Test
+    void bytes_countUtf8BytesNotCharacters() {
+        assertEquals(6, PrintedDocument.text("t", "", "", List.of("a" + (char) 0xE9 + (char) 0x20AC)).bytes());
+    }
 }

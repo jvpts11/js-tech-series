@@ -103,7 +103,8 @@ public final class SoundfoundrySharePayloads {
                 state.clearFinishedDownloads();
                 computer.setChanged();
             }
-            default -> SoundfoundryShare.layDownSharedFolder(computer);
+            case SoundfoundryShareActionPayload.LOOK -> SoundfoundryShare.layDownSharedFolder(computer);
+            default -> { }
         }
         final boolean shared = payload.action() == SoundfoundryShareActionPayload.LOOK && payload.index() != 0;
         PacketDistributor.sendToPlayer(player, stateOf(level, computer, found, shared, note));

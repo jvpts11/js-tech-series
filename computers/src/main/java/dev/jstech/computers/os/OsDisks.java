@@ -115,19 +115,8 @@ public final class OsDisks {
      */
     public static ItemStack systemDisk(final int diskCount, final IntFunction<ItemStack> diskInSlot,
                                        final int preferredSlot) {
-        if (preferredSlot >= 0 && preferredSlot < diskCount) {
-            final ItemStack preferred = diskInSlot.apply(preferredSlot);
-            if (preferred.getItem() instanceof DiskItem && hasSystem(preferred)) {
-                return preferred;
-            }
-        }
-        for (int i = 0; i < diskCount; i++) {
-            final ItemStack stack = diskInSlot.apply(i);
-            if (stack.getItem() instanceof DiskItem && hasSystem(stack)) {
-                return stack;
-            }
-        }
-        return ItemStack.EMPTY;
+        final int slot = systemDiskSlot(diskCount, diskInSlot, preferredSlot);
+        return slot < 0 ? ItemStack.EMPTY : diskInSlot.apply(slot);
     }
 
     /**
@@ -181,10 +170,13 @@ public final class OsDisks {
         if (systemsOn(disk).has(osId)) {
             return true;
         }
+        // A full list would drop the new entry off its end, leaving the install reported as done but not on the disk.
+        if (systemsOn(disk).count() >= DiskSystems.MOST_SYSTEMS) {
+            return false;
+        }
         final DiskItem target = (DiskItem) disk.getItem();
-        final long freeWeight = target.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM
-                - DriveVolumes.usedWeight(disk) - DiskFilesystem.filesWeight(disk);
-        return def.footprintItemsOn(target.spec().era()) * StorageKey.MB_EQ_PER_ITEM <= freeWeight;
+        // The room left already accounts for the systems the disk carries, so a second one cannot overfill it.
+        return def.footprintItemsOn(target.spec().era()) * StorageKey.MB_EQ_PER_ITEM <= systemDiskFreeWeight(disk);
     }
 
     /**
@@ -313,6 +305,9 @@ public final class OsDisks {
         updated.remove(ComputingComponents.FILESYSTEM.get());
         DriveVolumes.erase(updated);
         updated.remove(ComputingComponents.DISK_PUBLIC_PERMILLE.get());
+        // The console (history, installed programs, a setup half done) lived on the systems just erased; left on
+        // the disk it would come back when a system is installed here again.
+        updated.remove(ComputingComponents.DISK_CONSOLE.get());
         setDiskInSlot.accept(updated, slot);
         return hadSystem ? FormatResult.ERASED_SYSTEM : FormatResult.ERASED_DATA;
     }

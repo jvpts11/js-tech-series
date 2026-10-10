@@ -11,7 +11,6 @@ import dev.jstech.computers.sigma.ast.CompilationUnit;
 import dev.jstech.computers.sigma.lex.Lexer;
 import dev.jstech.computers.sigma.lex.Token;
 import dev.jstech.computers.sigma.parse.Parser;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,7 +38,7 @@ public final class SigmaFrontEnd {
 
         /** Whether the file can go on to the next stage. */
         public boolean ok() {
-            return this.diagnostics.stream().noneMatch(Diagnostic::isError);
+            return DiagnosticBag.noErrors(this.diagnostics);
         }
 
         /**
@@ -47,14 +46,7 @@ public final class SigmaFrontEnd {
          * file or a log.
          */
         public List<String> lines() {
-            final List<String> lines = new ArrayList<>();
-            for (final Diagnostic diagnostic : this.diagnostics) {
-                lines.add(diagnostic.format());
-            }
-            if (this.truncated) {
-                lines.add(DiagnosticBag.TOO_MANY.text().english());
-            }
-            return lines;
+            return DiagnosticBag.lines(this.diagnostics, this.truncated);
         }
     }
 

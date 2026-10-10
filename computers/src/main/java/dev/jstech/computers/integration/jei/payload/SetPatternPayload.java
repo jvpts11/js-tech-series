@@ -8,6 +8,7 @@
 package dev.jstech.computers.integration.jei.payload;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.crafting.CraftingPattern;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -35,7 +36,8 @@ public record SetPatternPayload(BlockPos host, BlockPos monitorPos, List<ItemSta
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, SetPatternPayload::host,
                     BlockPos.STREAM_CODEC, SetPatternPayload::monitorPos,
-                    ItemStack.OPTIONAL_STREAM_CODEC.apply(ByteBufCodecs.list(16)), SetPatternPayload::grid,
+                    ItemStack.OPTIONAL_STREAM_CODEC.apply(ByteBufCodecs.list(CraftingPattern.GRID_SIZE)),
+                    SetPatternPayload::grid,
                     ByteBufCodecs.stringUtf8(MAX_ID), SetPatternPayload::recipeId,
                     SetPatternPayload::new);
 

@@ -198,9 +198,13 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
             finish();
             return;
         }
+        final long gross = index.grossAvailable(key, sourceFilter);
+        if (gross >= demand && index.available(key, sourceFilter) < demand) {
+            // Still held by another Operation: nothing to take yet, so skip the captures and the lock.
+            return;
+        }
         final Map<NodeUuid, StorageTier> tiers = captureTiers();
         final Map<NodeUuid, Integer> ramLatencies = captureRamLatencies();
-        final long gross = index.grossAvailable(key, sourceFilter);
         final Allocation plan = index.lock(operationId, key, demand, sourceFilter);
         if (plan.covers(demand) || gross < demand) {
             /*

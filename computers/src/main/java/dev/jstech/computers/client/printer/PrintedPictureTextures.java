@@ -13,8 +13,12 @@ import dev.jstech.computers.os.fs.PixImage;
 import dev.jstech.computers.printer.PrintedDocument;
 import dev.jstech.computers.printer.PrintedPicture;
 import dev.jstech.computers.printer.PrinterModel;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
@@ -32,7 +36,12 @@ public final class PrintedPictureTextures {
     /** The square sheet a framed picture is drawn on, in its texture's pixels, and the paper round the picture. */
     private static final int FRAME_SIDE = 128;
     private static final int FRAME_MARGIN = 8;
-    private static final Map<String, Entry> KEPT = new LinkedHashMap<>(16, 0.75F, true);
+    /** How long a picture is safe from being let go after it was last drawn, so a busy view never thrashes. */
+    private static final long GRACE_MILLIS = 2000L;
+    private static final Map<String, Slot> KEPT = new LinkedHashMap<>(16, 0.75F, true);
+    /** Pictures that did not decode, so a malformed one is read once and not again at every frame. */
+    private static final Set<String> FAILED = new LinkedHashSet<>();
+    private static long nextTexture;
 
     private PrintedPictureTextures() {
     }
@@ -51,10 +60,11 @@ public final class PrintedPictureTextures {
 
     /** Lets every texture go, as the player leaves a world. */
     public static void forgetAll() {
-        for (final Entry entry : KEPT.values()) {
-            Minecraft.getInstance().getTextureManager().release(entry.texture());
+        for (final Slot slot : KEPT.values()) {
+            Minecraft.getInstance().getTextureManager().release(slot.entry.texture());
         }
         KEPT.clear();
+        FAILED.clear();
     }
 
     @Nullable
@@ -63,28 +73,51 @@ public final class PrintedPictureTextures {
         if (!document.isPicture() || model == null) {
             return null;
         }
-        final String key = (framed ? "f" : "i") + model.serializedName() + document.picture().hashCode()
-                + "_" + document.picture().length();
-        final Entry kept = KEPT.get(key);
+        // The picture's own text is part of the key, so two different pictures can never share a texture.
+        final String key = (framed ? "f" : "i") + model.serializedName() + ":" + document.picture();
+        final long now = Util.getMillis();
+        final Slot kept = KEPT.get(key);
         if (kept != null) {
-            return kept;
+            kept.lastUsed = now;
+            return kept.entry;
+        }
+        if (FAILED.contains(document.picture())) {
+            return null;
         }
         final PixImage picture = PixImage.decode(document.picture());
         if (picture == null) {
+            FAILED.add(document.picture());
+            if (FAILED.size() > MOST) {
+                FAILED.remove(FAILED.iterator().next());
+            }
             return null;
         }
         final PrintedPicture.Raster raster = PrintedPicture.print(picture, model.ink());
         final NativeImage image = framed ? framedImage(raster, model, paper, bar) : inkImage(raster);
         final ResourceLocation id = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
-                "printed_picture/" + Integer.toHexString(key.hashCode()) + (framed ? "_f" : "_i"));
+                "printed_picture/" + nextTexture++ + (framed ? "_f" : "_i"));
         Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(image));
         final Entry entry = new Entry(id, image.getWidth(), image.getHeight());
-        KEPT.put(key, entry);
-        if (KEPT.size() > MOST) {
-            final String eldest = KEPT.keySet().iterator().next();
-            Minecraft.getInstance().getTextureManager().release(KEPT.remove(eldest).texture());
-        }
+        KEPT.put(key, new Slot(entry, now));
+        trim(now);
         return entry;
+    }
+
+    /*
+     * Lets go of the pictures not drawn for a while, eldest first, while there are too many. One drawn a moment
+     * ago stays even past the limit: with more pictures in view than fit, letting those go would decode and
+     * upload every one of them again at every frame.
+     */
+    private static void trim(final long now) {
+        final Iterator<Slot> eldest = KEPT.values().iterator();
+        while (KEPT.size() > MOST && eldest.hasNext()) {
+            final Slot slot = eldest.next();
+            if (now - slot.lastUsed < GRACE_MILLIS) {
+                return;
+            }
+            Minecraft.getInstance().getTextureManager().release(slot.entry.texture());
+            eldest.remove();
+        }
     }
 
     private static NativeImage inkImage(final PrintedPicture.Raster raster) {
@@ -150,5 +183,16 @@ public final class PrintedPictureTextures {
      * @param height  how many pixels down
      */
     public record Entry(ResourceLocation texture, int width, int height) {
+    }
+
+    /* A kept texture and when it was last drawn. */
+    private static final class Slot {
+        private final Entry entry;
+        private long lastUsed;
+
+        private Slot(final Entry entry, final long lastUsed) {
+            this.entry = entry;
+            this.lastUsed = lastUsed;
+        }
     }
 }

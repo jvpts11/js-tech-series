@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
@@ -113,6 +114,9 @@ public record FirmwareStatePayload(
     public static final int KIND_MEDIA = 1;
     public static final int MAX_ENTRIES = 32;
 
+    /** The most capacities a RAID summary carries, one per mode, so the encoder and the decoder agree on the cap. */
+    public static final int MAX_RAID_CAPACITIES = RaidMode.values().length;
+
     /**
      * One boot entry, in the parts a firmware reads out rather than as a sentence.
      *
@@ -178,9 +182,10 @@ public record FirmwareStatePayload(
             buf.writeVarInt(raid.mode());
             buf.writeVarInt(raid.members());
             buf.writeVarInt(raid.drives());
-            buf.writeVarInt(raid.capacities().size());
-            for (final long capacity : raid.capacities()) {
-                buf.writeVarLong(capacity);
+            final int capacityCount = Math.min(raid.capacities().size(), MAX_RAID_CAPACITIES);
+            buf.writeVarInt(capacityCount);
+            for (int i = 0; i < capacityCount; i++) {
+                buf.writeVarLong(raid.capacities().get(i));
             }
         }
     }
@@ -203,7 +208,7 @@ public record FirmwareStatePayload(
             final int mode = buf.readVarInt();
             final int members = buf.readVarInt();
             final int drives = buf.readVarInt();
-            final int capacityCount = Math.min(buf.readVarInt(), 8);
+            final int capacityCount = Math.min(buf.readVarInt(), MAX_RAID_CAPACITIES);
             final List<Long> capacities = new ArrayList<>(capacityCount);
             for (int i = 0; i < capacityCount; i++) {
                 capacities.add(buf.readVarLong());

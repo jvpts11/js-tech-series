@@ -80,11 +80,36 @@ final class TextFunctions {
 
     private static Object format(final IPureContext context, final Object target, final Object[] arguments,
                                  final int line) {
-        String result = String.valueOf(arguments[0]);
-        for (int i = 1; i < arguments.length; i++) {
-            result = result.replace("{" + (i - 1) + "}", String.valueOf(arguments[i]));
+        final String pattern = String.valueOf(arguments[0]);
+        final StringBuilder result = new StringBuilder(pattern.length());
+        int at = 0;
+        while (at < pattern.length()) {
+            final int end = placeholderEnd(pattern, at, arguments.length - 1);
+            if (end < 0) {
+                result.append(pattern.charAt(at++));
+                continue;
+            }
+            // What is inserted is never read again, so an argument that contains "{1}" keeps it as written.
+            final int index = Integer.parseInt(pattern.substring(at + 1, end));
+            result.append(arguments[index + 1]);
+            at = end + 1;
         }
-        return context.text(result, line);
+        return context.text(result.toString(), line);
+    }
+
+    /* Where the closing brace is when a {n} naming one of the arguments starts at that place, otherwise -1. */
+    private static int placeholderEnd(final String pattern, final int start, final int count) {
+        if (pattern.charAt(start) != '{') {
+            return -1;
+        }
+        int end = start + 1;
+        while (end < pattern.length() && pattern.charAt(end) >= '0' && pattern.charAt(end) <= '9') {
+            end++;
+        }
+        if (end == start + 1 || end >= pattern.length() || pattern.charAt(end) != '}' || end - start > 10) {
+            return -1;
+        }
+        return Long.parseLong(pattern.substring(start + 1, end)) < count ? end : -1;
     }
 
     /** A character as it runs, which is its number, as the character it is. */

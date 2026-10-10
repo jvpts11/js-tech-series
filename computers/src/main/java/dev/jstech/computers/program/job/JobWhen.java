@@ -66,8 +66,9 @@ public record JobWhen(int hour, List<Integer> days) {
         if (!this.days.isEmpty() && !this.days.contains(GameCalendar.dayOfWeek(dayTime))) {
             return false;
         }
+        /* A run stamped later than now means the world clock was set back, so the old stamp says nothing. */
         return GameCalendar.hourOf(dayTime) == this.hour
-                && (lastRun < 0L || GameCalendar.hoursBetween(lastRun, dayTime) >= 1L);
+                && (lastRun < 0L || lastRun > dayTime || GameCalendar.hoursBetween(lastRun, dayTime) >= 1L);
     }
 
     /** How a person reads it: the word for a job left running, or the hour and the days, which are data. */

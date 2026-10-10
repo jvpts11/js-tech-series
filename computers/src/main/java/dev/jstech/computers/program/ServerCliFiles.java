@@ -223,6 +223,11 @@ abstract class ServerCliFiles extends ServerCliShell {
     }
 
     @Override
+    public FsResult moveTo(final String src, final String dest) {
+        return files().moveTo(src, dest);
+    }
+
+    @Override
     public FsResult renamePath(final String src, final String newName) {
         return files().renamePath(src, newName);
     }

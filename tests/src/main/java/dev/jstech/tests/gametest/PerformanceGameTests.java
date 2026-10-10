@@ -117,7 +117,7 @@ public final class PerformanceGameTests {
     @GameTest(template = ARENA, batch = "jsc_bench_dispatcher", timeoutTicks = 800)
     public static void bench_dispatcherSelfTest(final GameTestHelper helper) {
         final BlockPos rel = new BlockPos(2, 2, 2);
-        final MainframeBlockEntity mf = NetworkGameTests.placeRunningMainframe(helper, rel);
+        final MainframeBlockEntity mf = TestWorldBuilder.forGameTest(helper).placeRunningMainframe(rel);
         final ServerLevel level = helper.getLevel();
         final BlockPos abs = helper.absolutePos(rel);
         final BlockState state = level.getBlockState(abs);
@@ -139,7 +139,7 @@ public final class PerformanceGameTests {
     @GameTest(template = ARENA, batch = "jsc_bench_processing", timeoutTicks = 800)
     public static void bench_manyProcessingOps(final GameTestHelper helper) {
         final BlockPos rel = new BlockPos(2, 2, 2);
-        final MainframeBlockEntity mf = NetworkGameTests.placeRunningMainframe(helper, rel);
+        final MainframeBlockEntity mf = TestWorldBuilder.forGameTest(helper).placeRunningMainframe(rel);
         final ServerLevel level = helper.getLevel();
         final BlockPos abs = helper.absolutePos(rel);
         final BlockState state = level.getBlockState(abs);
@@ -169,7 +169,7 @@ public final class PerformanceGameTests {
     @GameTest(template = ARENA, batch = "jsc_bench_netops", timeoutTicks = 800)
     public static void bench_networkSelects(final GameTestHelper helper) {
         final BlockPos m = new BlockPos(1, 2, 2);
-        final MainframeBlockEntity mf = NetworkGameTests.placeRunningMainframe(helper, m);
+        final MainframeBlockEntity mf = TestWorldBuilder.forGameTest(helper).placeRunningMainframe(m);
         final ServerRackBlockEntity rackBe = buildMainframeWithRack(helper, m,
                 new BlockPos(2, 2, 2), new BlockPos(2, 2, 3), mf);
         final ServerLevel level = helper.getLevel();
@@ -206,7 +206,7 @@ public final class PerformanceGameTests {
     @GameTest(template = ARENA, batch = "jsc_bench_catalog", timeoutTicks = 800)
     public static void bench_largeCatalogIdle(final GameTestHelper helper) {
         final BlockPos m = new BlockPos(1, 2, 2);
-        final MainframeBlockEntity mf = NetworkGameTests.placeRunningMainframe(helper, m);
+        final MainframeBlockEntity mf = TestWorldBuilder.forGameTest(helper).placeRunningMainframe(m);
         final ServerRackBlockEntity rackBe = buildMainframeWithRack(helper, m,
                 new BlockPos(2, 2, 2), new BlockPos(2, 2, 3), mf);
         final ServerLevel level = helper.getLevel();
@@ -240,7 +240,7 @@ public final class PerformanceGameTests {
     @GameTest(template = ARENA, batch = "jsc_bench_craft", timeoutTicks = 800)
     public static void bench_craftPlannerDeepChain(final GameTestHelper helper) {
         final BlockPos m = new BlockPos(1, 2, 2);
-        final MainframeBlockEntity mf = NetworkGameTests.placeRunningMainframe(helper, m);
+        final MainframeBlockEntity mf = TestWorldBuilder.forGameTest(helper).placeRunningMainframe(m);
         TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
         helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
         TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
@@ -322,7 +322,8 @@ public final class PerformanceGameTests {
      */
     @GameTest(template = "bench", batch = "jsc_bench_physical", timeoutTicks = 2000)
     public static void bench_physicalNetwork(final GameTestHelper helper) {
-        final MainframeBlockEntity mf = NetworkGameTests.placeRunningMainframe(helper, new BlockPos(1, 2, 1));
+        final MainframeBlockEntity mf =
+                TestWorldBuilder.forGameTest(helper).placeRunningMainframe(new BlockPos(1, 2, 1));
         /*
          * 32 keeps this a fast regression gate (~1k cables); a one-off run at side 72 (~5k cables,
          * GregTech-late-game scale) measured 4.7 ms/tick, confirming the network scales sub-linearly.

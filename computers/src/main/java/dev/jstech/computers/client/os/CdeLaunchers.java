@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Control;
@@ -54,7 +55,7 @@ final class CdeLaunchers {
 
     /** The Application Manager's picture, which is CDE's own and no program's. */
     private static final ResourceLocation APPLICATION_MANAGER =
-            ResourceLocation.fromNamespaceAndPath("jsc", "application_manager");
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "application_manager");
 
     CdeLaunchers(final DesktopState desktop) {
         this.desktop = desktop;

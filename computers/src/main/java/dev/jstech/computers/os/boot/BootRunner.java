@@ -227,13 +227,7 @@ public final class BootRunner {
              * The systems that bring a boot manager stop at it first, which is also how a player finds out that
              * the other disk has something on it.
              */
-            final BootMenu list = BootLines.menuFor(machine, MENU_TICKS);
-            if (!list.isEmpty() && ComputersServerConfig.showBootMenu()) {
-                phases.beginMenu(now, MENU_TICKS);
-                showMenu(machine, level, pos);
-            } else {
-                phases.beginBoot();
-            }
+            enterMenuOrBoot(machine, phases, level, pos, now);
             return;
         }
         if (machine.onScreen()) {
@@ -279,17 +273,23 @@ public final class BootRunner {
         }
         phases.resume();
         if (machine.hasOs()) {
-            final BootMenu list = BootLines.menuFor(machine, MENU_TICKS);
-            if (!list.isEmpty() && ComputersServerConfig.showBootMenu()) {
-                phases.beginMenu(level.getGameTime(), MENU_TICKS);
-                showMenu(machine, level, pos);
-            } else {
-                phases.beginBoot();
-            }
+            enterMenuOrBoot(machine, phases, level, pos, level.getGameTime());
             return;
         }
         if (machine.onScreen()) {
             ScreenSessions.bootWatchers(level, pos);
+        }
+    }
+
+    /** Stops at the boot manager when it has something to ask and the player wants it, and boots otherwise. */
+    private static void enterMenuOrBoot(final IOsHost machine, final BootPhases phases, final ServerLevel level,
+                                        final BlockPos pos, final long now) {
+        final BootMenu list = BootLines.menuFor(machine, MENU_TICKS);
+        if (!list.isEmpty() && ComputersServerConfig.showBootMenu()) {
+            phases.beginMenu(now, MENU_TICKS);
+            showMenu(machine, level, pos);
+        } else {
+            phases.beginBoot();
         }
     }
 

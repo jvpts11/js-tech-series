@@ -227,8 +227,11 @@ final class NetFileCommands {
         }
 
         @Override public void run(final CliContext ctx) {
-            say(ctx, ctx.computer().deleteFile(ctx.hasArgs() ? ctx.arg(0) : ""),
-                    CliTexts.USAGE.with(name(), usage()), !ctx.hasArgs());
+            if (!ctx.hasArgs()) {
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
+                return;
+            }
+            say(ctx, ctx.computer().deleteFile(ctx.arg(0)));
         }
     }
 
@@ -269,7 +272,7 @@ final class NetFileCommands {
                 ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
-            say(ctx, ctx.computer().copyPath(ctx.arg(0), ctx.arg(1)), Text.EMPTY, false);
+            say(ctx, ctx.computer().copyPath(ctx.arg(0), ctx.arg(1)));
         }
     }
 
@@ -310,7 +313,7 @@ final class NetFileCommands {
                 ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
-            say(ctx, ctx.computer().renamePath(ctx.arg(0), ctx.arg(1)), Text.EMPTY, false);
+            say(ctx, ctx.computer().renamePath(ctx.arg(0), ctx.arg(1)));
         }
     }
 
@@ -364,17 +367,12 @@ final class NetFileCommands {
                 ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
-            say(ctx, ctx.computer().writeFile(ctx.arg(0), ctx.rest(1)), Text.EMPTY, false);
+            say(ctx, ctx.computer().writeFile(ctx.arg(0), ctx.rest(1)));
         }
     }
 
-    /** Prints what the machine made of it, or the usage when there was nothing to act on. */
-    private static void say(final CliContext ctx, final ICliComputer.FsResult result,
-                            final Text usage, final boolean missing) {
-        if (missing) {
-            ctx.out().error(usage);
-            return;
-        }
+    /** Prints what the machine made of the request. */
+    private static void say(final CliContext ctx, final ICliComputer.FsResult result) {
         if (!result.ok()) {
             ctx.out().error(result.message());
             return;

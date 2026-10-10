@@ -40,7 +40,6 @@ import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WorkstationFacts;
-import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.machine.DriveTable;
@@ -48,7 +47,6 @@ import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.MediaDriveType;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
-import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
@@ -113,25 +111,15 @@ public final class ThisPcPayloads {
             for (final ItemStack stack : computer.diskStacks()) {
                 if (stack.getItem() instanceof DiskItem diskItem) {
                     final long cap = diskItem.spec().capacityItems();
-                    final long storageW =
-                            DriveVolumes.usedWeight(stack);
-                    final long fsW = DiskFilesystem.filesWeight(stack);
-                    final ResourceLocation osId =
-                            OsDisks.systemOn(stack);
-                    final OsDef os =
-                            osId != null ? OsRegistry.getOs(osId) : null;
-                    final long osItems = os != null ? os.footprintItemsOn(diskItem.spec().era()) : 0L;
-                    final long mbEq = StorageKey.MB_EQ_PER_ITEM;
-                    final long storeItems = storageW / mbEq;
-                    final long fileItems = fsW / mbEq;
-                    final long usedItems = storeItems + fileItems + osItems;
+                    final ResourceLocation osId = OsDisks.systemOn(stack);
+                    final DiskShares shares = DiskShares.of(stack);
                     /*
                      * The three shares travel separately, so the disk can show where its space
                      * actually went instead of one anonymous "used" number.
                      */
                     disks.add(new ThisPcPayload.WireDisk(slot, GameText.of(stack.getHoverName()),
-                            cap, usedItems, stack == sys, osId != null ? osId.getPath() : "",
-                            osItems, storeItems, fileItems));
+                            cap, shares.usedItems(), stack == sys, osId != null ? osId.getPath() : "",
+                            shares.systemItems(), shares.storageItems(), shares.fileItems()));
                 }
                 slot++;
             }
@@ -166,9 +154,7 @@ public final class ThisPcPayloads {
         final ItemStack disk = dock.disk(bay);
         final long capItems = disk.getItem() instanceof DiskItem item ? item.spec().capacityItems() : 0L;
         final long usedItems = Math.max(0L, capItems - DriveTable.freeWeightOf(disk) / StorageKey.MB_EQ_PER_ITEM);
-        final BlockPos at = BlockPos.of(endpoint);
-        final int blocksAway = Math.abs(at.getX() - host.getX()) + Math.abs(at.getY() - host.getY())
-                + Math.abs(at.getZ() - host.getZ());
+        final int blocksAway = BlockPos.of(endpoint).distManhattan(host);
         return new ThisPcPayload.WireMedia(endpoint, MediaDriveType.DOCK_STATION.serializedName(),
                 GameText.of(disk.getHoverName()), "", "", false, "", 0, "", List.of(), 0L, blocksAway, bay,
                 capItems, usedItems);
@@ -208,9 +194,7 @@ public final class ThisPcPayloads {
         }
         final long stored = kind == MediaKind.DATA
                 ? reader.insertedData().total() : 0L;
-        final BlockPos at = BlockPos.of(endpoint);
-        final int blocksAway = Math.abs(at.getX() - host.getX()) + Math.abs(at.getY() - host.getY())
-                + Math.abs(at.getZ() - host.getZ());
+        final int blocksAway = BlockPos.of(endpoint).distManhattan(host);
         return new ThisPcPayload.WireMedia(endpoint, reader.driveType().serializedName(),
                 m.isEmpty() ? Text.EMPTY : GameText.of(m.getHoverName()), kind != null ? kind.serializedName() : "",
                 pl != null ? pl.getPath() : "", installable, payloadName, payloadYear, packageId, needs,
@@ -302,7 +286,7 @@ public final class ThisPcPayloads {
             return ThisPcPayload.AboutFacts.EMPTY;
         }
         final ItemStack disk = computer.systemDisk();
-        final long diskMb = disk.getItem() instanceof DiskItem item ? item.spec().capacityMb() : 0L;
+        final long diskMb = DiskShares.capacityMbOf(disk);
         /*
          * A Linux names its distribution alone here: the kernel row already carries the version this system
          * put beside its name, and repeating it in both places is the same fact twice.

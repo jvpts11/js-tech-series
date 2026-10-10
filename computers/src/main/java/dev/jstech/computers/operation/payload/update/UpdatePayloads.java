@@ -136,54 +136,62 @@ public final class UpdatePayloads {
                                      final ServerLevel level) {
         final PersonalComputerBlockEntity computer = computer(player, level, payload.hostPos(), payload.monitorPos());
         final StorageKey key = StorageKey.of(payload.item());
-        final Text refused = submit(player, level, computer, key, payload);
+        final Submitted outcome = submit(player, level, computer, key, payload);
+        final Text refused = outcome.refused();
         if (refused == null && computer != null && computer.networkUuid() != null) {
             OperationsPayloads.dispatchTerminalOpsLog(player, computer.networkUuid(), level);
             OperationsPayloads.dispatchActiveOperations(player, computer.networkUuid(), level);
         }
         PacketDistributor.sendToPlayer(player, preview(player, level, computer, key, payload.name(),
-                refused == null ? QUEUED.with(Math.max(1L, payload.quantity()), key.displayName().getString())
+                refused == null ? QUEUED.with(outcome.quantity(), key.displayName().getString())
                         : refused, refused == null));
     }
 
-    /* Sends the UPDATE the window set up; why not, or null when it went. */
-    @Nullable
-    private static Text submit(final ServerPlayer player, final ServerLevel level,
+    /* What a submit came to: why it was refused, or null with the quantity that was really queued. */
+    private record Submitted(@Nullable Text refused, long quantity) {
+
+        static Submitted refusedWith(final Text why) {
+            return new Submitted(why, 0L);
+        }
+    }
+
+    /* Sends the UPDATE the window set up; why not, or null when it went, with the quantity that was queued. */
+    private static Submitted submit(final ServerPlayer player, final ServerLevel level,
                                @Nullable final PersonalComputerBlockEntity computer, final StorageKey key,
                                final UpdateSubmitPayload payload) {
         final UpdateAction action = UpdateAction.byId(payload.action()).orElse(null);
         if (action == null) {
-            return NOT_STARTED.text();
+            return Submitted.refusedWith(NOT_STARTED.text());
         }
         final Text refused = UpdateDoor.refusal(level, computer, key, action, player);
         if (refused != null || computer == null || computer.networkUuid() == null) {
-            return refused != null ? refused : UpdateDoor.PC_ONLY.text();
+            return Submitted.refusedWith(refused != null ? refused : UpdateDoor.PC_ONLY.text());
         }
         final MainframeBlockEntity mainframe = NetworkLookup.resolveMainframe(level, computer.networkUuid());
         if (mainframe == null) {
-            return NOT_STARTED.text();
+            return Submitted.refusedWith(NOT_STARTED.text());
         }
         final Text unavailable = mainframe.networkOperations().refusal(EngineVerb.UPDATE);
         if (unavailable != null) {
-            return unavailable;
+            return Submitted.refusedWith(unavailable);
         }
         final Map<StorageKey, Long> stock = NetworkStorage.of(level, computer.networkUuid()).query();
         final long held = stock.getOrDefault(key, 0L);
         if (held <= 0L) {
-            return NOTHING_HELD.with(key.displayName().getString());
+            return Submitted.refusedWith(NOTHING_HELD.with(key.displayName().getString()));
         }
         StorageKey with = null;
         if (action == UpdateAction.REPAIR) {
             with = UpdateDoor.material(stock, key.stack(1));
             if (with == null) {
-                return UpdateDoor.NO_MATERIAL.with(key.displayName().getString());
+                return Submitted.refusedWith(UpdateDoor.NO_MATERIAL.with(key.displayName().getString()));
             }
         }
         final long quantity = Math.max(1L, Math.min(held, payload.quantity()));
         final NetworkUpdateOperation operation = mainframe.networkOperations().update(new UpdateRequest(
                 computer.getBlockPos(), key, quantity, action, payload.offer(), payload.name(), with, null,
                 player.getUUID(), computer.originLabel(MoveLabels.TERMINAL)));
-        return operation == null ? NOT_STARTED.text() : null;
+        return operation == null ? Submitted.refusedWith(NOT_STARTED.text()) : new Submitted(null, quantity);
     }
 
     /* The most worn of {@code key}'s kind the network holds, which a repair takes; the key itself with none worn. */

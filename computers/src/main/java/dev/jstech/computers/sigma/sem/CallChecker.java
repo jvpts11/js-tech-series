@@ -204,9 +204,7 @@ final class CallChecker {
         }
         final IMemberSymbol.MethodSymbol chosen = fitting.getFirst();
         this.checkAgainst(chosen, arguments, given);
-        if (at instanceof IExpr expression) {
-            this.scope.model().setCall(expression, chosen);
-        }
+        this.scope.model().setCall(at, chosen);
         return chosen;
     }
 
@@ -226,9 +224,7 @@ final class CallChecker {
         if (sameCount.size() == 1) {
             final IMemberSymbol.MethodSymbol only = sameCount.getFirst();
             this.checkAgainst(only, arguments, given);
-            if (at instanceof IExpr expression) {
-                this.scope.model().setCall(expression, only);
-            }
+            this.scope.model().setCall(at, only);
             return only;
         }
         this.scope.report(at.line(), at.column(), SigmaError.NO_MATCHING_OVERLOAD, name);

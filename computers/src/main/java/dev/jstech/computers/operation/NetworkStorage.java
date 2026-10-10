@@ -299,18 +299,7 @@ public final class NetworkStorage {
         if (stack.isEmpty()) {
             return 0;
         }
-        final StorageKey key = StorageKey.of(stack);
-        long remaining = stack.getCount();
-        for (final Entry entry : fillOrder) {
-            if (remaining <= 0L) {
-                break;
-            }
-            if (!entry.acceptsInsert()) {
-                continue; // never write into a PC's public area
-            }
-            remaining -= entry.store().insert(key, remaining);
-        }
-        return (int) (stack.getCount() - remaining);
+        return (int) insert(StorageKey.of(stack), stack.getCount());
     }
 
     /**
@@ -333,29 +322,6 @@ public final class NetworkStorage {
             remaining -= entry.store().insert(key, remaining);
         }
         return amount - remaining;
-    }
-
-    public Map<NodeUuid, Long> insertBreakdown(final ItemStack stack) {
-        final Map<NodeUuid, Long> stored = new LinkedHashMap<>();
-        if (stack.isEmpty()) {
-            return stored;
-        }
-        final StorageKey key = StorageKey.of(stack);
-        long remaining = stack.getCount();
-        for (final Entry entry : fillOrder) {
-            if (remaining <= 0L) {
-                break;
-            }
-            if (!entry.acceptsInsert()) {
-                continue; // never write into a PC's public area
-            }
-            final long accepted = entry.store().insert(key, remaining);
-            if (accepted > 0L) {
-                stored.merge(entry.node(), accepted, Long::sum);
-                remaining -= accepted;
-            }
-        }
-        return stored;
     }
 
     public long drop(final Item item, final long amount) {

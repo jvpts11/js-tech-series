@@ -87,6 +87,8 @@ public final class ClientTestRunner {
     private int stepDelayLeft;
     private int testTicks;
     private CompletableFuture<Void> pendingMove;
+    /** The server's answer to whether the test area is loaded, asked on the server thread and polled here. */
+    private CompletableFuture<Boolean> areaProbe;
 
     private ClientTestRunner() {
     }
@@ -112,7 +114,10 @@ public final class ClientTestRunner {
                 case DONE -> { }
             }
         } catch (final RuntimeException e) {
-            if (state == State.RUNNING && current != null) {
+            if ((state == State.RUNNING || state == State.MOVE_TO_AREA) && current != null) {
+                // A test whose area never loads, or whose sequence fails to build, fails under its own name.
+                pendingMove = null;
+                areaProbe = null;
                 failCurrent(mc, e);
             } else {
                 LOGGER.error("[JSC-CT] harness failure in state {}", state, e);
@@ -261,6 +266,8 @@ public final class ClientTestRunner {
          */
         final BlockPos origin = new BlockPos(spawn.getX() + current.index() * AREA_SPACING, groundY - 2, spawn.getZ());
         context = new ClientTestContext(mc, current.name(), origin);
+        stepIndex = 0;
+        testTicks = 0;
         final MinecraftServer server = mc.getSingleplayerServer();
         if (server == null) {
             throw new IllegalStateException("integrated server vanished");
@@ -275,14 +282,25 @@ public final class ClientTestRunner {
         }
         pendingMove.join();
         final MinecraftServer server = mc.getSingleplayerServer();
-        final boolean loaded = server != null && server.overworld().isLoaded(context.abs(new BlockPos(3, 2, 3)))
-                && mc.level != null && mc.level.isLoaded(context.abs(new BlockPos(3, 2, 3)));
+        final BlockPos probe = context.abs(new BlockPos(3, 2, 3));
+        // The server level is read on the server thread; only the client level is read here.
+        if (areaProbe == null && server != null) {
+            areaProbe = server.submit(() -> {
+                return server.overworld().isLoaded(probe);
+            });
+        }
+        final boolean loaded = areaProbe != null && areaProbe.isDone() && areaProbe.join()
+                && mc.level != null && mc.level.isLoaded(probe);
+        if (areaProbe != null && areaProbe.isDone() && !loaded) {
+            areaProbe = null; // ask again next tick
+        }
         if (!loaded || stateTicks < 10) {
             if (stateTicks > 600) {
                 throw new ClientTestFailure("the test area never loaded");
             }
             return;
         }
+        areaProbe = null;
         pendingMove = null;
         /*
          * Every test starts from what a fresh game remembers. The Network Interactor keeps the view a player left it
@@ -314,6 +332,7 @@ public final class ClientTestRunner {
         }
         final List<ClientTestContext.Queued> steps = context.steps();
         if (stepIndex >= steps.size()) {
+            context.runAfterTest();
             report.record(new ClientTestReport.Result(current.name(), true, "", context.screenshotsTaken(), testTicks));
             current = null;
             enter(State.NEXT_TEST);
@@ -342,6 +361,8 @@ public final class ClientTestRunner {
         } catch (final RuntimeException ignored) {
             // A screenshot is a courtesy; the failure itself is what matters.
         }
+        // Whatever the test changed outside its own area is put back, so a failure leaks nothing into later tests.
+        context.runAfterTest();
         final Throwable cause = e instanceof ClientTestFailure && e.getCause() != null ? e.getCause() : e;
         report.record(new ClientTestReport.Result(current.name(), false,
                 (e.getMessage() == null ? cause.toString() : e.getMessage()) + where,

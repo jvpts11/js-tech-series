@@ -8,8 +8,8 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.registry.ClientHook;
 import net.minecraft.core.BlockPos;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Opens the client-only power-on self-test screen. Mirrors {@link IFirmwareScreenOpener}: the payload
@@ -37,22 +37,20 @@ public interface IPostScreenOpener {
 
     final class Holder {
 
+        private static final ClientHook<IPostScreenOpener> HOOK = new ClientHook<>();
+
         private Holder() {
         }
 
-        @Nullable
-        private static IPostScreenOpener instance;
-
         public static void set(final IPostScreenOpener opener) {
-            instance = opener;
+            HOOK.set(opener);
         }
 
         public static void open(final BlockPos pos, final BlockPos monitorPos, final FirmwareKind kind,
                                 final String machineName, final int remainingTicks, final boolean halted,
                                 final String complaint) {
-            if (instance != null) {
-                instance.open(pos, monitorPos, kind, machineName, remainingTicks, halted, complaint);
-            }
+            HOOK.ifPresent(target ->
+                    target.open(pos, monitorPos, kind, machineName, remainingTicks, halted, complaint));
         }
     }
 }

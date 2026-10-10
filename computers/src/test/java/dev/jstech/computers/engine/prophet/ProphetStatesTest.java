@@ -132,6 +132,20 @@ class ProphetStatesTest {
     }
 
     @Test
+    void evaluate_showsADisarmedWatchWhoseConditionStillHoldsAsFired() {
+        stock.put("redstone", 400L);
+        final ProphetStates.WatchState watch = states.watch("redstone", IProphetStatement.Comparison.BELOW, 500,
+                "CRAFT redstone TO 1000");
+        // As a save read back leaves it: it fired before, so it is not armed, and nothing has been evaluated yet.
+        watch.armed(false);
+        watch.fired(3);
+
+        assertTrue(states.evaluate(1, 0, this::held).isEmpty(), "it does not fire again");
+        assertEquals(ProphetStates.Status.FIRED, watch.status());
+        assertEquals(3, watch.fired());
+    }
+
+    @Test
     void keep_replacesTheStateOfTheSameItem() {
         states.keep("coal", 10, IProphetStatement.UNBOUNDED);
         states.keep("coal", 20, 40);

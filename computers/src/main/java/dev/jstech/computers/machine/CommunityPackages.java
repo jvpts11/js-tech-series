@@ -83,6 +83,10 @@ final class CommunityPackages {
             return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(wanted, NO_FOLDERS));
         }
         for (final var file : packed.files().entrySet()) {
+            // Checked again here, where the files are written, so no name can reach outside the package's folder.
+            if (!Packed.isSafeFileName(file.getKey())) {
+                return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(wanted, UNREADABLE));
+            }
             final ICliComputer.FsResult written = this.files.writeFile(folder + "/" + file.getKey(), file.getValue());
             if (!written.ok()) {
                 return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(wanted, written.message()));

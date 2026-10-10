@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdeBackdrop;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.core.client.gui.component.Draw;
@@ -142,7 +143,7 @@ final class MotifChrome {
         final Map<CdeBackdrop, ResourceLocation> out = new EnumMap<>(CdeBackdrop.class);
         for (final CdeBackdrop pattern : CdeBackdrop.values()) {
             if (!pattern.mask().isEmpty()) {
-                out.put(pattern, ResourceLocation.fromNamespaceAndPath("jsc",
+                out.put(pattern, ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
                         "textures/gui/cde/backdrop_" + pattern.mask() + ".png"));
             }
         }

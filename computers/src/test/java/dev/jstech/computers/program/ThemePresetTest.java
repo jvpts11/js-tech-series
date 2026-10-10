@@ -8,6 +8,7 @@
 package dev.jstech.computers.program;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -53,5 +54,12 @@ class ThemePresetTest {
     void wallpaper_isWhatTheDesktopHangsWithIt() {
         assertEquals("winxp", ThemePreset.OCEAN.wallpaper());
         assertEquals("", ThemePreset.SYSTEM.wallpaper());
+    }
+
+    @Test
+    void find_answersNullForAnUnknownName() {
+        assertEquals(ThemePreset.OCEAN, ThemePreset.find(" Ocean "));
+        assertNull(ThemePreset.find("ocaen"));
+        assertNull(ThemePreset.find(null));
     }
 }

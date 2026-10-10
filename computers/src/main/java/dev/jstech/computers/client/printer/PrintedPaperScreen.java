@@ -8,16 +8,13 @@
 package dev.jstech.computers.client.printer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.client.printer.PrintedPaperColours.SheetColours;
 import dev.jstech.computers.gui.layout.PrintedPaperLayout;
 import dev.jstech.computers.item.PrintedPaperItem;
 import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.computers.printer.PrintedDocument;
 import dev.jstech.computers.printer.PrinterModel;
 import dev.jstech.core.client.gui.component.Draw;
-import dev.jstech.core.palette.Palette;
-import dev.jstech.core.palette.PaletteHolder;
-import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -25,16 +22,20 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A printed sheet read page by page, as a written book is: the sheet looks like its printer's (the fanfold with its
  * green bars and tractor holes from the dot matrix, a plain sheet from the others), upright or on its side as its
  * pages were laid out, and a picture shows on it as that printer put it on paper. The arrows under it, or the arrow
  * and page keys, turn the pages.
  */
-@PaletteHolder
 public final class PrintedPaperScreen extends Screen {
 
     private final PrintedDocument document;
+    /* Each page cut into its lines once, since the document does not change while it is read. */
+    private final List<String[]> pageLines = new ArrayList<>();
     private final boolean fanfold;
     private final boolean landscape;
     private int page;
@@ -43,10 +44,6 @@ public final class PrintedPaperScreen extends Screen {
     private float originY;
     private float scale = 1F;
 
-    /** The paper, its bands and holes, the print, and the pager under the sheet. */
-    private static final Palette<SheetColours> COLOURS = Palettes.declare(JsComputers.MODID, "screen/printed_paper",
-            new SheetColours(0xFFFBFBF8, 0xFFF4F4F0, 0xFFD7EBD7, 0xFFCFCFC8, 0xFF23262C, 0xFF6A707A, 0xFFDDDDDD,
-                    0xFF6F6F6F));
     private static final String PREVIOUS = "<";
     private static final String NEXT = ">";
     /** The room kept round the sheet when the window is too small for it. */
@@ -59,6 +56,9 @@ public final class PrintedPaperScreen extends Screen {
     private PrintedPaperScreen(final PrintedDocument document) {
         super(Component.literal(document.title()));
         this.document = document;
+        for (final String text : document.pages()) {
+            this.pageLines.add(text.split("\n", -1));
+        }
         final PrinterModel model = document.printerModel();
         this.fanfold = model != null && model.sheet() == PrinterModel.Sheet.FANFOLD;
         this.landscape = widest(document) > PrintLayout.PORTRAIT_COLUMNS;
@@ -67,11 +67,6 @@ public final class PrintedPaperScreen extends Screen {
     /** Opens {@code document} to read it. */
     public static void open(final PrintedDocument document) {
         Minecraft.getInstance().setScreen(new PrintedPaperScreen(document));
-    }
-
-    /** The colours of the paper, which a framed picture is drawn on too. */
-    public static SheetColours colours() {
-        return COLOURS.get();
     }
 
     /** The page being read, from 0. */
@@ -96,7 +91,7 @@ public final class PrintedPaperScreen extends Screen {
 
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
-        final SheetColours colours = COLOURS.get();
+        final SheetColours colours = PrintedPaperColours.get();
         // The world blurred and dimmed behind the sheet, as behind a book being read.
         renderBackground(g, mouseX, mouseY, partialTick);
         final PrintedPaperLayout.Sheet sheet = landscape ? PrintedPaperLayout.landscape(fanfold)
@@ -176,7 +171,7 @@ public final class PrintedPaperScreen extends Screen {
     }
 
     private void drawText(final GuiGraphics g, final PrintedPaperLayout.Sheet sheet, final SheetColours colours) {
-        final String[] lines = document.pages().get(page).split("\n", -1);
+        final String[] lines = pageLines.get(page);
         for (int i = 0; i < lines.length; i++) {
             Draw.textScaled(g, font, lines[i], sheet.textX(), sheet.textY() + i * PrintedPaperLayout.LINE_H,
                     colours.ink(), PrintedPaperLayout.TEXT_SCALE);
@@ -226,20 +221,5 @@ public final class PrintedPaperScreen extends Screen {
             }
         }
         return widest;
-    }
-
-    /**
-     * The colours of a sheet being read.
-     *
-     * @param paper    a plain sheet
-     * @param fanfold  the fanfold's paper between its bands
-     * @param bar      the fanfold's green bands
-     * @param hole     the fanfold's tractor holes
-     * @param ink      the print
-     * @param faint    the caption under a picture's name
-     * @param pager    the page count and an arrow that turns
-     * @param pagerDim an arrow at the end of the document
-     */
-    public record SheetColours(int paper, int fanfold, int bar, int hole, int ink, int faint, int pager, int pagerDim) {
     }
 }

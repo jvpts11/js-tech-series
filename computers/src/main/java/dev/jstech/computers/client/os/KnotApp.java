@@ -80,6 +80,7 @@ public final class KnotApp implements IDesktopApp {
 
     /* Where the history was last drawn, so a click reads the same numbers. */
     private int historyTop;
+    private int lastMouseY;
 
     public KnotApp(final BlockPos host, final BlockPos monitorPos) {
         this.host = host;
@@ -204,6 +205,7 @@ public final class KnotApp implements IDesktopApp {
          * the one that hears back rather than whichever was made last.
          */
         open = this;
+        this.lastMouseY = mouseY;
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
         layoutToolbar(font, x, y, width);
@@ -367,6 +369,12 @@ public final class KnotApp implements IDesktopApp {
 
     @Override
     public boolean mouseScrolled(final double delta) {
+        if (lastMouseY >= historyTop && lastMouseY < historyTop + HISTORY_ROWS * ROW_H) {
+            // Over the revision rows the wheel walks the history, so revisions past the fourth can be reached.
+            final int last = Math.max(0, state.revisions().size() - HISTORY_ROWS);
+            this.historyScroll = Math.max(0, Math.min(last, historyScroll - (int) Math.signum(delta)));
+            return true;
+        }
         this.diffScroll = Math.max(0, diffScroll - (int) Math.signum(delta));
         return true;
     }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.help.HelpForm;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -132,7 +133,7 @@ public final class ProgramClient {
     }
 
     private static ResourceLocation rl(final String path) {
-        return ResourceLocation.fromNamespaceAndPath("jsc", path);
+        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
     }
 
     /** Whether a program is being opened on CDE, whatever system CDE stands on. */

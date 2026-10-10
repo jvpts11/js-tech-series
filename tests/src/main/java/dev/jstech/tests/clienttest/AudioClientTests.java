@@ -87,6 +87,12 @@ public final class AudioClientTests {
     public static void mixer_playsAtTheChannelsVolumeAndDropsWhatThePlayerTurnedOff(final ClientTestContext ctx) {
         final CapturingAudioSink sink = new CapturingAudioSink();
         final AudioPrefs prefs = AudioPrefsStore.prefs();
+        ctx.afterTest(() -> {
+            prefs.setMuted(CLICK, false);
+            prefs.setMuted(BELL, false);
+            prefs.setVolume(INTERFACE, 1.0F);
+            AudioEngine.restoreSink();
+        });
         ctx.then(0, () -> AudioEngine.useSink(sink))
                 .then(1, () -> AudioEngine.playOnScreen(TestSounds.CLICK))
                 .thenAssert(1, () -> sink.played().size() == 1
@@ -109,13 +115,7 @@ public final class AudioClientTests {
                     final boolean untouched = AudioMixer.mix(bell) == bell;
                     prefs.setMuted(BELL, true);
                     return untouched && AudioMixer.mix(bell) == null;
-                }, "a sound of the game is left alone until the player turns it off too")
-                .then(0, () -> {
-                    prefs.setMuted(CLICK, false);
-                    prefs.setMuted(BELL, false);
-                    prefs.setVolume(INTERFACE, 1.0F);
-                    AudioEngine.restoreSink();
-                });
+                }, "a sound of the game is left alone until the player turns it off too");
     }
 
     /**

@@ -30,6 +30,7 @@ import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestMachineBlockEntity;
 import dev.jstech.tests.TestMachines;
 import dev.jstech.tests.testkit.CraftingRig;
+import dev.jstech.tests.testkit.StorageNetworkFixture;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -67,20 +68,20 @@ public final class OperationCancelGameTests {
     private static NetworkSelectOperation pull(final GameTestHelper helper, final MainframeBlockEntity mainframe,
                                                final ItemStackHandler dest, final long amount, final String label) {
         final NetworkSelectOperation op = mainframe.submitNetworkSelect(Items.COBBLESTONE, amount,
-                OperationSchedulingGameTests.port(dest), label);
+                StorageNetworkFixture.port(dest), label);
         helper.assertTrue(op != null, label + " dispatched");
         return op;
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void cancel_queuedSelectIsDiscardedAndFreesItsReservation(final GameTestHelper helper) {
-        final MainframeBlockEntity mainframe = OperationSchedulingGameTests.storageNetwork(helper);
-        final ItemStackHandler fullDest = OperationSchedulingGameTests.fullHandler();
+        final MainframeBlockEntity mainframe = StorageNetworkFixture.storageNetwork(helper);
+        final ItemStackHandler fullDest = StorageNetworkFixture.fullHandler();
         final ItemStackHandler goodDest = new ItemStackHandler(9);
         final ItemStackHandler lateDest = new ItemStackHandler(9);
         final NetworkSelectOperation[] queued = new NetworkSelectOperation[1];
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + 4, () -> OperationSchedulingGameTests.rack(helper)
+                .thenExecuteAfter(SETTLE + 4, () -> StorageNetworkFixture.rack(helper)
                         .getServerStorage(0).insert(Items.COBBLESTONE, 100))
                 .thenExecuteAfter(2, () -> {
                     pull(helper, mainframe, fullDest, 30, "full"); // holds the queue, stalls on a full destination
@@ -103,8 +104,8 @@ public final class OperationCancelGameTests {
                     // Its reservation is gone: a pull that needs the freed items can be granted them now.
                     pull(helper, mainframe, lateDest, 60, "late");
                 })
-                .thenExecuteAfter(60, () -> helper.assertTrue(OperationSchedulingGameTests.count(lateDest) == 60,
-                        "the freed items served the later pull; got " + OperationSchedulingGameTests.count(lateDest)))
+                .thenExecuteAfter(60, () -> helper.assertTrue(StorageNetworkFixture.count(lateDest) == 60,
+                        "the freed items served the later pull; got " + StorageNetworkFixture.count(lateDest)))
                 .thenSucceed();
     }
 

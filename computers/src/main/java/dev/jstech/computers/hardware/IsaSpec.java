@@ -39,10 +39,7 @@ public record IsaSpec(String id, String name, int bits, Set<String> runs) {
         Objects.requireNonNull(id, "an ISA must have an id");
         Objects.requireNonNull(name, "an ISA must have a name");
         Objects.requireNonNull(runs, "an ISA must say what it runs");
-        final int colon = id.indexOf(':');
-        if (colon <= 0 || colon == id.length() - 1) {
-            throw new IllegalArgumentException("an ISA id reads namespace:path; got '" + id + "'");
-        }
+        HardwareIds.requireNamespaced(id, "an ISA");
         if (bits <= 0) {
             throw new IllegalArgumentException("an ISA has a word size; got " + bits);
         }

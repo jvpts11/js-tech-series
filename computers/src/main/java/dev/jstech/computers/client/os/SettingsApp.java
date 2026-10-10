@@ -77,6 +77,19 @@ public final class SettingsApp implements IDesktopApp {
     private static final int SCORE_ROWS = 3;
     private static final int SCORE_PITCH = 8;
 
+    /** The page that is none of the list's: the home Frames 7 and 10 open on, every page one click from it. */
+    private static final int PAGE_HOME = -1;
+    /** The sizes the desktop can be drawn at, the biggest first, as percentages of its own size. */
+    private static final List<Integer> SCALES = List.of(100, 90, 80, 75, 66, 50);
+
+    /** The pages, by the index the navigation lists them at, for a menu that opens one directly. */
+    public static final int PAGE_PERSONALIZE = 0;
+    public static final int PAGE_SYSTEM = 1;
+    public static final int PAGE_DISPLAY = 4;
+    public static final int PAGE_SOUND = 6;
+    /** The system's effects page, which the list does not show: it is reached from its own page. */
+    public static final int PAGE_EFFECTS = 8;
+
     private final BlockPos host;
     private OsSkin skin = OsSkin.fallback();
     @Nullable
@@ -146,8 +159,6 @@ public final class SettingsApp implements IDesktopApp {
     /** The home's entries as last built, so a client test can find them: a page index and where it is. */
     private final List<HomeEntry> homeEntries = new ArrayList<>();
 
-    /** The page that is none of the list's: the home Frames 7 and 10 open on, every page one click from it. */
-    private static final int PAGE_HOME = -1;
     private static final int HOME_ROW_H = 28;
     /** How wide one column of Frames 7's categories must be for "Appearance and Personalization" beside its icon. */
     private static final int HOME_COLUMN_W = 204;
@@ -649,7 +660,8 @@ public final class SettingsApp implements IDesktopApp {
         if (d.vramMb() > 0) {
             y = specRow(x, y, w, SettingsTexts.GRAPHICS, SettingsTexts.VRAM.with(d.vramMb()));
         }
-        y = specRow(x, y, w, SettingsTexts.SYSTEM, Text.literal(d.osLabel()));
+        y = specRow(x, y, w, SettingsTexts.SYSTEM,
+                d.osLabel().isEmpty() ? ThisPcTexts.NO_SYSTEM.text() : Text.literal(d.osLabel()));
         y = specRow(x, y, w, SettingsTexts.PLATFORM, Text.literal(d.platform()));
         if (skin.form() == OsSkin.Form.AERO) {
             y = experience(x, y, w, d.experience());
@@ -944,17 +956,6 @@ public final class SettingsApp implements IDesktopApp {
         caption(SettingsTexts.MONITOR, x, y, w);
     }
 
-    /** The sizes the desktop can be drawn at, the biggest first, as percentages of its own size. */
-    private static final List<Integer> SCALES = List.of(100, 90, 80, 75, 66, 50);
-
-    /** The pages, by the index the navigation lists them at, for a menu that opens one directly. */
-    public static final int PAGE_PERSONALIZE = 0;
-    public static final int PAGE_SYSTEM = 1;
-    public static final int PAGE_DISPLAY = 4;
-    public static final int PAGE_SOUND = 6;
-    /** The system's effects page, which the list does not show: it is reached from its own page. */
-    public static final int PAGE_EFFECTS = 8;
-
     /** Opens on {@code index}'s page instead of the first one. */
     public SettingsApp showPage(final int index) {
         if (index >= 0 && index < NAV.size()) {
@@ -1239,10 +1240,6 @@ public final class SettingsApp implements IDesktopApp {
 
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
-        if (key == GLFW.GLFW_KEY_ESCAPE && nameField != null && nameField.isFocused()) {
-            // Escape drops the edit through the field's own handling and keeps the window open.
-            return root.keyPressed(key, scanCode, modifiers);
-        }
         return root.keyPressed(key, scanCode, modifiers);
     }
 }

@@ -2082,6 +2082,24 @@ public final class NetworkGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void job_removeForgetsThePauseOfAJobCreatedAgainUnderTheSameName(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = placeRunningMainframe(helper, new BlockPos(1, 2, 2));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    mainframe.installAutomationEngine();
+                    final var cli = new ServerCliComputer(mainframe, helper.getLevel());
+                    runIql(mainframe, cli, "CREATE JOB tidy AS DROP 64 cobblestone EVERY 5t");
+                    mainframe.pauseJob("tidy");
+                    helper.assertTrue(mainframe.isJobPaused("tidy"), "the job should be paused before it is deleted");
+                    helper.assertTrue(mainframe.deleteJob("tidy"), "removing a saved job should report it was there");
+                    runIql(mainframe, cli, "CREATE JOB tidy AS DROP 64 cobblestone EVERY 5t");
+                    helper.assertFalse(mainframe.isJobPaused("tidy"),
+                            "a job created again under a deleted job's name must not start paused");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
     public static void ismsSchema_carriesWhatAViewRuns(final GameTestHelper helper) {
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, new BlockPos(1, 2, 2));
         helper.startSequence()
@@ -2626,11 +2644,7 @@ public final class NetworkGameTests {
 
     // Helpers
 
-    /*
-     * Package-private so the performance benchmarks (PerformanceGameTests) can reuse the same powered-up
-     * Mainframe setup without duplicating the hardware-install plumbing.
-     */
-    static MainframeBlockEntity placeRunningMainframe(final GameTestHelper helper, final BlockPos relative) {
+    private static MainframeBlockEntity placeRunningMainframe(final GameTestHelper helper, final BlockPos relative) {
         return TestWorldBuilder.forGameTest(helper).placeRunningMainframe(relative);
     }
 
@@ -2867,15 +2881,16 @@ public final class NetworkGameTests {
                             "both clusters are online on the Mainframe's network");
                     final var both = java.util.List.of(a, b);
                     // Fill A completely: the next craft must be sent to B, not left waiting on A.
-                    a.acquireCraftSlots(java.util.UUID.randomUUID(), 8);
+                    final java.util.UUID holdingA = java.util.UUID.randomUUID();
+                    a.acquireCraftSlots(holdingA, 8);
                     helper.assertTrue(dev.jstech.computers.crafting.NetworkCraftOperation
                                     .chooseLeastLoaded(both) == b,
                             "with A full, the craft goes to B");
-                    // Free A: it is back to the most room, so it is chosen again (ties go to the first).
-                    a.acquireCraftSlots(java.util.UUID.randomUUID(), 0);
+                    // Free A while B holds three: A has 8 free against B's 5, so A is chosen again.
+                    a.releaseCraftSlot(holdingA);
                     b.acquireCraftSlots(java.util.UUID.randomUUID(), 3);
                     helper.assertTrue(dev.jstech.computers.crafting.NetworkCraftOperation
-                                    .chooseLeastLoaded(both) == a || a.craftSlotsInUse() == 8,
+                                    .chooseLeastLoaded(both) == a,
                             "the emptier supercomputer wins");
                 })
                 .thenSucceed();

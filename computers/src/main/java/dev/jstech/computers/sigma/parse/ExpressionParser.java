@@ -375,9 +375,8 @@ final class ExpressionParser {
      */
     private IExpr parseOutArgument() {
         final Token start = this.cursor.advance();
-        final int afterType = this.types.scanType(this.cursor.at());
         TypeRef type = null;
-        if (afterType > this.cursor.at() && this.cursor.kindAt(afterType) == TokenKind.IDENTIFIER) {
+        if (this.types.typedNameAhead()) {
             type = this.types.parseTypeRef();
         }
         final String name = this.cursor.expectIdentifier();
@@ -421,17 +420,16 @@ final class ExpressionParser {
     /**
      * The expression in one hole, read by a lexer and parser of its own.
      *
-     * <p>The code is padded with the lines and columns before it, so anything wrong inside the hole is
-     * reported where it sits in the file rather than at the start of a string nobody can find.
+     * <p>The lexer starts at the line and column the hole sits at, so anything wrong inside it is reported
+     * where it sits in the file rather than at the start of a string nobody can find.
      */
     private IExpr parseHole(final Token token, final Lexer.Hole hole) {
         if (hole.code().isBlank()) {
             this.diagnostics.error(hole.line(), hole.column(), SigmaError.EXPECTED_EXPRESSION, "'}'");
             return new IExpr.Literal(TokenKind.STRING_LITERAL, "", token.line(), token.column());
         }
-        final String padded = "\n".repeat(Math.max(0, hole.line() - 1)) + " ".repeat(Math.max(0, hole.column() - 1))
-                + hole.code();
-        final Lexer lexer = new Lexer(new SourceFile("", padded), this.diagnostics);
+        final Lexer lexer = new Lexer(new SourceFile("", hole.code()), this.diagnostics,
+                Math.max(1, hole.line()), Math.max(1, hole.column()));
         // The hole is read as deep as the string it sits in, so holes nested in holes still meet the limit.
         return new Parser(lexer.tokenize(), this.diagnostics, this.cursor.depth()).parseLoneExpression();
     }
@@ -513,9 +511,8 @@ final class ExpressionParser {
             final int before = this.cursor.at();
             final Token at = this.cursor.peek();
             final boolean outward = this.cursor.match(TokenKind.OUT);
-            final int afterType = this.types.scanType(this.cursor.at());
             TypeRef type = null;
-            if (afterType > this.cursor.at() && this.cursor.kindAt(afterType) == TokenKind.IDENTIFIER) {
+            if (this.types.typedNameAhead()) {
                 type = this.types.parseTypeRef();
             }
             final String name = this.cursor.expectIdentifier();

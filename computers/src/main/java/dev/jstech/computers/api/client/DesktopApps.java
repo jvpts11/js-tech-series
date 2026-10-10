@@ -30,7 +30,9 @@ public final class DesktopApps {
      * Says what opens the window of the program registered under {@code program}.
      *
      * @param surface whether its window draws through a surface, which holds video memory on the machine while it is
-     *                open; a program that answers a renderer from {@link DesktopProgram#renderer()} says yes
+     *                open; a program that answers a renderer from {@link DesktopProgram#renderer()} says yes. The
+     *                server counts that memory too, so the program must also be named by
+     *                {@code ComputersRegisterEvent.graphicsProgram}; this flag only covers this game
      */
     public static void register(final ResourceLocation program, final boolean surface,
                                 final IDesktopProgramFactory factory) {

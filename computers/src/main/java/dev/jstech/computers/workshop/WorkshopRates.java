@@ -17,7 +17,7 @@ import dev.jstech.core.tier.HardwareEra;
  */
 public final class WorkshopRates {
 
-    /** The levels a table asks for its three offers is 1, 2 and 3; the card asks these. */
+    /** A table takes 1, 2 and 3 levels for its three offers; the card takes 1, 1 and 2, and no lapis. */
     private static final int[] ENCHANT_LEVELS = {1, 1, 2};
     /** The bookshelves the card's offers are drawn as if a table had around it: all it can use. */
     public static final int BOOKSHELVES = 15;

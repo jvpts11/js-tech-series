@@ -17,6 +17,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -33,7 +34,7 @@ final class ProphetMind {
     private final Deque<Reacted> reactions = new ArrayDeque<>();
     /** The last thing done for each item, and the Operations set going for it lately. */
     private final Map<String, Text> lastReaction = new HashMap<>();
-    private final Map<String, Deque<INetworkOperation>> operations = new HashMap<>();
+    private final Map<String, Deque<Started>> operations = new HashMap<>();
     private final Map<String, StorageKey> keys = new HashMap<>();
     private int interval = DEFAULT_INTERVAL;
     private long maxBatch = DEFAULT_BATCH;
@@ -119,11 +120,33 @@ final class ProphetMind {
 
     /** Notes an Operation set going for {@code item}. */
     void started(final String item, final INetworkOperation operation) {
-        final Deque<INetworkOperation> kept = operations.computeIfAbsent(item, k -> new ArrayDeque<>());
-        kept.addFirst(operation);
+        final Deque<Started> kept = operations.computeIfAbsent(item, k -> new ArrayDeque<>());
+        kept.addFirst(new Started(operation));
         while (kept.size() > OPERATIONS) {
             kept.removeLast();
         }
+    }
+
+    /**
+     * Notes that {@code operation} settled: its id and last status are kept, and the Operation itself is let go, so
+     * this mind never holds a settled Operation (and through it the Mainframe and its level) alive.
+     */
+    void ended(final String item, final INetworkOperation operation) {
+        final Deque<Started> kept = operations.get(item);
+        if (kept == null) {
+            return;
+        }
+        for (final Started started : kept) {
+            if (started.live == operation) {
+                started.end();
+            }
+        }
+    }
+
+    /** Lets go of everything remembered for {@code item}: its last reaction and the Operations noted for it. */
+    void forgetItem(final String item) {
+        lastReaction.remove(item);
+        operations.remove(item);
     }
 
     /** The last thing done for {@code item}, or null. */
@@ -133,7 +156,7 @@ final class ProphetMind {
     }
 
     /** The Operations set going for {@code item} lately, the newest first. */
-    List<INetworkOperation> operations(final String item) {
+    List<Started> operations(final String item) {
         return List.copyOf(operations.getOrDefault(item, new ArrayDeque<>()));
     }
 
@@ -161,6 +184,7 @@ final class ProphetMind {
             row.putLong("Threshold", watch.threshold());
             row.putString("Action", watch.action());
             row.putBoolean("Armed", watch.armed());
+            row.putInt("Fired", watch.fired());
             watches.add(row);
         }
         tag.put("Watches", watches);
@@ -198,6 +222,7 @@ final class ProphetMind {
             final ProphetStates.WatchState watch = mind.states.watch(row.getString("Item"), comparison,
                     row.getLong("Threshold"), row.getString("Action"));
             watch.armed(row.getBoolean("Armed"));
+            watch.fired(row.getInt("Fired"));
             highest = Math.max(highest, watch.number());
         }
         mind.states.nextWatch(Math.max(highest + 1, tag.getInt("NextWatch")));
@@ -218,5 +243,35 @@ final class ProphetMind {
 
     /** Something it did, and when. */
     record Reacted(long at, Text what) {
+    }
+
+    /** An Operation set going: held live while it runs, then only its id and the status it ended with. */
+    static final class Started {
+
+        private final UUID id;
+        @Nullable
+        private INetworkOperation live;
+        private byte endedWith;
+
+        private Started(final INetworkOperation operation) {
+            this.id = operation.operationId();
+            this.live = operation;
+        }
+
+        UUID id() {
+            return id;
+        }
+
+        /** Where it stands: its live status while it runs, the one it ended with after. */
+        byte status() {
+            return live == null ? endedWith : live.liveRecord().status();
+        }
+
+        private void end() {
+            if (live != null) {
+                endedWith = live.liveRecord().status();
+                live = null;
+            }
+        }
     }
 }

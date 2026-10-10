@@ -7,11 +7,15 @@
  */
 package dev.jstech.industrial.client;
 
+import dev.jstech.core.blockentity.FieldEnergyStorage;
+import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.industrial.JsIndustrial;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 
 /**
  * Shared placeholder drawing for the Industrial machine screens, and their colours: the palette
@@ -49,6 +53,27 @@ final class MachineScreenSupport {
         if (maxEnergy > 0 && energy > 0) {
             final int filled = Math.min(h, energy * h / maxEnergy);
             g.fill(x, y + h - filled, x + w, y + h, c.energyFull());
+        }
+    }
+
+    /**
+     * Draws the FE gauge of a machine in the layout's {@code energy} box, for a screen at {@code left}, {@code top}.
+     */
+    static void drawEnergyGauge(final GuiGraphics g, final int left, final int top, final GuiLayout.Box box,
+                                final FieldEnergyStorage storage) {
+        drawEnergyBar(g, left + box.x(), top + box.y(), box.width(), box.height(), storage.getEnergyStored(),
+                storage.getMaxEnergyStored());
+    }
+
+    /** Shows the "stored / max FE" tooltip when the mouse is over the gauge's box. */
+    static void drawEnergyTooltip(final GuiGraphics g, final Font font, final int left, final int top,
+                                  final GuiLayout.Box box, final FieldEnergyStorage storage, final int mouseX,
+                                  final int mouseY) {
+        final int mx = mouseX - left;
+        final int my = mouseY - top;
+        if (mx >= box.x() && mx < box.x() + box.width() && my >= box.y() && my < box.y() + box.height()) {
+            g.renderTooltip(font, Component.literal(storage.getEnergyStored() + " / "
+                    + storage.getMaxEnergyStored() + " FE"), mouseX, mouseY);
         }
     }
 

@@ -174,8 +174,11 @@ final class ActionCenter {
         final int qy = quickTop(tbY);
         if (my >= qy && my < qy + QUICK_H) {
             final int qw = (W - 2 * PAD - (QUICK_COLUMNS - 1) * 2) / QUICK_COLUMNS;
-            final int i = (int) ((mx - x - PAD) / (qw + 2));
-            quick(i);
+            // A click in the padding or in the gap between two tiles is on no tile and does nothing.
+            final double off = mx - x - PAD;
+            if (off >= 0 && off % (qw + 2) < qw) {
+                quick((int) (off / (qw + 2)));
+            }
         }
         return true;
     }

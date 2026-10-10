@@ -482,7 +482,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             this.held = pressed;
             return true;
         }
-        if (this.listRows > 0 && mouseX >= this.listLeft && mouseX < this.listLeft + this.listWidth) {
+        if (this.listRows > 0 && mouseX >= this.listLeft && mouseX < this.listLeft + this.listWidth
+                && mouseY >= this.listTop) {
             final int row = (int) ((mouseY - this.listTop) / Math.max(1, this.listRowHeight));
             if (row >= 0 && row < this.listRows) {
                 this.selection = row;

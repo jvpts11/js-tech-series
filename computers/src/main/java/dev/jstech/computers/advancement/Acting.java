@@ -30,7 +30,7 @@ import java.util.UUID;
  */
 public final class Acting {
 
-    private static final UUID NOBODY = new UUID(0L, 0L);
+    private static final UUID NOBODY = MachineOperators.NOBODY;
     private static final ThreadLocal<Deque<UUID>> SCOPES = ThreadLocal.withInitial(ArrayDeque::new);
 
     private Acting() {

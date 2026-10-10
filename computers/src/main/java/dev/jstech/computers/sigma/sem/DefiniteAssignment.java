@@ -102,7 +102,7 @@ final class DefiniteAssignment {
      * Whether evaluating this expression gives the name a value: an assignment to it, or handing it
      * to a method as the place to fill in. A lambda's body does not count, because it runs later.
      */
-    private static boolean writesTo(final IExpr expression, final String name) {
+    static boolean writesTo(final IExpr expression, final String name) {
         return switch (expression) {
             case null -> false;
             case IExpr.Assign assign -> (assign.operator() == Operator.ASSIGN

@@ -73,6 +73,23 @@ public final class DiagnosticBag {
     }
 
     /** Whether anything recorded here stops the compilation. */
+    /** Whether none of these is an error, which is when what they came from can go on to the next stage. */
+    public static boolean noErrors(final List<Diagnostic> diagnostics) {
+        return diagnostics.stream().noneMatch(Diagnostic::isError);
+    }
+
+    /** The messages one per line, plus a note if any were dropped, in English. */
+    public static List<String> lines(final List<Diagnostic> diagnostics, final boolean truncated) {
+        final List<String> lines = new ArrayList<>();
+        for (final Diagnostic diagnostic : diagnostics) {
+            lines.add(diagnostic.format());
+        }
+        if (truncated) {
+            lines.add(TOO_MANY.text().english());
+        }
+        return lines;
+    }
+
     public boolean hasErrors() {
         return this.diagnostics.stream().anyMatch(Diagnostic::isError);
     }

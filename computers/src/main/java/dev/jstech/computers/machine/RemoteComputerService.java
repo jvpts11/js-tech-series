@@ -33,9 +33,11 @@ import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -114,12 +116,15 @@ public final class RemoteComputerService {
                 candidates.add(be);
             }
         }
+        // A rack holds many servers; its position is collected first so each rack is looked up once.
+        final Set<Long> rackPositions = new LinkedHashSet<>();
         for (final ServerNode server : system.serversOf(network)) {
-            system.locationOf(server.nodeUuid()).ifPresent(loc -> {
-                if (Loaded.blockEntity(this.level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
-                    candidates.add(rack);
-                }
-            });
+            system.locationOf(server.nodeUuid()).ifPresent(loc -> rackPositions.add(loc.rackPos()));
+        }
+        for (final long rackPos : rackPositions) {
+            if (Loaded.blockEntity(this.level, BlockPos.of(rackPos)) instanceof ServerRackBlockEntity rack) {
+                candidates.add(rack);
+            }
         }
         final BlockEntity self = (BlockEntity) this.terminal;
         for (final BlockEntity candidate : candidates) {

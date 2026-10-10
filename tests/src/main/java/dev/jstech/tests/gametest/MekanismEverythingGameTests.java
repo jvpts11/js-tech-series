@@ -380,7 +380,12 @@ public final class MekanismEverythingGameTests {
                     switch (phase[0]) {
                         case 0 -> { // SEED: load this wave's recipes, top the raw pool up, let the index absorb it
                             for (final CraftingPattern recipe : waveRecipes.get(wave[0])) {
-                                helper.assertTrue(load(benches, recipe), "wave recipe must load into a card's ROM");
+                                if (!load(benches, recipe)) {
+                                    // Recorded, not thrown: a throw would retry this setup every tick until timeout.
+                                    failure[0] = "wave " + wave[0] + ": a recipe did not load into a card's ROM"
+                                            + " (seed=" + seed + ")";
+                                    return;
+                                }
                             }
                             for (final Item raw : rawPool) {
                                 final long have = storage.count(raw);

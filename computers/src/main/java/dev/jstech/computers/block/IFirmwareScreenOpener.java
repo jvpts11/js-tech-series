@@ -8,8 +8,8 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.registry.ClientHook;
 import net.minecraft.core.BlockPos;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Callback that opens the firmware setup screen on the client.
@@ -37,23 +37,20 @@ public interface IFirmwareScreenOpener {
 
     final class Holder {
 
+        private static final ClientHook<IFirmwareScreenOpener> HOOK = new ClientHook<>();
+
         private Holder() {
         }
 
-        @Nullable
-        private static IFirmwareScreenOpener instance;
-
         /** Registers the client-side opener. Called from the client event subscriber. */
         public static void set(final IFirmwareScreenOpener opener) {
-            instance = opener;
+            HOOK.set(opener);
         }
 
         /** Opens the firmware screen if the client-side opener is registered; no-op otherwise. */
         public static void open(final BlockPos pos, final BlockPos monitorPos, final FirmwareKind kind,
                                 final String machineName) {
-            if (instance != null) {
-                instance.open(pos, monitorPos, kind, machineName);
-            }
+            HOOK.ifPresent(target -> target.open(pos, monitorPos, kind, machineName));
         }
     }
 }

@@ -7,10 +7,14 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.api.client.DesktopProgram;
+import dev.jstech.computers.os.GraphicsPrograms;
 import dev.jstech.core.api.client.SurfaceRenderer;
 import dev.jstech.core.client.gui.surface.SurfaceHost;
 import dev.jstech.core.gui.SurfaceTexts;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -38,12 +42,25 @@ public final class AddonDesktopApp implements IDesktopApp {
     /** Set while a window is being opened by the player's own hand, so the program it makes knows it runs for them. */
     private static boolean openingByHand;
 
+    /** The programs already warned about, so a window opened many times says it once. */
+    private static final Set<ResourceLocation> WARNED = ConcurrentHashMap.newKeySet();
+
     public AddonDesktopApp(final ResourceLocation program, final DesktopProgram app) {
         this.program = program;
         this.app = app;
         final SurfaceRenderer renderer = app.renderer();
+        warnOnceIfFlagDisagrees(program, renderer != null);
         this.surface = renderer == null ? null : new SurfaceHost(renderer, program.toString());
         this.opener = openingByHand;
+    }
+
+    /** Says once per program when its renderer and its video memory flag disagree, since nothing else would. */
+    private static void warnOnceIfFlagDisagrees(final ResourceLocation program, final boolean hasRenderer) {
+        if (hasRenderer != GraphicsPrograms.isGraphicalProgram(program) && WARNED.add(program)) {
+            JsComputers.LOGGER.warn(hasRenderer
+                    ? "The program {} answers a renderer but is not marked as holding video memory"
+                    : "The program {} is marked as holding video memory but answers no renderer", program);
+        }
     }
 
     /** Opens a window by the player's own hand: what {@code make} makes runs for this game's player. */

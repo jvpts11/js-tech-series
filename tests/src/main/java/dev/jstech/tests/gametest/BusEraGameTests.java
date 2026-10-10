@@ -221,8 +221,11 @@ public final class BusEraGameTests {
                 .thenSucceed();
     }
 
-    /** A Standard bus set to the night does not move at noon, and moves at midnight. */
-    @GameTest(template = ARENA, timeoutTicks = 300)
+    /**
+     * A Standard bus set to the night does not move at noon, and moves at midnight. It rewrites the shared level
+     * clock, so it runs in a batch of its own: no other test shares the level while the clock jumps.
+     */
+    @GameTest(template = ARENA, batch = "jsc_clock", timeoutTicks = 300)
     public static void standard_waitsForItsHours(final GameTestHelper helper) {
         final MainframeBlockEntity mainframe = network(helper, ComputingModule.HBW_CABLE);
         chest(helper, SOUTH_CHEST, new ItemStack(Items.COBBLESTONE, 10));

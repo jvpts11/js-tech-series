@@ -130,7 +130,7 @@ public final class IqlPayloads {
         if (net == null) {
             return new IsmsSchemaPayload(window, IsmsSchemaPayload.OFFLINE.with(DEFAULT_NETWORK), host.hostname(),
                     IsmsSchemaPayload.Engine.offline(), List.of(), List.of(), List.of(), List.of(), List.of(),
-                    new IsmsSchemaPayload.Index(IndexHealth.State.OK, 0, 0), List.of());
+                    null, List.of());
         }
         final MainframeBlockEntity mainframe = resolveMainframe(level, net);
         final List<Integer> tableRows = new ArrayList<>();
@@ -145,7 +145,8 @@ public final class IqlPayloads {
         final List<IsmsSchemaPayload.Saved> procedures = new ArrayList<>();
         final List<IsmsSchemaPayload.Job> jobs = new ArrayList<>();
         final List<IsmsSchemaPayload.Lock> locks = new ArrayList<>();
-        IsmsSchemaPayload.Index index = new IsmsSchemaPayload.Index(IndexHealth.State.OK, 0, 0);
+        // Without a Mainframe there is no index to report, which is not the same as a healthy one.
+        IsmsSchemaPayload.Index index = null;
         if (mainframe != null) {
             final IqlCatalog catalog = mainframe.iqlCatalog();
             catalog.ofType(IqlDefinition.ObjectType.VIEW)
@@ -368,8 +369,7 @@ public final class IqlPayloads {
                 yield ICliComputer.OpResult.ok(JOB_PAUSED.with(name));
             }
             default -> {
-                mainframe.iqlCatalog().remove(IqlDefinition.ObjectType.JOB, name);
-                mainframe.markIqlCatalogChanged();
+                mainframe.deleteJob(name);
                 yield ICliComputer.OpResult.ok(JOB_DELETED.with(name));
             }
         };

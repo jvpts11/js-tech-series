@@ -33,6 +33,10 @@ public class ProcessingMachineMenu extends CoreMenu {
                                  final ProcessingMachineBlockEntity machine) {
         super(type, containerId, inventory, MenuValidity.blockEntity(machine));
         this.machine = machine;
+        if (machine.layout().inputs() != 1 || machine.layout().outputs() != 1) {
+            throw new IllegalStateException("The processing machine menu places exactly one input slot and one "
+                    + "output slot");
+        }
         final GuiLayout layout = ProcessingMachineLayout.layout();
         final SlotGroup input = slots(slot(machine.getInventory(), 0, layout.slotAt("input")));
         final SlotGroup output = slots(outputSlot(machine.getInventory(), machine.layout().firstOutput(),

@@ -68,6 +68,9 @@ public final class IsmsProfilerApp implements IDesktopApp, CodeFileReplies.IRead
     private String network = "";
     private String path = "";
     private Text status = Text.EMPTY;
+    /** How many rows of the trace being saved fit in the file, and how many did not. */
+    private int rowsKept;
+    private int rowsLeftOut;
     private boolean askedSchema;
     private Font font = Minecraft.getInstance().font;
     private int originX;
@@ -345,7 +348,13 @@ public final class IsmsProfilerApp implements IDesktopApp, CodeFileReplies.IRead
     public void onSaved(final boolean ok, final Text message) {
         if (saving) {
             saving = false;
-            status = ok ? IsmsProfilerTexts.SAVED.with(path) : message;
+            if (!ok) {
+                status = message;
+            } else if (rowsLeftOut > 0) {
+                status = IsmsProfilerTexts.SAVED_CUT.with(path, rowsKept, rowsLeftOut);
+            } else {
+                status = IsmsProfilerTexts.SAVED.with(path);
+            }
         }
     }
 
@@ -478,18 +487,23 @@ public final class IsmsProfilerApp implements IDesktopApp, CodeFileReplies.IRead
     private void write(final String file) {
         final StringBuilder out = new StringBuilder();
         out.append(String.join(TAB, columnWords())).append('\n');
+        int kept = 0;
         for (final Row row : rows) {
             final List<String> cells = new ArrayList<>(cells(row));
             final List<String> detail = new ArrayList<>();
             row.event().detail().forEach(line -> detail.add(GameText.resolve(line)));
             cells.add(String.join(DETAIL_SEPARATOR, detail));
-            out.append(String.join(TAB, cells).replace("\n", " ")).append('\n');
-            if (out.length() > SaveFilePayload.MAX_CONTENT) {
+            final String written = String.join(TAB, cells).replace("\n", " ") + '\n';
+            // A row that would cross the limit is left out whole, so the file never ends in the middle of a field.
+            if (out.length() + written.length() > SaveFilePayload.MAX_CONTENT) {
                 break;
             }
+            out.append(written);
+            kept++;
         }
-        final String text = out.length() > SaveFilePayload.MAX_CONTENT ? out.substring(0, SaveFilePayload.MAX_CONTENT)
-                : out.toString();
+        rowsKept = kept;
+        rowsLeftOut = rows.size() - kept;
+        final String text = out.toString();
         saving = true;
         CodeFileReplies.expectSaved(this);
         send(new SaveFilePayload(host, file, text));
@@ -523,7 +537,15 @@ public final class IsmsProfilerApp implements IDesktopApp, CodeFileReplies.IRead
 
     private static long number(final String cell) {
         final String digits = cell.replaceAll("[^0-9]", "");
-        return digits.isEmpty() ? TraceEvent.NONE : Long.parseLong(digits);
+        if (digits.isEmpty()) {
+            return TraceEvent.NONE;
+        }
+        try {
+            return Long.parseLong(digits);
+        } catch (final NumberFormatException e) {
+            // A damaged cell too large for a long reads as no value instead of failing the whole open.
+            return TraceEvent.NONE;
+        }
     }
 
     private void findNext() {

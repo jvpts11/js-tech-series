@@ -10,6 +10,7 @@ package dev.jstech.computers.program.cli;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * The view of a computer and its network that a CLI command operates on, made of one part for each thing a command
@@ -98,6 +99,16 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
         /** One that came with the machines. */
         public PackageInfo(final String name, final String description, final boolean installed) {
             this(name, description, installed, false);
+        }
+
+        /**
+         * Whether a typed search term finds this package: the term, trimmed and without regard to case, is in
+         * the name or the description. An empty term finds everything. Every package manager searches this way.
+         */
+        public boolean matches(final String term) {
+            final String needle = term == null ? "" : term.trim().toLowerCase(Locale.ROOT);
+            return needle.isEmpty() || this.name.toLowerCase(Locale.ROOT).contains(needle)
+                    || this.description.toLowerCase(Locale.ROOT).contains(needle);
         }
     }
 

@@ -40,6 +40,11 @@ public final class MonitorPictureCache {
         return PICTURES.getOrDefault(pos, IMonitorPicture.DARK);
     }
 
+    /** Lets go of what the monitor at {@code pos} showed, once that monitor is gone from this client. */
+    public static void forget(final BlockPos pos) {
+        PICTURES.remove(pos);
+    }
+
     @SubscribeEvent
     public static void onLeave(final ClientPlayerNetworkEvent.LoggingOut event) {
         PICTURES.clear();

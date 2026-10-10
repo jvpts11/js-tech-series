@@ -29,6 +29,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
@@ -89,19 +90,19 @@ public final class MachineSoundGameTests {
         final PersonalComputerBlockEntity pc = legacy(helper, StorageTier.HDD);
         pc.togglePower();
         helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
+                .thenExecuteAfter(SETTLE, () -> heard.guard(() -> {
                     heard.assertPlayed(helper, ComputingSounds.HARD_DRIVE_SPIN_UP);
                     helper.assertFalse(turning(helper, pc), "the drive is not heard turning while it spins up");
-                })
-                .thenExecuteAfter(SPUN_UP, () -> {
+                }))
+                .thenExecuteAfter(SPUN_UP, () -> heard.guard(() -> {
                     helper.assertTrue(turning(helper, pc), "a spun-up drive is heard turning");
                     pc.togglePower();
-                })
-                .thenExecuteAfter(SETTLE, () -> {
+                }))
+                .thenExecuteAfter(SETTLE, () -> heard.guard(() -> {
                     heard.stop();
                     heard.assertPlayed(helper, ComputingSounds.HARD_DRIVE_SPIN_DOWN);
                     helper.assertFalse(turning(helper, pc), "a machine switched off stops its drive");
-                })
+                }))
                 .thenSucceed();
     }
 
@@ -169,14 +170,14 @@ public final class MachineSoundGameTests {
         }
         drive.insertMedia(new ItemStack(ComputingModule.FLOPPY_DISK.get()));
         helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
+                .thenExecuteAfter(SETTLE, () -> heard.guard(() -> {
                     heard.assertPlayed(helper, ComputingSounds.FLOPPY_INSERT);
                     drive.ejectMedia();
-                })
-                .thenExecuteAfter(SETTLE, () -> {
+                }))
+                .thenExecuteAfter(SETTLE, () -> heard.guard(() -> {
                     heard.assertPlayed(helper, ComputingSounds.FLOPPY_EJECT);
                     drive.insertMedia(new ItemStack(ComputingModule.FLOPPY_DISK.get()));
-                })
+                }))
                 .thenExecuteAfter(SETTLE, () -> {
                     // A drive being broken lets its disk fall out without the sound of ejecting it.
                     helper.setBlock(WHERE, Blocks.AIR);
@@ -253,21 +254,31 @@ public final class MachineSoundGameTests {
     /** The sounds the server plays at one block, heard from the moment it is made until it is stopped. */
     private static final class Heard implements Consumer<PlayLevelSoundEvent.AtPosition> {
 
+        /** Longer than any test here runs: a listener a failed test never stopped goes deaf after this. */
+        private static final long LIFETIME_TICKS = 1000L;
+
         private final Vec3 at;
+        private final Level level;
+        private final long expiresAt;
         private final List<ResourceLocation> sounds = new ArrayList<>();
 
-        private Heard(final Vec3 at) {
+        private Heard(final Vec3 at, final Level level) {
             this.at = at;
+            this.level = level;
+            this.expiresAt = level.getGameTime() + LIFETIME_TICKS;
         }
 
         static Heard at(final GameTestHelper helper, final BlockPos local) {
-            final Heard heard = new Heard(Vec3.atCenterOf(helper.absolutePos(local)));
+            final Heard heard = new Heard(Vec3.atCenterOf(helper.absolutePos(local)), helper.getLevel());
             NeoForge.EVENT_BUS.addListener(heard);
             return heard;
         }
 
         @Override
         public void accept(final PlayLevelSoundEvent.AtPosition event) {
+            if (level.getGameTime() > expiresAt) {
+                return;
+            }
             if (event.getSound() != null && event.getPosition().distanceToSqr(at) < 0.01) {
                 sounds.add(event.getSound().value().getLocation());
             }
@@ -275,6 +286,16 @@ public final class MachineSoundGameTests {
 
         void stop() {
             NeoForge.EVENT_BUS.unregister(this);
+        }
+
+        /** Runs one step of a test and stops listening before a failure in it ends the test. */
+        void guard(final Runnable step) {
+            try {
+                step.run();
+            } catch (final RuntimeException | Error failure) {
+                stop();
+                throw failure;
+            }
         }
 
         boolean played(final SoundKey sound) {

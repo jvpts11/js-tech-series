@@ -116,7 +116,7 @@ public final class ServerAssemblyLayout {
         l.playerInventory(INV_X, INV_Y);
 
         l.text("titleServer", 12, 11, 6, 1.0f);
-        l.text("statusPill", WIDTH - 6 * 6, 11, 6, 1.0f);
+        l.text("statusPill", WIDTH - Math.round(6 * GuiLayout.GLYPH_WIDTH), 11, 6, 1.0f);
         l.text("lblBoard", MOBO_X, LABEL_ROW_1_Y, 5, 1.0f);
         l.text("lblCpu", RIGHT_X, LABEL_ROW_1_Y, 3, 1.0f);
         l.text("lblRam", RIGHT_X, LABEL_ROW_2_Y, 3, 1.0f);

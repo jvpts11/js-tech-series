@@ -299,8 +299,7 @@ final class PackageCommands {
             final String needle = term.trim().toLowerCase(Locale.ROOT);
             boolean any = false;
             for (final ICliComputer.PackageInfo p : ctx.computer().packagesAvailable()) {
-                if (!needle.isEmpty() && !p.name().contains(needle)
-                        && !p.description().toLowerCase(Locale.ROOT).contains(needle)) {
+                if (!p.matches(needle)) {
                     continue;
                 }
                 any = true;

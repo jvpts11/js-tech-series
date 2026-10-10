@@ -11,7 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.FilesApp;
-import dev.jstech.computers.client.os.IDesktopApp;
+import dev.jstech.computers.client.os.ShellApp;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -43,10 +43,7 @@ public final class DesktopMenuClientTests {
     private static final int[] WALLPAPER = {300, 60};
 
     private static FilesApp files(final ClientTestContext ctx) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
-        final var window = desktop == null ? null : desktop.windowFor("Files");
-        final IDesktopApp app = window == null ? null : window.app();
-        return app instanceof FilesApp f ? f : null;
+        return DesktopSteps.app(ctx, "Files", FilesApp.class);
     }
 
     private static ClientTestContext atTheDesktop(final ClientTestContext ctx, final ResourceLocation os,
@@ -146,11 +143,8 @@ public final class DesktopMenuClientTests {
         return false;
     }
 
-    private static dev.jstech.computers.client.os.ShellApp terminal(final ClientTestContext ctx) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
-        final var window = desktop == null ? null : desktop.windowFor("Command Prompt");
-        final IDesktopApp app = window == null ? null : window.app();
-        return app instanceof dev.jstech.computers.client.os.ShellApp s ? s : null;
+    private static ShellApp terminal(final ClientTestContext ctx) {
+        return DesktopSteps.app(ctx, "Command Prompt", ShellApp.class);
     }
 
     /** A click past the last crumb turns the address into text; a path typed there is where the explorer goes. */

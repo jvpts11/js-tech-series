@@ -724,7 +724,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
         boolean optical = false;
         for (int slot = 0; slot < servers.getSlots() && !optical; slot++) {
-            optical = OpticalPort.holdsCard(ServerItem.build(servers.getStackInSlot(slot)));
+            optical = OpticalPort.holdsCard(buildIn(slot));
         }
         block.setOptical(level, worldPosition, optical);
     }
@@ -1031,6 +1031,16 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return arrays.memberCount(serverSlot);
     }
 
+    /** The size of the volume the unit's array was formed with (0 when it runs no array or none was kept). */
+    public long raidPromisedVolume(final int serverSlot) {
+        return arrays.promisedVolume(serverSlot);
+    }
+
+    /** The capacity in items of each disk in the unit's bay. */
+    public List<Long> raidDriveSizes(final int serverSlot) {
+        return arrays.driveSizes(serverSlot);
+    }
+
     /** Whether the unit's array is missing members but still serving data. */
     public boolean raidDegraded(final int serverSlot) {
         return arrays.degraded(serverSlot);
@@ -1116,9 +1126,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
              * A machine in a rack is a machine: it comes up through its own self-test, boot manager and system,
              * it keeps setting a program up while it is a powered node, and it keeps a copy of its own going.
              */
-            BootRunner.tick(unitHost(i), unitState(i).phases, level, worldPosition);
-            SetupRunner.tick(unitHost(i), level, worldPosition);
-            OsInstallRunner.tick(unitHost(i), level, worldPosition);
+            final IOsHost unit = unitHost(i);
+            BootRunner.tick(unit, unitState(i).phases, level, worldPosition);
+            SetupRunner.tick(unit, level, worldPosition);
+            OsInstallRunner.tick(unit, level, worldPosition);
             // And whatever was left running in front of its terminal goes on running, watched or not.
             terminals.tick(level, i);
 
@@ -2179,7 +2190,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     @Override
     public LocalStore localStore() {
-        final int slot = Math.max(0, soleComputerSlot());
+        final int slot = soleComputerSlot();
+        if (slot < 0) {
+            // No addressable computer: like the disks and the console, the local store is empty, not row 0's.
+            return new LocalStore(List.of(), () -> {
+            });
+        }
         return new LocalStore(
                 claimedDriveStacks(slot), () -> {
                     markStorageChanged(slot);
@@ -2188,13 +2204,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     }
 
     private long netStorageItems() {
-        long capacity = 0L;
-        for (final ItemStack disk : diskStacks()) {
-            if (disk.getItem() instanceof DiskItem item) {
-                capacity += item.spec().capacityItems();
-            }
-        }
-        return Math.max(0L, capacity - reservedByOs());
+        final int slot = soleComputerSlot();
+        return slot < 0 ? 0L : Math.max(0L, bayStorageItems(slot) - reservedByOs());
     }
 
     @Override

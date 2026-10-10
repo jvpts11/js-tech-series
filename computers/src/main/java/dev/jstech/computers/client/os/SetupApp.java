@@ -47,7 +47,7 @@ public final class SetupApp implements IDesktopApp {
             new Colours(0xFF000080, 0xFF1084D0, 0xFFFFFFFF, 0xFFA9B4CC, 0xFF4E5C78, 0xFF8891A2));
 
     /** The box with a disc coming out of it that every setup window wears, whatever it installs. */
-    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath("jsc", "setup");
+    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "setup");
 
     private static final int STRIP_W = 42;
     private static final int HEADER_H = 24;
@@ -214,7 +214,7 @@ public final class SetupApp implements IDesktopApp {
         final int textX;
         int rowY;
         final ResourceLocation icon = this.state == null ? null
-                : ResourceLocation.fromNamespaceAndPath("jsc", this.state.programId().contains(":")
+                : ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, this.state.programId().contains(":")
                         ? this.state.programId().substring(this.state.programId().indexOf(':') + 1)
                         : this.state.programId());
         switch (this.skin.form()) {

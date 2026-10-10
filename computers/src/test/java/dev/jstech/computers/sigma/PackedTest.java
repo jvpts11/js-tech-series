@@ -108,6 +108,30 @@ class PackedTest {
     }
 
     @Test
+    void problems_refusesAFileNamedToClimbOutOfThePackageFolder() {
+        final Manifest manifest = new Manifest("stockwatch", "1.2.0", "jvpts11", "stockwatch.asm",
+                "bell", 2, List.of("stockwatch.asm", "../../AUTOEXEC.TXT"), "");
+        final Map<String, String> files = new LinkedHashMap<>();
+        files.put("stockwatch.asm", ".asm 1\n.start Watcher script\n");
+        files.put("../../AUTOEXEC.TXT", "overwritten\n");
+        final List<String> found = new Packed(manifest, files).problems();
+        assertTrue(found.stream().anyMatch(p -> p.contains("AUTOEXEC.TXT")), () -> found.toString());
+    }
+
+    @Test
+    void isSafeFileName_acceptsPlainNamesAndSubfoldersOnly() {
+        assertTrue(Packed.isSafeFileName("stockwatch.asm"));
+        assertTrue(Packed.isSafeFileName("lib/util.asm"));
+        assertFalse(Packed.isSafeFileName(""));
+        assertFalse(Packed.isSafeFileName(".."));
+        assertFalse(Packed.isSafeFileName("a/../b"));
+        assertFalse(Packed.isSafeFileName("/etc/x"));
+        assertFalse(Packed.isSafeFileName("a//b"));
+        assertFalse(Packed.isSafeFileName("..\\x"));
+        assertFalse(Packed.isSafeFileName("C:x"));
+    }
+
+    @Test
     void read_passesOverALineFromALaterVersionRatherThanRefusingTheWhole() {
         final Manifest read = Manifest.read("""
                 name: stockwatch
@@ -126,7 +150,7 @@ class PackedTest {
                 # what this is
                 name: stockwatch
 
-                version: 1.0.0   # bumped today
+                version: 1.0.0   
                 entry: stockwatch.asm
                 file: stockwatch.asm
                 """);
@@ -140,5 +164,38 @@ class PackedTest {
         assertTrue(made.problems().isEmpty(), () -> made.problems().toString());
         assertEquals("stockwatch.asm", made.entry());
         assertFalse(made.write().isBlank());
+    }
+
+    @Test
+    void read_keepsAHashInsideAValue() {
+        final Manifest before = new Manifest("stockwatch", "1.0.0", "Team #1", "stockwatch.asm", "bell", 1,
+                List.of("stockwatch.asm"), "use # for notes");
+        final Manifest after = Manifest.read(before.write());
+        assertEquals("use # for notes", after.about());
+        assertEquals("Team #1", after.house());
+    }
+
+    @Test
+    void write_thenRead_givesBackAFileWithNoFinalNewlineAsItWas() {
+        final Map<String, String> files = new LinkedHashMap<>();
+        files.put("a.txt", "x");
+        files.put("b.txt", "");
+        files.put("c.txt", "y\n");
+        final Manifest manifest = new Manifest("stockwatch", "1.0.0", "jvpts11", "a.txt", "bell", 1,
+                List.of("a.txt", "b.txt", "c.txt"), "");
+        final Packed after = Packed.read(new Packed(manifest, files).write());
+        assertEquals(files, after.files());
+    }
+
+    @Test
+    void read_refusesAHeadThatOnlyStartsLikeTheFormat() {
+        assertNull(Packed.read(".pkg 10\nname: a\n"));
+        assertNull(Packed.read(".pkg 1x\n"));
+    }
+
+    @Test
+    void read_refusesAPackageThatNamesOneFileTwice() {
+        final String text = built().write() + "--- readme.txt\nsecond body\n";
+        assertNull(Packed.read(text));
     }
 }

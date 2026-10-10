@@ -30,19 +30,13 @@ public class CraftingRouterMenu extends AbstractBusMenu {
 
     public static CraftingRouterMenu create(final int containerId, final Inventory playerInventory,
                                             final CableBlockEntity cable, final Direction face) {
-        // A part gone from the face leaves a window on a stand-in, which its validity closes at once.
-        final CraftingRouterPart part = cable.getPart(face) instanceof CraftingRouterPart real ? real
-                : new CraftingRouterPart();
-        return new CraftingRouterMenu(containerId, playerInventory, part, cable.getLevel(),
-                Opening.of(cable, face, part));
+        return open(containerId, playerInventory, cable, face, CraftingRouterPart.class,
+                era -> new CraftingRouterPart(), CraftingRouterMenu::new);
     }
 
     public static CraftingRouterMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                  final RegistryFriendlyByteBuf buf) {
-        final Opening opening = Opening.read(buf);
-        final Level level = playerInventory.player.level();
-        final CraftingRouterPart part = level.getBlockEntity(opening.pos()) instanceof CableBlockEntity cable
-                && cable.getPart(opening.face()) instanceof CraftingRouterPart real ? real : new CraftingRouterPart();
-        return new CraftingRouterMenu(containerId, playerInventory, part, level, opening);
+        return openFromNetwork(containerId, playerInventory, buf, CraftingRouterPart.class,
+                era -> new CraftingRouterPart(), CraftingRouterMenu::new);
     }
 }

@@ -56,4 +56,9 @@ public enum Operator {
     public String text() {
         return this.text;
     }
+
+    /** How an assignment with this operator is written: {@code +=} for add, plain {@code =} for assign. */
+    public String assignmentText() {
+        return this == ASSIGN ? this.text : this.text + "=";
+    }
 }

@@ -204,9 +204,9 @@ public final class SetupGameTests {
                 .thenSucceed();
     }
 
-    /** Removing is the same job backwards, a fifth as long, and the program is gone at the end. */
+    /** Removing is the same job backwards, quicker than installing, and the program is gone at the end. */
     @GameTest(template = ARENA, timeoutTicks = 300)
-    public static void setup_removingTakesAFifthAndUninstalls(final GameTestHelper helper) {
+    public static void setup_removingIsQuickerThanInstallingAndUninstalls(final GameTestHelper helper) {
         final BlockPos pos = new BlockPos(2, 2, 2);
         final MainframeBlockEntity mainframe = machineWithFloppy(helper, pos, MINESWEEPER);
         final int factor = SetupTiming.eraFactor(mainframe.displayEra());

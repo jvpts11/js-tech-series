@@ -28,6 +28,7 @@ import dev.jstech.computers.program.cli.NetPath;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.text.TextKey;
@@ -327,10 +328,20 @@ public final class FileService {
                 drive.commit().run();
                 yield ICliComputer.FsResult.ok(WROTE.with(path));
             }
-            case INVALID_PATH -> ICliComputer.FsResult.fail(INVALID_NAME.with(path));
-            case DISK_FULL -> ICliComputer.FsResult.fail(DISK_FULL.with(path));
-            case TOO_LARGE -> ICliComputer.FsResult.fail(TOO_LARGE.with(path, StoredFile.MOST_CHARS));
-            case READ_ONLY -> ICliComputer.FsResult.fail(TYPE_READ_ONLY.with(path, type.extension()));
+            case INVALID_PATH, DISK_FULL, TOO_LARGE, READ_ONLY ->
+                    writeFailure(result, path, TYPE_READ_ONLY.with(path, type.extension()));
+        };
+    }
+
+    /** The refusal for a write that did not go through; the read-only wording differs between a write and a copy. */
+    private static ICliComputer.FsResult writeFailure(final DiskFilesystem.WriteResult result, final String label,
+                                                      final Text readOnlyMessage) {
+        return switch (result) {
+            case INVALID_PATH -> ICliComputer.FsResult.fail(INVALID_NAME.with(label));
+            case DISK_FULL -> ICliComputer.FsResult.fail(DISK_FULL.with(label));
+            case TOO_LARGE -> ICliComputer.FsResult.fail(TOO_LARGE.with(label, StoredFile.MOST_CHARS));
+            case READ_ONLY -> ICliComputer.FsResult.fail(readOnlyMessage);
+            case OK -> ICliComputer.FsResult.ok("");
         };
     }
 
@@ -484,10 +495,8 @@ public final class FileService {
                 d.drive().commit().run();
                 yield ICliComputer.FsResult.ok(COPIED.text());
             }
-            case DISK_FULL -> ICliComputer.FsResult.fail(DISK_FULL.with(dest));
-            case TOO_LARGE -> ICliComputer.FsResult.fail(TOO_LARGE.with(dest, StoredFile.MOST_CHARS));
-            case INVALID_PATH -> ICliComputer.FsResult.fail(INVALID_NAME.with(dest));
-            case READ_ONLY -> ICliComputer.FsResult.fail(DESTINATION_READ_ONLY.with(dest));
+            case INVALID_PATH, DISK_FULL, TOO_LARGE, READ_ONLY ->
+                    writeFailure(wr, dest, DESTINATION_READ_ONLY.with(dest));
         };
     }
 
@@ -571,18 +580,54 @@ public final class FileService {
         final DiskFilesystem.WriteResult wr = DiskFilesystem.write(d.drive().disk(), destPath, type, content.get(),
                 DriveTable.freeWeightOf(d.drive().disk()), d.drive().kind(), this.level.getGameTime());
         if (wr != DiskFilesystem.WriteResult.OK) {
-            return switch (wr) {
-                case DISK_FULL -> ICliComputer.FsResult.fail(DISK_FULL.with(destDir));
-                case TOO_LARGE -> ICliComputer.FsResult.fail(TOO_LARGE.with(destDir, StoredFile.MOST_CHARS));
-                case INVALID_PATH -> ICliComputer.FsResult.fail(INVALID_NAME.with(destDir));
-                case READ_ONLY -> ICliComputer.FsResult.fail(DESTINATION_READ_ONLY.with(destDir));
-                case OK -> ICliComputer.FsResult.ok("");
-            };
+            return writeFailure(wr, destDir, DESTINATION_READ_ONLY.with(destDir));
         }
-        DiskFilesystem.delete(s.drive().disk(), s.path());
+        if (!DiskFilesystem.delete(s.drive().disk(), s.path())) {
+            // All or nothing: without this the file would sit on both drives while the player is told it moved.
+            DiskFilesystem.delete(d.drive().disk(), destPath);
+            return ICliComputer.FsResult.fail(CliTexts.FILE_NOT_FOUND.text());
+        }
         s.drive().commit().run();
         d.drive().commit().run();
         return ICliComputer.FsResult.ok(MOVED.text());
+    }
+
+    /**
+     * Moves a file or folder the way {@code mv} does. A destination that is an existing folder takes the source
+     * in under its own name; any other destination is the full new path, so the source ends up exactly there,
+     * renamed on the way if its name differs. A bare name is read against the current folder, not the source's.
+     */
+    public ICliComputer.FsResult moveTo(final String src, final String dest) {
+        if (NetPath.looksLike(src) || NetPath.looksLike(dest)) {
+            return ICliComputer.FsResult.fail(NO_NETWORK_MOVE.text());
+        }
+        final Resolved s = this.resolve(src);
+        final ICliComputer.FsResult sourceUnready = unready(s);
+        if (sourceUnready != null) {
+            return sourceUnready;
+        }
+        final Resolved d = this.resolve(dest);
+        final ICliComputer.FsResult destUnready = unready(d);
+        if (destUnready != null) {
+            return destUnready;
+        }
+        if (d.path().isEmpty() || DriveTable.dirExists(this.osHost(), d.drive(), d.path())) {
+            return this.movePath(src, dest);
+        }
+        final String parent = FsPaths.parentDir(d.path());
+        final boolean parentThere = parent.isEmpty() || DriveTable.dirExists(this.osHost(), d.drive(), parent);
+        if (s.letter() != d.letter() || !parentThere) {
+            return ICliComputer.FsResult.fail(CliTexts.PATH_NOT_FOUND.text());
+        }
+        if (DiskFilesystem.exists(d.drive().disk(), d.path())) {
+            return alreadyThere(dest);
+        }
+        this.heard(s);
+        if (DiskFilesystem.rename(s.drive().disk(), s.path(), d.path(), s.drive().kind())) {
+            s.drive().commit().run();
+            return ICliComputer.FsResult.ok(MOVED.text());
+        }
+        return ICliComputer.FsResult.fail(CliTexts.FILE_NOT_FOUND.text());
     }
 
     /** Renames a file or folder, which stays where it is. */
@@ -634,6 +679,7 @@ public final class FileService {
                 return ICliComputer.OpResult.fail(FORMAT_SYSTEM_DRIVE);
             }
             target.remove(ComputingComponents.DISK_SYSTEMS.get());
+            target.remove(ComputingComponents.DISK_CONSOLE.get());
             target.remove(ComputingComponents.FILESYSTEM.get());
             DriveVolumes.erase(target);
             target.remove(ComputingComponents.DISK_PUBLIC_PERMILLE.get());

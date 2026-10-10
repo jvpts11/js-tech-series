@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
@@ -324,12 +325,9 @@ public final class RackUnitGameTests {
 
     @GameTest(template = ARENA)
     public static void bayPower_switchDropsTheNodeFromTheNetwork(final GameTestHelper helper) {
-        final dev.jstech.tests.testkit.TestWorldBuilder world =
-                dev.jstech.tests.testkit.TestWorldBuilder.forGameTest(helper);
-        final var mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
-        final ServerRackBlockEntity rack = world.placeSeededRack(new BlockPos(3, 2, 2),
-                net.minecraft.core.Direction.EAST); // cables attach through the rear (west here)
+        final RackOnNetwork fixture = rackOnNetwork(helper);
+        final MainframeBlockEntity mainframe = fixture.mainframe();
+        final ServerRackBlockEntity rack = fixture.rack();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final var net = mainframe.networkUuid();
@@ -562,12 +560,9 @@ public final class RackUnitGameTests {
 
     @GameTest(template = ARENA)
     public static void hotPull_flagsTheIndexAndAReindexClearsIt(final GameTestHelper helper) {
-        final dev.jstech.tests.testkit.TestWorldBuilder world =
-                dev.jstech.tests.testkit.TestWorldBuilder.forGameTest(helper);
-        final var mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
-        final ServerRackBlockEntity rack = world.placeSeededRack(new BlockPos(3, 2, 2),
-                net.minecraft.core.Direction.EAST);
+        final RackOnNetwork fixture = rackOnNetwork(helper);
+        final MainframeBlockEntity mainframe = fixture.mainframe();
+        final ServerRackBlockEntity rack = fixture.rack();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     rack.getServerStorage(0).insert(StorageKey.of(Items.COBBLESTONE), 64L);
@@ -592,12 +587,9 @@ public final class RackUnitGameTests {
 
     @GameTest(template = ARENA)
     public static void ssh_opensARemoteShellOnARackServer(final GameTestHelper helper) {
-        final dev.jstech.tests.testkit.TestWorldBuilder world =
-                dev.jstech.tests.testkit.TestWorldBuilder.forGameTest(helper);
-        final var mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
-        final ServerRackBlockEntity rack = world.placeSeededRack(new BlockPos(3, 2, 2),
-                net.minecraft.core.Direction.EAST);
+        final RackOnNetwork fixture = rackOnNetwork(helper);
+        final MainframeBlockEntity mainframe = fixture.mainframe();
+        final ServerRackBlockEntity rack = fixture.rack();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     // Name the server so it has a host name worth typing.
@@ -658,8 +650,7 @@ public final class RackUnitGameTests {
 
     @GameTest(template = ARENA)
     public static void pckmgr_installsAndTracksThePackageVersion(final GameTestHelper helper) {
-        final dev.jstech.tests.testkit.TestWorldBuilder world =
-                dev.jstech.tests.testkit.TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final var mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -826,12 +817,9 @@ public final class RackUnitGameTests {
 
     @GameTest(template = ARENA)
     public static void serverServices_giveTheMachineItsRole(final GameTestHelper helper) {
-        final dev.jstech.tests.testkit.TestWorldBuilder world =
-                dev.jstech.tests.testkit.TestWorldBuilder.forGameTest(helper);
-        final var mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
-        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
-        final ServerRackBlockEntity rack = world.placeSeededRack(new BlockPos(3, 2, 2),
-                net.minecraft.core.Direction.EAST);
+        final RackOnNetwork fixture = rackOnNetwork(helper);
+        final MainframeBlockEntity mainframe = fixture.mainframe();
+        final ServerRackBlockEntity rack = fixture.rack();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     helper.assertTrue(!rack.hasService(0, Programs.LOAD_BALANCER),
@@ -938,5 +926,18 @@ public final class RackUnitGameTests {
                             "a drive outside the unit's claimed rows must not add capacity");
                 })
                 .thenSucceed();
+    }
+
+    /** A running Mainframe with a seeded rack behind a data cable, the setup most rack tests start from. */
+    private static RackOnNetwork rackOnNetwork(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final MainframeBlockEntity mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
+        TestCables.lay(helper, new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE);
+        // Cables attach through the rack's rear, which faces west here.
+        final ServerRackBlockEntity rack = world.placeSeededRack(new BlockPos(3, 2, 2), Direction.EAST);
+        return new RackOnNetwork(mainframe, rack);
+    }
+
+    private record RackOnNetwork(MainframeBlockEntity mainframe, ServerRackBlockEntity rack) {
     }
 }

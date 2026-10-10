@@ -41,13 +41,19 @@ public enum ThemePreset {
 
     /** The preset by its id, case aside; anything that names none is the system's own. */
     public static ThemePreset byId(final String id) {
+        final ThemePreset found = find(id);
+        return found == null ? SYSTEM : found;
+    }
+
+    /** The preset by its id, case aside, or null when the id names none. */
+    public static ThemePreset find(final String id) {
         final String wanted = id == null ? "" : id.trim().toLowerCase(Locale.ROOT);
         for (final ThemePreset preset : values()) {
             if (preset.id.equals(wanted)) {
                 return preset;
             }
         }
-        return SYSTEM;
+        return null;
     }
 
     public String id() {

@@ -18,7 +18,6 @@ import dev.jstech.computers.operation.payload.MediumTransferPayload;
 import dev.jstech.computers.operation.payload.MoveFilePayload;
 import dev.jstech.computers.operation.payload.PauseCopyPayload;
 import dev.jstech.computers.operation.payload.RenameVolumePayload;
-import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.VolumeLabel;
 import dev.jstech.computers.os.fs.CopyTiming;
@@ -28,16 +27,17 @@ import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.StorageKey;
-import java.util.Locale;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import org.jetbrains.annotations.Nullable;
 
 import static dev.jstech.computers.operation.payload.files.FileAccess.NET_ROOT;
 import static dev.jstech.computers.operation.payload.files.FileAccess.commitMedia;
-import static dev.jstech.computers.operation.payload.files.FileAccess.filesystemKindOf;
+import static dev.jstech.computers.operation.payload.files.FileAccess.kindOf;
 import static dev.jstech.computers.operation.payload.files.FileAccess.localDos;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaFreeWeight;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaStackFor;
@@ -47,6 +47,7 @@ import static dev.jstech.computers.operation.payload.files.FileAccess.netShell;
 import static dev.jstech.computers.operation.payload.files.FileAccess.resolveDatKey;
 import static dev.jstech.computers.operation.payload.files.FileAccess.transferDatToMedium;
 import static dev.jstech.computers.operation.payload.files.FileAccess.volumeKey;
+import static dev.jstech.computers.operation.payload.files.FileAccess.volumeOf;
 import static dev.jstech.computers.operation.payload.interactor.NetworkInteractorPayloads.sendNetworkInteractor;
 import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.niHost;
 
@@ -54,6 +55,9 @@ import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.niHo
  * The payloads that copy and move files between drives, move a data file onto a medium and rename a volume.
  */
 public final class FileTransferPayloads {
+
+    /** How many names a copy tries ("name", "name - Copy", "name - Copy (2)" and on) before it gives up. */
+    private static final int MAX_COPY_NAMES = 100;
 
     private FileTransferPayloads() {
     }
@@ -126,51 +130,7 @@ public final class FileTransferPayloads {
             }
             return;
         }
-        final boolean srcMedia = src.startsWith("media:");
-        final boolean dstMedia = destDir.startsWith("media:");
-        final ItemStack srcVol =
-                srcMedia ? mediaStackFor(level, computer, src) : computer.systemDisk();
-        final ItemStack dstVol =
-                dstMedia ? mediaStackFor(level, computer, destDir) : computer.systemDisk();
-        if (srcVol.isEmpty() || dstVol.isEmpty()) {
-            return;
-        }
-        final String realSrc = srcMedia ? mediaSubPath(src) : src;
-        final String realDstDir = dstMedia ? mediaSubPath(destDir) : destDir;
-        final var read = DiskFilesystem.read(srcVol, realSrc);
-        if (read.isEmpty()) {
-            return;
-        }
-        final String name = realSrc.contains("/") ? realSrc.substring(realSrc.lastIndexOf('/') + 1) : realSrc;
-        final int dot = name.lastIndexOf('.');
-        final String stem = dot > 0 ? name.substring(0, dot) : name;
-        final String ext = dot >= 0 && dot < name.length() - 1
-                ? name.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
-        final FileType type = FileType.of(ext);
-        final FilesystemKind dstKind = dstMedia
-                ? FilesystemKind.HIERARCHICAL
-                : filesystemKindOf(computer);
-        // "name - Copy.ext", then "name - Copy (2).ext", the way a desktop names a duplicate.
-        String candidate = name;
-        final String suffix = ext.isEmpty() ? "" : "." + ext;
-        for (int n = 1; n < 100; n++) {
-            final String path = realDstDir.isEmpty() ? candidate : realDstDir + "/" + candidate;
-            if (!DiskFilesystem.exists(dstVol, path)) {
-                break;
-            }
-            candidate = stem + (n == 1 ? " - Copy" : " - Copy (" + n + ")") + suffix;
-        }
-        final String destPath = realDstDir.isEmpty() ? candidate : realDstDir + "/" + candidate;
-        final long free = dstMedia ? mediaFreeWeight(dstVol) : computer.systemDiskFreeWeight();
-        if (DiskFilesystem.write(
-                dstVol, destPath, type, read.get(), free, dstKind, level.getGameTime())
-                == DiskFilesystem.WriteResult.OK) {
-            if (dstMedia) {
-                commitMedia(level, computer, destDir);
-            } else {
-                computer.setChanged();
-            }
-        }
+        transfer(level, computer, src, destDir, true);
     }
 
     /**
@@ -206,24 +166,15 @@ public final class FileTransferPayloads {
             // A file on another machine is copied, not moved: the copy is what the explorer offers.
             return;
         }
-        final boolean srcMedia = src.startsWith("media:");
-        final boolean dstMedia = destDir.startsWith("media:");
-        final ItemStack srcVol =
-                srcMedia ? mediaStackFor(level, computer, src) : computer.systemDisk();
-        final ItemStack dstVol =
-                dstMedia ? mediaStackFor(level, computer, destDir) : computer.systemDisk();
-        if (srcVol.isEmpty() || dstVol.isEmpty()) {
-            return;
-        }
-        final String realSrc = srcMedia ? mediaSubPath(src) : src;
-        final String realDstDir = dstMedia ? mediaSubPath(destDir) : destDir;
-        final FilesystemKind srcKind = srcMedia
-                ? FilesystemKind.HIERARCHICAL
-                : filesystemKindOf(computer);
         if (volumeKey(src).equals(volumeKey(destDir))) {
             // Same volume, an in-place move.
-            if (DiskFilesystem.move(
-                    srcVol, realSrc, realDstDir, srcKind)) {
+            final ItemStack srcVol = volumeOf(level, computer, src);
+            if (srcVol.isEmpty()) {
+                return;
+            }
+            final boolean srcMedia = src.startsWith("media:");
+            if (DiskFilesystem.move(srcVol, srcMedia ? mediaSubPath(src) : src,
+                    destDir.startsWith("media:") ? mediaSubPath(destDir) : destDir, kindOf(computer, src))) {
                 if (srcMedia) {
                     commitMedia(level, computer, src);
                 } else {
@@ -234,42 +185,87 @@ public final class FileTransferPayloads {
         }
         /*
          * Cross-volume (disk <-> media): copy the file then delete the source. Directories are
-         * not copied across volumes here.
+         * not copied across volumes here. A name already taken at the destination is not moved over, because the
+         * source is deleted after the write and the file written over would be lost.
          */
-        final var read = DiskFilesystem.read(srcVol, realSrc);
-        if (read.isEmpty()) {
+        if (transfer(level, computer, src, destDir, false) == null) {
             return;
         }
-        final String name = realSrc.contains("/")
-                ? realSrc.substring(realSrc.lastIndexOf('/') + 1) : realSrc;
-        final int dot = name.lastIndexOf('.');
-        final String ext = dot >= 0 && dot < name.length() - 1
-                ? name.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
-        final FileType type = FileType.of(ext);
-        final FilesystemKind dstKind = dstMedia
-                ? FilesystemKind.HIERARCHICAL
-                : filesystemKindOf(computer);
-        final String destPath = realDstDir.isEmpty() ? name : realDstDir + "/" + name;
-        // A write replaces a file of the same name, and the source is deleted after it, so a clash is not moved.
-        if (DiskFilesystem.exists(dstVol, destPath)) {
-            return;
+        final boolean srcMedia = src.startsWith("media:");
+        DiskFilesystem.delete(volumeOf(level, computer, src), srcMedia ? mediaSubPath(src) : src);
+        if (srcMedia) {
+            commitMedia(level, computer, src);
+        } else {
+            computer.setChanged();
+        }
+    }
+
+    /**
+     * Writes the file at {@code src} into the folder {@code destDir}, which may be on another volume, and saves the
+     * volume it was written to.
+     *
+     * @param uniqueName whether a name already taken gets a numbered copy ("name - Copy.ext", then
+     *                   "name - Copy (2).ext") rather than being refused
+     * @return the path written within its volume, or null when nothing was written: the file could not be read, the
+     *         volume is not reachable, the name was taken, or the disk was full
+     */
+    @Nullable
+    private static String transfer(final ServerLevel level, final IOsHost computer, final String src,
+                                   final String destDir, final boolean uniqueName) {
+        final ItemStack srcVol = volumeOf(level, computer, src);
+        final ItemStack dstVol = volumeOf(level, computer, destDir);
+        if (srcVol.isEmpty() || dstVol.isEmpty()) {
+            return null;
+        }
+        final boolean srcMedia = src.startsWith("media:");
+        final boolean dstMedia = destDir.startsWith("media:");
+        final String realSrc = srcMedia ? mediaSubPath(src) : src;
+        final String realDstDir = dstMedia ? mediaSubPath(destDir) : destDir;
+        final Optional<String> read = DiskFilesystem.read(srcVol, realSrc);
+        if (read.isEmpty()) {
+            return null;
+        }
+        final String name = realSrc.substring(realSrc.lastIndexOf('/') + 1);
+        final String destPath = uniqueName ? freeCopyPath(dstVol, realDstDir, name) : joined(realDstDir, name);
+        if (destPath == null || !uniqueName && DiskFilesystem.exists(dstVol, destPath)) {
+            return null;
         }
         final long free = dstMedia ? mediaFreeWeight(dstVol) : computer.systemDiskFreeWeight();
-        if (DiskFilesystem.write(
-                dstVol, destPath, type, read.get(), free, dstKind, level.getGameTime())
-                == DiskFilesystem.WriteResult.OK) {
-            DiskFilesystem.delete(srcVol, realSrc);
-            if (srcMedia) {
-                commitMedia(level, computer, src);
-            } else {
-                computer.setChanged();
-            }
-            if (dstMedia) {
-                commitMedia(level, computer, destDir);
-            } else {
-                computer.setChanged();
-            }
+        if (DiskFilesystem.write(dstVol, destPath, FileType.ofPath(name), read.get(), free,
+                kindOf(computer, destDir), level.getGameTime()) != DiskFilesystem.WriteResult.OK) {
+            return null;
         }
+        if (dstMedia) {
+            commitMedia(level, computer, destDir);
+        } else {
+            computer.setChanged();
+        }
+        return destPath;
+    }
+
+    /**
+     * The first path free in {@code dir}: the name itself, then "name - Copy.ext", then "name - Copy (2).ext" and on,
+     * the way a desktop names a duplicate. Every candidate is tested before it is used, and null comes back when
+     * none of them is free, so a copy never writes over a file.
+     */
+    @Nullable
+    private static String freeCopyPath(final ItemStack volume, final String dir, final String name) {
+        final int dot = name.lastIndexOf('.');
+        final String stem = dot > 0 ? name.substring(0, dot) : name;
+        final String suffix = dot > 0 ? name.substring(dot) : "";
+        String candidate = name;
+        for (int n = 0; n < MAX_COPY_NAMES; n++) {
+            final String path = joined(dir, candidate);
+            if (!DiskFilesystem.exists(volume, path)) {
+                return path;
+            }
+            candidate = stem + (n == 0 ? " - Copy" : " - Copy (" + (n + 1) + ")") + suffix;
+        }
+        return null;
+    }
+
+    private static String joined(final String dir, final String name) {
+        return dir.isEmpty() ? name : dir + "/" + name;
     }
 
     /**

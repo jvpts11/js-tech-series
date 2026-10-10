@@ -464,6 +464,9 @@ public final class CraftingInterfacePart implements IFacePart {
      * What a settled job is still owed of one output: the lots it fed that have not all come out. What comes out of
      * it within the quiet window goes where that job's outputs go, the craft it was part of or the network, never to
      * the next job.
+     *
+     * <p>The sink is not saved: after a reload the late outputs of an owed job go to the network, the same place a
+     * restored step sends what it held, because resolving the craft again would need an id that outlives a reload.
      */
     public static final class Owed {
 

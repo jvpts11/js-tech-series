@@ -40,9 +40,19 @@ public final class Stamps {
         if (ticks <= 0L) {
             return "  --  ";
         }
+        return String.format(Locale.ROOT, "Day %d  %s", day(ticks), clock(ticks));
+    }
+
+    /** The world's day a moment falls on, counted from zero: the first morning is day zero. */
+    public static long day(final long ticks) {
+        return ticks / DAY;
+    }
+
+    /** The hour and minute on the world's clock at a moment, as {@code 08:15}. */
+    public static String clock(final long ticks) {
         final long timeOfDay = ticks % DAY;
         final long hour = ((timeOfDay / HOUR) + DAWN) % 24L;
         final long minute = (timeOfDay % HOUR) * 60L / HOUR;
-        return String.format(Locale.ROOT, "Day %d  %02d:%02d", ticks / DAY, hour, minute);
+        return String.format(Locale.ROOT, "%02d:%02d", hour, minute);
     }
 }

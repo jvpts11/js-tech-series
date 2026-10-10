@@ -57,6 +57,12 @@ public final class CoreStateClientTests {
 
     @ClientTest(timeoutTicks = 400)
     public static void teamState_followsThePlayerOntoAScoreboardTeam(final ClientTestContext ctx) {
+        // Put back on the server's own thread, also when a wait below times out and the last step never runs.
+        ctx.afterTest(() -> {
+            final MinecraftServer server = ctx.server();
+            final UUID player = ctx.player().getUUID();
+            server.submit(() -> clearCrew(server, player));
+        });
         ctx.thenServer(0, level -> {
                     final MinecraftServer server = level.getServer();
                     TestStates.FUNDS.set(server, CoreTeams.solo(ctx.serverPlayer().getUUID()), 5);
@@ -67,13 +73,13 @@ public final class CoreStateClientTests {
                         .addPlayerToTeam(ctx.serverPlayer().getScoreboardName(), crew(level.getServer())))
                 .thenWaitUntil(() -> TestStates.FUNDS.client() == 900, 60,
                         "the crew's funds, once the player is on the crew")
-                .thenServer(0, level -> {
-                    final MinecraftServer server = level.getServer();
-                    final Scoreboard board = server.getScoreboard();
-                    TestStates.FUNDS.set(server, ScoreboardTeams.idOf(crew(server)), 0);
-                    TestStates.FUNDS.set(server, CoreTeams.solo(ctx.serverPlayer().getUUID()), 0);
-                    board.removePlayerTeam(crew(server));
-                });
+                .thenServer(0, level -> clearCrew(level.getServer(), ctx.serverPlayer().getUUID()));
+    }
+
+    private static void clearCrew(final MinecraftServer server, final UUID player) {
+        TestStates.FUNDS.set(server, ScoreboardTeams.idOf(crew(server)), 0);
+        TestStates.FUNDS.set(server, CoreTeams.solo(player), 0);
+        server.getScoreboard().removePlayerTeam(crew(server));
     }
 
     private static PlayerTeam crew(final MinecraftServer server) {

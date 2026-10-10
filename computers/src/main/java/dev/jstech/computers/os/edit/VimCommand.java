@@ -50,7 +50,9 @@ public record VimCommand(boolean write, boolean quit, boolean force, int goTo, T
     public static VimCommand of(final String typed) {
         final String line = typed == null ? "" : typed.trim();
         if (!line.isEmpty() && line.chars().allMatch(Character::isDigit)) {
-            final int number = line.length() > 6 ? Integer.MAX_VALUE : Integer.parseInt(line);
+            // Leading zeros are part of the number, not of its size: ":0000005" is line 5.
+            final String digits = line.replaceFirst("^0+(?=\\d)", "");
+            final int number = digits.length() > 6 ? Integer.MAX_VALUE : Integer.parseInt(digits);
             return new VimCommand(false, false, false, Math.max(1, number), Text.EMPTY);
         }
         return switch (line) {

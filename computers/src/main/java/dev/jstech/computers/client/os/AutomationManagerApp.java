@@ -28,6 +28,7 @@ import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
+import net.minecraft.Util;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -49,7 +50,8 @@ public final class AutomationManagerApp implements IDesktopApp {
     /** The window's title in English, which is how a desktop is asked to open it. */
     public static final String TITLE = AutomationManagerTexts.TITLE.english();
 
-    private static final int REFRESH_FRAMES = 40;
+    /** Milliseconds between state requests, so the request rate does not follow the frame rate. */
+    private static final long REFRESH_MILLIS = 2000L;
     /** How wide the bar for the wait for the Mainframe runs at most. */
     private static final int WAIT_W = 100;
     /**
@@ -73,7 +75,7 @@ public final class AutomationManagerApp implements IDesktopApp {
     @Nullable
     private AutomationPayload data;
     private int newType;
-    private int frame;
+    private long lastRequestMillis;
     private int lastMouseX;
     private int lastMouseY;
     /** The .iql files the script buttons were built for; a different list rebuilds them. */
@@ -194,6 +196,7 @@ public final class AutomationManagerApp implements IDesktopApp {
     }
 
     private void request() {
+        lastRequestMillis = Util.getMillis();
         PacketDistributor.sendToServer(new RequestAutomationPayload(host, monitorPos));
     }
 
@@ -256,8 +259,7 @@ public final class AutomationManagerApp implements IDesktopApp {
                               final float partialTick) {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
-        frame++;
-        if (frame % REFRESH_FRAMES == 0) {
+        if (Util.getMillis() - lastRequestMillis >= REFRESH_MILLIS) {
             request();
         }
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
@@ -469,10 +471,15 @@ public final class AutomationManagerApp implements IDesktopApp {
     }
 
     private static long parseLong(final String s) {
-        try {
-            return Math.max(1, Long.parseLong(s.trim()));
-        } catch (final NumberFormatException e) {
+        final String digits = s.trim();
+        if (digits.isEmpty()) {
             return 1;
+        }
+        try {
+            return Math.max(1, Long.parseLong(digits));
+        } catch (final NumberFormatException e) {
+            // Digits beyond the range of a long saturate instead of silently turning into 1.
+            return digits.chars().allMatch(Character::isDigit) ? Long.MAX_VALUE : 1;
         }
     }
 

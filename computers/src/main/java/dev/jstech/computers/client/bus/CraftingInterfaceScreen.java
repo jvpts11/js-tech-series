@@ -28,7 +28,6 @@ import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
@@ -59,11 +58,6 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
     private int softwareContent;
 
     private static final TextKey[] TAB_WORDS = {BusTexts.TAB_CONFIGURE, BusTexts.TAB_ACTIVITY, BusTexts.TAB_SOFTWARE};
-    private static final int LENS_LIFT = 70;
-    private static final long DAY = 24_000L;
-    private static final long HOUR = 1_000L;
-    private static final int HOURS_BEFORE_DAWN = 6;
-    private static final int MINUTES = 60;
     private static final int MOST_JOBS = 64;
 
     public CraftingInterfaceScreen(final CraftingInterfaceMenu menu, final Inventory inventory,
@@ -98,19 +92,6 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
     /** Picks pattern {@code index}, as a click on its cell does. */
     public void pick(final int index) {
         picked = Math.max(0, index);
-    }
-
-    /** The window-local centre of input {@code input}'s router button, as last laid out; null when not in view. */
-    @Nullable
-    public int[] pickCenter(final int input) {
-        for (final CraftingInterfaceLayout.Row row : rows) {
-            if (row.kind() == Kind.MAPPING && row.index() == input) {
-                final int y = CraftingInterfaceLayout.CONFIGURE_VIEW_Y + row.y() - scroll + 4;
-                return new int[] {CraftingInterfaceLayout.PICK_X + CraftingInterfaceLayout.PICK_W / 2,
-                        y + CraftingInterfaceLayout.CONTROL_H / 2};
-            }
-        }
-        return null;
     }
 
     @Override
@@ -160,7 +141,8 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
         }
         Draw.text(g, font, GameText.resolve(InterfaceTexts.TITLE), x + CraftingInterfaceLayout.TITLE_X,
                 y + CraftingInterfaceLayout.TITLE_Y, titleBar ? JsTechTheme.tabLabelOn() : JsTechTheme.text());
-        drawLamp(g, x + CraftingInterfaceLayout.LAMP_X, y + CraftingInterfaceLayout.LAMP_Y, linked());
+        BusDraw.lamp(g, x + CraftingInterfaceLayout.LAMP_X, y + CraftingInterfaceLayout.LAMP_Y,
+                CraftingInterfaceLayout.LAMP_SIZE, linked());
         drawTabs(g, x, y, mouseX, mouseY);
         switch (tab) {
             case CraftingInterfaceLayout.TAB_ACTIVITY -> drawActivity(g, x, y);
@@ -216,6 +198,17 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
     @Override
     public boolean mouseScrolled(final double mouseX, final double mouseY, final double scrollX,
                                  final double scrollY) {
+        final int viewH = switch (tab) {
+            case CraftingInterfaceLayout.TAB_ACTIVITY -> CraftingInterfaceLayout.ACTIVITY_VIEW_H;
+            case CraftingInterfaceLayout.TAB_SOFTWARE -> CraftingInterfaceLayout.softwareView(softwareContent);
+            default -> CraftingInterfaceLayout.configureView(shape());
+        };
+        final int viewY = tab == CraftingInterfaceLayout.TAB_CONFIGURE ? CraftingInterfaceLayout.CONFIGURE_VIEW_Y
+                : CraftingInterfaceLayout.VIEW_Y;
+        if (!BusDraw.inside(mouseX - leftPos, mouseY - topPos, CraftingInterfaceLayout.LABEL_X, viewY,
+                CraftingInterfaceLayout.ROW_W, viewH)) {
+            return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        }
         final int step = (int) -Math.signum(scrollY) * CraftingInterfaceLayout.ROW;
         switch (tab) {
             case CraftingInterfaceLayout.TAB_ACTIVITY -> activityScroll = Math.max(0, activityScroll + step);
@@ -482,7 +475,9 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
 
     private List<Component> configureTooltip(final int x, final int y) {
         final InterfaceView s = menu.state();
-        if (s == null) {
+        if (s == null || !BusDraw.inside(x, y, CraftingInterfaceLayout.LABEL_X,
+                CraftingInterfaceLayout.CONFIGURE_VIEW_Y, CraftingInterfaceLayout.ROW_W,
+                CraftingInterfaceLayout.configureView(shape()))) {
             return List.of();
         }
         final int at = y - CraftingInterfaceLayout.CONFIGURE_VIEW_Y + scroll;
@@ -491,7 +486,8 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
                 continue;
             }
             final int ry = at - row.y();
-            if (row.kind() == Kind.MAPPING && over(x, ry, CraftingInterfaceLayout.PICK_X, 4,
+            if (row.kind() == Kind.MAPPING && s.mode() == InterfaceView.CABLE
+                    && over(x, ry, CraftingInterfaceLayout.PICK_X, 4,
                     CraftingInterfaceLayout.PICK_W, CraftingInterfaceLayout.CONTROL_H)) {
                 return List.of(GameText.component(InterfaceTexts.PICK_HINT));
             }
@@ -543,7 +539,7 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
     private void drawEntry(final GuiGraphics g, final CraftingLog.Entry entry, final int left, final int y) {
         BusDraw.bar(g, left + CraftingInterfaceLayout.LABEL_X, y, CraftingInterfaceLayout.ROW_W,
                 CraftingInterfaceLayout.ENTRY_H - 1, false);
-        final String time = clock(entry.time());
+        final String time = BusDraw.clock(entry.time());
         final int x = left + CraftingInterfaceLayout.LABEL_X + 3;
         BusDraw.small(g, font, time, x, y + 2, JsTechTheme.dim());
         final int whatX = x + BusDraw.width(font, time) + 5;
@@ -658,18 +654,6 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
             BusDraw.smallCentered(g, font, word, tx + tw / 2, ty + 2,
                     chosen ? JsTechTheme.tabLabelOn() : JsTechTheme.dim());
         }
-    }
-
-    /* The link as a lamp: green while a Crafting Computer drives it, red while none does. */
-    private static void drawLamp(final GuiGraphics g, final int x, final int y, final boolean linked) {
-        final int colour = linked ? JsTechTheme.green() : JsTechTheme.red();
-        final int size = CraftingInterfaceLayout.LAMP_SIZE;
-        g.fill(x, y, x + size, y + size, JsTechTheme.outer());
-        g.fill(x + 1, y + 1, x + size - 1, y + size - 1, colour);
-        final int r = Math.min(255, ((colour >> 16) & 0xFF) + LENS_LIFT);
-        final int gr = Math.min(255, ((colour >> 8) & 0xFF) + LENS_LIFT);
-        final int b = Math.min(255, (colour & 0xFF) + LENS_LIFT);
-        g.fill(x + 1, y + 1, x + 2, y + 2, (colour >>> 24) << 24 | r << 16 | gr << 8 | b);
     }
 
     private void toggle(final GuiGraphics g, final int x, final int y, final int px, final int py, final int chosen,
@@ -798,18 +782,6 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
 
     private static void send(final CraftingInterfaceEditPayload edit) {
         PacketDistributor.sendToServer(edit);
-    }
-
-    /** The hour of the day {@code time} was, as the clock read: what happened at a game time, read on today's. */
-    private static String clock(final long time) {
-        final Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
-            return "--:--";
-        }
-        final long day = Math.floorMod(mc.level.getDayTime() - (mc.level.getGameTime() - time), DAY);
-        final long hour = (day / HOUR + HOURS_BEFORE_DAWN) % 24L;
-        final long minute = day % HOUR * MINUTES / HOUR;
-        return String.format(Locale.ROOT, "%02d:%02d", hour, minute);
     }
 
     private static boolean over(final int px, final int py, final int x, final int y, final int w, final int h) {

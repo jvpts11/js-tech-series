@@ -238,4 +238,14 @@ public enum FileType {
     public static FileType of(final String ext) {
         return fromExtension(ext).orElse(OTHER);
     }
+
+    /**
+     * The kind of the file a path names, from the extension of its last segment, so a dot in a folder name is not
+     * mistaken for one. A name without an extension is {@link #OTHER}.
+     */
+    public static FileType ofPath(final String path) {
+        final String name = path.substring(path.lastIndexOf('/') + 1);
+        final int dot = name.lastIndexOf('.');
+        return dot >= 0 && dot < name.length() - 1 ? of(name.substring(dot + 1)) : OTHER;
+    }
 }

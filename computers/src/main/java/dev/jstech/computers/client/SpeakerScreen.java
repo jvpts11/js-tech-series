@@ -11,19 +11,15 @@ import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.menu.SpeakerMenu;
 import dev.jstech.computers.operation.payload.RenameSpeakerPayload;
-import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.lwjgl.glfw.GLFW;
 
 import static dev.jstech.computers.gui.layout.SpeakerLayout.CHANNEL_X;
 import static dev.jstech.computers.gui.layout.SpeakerLayout.COMPUTER_X;
@@ -47,9 +43,7 @@ import static dev.jstech.computers.gui.layout.SpeakerLayout.WIDTH;
  */
 public final class SpeakerScreen extends AbstractComputerScreen<SpeakerMenu> {
 
-    private EditBox nameBox;
-
-    private static final long CARET_BLINK_MILLIS = 500L;
+    private NameField nameField;
 
     public SpeakerScreen(final SpeakerMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
@@ -82,23 +76,16 @@ public final class SpeakerScreen extends AbstractComputerScreen<SpeakerMenu> {
          * a dark copy of the letters as the shadow, a smear on a light era's field. The field is drawn in
          * renderLabels instead.
          */
-        nameBox = new EditBox(font, leftPos + NAME_X + 2, topPos + NAME_Y, WIDTH - 2 * NAME_X - 4, NAME_H,
-                GameText.component(SpeakerTexts.NAME_FIELD));
-        // Unbordered, its text starts where the field draws it, so a click lands the caret on the letter clicked.
-        nameBox.setBordered(false);
-        nameBox.setTextShadow(false);
-        nameBox.setMaxLength(SpeakerBlockEntity.MAX_NAME);
-        nameBox.setValue(menu.opening().name());
-        nameBox.setResponder(name ->
-                PacketDistributor.sendToServer(new RenameSpeakerPayload(menu.speakerPos(), name)));
-        addWidget(nameBox);
+        nameField = new NameField(font, leftPos + NAME_X + 2, topPos + NAME_Y, WIDTH - 2 * NAME_X - 4, NAME_H,
+                GameText.component(SpeakerTexts.NAME_FIELD), SpeakerBlockEntity.MAX_NAME, menu.opening().name(),
+                name -> PacketDistributor.sendToServer(new RenameSpeakerPayload(menu.speakerPos(), name)));
+        addWidget(nameField.widget());
     }
 
     @Override
     public boolean keyPressed(final int key, final int scan, final int mods) {
         // While a name is typed every key goes to it, so the inventory key types instead of closing the screen.
-        if (nameBox.isFocused() && key != GLFW.GLFW_KEY_ESCAPE) {
-            nameBox.keyPressed(key, scan, mods);
+        if (nameField.keyPressed(key, scan, mods)) {
             return true;
         }
         return super.keyPressed(key, scan, mods);
@@ -106,8 +93,8 @@ public final class SpeakerScreen extends AbstractComputerScreen<SpeakerMenu> {
 
     @Override
     public boolean charTyped(final char c, final int mods) {
-        if (nameBox.isFocused()) {
-            return nameBox.charTyped(c, mods);
+        if (nameField.charTyped(c, mods)) {
+            return true;
         }
         return super.charTyped(c, mods);
     }
@@ -173,31 +160,10 @@ public final class SpeakerScreen extends AbstractComputerScreen<SpeakerMenu> {
         return SpeakerTexts.PLAYS_WHOLE;
     }
 
-    /*
-     * The name being typed, or the default name dimmed while there is none, with a caret where the next letter goes.
-     * A name wider than the field shows the part around the caret.
-     */
+    /* The name being typed, or the default name dimmed while there is none, with a caret where the next letter goes. */
     private void renderName(final GuiGraphics g) {
-        final int room = WIDTH - 2 * NAME_X - 4;
-        final int x = NAME_X + 2;
-        final int y = NAME_Y + 3;
-        final String value = nameBox.getValue();
-        final int cursor = Math.min(nameBox.getCursorPosition(), value.length());
-        final String before = Texts.tail(font, value.substring(0, cursor), room);
-        String after = value.substring(cursor);
-        while (!after.isEmpty() && font.width(before + after) > room) {
-            after = after.substring(0, after.length() - 1);
-        }
-        if (value.isEmpty()) {
-            Draw.text(g, font, GameText.resolve(SpeakerTexts.DEFAULT_NAME), x, y, JsTechTheme.dim(),
-                    JsTechTheme.slotBg());
-        } else {
-            Draw.text(g, font, before + after, x, y, JsTechTheme.text(), JsTechTheme.slotBg());
-        }
-        if (nameBox.isFocused() && Util.getMillis() / CARET_BLINK_MILLIS % 2 == 0) {
-            final int caretX = x + font.width(before);
-            g.fill(caretX, y - 1, caretX + 1, y + 9, JsTechTheme.text());
-        }
+        nameField.render(g, font, NAME_X + 2, NAME_Y + 3, WIDTH - 2 * NAME_X - 4,
+                GameText.resolve(SpeakerTexts.DEFAULT_NAME));
     }
 
     /* As much of a small line as fits in {@code pixels}: a computer's own name can be as long as a speaker's. */

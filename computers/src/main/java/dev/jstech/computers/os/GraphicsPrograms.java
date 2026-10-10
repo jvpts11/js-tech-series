@@ -27,6 +27,11 @@ public final class GraphicsPrograms {
         GRAPHICAL.add(program);
     }
 
+    /** Whether the program registered under {@code program} is marked as one whose windows hold video memory. */
+    public static boolean isGraphicalProgram(final ResourceLocation program) {
+        return GRAPHICAL.contains(program);
+    }
+
     /** Whether a window opened under {@code key} is a graphics program's. */
     public static boolean isGraphical(final String key) {
         final ProgramSpec spec = WindowKeys.program(key);

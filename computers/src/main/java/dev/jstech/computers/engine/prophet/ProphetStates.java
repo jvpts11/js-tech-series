@@ -146,10 +146,11 @@ public final class ProphetStates {
             if (watch.comparison.test(held, watch.threshold)) {
                 if (watch.armed) {
                     watch.armed = false;
-                    watch.status = Status.FIRED;
                     watch.fired++;
                     out = add(out, new Reaction(Reaction.FIRE, watch.item, watch.number, watch.action));
                 }
+                // A watch read back disarmed whose condition still holds has fired already; it shows as fired.
+                watch.status = Status.FIRED;
             } else {
                 watch.armed = true;
                 watch.status = Status.ARMED;
@@ -396,13 +397,13 @@ public final class ProphetStates {
             return fired;
         }
 
-        public Status status() {
-            return status;
+        /** Sets how many times it fired, as a save read back says. */
+        void fired(final int times) {
+            this.fired = Math.max(0, times);
         }
 
-        /** How the watch is written. */
-        public String written() {
-            return "WATCH " + item + " " + comparison.symbol() + " " + threshold + " DO " + action;
+        public Status status() {
+            return status;
         }
     }
 }

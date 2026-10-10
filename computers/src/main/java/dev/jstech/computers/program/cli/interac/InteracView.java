@@ -125,7 +125,7 @@ public final class InteracView {
             case InteracState.TAB_LOCKED -> items(computer.locks(), state.search());
             case InteracState.TAB_OPS -> operations(computer, state.search());
             case InteracState.TAB_STARRED -> favourites(computer, state.search());
-            default -> items(computer.query(null, "", MOST_ROWS), state.search());
+            default -> items(InteracRows.search(computer, state.search(), "count", MOST_ROWS), "");
         };
     }
 
@@ -153,10 +153,7 @@ public final class InteracView {
 
     private static List<InteracScreen.Row> operations(final ICliComputer computer, final String search) {
         final List<InteracScreen.Row> rows = new ArrayList<>();
-        for (final ICliComputer.ActiveOp op : computer.activeOps()) {
-            if (!matches(op.item() + " " + op.type(), search)) {
-                continue;
-            }
+        for (final ICliComputer.ActiveOp op : operationsMatching(computer, search)) {
             rows.add(new InteracScreen.Row(op.type().toLowerCase(Locale.ROOT) + " " + op.item(),
                     CliText.group(op.progress()) + "/" + CliText.group(op.total()),
                     op.status().toLowerCase(Locale.ROOT)));
@@ -313,12 +310,7 @@ public final class InteracView {
         if (state.tab() != InteracState.TAB_OPS) {
             return english(ONLY_OPERATIONS.text());
         }
-        final List<ICliComputer.ActiveOp> kept = new ArrayList<>();
-        for (final ICliComputer.ActiveOp op : computer.activeOps()) {
-            if (matches(op.item() + " " + op.type(), state.search())) {
-                kept.add(op);
-            }
-        }
+        final List<ICliComputer.ActiveOp> kept = operationsMatching(computer, state.search());
         final int picked = Math.min(state.selected(), Math.min(rowCount, kept.size()) - 1);
         if (picked < 0) {
             return english(NOTHING_IN_FLIGHT.text());
@@ -327,7 +319,19 @@ public final class InteracView {
     }
 
     private static boolean matches(final String text, final String search) {
-        return search.isEmpty() || text.toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT));
+        return InteracRows.matches(text, search);
+    }
+
+    /** The operations in flight that the search keeps, in the order the screen draws them. */
+    private static List<ICliComputer.ActiveOp> operationsMatching(final ICliComputer computer,
+                                                                  final String search) {
+        final List<ICliComputer.ActiveOp> kept = new ArrayList<>();
+        for (final ICliComputer.ActiveOp op : computer.activeOps()) {
+            if (matches(op.item() + " " + op.type(), search)) {
+                kept.add(op);
+            }
+        }
+        return kept;
     }
 
     /** Words for the screen, which is drawn here and travels as a file's rows, so in the machine's language. */

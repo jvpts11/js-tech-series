@@ -33,8 +33,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
+import java.util.Set;
 
 /**
  * The payloads that pack files into an archive and take them back out again.
@@ -116,7 +117,7 @@ public final class ArchivePayloads {
          * in it rather than failing on a path that names no file. Gathered here because only the machine
          * knows what a folder holds.
          */
-        final List<String> wanted = new ArrayList<>();
+        final Set<String> wanted = new LinkedHashSet<>();
         for (final String path : payload.paths()) {
             if (DiskFilesystem.read(disk, path).isPresent()) {
                 wanted.add(path);
@@ -205,7 +206,7 @@ public final class ArchivePayloads {
      * storage rather than a file, and packing it would archive a picture of something that is still there.
      */
     private static void gather(final ItemStack disk, final String dir, final FilesystemKind kind,
-                               final List<String> out) {
+                               final Set<String> out) {
         /*
          * A flat disk has no folders, so a path that named no file names nothing at all. Without this the
          * listing, which ignores the folder it is given on such a disk, would answer with every file there.
@@ -214,7 +215,7 @@ public final class ArchivePayloads {
             return;
         }
         for (final DiskFilesystem.FileEntry entry : DiskFilesystem.list(disk, dir, kind)) {
-            if (!entry.type().virtualProjection() && !out.contains(entry.path())) {
+            if (!entry.type().virtualProjection()) {
                 out.add(entry.path());
             }
         }
@@ -325,10 +326,7 @@ public final class ArchivePayloads {
     }
 
     private static FileType typeOf(final String path) {
-        final int dot = path.lastIndexOf('.');
-        final String ext = dot >= 0 && dot < path.length() - 1
-                ? path.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
-        return FileType.of(ext);
+        return FileType.ofPath(path);
     }
 
     /** What packing or taking out came to: whether it was done, and what to tell the player either way. */

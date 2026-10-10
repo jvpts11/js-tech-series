@@ -8,7 +8,6 @@
 package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.client.os.WorkstationInfoApp;
-import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.RequestWorkstationInfoPayload;
@@ -56,7 +55,7 @@ public final class WorkstationInfoPayloads {
         final Platform platform = system == null ? Platform.UNIX : system.platform();
         final NetworkUuid network = computer.networkUuid();
         final ItemStack disk = computer.systemDisk();
-        final long diskMb = disk.getItem() instanceof DiskItem item ? item.spec().capacityMb() : 0L;
+        final long diskMb = DiskShares.capacityMbOf(disk);
         return new WorkstationFacts(UnixTree.of(platform).home().getLast(), Installers.hostName(computer),
                 network == null ? "" : network.value().toString(), systemOf(system),
                 KernelNames.architecture(platform, computer.processorBits()), windowSystemOf(computer),

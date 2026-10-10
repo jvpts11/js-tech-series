@@ -11,13 +11,11 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.SystemBootScreen;
-import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * The pictures the Frames editions come up behind, each photographed at the moments that make it: Frames XP's logo
@@ -76,7 +74,7 @@ public final class BootSplashClientTests {
 
     /** How far the start on the glass is, or nought while no boot screen is up. */
     private static int through(final ClientTestContext ctx) {
-        final SystemBootScreen screen = ctx.screen(SystemBootScreen.class);
+        final SystemBootScreen screen = ctx.openScreen(SystemBootScreen.class);
         return screen == null ? 0 : screen.percentThrough();
     }
 
@@ -91,18 +89,7 @@ public final class BootSplashClientTests {
         return ctx.thenBuild(0, world -> {
                     world.setBlock(MACHINE, ComputingModule.MAINFRAME.get());
                     final MainframeBlockEntity machine = world.blockEntity(MACHINE, MainframeBlockEntity.class);
-                    final ItemStackHandler inv = machine.getInventory();
-                    inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                            new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                            new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
-                            new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
-                            new ItemStack(ComputingModule.GPU_HD_7970.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
-                            new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
+                    TestWorldBuilder.installMainframeParts(machine, StorageTier.SSD, true);
                     machine.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, system));
                     if (metBefore) {
                         machine.setSystemWelcome(machine.systemWelcome().met());

@@ -244,11 +244,6 @@ public final class Process {
         return this.worldCalls;
     }
 
-    /** Ends a thread other than the main one, as the runtime's coroutines do when theirs is over. */
-    void endThread(final ProgramThread thread) {
-        this.end(thread);
-    }
-
     public Process(final ProgramImage program, final long heapBytes, final IHost host) {
         this(program, heapBytes, host, true);
     }
@@ -458,10 +453,7 @@ public final class Process {
     }
 
     private Integer processId(final Object token, final int line) {
-        if (this.heap.alive(token, line) instanceof Values.Obj object && object.get("Id") instanceof Integer id) {
-            return id;
-        }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_PROCESS.text());
+        return this.tokenId(token, line, NO_PROCESS);
     }
 
     /** The machine a process handle points at: what its {@code Host} says, or this one when it says nothing. */
@@ -477,7 +469,7 @@ public final class Process {
      * does not wait for a program that has ended, nor once its time has run out or when it was given none.
      */
     boolean waitForWaits(final Frame frame, final int count, final int line) {
-        final Object token = frame.stack.size() > count ? frame.stack.get(frame.stack.size() - 1 - count) : null;
+        final Object token = handleBelow(frame, count);
         final Integer id = this.processId(token, line);
         final String host = processHost(token);
         final boolean over = !this.host.programRunning(id, host);
@@ -487,7 +479,7 @@ public final class Process {
         if (over || gaveUp || (count == 1 && ticks <= 0)) {
             return false;
         }
-        this.scheduler.await(this.current, new IWait.Child(id, host, ticks > 0 ? this.host.tick() + ticks : 0L));
+        this.scheduler.await(this.current, new IWait.Child(id, host, this.deadline(ticks)));
         return true;
     }
 
@@ -699,10 +691,10 @@ public final class Process {
                 try {
                     this.executor.one(thread);
                 } catch (final Halt halt) {
-                    this.fail(thread, halt);
+                    this.halt(halt);
                 } catch (final RuntimeException fault) {
                     final Frame top = thread.frames.peek();
-                    this.fail(thread, this.fault(fault, top == null ? 0 : top.at));
+                    this.halt(this.fault(fault, top == null ? 0 : top.at));
                 }
                 /*
                  * Reaching into the machine costs more than moving a number about, and the difference is
@@ -965,7 +957,10 @@ public final class Process {
     /** Puts the running thread to sleep for that many ticks; asking for none is asking for nothing. */
     void sleep(final long ticks) {
         if (ticks > 0) {
-            this.scheduler.await(this.current, new IWait.Sleep(this.host.tick() + ticks));
+            final long now = this.host.tick();
+            // A sum that wrapped negative would wake the sleeper at once, so a huge sleep stops at the largest tick.
+            final long until = ticks > Long.MAX_VALUE - now ? Long.MAX_VALUE : now + ticks;
+            this.scheduler.await(this.current, new IWait.Sleep(until));
         }
     }
 
@@ -987,10 +982,25 @@ public final class Process {
     }
 
     private Integer threadId(final Object token, final int line) {
+        return this.tokenId(token, line, NO_THREAD);
+    }
+
+    /* The number a process or thread handle carries, or a halt saying what was not a handle. */
+    private Integer tokenId(final Object token, final int line, final TextKey missing) {
         if (this.heap.alive(token, line) instanceof Values.Obj object && object.get("Id") instanceof Integer id) {
             return id;
         }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, NO_THREAD.text());
+        throw new Halt(Halt.Reason.NO_OBJECT, line, missing.text());
+    }
+
+    /* The handle a wait was called on, which sits under the time given when there is one; null when it is missing. */
+    private static Object handleBelow(final Frame frame, final int count) {
+        return frame.stack.size() > count ? frame.stack.get(frame.stack.size() - 1 - count) : null;
+    }
+
+    /* The tick a wait of that many ticks runs out at; 0 when none was given, which means no deadline. */
+    private long deadline(final long ticks) {
+        return ticks > 0 ? this.host.tick() + ticks : 0L;
     }
 
     /**
@@ -1001,7 +1011,7 @@ public final class Process {
      * thread that is over or is the one asking, nor once its time has run out or when it was given none.
      */
     boolean joinWaits(final Frame frame, final int count, final int line) {
-        final Object token = frame.stack.size() > count ? frame.stack.get(frame.stack.size() - 1 - count) : null;
+        final Object token = handleBelow(frame, count);
         final ProgramThread target = this.thread(this.threadId(token, line));
         final long ticks = count == 1 ? Numbers.toLong(frame.peek()) : 0L;
         // Read before the test, so it is forgotten whenever the call answers, as it always was.
@@ -1009,7 +1019,7 @@ public final class Process {
         if (target == null || target == this.current || gaveUp || (count == 1 && ticks <= 0)) {
             return false;
         }
-        this.scheduler.await(this.current, new IWait.Join(target.id, ticks > 0 ? this.host.tick() + ticks : 0L));
+        this.scheduler.await(this.current, new IWait.Join(target.id, this.deadline(ticks)));
         return true;
     }
 
@@ -1111,13 +1121,6 @@ public final class Process {
         }
         this.main.frames.push(next);
         return true;
-    }
-
-    /**
-     * A halt in a thread is the end of the process.
-     */
-    private void fail(final ProgramThread thread, final Halt first) {
-        this.halt(first);
     }
 
     void halt(final Halt halt) {

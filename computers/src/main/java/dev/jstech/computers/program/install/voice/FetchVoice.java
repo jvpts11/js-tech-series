@@ -26,7 +26,7 @@ import java.util.Locale;
 public final class FetchVoice {
 
     /** How the Mirror is addressed, which is the only address anything in this world is fetched from. */
-    public static final String MIRROR = "mirror://mainframe";
+    public static final String MIRROR = mirrorAddress("mainframe");
 
     /** The host inside that address, which is what gets resolved and connected to. */
     private static final String HOST = "mainframe";
@@ -49,6 +49,11 @@ public final class FetchVoice {
             TextKey.of("jsc.install.fetch_voice.unable_to_resolve", "unable to resolve host address '%s'");
 
     private FetchVoice() {
+    }
+
+    /** The address of the Mirror running on the machine that goes by the given name. */
+    public static String mirrorAddress(final String host) {
+        return "mirror://" + host;
     }
 
     /**

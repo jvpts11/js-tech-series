@@ -472,7 +472,7 @@ public final class UpdatePopup extends Popup {
     private void renderSmelt(final GuiGraphics g, final UiContext ctx, final int px, final int py) {
         final Font font = ctx.font();
         Texts.small(g, font, GameText.resolve(SMELT), px + 4, py + BODY_Y + 5, ctx.skin().text());
-        arrow(g, ctx, px + SMELT_ARROW_X, py + BODY_Y + 5, SMELT_ARROW_W, 0f);
+        arrow(g, ctx, px + SMELT_ARROW_X, py + BODY_Y + 5, SMELT_ARROW_W);
         cell(g, ctx, px + SMELT_RESULT_X, py + BODY_Y, preview.smeltsInto());
         final String into = preview.smeltsInto().getHoverName().getString();
         final long count = amount.amount() * Math.max(1, preview.smeltsInto().getCount());
@@ -501,7 +501,7 @@ public final class UpdatePopup extends Popup {
         Draw.text(g, font, "+", px + LEFT_X + CELL + 4, py + BODY_Y + 5, ctx.skin().dim());
         cell(g, ctx, px + RIGHT_X, py + BODY_Y, preview.material().isEmpty() ? ItemStack.EMPTY
                 : preview.material().copyWithCount(preview.materialUsed()));
-        arrow(g, ctx, px + ANVIL_ARROW_X, py + BODY_Y + 5, ANVIL_ARROW_W, 0f);
+        arrow(g, ctx, px + ANVIL_ARROW_X, py + BODY_Y + 5, ANVIL_ARROW_W);
         cell(g, ctx, px + RESULT_X, py + BODY_Y, preview.repaired());
         if (worn.isDamageableItem() && worn.isDamaged()) {
             final String used = GameText.resolve(WORN.with(worn.getDamageValue(), worn.getMaxDamage()));
@@ -568,14 +568,12 @@ public final class UpdatePopup extends Popup {
         }
     }
 
-    /* An arrow {@code w} wide, filled from the left by {@code fraction}, the Workshop's own. */
-    private static void arrow(final GuiGraphics g, final UiContext ctx, final int x, final int y, final int w,
-                              final float fraction) {
+    /* An arrow {@code w} wide, drawn in the skin's edge colour. */
+    private static void arrow(final GuiGraphics g, final UiContext ctx, final int x, final int y, final int w) {
         final int head = 5;
         final int shaft = w - head;
-        final int filled = Math.round(Math.max(0f, Math.min(1f, fraction)) * w);
+        final int colour = ctx.skin().edge();
         for (int i = 0; i < w; i++) {
-            final int colour = i < filled ? PALETTE.get().working() : ctx.skin().edge();
             if (i < shaft) {
                 g.fill(x + i, y + 2, x + i + 1, y + 6, colour);
             } else {

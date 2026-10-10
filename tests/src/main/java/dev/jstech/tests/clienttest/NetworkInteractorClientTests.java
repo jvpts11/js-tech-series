@@ -569,11 +569,7 @@ public final class NetworkInteractorClientTests {
     }
 
     private static NetworkInteractorApp interactor(final ClientTestContext ctx) {
-        if (!(ctx.mc().screen instanceof DesktopScreen desktop)) {
-            return null;
-        }
-        final DesktopWindow window = desktop.windowFor(NETWORK_LAUNCHER);
-        return window != null && window.app() instanceof NetworkInteractorApp app ? app : null;
+        return DesktopSteps.app(ctx, NETWORK_LAUNCHER, NetworkInteractorApp.class);
     }
 
     /** Converts a Network Interactor content-local point into desktop coordinates. */
@@ -585,7 +581,7 @@ public final class NetworkInteractorClientTests {
         if (local == null) {
             throw new ClientTestFailure("no such control on the " + NETWORK_LAUNCHER + " window");
         }
-        return new int[] {window.x() + 4 + local[0], window.y() + 18 + local[1]};
+        return DesktopSteps.contentPoint(window, local);
     }
 
     private static ProcessingPattern smelt(final Item in, final Item out, final int ticks) {

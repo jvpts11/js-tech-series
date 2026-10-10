@@ -397,7 +397,7 @@ public final class NetworkReadService {
         if (mainframe != null) {
             for (final OperationRecord record : mainframe.recentOperations()) {
                 out.add(new ICliComputer.StoredItem(OPERATION.with(OperationRecord.typeName(record.type()),
-                        GameText.of(record.name()), OperationRecord.statusName(record.status())), record.moved()));
+                        GameText.of(record.name()), OperationRecord.statusText(record.status())), record.moved()));
                 if (out.size() >= limit) {
                     break;
                 }

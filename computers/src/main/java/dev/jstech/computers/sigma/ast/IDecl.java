@@ -76,12 +76,6 @@ public sealed interface IDecl extends INode {
     record ClassDecl(Set<Modifier> modifiers, String name, List<TypeRef> bases, List<IMemberDecl> members,
                      Flavour flavour, int line, int column) implements ITypeDecl {
 
-        /** A class as it was before there were structs and records. */
-        public ClassDecl(final Set<Modifier> modifiers, final String name, final List<TypeRef> bases,
-                         final List<IMemberDecl> members, final int line, final int column) {
-            this(modifiers, name, bases, members, Flavour.CLASS, line, column);
-        }
-
         /** Which of the three class-like declarations this is. */
         public enum Flavour {
             CLASS,

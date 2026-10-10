@@ -7,14 +7,19 @@
  */
 package dev.jstech.computers.guide;
 
+import dev.jstech.computers.block.part.CablePartItem;
 import dev.jstech.computers.registry.ComputingContent;
+import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ItemEntry;
+import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.ManualItem;
 import dev.jstech.core.guide.ModGuide;
+import dev.jstech.core.multipart.PartType;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import net.minecraft.world.level.ItemLike;
 
@@ -71,6 +76,21 @@ public final class ComputersGuide {
     static Supplier<List<ItemLike>> blocksOf(final Class<?>... kinds) {
         return () -> ComputingContent.CONTENT.declaredBlocks().stream().filter(BlockEntry::hasItem)
                 .filter(entry -> isOf(entry.get(), kinds)).map(entry -> (ItemLike) entry.get()).toList();
+    }
+
+    /** The cable items of every cable the mod registers on {@code grid}, but those named, read when written. */
+    static Supplier<List<ItemLike>> cablesOn(final GridKind grid, final CableEntry... except) {
+        final List<CableEntry> left = List.of(except);
+        return () -> ComputingContent.CONTENT.declaredCables().stream()
+                .filter(entry -> entry.get().grid() == grid && !left.contains(entry))
+                .map(entry -> (ItemLike) entry).toList();
+    }
+
+    /** The items of every cable part the mod registers whose kind passes {@code kind}. */
+    static Supplier<List<ItemLike>> partsOf(final Predicate<PartType<?>> kind) {
+        return () -> ComputingContent.CONTENT.declaredItems().stream()
+                .filter(entry -> entry.get() instanceof CablePartItem part && kind.test(part.partType()))
+                .map(entry -> (ItemLike) entry.get()).toList();
     }
 
     private static boolean isOf(final Object thing, final Class<?>... kinds) {

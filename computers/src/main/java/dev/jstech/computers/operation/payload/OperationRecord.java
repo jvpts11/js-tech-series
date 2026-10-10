@@ -13,6 +13,9 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.persistence.SavedValue;
+import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Utf8Text;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
@@ -54,8 +57,9 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
      * on working on what it passed.
      */
     public OperationRecord {
-        moves = List.copyOf(moves);
-        subs = List.copyOf(subs);
+        // The wire codecs refuse a longer list, so the cap lives here where every caller passes through.
+        moves = List.copyOf(moves.size() > MAX_MOVES ? moves.subList(0, MAX_MOVES) : moves);
+        subs = List.copyOf(subs.size() > MAX_SUBS ? subs.subList(0, MAX_SUBS) : subs);
         cause = cause == null ? OperationFailure.NONE : cause;
     }
 
@@ -120,6 +124,24 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
             case STATUS_PENDING -> "pending";
             case STATUS_DISCARDED -> "discarded";
             default -> "?";
+        };
+    }
+
+    /**
+     * The translatable word a record's status reads by, for text a player reads. {@link #statusName(byte)} stays
+     * the stable token that queries compare against; this is only for display.
+     */
+    public static Text statusText(final byte status) {
+        return switch (status) {
+            case STATUS_COMPLETED -> StatusWords.DONE.text();
+            case STATUS_PARTIAL -> StatusWords.PARTIAL.text();
+            case STATUS_FAILED -> StatusWords.FAILED.text();
+            case STATUS_PROCESSING -> StatusWords.RUNNING.text();
+            case STATUS_WAITING -> StatusWords.WAITING.text();
+            case STATUS_RESOURCE_LOCKED -> StatusWords.LOCKED.text();
+            case STATUS_PENDING -> StatusWords.PENDING.text();
+            case STATUS_DISCARDED -> StatusWords.DISCARDED.text();
+            default -> StatusWords.UNKNOWN.text();
         };
     }
 
@@ -373,5 +395,22 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
         return new OperationRecord(id, tag.getByte("type"), key, tag.getLong("requested"),
                 tag.getLong("moved"), tag.getByte("status"), priority, List.copyOf(moves), List.copyOf(subs),
                 tag.getLong("waited"), tag.getLong("ran"), cause);
+    }
+
+    /** The displayed words of the Operation states. */
+    @TextHolder
+    public static final class StatusWords {
+        public static final TextKey DONE = TextKey.of("jsc.operation.status.done", "done");
+        public static final TextKey PARTIAL = TextKey.of("jsc.operation.status.partial", "partial");
+        public static final TextKey FAILED = TextKey.of("jsc.operation.status.failed", "failed");
+        public static final TextKey RUNNING = TextKey.of("jsc.operation.status.running", "running");
+        public static final TextKey WAITING = TextKey.of("jsc.operation.status.waiting", "waiting");
+        public static final TextKey LOCKED = TextKey.of("jsc.operation.status.locked", "locked");
+        public static final TextKey PENDING = TextKey.of("jsc.operation.status.pending", "pending");
+        public static final TextKey DISCARDED = TextKey.of("jsc.operation.status.discarded", "discarded");
+        public static final TextKey UNKNOWN = TextKey.of("jsc.operation.status.unknown", "?");
+
+        private StatusWords() {
+        }
     }
 }

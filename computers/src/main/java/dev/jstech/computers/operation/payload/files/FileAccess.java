@@ -28,6 +28,7 @@ import dev.jstech.computers.storage.ServerStorageContents;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.util.Loaded;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -90,6 +91,19 @@ public final class FileAccess {
             return reader instanceof DockStationBlockEntity dock ? dock.disk(volume.bay()) : ItemStack.EMPTY;
         }
         return reader.mediaSlot().getStackInSlot(0);
+    }
+
+    /**
+     * The volume a path lives on: the medium for a {@code media:} path (empty when it is not reachable), otherwise the
+     * computer's system disk.
+     */
+    public static ItemStack volumeOf(final ServerLevel level, final IOsHost computer, final String path) {
+        return path.startsWith("media:") ? mediaStackFor(level, computer, path) : computer.systemDisk();
+    }
+
+    /** The filesystem kind of the volume a path lives on: a medium is always hierarchical. */
+    public static FilesystemKind kindOf(final IOsHost computer, final String path) {
+        return path.startsWith("media:") ? FilesystemKind.HIERARCHICAL : filesystemKindOf(computer);
     }
 
     /** Strips the volume's key from a media path, leaving the path within the medium. */
@@ -198,25 +212,31 @@ public final class FileAccess {
      */
     @Nullable
     public static StorageKey resolveDatKey(final ItemStack disk, final String datPath) {
+        return datIndexOf(disk).keys().get(datPath);
+    }
+
+    /**
+     * Every {@code .dat} path of a disk's storage with the key it projects, read once, so a listing with many
+     * {@code .dat} rows projects the storage a single time instead of once per row.
+     */
+    public static DatIndex datIndexOf(final ItemStack disk) {
         if (disk.isEmpty()) {
-            return null;
+            return DatIndex.EMPTY;
         }
-        final ServerStorageContents storage =
-                DriveVolumes.contents(disk);
+        final ServerStorageContents storage = DriveVolumes.contents(disk);
         /*
-         * The projection emits one entry per key in iteration order, with the same path each time; pair each
-         * emitted path with the storage key at the same position to invert the path back to its key.
+         * The projection emits one entry per key in iteration order, with a unique path each; pair each emitted
+         * path with the storage key at the same position to invert the path back to its key.
          */
-        final List<DiskFilesystem.FileEntry> entries =
-                StorageProjection.project(storage);
+        final List<DiskFilesystem.FileEntry> entries = StorageProjection.project(storage);
         final Iterator<StorageKey> keys = storage.items().keySet().iterator();
-        for (final var entry : entries) {
-            final StorageKey key = keys.hasNext() ? keys.next() : null;
-            if (key != null && entry.path().equals(datPath)) {
-                return key;
+        final Map<String, StorageKey> byPath = new HashMap<>();
+        for (final DiskFilesystem.FileEntry entry : entries) {
+            if (keys.hasNext()) {
+                byPath.putIfAbsent(entry.path(), keys.next());
             }
         }
-        return null;
+        return new DatIndex(storage, byPath);
     }
 
     /** The volume identity of a path: {@code ""} for the system disk, or the reader pos for a {@code media:} path. */
@@ -227,5 +247,11 @@ public final class FileAccess {
         final String rest = path.substring("media:".length());
         final int slash = rest.indexOf('/');
         return slash < 0 ? rest : rest.substring(0, slash);
+    }
+
+    /** The storage of a disk and the key behind each projected {@code .dat} path. */
+    public record DatIndex(ServerStorageContents storage, Map<String, StorageKey> keys) {
+
+        static final DatIndex EMPTY = new DatIndex(ServerStorageContents.EMPTY, Map.of());
     }
 }

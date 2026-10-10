@@ -46,10 +46,18 @@ public final class PrintLayout {
             all.addAll(wrap(title, columns));
             all.add("");
         }
+        // Nothing past the last page a document may hold is ever printed, so laying it out would only cost time.
+        final int mostLines = PrintedDocument.MAX_PAGES * lines;
+        boolean cut = false;
         for (final String line : text.replace("\r\n", "\n").replace('\r', '\n').split("\n", -1)) {
+            if (all.size() >= mostLines) {
+                cut = true;
+                break;
+            }
             all.addAll(wrap(line.replace("\t", " ".repeat(TAB)), columns));
         }
-        while (all.size() > 1 && all.getLast().isBlank()) {
+        // A cut text has more behind it, so what ends the kept part is not the end of the document.
+        while (!cut && all.size() > 1 && all.getLast().isBlank()) {
             all.removeLast();
         }
         final List<String> pages = new ArrayList<>();

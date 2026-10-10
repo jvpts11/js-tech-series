@@ -212,7 +212,7 @@ final class FdiskProcess implements ITtyProcess {
             case COMMAND -> this.command(typed, out);
             case NEW_NUMBER -> this.stage = Stage.NEW_FIRST;
             case NEW_FIRST -> this.stage = Stage.NEW_LAST;
-            case NEW_LAST -> this.made(megabytesOf(typed), out);
+            case NEW_LAST -> this.made(this.lastAnswerMb(typed), out);
             case TYPE_NUMBER -> this.picked(typed, Stage.TYPE_KIND, out);
             case TYPE_KIND -> this.typed(typed, out);
             case DELETE_NUMBER -> this.picked(typed, Stage.COMMAND, out);
@@ -342,6 +342,13 @@ final class FdiskProcess implements ITtyProcess {
         this.stage = Stage.COMMAND;
         final int number = this.draft.size() + 1;
         final long room = this.sizeMb - this.taken();
+        // A partition that took the rest of the disk leaves nothing, though it asked for no size to count.
+        for (final LiveDisks.Partition part : this.draft) {
+            if (part.sizeMb() <= 0) {
+                say(out, NO_FREE_SECTORS.text(), Text.EMPTY);
+                return;
+            }
+        }
         if (room <= 0 || sizeMb < 0 || sizeMb > room) {
             say(out, OUT_OF_RANGE.text(), Text.EMPTY);
             return;
@@ -379,6 +386,26 @@ final class FdiskProcess implements ITtyProcess {
             }
         }
         say(out, Text.EMPTY);
+    }
+
+    /**
+     * The size, in megabytes, that an answer to the last-sector question stands for: nothing for the rest of the
+     * disk, {@code +size} for a size, and a plain number for the last sector itself, as the question says. -1 when
+     * the sector is outside what is free, which the caller then refuses as out of range.
+     */
+    private int lastAnswerMb(final String typed) {
+        if (typed.isEmpty() || !typed.matches("\\d{1,18}")) {
+            return megabytesOf(typed);
+        }
+        final long last = Long.parseLong(typed);
+        if (last == this.defaultLast()) {
+            return 0;
+        }
+        if (last < this.nextStart() || last > this.lastUsable()) {
+            return -1;
+        }
+        final long megabytes = (last - this.nextStart() + 1L) / SECTORS_PER_MB;
+        return megabytes < 1L ? -1 : (int) megabytes;
     }
 
     private int nextNumber() {

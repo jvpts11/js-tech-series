@@ -211,6 +211,7 @@ public final class NextgrePlanner {
         final List<String> names = new ArrayList<>();
         boolean preferredUsed = false;
         boolean avoidedHolds = false;
+        final List<Draw> draws = new ArrayList<>();
         for (final Source source : ordered) {
             if (routing.avoid().contains(source.server())) {
                 avoidedHolds = true;
@@ -219,15 +220,21 @@ public final class NextgrePlanner {
                 continue;
             }
             final long take = Math.min(left, source.quantity());
-            ticks += NextgreCosts.pull(take, source.perTick(), source.latency());
+            final long drawTicks = NextgreCosts.pull(take, source.perTick(), source.latency());
+            ticks += drawTicks;
+            draws.add(new Draw(source.name(), take, drawTicks));
             names.add(source.name());
             preferredUsed |= routing.prefer().contains(source.server());
             left -= take;
         }
+        long uncovered = 0L;
+        long uncoveredTicks = 0L;
         if (left > 0L) {
-            ticks += NextgreCosts.pull(left, NextgreCosts.DEFAULT_ITEMS_PER_TICK, 0);
+            uncovered = left;
+            uncoveredTicks = NextgreCosts.pull(left, NextgreCosts.DEFAULT_ITEMS_PER_TICK, 0);
+            ticks += uncoveredTicks;
         }
-        return new PullPlan(ticks, names, preferredUsed, avoidedHolds);
+        return new PullPlan(ticks, names, preferredUsed, avoidedHolds, draws, uncovered, uncoveredTicks);
     }
 
     /** The plan for {@code in}'s request, scaled down to what can be made when a partial craft is allowed. */
@@ -266,12 +273,11 @@ public final class NextgrePlanner {
     private static Reckoning reckon(final CraftPlanner.Plan plan, final Shape shape, final CraftRouting routing,
                                     final Inputs in) {
         final int n = plan.steps().size();
-        final long[] own = new long[n];
         final long[] whole = new long[n];
         final int lanes = in.on(PARALLEL_STEPS) ? routing.capped(in.lanes()) : 1;
         final List<List<Long>> pullTimes = new ArrayList<>();
         for (int i = 0; i < n; i++) {
-            own[i] = ownTime(plan.steps().get(i), in);
+            final long own = ownTime(plan.steps().get(i), in);
             final List<Long> under = new ArrayList<>();
             for (final int child : shape.children().get(i)) {
                 under.add(whole[child]);
@@ -283,9 +289,13 @@ public final class NextgrePlanner {
                 under.add(ticks);
             }
             pullTimes.add(pulls);
-            whole[i] = NextgreCosts.node(own[i], under, lanes);
+            whole[i] = NextgreCosts.node(own, under, lanes);
         }
-        return new Reckoning(own, whole, pullTimes, lanes, routing, n == 0 ? 0L : whole[n - 1]);
+        final List<Long> wholeTimes = new ArrayList<>(n);
+        for (final long time : whole) {
+            wholeTimes.add(time);
+        }
+        return new Reckoning(List.copyOf(wholeTimes), pullTimes, lanes, routing, n == 0 ? 0L : whole[n - 1]);
     }
 
     /* What a step takes on its own: what another mod measured, what this network measured, or a fair guess. */
@@ -322,7 +332,7 @@ public final class NextgrePlanner {
         final StorageKey made = at.resultKey();
         if (made != null) {
             final PlanStep view = new PlanStep(made.registryId(), at.runs(), at.produced(), at.isMachine(),
-                    reckoning.whole()[step]);
+                    reckoning.whole().get(step));
             for (final IExplainNode contribution : contributions) {
                 for (final Component note : contribution.notes(view)) {
                     if (nodes.size() < NextgrePlanView.MAX_NODES) {
@@ -364,7 +374,7 @@ public final class NextgrePlanner {
             nodes.add(new NextgrePlanView.Node(parentNode, child,
                     under.isMachine() ? NextgrePlanView.MACHINE : NextgrePlanView.BENCH, stepTitle(under),
                     (under.isMachine() ? NextgreTexts.ON_A_MACHINE : NextgreTexts.AT_A_BENCH).with(under.runs()),
-                    reckoning.whole()[child], NextgrePlanView.UNKNOWN, false, hints));
+                    reckoning.whole().get(child),NextgrePlanView.UNKNOWN, false, hints));
             addChildren(nodes, nodes.size() - 1, child, plan, shape, reckoning, in, contributions, shown);
         }
     }
@@ -420,7 +430,7 @@ public final class NextgrePlanner {
             final StorageKey made = step.resultKey();
             if (made != null) {
                 out.add(new PlanStep(made.registryId(), step.runs(), step.produced(), step.isMachine(),
-                        reckoning.whole()[i]));
+                        reckoning.whole().get(i)));
             }
         }
         return out;
@@ -552,14 +562,13 @@ public final class NextgrePlanner {
     /**
      * The time reckoned for a plan.
      *
-     * @param own     each step's own time, in ticks
      * @param whole   each step's time with what is under it
      * @param pulls   each step's pulls' times, in the order of its pulls
      * @param lanes   how many stages were reckoned to run at once
      * @param routing the routing it was reckoned with
      * @param total   the whole plan's
      */
-    public record Reckoning(long[] own, long[] whole, List<List<Long>> pulls, int lanes, CraftRouting routing,
+    public record Reckoning(List<Long> whole, List<List<Long>> pulls, int lanes, CraftRouting routing,
                             long total) {
     }
 
@@ -570,8 +579,19 @@ public final class NextgrePlanner {
      * @param servers       the servers' names, in the order they are drawn on
      * @param preferredUsed whether a server the hints prefer was drawn on
      * @param avoidedHolds  whether a server the hints avoid holds some of it
+     * @param draws         what each server hands over, in the order drawn on
+     * @param uncovered     how many no listed server holds, reckoned at a default speed, 0 when all are held
+     * @param uncoveredTicks what the uncovered part takes
      */
-    public record PullPlan(long ticks, List<String> servers, boolean preferredUsed, boolean avoidedHolds) {
+    public record PullPlan(long ticks, List<String> servers, boolean preferredUsed, boolean avoidedHolds,
+                           List<Draw> draws, long uncovered, long uncoveredTicks) {
+    }
+
+    /**
+     * One store drawn on by a pull: its name, how many it hands over and the ticks that takes. The draws of a plan
+     * are in the order the plan takes them, which is the order its total reckons.
+     */
+    public record Draw(String server, long amount, long ticks) {
     }
 
     /** A plan scaled to what it makes. */

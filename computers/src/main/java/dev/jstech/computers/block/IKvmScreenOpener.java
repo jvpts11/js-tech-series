@@ -8,7 +8,7 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.computers.operation.payload.OpenKvmPayload;
-import org.jetbrains.annotations.Nullable;
+import dev.jstech.computers.registry.ClientHook;
 
 /**
  * Opens the client-only KVM channel bar. Mirrors {@link IPostScreenOpener}: the payload handler lives
@@ -23,20 +23,17 @@ public interface IKvmScreenOpener {
 
     final class Holder {
 
+        private static final ClientHook<IKvmScreenOpener> HOOK = new ClientHook<>();
+
         private Holder() {
         }
 
-        @Nullable
-        private static IKvmScreenOpener instance;
-
         public static void set(final IKvmScreenOpener opener) {
-            instance = opener;
+            HOOK.set(opener);
         }
 
         public static void open(final OpenKvmPayload payload) {
-            if (instance != null) {
-                instance.open(payload);
-            }
+            HOOK.ifPresent(target -> target.open(payload));
         }
     }
 }

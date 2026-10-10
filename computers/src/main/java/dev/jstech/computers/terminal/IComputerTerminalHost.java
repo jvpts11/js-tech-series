@@ -10,6 +10,7 @@ package dev.jstech.computers.terminal;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
@@ -18,7 +19,8 @@ import dev.jstech.core.uuid.NetworkUuid;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The read-only monitoring data a computer exposes to the Monitor terminal's Local tab.
+ * The computer as the terminal and the operations path see it: the monitoring data the Monitor's Local tab shows, the
+ * console state and names the shell reports, and the computer's local storage, which operations read and write.
  */
 public interface IComputerTerminalHost {
 
@@ -186,8 +188,9 @@ public interface IComputerTerminalHost {
         String osId = "";
         if (this instanceof IOsHost computer) {
             customName = computer.customName();
-            if (computer.installedOs() != null) {
-                osId = computer.installedOs().id().getPath();
+            final OsDef os = computer.installedOs();
+            if (os != null) {
+                osId = os.id().getPath();
             }
         }
         return MoveLabels.hostname(

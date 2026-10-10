@@ -74,12 +74,6 @@ public final class PortageVoices {
         "move", "nls", "options", "parse", "path", "prompt", "regex", "screen", "search", "signal", "strutil",
         "syntax", "term", "text", "undo", "util", "winio"};
 
-    /** The profiles a machine of this architecture can be set to, in the order the chooser numbers them. */
-    private static final List<String> PROFILES = List.of("default/linux/vel64/23.0",
-            "default/linux/vel64/23.0/systemd", "default/linux/vel64/23.0/desktop",
-            "default/linux/vel64/23.0/desktop/gnome", "default/linux/vel64/23.0/desktop/plasma",
-            "default/linux/vel64/23.0/no-multilib", "default/linux/vel64/23.0/hardened");
-
     private static final List<Text> CONFIGURED = List.of(Text.literal("configure: creating ./config.status"),
             Text.literal("config.status: creating Makefile"), Text.literal("config.status: creating src/Makefile"),
             Text.literal("config.status: creating config.sg"),
@@ -299,29 +293,12 @@ public final class PortageVoices {
     public static List<CliLine> profiles(final int chosen) {
         final List<CliLine> out = new ArrayList<>();
         out.add(Tint.line(Tint.green(PROFILE_TARGETS.text())));
-        for (int i = 0; i < PROFILES.size(); i++) {
+        for (int i = 0; i < GentooProfiles.names().size(); i++) {
             out.add(Tint.line("  ", Tint.bright("[" + (i + 1) + "]"),
-                    Text.literal("   " + PROFILES.get(i) + " (stable)"),
+                    Text.literal("   " + GentooProfiles.names().get(i) + " (stable)"),
                     i + 1 == chosen ? Tint.line(" ", Tint.cyan("*")) : ""));
         }
         return out;
-    }
-
-    /**
-     * The number of the profile somebody named, by that number or by its whole name, or zero when what they
-     * typed is neither.
-     */
-    public static int profileOf(final String typed) {
-        final int byName = PROFILES.indexOf(typed) + 1;
-        if (byName > 0) {
-            return byName;
-        }
-        try {
-            final int number = Integer.parseInt(typed);
-            return number >= 1 && number <= PROFILES.size() ? number : 0;
-        } catch (final NumberFormatException notANumber) {
-            return 0;
-        }
     }
 
     /**

@@ -9,7 +9,6 @@ package dev.jstech.computers.storage;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.chemical.IChemicalBridge;
@@ -251,16 +250,6 @@ public final class StorageKey {
                 case FLUID -> Either.left(Either.right(key.fluidStack(1)));
                 case CHEMICAL -> Either.right(key);
             });
-
-    public DataResult<StorageKey> validated() {
-        if (kind == Kind.ITEM && itemPrototype.isEmpty()) {
-            return DataResult.error(() -> "empty item storage key");
-        }
-        if (kind == Kind.CHEMICAL && chemical == null) {
-            return DataResult.error(() -> "chemical storage key without an id");
-        }
-        return DataResult.success(this);
-    }
 
     private static final byte WIRE_ITEM = 0;
     private static final byte WIRE_FLUID = 1;

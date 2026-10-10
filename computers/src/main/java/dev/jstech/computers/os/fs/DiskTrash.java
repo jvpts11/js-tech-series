@@ -127,7 +127,14 @@ public final class DiskTrash {
 
     /** Whether anything at all is in the trash, which is what its picture shows. */
     public static boolean holdsAnything(final ItemStack disk, final TrashFolder trash) {
-        return !list(disk, trash).isEmpty();
+        final FilesystemContents fs = contents(disk);
+        for (final String stored : records(disk, trash).keySet()) {
+            final String at = trash.storedPath(stored);
+            if (fs.files().containsKey(at) || isDirectory(fs, at)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

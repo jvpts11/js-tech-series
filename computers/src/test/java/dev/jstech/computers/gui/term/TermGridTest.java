@@ -111,4 +111,11 @@ class TermGridTest {
         assertEquals(size, fit.size(), what);
         assertEquals(scale, fit.scale(), 1e-6f, what);
     }
+
+    @Test
+    void clip_neverReturnsMoreCellsThanItWasGiven() {
+        assertEquals("a", TermGrid.clip("abcdef", 1));
+        assertEquals("abc", TermGrid.clip("abcdef", 3));
+        assertEquals("a...", TermGrid.clip("abcdef", 4));
+    }
 }

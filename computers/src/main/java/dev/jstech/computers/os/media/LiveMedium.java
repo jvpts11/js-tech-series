@@ -94,6 +94,6 @@ public final class LiveMedium {
 
     /** What that distribution's medium is called, which is the distribution's own name. */
     private static String mediumName(final LiveInstallState.Distro distro) {
-        return distro == LiveInstallState.Distro.ARCH ? "arch" : "gentoo";
+        return distro.serializedName();
     }
 }

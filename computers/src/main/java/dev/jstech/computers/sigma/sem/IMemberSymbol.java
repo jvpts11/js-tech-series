@@ -63,6 +63,19 @@ public sealed interface IMemberSymbol {
             parameters = List.copyOf(parameters);
         }
 
+        /** Whether the other method takes the same types in the same order, which is what makes two the same. */
+        public boolean sameParameters(final MethodSymbol other) {
+            if (this.parameters.size() != other.parameters.size()) {
+                return false;
+            }
+            for (int i = 0; i < this.parameters.size(); i++) {
+                if (!this.parameters.get(i).type().equals(other.parameters.get(i).type())) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         /** How a diagnostic writes the method, with the types it takes. */
         public String describe() {
             final StringBuilder text = new StringBuilder(this.name).append('(');

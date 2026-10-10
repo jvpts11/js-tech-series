@@ -13,6 +13,7 @@ import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.text.ITextLanguage;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -33,6 +34,8 @@ public final class TermBuffer {
 
     private final Deque<Kept> lines = new ArrayDeque<>();
     private final List<TermRow> rows = new ArrayList<>();
+    /** What rows() hands out: a view, so a reader cannot change the rows the line bookkeeping counts. */
+    private final List<TermRow> rowsView = Collections.unmodifiableList(this.rows);
     private final int most;
     private final ITextLanguage language;
     private int columns;
@@ -119,7 +122,7 @@ public final class TermBuffer {
 
     /** The rows on the glass, oldest first. */
     public List<TermRow> rows() {
-        return this.rows;
+        return this.rowsView;
     }
 
     /** The lines as they arrived, oldest first, which is what a terminal that is reopened is given back. */
@@ -211,7 +214,10 @@ public final class TermBuffer {
             }
             room = columns - indent;
         }
-        out.add(setIn(rowOf(cells, from, cells.size()), room == columns ? 0 : indent));
+        // A break at trailing spaces can leave nothing after it; an empty line still takes its one row.
+        if (from < cells.size() || from == 0) {
+            out.add(setIn(rowOf(cells, from, cells.size()), room == columns ? 0 : indent));
+        }
     }
 
     /** The row set in by that many blank cells. */

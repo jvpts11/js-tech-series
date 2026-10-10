@@ -19,6 +19,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.devices.DeviceMap;
 import dev.jstech.computers.os.devices.DeviceMaps;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.workshop.UpdateDoor;
 import dev.jstech.computers.workshop.Workshop;
 import dev.jstech.computers.workshop.WorkshopCard;
 import dev.jstech.computers.workshop.WorkshopRates;
@@ -248,12 +249,7 @@ public final class WorkshopGameTests {
 
     /* Puts {@code card} in the first free card slot of {@code pc}. */
     private static void install(final PersonalComputerBlockEntity pc, final WorkshopCard card) {
-        final ItemStack stack = new ItemStack(switch (card) {
-            case CRAFTING_TABLE -> ComputingModule.CRAFTING_TABLE_CARD.get();
-            case FURNACE -> ComputingModule.FURNACE_CARD.get();
-            case ENCHANTING -> ComputingModule.ENCHANTING_CARD.get();
-            case ANVIL -> ComputingModule.ANVIL_CARD.get();
-        });
+        final ItemStack stack = UpdateDoor.cardItem(card);
         for (int slot = FIRST_FREE_CARD_SLOT; slot < PersonalComputerBlockEntity.GPU_SLOTS_START
                 + PersonalComputerBlockEntity.GPU_SLOTS; slot++) {
             if (pc.getHardware().getStackInSlot(slot).isEmpty()) {

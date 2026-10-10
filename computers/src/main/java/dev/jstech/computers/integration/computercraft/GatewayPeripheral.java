@@ -40,6 +40,7 @@ public final class GatewayPeripheral implements IPeripheral {
     private final NetworkGatewayBlockEntity gateway;
     /** The computers attached right now, by id, so an event can be queued on each of them. */
     private final Map<Integer, IComputerAccess> attached = new LinkedHashMap<>();
+
     GatewayPeripheral(final NetworkGatewayBlockEntity gateway) {
         this.gateway = gateway;
     }
@@ -74,8 +75,14 @@ public final class GatewayPeripheral implements IPeripheral {
         return new GatewayService.Caller(computer.getID());
     }
 
-    private static LuaException error(final GatewayRefusedException refused) {
-        return new LuaException(refused.getMessage());
+    /** Runs one service call for the calling computer, turning a refusal into the error the program sees. */
+    private <T> T answer(final IComputerAccess computer, final ServiceCall<T> call) throws LuaException {
+        final GatewayService service = service();
+        try {
+            return call.apply(service, caller(computer));
+        } catch (final GatewayRefusedException refused) {
+            throw new LuaException(refused.getMessage());
+        }
     }
 
     // Reads
@@ -83,71 +90,43 @@ public final class GatewayPeripheral implements IPeripheral {
     /** How much data the network can hold. */
     @LuaFunction(mainThread = true)
     public long capacity(final IComputerAccess computer) throws LuaException {
-        try {
-            return service().capacity(caller(computer));
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.capacity(c));
     }
 
     /** How much data the network holds. */
     @LuaFunction(mainThread = true)
     public long used(final IComputerAccess computer) throws LuaException {
-        try {
-            return service().used(caller(computer));
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.used(c));
     }
 
     /** Everything the network holds: a table of name to total. */
     @LuaFunction(mainThread = true)
     public Map<String, Long> types(final IComputerAccess computer) throws LuaException {
-        try {
-            return service().types(caller(computer));
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.types(c));
     }
 
     /** How much of {@code name} the whole network holds. */
     @LuaFunction(mainThread = true)
     public long total(final IComputerAccess computer, final String name) throws LuaException {
-        try {
-            return service().total(caller(computer), name);
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.total(c, name));
     }
 
     /** Which servers hold {@code name}: a list of {@code {server=, quantity=}}. */
     @LuaFunction(mainThread = true)
     public List<Map<String, Object>> find(final IComputerAccess computer, final String name) throws LuaException {
-        try {
-            return service().find(caller(computer), name);
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.find(c, name));
     }
 
     /** The network's servers: a list of {@code {name=, used=, capacity=, online=}}. */
     @LuaFunction(mainThread = true)
     public List<Map<String, Object>> servers(final IComputerAccess computer) throws LuaException {
-        try {
-            return service().servers(caller(computer));
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.servers(c));
     }
 
     /** The computers on the network: a list of {@code {name=, label=, os=, type=, online=, shares=}}. */
     @LuaFunction(mainThread = true)
     public List<Map<String, Object>> computers(final IComputerAccess computer) throws LuaException {
-        try {
-            return service().computers(caller(computer));
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.computers(c));
     }
 
     // Operations
@@ -156,64 +135,40 @@ public final class GatewayPeripheral implements IPeripheral {
     @LuaFunction(mainThread = true)
     public String pull(final IComputerAccess computer, final String name, final long quantity,
                        final Optional<String> priority) throws LuaException {
-        try {
-            return service().pull(caller(computer), name, quantity, priority.orElse(null));
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.pull(c, name, quantity, priority.orElse(null)));
     }
 
     /** Pushes up to {@code quantity} of {@code name} from the buffer into the network; the operation's id. */
     @LuaFunction(mainThread = true)
     public String push(final IComputerAccess computer, final String name, final long quantity,
                        final Optional<String> priority) throws LuaException {
-        try {
-            return service().push(caller(computer), name, quantity, priority.orElse(null));
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.push(c, name, quantity, priority.orElse(null)));
     }
 
     /** Asks the network to craft {@code quantity} of {@code name}; the operation's id. */
     @LuaFunction(mainThread = true)
     public String craft(final IComputerAccess computer, final String name, final long quantity,
                         final Optional<String> priority) throws LuaException {
-        try {
-            return service().craft(caller(computer), name, quantity, priority.orElse(null));
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.craft(c, name, quantity, priority.orElse(null)));
     }
 
     /** One operation by id: {@code {id=, type=, status=, item=, requested=, moved=, priority=}}, or nil. */
     @LuaFunction(mainThread = true)
     @Nullable
     public Map<String, Object> operation(final IComputerAccess computer, final String id) throws LuaException {
-        try {
-            return service().operation(caller(computer), id);
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.operation(c, id));
     }
 
     /** Every operation in flight on the network. */
     @LuaFunction(mainThread = true)
     public List<Map<String, Object>> operations(final IComputerAccess computer) throws LuaException {
-        try {
-            return service().operations(caller(computer));
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.operations(c));
     }
 
     /** Stops an operation in flight; whether it was still running. */
     @LuaFunction(mainThread = true)
     public boolean cancel(final IComputerAccess computer, final String id) throws LuaException {
-        try {
-            return service().cancel(caller(computer), id);
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.cancel(c, id));
     }
 
     /** Starts a compiled program on one of our computers: {@code run(computer, program, ...)}; the process id. */
@@ -225,11 +180,7 @@ public final class GatewayPeripheral implements IPeripheral {
         for (int i = 2; i < arguments.count(); i++) {
             args.add(arguments.getStringCoerced(i));
         }
-        try {
-            return service().run(caller(computer), target, program, args, null);
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.run(c, target, program, args, null));
     }
 
     // Watches and the log
@@ -237,31 +188,25 @@ public final class GatewayPeripheral implements IPeripheral {
     /** Asks for a {@code jsc_stock} event whenever the total of {@code name} moves; the total now. */
     @LuaFunction(mainThread = true)
     public long watch(final IComputerAccess computer, final String name) throws LuaException {
-        try {
-            return service().watch(caller(computer), name);
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.watch(c, name));
     }
 
     /** Stops watching {@code name}; whether it was being watched. */
     @LuaFunction(mainThread = true)
     public boolean unwatch(final IComputerAccess computer, final String name) throws LuaException {
-        try {
-            return service().unwatch(caller(computer), name);
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        return answer(computer, (s, c) -> s.unwatch(c, name));
     }
 
-    /** Writes a line into the Gateway's log: {@code log(level, text)}, the level {@code info}, {@code warn} or {@code error}. */
+    /**
+     * Writes a line into the Gateway's log: {@code log(level, text)}, the level being {@code info},
+     * {@code warn} or {@code error}.
+     */
     @LuaFunction(mainThread = true)
     public void log(final IComputerAccess computer, final String level, final String text) throws LuaException {
-        try {
-            service().log(caller(computer), level, text);
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
+        answer(computer, (s, c) -> {
+            s.log(c, level, text);
+            return null;
+        });
     }
 
     @Override
@@ -270,18 +215,17 @@ public final class GatewayPeripheral implements IPeripheral {
     }
 
     /** Whether the Gateway is linked to one of our computers, so the network is within reach. */
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public boolean online() {
         return gateway.online();
     }
 
     /** The Gateway's name, the one its host gave it. */
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public String name() {
         return gateway.name();
     }
 
-    /** The name of the computer the Gateway is linked to, or an empty string while it is not. */
     /**
      * Says something to the machine the Gateway is linked to, for a program of ours listening for it.
      *
@@ -296,6 +240,7 @@ public final class GatewayPeripheral implements IPeripheral {
         return true;
     }
 
+    /** The name of the computer the Gateway is linked to, or an empty string while it is not. */
     @LuaFunction(mainThread = true)
     public String host() {
         return gateway.hostName();
@@ -322,5 +267,12 @@ public final class GatewayPeripheral implements IPeripheral {
     @Override
     public boolean equals(@Nullable final IPeripheral other) {
         return other == this || (other instanceof GatewayPeripheral that && that.gateway == gateway);
+    }
+
+    /** One call on the service for a given caller, which may be refused. */
+    @FunctionalInterface
+    private interface ServiceCall<T> {
+
+        T apply(GatewayService service, GatewayService.Caller caller) throws GatewayRefusedException;
     }
 }

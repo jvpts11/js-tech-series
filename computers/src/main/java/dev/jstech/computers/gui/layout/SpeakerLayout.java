@@ -44,7 +44,8 @@ public final class SpeakerLayout {
                 .box("channelTile", CHANNEL_X, TILE_Y, TILE_W, TILE_H)
                 .box("playsTile", NAME_X, PLAYS_Y, PLAYS_W, TILE_H);
         l.text("title", 12, 10, 7, 1.0f);                       // "SPEAKER"
-        l.text("model", WIDTH - 12 - 13 * 6, 10, 13, 1.0f);    // "WATTWORKS T20", right-aligned
+        // "WATTWORKS T20", right-aligned
+        l.text("model", WIDTH - 12 - Math.round(13 * GuiLayout.GLYPH_WIDTH), 10, 13, 1.0f);
         l.text("nameLabel", 10, NAME_LABEL_Y, 4, 0.75f);        // "NAME"
         l.text("note", 10, NOTE_Y, 38, 0.75f);                  // "Programs find this speaker by its name"
         l.text("channel", CHANNEL_X + 3, TILE_Y + 11, 18, 0.75f);  // "Right, by position", "Off: monitor only"

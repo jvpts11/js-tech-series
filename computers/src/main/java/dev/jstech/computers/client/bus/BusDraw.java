@@ -11,6 +11,7 @@ import dev.jstech.computers.gui.layout.BusLayout;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -20,6 +21,7 @@ import net.minecraft.util.FastColor;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * The pieces a bus window is drawn from, in the skin bound for the frame: the small words, the toggles, the
@@ -36,6 +38,12 @@ final class BusDraw {
     private static final String ELLIPSIS = "...";
     /** The smallest a row's word is drawn, as a part of the game's letters. */
     private static final float SMALLEST = 0.5f;
+    /** How much brighter the lamp's lens corner is than its light, per channel. */
+    private static final int LENS_LIFT = 70;
+    private static final long DAY = 24_000L;
+    private static final long HOUR = 1_000L;
+    private static final int HOURS_BEFORE_DAWN = 6;
+    private static final int MINUTES = 60;
 
     private BusDraw() {
     }
@@ -198,6 +206,32 @@ final class BusDraw {
             cut = cut.substring(0, cut.length() - 1);
         }
         return cut + ELLIPSIS;
+    }
+
+    /**
+     * The link as a lamp, green when it reaches the network and red when it does not: a lit square in a dark bezel,
+     * with a lighter corner so it reads as a lens.
+     */
+    static void lamp(final GuiGraphics g, final int x, final int y, final int size, final boolean linked) {
+        final int colour = linked ? JsTechTheme.green() : JsTechTheme.red();
+        g.fill(x, y, x + size, y + size, JsTechTheme.outer());
+        g.fill(x + 1, y + 1, x + size - 1, y + size - 1, colour);
+        final int r = Math.min(255, ((colour >> 16) & 0xFF) + LENS_LIFT);
+        final int gr = Math.min(255, ((colour >> 8) & 0xFF) + LENS_LIFT);
+        final int b = Math.min(255, (colour & 0xFF) + LENS_LIFT);
+        g.fill(x + 1, y + 1, x + 2, y + 2, (colour >>> 24) << 24 | r << 16 | gr << 8 | b);
+    }
+
+    /** The hour of the day {@code time} was, as the clock read: what happened at a game time, read on today's. */
+    static String clock(final long time) {
+        final Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            return "--:--";
+        }
+        final long day = Math.floorMod(mc.level.getDayTime() - (mc.level.getGameTime() - time), DAY);
+        final long hour = (day / HOUR + HOURS_BEFORE_DAWN) % 24L;
+        final long minute = day % HOUR * MINUTES / HOUR;
+        return String.format(Locale.ROOT, "%02d:%02d", hour, minute);
     }
 
     /** Whether the point is in the rectangle. */

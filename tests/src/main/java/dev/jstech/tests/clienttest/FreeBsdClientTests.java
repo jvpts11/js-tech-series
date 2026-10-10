@@ -12,14 +12,11 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.BootMenuScreen;
 import dev.jstech.computers.client.CommandPromptScreen;
-import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.ItemStackHandler;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -50,19 +47,8 @@ public final class FreeBsdClientTests {
         ctx.thenBuild(0, world -> {
                     world.setBlock(MACHINE, ComputingModule.MAINFRAME.get());
                     final MainframeBlockEntity machine = world.blockEntity(MACHINE, MainframeBlockEntity.class);
-                    final ItemStackHandler inv = machine.getInventory();
-                    inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                            new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                            new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
-                            new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
                     // A graphics card gives the machine peripheral ports, which is what the monitor links to.
-                    inv.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
-                            new ItemStack(ComputingModule.GPU_HD_7970.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
-                            new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
+                    TestWorldBuilder.installMainframeParts(machine, StorageTier.SSD, true);
                     machine.installOs(FREEBSD);
                     machine.togglePower();
                     world.placeMonitor(MONITOR, Direction.EAST);

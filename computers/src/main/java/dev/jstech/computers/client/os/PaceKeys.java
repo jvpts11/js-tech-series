@@ -269,7 +269,7 @@ public final class PaceKeys implements TtyEditor.IKeys {
     }
 
     private void openFolder(final Text name, final String path) {
-        final Frame frame = new Frame(Kind.FOLDER, PaceTexts.FOLDER_TITLE.with(name, path), path,
+        final Frame frame = new Frame(Kind.FOLDER, PaceTexts.FOLDER_TITLE.with(name, path), name, path,
                 List.of(new Item(PaceTexts.READING.text(), Text.EMPTY, PaceTexts.MOVE_AND_ENTER.text(), () -> { },
                         false, null)));
         openFrame(frame);
@@ -394,10 +394,10 @@ public final class PaceKeys implements TtyEditor.IKeys {
     private void refresh() {
         final Frame front = front();
         if (front.kind == Kind.FOLDER) {
-            final Text title = front.title;
+            final Text name = front.name;
             frames.remove(front);
             active = Math.max(0, frames.size() - 1);
-            openFolder(Text.literal(GameText.resolve(title)), front.path);
+            openFolder(name, front.path);
         }
     }
 
@@ -526,14 +526,21 @@ public final class PaceKeys implements TtyEditor.IKeys {
 
         private final Kind kind;
         private final Text title;
+        /** The bare name a folder was opened under, kept so a refresh builds its title from the name alone. */
+        private final Text name;
         private final String path;
         private List<Item> items;
         private int selected;
         private int top;
 
         Frame(final Kind kind, final Text title, final String path, final List<Item> items) {
+            this(kind, title, title, path, items);
+        }
+
+        Frame(final Kind kind, final Text title, final Text name, final String path, final List<Item> items) {
             this.kind = kind;
             this.title = title;
+            this.name = name;
             this.path = path;
             this.items = List.copyOf(items);
         }

@@ -55,6 +55,12 @@ public sealed interface IMonitorPicture
     /** The most windows a desktop picture carries. */
     int WINDOWS_MAX = 32;
 
+    /* Which kind of picture follows, on the wire. */
+    byte PICTURE_DARK = 0;
+    byte PICTURE_CONSOLE = 2;
+    byte PICTURE_DESKTOP = 3;
+    byte PICTURE_SESSION = 4;
+
     /* Which opening a session's picture carries, on the wire. */
     byte OPENING_POST = 1;
     byte OPENING_BOOT_MENU = 2;
@@ -124,9 +130,9 @@ public sealed interface IMonitorPicture
 
     private static void write(final RegistryFriendlyByteBuf buf, final IMonitorPicture picture) {
         switch (picture) {
-            case Dark dark -> buf.writeByte(0);
+            case Dark dark -> buf.writeByte(PICTURE_DARK);
             case Console console -> {
-                buf.writeByte(2);
+                buf.writeByte(PICTURE_CONSOLE);
                 buf.writeEnum(console.era());
                 WireLine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)).encode(buf, console.lines());
                 buf.writeUtf(clip(console.prompt()), PROMPT_MAX);
@@ -134,7 +140,7 @@ public sealed interface IMonitorPicture
                 buf.writeVarInt(console.scalePercent());
             }
             case Desktop desktop -> {
-                buf.writeByte(3);
+                buf.writeByte(PICTURE_DESKTOP);
                 BlockPos.STREAM_CODEC.encode(buf, desktop.host());
                 buf.writeResourceLocation(desktop.osId());
                 buf.writeResourceLocation(desktop.desktopId());
@@ -146,7 +152,7 @@ public sealed interface IMonitorPicture
                 buf.writeVarInt(desktop.workspace());
             }
             case Session session -> {
-                buf.writeByte(4);
+                buf.writeByte(PICTURE_SESSION);
                 buf.writeVarInt(session.era() == null ? -1 : session.era().id());
                 writeOpening(buf, session.opening());
                 buf.writeBoolean(session.state() != null);
@@ -208,16 +214,17 @@ public sealed interface IMonitorPicture
 
     private static IMonitorPicture read(final RegistryFriendlyByteBuf buf) {
         return switch (buf.readByte()) {
-            case 2 -> new Console(buf.readEnum(HardwareEra.class),
+            case PICTURE_DARK -> DARK;
+            case PICTURE_CONSOLE -> new Console(buf.readEnum(HardwareEra.class),
                     WireLine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)).decode(buf), buf.readUtf(PROMPT_MAX),
                     Platform.byName(buf.readUtf()), buf.readVarInt());
-            case 3 -> new Desktop(BlockPos.STREAM_CODEC.decode(buf), buf.readResourceLocation(),
+            case PICTURE_DESKTOP -> new Desktop(BlockPos.STREAM_CODEC.decode(buf), buf.readResourceLocation(),
                     buf.readResourceLocation(), buf.readVarInt(), buf.readVarInt(),
                     new ArrayList<>(DesktopWindowsPayload.WireWindow.STREAM_CODEC
                             .apply(ByteBufCodecs.list(WINDOWS_MAX)).decode(buf)), buf.readVarInt());
-            case 4 -> new Session(HardwareEra.find(buf.readVarInt()), readOpening(buf),
+            case PICTURE_SESSION -> new Session(HardwareEra.find(buf.readVarInt()), readOpening(buf),
                     buf.readBoolean() ? FirmwareStatePayload.STREAM_CODEC.decode(buf) : null, buf.readVarLong());
-            default -> DARK;
+            default -> throw new IllegalArgumentException("unknown monitor picture");
         };
     }
 

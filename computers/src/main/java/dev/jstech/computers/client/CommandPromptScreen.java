@@ -301,6 +301,11 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     // output
 
+    /** The player left the world: the scrollbacks kept for its machines are let go. */
+    public static void forgetClientState() {
+        KEPT.clear();
+    }
+
     /** Routes a server output payload to the open Command Prompt, if one is showing. */
     public static void accept(final CommandOutputPayload payload) {
         if (Minecraft.getInstance().screen instanceof CommandPromptScreen screen) {

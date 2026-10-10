@@ -41,51 +41,8 @@ final class NetSoftwareCommands {
          * mirror, so a fix to how a package installs is a fix on both machines.
          */
         return List.of(new SoftwareCommands.Pckmgr("netgetter", CommandScope.NET_SYSTEMS),
-                new Uninstall(), new RunBackground(), new Schedule(), new ShowCommands());
-    }
-
-    /** Takes a program off the machine. */
-    @TextHolder
-    static final class Uninstall implements ICliCommand {
-
-        private static final TextKey SUMMARY =
-                TextKey.of("jsc.cli.netsoftware.uninstall.summary", "take a program off this machine");
-        private static final TextKey USAGE = TextKey.of("jsc.cli.netsoftware.uninstall.usage", "<program>");
-        private static final TextKey USAGE_HINT = TextKey.of("jsc.cli.netsoftware.uninstall.usage_hint",
-                "usage: uninstall <program>   (see 'programs')");
-
-        @Override public CommandScope scope() {
-            return NET_ANY;
-        }
-
-        @Override public String name() {
-            return "uninstall";
-        }
-
-        @Override public CommandGroup group() {
-            return CommandGroup.SOFTWARE;
-        }
-
-        @Override public Text summary() {
-            return SUMMARY.text();
-        }
-
-        @Override public Text usage() {
-            return USAGE.text();
-        }
-
-        @Override public List<String> seeAlso() {
-            return List.of("netgetter", "programs");
-        }
-
-        @Override public void run(final CliContext ctx) {
-            if (!ctx.hasArgs()) {
-                ctx.out().error(USAGE_HINT);
-                return;
-            }
-            final ICliComputer.OpResult result = ctx.computer().packageRemove(ctx.arg(0));
-            ctx.out().styled(result.message(), result.ok() ? CliStyle.OK : CliStyle.ERROR);
-        }
+                new SoftwareCommands.Uninstall(NET_ANY, List.of("netgetter", "programs")),
+                new RunBackground(), new Schedule(), new ShowCommands());
     }
 
     /** Leaves the machine running a line and gives the prompt straight back. */

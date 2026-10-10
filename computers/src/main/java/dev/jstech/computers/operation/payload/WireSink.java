@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.tty.ITtySink;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,7 +36,7 @@ public final class WireSink implements ITtySink {
 
     /** Everything printed since this was made, in order. */
     public List<WireLine> lines() {
-        return this.lines;
+        return Collections.unmodifiableList(this.lines);
     }
 
     public boolean isEmpty() {

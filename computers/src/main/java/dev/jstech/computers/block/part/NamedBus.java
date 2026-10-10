@@ -11,6 +11,7 @@ import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -52,7 +53,7 @@ public final class NamedBus {
         }
         final Set<Long> wires = NetworkSystem.get(level).connectivity().positionsOf(network);
         for (final BlockPos pos : Cables.blocksOf(level, wires)) {
-            if (!(level.getBlockEntity(pos) instanceof CableBlockEntity cable)) {
+            if (!(Loaded.blockEntity(level, pos) instanceof CableBlockEntity cable)) {
                 continue;
             }
             for (final Direction face : Direction.values()) {

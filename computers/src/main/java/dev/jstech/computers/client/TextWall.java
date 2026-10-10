@@ -78,10 +78,8 @@ public final class TextWall {
         if (width(font, line) <= pixels) {
             return line;
         }
-        String cut = line;
-        while (cut.length() > 1 && width(font, cut + "...") > pixels) {
-            cut = cut.substring(0, cut.length() - 1);
-        }
-        return cut + "...";
+        // Measured in the font's own units in one pass; a room too small even for the dots holds nothing.
+        final int fit = room(pixels) - font.width("...");
+        return fit <= 0 ? "" : font.plainSubstrByWidth(line, fit) + "...";
     }
 }

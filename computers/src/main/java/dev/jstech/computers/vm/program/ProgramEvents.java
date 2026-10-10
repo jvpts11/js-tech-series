@@ -115,6 +115,10 @@ final class ProgramEvents {
             return false;
         }
         if ("close".equals(kind)) {
+            // The throttle only matters while a box can be typed into, so a closed window's boxes are forgotten.
+            for (final Values.Obj gone : UiWidgets.inside(open)) {
+                this.typedAt.remove(Numbers.toLong(gone.get(UiWidgets.ID)));
+            }
             this.windows.close(open);
             this.ahead(handlerOf(open, "OnClose"));
             /*

@@ -146,6 +146,10 @@ public final class ProphetGameTests {
                     final List<ProphetEngine.WatchRow> watches = engine().watches(net.mainframe());
                     helper.assertTrue(watches.size() == 1 && watches.get(0).times() == 1 && watches.get(0).armed(),
                             "fired once, and armed again once the planks were back over 4; " + watches);
+                    final CompoundTag saved = net.mainframe().saveWithoutMetadata(helper.getLevel().registryAccess())
+                            .getCompound("EngineData").getCompound(PROPHET.toString());
+                    helper.assertTrue(saved.getList("Watches", Tag.TAG_COMPOUND).getCompound(0).getInt("Fired") == 1,
+                            "the times it fired are saved, so a reload keeps the count; " + saved);
                 })
                 .thenSucceed();
     }

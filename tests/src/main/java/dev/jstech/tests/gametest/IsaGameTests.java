@@ -20,6 +20,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -65,9 +66,6 @@ public final class IsaGameTests {
     @GameTest(template = ARENA)
     public static void legacyMachine_refusesAProgramBuiltForTheNewerIsa(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = legacy(helper);
-        if (computer == null) {
-            return;
-        }
         final MachinePrograms.Started started = run(computer, "jsc:x86_64");
         helper.assertFalse(started.ok(), "a 32-bit machine cannot run what was built for the 64-bit one");
         helper.assertTrue(started.message().contains("A4015"), "it says which refusal it is: " + started.message());
@@ -79,9 +77,6 @@ public final class IsaGameTests {
     @GameTest(template = ARENA)
     public static void legacyMachine_runsAProgramBuiltForItsOwn(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = legacy(helper);
-        if (computer == null) {
-            return;
-        }
         final MachinePrograms.Started started = run(computer, "jsc:x86");
         helper.assertTrue(started.ok(), "a machine runs its own programs: " + started.message());
         helper.succeed();
@@ -90,9 +85,6 @@ public final class IsaGameTests {
     @GameTest(template = ARENA)
     public static void standardMachine_runsAProgramBuiltForTheOlderIsa(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = standard(helper);
-        if (computer == null) {
-            return;
-        }
         final MachinePrograms.Started started = run(computer, "jsc:x86");
         helper.assertTrue(started.ok(),
                 "a 64-bit machine keeps running what was written for the older ones: " + started.message());
@@ -102,9 +94,6 @@ public final class IsaGameTests {
     @GameTest(template = ARENA)
     public static void standardMachine_refusesAnIsaNoModBrought(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = standard(helper);
-        if (computer == null) {
-            return;
-        }
         final MachinePrograms.Started started = run(computer, "other:risc");
         helper.assertFalse(started.ok(), "a machine runs no instruction set it has never heard of");
         helper.assertTrue(started.message().contains("built for other:risc"),
@@ -115,9 +104,6 @@ public final class IsaGameTests {
     @GameTest(template = ARENA)
     public static void vintageMachine_refusesTheLanguagesOwnListings(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = vintage(helper);
-        if (computer == null) {
-            return;
-        }
         final MachinePrograms.Started started = run(computer, "jsc:x86");
         helper.assertFalse(started.ok(), "the earliest machines run only their own, which is what dates them");
         helper.assertTrue(started.message().contains("this machine is IA-16"),
@@ -256,8 +242,7 @@ public final class IsaGameTests {
                                                         final Item ram, final Item psu) {
         helper.setBlock(at, computer);
         if (!(helper.getBlockEntity(at) instanceof PersonalComputerBlockEntity assembled)) {
-            helper.fail("no personal computer at " + at);
-            return null;
+            throw new GameTestAssertException("no personal computer at " + at);
         }
         final ItemStackHandler hardware = assembled.getHardware();
         hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(board));

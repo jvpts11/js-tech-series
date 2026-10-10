@@ -8,7 +8,6 @@
 package dev.jstech.computers.os.boot;
 
 import dev.jstech.computers.os.OsDisks;
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FirmwareKind;
@@ -386,8 +385,7 @@ public final class BootLines {
     private static BootSequence linux(final IOsHost machine, final OsDef system,
                                       @Nullable final ServerLevel level) {
         final boolean openRc = system.packageManager() == PackageManagerKind.EMERGE;
-        final String desktop = machine.installedDesktopId() == null ? ""
-                : machine.installedDesktopId().getPath().replace('_', ' ');
+        final String desktop = desktopOf(machine);
         return openRc ? openRc(machine, system, desktop) : systemd(machine, desktop, level);
     }
 
@@ -583,13 +581,19 @@ public final class BootLines {
         return out.build();
     }
 
+    /** The desktop installed on the machine as its startup names it, or nothing for a machine at a terminal. */
+    static String desktopOf(final IOsHost machine) {
+        return machine.installedDesktopId() == null ? ""
+                : machine.installedDesktopId().getPath().replace('_', ' ');
+    }
+
     /** How much room a drive still has, in the words the system of that age printed beside its letter. */
     private static String freeOn(final ItemStack disk) {
         if (!(disk.getItem() instanceof DiskItem drive)) {
             return "";
         }
         final HardwareEra era = drive.spec().era();
-        final long freeMb = OsDisks.systemDiskFreeWeight(disk) / StorageKey.MB_EQ_PER_ITEM * era.mbPerItem();
+        final long freeMb = OsDisks.systemDiskFreeWeight(disk) * era.mbPerItem() / StorageKey.MB_EQ_PER_ITEM;
         return DiskSpec.sizeLabel(freeMb) + " free";
     }
 

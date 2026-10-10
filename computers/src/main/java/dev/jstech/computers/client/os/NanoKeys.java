@@ -64,7 +64,8 @@ public final class NanoKeys implements TtyEditor.IKeys {
     public String status(final TtyEditor editor) {
         return switch (this.asking) {
             case SAVE_ON_EXIT -> GameText.resolve(NanoWords.SAVE_MODIFIED);
-            case FILE_NAME -> GameText.resolve(NanoWords.FILE_NAME.with(NanoWords.shown(editor.path())));
+            case FILE_NAME -> GameText.resolve(NanoWords.FILE_NAME.with(
+                    this.answer.length() == 0 ? NanoWords.shown(editor.path()) : this.answer.toString()));
             case SEARCH -> GameText.resolve(
                     NanoWords.searching(NanoWords.SEARCH, this.needle, this.answer.toString()));
             case REPLACE_WHAT -> GameText.resolve(NanoWords.searching(NanoWords.SEARCH_TO_REPLACE, this.needle,
@@ -116,8 +117,8 @@ public final class NanoKeys implements TtyEditor.IKeys {
             }
             case SAVE_ON_EXIT -> saveOnExit(editor, Character.toLowerCase(c));
             case REPLACE_EACH -> replaceEach(editor, Character.toLowerCase(c));
-            case SEARCH, REPLACE_WHAT, REPLACE_WITH, READ_NAME -> this.answer.append(c);
-            case FILE_NAME, HELP -> {
+            case FILE_NAME, SEARCH, REPLACE_WHAT, REPLACE_WITH, READ_NAME -> this.answer.append(c);
+            case HELP -> {
             }
         }
         return true;
@@ -239,7 +240,12 @@ public final class NanoKeys implements TtyEditor.IKeys {
         this.asking = Asking.NOTHING;
         switch (was) {
             case FILE_NAME -> {
-                editor.save();
+                // An empty answer keeps the name that was offered, which is the file being edited.
+                if (typed.isBlank()) {
+                    editor.save();
+                } else {
+                    editor.saveAs(typed.strip());
+                }
                 editor.say(NanoWords.wrote(lines(editor.document())));
                 if (this.leaving) {
                     editor.quit();

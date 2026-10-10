@@ -106,6 +106,7 @@ public final class ProphetEngine implements INetworkEngine {
                 final StorageKey key = named != null ? named : StorageKey.byId(forget.item());
                 final boolean gone = key != null && states.forget(key.id());
                 if (gone) {
+                    mind.forgetItem(key.id());
                     save(core, mind);
                 }
                 yield gone ? ok(ProphetTexts.FORGOTTEN.with(GameText.of(key.displayName())))
@@ -159,9 +160,9 @@ public final class ProphetEngine implements INetworkEngine {
         for (final ProphetStates.KeepState keep : mind.states().keeps()) {
             final StorageKey key = mind.key(keep.item());
             final List<Text> operations = new ArrayList<>();
-            for (final INetworkOperation operation : mind.operations(keep.item())) {
-                operations.add(Text.literal("#" + ShortId.of(operation.operationId().toString()) + " "
-                        + OperationRecord.statusName(operation.liveRecord().status())));
+            for (final ProphetMind.Started operation : mind.operations(keep.item())) {
+                operations.add(Text.literal("#" + ShortId.of(operation.id().toString()) + " "
+                        + OperationRecord.statusName(operation.status())));
             }
             final Text last = mind.lastReaction(keep.item());
             out.add(new StateRow(keep.item(), key == null ? Text.literal(keep.item()) : GameText.of(key.displayName()),
@@ -225,6 +226,10 @@ public final class ProphetEngine implements INetworkEngine {
         }
         mind.states().started(item, amount);
         mind.started(item, operation);
+        if (operation.isDone()) {
+            // It settled before it could be noted, so the settle callback found nothing to close.
+            mind.ended(item, operation);
+        }
         mind.reacted(now, item, ProphetTexts.ASKED_FOR.with(amount, GameText.of(key.displayName()),
                 ShortId.of(operation.operationId().toString())));
     }
@@ -237,6 +242,9 @@ public final class ProphetEngine implements INetworkEngine {
     private static void settled(final MainframeBlockEntity core, final ProphetMind mind, final String item,
                                 final long amount, @Nullable final INetworkOperation operation) {
         mind.states().settled(item, amount, core.networkIndex().version());
+        if (operation != null) {
+            mind.ended(item, operation);
+        }
         final boolean madeNothing = operation instanceof PendingCraftOperation pending
                 ? pending.delivered() == null || pending.delivered().delivered() <= 0
                 : operation instanceof NetworkCraftOperation craft && craft.delivered() <= 0;

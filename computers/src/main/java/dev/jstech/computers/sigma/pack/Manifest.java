@@ -166,9 +166,10 @@ public record Manifest(String name, String version, String house, String entry, 
         return this.name + " " + this.version;
     }
 
+    /** A line with its edges trimmed, or nothing when the whole line is a comment; a '#' inside a value stays. */
     private static String strip(final String line) {
-        final int hash = line.indexOf('#');
-        return (hash < 0 ? line : line.substring(0, hash)).trim();
+        final String trimmed = line.trim();
+        return trimmed.startsWith("#") ? "" : trimmed;
     }
 
     private static int whole(final String value) {

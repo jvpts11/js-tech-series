@@ -167,24 +167,24 @@ public final class KernelVoices {
                 .say("")
                 .say(Tint.line(Tint.green("* "), WORKING_WITH, " ", Tint.bright(full), " ", WORKING_FOR, " ",
                         Tint.bright(ARCH)))
-                .pause(share(ticks, 1))
+                .pause(Tint.share(ticks, 1))
                 .say(star(USING_KERNEL_CONFIG.with(KERNEL_CONFIG)))
                 .say("");
-        phase(script, "kernel: >> ", INITIALIZING.text(), share(ticks, 1));
-        phase(script, under, RUNNING.with(Text.literal("make mrproper")), share(ticks, 4));
-        phase(script, under, RUNNING.with(Text.literal("make oldconfig")), share(ticks, 5));
-        phase(script, under, COMPILING_IMAGE.with(full), share(ticks, 38));
-        phase(script, under, COMPILING_MODULES.with(full), share(ticks, 27));
-        phase(script, under, INSTALLING_MODULES.with(full), share(ticks, 5));
-        phase(script, under, GENERATING_DEPENDENCIES.text(), share(ticks, 2));
+        phase(script, "kernel: >> ", INITIALIZING.text(), Tint.share(ticks, 1));
+        phase(script, under, RUNNING.with(Text.literal("make mrproper")), Tint.share(ticks, 4));
+        phase(script, under, RUNNING.with(Text.literal("make oldconfig")), Tint.share(ticks, 5));
+        phase(script, under, COMPILING_IMAGE.with(full), Tint.share(ticks, 38));
+        phase(script, under, COMPILING_MODULES.with(full), Tint.share(ticks, 27));
+        phase(script, under, INSTALLING_MODULES.with(full), Tint.share(ticks, 5));
+        phase(script, under, GENERATING_DEPENDENCIES.text(), Tint.share(ticks, 2));
         script.say("");
-        phase(script, "initramfs: >> ", INITIALIZING.text(), share(ticks, 1));
-        phase(script, under, APPENDING.with("devices"), share(ticks, 1));
-        phase(script, under, APPENDING.with("base_layout"), share(ticks, 1));
-        phase(script, under, APPENDING.with("busybox"), share(ticks, 5));
-        phase(script, under, APPENDING.with("modules"), share(ticks, 3));
-        phase(script, under, DEDUPING.text(), share(ticks, 1));
-        phase(script, under, COMPRESSING.with(".xz"), share(ticks, 5));
+        phase(script, "initramfs: >> ", INITIALIZING.text(), Tint.share(ticks, 1));
+        phase(script, under, APPENDING.with("devices"), Tint.share(ticks, 1));
+        phase(script, under, APPENDING.with("base_layout"), Tint.share(ticks, 1));
+        phase(script, under, APPENDING.with("busybox"), Tint.share(ticks, 5));
+        phase(script, under, APPENDING.with("modules"), Tint.share(ticks, 3));
+        phase(script, under, DEDUPING.text(), Tint.share(ticks, 1));
+        phase(script, under, COMPRESSING.with(".xz"), Tint.share(ticks, 5));
         return script.say("")
                 .effect(built)
                 .say(star(COMPILED.text()))
@@ -212,15 +212,15 @@ public final class KernelVoices {
      * @param ticks how long this machine's processor takes over it
      */
     public static TtyScript make(final String release, final int jobs, final int ticks, final Runnable built) {
-        final int compiling = share(ticks, 86);
+        final int compiling = Tint.share(ticks, 86);
         final int objects = Math.min(compiling * TtyScript.MAX_LINES_PER_TICK, Math.max(120, compiling * 2));
         final String modules = "/lib/modules/" + release + "-gentoo";
         return TtyScript.script()
                 .sayAll(PREPARING)
                 .flood(compiling, objects, KernelVoices::object)
-                .flood(share(ticks, 9), LINKING.size(), LINKING::get)
+                .flood(Tint.share(ticks, 9), LINKING.size(), LINKING::get)
                 .say(Text.literal("Kernel: arch/x86/boot/bzImage is ready  (#1)"))
-                .flood(share(ticks, 5), MODULES.length + 2, index -> index < MODULES.length
+                .flood(Tint.share(ticks, 5), MODULES.length + 2, index -> index < MODULES.length
                         ? step("INSTALL", modules + "/kernel/" + MODULES[index][0] + "/" + lastOf(MODULES[index][0])
                                 + ".ko")
                         : index == MODULES.length ? step("DEPMOD", modules) : step("INSTALL", "/boot"))
@@ -272,9 +272,5 @@ public final class KernelVoices {
 
     private static CliLine star(final Text text) {
         return Tint.line(Tint.green("* "), text);
-    }
-
-    private static int share(final int ticks, final int hundredths) {
-        return Math.max(1, ticks * hundredths / 100);
     }
 }

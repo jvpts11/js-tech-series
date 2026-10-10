@@ -19,6 +19,7 @@ import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.operation.OperationStatistics;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.StorageNetworkFixture;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -59,17 +60,19 @@ public final class OperationStatisticsGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void timing_logRecordsCarryWaitAndRunAndFeedTheHourlyStatistics(final GameTestHelper helper) {
-        final MainframeBlockEntity mainframe = OperationSchedulingGameTests.storageNetwork(helper);
+        final MainframeBlockEntity mainframe = StorageNetworkFixture.storageNetwork(helper);
         final ItemStackHandler first = new ItemStackHandler(9);
         final ItemStackHandler second = new ItemStackHandler(9);
         final NetworkSelectOperation[] ops = new NetworkSelectOperation[2];
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + 4, () -> OperationSchedulingGameTests.rack(helper)
+                .thenExecuteAfter(SETTLE + 4, () -> StorageNetworkFixture.rack(helper)
                         .getServerStorage(0).insert(Items.COBBLESTONE, 100))
                 .thenExecuteAfter(2, () -> {
                     // On a single queue the second pull waits for the first: it must show waited ticks.
-                    ops[0] = mainframe.submitNetworkSelect(Items.COBBLESTONE, 30, OperationSchedulingGameTests.port(first), "first");
-                    ops[1] = mainframe.submitNetworkSelect(Items.COBBLESTONE, 30, OperationSchedulingGameTests.port(second), "second");
+                    ops[0] = mainframe.submitNetworkSelect(Items.COBBLESTONE, 30,
+                            StorageNetworkFixture.port(first), "first");
+                    ops[1] = mainframe.submitNetworkSelect(Items.COBBLESTONE, 30,
+                            StorageNetworkFixture.port(second), "second");
                     helper.assertTrue(ops[0] != null && ops[1] != null, "both pulls dispatched");
                 })
                 .thenExecuteAfter(6, () -> {
@@ -81,8 +84,8 @@ public final class OperationStatisticsGameTests {
                             "the second pull has been waiting; got " + live.get(1));
                 })
                 .thenExecuteAfter(60, () -> {
-                    helper.assertTrue(OperationSchedulingGameTests.count(first) == 30
-                            && OperationSchedulingGameTests.count(second) == 30, "both pulls delivered");
+                    helper.assertTrue(StorageNetworkFixture.count(first) == 30
+                            && StorageNetworkFixture.count(second) == 30, "both pulls delivered");
                     final List<OperationRecord> log = mainframe.recentOperations(); // newest first
                     helper.assertTrue(log.size() >= 2, "both logged; got " + log.size());
                     final OperationRecord older = log.get(1);

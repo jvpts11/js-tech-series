@@ -74,13 +74,11 @@ final class MachineFacts {
          * runs it, and then the file is the only thing telling two of them apart. The heads are laid out once they
          * are in the reader's language, so a longer word still leaves the next column where it was.
          */
-        final String indent = family == ShellFamily.POSIX ? "  " : "";
         final int nameAt = PID_W;
         final int fileAt = nameAt + NAME_W;
         final int stateAt = fileAt + FILE_W;
         final int end = stateAt + STATE_W + MEM_W;
-        ctx.out().line(CliLine.of(new CliSpan(Text.literal(indent), CliStyle.HEADER),
-                new CliSpan(PID.text(), CliStyle.HEADER), CliSpan.pad(nameAt),
+        ctx.out().line(CliLine.of(new CliSpan(PID.text(), CliStyle.HEADER), CliSpan.pad(nameAt),
                 new CliSpan(NAME.text(), CliStyle.HEADER), CliSpan.pad(fileAt),
                 new CliSpan(FILE.text(), CliStyle.HEADER), CliSpan.pad(stateAt),
                 new CliSpan(STATE.text(), CliStyle.HEADER),

@@ -21,20 +21,19 @@ public final class MachineLabels {
     }
 
     /**
-     * The name the system under an installed OS id goes by, or {@code none} when no OS is installed. An id the
+     * The name the system under an installed OS id goes by, or an empty string when no OS is installed, which the
+     * screens turn into their own "no system" text. An id the
      * registry does not know shows as itself, which is all there is to say about it.
      */
     public static String osLabelOf(final ResourceLocation osId) {
         if (osId == null) {
-            return "none";
+            return "";
         }
         final OsDef os = OsRegistry.getOs(osId);
         return os == null ? osId.getPath() : os.displayName();
     }
 
     public static String osLabel(final IOsHost host) {
-        final ResourceLocation osId = host.installedOsId();
-        final OsDef os = osId == null ? null : OsRegistry.getOs(osId);
-        return os == null ? "" : os.displayName();
+        return osLabelOf(host.installedOsId());
     }
 }

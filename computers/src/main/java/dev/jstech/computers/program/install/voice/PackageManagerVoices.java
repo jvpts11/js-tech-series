@@ -103,7 +103,7 @@ public final class PackageManagerVoices {
      */
     public static Text fetch(final PackageManagerKind manager, final String pkg, final String version,
                              final int mb, final String mirrorHost) {
-        final String mirror = "mirror://" + mirrorHost;
+        final String mirror = FetchVoice.mirrorAddress(mirrorHost);
         return switch (manager) {
             case APT -> ICliPackages.lines(List.of(
                     APT_READING.text(),

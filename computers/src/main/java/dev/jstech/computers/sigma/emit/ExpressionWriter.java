@@ -321,12 +321,6 @@ final class ExpressionWriter {
     }
 
     /**
-     * Where an expression says a value lives, or nothing when it names no place at all.
-     *
-     * <p>Worked out once, here, and then read by everything that writes: plain assignment, assignment that
-     * combines, and one more or one less. Each of the three used to walk this list for itself.
-     */
-    /**
      * Pushes what the write will need under the value, and hands back the kept element when there is one.
      *
      * <p>A place inside a collection is the only one whose address is worked out rather than named, so it
@@ -515,16 +509,6 @@ final class ExpressionWriter {
         }
     }
 
-    /**
-     * One more or one less, wherever the one is kept.
-     *
-     * <p>Three shapes, and which one a place takes is decided by what reaching it leaves on the stack.
-     * A captured variable is read through the object that holds it, so the answer is read rather than
-     * kept. A slot or a place belonging to a type is reached from nothing, so the answer can be taken
-     * with a duplicate as the value goes past. A place on an object or inside a collection sits on top
-     * of what it belongs to, and a duplicate would be buried under that when the value goes back, so
-     * the answer is put away in a place of its own and read out at the end.
-     */
     /** Keeps the value that answers the expression: a duplicate on top, or one put away in a slot. */
     private void answer(final boolean now, final int kept) {
         if (!now) {
@@ -768,8 +752,8 @@ final class ExpressionWriter {
         final ITypeSymbol gives = this.emitter.rules.substitute(shape.returnType(), filled);
         final List<String> written = new ArrayList<>();
         for (final IMemberSymbol.ParameterSymbol parameter : shape.parameters()) {
-            written.add((parameter.outward() ? "out " : "")
-                    + this.emitter.rules.substitute(parameter.type(), filled).describe());
+            written.add(Emitter.parameterText(parameter.outward(),
+                    this.emitter.rules.substitute(parameter.type(), filled)));
         }
 
         final Closure closure = this.body.closure();

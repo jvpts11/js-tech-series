@@ -460,13 +460,16 @@ public final class MonitorClientTests {
         }
         final int columns = 12;
         final int rows = 8;
-        for (int c = 1; c < columns; c++) {
-            for (int r = 1; r < rows; r++) {
-                final int x = screen.getGuiLeft() + screen.getXSize() * c / columns;
-                final int y = screen.getGuiTop() + screen.getYSize() * r / rows;
-                final int rgb = ctx.pixel(x, y) & 0xFFFFFF;
-                if (!test.test(rgb)) {
-                    return false;
+        // One copy of the frame serves the whole grid.
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            for (int c = 1; c < columns; c++) {
+                for (int r = 1; r < rows; r++) {
+                    final int x = screen.getGuiLeft() + screen.getXSize() * c / columns;
+                    final int y = screen.getGuiTop() + screen.getYSize() * r / rows;
+                    final int rgb = frame.pixel(x, y) & 0xFFFFFF;
+                    if (!test.test(rgb)) {
+                        return false;
+                    }
                 }
             }
         }

@@ -14,11 +14,9 @@ import dev.jstech.computers.operation.payload.SoundfoundryCoverRequestPayload;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.core.BlockPos;
@@ -37,7 +35,10 @@ public final class SoundfoundryCoverArt {
     private static final Map<String, Cover> KNOWN = new HashMap<>();
     /** The covers to ask for, and the machine whose window wants each, which the server checks the player is at. */
     private static final Map<String, BlockPos> WAITING = new LinkedHashMap<>();
-    private static final Set<String> ASKED = new HashSet<>();
+    /** The covers asked for and when each was asked, so a request the server never answers frees its slot. */
+    private static final Map<String, Long> ASKED = new HashMap<>();
+    /** How long an unanswered request holds its slot, in milliseconds. */
+    private static final long ANSWER_WAIT_MS = 5000L;
     /** How many covers are asked for at once. */
     private static final int AT_ONCE = 6;
     private static final Cover NONE = new Cover(null, 0, 0);
@@ -67,7 +68,8 @@ public final class SoundfoundryCoverArt {
         if (known != null) {
             return known.texture() == null ? null : known;
         }
-        if (!ASKED.contains(key) && !WAITING.containsKey(key)) {
+        expire();
+        if (!ASKED.containsKey(key) && !WAITING.containsKey(key)) {
             WAITING.put(key, host);
             ask();
         }
@@ -95,13 +97,20 @@ public final class SoundfoundryCoverArt {
     }
 
     private static void ask() {
+        expire();
         final Iterator<Map.Entry<String, BlockPos>> waiting = WAITING.entrySet().iterator();
         while (ASKED.size() < AT_ONCE && waiting.hasNext()) {
             final Map.Entry<String, BlockPos> next = waiting.next();
             waiting.remove();
-            ASKED.add(next.getKey());
+            ASKED.put(next.getKey(), System.currentTimeMillis());
             PacketDistributor.sendToServer(new SoundfoundryCoverRequestPayload(next.getValue(), next.getKey()));
         }
+    }
+
+    /* The server answers only a player who is at the machine, and a refused request gets no reply at all. */
+    private static void expire() {
+        final long now = System.currentTimeMillis();
+        ASKED.values().removeIf(asked -> now - asked > ANSWER_WAIT_MS);
     }
 
     private static Cover texture(final byte[] png) {

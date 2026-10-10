@@ -14,6 +14,7 @@ import dev.jstech.computers.gui.help.HelpViews;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
+import dev.jstech.computers.operation.payload.files.FileAccess.DatIndex;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.FileContentPayload;
 import dev.jstech.computers.operation.payload.FolderContentPayload;
@@ -39,7 +40,6 @@ import dev.jstech.computers.program.cli.menushell.MenuShellListing;
 import dev.jstech.computers.program.cli.menushell.MenuShellView;
 import dev.jstech.computers.program.cli.msd.MsdState;
 import dev.jstech.computers.program.cli.msd.MsdView;
-import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.GameText;
@@ -61,12 +61,13 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import static dev.jstech.computers.operation.payload.files.FileAccess.NET_ROOT;
+import static dev.jstech.computers.operation.payload.files.FileAccess.datIndexOf;
 import static dev.jstech.computers.operation.payload.files.FileAccess.filesystemKindOf;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaStackFor;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaSubPath;
 import static dev.jstech.computers.operation.payload.files.FileAccess.netDos;
 import static dev.jstech.computers.operation.payload.files.FileAccess.netShell;
-import static dev.jstech.computers.operation.payload.files.FileAccess.resolveDatKey;
+import static dev.jstech.computers.operation.payload.files.FileAccess.volumeOf;
 
 /**
  * The payloads that list a computer's drives and folders and read the contents of a file.
@@ -152,11 +153,7 @@ public final class FilePayloads {
                                     disk, reqDir, kind)) {
                         wire.add(new DiskFilesPayload.WireFile(d, "", 0L, false, true));
                     }
-                    for (final DiskFilesystem.FileEntry e
-                            : DiskFilesystem.list(
-                                    disk, reqDir, kind)) {
-                        wire.add(wireFile(disk, e, ""));
-                    }
+                    addFiles(wire, disk, DiskFilesystem.list(disk, reqDir, kind), "");
                     /*
                      * The system's own files and the installed programs' folders are generated, not
                      * stored, and take their place among the real entries; a real one with the same
@@ -181,7 +178,10 @@ public final class FilePayloads {
                  */
             }
         }
-        PacketDistributor.sendToPlayer(player, new DiskFilesPayload(payload.dir(), wire, volumes));
+        // The packet's list codec refuses more than MAX_FILES rows, so a crowded folder is clipped.
+        final List<DiskFilesPayload.WireFile> sent = wire.size() > DiskFilesPayload.MAX_FILES
+                ? wire.subList(0, DiskFilesPayload.MAX_FILES) : wire;
+        PacketDistributor.sendToPlayer(player, new DiskFilesPayload(payload.dir(), sent, volumes));
     }
 
     /** Lists what a network path holds into {@code wire}: hosts, a host's shares, or a shared folder. */
@@ -234,31 +234,33 @@ public final class FilePayloads {
                 media, subDir, kind)) {
             wire.add(new DiskFilesPayload.WireFile(prefix + d, "", 0L, false, true));
         }
-        for (final DiskFilesystem.FileEntry e
-                : DiskFilesystem.list(media, subDir, kind)) {
-            wire.add(wireFile(media, e, prefix));
-        }
+        addFiles(wire, media, DiskFilesystem.list(media, subDir, kind), prefix);
     }
 
     /**
      * A listed file on the wire. A {@code .dat} row also carries the item it projects and how many are
      * stored, so the explorer shows the item and its count rather than a file name a player has to decode.
      */
-    private static DiskFilesPayload.WireFile wireFile(final ItemStack volume,
-            final DiskFilesystem.FileEntry e, final String prefix) {
-        String itemId = "";
-        long count = 0L;
-        if (e.type() == FileType.DAT
-                && volume.getItem() instanceof DiskItem) {
-            final StorageKey key = resolveDatKey(volume, e.path());
-            if (key != null && key.item() != null) {
-                itemId = BuiltInRegistries.ITEM.getKey(key.item()).toString();
-                count = DriveVolumes.contents(volume)
-                        .items().getOrDefault(key, 0L);
+    private static void addFiles(final List<DiskFilesPayload.WireFile> wire, final ItemStack volume,
+            final List<DiskFilesystem.FileEntry> entries, final String prefix) {
+        // The storage is projected once per listing, and only when a .dat row needs it.
+        DatIndex datIndex = null;
+        for (final DiskFilesystem.FileEntry e : entries) {
+            String itemId = "";
+            long count = 0L;
+            if (e.type() == FileType.DAT && volume.getItem() instanceof DiskItem) {
+                if (datIndex == null) {
+                    datIndex = datIndexOf(volume);
+                }
+                final StorageKey key = datIndex.keys().get(e.path());
+                if (key != null && key.item() != null) {
+                    itemId = BuiltInRegistries.ITEM.getKey(key.item()).toString();
+                    count = datIndex.storage().items().getOrDefault(key, 0L);
+                }
             }
+            wire.add(new DiskFilesPayload.WireFile(prefix + e.path(), e.type().extension(), e.weight(),
+                    e.readOnly(), false, itemId, count));
         }
-        return new DiskFilesPayload.WireFile(prefix + e.path(), e.type().extension(), e.weight(), e.readOnly(),
-                false, itemId, count);
     }
 
     private static void handleDiskFiles(final DiskFilesPayload payload, final Player player) {
@@ -404,8 +406,7 @@ public final class FilePayloads {
             return read.ok() ? Optional.of(read.message().english()) : Optional.empty();
         }
         final boolean media = path.startsWith("media:");
-        final ItemStack vol =
-                media ? mediaStackFor(level, computer, path) : computer.systemDisk();
+        final ItemStack vol = volumeOf(level, computer, path);
         if (vol.isEmpty()) {
             return Optional.empty();
         }

@@ -41,6 +41,8 @@ public final class InfoHelp {
     private int laidFor = -1;
     private int laidWith = -1;
     private int answers;
+    /** The top row, worked out when the page is laid because it only changes with the page. */
+    private String headerRow = "";
     private int scroll;
     private int focus = -1;
     private int bodyRows = 21;
@@ -283,7 +285,7 @@ public final class InfoHelp {
         this.lay(columns);
         final TextScreen screen = new TextScreen(columns, rows, INK, GROUND);
         screen.fill(0, HEADER_ROW, columns, 1, GROUND, INK);
-        screen.put(0, HEADER_ROW, this.header(), GROUND, INK);
+        screen.put(0, HEADER_ROW, this.headerRow, GROUND, INK);
         final List<Found> links = this.links();
         final Found picked = this.focus >= 0 && this.focus < links.size() ? links.get(this.focus) : null;
         for (int r = 0; r < this.bodyRows && this.scroll + r < this.page.size(); r++) {
@@ -397,14 +399,8 @@ public final class InfoHelp {
             return;
         }
         final List<String> order = reader.get().entries();
-        final int here = this.shown.kind() == HelpTarget.Kind.NODE ? order.indexOf(this.shown.id()) : -1;
-        String pick = found.getFirst();
-        for (final String entry : found) {
-            if (order.indexOf(entry) > here) {
-                pick = entry;
-                break;
-            }
-        }
+        final String pick = HelpSearch.nextHit(order, found,
+                this.shown.kind() == HelpTarget.Kind.NODE ? this.shown.id() : null);
         this.go(HelpTarget.node(reader.get().manualId(), pick));
     }
 
@@ -532,6 +528,7 @@ public final class InfoHelp {
         }
         this.laidFor = columns;
         this.laidWith = this.answers;
+        this.headerRow = this.header();
         if (this.keys) {
             this.page = new ArrayList<>(List.of(HelpLine.of(0, say(HelpTexts.INFO_HELP_TITLE), HelpLine.Ink.TITLE),
                     HelpLine.BLANK));

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.api.client.ComponentRenderers;
 import dev.jstech.computers.api.client.IComponentRenderer;
 import dev.jstech.computers.gui.layout.UiLayout;
@@ -52,8 +53,11 @@ public final class SigmaWindowApp implements IDesktopApp {
     private final Map<Long, UiLayout.Rect> clips = new HashMap<>();
     /** The file dialogs this window has up for the program, by the dialog widget's number. */
     private final Map<Long, FileDialog> dialogs = new HashMap<>();
+    private boolean closedByProgram;
     private final Map<Long, Boolean> answered = new HashMap<>();
     private UiWindowPayload state;
+    /* The widgets of the state by their number, so walking up a widget's parents is not a scan at every step. */
+    private Map<Long, UiWindowPayload.Widget> index;
     private OsSkin skin = OsSkin.fallback();
     private int contentX;
     private int contentY;
@@ -61,13 +65,15 @@ public final class SigmaWindowApp implements IDesktopApp {
     private int contentH;
 
     /** What every window a player's own program opens wears: it is no installed program, so it has none of its own. */
-    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath("jsc", "sigma_program");
+    private static final ResourceLocation ICON =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "sigma_program");
 
     public SigmaWindowApp(final BlockPos host, final UiWindowPayload opened) {
         this.host = host;
         this.program = opened.program();
         this.window = opened.window();
         this.state = opened;
+        this.index = indexOf(opened);
         this.painter = new SigmaPainter(this.ui, host);
         this.input = new SigmaInput(this);
     }
@@ -84,6 +90,7 @@ public final class SigmaWindowApp implements IDesktopApp {
     /** Takes the window as it now stands. */
     public void accept(final UiWindowPayload payload) {
         this.state = merged(payload);
+        this.index = indexOf(this.state);
         // A box the program itself changed shows what the program says, not what was half typed into it.
         for (final UiWindowPayload.Widget widget : payload.widgets()) {
             final String typed = this.ui.typing.get(widget.id());
@@ -353,7 +360,15 @@ public final class SigmaWindowApp implements IDesktopApp {
             dialog.close();
         }
         // The player shutting the window is the program's to hear: its own OnClose runs, and it may end.
-        this.send("close", 0L, "", 0, 0);
+        // A window the program closed itself has nothing to be told, and answering would echo its own close.
+        if (!this.closedByProgram) {
+            this.send("close", 0L, "", 0, 0);
+        }
+    }
+
+    /** Marks the window as taken away by the program, so closing it does not report back to that program. */
+    void closedByProgram() {
+        this.closedByProgram = true;
     }
 
     @Override
@@ -655,15 +670,29 @@ public final class SigmaWindowApp implements IDesktopApp {
     }
 
     UiWindowPayload.Widget widgetOf(final long id) {
+        return id == 0 ? null : this.index.get(id);
+    }
+
+    /** The widget of a window with that number, or null; a scan, for the callers that hold no index. */
+    static UiWindowPayload.Widget find(final UiWindowPayload window, final long id) {
         if (id == 0) {
             return null;
         }
-        for (final UiWindowPayload.Widget widget : this.state.widgets()) {
+        for (final UiWindowPayload.Widget widget : window.widgets()) {
             if (widget.id() == id) {
                 return widget;
             }
         }
         return null;
+    }
+
+    private static Map<Long, UiWindowPayload.Widget> indexOf(final UiWindowPayload window) {
+        final Map<Long, UiWindowPayload.Widget> byId = new HashMap<>();
+        for (final UiWindowPayload.Widget widget : window.widgets()) {
+            // The first widget of a number wins, as it does in a scan.
+            byId.putIfAbsent(widget.id(), widget);
+        }
+        return byId;
     }
 
     /** Tells the program what the player did. */

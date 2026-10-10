@@ -113,8 +113,7 @@ public final class UpdateDrawer {
 
     /** How far the network's smelting is over the item now in the furnace, in ticks. */
     public int progressTicks() {
-        final Integer ticks = progress.get();
-        return ticks == null ? 0 : ticks;
+        return Workshop.ticksOf(progress);
     }
 
     /**
@@ -152,13 +151,12 @@ public final class UpdateDrawer {
             return 0;
         }
         final ItemStack input = slot(WORK);
-        final Workshop.Smelt smelt = Workshop.smelt(level, input);
+        final Workshop.Smelt smelt = workshop.smeltCached(level, input);
         if (smelt == null) {
             return 0;
         }
         final ItemStack made = slot(MADE);
-        if (!made.isEmpty() && (!ItemStack.isSameItemSameComponents(made, smelt.result())
-                || made.getCount() + smelt.result().getCount() > made.getMaxStackSize())) {
+        if (!Workshop.hasRoomFor(made, smelt.result())) {
             return 0;
         }
         final int now = progressTicks() + 1;

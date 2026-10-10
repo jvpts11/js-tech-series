@@ -140,16 +140,6 @@ class IqlScriptTest {
     }
 
     @Test
-    void textTable_padsEveryColumnToItsWidestCell() {
-        final String expected = "item" + " ".repeat(10) + "qty\n"
-                + "-".repeat(12) + "  ---\n"
-                + "iron_ingot    198\n"
-                + "copper_ingot  204";
-        assertEquals(expected, IqlScript.textTable(List.of("item", "qty"),
-                List.of(List.of("iron_ingot", "198"), List.of("copper_ingot", "204"))));
-    }
-
-    @Test
     void keyword_knowsTheVerbsAndTheClauses() {
         assertTrue(IqlScript.keyword("query"));
         assertTrue(IqlScript.keyword("WHERE"));

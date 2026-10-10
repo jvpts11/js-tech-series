@@ -49,10 +49,17 @@ public final class LocalStore implements IWeightedStore {
         if (!balanced) {
             return disks;
         }
-        final List<ItemStack> ordered = new ArrayList<>(disks);
-        ordered.sort(Comparator.comparingLong(
-                (final ItemStack disk) -> diskCapacity(disk) * StorageKey.MB_EQ_PER_ITEM
-                        - DriveVolumes.peek(disk).usedWeight()).reversed());
+        // The free weight of each disk is read once, so the sort does not look every drive up per comparison.
+        final List<DiskRoom> rooms = new ArrayList<>(disks.size());
+        for (final ItemStack disk : disks) {
+            rooms.add(new DiskRoom(disk, diskCapacity(disk) * StorageKey.MB_EQ_PER_ITEM
+                    - DriveVolumes.peek(disk).usedWeight()));
+        }
+        rooms.sort(Comparator.comparingLong(DiskRoom::free).reversed());
+        final List<ItemStack> ordered = new ArrayList<>(rooms.size());
+        for (final DiskRoom room : rooms) {
+            ordered.add(room.disk());
+        }
         return ordered;
     }
 
@@ -276,6 +283,10 @@ public final class LocalStore implements IWeightedStore {
                 continue;
             }
             final StorageVolume volume = DriveVolumes.of(disk);
+            if (volume == StorageVolume.EMPTY) {
+                // Off the server thread the volume is the read-only blank one; writing to it would lose the items.
+                continue;
+            }
             final long roomNative = (capacityWeight - volume.usedWeight()) / unitWeight;
             if (roomNative <= 0L) {
                 continue;
@@ -312,5 +323,8 @@ public final class LocalStore implements IWeightedStore {
             onChanged.run();
         }
         return taken;
+    }
+
+    private record DiskRoom(ItemStack disk, long free) {
     }
 }

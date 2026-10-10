@@ -40,12 +40,9 @@ public class ProcessingMachineScreen extends CoreContainerScreen<ProcessingMachi
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
-        final GuiLayout.Box energy = layout.boxAt("energy");
-        if (hover(mouseX, mouseY, energy.x(), energy.y(), energy.width(), energy.height())) {
-            final ProcessingMachineBlockEntity machine = menu.machine();
-            g.renderTooltip(font, Component.literal(machine.getEnergy().getEnergyStored() + " / "
-                    + machine.getEnergy().getMaxEnergyStored() + " FE"), mouseX, mouseY);
-        }
+        final ProcessingMachineBlockEntity machine = menu.machine();
+        MachineScreenSupport.drawEnergyTooltip(g, font, leftPos, topPos, layout.boxAt("energy"),
+                machine.getEnergy(), mouseX, mouseY);
     }
 
     @Override
@@ -58,8 +55,6 @@ public class ProcessingMachineScreen extends CoreContainerScreen<ProcessingMachi
         MachineScreenSupport.drawProgressBar(g, leftPos + progress.x(), topPos + progress.y(), progress.width(),
                 progress.height(), machine.getProgress(), machine.getMaxProgress(),
                 progressColour.applyAsInt(colours));
-        final GuiLayout.Box energy = layout.boxAt("energy");
-        MachineScreenSupport.drawEnergyBar(g, leftPos + energy.x(), topPos + energy.y(), energy.width(),
-                energy.height(), machine.getEnergy().getEnergyStored(), machine.getEnergy().getMaxEnergyStored());
+        MachineScreenSupport.drawEnergyGauge(g, leftPos, topPos, layout.boxAt("energy"), machine.getEnergy());
     }
 }

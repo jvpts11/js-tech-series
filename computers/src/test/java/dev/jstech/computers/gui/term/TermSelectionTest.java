@@ -112,4 +112,11 @@ class TermSelectionTest {
         assertEquals("Oak Log                     3,322", TermSelection.lineAt(GLASS, 1).textOf(GLASS));
         assertTrue(TermSelection.lineAt(GLASS, 9).isEmpty());
     }
+
+    @Test
+    void textOf_keepsTheLineBreakAfterABlankFirstRow() {
+        final List<TermRow> rows = List.of(row(""), row("xyz"));
+
+        assertEquals("\nxyz", TermSelection.at(0, 0).reachingTo(1, 3).textOf(rows));
+    }
 }

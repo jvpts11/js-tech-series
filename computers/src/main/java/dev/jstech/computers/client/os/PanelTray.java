@@ -46,11 +46,11 @@ final class PanelTray {
 
     /** The two status pictures, white so the panel's text colour can be laid over them, and the badge of no link. */
     private static final ResourceLocation NETWORK =
-            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/tray/network.png");
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/tray/network.png");
     private static final ResourceLocation SPEAKER =
-            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/tray/speaker.png");
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/tray/speaker.png");
     private static final ResourceLocation OFFLINE =
-            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/tray/offline_badge.png");
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/tray/offline_badge.png");
     private static final int BADGE = 4;
     private static final int RAM_BAR_W = 26;
     private static final int RAM_BAR_H = 6;

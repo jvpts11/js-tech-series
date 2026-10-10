@@ -172,8 +172,13 @@ public final class StorageVolumes extends SavedData {
                 final DataResult<ServerStorageContents> parsed = ServerStorageContents.CODEC.parse(ops, items);
                 SavedValue.read(parsed, LOGGER, "what a server was storing (" + id + ")")
                         .ifPresent(contents -> volume.replaceAll(contents.items()));
-                if (parsed.result().isPresent()) {
-                    store.encoded.put(id, items); // what was read is what would be written: no encoding owed
+                if (parsed.resultOrPartial(message -> { }).isPresent()) {
+                    /*
+                     * What was read is what would be written, so no encoding is owed. This also holds for a partly
+                     * unreadable list: its raw lines (from a mod that is gone for now) are kept as they are until
+                     * the volume is written again, instead of being dropped by the next save.
+                     */
+                    store.encoded.put(id, items);
                 }
             }
             store.volumes.put(id, volume);

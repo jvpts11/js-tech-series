@@ -73,6 +73,7 @@ public final class ComputingClientSetup {
     public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
         // The desktop's per-machine caches belong to the world being left.
         ActiveDesktop.forgetClientState();
+        CommandPromptScreen.forgetClientState();
         SoundfoundryStates.clear();
         SoundfoundryShares.clear();
         SoundfoundryPages.clear();

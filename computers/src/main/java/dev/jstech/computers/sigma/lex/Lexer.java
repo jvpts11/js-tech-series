@@ -27,12 +27,23 @@ public final class Lexer {
     private final DiagnosticBag diagnostics;
 
     private int index;
-    private int line = 1;
-    private int column = 1;
+    private int line;
+    private int column;
 
     public Lexer(final SourceFile source, final DiagnosticBag diagnostics) {
+        this(source, diagnostics, 1, 1);
+    }
+
+    /**
+     * A lexer for a piece cut out of a larger file: its first character is reported at that line and
+     * column, so a mistake inside it points at the place it sits in the file.
+     */
+    public Lexer(final SourceFile source, final DiagnosticBag diagnostics, final int startLine,
+                 final int startColumn) {
         this.source = source;
         this.diagnostics = diagnostics;
+        this.line = startLine;
+        this.column = startColumn;
     }
 
     /** Reads the whole file. The last token is always {@link TokenKind#END_OF_FILE}. */
@@ -157,29 +168,10 @@ public final class Lexer {
                     parts.add(text.toString());
                     text.setLength(0);
                 }
-                this.advance();
-                final int holeLine = this.line;
-                final int holeColumn = this.column;
-                final StringBuilder code = new StringBuilder();
-                int depth = 1;
-                while (this.index < this.source.length() && this.peek() != '\n') {
-                    final char inner = this.peek();
-                    if (inner == '{') {
-                        depth++;
-                    } else if (inner == '}') {
-                        depth--;
-                        if (depth == 0) {
-                            break;
-                        }
-                    }
-                    code.append(this.advance());
+                if (!this.scanHole(parts)) {
+                    // The hole ran to the end of the line and was reported, so the string is not reported as well.
+                    break;
                 }
-                if (this.index < this.source.length() && this.peek() == '}') {
-                    this.advance();
-                } else {
-                    this.diagnostics.error(holeLine, holeColumn, SigmaError.UNTERMINATED_STRING);
-                }
-                parts.add(new Hole(code.toString(), holeLine, holeColumn));
                 continue;
             }
             text.append(c == '\\' ? this.scanEscape() : this.advance());
@@ -189,6 +181,38 @@ public final class Lexer {
         }
         return new Token(TokenKind.INTERPOLATED_STRING, this.source.text().substring(startIndex, this.index),
                 List.copyOf(parts), startLine, startColumn);
+    }
+
+    /**
+     * Reads one hole, from the opening brace to the matching closing one, and adds it to {@code parts}.
+     * An unclosed hole is reported here; the result says whether it was closed.
+     */
+    private boolean scanHole(final List<Object> parts) {
+        this.advance();
+        final int holeLine = this.line;
+        final int holeColumn = this.column;
+        final StringBuilder code = new StringBuilder();
+        int depth = 1;
+        while (this.index < this.source.length() && this.peek() != '\n') {
+            final char inner = this.peek();
+            if (inner == '{') {
+                depth++;
+            } else if (inner == '}') {
+                depth--;
+                if (depth == 0) {
+                    break;
+                }
+            }
+            code.append(this.advance());
+        }
+        final boolean closed = this.index < this.source.length() && this.peek() == '}';
+        if (closed) {
+            this.advance();
+        } else {
+            this.diagnostics.error(holeLine, holeColumn, SigmaError.UNTERMINATED_STRING);
+        }
+        parts.add(new Hole(code.toString(), holeLine, holeColumn));
+        return closed;
     }
 
     private Token scanWord(final int startIndex, final int startLine, final int startColumn) {
@@ -248,11 +272,10 @@ public final class Lexer {
             switch (suffix) {
                 case 'f':
                 case 'F':
-                    return new Token(TokenKind.FLOAT_LITERAL, text, Float.parseFloat(digits), startLine, startColumn);
+                    return new Token(TokenKind.FLOAT_LITERAL, text, floatOf(digits), startLine, startColumn);
                 case 'd':
                 case 'D':
-                    return new Token(TokenKind.DOUBLE_LITERAL, text, Double.parseDouble(digits),
-                            startLine, startColumn);
+                    return new Token(TokenKind.DOUBLE_LITERAL, text, doubleOf(digits), startLine, startColumn);
                 case 'l':
                 case 'L':
                     if (real) {
@@ -261,19 +284,38 @@ public final class Lexer {
                     return new Token(TokenKind.LONG_LITERAL, text, Long.parseLong(digits), startLine, startColumn);
                 case '\0':
                     return real
-                            ? new Token(TokenKind.DOUBLE_LITERAL, text, Double.parseDouble(digits),
-                                    startLine, startColumn)
+                            ? new Token(TokenKind.DOUBLE_LITERAL, text, doubleOf(digits), startLine, startColumn)
                             : new Token(TokenKind.INT_LITERAL, text, Integer.parseInt(digits),
                                     startLine, startColumn);
                 default:
                     break;
             }
         } catch (final NumberFormatException tooBigForItsType) {
-            this.diagnostics.error(startLine, startColumn, SigmaError.MALFORMED_NUMBER, text);
-            return new Token(TokenKind.INT_LITERAL, text, 0, startLine, startColumn);
+            // Reported below, the same way as a suffix that does not fit the number.
         }
         this.diagnostics.error(startLine, startColumn, SigmaError.MALFORMED_NUMBER, text);
         return new Token(TokenKind.INT_LITERAL, text, 0, startLine, startColumn);
+    }
+
+    /* Java turns a literal too large or too small for a float into infinity or zero; here that is a mistake. */
+    private static float floatOf(final String digits) {
+        final float value = Float.parseFloat(digits);
+        if (Float.isInfinite(value) || value == 0f && hasNonZeroDigit(digits)) {
+            throw new NumberFormatException(digits);
+        }
+        return value;
+    }
+
+    private static double doubleOf(final String digits) {
+        final double value = Double.parseDouble(digits);
+        if (Double.isInfinite(value) || value == 0d && hasNonZeroDigit(digits)) {
+            throw new NumberFormatException(digits);
+        }
+        return value;
+    }
+
+    private static boolean hasNonZeroDigit(final String digits) {
+        return digits.chars().anyMatch(digit -> digit >= '1' && digit <= '9');
     }
 
     private Token scanString(final int startLine, final int startColumn) {

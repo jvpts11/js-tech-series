@@ -97,11 +97,6 @@ public final class IsmsTraces {
         };
     }
 
-    /** Whether anybody traces {@code network}. */
-    public static boolean tracing(@Nullable final NetworkUuid network) {
-        return network != null && LISTENERS.containsKey(network);
-    }
-
     /**
      * Tells every trace on {@code network} that watches {@code kind}'s group what {@code event} builds; a trace whose
      * player has left is ended.
@@ -113,16 +108,19 @@ public final class IsmsTraces {
             return;
         }
         TraceEvent built = null;
-        final Iterator<Listener> each = listeners.iterator();
-        while (each.hasNext()) {
-            final Listener listener = each.next();
+        /*
+         * A sink may end its own trace or start another on this network, which changes the live list; the walk is
+         * over a copy, and the traces whose player has left are removed once it is done.
+         */
+        final List<Listener> gone = new ArrayList<>();
+        for (final Listener listener : List.copyOf(listeners)) {
             if (!kind.group().in(listener.mask())) {
                 continue;
             }
             final ServerPlayer player = listener.player() == null ? null
                     : level.getServer().getPlayerList().getPlayer(listener.player());
             if (listener.sink() == null && player == null) {
-                each.remove();
+                gone.add(listener);
                 continue;
             }
             if (built == null) {
@@ -134,6 +132,7 @@ public final class IsmsTraces {
                 PacketDistributor.sendToPlayer(player, new IsmsTracePayload(listener.window(), List.of(built)));
             }
         }
+        listeners.removeAll(gone);
         if (listeners.isEmpty()) {
             LISTENERS.remove(network);
         }
@@ -147,7 +146,6 @@ public final class IsmsTraces {
     public static TraceEvent event(final ServerLevel level, final NetworkUuid network, final TraceEventClass kind,
                                    final Text text, final long items, final long duration, final List<Text> detail) {
         final Origin origin = ORIGIN.get();
-        final MainframeBlockEntity mainframe = NetworkLookup.resolveMainframe(level, network);
         final String requester;
         final String computer;
         final ServerPlayer acting = Acting.current().map(id -> level.getServer().getPlayerList().getPlayer(id))
@@ -160,6 +158,7 @@ public final class IsmsTraces {
             requester = acting.getGameProfile().getName();
             computer = "";
         } else {
+            final MainframeBlockEntity mainframe = NetworkLookup.resolveMainframe(level, network);
             final INetworkEngine engine = mainframe == null ? null : mainframe.runningEngine();
             requester = engine == null ? NETWORK : engineName(engine);
             computer = mainframe == null ? "" : mainframe.hostname();

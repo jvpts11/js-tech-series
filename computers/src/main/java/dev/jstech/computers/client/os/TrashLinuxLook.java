@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.TrashItem;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.gui.layout.TrashLayout;
@@ -44,7 +45,7 @@ final class TrashLinuxLook implements ITrashLook {
 
     private static final int MENU_W = 140;
     private static final long DOUBLE_CLICK_MS = 300L;
-    private static final ResourceLocation FILES = ResourceLocation.fromNamespaceAndPath("jsc", "files");
+    private static final ResourceLocation FILES = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "files");
 
     TrashLinuxLook(final TrashApp app) {
         this.app = app;

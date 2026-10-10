@@ -26,11 +26,8 @@ import java.util.Locale;
 @TextHolder
 final class JobCommands {
 
-    /** Work belongs to a machine, so this is wherever a machine is. */
-    private static final CommandScope ANY_MACHINE = CommandScope.everywhere();
-
     /* What each family says about the list, in its own voice: the Unix one terse, the DOS one in sentences. */
-    private static final TextKey NOTHING_TO_RUN = TextKey.of("jsc.cli.job.nothing_to_run", "nothing to run");
+    static final TextKey NOTHING_TO_RUN = TextKey.of("jsc.cli.job.nothing_to_run", "nothing to run");
     private static final TextKey DOS_NOTHING_TO_RUN = TextKey.of("jsc.cli.job.dos.nothing_to_run",
             "A command is needed.");
     private static final TextKey NO_MEMORY = TextKey.of("jsc.cli.job.no_memory",
@@ -400,7 +397,13 @@ final class JobCommands {
             List<Integer> days = List.of();
             int from = 1;
             if (ctx.arg(1).toLowerCase(Locale.ROOT).startsWith("/every:")) {
-                days = JobWhen.daysOf(ctx.arg(1).substring("/every:".length()));
+                final String written = ctx.arg(1).substring("/every:".length());
+                days = JobWhen.daysOf(written);
+                /* An empty list means every day, so a name that was not understood must not slip through. */
+                if (days.size() != written.split(",", -1).length) {
+                    ctx.out().error(BAD_TIME);
+                    return;
+                }
                 from = 2;
             }
             add(ctx, ctx.rest(from), JobWhen.at(hour, days), true);

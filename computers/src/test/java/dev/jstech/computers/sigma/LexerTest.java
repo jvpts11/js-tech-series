@@ -44,6 +44,30 @@ class LexerTest {
     }
 
     @Test
+    void tokenize_anUnclosedHoleIsReportedOnce() {
+        this.scan("$\"total {count\nint x;");
+        assertEquals(1, this.bag.sorted().size(), "the hole is the one mistake, not the string as well");
+    }
+
+    @Test
+    void tokenize_aFloatTooLargeForItsTypeIsMalformed() {
+        this.scan("1" + "0".repeat(45) + "f");
+        assertEquals(1, this.bag.sorted().size());
+    }
+
+    @Test
+    void tokenize_aDoubleTooSmallForItsTypeIsMalformed() {
+        this.scan("0." + "0".repeat(400) + "1d");
+        assertEquals(1, this.bag.sorted().size());
+    }
+
+    @Test
+    void tokenize_anOrdinaryFloatAndAZeroOneAreAccepted() {
+        this.scan("1.5f 0.0d 0f");
+        assertTrue(this.bag.sorted().isEmpty());
+    }
+
+    @Test
     void tokenize_alwaysEndsWithEndOfFile() {
         assertEquals(List.of(TokenKind.END_OF_FILE), kinds(this.scan("")));
         assertEquals(TokenKind.END_OF_FILE, this.scan("class C { }").getLast().kind());
@@ -200,5 +224,11 @@ class LexerTest {
     void tokenize_complainsOfAnInterpolatedStringThatNeverCloses() {
         this.scan("$\"open {x");
         assertEquals("S1001", this.bag.sorted().getFirst().code());
+    }
+
+    @Test
+    void tokenize_aDecimalLiteralTooBigForADouble_isMalformedNotInfinite() {
+        this.scan("double d = " + "9".repeat(400) + ".0;");
+        assertTrue(this.bag.hasErrors());
     }
 }

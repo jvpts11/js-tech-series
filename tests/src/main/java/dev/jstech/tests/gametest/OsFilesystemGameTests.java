@@ -839,4 +839,55 @@ public final class OsFilesystemGameTests {
                 })
                 .thenSucceed();
     }
+
+    /** A name cannot be a file and a folder at once, so nothing is put under a path whose parent is a file. */
+    @GameTest(template = ARENA)
+    public static void fs_nothingIsPutUnderAFile(final GameTestHelper helper) {
+        final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
+        final FilesystemKind kind = FilesystemKind.HIERARCHICAL;
+        DiskFilesystem.write(disk, "a.txt", FileType.TXT, "file", Long.MAX_VALUE, kind);
+        DiskFilesystem.write(disk, "b.txt", FileType.TXT, "other", Long.MAX_VALUE, kind);
+
+        helper.assertTrue(DiskFilesystem.write(disk, "a.txt/b.txt", FileType.TXT, "x", Long.MAX_VALUE, kind)
+                == DiskFilesystem.WriteResult.INVALID_PATH, "a file is not written under a file");
+        helper.assertTrue(DiskFilesystem.append(disk, "a.txt/c.txt", FileType.TXT, "x", Long.MAX_VALUE, kind, 0L)
+                == DiskFilesystem.WriteResult.INVALID_PATH, "nor appended under one");
+        helper.assertFalse(DiskFilesystem.copy(disk, "b.txt", "a.txt/b.txt", Long.MAX_VALUE, kind),
+                "nor copied under one");
+        helper.assertFalse(DiskFilesystem.rename(disk, "b.txt", "a.txt/b.txt", kind), "nor renamed under one");
+        helper.assertFalse(DiskFilesystem.list(disk, "a.txt", kind).stream()
+                .anyMatch(e -> e.path().startsWith("a.txt/")), "so nothing ever sits inside the file");
+        helper.succeed();
+    }
+
+    /** A recording's lines are never kept as another kind of file, and appending them is no way around that. */
+    @GameTest(template = ARENA)
+    public static void fs_appendingRecordingLinesToTextIsRefused(final GameTestHelper helper) {
+        final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
+        final FilesystemKind kind = FilesystemKind.HIERARCHICAL;
+        final String lines = "JSREC1\nmedia song.ogg 1000\n";
+
+        helper.assertTrue(DiskFilesystem.append(disk, "song.txt", FileType.TXT, lines, Long.MAX_VALUE, kind, 0L)
+                == DiskFilesystem.WriteResult.READ_ONLY, "recording lines are not appended to a new text file");
+        DiskFilesystem.write(disk, "notes.txt", FileType.TXT, "notes", Long.MAX_VALUE, kind);
+        helper.assertTrue(DiskFilesystem.append(disk, "notes.txt", FileType.TXT, lines, Long.MAX_VALUE, kind, 0L)
+                == DiskFilesystem.WriteResult.READ_ONLY, "nor to a text file that is there");
+        helper.succeed();
+    }
+
+    /** A disk that holds as many systems as it can has no room for another, which would be lost off its end. */
+    @GameTest(template = ARENA)
+    public static void roomFor_aFullListOfSystems_refusesAnother(final GameTestHelper helper) {
+        final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
+        DiskSystems systems = DiskSystems.of(ResourceLocation.fromNamespaceAndPath("jsc", "filler_0"));
+        for (int i = 1; i < DiskSystems.MOST_SYSTEMS; i++) {
+            systems = systems.with(ResourceLocation.fromNamespaceAndPath("jsc", "filler_" + i));
+        }
+        disk.set(ComputingComponents.DISK_SYSTEMS.get(), systems);
+        final ResourceLocation mcNet = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
+
+        helper.assertFalse(OsDisks.roomFor(1, slot -> disk, mcNet, 0),
+                "a seventeenth system must be refused rather than dropped after the install");
+        helper.succeed();
+    }
 }

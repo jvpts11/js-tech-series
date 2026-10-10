@@ -7,7 +7,8 @@
  */
 package dev.jstech.computers.printer;
 
-import org.jetbrains.annotations.Nullable;
+import dev.jstech.computers.registry.ClientHook;
+
 
 /**
  * Where a player's game opens a printed sheet to read it, page by page. The sheet's item is common code, so the client
@@ -20,20 +21,17 @@ public interface IPrintedPaperReader {
 
     final class Holder {
 
-        @Nullable
-        private static IPrintedPaperReader instance;
+        private static final ClientHook<IPrintedPaperReader> HOOK = new ClientHook<>();
 
         private Holder() {
         }
 
         public static void set(final IPrintedPaperReader reader) {
-            instance = reader;
+            HOOK.set(reader);
         }
 
         public static void read(final PrintedDocument document) {
-            if (instance != null) {
-                instance.read(document);
-            }
+            HOOK.ifPresent(target -> target.read(document));
         }
     }
 }

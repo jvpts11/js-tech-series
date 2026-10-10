@@ -358,6 +358,9 @@ public final class ComputerConsoleState {
         programs.clear();
         // Whatever was being built went with the system it was being built for.
         foreground.clear();
+        // A setup half done was installing onto the system that is gone; finishing it would put a program on the
+        // freshly formatted one.
+        setup = null;
         // And the playlist named songs on that disk.
         SoundfoundryStorage.load(soundfoundry, new CompoundTag());
     }

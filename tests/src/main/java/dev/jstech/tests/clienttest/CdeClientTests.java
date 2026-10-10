@@ -19,17 +19,16 @@ import dev.jstech.computers.client.os.WorkstationDevicesApp;
 import dev.jstech.computers.client.os.WorkstationInfoApp;
 import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
-import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * CDE as a player meets it on a UNIX machine: the Front Panel where the others have a bar, windows in Motif
@@ -139,8 +138,8 @@ public final class CdeClientTests {
     public static void comingUp_showsCdesOwnPlateBeforeTheDesktop(final ClientTestContext ctx) {
         switchedOn(ctx)
                 .thenAwaitScreen(SystemBootScreen.class, BOOT_WAIT)
-                .thenWaitUntil(() -> ctx.screen(SystemBootScreen.class) != null
-                        && ctx.screen(SystemBootScreen.class).desktopSplashUp(), BOOT_WAIT,
+                .thenWaitUntil(() -> ctx.openScreen(SystemBootScreen.class) != null
+                        && ctx.openScreen(SystemBootScreen.class).desktopSplashUp(), BOOT_WAIT,
                         "CDE's plate to take the glass from the system's lines")
                 .thenScreenshot(2, "cde-coming-up")
                 .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT);
@@ -182,19 +181,8 @@ public final class CdeClientTests {
         return ctx.thenBuild(0, world -> {
                     world.setBlock(MACHINE, ComputingModule.MAINFRAME.get());
                     final MainframeBlockEntity machine = world.blockEntity(MACHINE, MainframeBlockEntity.class);
-                    final ItemStackHandler inv = machine.getInventory();
-                    inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                            new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                            new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
-                            new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
                     // A graphics card gives the machine peripheral ports, which is what the monitor links to.
-                    inv.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
-                            new ItemStack(ComputingModule.GPU_HD_7970.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
-                            new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
+                    TestWorldBuilder.installMainframeParts(machine, StorageTier.SSD, true);
                     machine.installOs(jsc(system));
                     machine.console().install(jsc("cde").toString());
                     machine.togglePower();
@@ -547,7 +535,7 @@ public final class CdeClientTests {
     }
 
     private static DesktopScreen desktop(final ClientTestContext ctx) {
-        return ctx.screen(DesktopScreen.class);
+        return ctx.openScreen(DesktopScreen.class);
     }
 
     private static WorkstationInfoApp workstationInfo(final ClientTestContext ctx) {

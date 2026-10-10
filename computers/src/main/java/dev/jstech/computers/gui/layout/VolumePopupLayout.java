@@ -106,7 +106,7 @@ public final class VolumePopupLayout {
         public GuiLayout toGuiLayout() {
             final GuiLayout l = new GuiLayout(width, height);
             l.box("track", track.x(), track.y(), track.w(), track.h());
-            if (mute.present() && mute != icon) {
+            if (mute.present()) {
                 l.box("mute", mute.x(), mute.y(), mute.w(), mute.h());
             }
             if (chevron.present()) {

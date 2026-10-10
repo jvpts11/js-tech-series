@@ -45,7 +45,7 @@ public final class JobStorage {
         for (int i = 0; i < list.size(); i++) {
             final CompoundTag one = list.getCompound(i);
             kept.add(new MachineJobs.Job(one.getInt("Id"), one.getString("Line"),
-                    JobWhen.of(one.getInt("Hour"), one.getIntArray("Days")), one.getLong("LastRun"), true));
+                    JobWhen.of(one.getInt("Hour"), one.getIntArray("Days")), one.getLong("LastRun")));
         }
         jobs.restore(kept, tag.getInt("NextJob"));
     }

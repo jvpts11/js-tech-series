@@ -7,16 +7,8 @@
  */
 package dev.jstech.computers.datacenter;
 
-import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.util.Loaded;
-import dev.jstech.core.uuid.NetworkUuid;
-import dev.jstech.core.uuid.NodeUuid;
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -28,25 +20,6 @@ import java.util.List;
 public final class LoadBalancer {
 
     private LoadBalancer() {
-    }
-
-    public static List<NodeUuid> order(final List<NodeUuid> servers, final LoadBalanceMode mode,
-                                       @Nullable final ServerLevel level, @Nullable final NetworkUuid network) {
-        if (mode != LoadBalanceMode.LEAST_LOADED || level == null || network == null || servers.size() < 2) {
-            return servers;
-        }
-        final NetworkSystem system = NetworkSystem.get(level);
-        final List<NodeUuid> sorted = new ArrayList<>(servers);
-        sorted.sort(Comparator.comparingLong((final NodeUuid node) -> freeWeightOf(system, level, node)).reversed());
-        return sorted;
-    }
-
-    private static long freeWeightOf(final NetworkSystem system, final ServerLevel level, final NodeUuid node) {
-        return system.locationOf(node)
-                .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
-                        ? rack.getServerStorage(loc.slot()).freeWeight()
-                        : 0L)
-                .orElse(0L);
     }
 
     public static long insert(final List<ServerStore> stores, final StorageKey key, final long amount,

@@ -73,12 +73,18 @@ public final class RegionGameTests {
             helper.assertTrue(ChunkLoaders.load(level, source, owner, third, true)
                     == ChunkLoaders.LoadOutcome.LIMIT_REACHED, "a third goes past the owner's limit of two");
             helper.assertTrue(ChunkLoaders.loadedBy(level.getServer(), owner) == 2, "the owner keeps two");
+            final Runnable restore = () -> {
+                ChunkLoaders.releaseAll(level, source);
+                ChunkLoadingBalance.setLimit(limit);
+            };
+            // Safety net: the wait below retries until the test times out, and a timeout would otherwise leave
+            // the lowered limit and the held chunks behind for every later test. The restore is idempotent.
+            helper.runAfterDelay(150, restore);
             helper.succeedWhen(() -> {
                 helper.assertTrue(level.getChunkSource().hasChunk(first.x, first.z), "the chunk has loaded");
-                ChunkLoaders.releaseAll(level, source);
+                restore.run();
                 helper.assertTrue(ChunkLoaders.loadedBy(level.getServer(), owner) == 0,
                         "everything is let go of");
-                ChunkLoadingBalance.setLimit(limit);
             });
         } catch (final RuntimeException failed) {
             ChunkLoaders.releaseAll(level, source);

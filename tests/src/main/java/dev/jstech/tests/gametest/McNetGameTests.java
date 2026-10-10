@@ -66,7 +66,6 @@ public final class McNetGameTests {
         final PersonalComputerBlockEntity computer = TestWorldBuilder.forGameTest(helper)
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
         computer.installOs(MC_NET);
-        computer.installOs(MC_NET);
         return computer;
     }
 

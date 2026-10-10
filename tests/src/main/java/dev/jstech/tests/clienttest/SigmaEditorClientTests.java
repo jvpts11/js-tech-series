@@ -124,10 +124,7 @@ public final class SigmaEditorClientTests {
                         "the compiler is happy with what was typed")
                 // Ctrl+S, the way anybody saves.
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_S, GLFW.GLFW_MOD_CONTROL))
-                .thenWaitUntilServer(level -> !dev.jstech.computers.os.fs.DiskFilesystem.read(
-                                TestWorldBuilder.at(level, ctx.origin())
-                                        .blockEntity(COMPUTER, CraftingComputerBlockEntity.class).systemDisk(),
-                                "progs/hello.sgs").orElse("").isEmpty(),
+                .thenWaitUntilServer(level -> onDisk(ctx, level, "progs/hello.sgs"),
                         SCREEN_WAIT, "the program to be on the machine's disk", level -> "")
                 .thenScreenshot(2, "editor-saved")
                 /*
@@ -158,7 +155,7 @@ public final class SigmaEditorClientTests {
     }
 
     /** Whether the machine's system disk holds a non-empty file at {@code path}. */
-    private static boolean onDisk(final ClientTestContext ctx, final net.minecraft.server.level.ServerLevel level,
+    private static boolean onDisk(final ClientTestContext ctx, final ServerLevel level,
                                   final String path) {
         return !diskText(ctx, level, path).isEmpty();
     }

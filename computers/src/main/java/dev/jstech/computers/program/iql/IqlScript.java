@@ -176,35 +176,6 @@ public final class IqlScript {
         return out.toString();
     }
 
-    /**
-     * A table as text, every column as wide as its widest cell and two spaces between them, with a line of dashes
-     * under the columns: what Results to Text shows.
-     */
-    public static String textTable(final List<String> columns, final List<List<String>> rows) {
-        final int[] widths = new int[columns.size()];
-        for (int c = 0; c < columns.size(); c++) {
-            widths[c] = columns.get(c).length();
-            for (final List<String> row : rows) {
-                if (c < row.size()) {
-                    widths[c] = Math.max(widths[c], row.get(c).length());
-                }
-            }
-        }
-        final StringBuilder out = new StringBuilder();
-        padLine(out, columns, widths);
-        out.append('\n');
-        final List<String> rules = new ArrayList<>();
-        for (final int width : widths) {
-            rules.add("-".repeat(width));
-        }
-        padLine(out, rules, widths);
-        for (final List<String> row : rows) {
-            out.append('\n');
-            padLine(out, row, widths);
-        }
-        return out.toString();
-    }
-
     /** Whether {@code word} is one of the language's own words, which an editor colours as such. */
     public static boolean keyword(final String word) {
         final String upper = word.toUpperCase(Locale.ROOT);
@@ -230,17 +201,5 @@ public final class IqlScript {
                 out.append(cell);
             }
         }
-    }
-
-    private static void padLine(final StringBuilder out, final List<String> cells, final int[] widths) {
-        final StringBuilder line = new StringBuilder();
-        for (int c = 0; c < widths.length; c++) {
-            final String cell = c < cells.size() ? cells.get(c) : "";
-            line.append(cell).append(" ".repeat(widths[c] - cell.length()));
-            if (c < widths.length - 1) {
-                line.append("  ");
-            }
-        }
-        out.append(line.toString().stripTrailing());
     }
 }

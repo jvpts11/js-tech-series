@@ -12,7 +12,6 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DeviceManagerApp;
-import dev.jstech.computers.client.os.IDesktopApp;
 import dev.jstech.computers.os.devices.DeviceRows;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -128,10 +127,7 @@ public final class DeviceManagerClientTests {
     }
 
     private static void launch(final ClientTestContext ctx, final String label) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
-        ctx.click(desktop.startButtonX(), desktop.startButtonY());
-        final int item = desktop.launcherLabels().indexOf(label);
-        ctx.click(desktop.startMenuItemX(item), desktop.startMenuItemY(item));
+        DesktopSteps.launch(ctx, label);
     }
 
     /* Whether that row is in view in that window's list, scrolling it one notch further down when it is not. */
@@ -148,9 +144,6 @@ public final class DeviceManagerClientTests {
     }
 
     private static DeviceManagerApp app(final ClientTestContext ctx, final String label) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
-        final var window = desktop == null ? null : desktop.windowFor(label);
-        final IDesktopApp app = window == null ? null : window.app();
-        return app instanceof DeviceManagerApp manager ? manager : null;
+        return DesktopSteps.app(ctx, label, DeviceManagerApp.class);
     }
 }

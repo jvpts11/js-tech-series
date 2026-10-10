@@ -57,6 +57,12 @@ public final class NetworkOperationsService {
     public static final TextKey UNAVAILABLE =
             TextKey.of("jsc.engine.unavailable", "Network Operations Service unavailable");
 
+    /**
+     * What the verbs that only move what is there do with no engine running: the defaults of {@link INetworkEngine},
+     * so the work is written once and the engine path and the no-engine path cannot drift apart.
+     */
+    private static final INetworkEngine CORE_VERBS = new CoreVerbs();
+
     public NetworkOperationsService(final MainframeBlockEntity core) {
         this.core = core;
     }
@@ -93,8 +99,7 @@ public final class NetworkOperationsService {
         if (engine != null) {
             return planned(engine.pull(core, key, demand, to, label, from));
         }
-        return from == null ? core.submitNetworkSelect(key, demand, to, label)
-                : core.submitNetworkSelect(key, demand, to, label, from);
+        return CORE_VERBS.pull(core, key, demand, to, label, from);
     }
 
     /** Puts {@code amount} of {@code key} into the network's storage. */
@@ -102,7 +107,7 @@ public final class NetworkOperationsService {
     public NetworkInsertOperation push(final StorageKey key, final long amount, final String label) {
         final INetworkEngine engine = engine();
         return engine != null ? planned(engine.push(core, key, amount, label))
-                : core.submitNetworkInsert(key, amount, label);
+                : CORE_VERBS.push(core, key, amount, label);
     }
 
     /** Moves {@code demand} of {@code key} from the servers in {@code from} into {@code to}. */
@@ -111,7 +116,7 @@ public final class NetworkOperationsService {
                                        final String label, final Set<NodeUuid> from) {
         final INetworkEngine engine = engine();
         return engine != null ? planned(engine.move(core, key, demand, to, label, from))
-                : core.submitNetworkMove(key, demand, to, label, from);
+                : CORE_VERBS.move(core, key, demand, to, label, from);
     }
 
     /** Sends {@code demand} of {@code key} out of the network into {@code to}: an outside inventory, or nothing. */
@@ -120,7 +125,7 @@ public final class NetworkOperationsService {
                                          final String label) {
         final INetworkEngine engine = engine();
         return engine != null ? planned(engine.export(core, key, demand, to, label))
-                : core.submitNetworkDelete(key, demand, to, label);
+                : CORE_VERBS.export(core, key, demand, to, label);
     }
 
     /** Fills a held container, through {@code to}, with {@code demand} of {@code key}. */
@@ -129,7 +134,7 @@ public final class NetworkOperationsService {
                                        final String label) {
         final INetworkEngine engine = engine();
         return engine != null ? planned(engine.fill(core, key, demand, to, label))
-                : core.submitNetworkSelect(key, demand, to, label);
+                : CORE_VERBS.fill(core, key, demand, to, label);
     }
 
     /** Makes what {@code request} asks for; refused, with nothing started, when no engine is running. */
@@ -204,5 +209,20 @@ public final class NetworkOperationsService {
             core.notePlanned();
         }
         return operation;
+    }
+
+    /* An engine with nothing of its own: only the default verbs are ever asked of it. */
+    private static final class CoreVerbs implements INetworkEngine {
+
+        @Override
+        public EngineDef def() {
+            throw new UnsupportedOperationException("The core verbs are not an engine that can be chosen");
+        }
+
+        @Override
+        public IqlEngine.Outcome query(final MainframeBlockEntity core, final IIqlView caller,
+                                       final String statement, final int rowLimit) {
+            throw new UnsupportedOperationException("The core verbs have no language");
+        }
     }
 }

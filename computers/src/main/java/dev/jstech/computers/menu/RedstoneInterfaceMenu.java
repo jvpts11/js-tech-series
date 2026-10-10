@@ -109,20 +109,13 @@ public class RedstoneInterfaceMenu extends CoreMenu {
     public record Opening(BlockPos pos, String name, String computerName, String computerKind, HardwareEra era) {
 
         public void write(final RegistryFriendlyByteBuf buf) {
-            buf.writeBlockPos(pos);
-            buf.writeUtf(name, RedstoneInterfaceBlockEntity.MAX_NAME);
-            buf.writeUtf(computerName, RedstoneInterfaceBlockEntity.MAX_NAME);
-            buf.writeUtf(computerKind);
-            buf.writeVarInt(era.id());
+            new NamedDeviceOpening(pos, name, computerName, computerKind, era)
+                    .write(buf, RedstoneInterfaceBlockEntity.MAX_NAME);
         }
 
         public static Opening read(final RegistryFriendlyByteBuf buf) {
-            final BlockPos pos = buf.readBlockPos();
-            final String name = buf.readUtf(RedstoneInterfaceBlockEntity.MAX_NAME);
-            final String computerName = buf.readUtf(RedstoneInterfaceBlockEntity.MAX_NAME);
-            final String computerKind = buf.readUtf();
-            final HardwareEra era = HardwareEra.find(buf.readVarInt());
-            return new Opening(pos, name, computerName, computerKind, era == null ? HardwareEra.STANDARD : era);
+            final NamedDeviceOpening read = NamedDeviceOpening.read(buf, RedstoneInterfaceBlockEntity.MAX_NAME);
+            return new Opening(read.pos(), read.name(), read.computerName(), read.computerKind(), read.era());
         }
     }
 }

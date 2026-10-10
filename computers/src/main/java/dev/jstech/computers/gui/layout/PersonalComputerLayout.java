@@ -120,7 +120,7 @@ public final class PersonalComputerLayout {
         l.playerInventory(INV_X, INV_Y);
 
         l.text("titlePc", 12, 11, 2, 1.0f);
-        l.text("statusPill", WIDTH - 6 * 7, 11, 7, 1.0f);
+        l.text("statusPill", WIDTH - Math.round(7 * GuiLayout.GLYPH_WIDTH), 11, 7, 1.0f);
         l.text("lblBoard", MOBO_X, LABEL_ROW_1_Y, 5, 1.0f);
         l.text("lblCpu", RIGHT_X, LABEL_ROW_1_Y, 3, 1.0f);
         l.text("lblPsu", MOBO_X, LABEL_ROW_2_Y, 3, 1.0f);

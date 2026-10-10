@@ -75,7 +75,8 @@ final class VirtualStudioTexts {
     static final TextKey WILL_BE_CREATED =
             TextKey.of("jsc.virtual_studio.will_be_created", "Project will be created in %s");
     static final TextKey ONE_WORD =
-            TextKey.of("jsc.virtual_studio.one_word", "A project name is one word, without slashes");
+            TextKey.of("jsc.virtual_studio.one_word",
+                    "A project name is one word of letters, digits and underscores, not starting with a digit");
     static final TextKey PROJECT_LOCATION = TextKey.of("jsc.virtual_studio.project_location", "Project Location");
 
     // The project's properties, and the options.

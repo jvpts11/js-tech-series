@@ -59,6 +59,8 @@ public final class MachineConfigService {
             TextKey.of("jsc.service.config.share_usage", "<folder> [read|write]");
     private static final TextKey TOO_MANY_SHARES =
             TextKey.of("jsc.service.config.too_many_shares", "this computer already shares %s folders");
+    private static final TextKey SHARE_NAME_IN_USE =
+            TextKey.of("jsc.service.config.share_name_in_use", "another folder is already shared as %s");
     private static final TextKey SHARED_READ_ONLY =
             TextKey.of("jsc.service.config.shared_read_only", "shared %s as \\\\%s\\%s (read only)");
     private static final TextKey SHARED_READ_WRITE =
@@ -205,6 +207,10 @@ public final class MachineConfigService {
             return folder;
         }
         final String dos = folder.message().english();
+        final ComputerSettings.Share sameName = console.settings().shareNamed(ComputerSettings.shareNameOf(dos));
+        if (sameName != null && !sameName.path().equalsIgnoreCase(dos.trim())) {
+            return ICliComputer.OpResult.fail(SHARE_NAME_IN_USE.with(sameName.name()));
+        }
         if (!console.settings().share(dos, writable)) {
             return ICliComputer.OpResult.fail(TOO_MANY_SHARES.with(ComputerSettings.MAX_SHARES));
         }

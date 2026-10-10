@@ -107,6 +107,16 @@ public record AsmMethod(String name, String returns, List<String> parameters, bo
             this.hasBody = hasBody;
         }
 
+        /** Whether the header was written with a slots line, which is what gives a method a body to hold. */
+        public boolean hasBody() {
+            return this.hasBody;
+        }
+
+        /** How many places a running call of the method has: its slots, or its parameters when those are more. */
+        public int placeCount() {
+            return Math.max(this.slots, this.parameters.size());
+        }
+
         /** Adds one line, with the line of the listing it came from. */
         public void add(final Instruction instruction, final int line) {
             this.body.add(instruction);

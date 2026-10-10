@@ -1025,6 +1025,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             if (in(tabHits[i], mouseX, mouseY)) {
                 page = i;
                 selected = 0;
+                confirmFormatRef = Long.MIN_VALUE;
                 return true;
             }
         }
@@ -1106,7 +1107,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private void formatSelected() {
         final FirmwareStatePayload.Entry e = selectedEntry();
-        if (e == null || e.kind() != FirmwareStatePayload.KIND_DISK || page == PAGE_HARDWARE) {
+        if (e == null || e.kind() != FirmwareStatePayload.KIND_DISK
+                || (page != PAGE_BOOT && page != PAGE_ORDER)) {
             return;
         }
         if (confirmFormatRef != e.ref()) {

@@ -39,9 +39,6 @@ public final class TtyScript {
      */
     public static final int MAX_LINES_PER_TICK = 40;
 
-    /** A script with nothing in it, which is what a question answers with when there is nothing more to do. */
-    public static final TtyScript EMPTY = new TtyScript(List.of());
-
     private TtyScript(final List<IStep> steps) {
         this.steps = List.copyOf(steps);
     }

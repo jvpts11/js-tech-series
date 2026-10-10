@@ -402,6 +402,19 @@ final class MainframeServices {
         }
     }
 
+    /**
+     * Drops a job from the catalog and forgets everything held about its name (its pause and its trigger state), so
+     * a job created later under the same name starts fresh instead of inheriting a pause nobody can see. Returns
+     * whether the job existed.
+     */
+    boolean deleteJob(final String jobName) {
+        final boolean removed = catalog.remove(IqlDefinition.ObjectType.JOB, jobName);
+        pausedJobs.remove(jobName.toLowerCase(Locale.ROOT));
+        jobAgent.rearm(jobName);
+        mainframe.setChanged();
+        return removed;
+    }
+
     /** Restarts a job: resumes it if paused and re-arms its trigger so it reschedules from now. */
     void restartJob(final String jobName) {
         pausedJobs.remove(jobName.toLowerCase(Locale.ROOT));

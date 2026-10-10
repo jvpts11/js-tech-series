@@ -14,7 +14,6 @@ import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.RackGadgetItem;
-import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.operation.index.Allocation;
 import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.operation.index.ItemLocation;
@@ -513,14 +512,9 @@ public final class NetworkIndex {
     }
 
     private static int ramLatencyOf(final ServerRackBlockEntity rack, final int slot) {
-        final ItemStack stack = rack.getServers().getStackInSlot(slot);
-        if (stack.getItem() instanceof ServerItem) {
-            final ComputerBuild build = ServerItem.build(stack);
-            if (build != null) {
-                return build.bestRamLatencyTicks();
-            }
-        }
-        return 0;
+        // The cabinet keeps this build until the bay's parts change, so no part is walked again here.
+        final ComputerBuild build = rack.buildIn(slot);
+        return build == null ? 0 : build.bestRamLatencyTicks();
     }
 
     // Query (reads the in-RAM catalog, net of locks, never touches disks)
@@ -530,9 +524,16 @@ public final class NetworkIndex {
     }
 
     public long available(final StorageKey key) {
+        return available(key, null);
+    }
+
+    /** What is free of locks on the {@code allowed} servers, or on every server when {@code allowed} is null. */
+    public long available(final StorageKey key, final Set<NodeUuid> allowed) {
         long total = 0L;
         for (final ItemLocation location : catalog.getOrDefault(key, List.of())) {
-            total += Math.max(0L, location.quantity() - locks.lockedOn(key, location.server()));
+            if (allowed == null || allowed.contains(location.server())) {
+                total += Math.max(0L, location.quantity() - locks.lockedOn(key, location.server()));
+            }
         }
         return total;
     }

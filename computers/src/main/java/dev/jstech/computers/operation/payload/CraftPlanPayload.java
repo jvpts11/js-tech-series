@@ -120,12 +120,12 @@ public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
     private static void encode(final RegistryFriendlyByteBuf buf, final CraftPlanPayload p) {
         ItemStack.STREAM_CODEC.encode(buf, p.result);
         buf.writeVarLong(p.quantity);
-        Row.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).encode(buf, p.rows);
+        Row.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).encode(buf, first(p.rows, MAX_ROWS));
         buf.writeBoolean(p.feasible);
         buf.writeVarLong(p.maxFeasible);
         buf.writeVarInt(p.estimateTicks);
         buf.writeVarInt(p.recipe);
-        CHOICE_CODEC.apply(ByteBufCodecs.list(MAX_OPTIONS)).encode(buf, p.options);
+        CHOICE_CODEC.apply(ByteBufCodecs.list(MAX_OPTIONS)).encode(buf, first(p.options, MAX_OPTIONS));
         COVER_CODEC.encode(buf, first(p.cover, MAX_COVER));
         buf.writeVarInt(p.stages);
     }

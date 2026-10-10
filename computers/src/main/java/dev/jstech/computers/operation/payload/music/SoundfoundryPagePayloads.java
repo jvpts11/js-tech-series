@@ -266,7 +266,7 @@ public final class SoundfoundryPagePayloads {
         for (final CatalogTrack track : album.tracks()) {
             if (!local.containsKey(track.media()) && !state.downloading(track.media())) {
                 final Text why = computer.musicDownloads().start(level, SongDownload.FROM_CATALOG,
-                        album.id() + "/" + track.file(), false);
+                        SongRefs.catalogPath(album.id(), track.file()), false);
                 if (!why.isEmpty()) {
                     told = why;
                 }
@@ -279,6 +279,10 @@ public final class SoundfoundryPagePayloads {
         final List<String> liked = new ArrayList<>(SoundfoundryPlaylists.read(level, computer,
                 SoundfoundryPlaylists.LIKED));
         if (!liked.remove(ref)) {
+            // A list reads back at most this many songs, so one more would be written and then lost.
+            if (liked.size() >= SoundfoundryState.MAX_SONGS) {
+                return SoundfoundryTexts.LIST_FULL.with(SoundfoundryState.MAX_SONGS);
+            }
             liked.add(ref);
         }
         return saved(level, computer, SoundfoundryPlaylists.LIKED, liked);

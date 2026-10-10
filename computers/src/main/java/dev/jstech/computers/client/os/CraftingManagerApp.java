@@ -265,6 +265,14 @@ public final class CraftingManagerApp implements IDesktopApp {
     }
 
     @Override
+    public void onClosed() {
+        // A closed window must not stay reachable or keep absorbing late replies.
+        if (active == this) {
+            active = null;
+        }
+    }
+
+    @Override
     public void applySkin(final OsSkin osSkin) {
         /*
          * Runs each frame for the window being drawn: with two Crafting Computers open in turn, the replies must

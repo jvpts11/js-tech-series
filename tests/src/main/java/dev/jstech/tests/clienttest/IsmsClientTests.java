@@ -211,6 +211,7 @@ public final class IsmsClientTests {
     /** A script saved through the system's file window lands on the computer's disk, and opens again from there. */
     @ClientTest(timeoutTicks = 3000)
     public static void isms_savesAScriptToTheComputersDiskAndOpensIt(final ClientTestContext ctx) {
+        final String[] path = {""};
         openStudio(ctx, null)
                 .then(2, () -> {
                     studio(ctx).typeScript("QUERY items WHERE qty > 10;");
@@ -222,8 +223,10 @@ public final class IsmsClientTests {
                 .then(2, () -> ctx.clickDesktop(studio(ctx).fileDialog().primaryPoint()))
                 .thenWaitUntil(() -> !studio(ctx).documentPath().isEmpty(), WORK_WAIT,
                         "the script to be saved and the tab to know its file")
-                .thenWaitUntilServer(level -> savedScript(ctx, level).contains("qty > 10"), SCREEN_WAIT,
-                        "the script to be on the computer's disk", level -> "path=" + studio(ctx).documentPath())
+                // Read on the client thread here, so the server probe below touches only the server's own state.
+                .then(0, () -> path[0] = studio(ctx).documentPath())
+                .thenWaitUntilServer(level -> savedScript(ctx, level, path[0]).contains("qty > 10"), SCREEN_WAIT,
+                        "the script to be on the computer's disk", level -> "path=" + path[0])
                 .then(2, () -> {
                     openMenu(ctx, 0);
                     ctx.clickDesktop(point(ctx, studio(ctx).menuItemCenter(1)));
@@ -352,8 +355,7 @@ public final class IsmsClientTests {
     }
 
     /* What the computer's disk holds at the path the studio saved its script to, or nothing. */
-    private static String savedScript(final ClientTestContext ctx, final ServerLevel level) {
-        final String path = studio(ctx) == null ? "" : studio(ctx).documentPath();
+    private static String savedScript(final ClientTestContext ctx, final ServerLevel level, final String path) {
         if (path.isEmpty() || !(level.getBlockEntity(ctx.abs(COMPUTER)) instanceof PersonalComputerBlockEntity pc)) {
             return "";
         }
@@ -384,7 +386,7 @@ public final class IsmsClientTests {
         if (window == null || local == null) {
             throw new ClientTestFailure("the Profiler window, or the point in it, is gone");
         }
-        return new int[] {window.x() + 4 + local[0], window.y() + 18 + local[1]};
+        return DesktopSteps.contentPoint(window, local);
     }
 
     /** Converts a studio content-local point into desktop coordinates. */
@@ -393,7 +395,7 @@ public final class IsmsClientTests {
         if (window == null || local == null) {
             throw new ClientTestFailure("the studio window, or the point in it, is gone");
         }
-        return new int[] {window.x() + 4 + local[0], window.y() + 18 + local[1]};
+        return DesktopSteps.contentPoint(window, local);
     }
 
     /** A computer of an age and what is built in it, by item id, and the system it runs. */

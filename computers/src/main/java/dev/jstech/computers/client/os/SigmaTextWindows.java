@@ -873,8 +873,13 @@ public final class SigmaTextWindows {
                 if (this.ui.popup == SigmaUiState.PopupKind.MENU && owner != null) {
                     final List<String> menus = menus(owner);
                     final int at = menus.indexOf(this.ui.popupMenu);
-                    final int next = Math.floorMod(at + (key == GLFW.GLFW_KEY_RIGHT ? 1 : -1), menus.size());
-                    this.openMenu(owner, menus.get(next));
+                    if (menus.isEmpty()) {
+                        // The program took every menu away while one was open, so there is nothing to step to.
+                        this.ui.closePopup();
+                    } else {
+                        final int next = Math.floorMod(at + (key == GLFW.GLFW_KEY_RIGHT ? 1 : -1), menus.size());
+                        this.openMenu(owner, menus.get(next));
+                    }
                 }
             }
             default -> {
@@ -1033,15 +1038,7 @@ public final class SigmaTextWindows {
 
     @Nullable
     private UiWindowPayload.Widget widget(final UiWindowPayload window, final long id) {
-        if (id == 0) {
-            return null;
-        }
-        for (final UiWindowPayload.Widget widget : window.widgets()) {
-            if (widget.id() == id) {
-                return widget;
-            }
-        }
-        return null;
+        return SigmaWindowApp.find(window, id);
     }
 
     private void send(final UiWindowPayload window, final String kind, final long widget, final String said,

@@ -135,10 +135,12 @@ public final class SoundfoundryShareLayout {
 
     /** Which download of the downloads tab a point is on, or -1. */
     public static int listDownloadAt(final double px, final double py) {
-        if (!LIST.contains(px, py) || py < LIST.y() + 3) {
+        // The picked download's fill is drawn from two pixels above the text, so the hit zone starts there too.
+        final int top = listDownloadTop(0) - 2;
+        if (!LIST.contains(px, py) || py < top) {
             return -1;
         }
-        final int row = (int) ((py - LIST.y() - 3) / DOWNLOAD_H);
+        final int row = (int) ((py - top) / DOWNLOAD_H);
         return row < LIST_DOWNLOADS ? row : -1;
     }
 

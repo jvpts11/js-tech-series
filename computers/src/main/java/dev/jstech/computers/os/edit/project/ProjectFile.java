@@ -190,8 +190,13 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         out.append("name: ").append(this.name).append('\n');
         out.append("kind: ").append(this.kind.key()).append('\n');
         out.append("language: ").append(this.language).append('\n');
-        out.append("sources: ").append(String.join(", ", this.sources)).append('\n');
-        out.append("references: ").append(String.join(", ", this.references)).append('\n');
+        // One line per entry: a file name may hold a comma, which a joined list could not tell from a separator.
+        for (final String source : this.sources) {
+            out.append("source: ").append(source).append('\n');
+        }
+        for (final String reference : this.references) {
+            out.append("reference: ").append(reference).append('\n');
+        }
         out.append("entry: ").append(this.entry).append('\n');
         out.append("platform: ").append(this.platform).append('\n');
         // Only a project that asked for one says so; without the line it builds at the compiler's own version.
@@ -209,8 +214,8 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         String name = "";
         Kind kind = Kind.EMPTY;
         String language = "";
-        List<String> sources = List.of();
-        List<String> references = List.of();
+        final List<String> sources = new ArrayList<>();
+        final List<String> references = new ArrayList<>();
         String entry = "";
         String platform = AsmProgram.DEFAULT_ISA;
         int languageVersion = 0;
@@ -226,8 +231,11 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
                 case "name" -> name = value;
                 case "kind" -> kind = Kind.of(value);
                 case "language" -> language = value;
-                case "sources" -> sources = list(value);
-                case "references" -> references = list(value);
+                case "source" -> addEntry(sources, value);
+                case "reference" -> addEntry(references, value);
+                // The older form, a comma-separated list on one line, which is still read.
+                case "sources" -> sources.addAll(list(value));
+                case "references" -> references.addAll(list(value));
                 case "entry" -> entry = value;
                 case "platform" -> platform = value;
                 case "langversion" -> languageVersion = number(value);
@@ -243,6 +251,12 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
             return Integer.parseInt(value);
         } catch (final NumberFormatException notANumber) {
             return 0;
+        }
+    }
+
+    private static void addEntry(final List<String> into, final String value) {
+        if (!value.isEmpty()) {
+            into.add(value);
         }
     }
 

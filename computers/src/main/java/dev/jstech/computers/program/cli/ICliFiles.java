@@ -193,6 +193,18 @@ public interface ICliFiles {
     }
 
     /**
+     * Moves a file or directory to {@code dest}: into it when it is an existing directory, otherwise to that
+     * full path, renaming on the way. Both are DOS paths relative to the current location (or absolute).
+     *
+     * @param src  the source path
+     * @param dest the destination directory, or the new full path
+     * @return a confirmation, or a failure message
+     */
+    default ICliComputer.FsResult moveTo(final String src, final String dest) {
+        return ICliComputer.FsResult.noOs();
+    }
+
+    /**
      * Renames a file or directory {@code src} to the new leaf name {@code newName} (kept in the same
      * parent directory). {@code src} is a DOS path relative to the current location (or absolute).
      *

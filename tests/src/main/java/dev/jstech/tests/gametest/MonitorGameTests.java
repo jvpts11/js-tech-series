@@ -336,6 +336,19 @@ public final class MonitorGameTests {
         return picture instanceof IMonitorPicture.Session session && session.opening() instanceof OpenPostPayload;
     }
 
+    @GameTest(template = ARENA)
+    public static void picture_ofAnUnknownKindFailsToDecode(final GameTestHelper helper) {
+        final RegistryFriendlyByteBuf wire = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                helper.getLevel().registryAccess());
+        wire.writeByte(99);
+        try {
+            IMonitorPicture.STREAM_CODEC.decode(wire);
+            helper.fail("an unknown picture kind decoded instead of failing");
+        } catch (final IllegalArgumentException expected) {
+            helper.succeed();
+        }
+    }
+
     /* The picture as a player's game reads it: written as the server sends it, and read back. */
     private static IMonitorPicture acrossTheWire(final GameTestHelper helper, final IMonitorPicture picture) {
         final RegistryFriendlyByteBuf wire = new RegistryFriendlyByteBuf(Unpooled.buffer(),

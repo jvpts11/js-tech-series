@@ -476,7 +476,7 @@ public final class SoundfoundryServerGameTests {
         try {
             return MediaStore.current().orElseThrow().put(wav, "wav");
         } catch (final IOException unexpected) {
-            throw new IllegalStateException("a WAV of silence is a recording", unexpected);
+            throw new IllegalStateException("the media store could not keep the WAV", unexpected);
         }
     }
 
@@ -484,7 +484,7 @@ public final class SoundfoundryServerGameTests {
         try {
             return MediaStore.current().orElseThrow().info(media);
         } catch (final IOException unexpected) {
-            throw new IllegalStateException("a kept recording can be read", unexpected);
+            throw new IllegalStateException("the media store could not read " + media, unexpected);
         }
     }
 

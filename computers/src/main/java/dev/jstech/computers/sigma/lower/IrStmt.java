@@ -101,11 +101,10 @@ public sealed interface IrStmt {
      * A value put somewhere of its own, under a name nothing else uses.
      *
      * <p>What holding a lock needs is that letting go names the very object that was taken, whatever the body
-     * did to the name it was written under, and this is how that is said once the shorthand is gone.
-     *
-     * @param leaves whether the value is also left on the stack, for whoever wanted it there as well
+     * did to the name it was written under, and this is how that is said once the shorthand is gone. The value
+     * is also left on the stack, which is what the monitor is taken on.
      */
-    record Keep(Temporary place, IExpr value, boolean leaves) implements IrStmt {
+    record Keep(Temporary place, IExpr value) implements IrStmt {
     }
 
     /** Taking the lock on the object kept in that place. */

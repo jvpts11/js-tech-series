@@ -15,9 +15,12 @@ import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CreateAutomationJobPayload;
 import dev.jstech.computers.operation.payload.JobActionPayload;
 import dev.jstech.computers.operation.payload.RequestAutomationPayload;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.program.IqlEngine;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlDuration;
 import dev.jstech.computers.program.iql.IqlSavedObject;
@@ -25,6 +28,8 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -43,6 +48,9 @@ import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.niHo
  * The Automation Manager's payloads: the jobs on the Mainframe, creating one and acting on one.
  */
 public final class AutomationPayloads {
+
+    /* One IQL word: no spaces, quotes or brackets, so it cannot change the statement it is spliced into. */
+    private static final Pattern IQL_WORD = Pattern.compile("[A-Za-z0-9_:./#-]+");
 
     private AutomationPayloads() {
     }
@@ -79,7 +87,8 @@ public final class AutomationPayloads {
         // Jobs are the Automation Engine's alone, whichever Network Operations Engine the network runs.
         final boolean online = mf.isAutomationEngineActive();
         // The engine goes by its program's name, which is data.
-        final Text label = mf.isAutomationEngineInstalled() ? Text.literal("Automation Engine")
+        final ProgramSpec engine = OsRegistry.getProgram(Programs.AUTOMATION_ENGINE);
+        final Text label = mf.isAutomationEngineInstalled() && engine != null ? engine.name().text()
                 : AutomationPayload.NO_ENGINE.text();
         final List<AutomationPayload.JobRow> rows = new ArrayList<>();
         for (final var job : mf.iqlCatalog().ofType(
@@ -130,11 +139,7 @@ public final class AutomationPayloads {
 
     private static void handleCreateAutomationJob(final CreateAutomationJobPayload payload, final ServerPlayer player,
                                                   final ServerLevel level) {
-        final var host = niHost(player, level, payload.host(), payload.monitorPos());
-        if (host == null || host.networkUuid() == null) {
-            return;
-        }
-        final MainframeBlockEntity mf = resolveMainframe(level, host.networkUuid());
+        final MainframeBlockEntity mf = mainframeOf(player, level, payload.host(), payload.monitorPos());
         if (mf == null) {
             return;
         }
@@ -165,7 +170,7 @@ public final class AutomationPayloads {
         final var when = IqlDefinition.TriggerKind.WHEN;
         switch (p.jobType()) {
             case CreateAutomationJobPayload.TYPE_RESTOCK_BELOW -> {
-                if (item.isEmpty()) {
+                if (!isIqlWord(item)) {
                     jobError(player, CreateAutomationJobPayload.RESTOCK_NEEDS_ITEM.text());
                     return null;
                 }
@@ -173,7 +178,7 @@ public final class AutomationPayloads {
                         type, name, "CRAFT " + amount + " " + item, when, "qty(" + item + ") < " + amount);
             }
             case CreateAutomationJobPayload.TYPE_BATCH_CRAFT -> {
-                if (item.isEmpty() || !validInterval(p.interval())) {
+                if (!isIqlWord(item) || !validInterval(p.interval())) {
                     jobError(player, CreateAutomationJobPayload.BATCH_CRAFT_NEEDS.text());
                     return null;
                 }
@@ -183,7 +188,8 @@ public final class AutomationPayloads {
             case CreateAutomationJobPayload.TYPE_PERIODIC_MOVE -> {
                 final String from = p.from().trim();
                 final String to = p.to().trim();
-                if (from.isEmpty() || to.isEmpty() || !validInterval(p.interval())) {
+                if (!isIqlWord(from) || !isIqlWord(to) || !(item.isEmpty() || isIqlWord(item))
+                        || !validInterval(p.interval())) {
                     jobError(player, CreateAutomationJobPayload.PERIODIC_MOVE_NEEDS.text());
                     return null;
                 }
@@ -213,6 +219,10 @@ public final class AutomationPayloads {
         }
     }
 
+    private static boolean isIqlWord(final String text) {
+        return IQL_WORD.matcher(text).matches();
+    }
+
     private static boolean validInterval(final String spec) {
         try {
             return IqlDuration.toTicks(spec.trim()) > 0;
@@ -221,17 +231,23 @@ public final class AutomationPayloads {
         }
     }
 
+    /* The Mainframe the monitor's host answers to, or null when there is no such host or Mainframe. */
+    private static MainframeBlockEntity mainframeOf(final ServerPlayer player, final ServerLevel level,
+                                                     final BlockPos hostPos, final BlockPos monitorPos) {
+        final var host = niHost(player, level, hostPos, monitorPos);
+        if (host == null || host.networkUuid() == null) {
+            return null;
+        }
+        return resolveMainframe(level, host.networkUuid());
+    }
+
     private static void jobError(final ServerPlayer player, final Text message) {
         player.displayClientMessage(GameText.component(message), false);
     }
 
     private static void handleJobAction(final JobActionPayload payload, final ServerPlayer player,
                                         final ServerLevel level) {
-        final var host = niHost(player, level, payload.host(), payload.monitorPos());
-        if (host == null || host.networkUuid() == null) {
-            return;
-        }
-        final MainframeBlockEntity mf = resolveMainframe(level, host.networkUuid());
+        final MainframeBlockEntity mf = mainframeOf(player, level, payload.host(), payload.monitorPos());
         if (mf == null) {
             return;
         }
@@ -239,9 +255,7 @@ public final class AutomationPayloads {
             case JobActionPayload.ACTION_PAUSE -> mf.pauseJob(payload.name());
             case JobActionPayload.ACTION_RESUME -> mf.restartJob(payload.name());
             case JobActionPayload.ACTION_DELETE -> {
-                mf.iqlCatalog().remove(
-                        IqlDefinition.ObjectType.JOB,
-                        payload.name());
+                mf.deleteJob(payload.name());
                 mf.markIqlCatalogChanged();
             }
             default -> { }

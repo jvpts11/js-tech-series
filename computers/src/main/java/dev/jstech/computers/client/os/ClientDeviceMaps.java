@@ -43,6 +43,11 @@ public final class ClientDeviceMaps {
         LISTENING.removeIf(listener -> listener.onMap() == onMap);
     }
 
+    /** Forgets every listener, for a world being left: a window that never closed cannot hear the next one. */
+    public static void forgetAll() {
+        LISTENING.clear();
+    }
+
     /** Asks {@code host} for its map as it stands. */
     public static void ask(final BlockPos host) {
         PacketDistributor.sendToServer(new RequestDeviceMapPayload(host));

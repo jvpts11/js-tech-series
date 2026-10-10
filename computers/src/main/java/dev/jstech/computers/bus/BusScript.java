@@ -48,12 +48,7 @@ public final class BusScript {
         } else {
             lines.add(router + "FILTER NONE");
         }
-        if (can.can(BusFeature.TAGS) && !settings.tags().isEmpty()) {
-            lines.add(router + "FILTER TAG " + String.join(", ", settings.tags()));
-        }
-        if (can.can(BusFeature.FUZZY) && settings.fuzzy()) {
-            lines.add(router + "MATCH FUZZY");
-        }
+        addTagAndFuzzyIql(lines, router, settings, can);
         return lines;
     }
 
@@ -66,20 +61,8 @@ public final class BusScript {
         } else {
             calls.add("Any()");
         }
-        if (can.can(BusFeature.TAGS)) {
-            settings.tags().forEach(tag -> calls.add("Tag(" + text(tag) + ")"));
-        }
-        if (can.can(BusFeature.FUZZY) && settings.fuzzy()) {
-            calls.add("Fuzzy(true)");
-        }
-        final String router = "craftRouter(" + text(settings.name()) + ")";
-        if (calls.size() == 1) {
-            return List.of(router + "." + calls.get(0) + ";");
-        }
-        final List<String> lines = new ArrayList<>();
-        lines.add("CraftRouter r = " + router + ";");
-        calls.forEach(call -> lines.add("r." + call + ";"));
-        return lines;
+        addTagAndFuzzySigma(calls, settings, can);
+        return chained("craftRouter(" + text(settings.name()) + ")", "CraftRouter r", "r", calls);
     }
 
     /** The IQL statements that set the bus as {@code settings} has it, one a line. */
@@ -94,12 +77,7 @@ public final class BusScript {
             lines.add(bus + "FILTER " + (settings.exclude() ? "ALL BUT " : "ONLY ") + String.join(", ",
                     listed(settings)));
         }
-        if (can.can(BusFeature.TAGS) && !settings.tags().isEmpty()) {
-            lines.add(bus + "FILTER TAG " + String.join(", ", settings.tags()));
-        }
-        if (can.can(BusFeature.FUZZY) && settings.fuzzy()) {
-            lines.add(bus + "MATCH FUZZY");
-        }
+        addTagAndFuzzyIql(lines, bus, settings, can);
         if (can.can(BusFeature.QUANTITIES)) {
             final String quantities = quantities("", settings.keep(), settings.max());
             if (!quantities.isEmpty()) {
@@ -159,12 +137,7 @@ public final class BusScript {
         if (can.can(BusFeature.FILTER) && settings.listsAny()) {
             calls.add((settings.exclude() ? "AllBut(" : "Only(") + text(String.join(", ", listed(settings))) + ")");
         }
-        if (can.can(BusFeature.TAGS)) {
-            settings.tags().forEach(tag -> calls.add("Tag(" + text(tag) + ")"));
-        }
-        if (can.can(BusFeature.FUZZY) && settings.fuzzy()) {
-            calls.add("Fuzzy(true)");
-        }
+        addTagAndFuzzySigma(calls, settings, can);
         if (can.can(BusFeature.QUANTITIES)) {
             addQuantities(calls, "", settings.keep(), settings.max());
         }
@@ -208,15 +181,7 @@ public final class BusScript {
             }
             calls.add("On()");
         }
-        final String bus = "bus(" + text(settings.name()) + ")";
-        if (calls.size() == 1) {
-            return List.of(bus + "." + calls.get(0) + ";");
-        }
-        final List<String> lines = new ArrayList<>();
-        // The type written out rather than var, which the smaller language has not: the lines are both languages'.
-        lines.add("Bus b = " + bus + ";");
-        calls.forEach(call -> lines.add("b." + call + ";"));
-        return lines;
+        return chained("bus(" + text(settings.name()) + ")", "Bus b", "b", calls);
     }
 
     /**
@@ -234,6 +199,42 @@ public final class BusScript {
     /** The hour of the day as a clock shows it: {@code 06:00}. */
     public static String hour(final int hour) {
         return String.format(Locale.ROOT, "%02d:00", Math.floorMod(hour, 24));
+    }
+
+    private static void addTagAndFuzzyIql(final List<String> lines, final String prefix, final BusSettings settings,
+            final BusAbilities can) {
+        if (can.can(BusFeature.TAGS) && !settings.tags().isEmpty()) {
+            lines.add(prefix + "FILTER TAG " + String.join(", ", settings.tags()));
+        }
+        if (can.can(BusFeature.FUZZY) && settings.fuzzy()) {
+            lines.add(prefix + "MATCH FUZZY");
+        }
+    }
+
+    private static void addTagAndFuzzySigma(final List<String> calls, final BusSettings settings,
+            final BusAbilities can) {
+        if (can.can(BusFeature.TAGS)) {
+            settings.tags().forEach(tag -> calls.add("Tag(" + text(tag) + ")"));
+        }
+        if (can.can(BusFeature.FUZZY) && settings.fuzzy()) {
+            calls.add("Fuzzy(true)");
+        }
+    }
+
+    /*
+     * The calls on one receiver: chained on it when there is one call, and on a variable holding it, a line each, when
+     * there are more. The type is written out rather than var, which the smaller language has not: the lines are both
+     * languages'.
+     */
+    private static List<String> chained(final String receiver, final String declaration, final String variable,
+            final List<String> calls) {
+        if (calls.size() == 1) {
+            return List.of(receiver + "." + calls.get(0) + ";");
+        }
+        final List<String> lines = new ArrayList<>();
+        lines.add(declaration + " = " + receiver + ";");
+        calls.forEach(call -> lines.add(variable + "." + call + ";"));
+        return lines;
     }
 
     private static List<String> listed(final BusSettings settings) {

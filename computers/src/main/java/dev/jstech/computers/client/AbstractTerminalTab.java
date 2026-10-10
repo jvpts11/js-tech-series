@@ -166,6 +166,6 @@ abstract class AbstractTerminalTab implements ITerminalTab {
 
     protected static boolean inRect(final double mx, final double my,
                                     final int x, final int y, final int w, final int h) {
-        return mx >= x && mx < x + w && my >= y && my < y + h;
+        return TerminalHit.inRect(mx, my, x, y, w, h);
     }
 }

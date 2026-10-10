@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.program.install;
 
-import dev.jstech.computers.program.install.voice.PortageVoices;
+import dev.jstech.computers.program.install.voice.GentooProfiles;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -76,6 +76,12 @@ final class LiveProgress {
         this.fstab = false;
         this.synced = false;
         this.sources = false;
+        // The unpacked base brings its own profile link and leaves the kernel sources unset, so those choices and
+        // the world update were made against a system that is no longer there. The hardware clock is not on the
+        // disk at all, so clockSet stays.
+        this.profile = 0;
+        this.worldUpdated = false;
+        this.kernelChosen = false;
         this.kernelCompiled = false;
         this.kernelBuilt = false;
         this.initramfs = false;
@@ -109,7 +115,7 @@ final class LiveProgress {
         this.base = saved.flag("base");
         this.fstab = saved.flag("fstab");
         this.synced = saved.flag("synced");
-        this.profile = PortageVoices.profileOf(saved.value("profile", "0"));
+        this.profile = GentooProfiles.profileOf(saved.value("profile", "0"));
         this.worldUpdated = saved.flag("world_updated");
         this.sources = saved.flag("sources");
         this.kernelChosen = saved.flag("kernel_chosen");

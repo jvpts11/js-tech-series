@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.TerminalHit.inRect;
+
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
@@ -242,7 +244,13 @@ final class TerminalRequestPopup {
         if (picked == null) {
             return;
         }
-        this.amount = (int) Math.max(0L, Math.min(Integer.MAX_VALUE, Math.min(picked.total(), value)));
+        final int max = (int) Math.max(1L, Math.min(Integer.MAX_VALUE, picked.total()));
+        this.amount = (int) Math.max(1L, Math.min(max, value));
+        // A number past the stock is put back to the stock so the field and the button agree. An emptied field
+        // is left empty while the player types, and is read as one.
+        if (value > max) {
+            this.qty.set(this.amount);
+        }
     }
 
     private void start(final NetworkItemEntry picked) {
@@ -432,10 +440,5 @@ final class TerminalRequestPopup {
         final TerminalPopupPalette.Colours c = TerminalPopupPalette.get();
         g.fill(x, y, x + w, y + 16, hover ? c.actionHover() : c.action());
         Draw.textCentered(g,screen.tabFont(), label, x + w / 2, y + 4, c.actionInk());
-    }
-
-    private static boolean inRect(final double mx, final double my, final int x, final int y,
-                                  final int w, final int h) {
-        return mx >= x && mx < x + w && my >= y && my < y + h;
     }
 }

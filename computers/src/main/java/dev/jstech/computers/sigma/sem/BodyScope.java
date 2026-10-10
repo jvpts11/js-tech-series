@@ -10,6 +10,7 @@ package dev.jstech.computers.sigma.sem;
 import dev.jstech.computers.sigma.DiagnosticBag;
 import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.ast.IDecl;
+import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.INode;
 import dev.jstech.computers.sigma.ast.IStmt;
 import java.util.ArrayList;
@@ -188,6 +189,15 @@ final class BodyScope {
         }
     }
 
+    /** The same for a lambda whose body is one expression: it gives the value when the expression writes it. */
+    void checkOutParameters(final List<IDecl.Parameter> parameters, final IExpr body, final INode at) {
+        for (final IDecl.Parameter parameter : parameters) {
+            if (parameter.outward() && !DefiniteAssignment.writesTo(body, parameter.name())) {
+                this.report(at.line(), at.column(), SigmaError.OUT_NOT_ASSIGNED, parameter.name());
+            }
+        }
+    }
+
     void expect(final ITypeSymbol given, final ITypeSymbol wanted, final INode at) {
         if (!this.rules.isAssignable(given, wanted)) {
             this.report(at.line(), at.column(),
@@ -216,25 +226,12 @@ final class BodyScope {
             boolean alreadyThere = false;
             for (final IMemberSymbol seen : found) {
                 alreadyThere = alreadyThere
-                        || sameSignature((IMemberSymbol.MethodSymbol) seen, method);
+                        || ((IMemberSymbol.MethodSymbol) seen).sameParameters(method);
             }
             if (!alreadyThere) {
                 found.add(member);
             }
         }
         return found;
-    }
-
-    private static boolean sameSignature(final IMemberSymbol.MethodSymbol left,
-                                         final IMemberSymbol.MethodSymbol right) {
-        if (left.parameters().size() != right.parameters().size()) {
-            return false;
-        }
-        for (int i = 0; i < left.parameters().size(); i++) {
-            if (!left.parameters().get(i).type().equals(right.parameters().get(i).type())) {
-                return false;
-            }
-        }
-        return true;
     }
 }

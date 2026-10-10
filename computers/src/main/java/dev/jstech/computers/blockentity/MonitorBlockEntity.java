@@ -13,6 +13,7 @@ import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.block.MonitorPanel;
+import dev.jstech.computers.client.monitor.MonitorPictureCache;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.monitor.IMonitorPicture;
 import dev.jstech.computers.monitor.MonitorPicturePayload;
@@ -213,6 +214,9 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
     @Override
     public void setRemoved() {
         super.setRemoved();
+        if (level != null && level.isClientSide) {
+            MonitorPictureCache.forget(worldPosition);
+        }
         MonitorPanel.changed();
     }
 

@@ -58,6 +58,8 @@ final class UiMutator {
             "a canvas holds at most %s strokes");
     private static final TextKey MENU_FULL = TextKey.of("jsc.vm.ui_mutator.menu_full",
             "a menu holds at most %s entries");
+    private static final TextKey TAB_FULL = TextKey.of("jsc.vm.ui_mutator.tab_full",
+            "a tab view holds at most %s pages");
     private static final TextKey COLUMNS_FULL = TextKey.of("jsc.vm.ui_mutator.columns_full",
             "a table has at most %s columns");
     private static final TextKey SECTIONS_FULL = TextKey.of("jsc.vm.ui_mutator.sections_full",
@@ -304,8 +306,8 @@ final class UiMutator {
         final Values.ListValue titles = UiWidgets.listOf(self, UiWidgets.ITEMS, line);
         switch (member) {
             case "Add" -> {
-                if (pages.items().size() >= UiWidgets.MOST_MENU) {
-                    throw new Halt(Halt.Reason.OUT_OF_RANGE, line, MENU_FULL.with(UiWidgets.MOST_MENU));
+                if (pages.items().size() >= UiWidgets.MOST_TABS) {
+                    throw new Halt(Halt.Reason.OUT_OF_RANGE, line, TAB_FULL.with(UiWidgets.MOST_TABS));
                 }
                 final Values.Obj page = UiWidgets.placeableWidget(arguments.size() > 1 ? arguments.get(1) : null,
                         line);
@@ -499,6 +501,8 @@ final class UiMutator {
         if (up != null && up != self) {
             throw new Halt(Halt.Reason.REFUSED, line, DIALOG_UP.text());
         }
+        // A dialog is up over one window at a time, so showing it again over another takes it off the first.
+        this.lowerDialog(self);
         window.set(UiWidgets.DIALOG, self);
         self.set(UiWidgets.EPOCH, Numbers.toInt(self.get(UiWidgets.EPOCH)) + 1);
         UiWidgets.touch(window);
@@ -810,14 +814,15 @@ final class UiMutator {
 
     /* Takes a dialog off the window it was up over; false when it was up over none, so it could not be answered. */
     private boolean lowerDialog(final Values.Obj dialog) {
+        boolean lowered = false;
         for (final Values.Obj window : this.open) {
             if (window.get(UiWidgets.DIALOG) == dialog) {
                 window.set(UiWidgets.DIALOG, null);
                 UiWidgets.touch(window);
-                return true;
+                lowered = true;
             }
         }
-        return false;
+        return lowered;
     }
 
     /*

@@ -714,19 +714,11 @@ public final class FullJourneyClientTests {
     }
 
     private static void launch(final ClientTestContext ctx, final String label) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
-        ctx.click(desktop.startButtonX(), desktop.startButtonY());
-        final int item = desktop.launcherLabels().indexOf(label);
-        ctx.assertTrue(item >= 0, "the Start menu must list " + label + "; got " + desktop.launcherLabels());
-        ctx.click(desktop.startMenuItemX(item), desktop.startMenuItemY(item));
+        DesktopSteps.launch(ctx, label);
     }
 
     private static <T> T app(final ClientTestContext ctx, final String label, final Class<T> type) {
-        if (!(ctx.mc().screen instanceof DesktopScreen desktop)) {
-            return null;
-        }
-        final DesktopWindow window = desktop.windowFor(label);
-        return window != null && type.isInstance(window.app()) ? type.cast(window.app()) : null;
+        return DesktopSteps.app(ctx, label, type);
     }
 
     /** Converts an app content-local point into desktop coordinates. */
@@ -735,7 +727,7 @@ public final class FullJourneyClientTests {
         if (window == null) {
             throw new ClientTestFailure("the " + label + " window is gone");
         }
-        return new int[]{window.x() + 4 + local[0], window.y() + 18 + local[1]};
+        return DesktopSteps.contentPoint(window, local);
     }
 
     private static int firstInstallable(final ThisPcApp app) {

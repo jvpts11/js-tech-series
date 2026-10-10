@@ -57,6 +57,7 @@ public final class PendingCraftOperation implements INetworkOperation {
     private Runnable onSettle;
     private boolean done;
     private boolean cancelled;
+    private boolean abandoned;
     private boolean failed;
     private OperationFailure cause = OperationFailure.NONE;
     @Nullable
@@ -190,6 +191,10 @@ public final class PendingCraftOperation implements INetworkOperation {
 
     @Override
     public void abandon() {
+        if (!done) {
+            // Marked before settling, so the callback it fires reads a request that was dropped, not a pending one.
+            abandoned = true;
+        }
         settle();
     }
 
@@ -217,7 +222,7 @@ public final class PendingCraftOperation implements INetworkOperation {
 
     @Override
     public OperationRecord toRecord() {
-        final byte status = cancelled ? OperationRecord.STATUS_DISCARDED
+        final byte status = cancelled || abandoned ? OperationRecord.STATUS_DISCARDED
                 : failed ? OperationRecord.STATUS_FAILED
                 : delivered != null ? OperationRecord.STATUS_COMPLETED
                 : OperationRecord.STATUS_PENDING;

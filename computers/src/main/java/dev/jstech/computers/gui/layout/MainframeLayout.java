@@ -120,7 +120,7 @@ public final class MainframeLayout {
         l.playerInventory(INV_X, INV_Y);
 
         l.text("titleMainframe", 12, 11, 9, 1.0f);
-        l.text("statusPill", WIDTH - 6 * 8, 11, 8, 1.0f);
+        l.text("statusPill", WIDTH - Math.round(8 * GuiLayout.GLYPH_WIDTH), 11, 8, 1.0f);
         l.text("lblBoard", MOBO_X, LABEL_ROW_1_Y, 5, 1.0f);
         l.text("lblCpu", RIGHT_X, LABEL_ROW_1_Y, 3, 1.0f);
         l.text("lblPsu", MOBO_X, LABEL_ROW_2_Y, 3, 1.0f);

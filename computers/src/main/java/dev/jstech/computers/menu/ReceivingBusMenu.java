@@ -30,19 +30,13 @@ public class ReceivingBusMenu extends AbstractBusMenu {
 
     public static ReceivingBusMenu create(final int containerId, final Inventory playerInventory,
                                           final CableBlockEntity cable, final Direction face) {
-        // A part gone from the face leaves a window on a stand-in, which its validity closes at once.
-        final ReceivingBusPart part = cable.getPart(face) instanceof ReceivingBusPart real ? real
-                : new ReceivingBusPart();
-        return new ReceivingBusMenu(containerId, playerInventory, part, cable.getLevel(),
-                Opening.of(cable, face, part));
+        return open(containerId, playerInventory, cable, face, ReceivingBusPart.class,
+                era -> new ReceivingBusPart(), ReceivingBusMenu::new);
     }
 
     public static ReceivingBusMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                final RegistryFriendlyByteBuf buf) {
-        final Opening opening = Opening.read(buf);
-        final Level level = playerInventory.player.level();
-        final ReceivingBusPart part = level.getBlockEntity(opening.pos()) instanceof CableBlockEntity cable
-                && cable.getPart(opening.face()) instanceof ReceivingBusPart real ? real : new ReceivingBusPart();
-        return new ReceivingBusMenu(containerId, playerInventory, part, level, opening);
+        return openFromNetwork(containerId, playerInventory, buf, ReceivingBusPart.class,
+                era -> new ReceivingBusPart(), ReceivingBusMenu::new);
     }
 }

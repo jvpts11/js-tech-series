@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.operation.payload.program;
 
-import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.client.CommandPromptScreen;
 import dev.jstech.computers.engine.EngineRequirements;
 import dev.jstech.computers.item.DiskItem;
@@ -123,6 +122,7 @@ public final class ConsolePayloads {
         if (parts.length == 2 && (parts[0].equalsIgnoreCase("run") || parts[0].equalsIgnoreCase("open"))) {
             if (host.console() != null && !payload.line().isBlank()) {
                 host.console().pushHistory(payload.line().trim());
+                ((BlockEntity) host).setChanged();
             }
             launchProgram(player, host, menu.monitorPos(), menu.hostPos(), parts[1].trim());
             return;
@@ -177,36 +177,7 @@ public final class ConsolePayloads {
             host.console().printed(false, List.of(new WireLine(typedAt + payload.line(), CliStyle.PROMPT.id())));
             host.console().printed(response.clearScreen(), wire);
         }
-        if (computer.firmwareRebootRequested()) {
-            // "reboot --firmware": leave the terminal and enter the boot manager on the same monitor.
-            player.closeContainer();
-            MonitorBlock.openFirmware(
-                    player, level, menu.monitorPos(), menu.hostPos());
-            return;
-        }
-        if (computer.rebootRequested()) {
-            /*
-             * A plain "reboot": the system closes down in front of whoever is watching, and the POST replays on
-             * the same monitor when it has finished, after which whatever the boot target now is (a freshly
-             * installed OS included) comes up. A machine whose system has nothing to show on its way down goes
-             * straight to the self-test, which is what the restart itself falls back to.
-             */
-            if (level.getBlockEntity(menu.hostPos()) instanceof IOsHost be) {
-                be.restart();
-                /*
-                 * Whoever typed it is at a terminal, not at a monitor session, so the machine's own goodbye
-                 * never reached them: the closing-down went on behind the prompt they were still sitting in,
-                 * and nothing moved until they left and came back.
-                 */
-                if (be.goingDown()) {
-                    player.closeContainer();
-                    MonitorBlock.openSystemDown(player, level, menu.monitorPos(), menu.hostPos(), be);
-                    return;
-                }
-            }
-            player.closeContainer();
-            MonitorBlock.openPost(
-                    player, level, menu.monitorPos(), menu.hostPos());
+        if (DesktopShellPayloads.handleReboot(player, level, menu.monitorPos(), menu.hostPos(), computer)) {
             return;
         }
         // Persist the typed line on the computer so the history survives closing the prompt or Monitor.

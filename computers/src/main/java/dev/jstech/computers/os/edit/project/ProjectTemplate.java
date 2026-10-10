@@ -179,6 +179,27 @@ public enum ProjectTemplate {
         return out;
     }
 
+    /**
+     * Whether a name can be a project's name. The starter source uses it as a namespace, a class name and the text
+     * of a string literal, so it has to be an identifier: letters, digits and underscores, not starting with a digit.
+     */
+    public static boolean isValidProjectName(final String name) {
+        if (name == null || name.isEmpty() || !isIdentifierStart(name.charAt(0))) {
+            return false;
+        }
+        for (int i = 1; i < name.length(); i++) {
+            final char c = name.charAt(i);
+            if (!isIdentifierStart(c) && (c < '0' || c > '9')) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isIdentifierStart(final char c) {
+        return c == '_' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
+    }
+
     /** The name of the first source a project of this template starts with, or empty for none. */
     public String firstSource(final String projectName, final LanguageLevel language) {
         return this == EMPTY_PROJECT ? "" : projectName + "." + language.sourceExtension();

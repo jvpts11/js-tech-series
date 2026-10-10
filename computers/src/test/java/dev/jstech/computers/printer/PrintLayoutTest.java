@@ -80,4 +80,11 @@ class PrintLayoutTest {
     void sheets_countThePages() {
         assertEquals(2, PrintLayout.sheets("", "a\n".repeat(PrintLayout.PORTRAIT_LINES + 1), false));
     }
+
+    @Test
+    void pages_ofACutTextKeepTheFullCapEvenWithBlankLinesBeforeTheCut() {
+        final String text = "line\n".repeat(PrintLayout.PORTRAIT_LINES * (PrintedDocument.MAX_PAGES - 1))
+                + "\n".repeat(PrintLayout.PORTRAIT_LINES) + "more\n".repeat(10);
+        assertEquals(PrintedDocument.MAX_PAGES, PrintLayout.pages("", text, false).size());
+    }
 }

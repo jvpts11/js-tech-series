@@ -22,7 +22,6 @@ import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.peripheral.PeripheralLine;
-import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;

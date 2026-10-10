@@ -13,7 +13,6 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -93,9 +92,7 @@ public final class ManTopics {
 
         /** Whether this topic's name or summary answers to that word, the question {@code apropos} asks. */
         public boolean answersTo(final String text) {
-            final String wanted = text.toLowerCase(Locale.ROOT);
-            return this.name.toLowerCase(Locale.ROOT).contains(wanted)
-                    || summary().english().toLowerCase(Locale.ROOT).contains(wanted);
+            return ManPage.matches(this.name, summary(), text);
         }
     }
 }

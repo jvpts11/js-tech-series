@@ -37,7 +37,7 @@ public record SetOperationPriorityPayload(BlockPos host, BlockPos monitorPos, UU
                     BlockPos.STREAM_CODEC, SetOperationPriorityPayload::host,
                     BlockPos.STREAM_CODEC, SetOperationPriorityPayload::monitorPos,
                     UUIDUtil.STREAM_CODEC, SetOperationPriorityPayload::operationId,
-                    NiGridClickPayload.PRIORITY_CODEC, SetOperationPriorityPayload::priority,
+                    PayloadCodecs.PRIORITY, SetOperationPriorityPayload::priority,
                     SetOperationPriorityPayload::new);
 
     @Override

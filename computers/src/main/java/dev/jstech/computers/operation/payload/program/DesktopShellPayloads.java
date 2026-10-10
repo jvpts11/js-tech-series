@@ -167,40 +167,52 @@ public final class DesktopShellPayloads {
              * this payload only shows it to a desktop, a prompt or a terminal, and all three are IMonitorMenu.
              */
             final BlockPos monitorPos = ((IMonitorMenu) player.containerMenu).monitorPos();
-            if (computer.firmwareRebootRequested()) {
-                player.closeContainer();
-                MonitorBlock.openFirmware(
-                        player, level, monitorPos, payload.hostPos());
-                return;
-            }
-            if (computer.rebootRequested()) {
-                /*
-                 * The system closes down in front of whoever is watching and the self-test follows when it has
-                 * finished; one with nothing to show on its way down starts over at once, and then the POST is
-                 * opened here as it always was.
-                 */
-                if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost be) {
-                    be.restart();
-                    /*
-                     * Whoever asked for it is at the desktop or the terminal, not at a monitor session, so the
-                     * machine's own goodbye never reached them: the closing-down went on behind the window they
-                     * were still sitting in, and nothing moved until they left and came back.
-                     */
-                    if (be.goingDown()) {
-                        player.closeContainer();
-                        MonitorBlock.openSystemDown(player, level, monitorPos, payload.hostPos(), be);
-                        return;
-                    }
-                }
-                player.closeContainer();
-                MonitorBlock.openPost(
-                        player, level, monitorPos, payload.hostPos());
+            if (handleReboot(player, level, monitorPos, payload.hostPos(), computer)) {
                 return;
             }
         }
         PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(clear, busy, prompt, wire,
                 handOver == null ? "" : handOver.editor(),
                 handOver == null ? "" : handOver.path(), payload.session(), false, false, keyboard));
+    }
+
+    /**
+     * Carries out a reboot the typed command asked for, from a desktop or a terminal alike: the screen closes
+     * and the monitor either enters the firmware setup ({@code reboot --firmware}) or replays the POST after the
+     * system has closed down. Returns whether a reboot was requested, in which case the container is already
+     * closed and the caller sends no reply.
+     */
+    static boolean handleReboot(final ServerPlayer player, final ServerLevel level, final BlockPos monitorPos,
+            final BlockPos hostPos, final ServerCliComputer computer) {
+        if (computer.firmwareRebootRequested()) {
+            player.closeContainer();
+            MonitorBlock.openFirmware(player, level, monitorPos, hostPos);
+            return true;
+        }
+        if (!computer.rebootRequested()) {
+            return false;
+        }
+        /*
+         * The system closes down in front of whoever is watching and the self-test follows when it has
+         * finished; one with nothing to show on its way down starts over at once, and then the POST is opened
+         * here instead.
+         */
+        if (level.getBlockEntity(hostPos) instanceof IOsHost be) {
+            be.restart();
+            /*
+             * Whoever asked for it is at a desktop or a terminal, not at a monitor session, so the machine's
+             * own goodbye never reached them: the closing-down would go on behind the window they were still
+             * sitting in, and nothing would move until they left and came back.
+             */
+            if (be.goingDown()) {
+                player.closeContainer();
+                MonitorBlock.openSystemDown(player, level, monitorPos, hostPos, be);
+                return true;
+            }
+        }
+        player.closeContainer();
+        MonitorBlock.openPost(player, level, monitorPos, hostPos);
+        return true;
     }
 
     /**

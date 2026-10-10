@@ -220,6 +220,13 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public void markUnsaved() {
+        if (rack.getLevel() != null) {
+            rack.getLevel().blockEntityChanged(rack.getBlockPos());
+        }
+    }
+
+    @Override
     @Nullable
     public ResourceLocation bootedDesktopId() {
         return rack.asUnit(row, rack::bootedDesktopId);

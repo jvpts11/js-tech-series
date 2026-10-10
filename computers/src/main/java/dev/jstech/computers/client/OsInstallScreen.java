@@ -353,12 +353,6 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
         return lines;
     }
 
-    private void row(final GuiGraphics g, final int x, final int y, final Look p,
-                     final String key, final String value) {
-        Draw.text(g, font, key, x + 10, y, p.dim);
-        Draw.text(g, font, value, x + 90, y, p.text);
-    }
-
     private int[] button(final GuiGraphics g, final int bx, final int by, final int bw, final int bh,
                          final String label, final Look p, final boolean strong,
                          final int mouseX, final int mouseY) {

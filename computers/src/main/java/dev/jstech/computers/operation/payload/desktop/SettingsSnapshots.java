@@ -21,24 +21,18 @@ import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.machine.MachineLabels;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
-import dev.jstech.computers.os.OsDisks;
-import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.WindowKeys;
-import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ComputerSettings;
-import dev.jstech.computers.storage.DriveVolumes;
-import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
@@ -187,12 +181,7 @@ final class SettingsSnapshots {
         if (!(stack.getItem() instanceof DiskItem diskItem)) {
             return 0L;
         }
-        final long mbEq = StorageKey.MB_EQ_PER_ITEM;
-        final long mbPerItem = diskItem.spec().era().mbPerItem();
-        final ResourceLocation systemId = OsDisks.systemOn(stack);
-        final OsDef system = systemId != null ? OsRegistry.getOs(systemId) : null;
-        final long reserved = system != null ? system.footprintItemsOn(diskItem.spec().era()) * mbEq : 0L;
-        return (DriveVolumes.usedWeight(stack) + DiskFilesystem.filesWeight(stack) + reserved) * mbPerItem / mbEq;
+        return DiskShares.of(stack).usedMb(diskItem.spec().era().mbPerItem());
     }
 
     /** How the machine's instruction set reads on a screen, or empty when it has no processor to read it from. */

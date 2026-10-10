@@ -77,6 +77,8 @@ public final class PrintDialog implements IDesktopApp {
     private int chosen;
     private boolean pagesOnly;
     private boolean lying;
+    /* The document laid out as pages, kept because it only changes with the document or the orientation. */
+    private List<String> pages = paginate();
     private int previewPage;
     /* Where the preview was last laid out, which the frame draws into. */
     private int previewX;
@@ -141,6 +143,7 @@ public final class PrintDialog implements IDesktopApp {
         this.chosen = 0;
         this.pagesOnly = false;
         this.lying = false;
+        this.pages = paginate();
         this.previewPage = 0;
         this.copies.setAmount(1);
         this.from.set("1");
@@ -412,7 +415,6 @@ public final class PrintDialog implements IDesktopApp {
         if (document.isPicture()) {
             drawPicturePreview(g, px, py, pageW, pageH);
         } else {
-            final List<String> pages = PrintLayout.pages(document.title(), document.text(), lying);
             final String[] lines = pages.get(Math.min(previewPage, pages.size() - 1)).split("\n", -1);
             final int columns = lying ? PrintLayout.LANDSCAPE_COLUMNS : PrintLayout.PORTRAIT_COLUMNS;
             final int room = pageW - PREVIEW_MARGIN * 2;
@@ -468,6 +470,7 @@ public final class PrintDialog implements IDesktopApp {
 
     private void lie(final boolean wide) {
         lying = wide;
+        pages = paginate();
         previewPage = Math.min(previewPage, pageCount() - 1);
         to.set(String.valueOf(pageCount()));
     }
@@ -477,7 +480,11 @@ public final class PrintDialog implements IDesktopApp {
     }
 
     private int pageCount() {
-        return document.isPicture() ? 1 : PrintLayout.pages(document.title(), document.text(), lying).size();
+        return document.isPicture() ? 1 : pages.size();
+    }
+
+    private List<String> paginate() {
+        return document.isPicture() ? List.of() : PrintLayout.pages(document.title(), document.text(), lying);
     }
 
     @Nullable

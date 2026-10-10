@@ -118,10 +118,18 @@ final class DesktopListings {
         final OsDef os = computer.installedOs();
         final String desktopDir = SystemLayout.desktopDirFor(os,
                 os == null ? null : OsRegistry.getKernel(os.kernelId()));
+        // The packet's list codec refuses more than MAX_FILES entries, so a crowded folder is clipped here
+        // (folders first) instead of making the whole desktop packet fail to encode.
         for (final String dir : DiskFilesystem.listDirs(disk, desktopDir, kind)) {
+            if (files.size() >= DesktopFilesPayload.MAX_FILES) {
+                return files;
+            }
             files.add(new DiskFilesPayload.WireFile(dir, "", 0L, false, true));
         }
         for (final DiskFilesystem.FileEntry entry : DiskFilesystem.list(disk, desktopDir, kind)) {
+            if (files.size() >= DesktopFilesPayload.MAX_FILES) {
+                break;
+            }
             files.add(new DiskFilesPayload.WireFile(entry.path(), entry.type().extension(), entry.weight(),
                     entry.readOnly(), false));
         }
@@ -139,12 +147,17 @@ final class DesktopListings {
         for (final DiskFilesPayload.WireFile file : files) {
             names.add(baseNameOf(file.path()));
         }
+        // Pins belong to the machine while desktop files belong to the boot disk, so an unreadable listing (no disk,
+        // or a filesystem without folders) or a clipped one proves nothing about which files were deleted.
+        final boolean complete = !computer.systemDisk().isEmpty()
+                && filesystemKindOf(computer) == FilesystemKind.HIERARCHICAL
+                && files.size() < DesktopFilesPayload.MAX_FILES;
         final List<DesktopFilesPayload.WireIconCell> cells = new ArrayList<>();
         boolean pruned = false;
         final DesktopLayout layout = computer.console().desktop();
         for (final Map.Entry<String, Integer> pin : layout.iconCells().entrySet()) {
             final String key = pin.getKey();
-            if (key.startsWith(FILE_PIN) && !names.contains(key.substring(FILE_PIN.length()))) {
+            if (complete && key.startsWith(FILE_PIN) && !names.contains(key.substring(FILE_PIN.length()))) {
                 layout.clearIconCell(key);
                 pruned = true;
                 continue;

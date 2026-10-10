@@ -157,7 +157,9 @@ public final class SoundfoundryPlaylists {
 
     /** How a song is listed in a playlist's file: its artist and its title, or its title alone. */
     public static String shownAs(final String title, final String artist) {
-        return artist.isEmpty() ? title : artist + " - " + title;
+        // A line break inside a tag would start a second line in the file, which reads back as a song.
+        final String text = artist.isEmpty() ? title : artist + " - " + title;
+        return text.replace('\r', ' ').replace('\n', ' ');
     }
 
     private static String pathOf(final AbstractComputerBlockEntity computer, final String name) {

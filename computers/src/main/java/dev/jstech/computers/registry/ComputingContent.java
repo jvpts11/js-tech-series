@@ -21,7 +21,6 @@ import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.EnumMap;
-import java.util.List;
 import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
@@ -44,10 +43,6 @@ import org.jetbrains.annotations.Nullable;
 public final class ComputingContent {
 
     public static final ModContent CONTENT = new ModContent(JsComputers.MODID);
-
-    /** The eras that have a tab, left to right after the shared one. */
-    private static final List<HardwareEra> TAB_ERAS = List.of(HardwareEra.VINTAGE, HardwareEra.LEGACY,
-            HardwareEra.TRANSITION, HardwareEra.STANDARD, HardwareEra.ADVANCED);
 
     /*
      * The tabs, declared in the order they stand. Each era's icon is the thing that era is remembered by: the floppy,
@@ -128,8 +123,9 @@ public final class ComputingContent {
 
     private static Map<HardwareEra, Map<Shelf, ContentTab.Section>> eraShelves() {
         final Map<HardwareEra, Map<Shelf, ContentTab.Section>> byEra = new EnumMap<>(HardwareEra.class);
-        for (final HardwareEra era : TAB_ERAS) {
-            byEra.put(era, shelves(ERA_TABS.get(era), era));
+        // The eras that have a tab are exactly the keys of ERA_TABS, so a tab can never lack its shelves.
+        for (final Map.Entry<HardwareEra, ContentTab> entry : ERA_TABS.entrySet()) {
+            byEra.put(entry.getKey(), shelves(entry.getValue(), entry.getKey()));
         }
         return byEra;
     }

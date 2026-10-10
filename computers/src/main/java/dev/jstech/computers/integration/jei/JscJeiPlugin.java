@@ -129,7 +129,11 @@ public final class JscJeiPlugin implements IModPlugin {
         return true;
     }
 
-    /** Whether one of the viewer's own screens (recipes, bookmarks) is the current screen. */
+    /**
+     * Whether one of the viewer's own screens (recipes, bookmarks) is the current screen. The viewer's API jar
+     * offers no type to test against for these screens (only its internal classes are screens), so the package
+     * prefix of the class is the one signal available.
+     */
     public static boolean viewerScreenOpen() {
         final Screen screen = Minecraft.getInstance().screen;
         return screen != null && screen.getClass().getName().startsWith("mezz.jei.");

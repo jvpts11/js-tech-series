@@ -140,12 +140,16 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
                     buf.writeVarInt(d.kind()).writeVarInt(d.index()).writeUtf(d.name(), 64);
                     TextCodecs.STREAM_CODEC.encode(buf, d.sub());
                     buf.writeBoolean(d.online()).writeVarInt(d.balance());
-                    buf.writeVarInt(d.nodes().size());
-                    for (final WireNode n : d.nodes()) {
+                    // Cut to the caps the decoder reads, so a longer list can never put the rest of the buffer
+                    // out of step.
+                    final List<WireNode> sentNodes = d.nodes().subList(0, Math.min(MAX_NODES, d.nodes().size()));
+                    buf.writeVarInt(sentNodes.size());
+                    for (final WireNode n : sentNodes) {
                         WireNode.STREAM_CODEC.encode(buf, n);
                     }
-                    buf.writeVarInt(d.queue().size());
-                    for (final WireCraft c : d.queue()) {
+                    final List<WireCraft> sentQueue = d.queue().subList(0, Math.min(MAX_QUEUE, d.queue().size()));
+                    buf.writeVarInt(sentQueue.size());
+                    for (final WireCraft c : sentQueue) {
                         WireCraft.STREAM_CODEC.encode(buf, c);
                     }
                 },
@@ -197,8 +201,9 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
                     buf.writeBoolean(j.active()).writeVarInt(j.kind()).writeUtf(j.label(), 64).writeVarInt(j.clusterKind())
                             .writeVarInt(j.clusterIndex()).writeVarInt(j.done()).writeVarInt(j.skipped()).writeVarInt(j.queued())
                             .writeVarInt(j.total()).writeVarInt(j.elapsedTicks()).writeBoolean(j.cancelled());
-                    buf.writeVarInt(j.lanes().size());
-                    for (final WireLane lane : j.lanes()) {
+                    final List<WireLane> sentLanes = j.lanes().subList(0, Math.min(MAX_LANES, j.lanes().size()));
+                    buf.writeVarInt(sentLanes.size());
+                    for (final WireLane lane : sentLanes) {
                         WireLane.STREAM_CODEC.encode(buf, lane);
                     }
                     TextCodecs.STREAM_CODEC.encode(buf, j.lastSummary());

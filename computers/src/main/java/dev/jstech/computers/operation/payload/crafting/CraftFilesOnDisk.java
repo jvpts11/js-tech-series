@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.fs.DiskFilesystem;
@@ -19,6 +20,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import static dev.jstech.computers.operation.payload.files.FileAccess.filesystemKindOf;
 
@@ -40,20 +42,14 @@ public final class CraftFilesOnDisk {
      */
     static void writeCraftToDisk(final CraftingComputerBlockEntity cc, final String fileName,
                                          final String content) {
+        final String path = mirrorPath(cc, fileName);
+        if (path == null) {
+            return;
+        }
         final ItemStack disk = cc.systemDisk();
-        if (disk.isEmpty()) {
-            return;
-        }
         final FilesystemKind kind = filesystemKindOf(cc);
-        if (kind == FilesystemKind.NONE) {
-            return;
-        }
-        final String path;
         if (kind == FilesystemKind.HIERARCHICAL) {
             DiskFilesystem.mkdir(disk, CRAFTS_DIR, kind);
-            path = CRAFTS_DIR + "/" + fileName;
-        } else {
-            path = fileName;
         }
         DiskFilesystem.write(disk, path, FileType.CRAFT, content, cc.systemDiskFreeWeight(), kind,
                 cc.getLevel() == null ? 0L : cc.getLevel().getGameTime());
@@ -61,17 +57,10 @@ public final class CraftFilesOnDisk {
 
     /** Deletes a mirrored {@code .craft} from the Crafting Computer's system disk, if present. */
     static void deleteCraftFromDisk(final CraftingComputerBlockEntity cc, final String fileName) {
-        final ItemStack disk = cc.systemDisk();
-        if (disk.isEmpty()) {
-            return;
+        final String path = mirrorPath(cc, fileName);
+        if (path != null) {
+            DiskFilesystem.delete(cc.systemDisk(), path);
         }
-        final FilesystemKind kind = filesystemKindOf(cc);
-        if (kind == FilesystemKind.NONE) {
-            return;
-        }
-        final String path = kind == FilesystemKind.HIERARCHICAL
-                ? CRAFTS_DIR + "/" + fileName : fileName;
-        DiskFilesystem.delete(disk, path);
     }
 
     /**
@@ -102,17 +91,30 @@ public final class CraftFilesOnDisk {
 
     /** Reports whether a mirrored {@code .craft} of the given name already exists on the system disk. */
     static boolean craftFileExistsOnDisk(final CraftingComputerBlockEntity cc, final String fileName) {
-        final ItemStack disk = cc.systemDisk();
-        if (disk.isEmpty()) {
-            return false;
+        final String path = mirrorPath(cc, fileName);
+        return path != null && DiskFilesystem.read(cc.systemDisk(), path).isPresent();
+    }
+
+    /**
+     * The file base-name a recipe is mirrored and saved under: a bench recipe by its pattern's name, any other by
+     * its sanitized display name.
+     */
+    static String mirrorFileName(final NetworkRecipe recipe) {
+        return recipe.bench().isPresent() ? craftFileNameFor(recipe.bench().get())
+                : sanitizeFileBase(recipe.displayName());
+    }
+
+    /* Where a mirrored file lives on the system disk, or null when there is no disk or no filesystem on it. */
+    @Nullable
+    private static String mirrorPath(final CraftingComputerBlockEntity cc, final String fileName) {
+        if (cc.systemDisk().isEmpty()) {
+            return null;
         }
         final FilesystemKind kind = filesystemKindOf(cc);
         if (kind == FilesystemKind.NONE) {
-            return false;
+            return null;
         }
-        final String path = kind == FilesystemKind.HIERARCHICAL
-                ? CRAFTS_DIR + "/" + fileName : fileName;
-        return DiskFilesystem.read(disk, path).isPresent();
+        return kind == FilesystemKind.HIERARCHICAL ? CRAFTS_DIR + "/" + fileName : fileName;
     }
 
     /**

@@ -46,6 +46,12 @@ public final class SystemApi {
     /** A file a program opened, named as C names it. */
     private static final String OPEN_FILE = "FILE";
 
+    /* What Scan can read into, which has to match what the reader of a typed or stored line can produce. */
+    private static final List<String> SCAN_KINDS = List.of(INT, LONG, DOUBLE, STRING, "char");
+
+    /* Writing a file and closing one it was opened to write cost the same, a block at a time. */
+    private static final CallCost FILE_WRITE = CallCost.perBlock(SigmaCosts.WRITE, SigmaCosts.WRITE_PER_BLOCK);
+
     private static final List<TypeSpec> TYPES = List.of(math(), convert(), console(), program(), process(),
             processMessage(), thread(), time(), random(), openFile(), file(), cpuInfo(), diskInfo(), osInfo(), processInfo(),
             computer(), holdingInfo(), serverInfo(), network(), stockEvent(), subscription(), remoteComputer(),
@@ -158,7 +164,7 @@ public final class SystemApi {
          * answering 1 when there was one and 0 when what was typed was not one. What is left of the line waits.
          */
         console.onType(INT, "Read", MemberKind.PROCESS, CallCost.FREE);
-        for (final String kind : List.of(INT, LONG, DOUBLE, STRING, "char")) {
+        for (final String kind : SCAN_KINDS) {
             console.onType(INT, "Scan", MemberKind.PROCESS, CallCost.FREE, "out " + kind);
         }
         /*
@@ -283,15 +289,14 @@ public final class SystemApi {
     private static TypeSpec file() {
         final Members file = new Members("File");
         final CallCost read = CallCost.perBlock(SigmaCosts.READ, SigmaCosts.READ_PER_BLOCK);
-        final CallCost write = CallCost.perBlock(SigmaCosts.WRITE, SigmaCosts.WRITE_PER_BLOCK);
         file.onType(BOOL, "Exists", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
         file.onType(STRING, "Read", MemberKind.WORLD, read, STRING);
         file.onType(BOOL, "TryRead", MemberKind.WORLD, read, STRING, "out " + STRING);
-        file.onType(BOOL, "Write", MemberKind.WORLD, write, STRING, STRING);
-        file.onType(BOOL, "Append", MemberKind.WORLD, write, STRING, STRING);
+        file.onType(BOOL, "Write", MemberKind.WORLD, FILE_WRITE, STRING, STRING);
+        file.onType(BOOL, "Append", MemberKind.WORLD, FILE_WRITE, STRING, STRING);
         file.onType(BOOL, "Delete", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING);
         file.onType(BOOL, "MkDir", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING);
-        file.onType(STRINGS, "List", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
+        file.onType(STRINGS, "List", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ), STRING);
         /*
          * The second version's: a file opened to be worked on a piece at a time, as C's fopen opens one, which costs
          * the read of what it holds; and a file moved or renamed, as C's rename does.
@@ -309,10 +314,10 @@ public final class SystemApi {
      */
     private static TypeSpec openFile() {
         final Members open = new Members(OPEN_FILE);
-        open.onObject(VOID, "Close", MemberKind.WORLD, CallCost.perBlock(SigmaCosts.WRITE, SigmaCosts.WRITE_PER_BLOCK));
+        open.onObject(VOID, "Close", MemberKind.WORLD, FILE_WRITE);
         open.onObject(BOOL, "ReadLine", MemberKind.PROCESS, CallCost.FREE, "out " + STRING);
         open.onObject(INT, "Read", MemberKind.PROCESS, CallCost.FREE);
-        for (final String kind : List.of(INT, LONG, DOUBLE, STRING, "char")) {
+        for (final String kind : SCAN_KINDS) {
             open.onObject(INT, "Scan", MemberKind.PROCESS, CallCost.FREE, "out " + kind);
         }
         open.onObject(VOID, "Write", MemberKind.PROCESS, CallCost.FREE, STRING);

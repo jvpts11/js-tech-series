@@ -78,4 +78,12 @@ class JobWhenTest {
     private static long clockAt(final int hour) {
         return (long) Math.floorMod(hour - GameCalendar.DAY_STARTS_AT, 24) * GameCalendar.HOUR_TICKS;
     }
+
+    @Test
+    void dueAt_runsAgainWhenTheClockWasSetBackBeforeTheLastRun() {
+        final JobWhen six = JobWhen.at(6);
+        final long ranOnALaterDay = clockAt(6) + 5 * GameCalendar.DAY_TICKS;
+
+        assertTrue(six.dueAt(clockAt(6), ranOnALaterDay));
+    }
 }

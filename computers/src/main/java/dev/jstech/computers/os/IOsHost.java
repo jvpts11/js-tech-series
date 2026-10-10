@@ -242,6 +242,15 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     default void markChanged() {
     }
 
+    /**
+     * Tells the world only that this machine's block has unsaved state, without writing the console onto its disks
+     * first. For progress that moves every tick: the next save of the block writes it, and the moments that need the
+     * disks to be current right now (a start, an end, a cancel) use {@link #markChanged()}.
+     */
+    default void markUnsaved() {
+        markChanged();
+    }
+
     /** The parts this machine is built from right now, or nothing when it is not built from parts. */
     @Nullable
     default ComputerBuild currentBuild() {

@@ -42,6 +42,7 @@ import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -159,11 +160,18 @@ public final class NextgreEngine implements INetworkEngine {
     @Override
     public ICraftPlanning planner(final MainframeBlockEntity core) {
         return new ICraftPlanning() {
+            /*
+             * What a weighing captures from the world does not depend on the item asked for, and a catalog asks
+             * for one plan per pattern: it is gathered once, on the first ask, and shared by the asks that follow.
+             */
+            private Gathered gathered;
+
             @Override
             public CraftPlanner.Plan plan(final StorageKey key, final long quantity,
                                           final List<CraftingPattern> patterns,
                                           final List<ProcessingPattern> machines, final Map<StorageKey, Long> stock) {
-                final NextgrePlanner.Candidate best = previewOf(core, key, quantity, false, patterns, machines, stock);
+                final NextgrePlanner.Candidate best = previewOf(gathered(key, quantity, false), key, quantity, false,
+                        patterns, machines, stock);
                 return best != null ? best.plan()
                         : ICraftPlanning.REFERENCE.plan(key, quantity, patterns, machines, stock);
             }
@@ -171,9 +179,18 @@ public final class NextgreEngine implements INetworkEngine {
             @Override
             public long maxFeasible(final StorageKey key, final long quantity, final List<CraftingPattern> patterns,
                                     final List<ProcessingPattern> machines, final Map<StorageKey, Long> stock) {
-                final NextgrePlanner.Candidate best = previewOf(core, key, quantity, true, patterns, machines, stock);
+                final NextgrePlanner.Candidate best = previewOf(gathered(key, quantity, true), key, quantity, true,
+                        patterns, machines, stock);
                 return best != null ? best.target()
                         : ICraftPlanning.REFERENCE.maxFeasible(key, quantity, patterns, machines, stock);
+            }
+
+            private Gathered gathered(final StorageKey key, final long quantity, final boolean partial) {
+                if (gathered == null) {
+                    gathered = gather(core, key, quantity, partial,
+                            new NextgreStatement(false, false, "", List.of()));
+                }
+                return gathered;
             }
         };
     }
@@ -345,16 +362,15 @@ public final class NextgreEngine implements INetworkEngine {
         nodes.add(new NextgrePlanView.Node(-1, -1, NextgrePlanView.SEEK, NextgreTexts.SEEK.with(name, quantity),
                 NextgreTexts.FROM.with(String.join(", ", seek.servers())), seek.ticks(), NextgrePlanView.UNKNOWN,
                 false, List.of()));
-        long left = quantity;
-        for (final NextgrePlanner.Source source : in.sources().getOrDefault(key, List.of())) {
-            if (left <= 0L) {
-                break;
-            }
-            final long take = Math.min(left, source.quantity());
-            left -= take;
-            nodes.add(new NextgrePlanView.Node(0, -1, NextgrePlanView.PULL, NextgreTexts.PULL.with(name, take),
-                    NextgreTexts.FROM.with(source.name()), NextgreCosts.pull(take, source.perTick(), source.latency()),
-                    NextgrePlanView.UNKNOWN, false, List.of()));
+        // The rows are the draws the SEEK total reckons, in its order, so the two always add up.
+        for (final NextgrePlanner.Draw draw : seek.draws()) {
+            nodes.add(new NextgrePlanView.Node(0, -1, NextgrePlanView.PULL, NextgreTexts.PULL.with(name, draw.amount()),
+                    NextgreTexts.FROM.with(draw.server()), draw.ticks(), NextgrePlanView.UNKNOWN, false, List.of()));
+        }
+        if (seek.uncovered() > 0L) {
+            nodes.add(new NextgrePlanView.Node(0, -1, NextgrePlanView.PULL,
+                    NextgreTexts.PULL.with(name, seek.uncovered()), NextgreTexts.HELD_NOWHERE.text(),
+                    seek.uncoveredTicks(), NextgrePlanView.UNKNOWN, false, List.of()));
         }
         final Text said = NextgreTexts.SEEK_PLANNED.with(quantity, name, Math.max(0, nodes.size() - 1),
                 seek.ticks());
@@ -394,7 +410,7 @@ public final class NextgreEngine implements INetworkEngine {
         final NextgreState state = state(core);
         final NextgrePlanView plan = state.plan(id);
         if (plan != null) {
-            state.remember(measuredOn(plan, craft, craft.finishedAt()), null);
+            state.replace(measuredOn(plan, craft, craft.finishedAt()));
         }
         state.settled(id);
         for (int i = 0; i < craft.plan().steps().size(); i++) {
@@ -448,13 +464,11 @@ public final class NextgreEngine implements INetworkEngine {
 
     /* The weighing a window's preview asks for, with no hints and the patterns it hands over. */
     @Nullable
-    private NextgrePlanner.Candidate previewOf(final MainframeBlockEntity core, final StorageKey key,
+    private NextgrePlanner.Candidate previewOf(final Gathered gathered, final StorageKey key,
                                                final long quantity, final boolean partial,
                                                final List<CraftingPattern> patterns,
                                                final List<ProcessingPattern> machines,
                                                final Map<StorageKey, Long> stock) {
-        final Gathered gathered = gather(core, key, quantity, partial,
-                new NextgreStatement(false, false, "", List.of()));
         if (gathered.inputs() == null) {
             return null;
         }
@@ -492,7 +506,7 @@ public final class NextgreEngine implements INetworkEngine {
         long benchSpeed = 0L;
         int lanes = 0;
         for (final BlockPos pos : core.craftingComputerPositions()) {
-            if (level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc && cc.canCraft()) {
+            if (Loaded.blockEntity(level, pos) instanceof CraftingComputerBlockEntity cc && cc.canCraft()) {
                 benchSpeed += cc.craftingThroughput();
                 lanes += cc.craftingThreads();
             }

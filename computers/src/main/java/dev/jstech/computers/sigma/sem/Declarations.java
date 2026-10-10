@@ -420,7 +420,7 @@ public final class Declarations {
     private void addMethod(final NamedType type, final IMemberSymbol.MethodSymbol method, final INode declaration) {
         for (final IMemberSymbol existing : type.members()) {
             if (existing instanceof IMemberSymbol.MethodSymbol other && other.name().equals(method.name())
-                    && this.sameParameters(other, method)) {
+                    && other.sameParameters(method)) {
                 this.diagnostics.error(declaration.line(), declaration.column(),
                         SigmaError.DUPLICATE_DECLARATION, method.describe());
                 return;
@@ -672,7 +672,7 @@ public final class Declarations {
                 if (member instanceof IMemberSymbol.MethodSymbol candidate
                         && !candidate.modifiers().contains(IDecl.Modifier.ABSTRACT)
                         && candidate.name().equals(wanted.name())
-                        && this.sameParameters(candidate, wanted)) {
+                        && candidate.sameParameters(wanted)) {
                     return true;
                 }
             }
@@ -688,7 +688,7 @@ public final class Declarations {
                 if (member instanceof IMemberSymbol.MethodSymbol candidate
                         && !candidate.isStatic()
                         && candidate.name().equals(method.name())
-                        && this.sameParameters(candidate, method)) {
+                        && candidate.sameParameters(method)) {
                     return candidate;
                 }
             }
@@ -737,23 +737,11 @@ public final class Declarations {
                     && candidate.owner().kind().classLike()
                     && candidate.name().equals(required.name())
                     && candidate.returnType().equals(required.returnType())
-                    && this.sameParameters(candidate, required)) {
+                    && candidate.sameParameters(required)) {
                 return true;
             }
         }
         return false;
-    }
-
-    private boolean sameParameters(final IMemberSymbol.MethodSymbol left, final IMemberSymbol.MethodSymbol right) {
-        if (left.parameters().size() != right.parameters().size()) {
-            return false;
-        }
-        for (int i = 0; i < left.parameters().size(); i++) {
-            if (!left.parameters().get(i).type().equals(right.parameters().get(i).type())) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /**

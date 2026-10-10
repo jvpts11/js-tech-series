@@ -122,7 +122,7 @@ class InteracScreenTest {
     @Test
     void tabAt_findsTheHeadingAColumnFallsOn() {
         assertEquals(0, InteracScreen.tabAt(2), "a column on the first heading is the first heading");
-        assertEquals(InteracState.TABS.length - 1,
+        assertEquals(InteracState.TABS.size() - 1,
                 InteracScreen.tabAt(InteracScreen.render(OPENING, data(1))
                         .get(InteracScreen.TAB_ROW).indexOf("Starred")),
                 "and the last is where it is drawn");
@@ -136,7 +136,7 @@ class InteracScreenTest {
 
         assertEquals(0, InteracScreen.keyAt(foot.indexOf("1Help")));
         assertEquals(1, InteracScreen.keyAt(foot.indexOf("2Get")));
-        assertEquals(InteracScreen.KEYS.length - 1, InteracScreen.keyAt(foot.indexOf("10Quit")));
+        assertEquals(InteracScreen.KEYS.size() - 1, InteracScreen.keyAt(foot.indexOf("10Quit")));
         assertEquals(-1, InteracScreen.keyAt(WIDE - 1), "past them all there is no key");
     }
 

@@ -66,6 +66,8 @@ public final class SoundfoundryCovers {
      * the same making rather than reading its recording a second time.
      */
     private static final Map<String, CompletableFuture<byte[]>> MAKING = new HashMap<>();
+    /* Raised each time the covers are forgotten, under the lock of MADE, so a cover made across that is not kept. */
+    private static int generation;
     /*
      * Covers are made one at a time on a thread of their own, with a short line of requests waiting: making one can
      * read a long recording, and a client asking for covers without end must not take the game's own workers or its
@@ -100,15 +102,19 @@ public final class SoundfoundryCovers {
      * thread.
      */
     public static byte[] cover(final String key) {
+        final int startedAt;
         synchronized (MADE) {
             final byte[] made = MADE.get(key);
             if (made != null) {
                 return made;
             }
+            startedAt = generation;
         }
         final byte[] made = make(key);
         synchronized (MADE) {
-            MADE.put(key, made);
+            if (startedAt == generation) {
+                MADE.put(key, made);
+            }
         }
         return made;
     }
@@ -151,6 +157,7 @@ public final class SoundfoundryCovers {
     /** Forgets the covers made, the catalogue having been read again. */
     public static void forget() {
         synchronized (MADE) {
+            generation++;
             MADE.clear();
         }
     }

@@ -22,6 +22,7 @@ import dev.jstech.computers.operation.payload.BusStatePayload;
 import dev.jstech.computers.operation.payload.CraftingView;
 import dev.jstech.computers.operation.payload.crafting.CraftingViews;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.multipart.IFacePart;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
@@ -29,6 +30,7 @@ import dev.jstech.core.menu.PlayerSlots;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
@@ -96,21 +98,63 @@ public abstract class AbstractBusMenu extends CoreMenu {
     public record Opening(BlockPos pos, Direction face, String name, HardwareEra era) {
 
         public void write(final FriendlyByteBuf buf) {
+            write(buf, AbstractBusPart.MAX_NAME_LENGTH);
+        }
+
+        /** Writes the opening with {@code maxName} as the longest name; the crafting interface shares this format. */
+        public void write(final FriendlyByteBuf buf, final int maxName) {
             buf.writeBlockPos(pos);
             buf.writeByte(face.get3DDataValue());
-            buf.writeUtf(name, AbstractBusPart.MAX_NAME_LENGTH);
+            buf.writeUtf(name, maxName);
             buf.writeVarInt(era.level());
         }
 
         public static Opening read(final FriendlyByteBuf buf) {
+            return read(buf, AbstractBusPart.MAX_NAME_LENGTH);
+        }
+
+        /** Reads an opening written with {@code maxName} as the longest name. */
+        public static Opening read(final FriendlyByteBuf buf, final int maxName) {
             return new Opening(buf.readBlockPos(), Direction.from3DDataValue(buf.readByte()),
-                    buf.readUtf(AbstractBusPart.MAX_NAME_LENGTH), HardwareEra.fromLevel(buf.readVarInt()));
+                    buf.readUtf(maxName), HardwareEra.fromLevel(buf.readVarInt()));
         }
 
         /** The opening of the window on {@code part}, on {@code cable}'s face {@code face}. */
         public static Opening of(final CableBlockEntity cable, final Direction face, final AbstractBusPart part) {
             return new Opening(cable.getBlockPos(), face, part.name(), part.era());
         }
+    }
+
+    /** The constructor of one kind of bus menu, which the shared factories below call. */
+    @FunctionalInterface
+    interface MenuMaker<P extends AbstractBusPart, M extends AbstractBusMenu> {
+
+        M make(int containerId, Inventory playerInventory, P part, Level level, Opening opening);
+    }
+
+    /*
+     * The menu on the server, for the part of kind {@code kind} on {@code face} of {@code cable}. A part gone from the
+     * face leaves a window on a stand-in, which its validity closes at once.
+     */
+    static <P extends AbstractBusPart, M extends AbstractBusMenu> M open(
+            final int containerId, final Inventory playerInventory, final CableBlockEntity cable,
+            final Direction face, final Class<P> kind, final Function<HardwareEra, P> standIn,
+            final MenuMaker<P, M> maker) {
+        final P part = kind.isInstance(cable.getPart(face)) ? kind.cast(cable.getPart(face))
+                : standIn.apply(HardwareEra.STANDARD);
+        return maker.make(containerId, playerInventory, part, cable.getLevel(), Opening.of(cable, face, part));
+    }
+
+    /* The menu on the player's game, made from what the server wrote when it opened. */
+    static <P extends AbstractBusPart, M extends AbstractBusMenu> M openFromNetwork(
+            final int containerId, final Inventory playerInventory, final FriendlyByteBuf buf, final Class<P> kind,
+            final Function<HardwareEra, P> standIn, final MenuMaker<P, M> maker) {
+        final Opening opening = Opening.read(buf);
+        final Level level = playerInventory.player.level();
+        final P part = level.getBlockEntity(opening.pos()) instanceof CableBlockEntity cable
+                && kind.isInstance(cable.getPart(opening.face())) ? kind.cast(cable.getPart(opening.face()))
+                : standIn.apply(opening.era());
+        return maker.make(containerId, playerInventory, part, level, opening);
     }
 
     /** The era of the bus, which decides its rows; its window's skin comes with its state. */
@@ -267,8 +311,8 @@ public abstract class AbstractBusMenu extends CoreMenu {
      * still mounted on {@code face} of it: a part swapped out (or picked off) from under an open menu closes it,
      * rather than going on editing a bus that is no longer there.
      */
-    private static Predicate<Player> validity(final Level level, final BlockPos cablePos, final Direction face,
-                                              final AbstractBusPart part) {
+    static Predicate<Player> validity(final Level level, final BlockPos cablePos, final Direction face,
+                                      final IFacePart part) {
         return MenuValidity.near(level, cablePos, REACH_BLOCKS)
                 .and(player -> level.getBlockEntity(cablePos) instanceof CableBlockEntity cable
                         && cable.getPart(face) == part);

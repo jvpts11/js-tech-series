@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.sigma.pack;
 
+import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -39,6 +40,12 @@ public record Packed(Manifest manifest, Map<String, String> files) {
      */
     private static final String ESCAPE = "\\";
 
+    /**
+     * What follows the name on a file's first line when its text does not end in a newline. Without it every
+     * body would come back with a newline the file never had.
+     */
+    private static final String NO_FINAL_NEWLINE = " \\";
+
     /** The extension a built package is written under. */
     public static final String EXTENSION = ".cpk";
 
@@ -47,6 +54,8 @@ public record Packed(Manifest manifest, Map<String, String> files) {
             "%s: %s is named but not in the package");
     private static final TextKey PACKED_NOT_NAMED = TextKey.of("jsc.sigma.packed.packed_not_named",
             "%s: %s is in the package but not named");
+    private static final TextKey UNSAFE_FILE_NAME = TextKey.of("jsc.sigma.packed.unsafe_file_name",
+            "%s: %s is not a file name a package may carry; it must stay inside the package's own folder");
 
     public Packed {
         files = new LinkedHashMap<>(files);
@@ -62,9 +71,10 @@ public record Packed(Manifest manifest, Map<String, String> files) {
         final StringBuilder text = new StringBuilder(HEAD).append('\n');
         text.append(this.manifest.write());
         for (final Map.Entry<String, String> file : this.files.entrySet()) {
-            text.append(MARK).append(file.getKey()).append('\n');
+            final boolean endsWithNewline = file.getValue().endsWith("\n");
+            text.append(MARK).append(file.getKey()).append(endsWithNewline ? "" : NO_FINAL_NEWLINE).append('\n');
             text.append(escaped(file.getValue()));
-            if (!file.getValue().endsWith("\n")) {
+            if (!endsWithNewline) {
                 text.append('\n');
             }
         }
@@ -90,12 +100,15 @@ public record Packed(Manifest manifest, Map<String, String> files) {
         }
     }
 
-    /** Reads one back, or null when the text is not a package at all. */
+    /** Reads one back, or null when the text is not a package at all or names one file twice. */
     public static Packed read(final String text) {
-        if (text == null || !text.startsWith(HEAD)) {
+        if (text == null) {
             return null;
         }
         final String[] lines = text.split("\n", -1);
+        if (!lines[0].trim().equals(HEAD)) {
+            return null;
+        }
         /*
          * A text ending in a newline splits with an empty piece after it. That piece is the end of the
          * last line, not a blank line of its own, and counting it would grow every package by one line
@@ -105,14 +118,20 @@ public record Packed(Manifest manifest, Map<String, String> files) {
         final StringBuilder head = new StringBuilder();
         final Map<String, String> files = new LinkedHashMap<>();
         String name = null;
+        boolean noFinalNewline = false;
         StringBuilder body = null;
         for (int i = 1; i < last; i++) {
             final String line = lines[i];
             if (line.startsWith(MARK)) {
-                if (name != null) {
-                    files.put(name, body.toString());
+                if (name != null && !finished(files, name, body, noFinalNewline)) {
+                    return null;
                 }
-                name = line.substring(MARK.length()).trim();
+                String header = line.substring(MARK.length());
+                noFinalNewline = header.endsWith(NO_FINAL_NEWLINE);
+                if (noFinalNewline) {
+                    header = header.substring(0, header.length() - NO_FINAL_NEWLINE.length());
+                }
+                name = header.trim();
                 body = new StringBuilder();
                 continue;
             }
@@ -122,8 +141,8 @@ public record Packed(Manifest manifest, Map<String, String> files) {
                 body.append(line.startsWith(ESCAPE) ? line.substring(ESCAPE.length()) : line).append('\n');
             }
         }
-        if (name != null) {
-            files.put(name, body.toString());
+        if (name != null && !finished(files, name, body, noFinalNewline)) {
+            return null;
         }
         return new Packed(Manifest.read(head.toString()), files);
     }
@@ -150,12 +169,39 @@ public record Packed(Manifest manifest, Map<String, String> files) {
             if (!this.manifest.files().contains(held)) {
                 found.add(PACKED_NOT_NAMED.with("files", held));
             }
+            if (!isSafeFileName(held)) {
+                found.add(UNSAFE_FILE_NAME.with("files", held));
+            }
         }
         return found;
+    }
+
+    /**
+     * Whether a file of a package may be written under the package's own folder: a relative path of plain names
+     * that stays inside it. A name that climbs out ({@code ..}), starts at a root, or carries a drive or a
+     * backslash would put the file where another program's files or the system's own live.
+     */
+    public static boolean isSafeFileName(final String name) {
+        if (name == null || name.isEmpty() || name.indexOf('\\') >= 0 || name.indexOf(':') >= 0) {
+            return false;
+        }
+        for (final String segment : name.split("/", -1)) {
+            if (segment.equals(".") || segment.equals("..") || segment.isBlank() || !FsPaths.isValidName(segment)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** How much disk this takes, in the same characters the filesystem weighs. */
     public int size() {
         return this.write().length();
+    }
+
+    /** Files a finished body under its name, or says false when that name already has one. */
+    private static boolean finished(final Map<String, String> files, final String name, final StringBuilder body,
+                                    final boolean noFinalNewline) {
+        final String text = noFinalNewline ? body.substring(0, body.length() - 1) : body.toString();
+        return files.putIfAbsent(name, text) == null;
     }
 }

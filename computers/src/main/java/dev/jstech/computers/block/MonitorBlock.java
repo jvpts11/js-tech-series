@@ -48,7 +48,6 @@ import dev.jstech.core.content.Device;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.DeviceBlock;
-import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.text.GameText;

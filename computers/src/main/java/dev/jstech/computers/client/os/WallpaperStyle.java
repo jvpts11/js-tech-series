@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdeScheme;
 import dev.jstech.computers.gui.CdeStyle;
 import java.util.ArrayList;
@@ -154,6 +155,6 @@ public enum WallpaperStyle {
     }
 
     private static ResourceLocation texture(final String name) {
-        return ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/wallpaper/" + name + ".png");
+        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/wallpaper/" + name + ".png");
     }
 }

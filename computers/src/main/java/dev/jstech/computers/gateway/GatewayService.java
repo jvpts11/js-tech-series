@@ -44,9 +44,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -81,10 +83,6 @@ public final class GatewayService {
     private static final String CHEMICAL_PREFIX = "chemical/";
     private static final int WHAT_LENGTH = GatewayLog.TEXT_LENGTH;
 
-    /** The file calls that change what is on a disk rather than only reading it. */
-    private static final List<String> WRITES_FILES =
-            List.of("Write", "Append", "Delete", "MkDir", "Put", "MakeDir", "Remove");
-
     /** A list the other side asks for, priced as a program's read is, by how many rows it brings back. */
     private static final CallCost ROWS = CallCost.perRow(SigmaCosts.READ);
 
@@ -95,6 +93,12 @@ public final class GatewayService {
     private static final TextKey NO_PATTERN = TextKey.of("jsc.service.gateway.no_pattern", "no pattern crafts %s");
     private static final TextKey WOULD_NOT_STOP = TextKey.of("jsc.service.gateway.would_not_stop", "would not stop");
     private static final TextKey NOT_RUNNING = TextKey.of("jsc.service.gateway.not_running", "not running");
+    private static final TextKey AMBIGUOUS_ID = TextKey.of("jsc.service.gateway.ambiguous_id",
+            "more than one operation starts with %s; give more of the id");
+    private static final TextKey LOG_RETURN_TO_BUFFER =
+            TextKey.of("jsc.service.gateway.log.return_to_buffer", "return to buffer");
+    private static final TextKey LOG_DROPPED =
+            TextKey.of("jsc.service.gateway.log.dropped", "buffer full, %s dropped at the Gateway");
     /* How a request went, as the Gateway's log shows it. */
     private static final TextKey LOG_STOPPED = TextKey.of("jsc.service.gateway.log.stopped", "stopped");
     private static final TextKey LOG_PROCESS = TextKey.of("jsc.service.gateway.log.process", "process %s");
@@ -347,12 +351,12 @@ public final class GatewayService {
         }
         final NetworkInsertOperation op = mainframe().networkOperations().push(key, taken, label(caller));
         if (op == null) {
-            returnToBuffer(key, taken);
+            returnToBuffer(key, taken, caller.label());
             throw denied(caller, what, COULD_NOT_START.with("INSERT"));
         }
         op.setPriority(priorityOf(priority));
         op.onSettle(() -> {
-            returnToBuffer(key, op.leftover());
+            returnToBuffer(key, op.leftover(), caller.label());
             settled(caller, op);
         });
         return started(caller, what, op, SigmaCosts.SUBMIT);
@@ -389,17 +393,20 @@ public final class GatewayService {
         read(caller, "operation " + id);
         charge(SigmaCosts.READ);
         final MainframeBlockEntity mainframe = mainframe();
-        for (final INetworkOperation live : mainframe.liveOperations()) {
-            if (matches(live.operationId(), id)) {
-                return luaTable(live.liveRecord());
-            }
-        }
+        final List<INetworkOperation> lives = liveMatching(mainframe, id);
+        final List<OperationRecord> records = new ArrayList<>();
         for (final OperationRecord record : mainframe.recentOperations()) {
             if (matches(record.id(), id)) {
-                return luaTable(record);
+                records.add(record);
             }
         }
-        return null;
+        if (lives.size() + records.size() > 1) {
+            throw denied(caller, "operation " + id, AMBIGUOUS_ID.with(id));
+        }
+        if (!lives.isEmpty()) {
+            return luaTable(lives.get(0).liveRecord());
+        }
+        return records.isEmpty() ? null : luaTable(records.get(0));
     }
 
     /** Every operation in flight on the network. */
@@ -419,13 +426,16 @@ public final class GatewayService {
         operations(caller, what);
         charge(SigmaCosts.SUBMIT);
         final MainframeBlockEntity mainframe = mainframe();
-        for (final INetworkOperation live : mainframe.liveOperations()) {
-            if (matches(live.operationId(), id)) {
-                final boolean stopped = mainframe.cancelOperation(live.operationId());
-                gateway.logged(caller.label(), what, (stopped ? LOG_STOPPED : WOULD_NOT_STOP).text(),
-                        stopped ? GatewayLog.Tone.OK : GatewayLog.Tone.BUSY);
-                return stopped;
-            }
+        final List<INetworkOperation> lives = liveMatching(mainframe, id);
+        if (lives.size() > 1) {
+            throw denied(caller, what, AMBIGUOUS_ID.with(id));
+        }
+        if (!lives.isEmpty()) {
+            final UUID live = lives.get(0).operationId();
+            final boolean stopped = mainframe.cancelOperation(live);
+            gateway.logged(caller.label(), what, (stopped ? LOG_STOPPED : WOULD_NOT_STOP).text(),
+                    stopped ? GatewayLog.Tone.OK : GatewayLog.Tone.BUSY);
+            return stopped;
         }
         gateway.logged(caller.label(), what, NOT_RUNNING.text(), GatewayLog.Tone.BUSY);
         return false;
@@ -591,13 +601,40 @@ public final class GatewayService {
         }).text();
     }
 
-    private void returnToBuffer(final StorageKey key, final long amount) {
-        long left = amount;
-        final ItemStackHandler buffer = gateway.buffer();
-        for (int slot = 0; slot < buffer.getSlots() && left > 0L; slot++) {
-            final int batch = (int) Math.min(left, key.prototype().getMaxStackSize());
-            left -= batch - buffer.insertItem(slot, key.stack(batch), false).getCount();
+    /**
+     * Puts items that left the buffer for the network back into it. The buffer may have refilled while they were
+     * away, so whatever no longer fits is dropped at the Gateway and logged rather than lost.
+     */
+    public static void returnToBuffer(final ServerLevel level, final NetworkGatewayBlockEntity gateway,
+                               final StorageKey key, final long amount, final String by) {
+        long left = amount - new BufferSink(gateway.buffer()).insert(key, amount, false);
+        if (left <= 0L) {
+            return;
         }
+        final long dropped = left;
+        final BlockPos at = gateway.getBlockPos();
+        final int max = Math.max(1, key.prototype().getMaxStackSize());
+        while (left > 0L) {
+            final int batch = (int) Math.min(left, max);
+            Containers.dropItemStack(level, at.getX() + 0.5D, at.getY() + 1.0D, at.getZ() + 0.5D, key.stack(batch));
+            left -= batch;
+        }
+        gateway.logged(by, LOG_RETURN_TO_BUFFER.text(), LOG_DROPPED.with(dropped), GatewayLog.Tone.BUSY);
+    }
+
+    private void returnToBuffer(final StorageKey key, final long amount, final String by) {
+        returnToBuffer(level, gateway, key, amount, by);
+    }
+
+    /** The live operations an id or a prefix of one names; one entry when it is unambiguous. */
+    private List<INetworkOperation> liveMatching(final MainframeBlockEntity mainframe, final String id) {
+        final List<INetworkOperation> found = new ArrayList<>();
+        for (final INetworkOperation live : mainframe.liveOperations()) {
+            if (matches(live.operationId(), id)) {
+                found.add(live);
+            }
+        }
+        return found;
     }
 
     private static boolean matches(final UUID id, final String asked) {

@@ -101,7 +101,7 @@ final class InstructionExecutor {
             case LDELEM -> this.objects.loadElement(frame, line);
             case STELEM -> this.objects.storeElement(frame, line);
             case LDLEN -> frame.push(this.objects.array(frame.pop(), line).length());
-            case DISPOSE -> this.heap.dispose(frame.pop(), line);
+            case DISPOSE -> this.heap.dispose(frame.pop());
             case MONITOR_ENTER -> this.enterMonitor(thread, frame, line);
             case MONITOR_EXIT -> this.exitMonitor(thread, frame, line);
             case CASTCLASS -> frame.push(this.types.cast(frame.pop(),

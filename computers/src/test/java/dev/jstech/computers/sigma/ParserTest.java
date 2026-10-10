@@ -448,6 +448,18 @@ class ParserTest {
     }
 
     @Test
+    void parse_keepsTheMadeMembersWhenTheBodyWritesOnlyOverloadsOfThem() {
+        final SigmaFrontEnd.Result result = parse("record P(int X, int Y) { public P(string a, string b) { } "
+                + "public bool Equals(int a, int b) { return true; } "
+                + "public string ToString(string f) { return f; } }");
+        assertEquals(List.of(), codes(result));
+        final IDecl.ClassDecl type = (IDecl.ClassDecl) result.unit().type("P");
+        assertEquals(2, type.members().stream().filter(m -> m instanceof IDecl.ConstructorDecl).count());
+        assertEquals(2, type.members().stream().filter(m -> m.name().equals("Equals")).count());
+        assertEquals(2, type.members().stream().filter(m -> m.name().equals("ToString")).count());
+    }
+
+    @Test
     void parse_readsATypeDeclaredInsideAnother() {
         final SigmaFrontEnd.Result result = parse("class Outer { public class Inner { int v; } enum Kind { A } int n; }");
         assertEquals(List.of(), codes(result));

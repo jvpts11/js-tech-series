@@ -47,7 +47,7 @@ public final class PrintedPaperFrames {
         if (!document.isPicture()) {
             return;
         }
-        final PrintedPaperScreen.SheetColours colours = PrintedPaperScreen.colours();
+        final PrintedPaperColours.SheetColours colours = PrintedPaperColours.get();
         final PrinterModel model = document.printerModel();
         final boolean fanfold = model != null && model.sheet() == PrinterModel.Sheet.FANFOLD;
         final PrintedPictureTextures.Entry framed = PrintedPictureTextures.framed(document,

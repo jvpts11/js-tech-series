@@ -31,11 +31,6 @@ public record IqlUpdate(UpdateAction action, int offer, String name, String with
         with = with == null ? "" : with;
     }
 
-    /** An action that needs nothing more said: SMELT, a REPAIR with whatever mends the item. */
-    public static IqlUpdate of(final UpdateAction action) {
-        return new IqlUpdate(action, NO_OFFER, "", "");
-    }
-
     /** Whether an offer was named. */
     public boolean hasOffer() {
         return offer != NO_OFFER;

@@ -20,12 +20,14 @@ import dev.jstech.tests.testkit.CraftingRig;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -67,54 +69,17 @@ public final class FusionReactorBuildGameTests {
         return Block.byItem(gen(path));
     }
 
-    private static CraftingPattern bench(final String layout, final Map<Character, Item> keys, final Item result, final int count) {
-        final List<ItemStack> grid = new ArrayList<>(CraftingPattern.GRID_SIZE);
-        for (int i = 0; i < CraftingPattern.GRID_SIZE; i++) {
-            final char c = layout.charAt(i);
-            grid.add(c == ' ' ? ItemStack.EMPTY : new ItemStack(keys.get(c)));
-        }
-        return new CraftingPattern(grid, new ItemStack(result, count));
-    }
-
-    private static ProcessingPattern infuse(final Item in, final Item extra, final long extraCount, final Item out) {
-        return new ProcessingPattern(
-                List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(in), 1),
-                        new ProcessingPattern.ProcessingInput(StorageKey.of(extra), extraCount)),
-                List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(out), 1, 100)),
-                400);
-    }
-
     /**
      * Loads every recipe of the shell: the five machine patterns into the infuser's interface, the nine bench ones
      * into the cards' ROM, which takes two cards more than the one the computer has.
      */
     private static void loadRecipes(final GameTestHelper helper, final TestWorldBuilder world,
                                     final CraftingComputerBlockEntity cc) {
-        final Item frame = gen("fusion_reactor_frame");
-        final Item atomic = mek("alloy_atomic");
-        final Item ultimate = mek("ultimate_control_circuit");
-        final ProcessingPattern[] machines = {
-                infuse(Items.COPPER_INGOT, Items.REDSTONE, 1, mek("alloy_infused")),
-                infuse(mek("alloy_infused"), mek("dust_diamond"), 2, mek("alloy_reinforced")),
-                infuse(mek("alloy_reinforced"), mek("dust_refined_obsidian"), 4, atomic),
-                infuse(mek("ingot_osmium"), Items.REDSTONE, 2, mek("basic_control_circuit")),
-                infuse(Items.IRON_INGOT, Items.COAL, 1, mek("enriched_iron"))};
-        for (final ProcessingPattern machine : machines) {
+        for (final ProcessingPattern machine : MekanismRig.shellMachines()) {
             MekanismRig.hold(world, NetworkRecipe.ofProcessing(machine));
         }
         CraftingRig.addCards(cc, 2);
-        final CraftingPattern[] benches = {
-                bench("A#A#X#A#A", Map.of('A', atomic, '#', mek("pellet_polonium"), 'X', mek("steel_casing")), frame, 4),
-                bench("ACA      ", Map.of('A', atomic, 'C', mek("elite_control_circuit")), ultimate, 1),
-                bench("ACA      ", Map.of('A', mek("alloy_reinforced"), 'C', mek("advanced_control_circuit")), mek("elite_control_circuit"), 1),
-                bench("ACA      ", Map.of('A', mek("alloy_infused"), 'C', mek("basic_control_circuit")), mek("advanced_control_circuit"), 1),
-                bench("AOAO OAOA", Map.of('A', mek("alloy_infused"), 'O', mek("ingot_osmium")), mek("basic_chemical_tank"), 1),
-                bench("CGCFTFFFF", Map.of('C', ultimate, 'G', Items.GLASS_PANE, 'F', frame, 'T', mek("basic_chemical_tank")),
-                        gen("fusion_reactor_controller"), 1),
-                bench(" F FCF F ", Map.of('F', frame, 'C', ultimate), gen("fusion_reactor_port"), 2),
-                bench(" R RFR R ", Map.of('F', frame, 'R', Items.REDSTONE), gen("fusion_reactor_logic_adapter"), 1),
-                bench("SISIGISIS", Map.of('S', mek("enriched_iron"), 'I', mek("ingot_lead"), 'G', Items.GLASS), gen("reactor_glass"), 4)};
-        for (final CraftingPattern pattern : benches) {
+        for (final CraftingPattern pattern : MekanismRig.shellBenches()) {
             helper.assertTrue(cc.loadPattern(pattern), "bench pattern must load");
         }
     }
@@ -124,7 +89,7 @@ public final class FusionReactorBuildGameTests {
      * controller's and ports' surplus frames feed the next part, and the 51 frames of the shell itself are one
      * request of their own, so 17 frame crafts (68 frames) cover the 66 used and two frames are left over.
      */
-    private static void seedRawStock(final ITestWorldBuilderSeed seed) {
+    private static void seedRawStock(final IStockSeeder seed) {
         seed.put(Items.COPPER_INGOT, 96);           // 76 atomic + 8 (elite) + 8 (advanced) + 4 (tank) infused alloys
         seed.put(Items.REDSTONE, 112);              // 96 infusions + 4 basic circuits x2 + 2 adapters x4
         seed.put(mek("dust_diamond"), 168);         // 84 reinforced x2
@@ -139,7 +104,8 @@ public final class FusionReactorBuildGameTests {
         seed.put(Items.GLASS_PANE, 1);
     }
 
-    private interface ITestWorldBuilderSeed {
+    /** Puts raw stock into the network's storage. */
+    private interface IStockSeeder {
         void put(Item item, int count);
     }
 
@@ -227,7 +193,7 @@ public final class FusionReactorBuildGameTests {
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     MekanismRig.mountBuses(helper);
                     MekanismRig.mountBottomInputRouter(helper);
-                    seedRawStock((item, count) -> rig.net().seed(item, count));
+                    seedRawStock(rig.net()::seed);
                     loadRecipes(helper, rig.world(), rig.net().cc());
                 })
                 /*
@@ -240,7 +206,7 @@ public final class FusionReactorBuildGameTests {
                     }
                     MekanismRig.power(helper);
                     if (current[0] != null && !current[0].isDone()) {
-                        throw new net.minecraft.gametest.framework.GameTestAssertException("still crafting " + order.get(next[0] - 1)
+                        throw new GameTestAssertException("still crafting " + order.get(next[0] - 1)
                                 + ": " + rig.net().mainframe().activeOperationRecords());
                     }
                     if (current[0] != null && current[0].toRecord().status() != OperationRecord.STATUS_COMPLETED) {
@@ -254,7 +220,7 @@ public final class FusionReactorBuildGameTests {
                         if (current[0] == null) {
                             // The storage index catches up with the seeded stock over a few ticks: retry briefly.
                             if (++planAttempts[0] < 40) {
-                                throw new net.minecraft.gametest.framework.GameTestAssertException("planning " + item);
+                                throw new GameTestAssertException("planning " + item);
                             }
                             failure[0] = "the Mainframe must plan " + item + " x" + parts.get(item) + " from the raw stock; stock="
                                     + rig.net().storage(helper.getLevel()).query() + " recipes=" + rig.net().mainframe().networkMachineRecipes().size()
@@ -263,7 +229,7 @@ public final class FusionReactorBuildGameTests {
                         }
                         planAttempts[0] = 0;
                         next[0]++;
-                        throw new net.minecraft.gametest.framework.GameTestAssertException("crafting " + item);
+                        throw new GameTestAssertException("crafting " + item);
                     }
                 })
                 .thenExecute(() -> helper.assertTrue(failure[0] == null, String.valueOf(failure[0])))
@@ -273,8 +239,9 @@ public final class FusionReactorBuildGameTests {
                         final long have = storage.count(part.getKey());
                         helper.assertTrue(have >= part.getValue(), part.getKey() + ": need " + part.getValue() + ", have " + have
                                 + " stock=" + storage.query() + " recent=" + rig.net().mainframe().recentOperations()
-                                + " dropped=" + helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
-                                        net.minecraft.world.phys.AABB.encapsulatingFullBlocks(helper.absolutePos(new BlockPos(0, 0, 0)), helper.absolutePos(new BlockPos(16, 8, 16)))).size());
+                                + " dropped=" + helper.getLevel().getEntitiesOfClass(ItemEntity.class,
+                                        AABB.encapsulatingFullBlocks(helper.absolutePos(new BlockPos(0, 0, 0)),
+                                                helper.absolutePos(new BlockPos(16, 8, 16)))).size());
                     }
                     // Take the parts out of the network and build the shell.
                     int placed = 0;

@@ -340,13 +340,8 @@ final class PosixFileCommands {
                 ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
-            final String dest = ctx.arg(1);
-            // A bare new name (no slash, no path form) is a rename; anything else moves into a directory.
-            final boolean rename = !dest.contains("/") && !dest.startsWith("~") && !dest.equals(".")
-                    && !dest.equals("..");
-            final ICliComputer.FsResult result = rename
-                    ? ctx.computer().renamePath(dos(ctx, ctx.arg(0)), dest)
-                    : ctx.computer().movePath(dos(ctx, ctx.arg(0)), dos(ctx, dest));
+            // An existing directory takes the source in; anything else is the new path, read from where we stand.
+            final ICliComputer.FsResult result = ctx.computer().moveTo(dos(ctx, ctx.arg(0)), dos(ctx, ctx.arg(1)));
             if (!result.ok()) {
                 ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
             }

@@ -64,6 +64,7 @@ final class FileCalls {
         file(bindings, "List", (files, call, target, arguments, line) -> {
             final Values.ListValue names = new Values.ListValue();
             names.items().addAll(files.list(path(arguments)));
+            call.rows(names.items().size());
             return names;
         }, STRING);
         file(bindings, "Move", (files, call, target, arguments, line) -> files.move(path(arguments), text(arguments)),

@@ -12,7 +12,6 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.os.media.MediaItem;
@@ -21,12 +20,12 @@ import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -143,8 +142,7 @@ public final class OsGameTests {
                             "Mainframe must start with no OS");
 
                     // Run the server-side install logic directly (no client packet needed in a GameTest).
-                    final ServerLevel level = helper.getLevel();
-                    FirmwarePayloads.installOsFromLinkedReader(level, helper.absolutePos(mainframePos));
+                    helper.assertTrue(mainframe.installOs(MC_DOS), "the guided system must fit the disk");
 
                     // The OS must now be installed.
                     helper.assertTrue(mainframe.hasOs(),
@@ -234,7 +232,7 @@ public final class OsGameTests {
 
         // Place a running Mainframe WITH an OS (the standard test setup).
         final MainframeBlockEntity mainframe =
-                NetworkGameTests.placeRunningMainframe(helper, mainframePos);
+                TestWorldBuilder.forGameTest(helper).placeRunningMainframe(mainframePos);
         TestCables.lay(helper, cablePos, ComputingModule.HBW_CABLE);
 
         // Place a Server Router (Category B, no OS concept).

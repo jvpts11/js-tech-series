@@ -64,16 +64,7 @@ public final class ManPage {
         if (!command.usage().isEmpty()) {
             page.add(new Section(Heading.SYNOPSIS, List.of(synopsis(command, CliStyle.PLAIN))));
         }
-        if (!command.description().isEmpty()) {
-            final List<CliLine> lines = new ArrayList<>();
-            for (final Text paragraph : command.description()) {
-                if (!lines.isEmpty()) {
-                    lines.add(CliLine.plain(""));
-                }
-                lines.add(CliLine.plain(paragraph));
-            }
-            page.add(new Section(Heading.DESCRIPTION, lines));
-        }
+        addDescription(page, command.description());
         if (!command.options().isEmpty()) {
             final List<CliLine> lines = new ArrayList<>();
             for (final ICliCommand.Option option : command.options()) {
@@ -92,9 +83,7 @@ public final class ManPage {
             }
             page.add(new Section(Heading.EXAMPLES, lines));
         }
-        if (!command.seeAlso().isEmpty()) {
-            page.add(new Section(Heading.SEE_ALSO, List.of(CliLine.plain(String.join(", ", command.seeAlso())))));
-        }
+        addSeeAlso(page, command.seeAlso());
         return page;
     }
 
@@ -115,19 +104,8 @@ public final class ManPage {
                                         final List<String> seeAlso) {
         final List<Section> page = new ArrayList<>();
         page.add(new Section(Heading.NAME, List.of(CliLine.of(CliSpan.plain(name + " - "), CliSpan.plain(summary)))));
-        if (!description.isEmpty()) {
-            final List<CliLine> lines = new ArrayList<>();
-            for (final Text paragraph : description) {
-                if (!lines.isEmpty()) {
-                    lines.add(CliLine.plain(""));
-                }
-                lines.add(CliLine.plain(paragraph));
-            }
-            page.add(new Section(Heading.DESCRIPTION, lines));
-        }
-        if (!seeAlso.isEmpty()) {
-            page.add(new Section(Heading.SEE_ALSO, List.of(CliLine.plain(String.join(", ", seeAlso)))));
-        }
+        addDescription(page, description);
+        addSeeAlso(page, seeAlso);
         return page;
     }
 
@@ -135,6 +113,28 @@ public final class ManPage {
     public static List<CliLine> topicLines(final String name, final Text summary, final List<Text> description,
                                            final List<String> seeAlso, final boolean upperHeadings) {
         return sectionLines(ofTopic(name, summary, description, seeAlso), upperHeadings);
+    }
+
+    /** The DESCRIPTION section, paragraphs apart by a blank line; no section at all when there is nothing to say. */
+    private static void addDescription(final List<Section> page, final List<Text> paragraphs) {
+        if (paragraphs.isEmpty()) {
+            return;
+        }
+        final List<CliLine> lines = new ArrayList<>();
+        for (final Text paragraph : paragraphs) {
+            if (!lines.isEmpty()) {
+                lines.add(CliLine.plain(""));
+            }
+            lines.add(CliLine.plain(paragraph));
+        }
+        page.add(new Section(Heading.DESCRIPTION, lines));
+    }
+
+    /** The SEE ALSO section, one line of names; no section at all when there are none. */
+    private static void addSeeAlso(final List<Section> page, final List<String> names) {
+        if (!names.isEmpty()) {
+            page.add(new Section(Heading.SEE_ALSO, List.of(CliLine.plain(String.join(", ", names)))));
+        }
     }
 
     /** Either page's sections, set in under their headings. */
@@ -176,9 +176,14 @@ public final class ManPage {
      * it, in English, since the machine does not know whose language the word was typed in.
      */
     public static boolean answersTo(final ICliCommand command, final String text) {
+        return matches(command.name(), command.summary(), text);
+    }
+
+    /** The one rule behind {@code apropos}, for commands and topics alike: the word is in the name or summary. */
+    public static boolean matches(final String name, final Text summary, final String text) {
         final String wanted = text.toLowerCase(Locale.ROOT);
-        return command.name().toLowerCase(Locale.ROOT).contains(wanted)
-                || command.summary().english().toLowerCase(Locale.ROOT).contains(wanted);
+        return name.toLowerCase(Locale.ROOT).contains(wanted)
+                || summary.english().toLowerCase(Locale.ROOT).contains(wanted);
     }
 
     /** The parts a page has, in the order it has them. */

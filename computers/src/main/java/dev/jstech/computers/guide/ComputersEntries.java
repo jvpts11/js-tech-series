@@ -8,7 +8,9 @@
 package dev.jstech.computers.guide;
 
 import static dev.jstech.computers.guide.ComputersGuide.blocksOf;
+import static dev.jstech.computers.guide.ComputersGuide.cablesOn;
 import static dev.jstech.computers.guide.ComputersGuide.itemsOf;
+import static dev.jstech.computers.guide.ComputersGuide.partsOf;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
@@ -30,6 +32,7 @@ import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.block.SubwooferBlock;
 import dev.jstech.computers.block.TankBlock;
+import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.ClusterInterfaceCardItem;
@@ -51,9 +54,8 @@ import dev.jstech.computers.item.SoundCardItem;
 import dev.jstech.computers.item.WorkshopCardItem;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaReaderBlock;
+import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.guide.ModGuide;
-import java.util.List;
-import net.minecraft.world.level.ItemLike;
 
 /**
  * The entries of J's Computers' chapter, written as a guide reads: what a computer is here and how to build one first,
@@ -701,13 +703,7 @@ final class ComputersEntries {
                                 + " a router of the newer era.")
                 .register();
         guide.page("data_cables", section).titled("Data cables").icon(() -> ComputingModule.ETHERNET_CABLE)
-                .coversAll(() -> List.<ItemLike>of(ComputingModule.THIN_COAX_CABLE, ComputingModule.ETHERNET_CABLE,
-                        ComputingModule.CAT5E_CABLE, ComputingModule.GIGABIT_CABLE, ComputingModule.CAT6A_CABLE,
-                        ComputingModule.THICK_COAX_CABLE, ComputingModule.HBW_CABLE, ComputingModule.CX4_CABLE,
-                        ComputingModule.FIBRE_CABLE, ComputingModule.OM5_CABLE, ComputingModule.TELEPHONE_LINE,
-                        ComputingModule.LEASED_LINE, ComputingModule.T3_LINE, ComputingModule.VLDC_CABLE,
-                        ComputingModule.DARK_FIBRE_CABLE, ComputingModule.INFINIBAND_CABLE,
-                        ComputingModule.HPC_CABLE, ComputingModule.OSFP_CABLE))
+                .coversAll(cablesOn(GridKind.DATA, ComputingModule.CRAFTING_CABLE))
                 .paragraph("The data cables are the network itself. They come in lines by the job they do, and each"
                         + " line has one cable for every era it exists in:")
                 .table("The lines")
@@ -927,15 +923,8 @@ final class ComputersEntries {
                         "Add disks or servers. A newer era's disks hold more.")
                 .register();
         guide.page("buses", section).titled("Buses").icon(ComputingModule.IMPORT_BUS_ITEM)
-                .coversAll(() -> List.<ItemLike>of(ComputingModule.VINTAGE_IMPORT_BUS_ITEM,
-                        ComputingModule.LEGACY_IMPORT_BUS_ITEM, ComputingModule.TRANSITION_IMPORT_BUS_ITEM,
-                        ComputingModule.IMPORT_BUS_ITEM, ComputingModule.ADVANCED_IMPORT_BUS_ITEM,
-                        ComputingModule.VINTAGE_EXPORT_BUS_ITEM, ComputingModule.LEGACY_EXPORT_BUS_ITEM,
-                        ComputingModule.TRANSITION_EXPORT_BUS_ITEM, ComputingModule.EXPORT_BUS_ITEM,
-                        ComputingModule.ADVANCED_EXPORT_BUS_ITEM, ComputingModule.VINTAGE_EXTERNAL_STORAGE_BUS_ITEM,
-                        ComputingModule.LEGACY_EXTERNAL_STORAGE_BUS_ITEM,
-                        ComputingModule.TRANSITION_EXTERNAL_STORAGE_BUS_ITEM,
-                        ComputingModule.EXTERNAL_STORAGE_BUS_ITEM, ComputingModule.ADVANCED_EXTERNAL_STORAGE_BUS_ITEM))
+                .coversAll(partsOf(kind -> ComputingParts.isImport(kind) || ComputingParts.isExport(kind)
+                        || ComputingParts.isExternal(kind)))
                 .paragraph("Buses are thin parts you put on the face of a data cable, against a chest or a machine, so"
                         + " the network can reach it without you.")
                 .paragraph("The Import Bus brings items from the inventory it faces into the network; the Export Bus"
@@ -1010,11 +999,7 @@ final class ComputersEntries {
                 .register();
         guide.page("crafting_interfaces", section).titled("Crafting Interfaces and the machine line")
                 .icon(ComputingModule.CRAFTING_INTERFACE_ITEM)
-                .coversAll(() -> List.<ItemLike>of(ComputingModule.VINTAGE_CRAFTING_INTERFACE_ITEM,
-                        ComputingModule.LEGACY_CRAFTING_INTERFACE_ITEM,
-                        ComputingModule.TRANSITION_CRAFTING_INTERFACE_ITEM, ComputingModule.CRAFTING_INTERFACE_ITEM,
-                        ComputingModule.ADVANCED_CRAFTING_INTERFACE_ITEM, ComputingModule.CRAFTING_ROUTER_ITEM,
-                        ComputingModule.RECEIVING_BUS_ITEM))
+                .coversAll(partsOf(ComputingParts::isCrafting))
                 .paragraph("A machine line is how the network runs a machine. It sits on the Crafting Cable, and it"
                         + " has three parts.")
                 .paragraph("The Crafting Interface sits on the cable against the machine: it holds that machine's"
@@ -1100,9 +1085,7 @@ final class ComputersEntries {
                 .register();
         guide.page("peripheral_cables", section).titled("Peripheral cables and hubs")
                 .icon(() -> ComputingModule.PERIPHERAL_CABLE)
-                .coversAll(() -> List.<ItemLike>of(ComputingModule.VINTAGE_PERIPHERAL_CABLE,
-                        ComputingModule.LEGACY_PERIPHERAL_CABLE, ComputingModule.TRANSITION_PERIPHERAL_CABLE,
-                        ComputingModule.PERIPHERAL_CABLE, ComputingModule.ADVANCED_PERIPHERAL_CABLE))
+                .coversAll(cablesOn(GridKind.PERIPHERAL))
                 .coversAll(blocksOf(HubBlock.class))
                 .paragraph("A peripheral cable joins a computer to its devices: monitors, speakers, drives, printers,"
                         + " hubs, Redstone Interfaces. It is not a data cable, and it carries no network. A device"

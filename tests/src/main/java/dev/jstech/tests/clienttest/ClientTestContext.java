@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.Window;
+import com.mojang.logging.LogUtils;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -28,6 +29,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,11 +62,14 @@ public final class ClientTestContext {
     record Queued(int delay, String label, IStep step) {
     }
 
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     private final Minecraft mc;
     private final String testName;
     private final BlockPos origin;
     private final List<Queued> queue = new ArrayList<>();
     private final List<String> screenshots = new ArrayList<>();
+    private final List<Runnable> afterTest = new ArrayList<>();
 
     /* How long a peripheral may take to link before it is clicked: a few ticks alone, far more on a loaded machine. */
     private static final int PERIPHERAL_LINK_WAIT = 200;
@@ -81,6 +86,27 @@ public final class ClientTestContext {
 
     List<String> screenshotsTaken() {
         return screenshots;
+    }
+
+    /**
+     * Registers {@code cleanup} to run once the test ends, whether it passed or failed, after its last step.
+     * Register it right after the change it undoes. Cleanups run in the reverse order they were registered, each
+     * on its own so one that throws does not stop the others. A cleanup that touches the server must not wait
+     * for it: it runs on the client thread.
+     */
+    public void afterTest(final Runnable cleanup) {
+        afterTest.add(cleanup);
+    }
+
+    void runAfterTest() {
+        for (int i = afterTest.size() - 1; i >= 0; i--) {
+            try {
+                afterTest.get(i).run();
+            } catch (final RuntimeException e) {
+                LOGGER.error("[JSC-CT] a cleanup of {} failed", testName, e);
+            }
+        }
+        afterTest.clear();
     }
 
     // Sequence building
@@ -368,6 +394,11 @@ public final class ClientTestContext {
                 + (mc.screen == null ? "no screen" : mc.screen.getClass().getSimpleName()));
     }
 
+    /** The open screen as {@code type}, or null when something else (or nothing) is open. Never fails. */
+    public <T extends Screen> T openScreen(final Class<T> type) {
+        return type.isInstance(mc.screen) ? type.cast(mc.screen) : null;
+    }
+
     /** Server-side: moves the player to {@code relative} looking toward {@code facing}. Call from a server step. */
     public void teleport(final BlockPos relative, final Direction facing) {
         final BlockPos at = abs(relative);
@@ -591,16 +622,46 @@ public final class ClientTestContext {
      * last rendered frame, so it proves what the player actually sees (a popup drawn above the slots, ...).
      */
     public int pixel(final int x, final int y) {
-        final double scale = mc.getWindow().getGuiScale();
-        final int px = (int) Math.min(mc.getWindow().getWidth() - 1, x * scale);
-        final int py = (int) Math.min(mc.getWindow().getHeight() - 1, y * scale);
-        try (NativeImage image = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
+        try (FrameSampler frame = sampleFrame()) {
+            return frame.pixel(x, y);
+        }
+    }
+
+    /**
+     * One copy of the last rendered frame to read many pixels from; close it when done. Reading a grid through
+     * {@link #pixel} would copy the whole frame once per sample.
+     */
+    public FrameSampler sampleFrame() {
+        return new FrameSampler(mc.getWindow(), Screenshot.takeScreenshot(mc.getMainRenderTarget()));
+    }
+
+    /** A copy of one frame, read by logical GUI coordinates. */
+    public static final class FrameSampler implements AutoCloseable {
+
+        private final Window window;
+        private final NativeImage image;
+
+        private FrameSampler(final Window window, final NativeImage image) {
+            this.window = window;
+            this.image = image;
+        }
+
+        /** The colour at logical GUI coordinates ({@code x}, {@code y}), as ARGB. */
+        public int pixel(final int x, final int y) {
+            final double scale = window.getGuiScale();
+            final int px = (int) Math.min(window.getWidth() - 1, x * scale);
+            final int py = (int) Math.min(window.getHeight() - 1, y * scale);
             final int abgr = image.getPixelRGBA(px, py);
             final int r = abgr & 0xFF;
             final int g = (abgr >> 8) & 0xFF;
             final int b = (abgr >> 16) & 0xFF;
             final int a = (abgr >>> 24) & 0xFF;
             return (a << 24) | (r << 16) | (g << 8) | b;
+        }
+
+        @Override
+        public void close() {
+            image.close();
         }
     }
 

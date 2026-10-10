@@ -9,6 +9,7 @@ package dev.jstech.computers.program.cli.interac;
 
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -46,8 +47,9 @@ public record InteracState(int tab, int selected, String search, String action, 
      * status page is not among them: what it says stands in the bar along the top of every tab instead, where
      * it is read without leaving the list. They are in English, the language the machine draws the screen in.
      */
-    public static final String[] TABS = {TAB_NETWORK_NAME.text().english(), TAB_SERVERS_NAME.text().english(),
-            TAB_LOCKED_NAME.text().english(), TAB_OPS_NAME.text().english(), TAB_STARRED_NAME.text().english()};
+    public static final List<String> TABS = List.of(TAB_NETWORK_NAME.text().english(),
+            TAB_SERVERS_NAME.text().english(), TAB_LOCKED_NAME.text().english(), TAB_OPS_NAME.text().english(),
+            TAB_STARRED_NAME.text().english());
 
     /** Everything the network holds. */
     public static final int TAB_NETWORK = 0;
@@ -84,7 +86,7 @@ public record InteracState(int tab, int selected, String search, String action, 
     public static final InteracState OPENING = new InteracState(0, 0, "", "", 0L);
 
     public InteracState {
-        tab = Math.floorMod(tab, TABS.length);
+        tab = Math.floorMod(tab, TABS.size());
         selected = Math.max(0, selected);
         search = search == null ? "" : search;
         action = action == null ? "" : action.toLowerCase(Locale.ROOT);
@@ -100,7 +102,7 @@ public record InteracState(int tab, int selected, String search, String action, 
 
     /** The name of the tab that is up. */
     public String tabName() {
-        return TABS[this.tab];
+        return TABS.get(this.tab);
     }
 
     /** The same state on another tab, with nothing picked, since the rows are not the same rows. */

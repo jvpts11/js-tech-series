@@ -153,7 +153,7 @@ public final class TtyEditor {
         void found(String content, boolean existed);
     }
 
-    private final String path;
+    private String path;
     private final TextDocument doc = new TextDocument();
     private final IKeys keys;
     /** The terminal it has taken, which changes when the player looks away and the next look is another screen. */
@@ -334,6 +334,24 @@ public final class TtyEditor {
             say(FileSaves.tooLong(text));
             return;
         }
+        this.dirty = false;
+        say(TtyTexts.WRITTEN.with(name()));
+    }
+
+    /**
+     * Puts the text on the disk under another name, which is the one the editor goes on to hold.
+     *
+     * <p>The open name only changes once the write has gone through, so a refused save leaves the editor
+     * pointing at the file it was editing.
+     */
+    public void saveAs(final String typed) {
+        final String target = beside(typed);
+        final String text = this.doc.text();
+        if (!this.host.save(target, text)) {
+            say(FileSaves.tooLong(text));
+            return;
+        }
+        this.path = target;
         this.dirty = false;
         say(TtyTexts.WRITTEN.with(name()));
     }

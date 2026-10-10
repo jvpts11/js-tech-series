@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.core.client.gui.component.Draw;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +32,7 @@ public final class SkinSprites {
     /** Marks the look a desktop wore on Legacy-era hardware. */
     public static final String PERIOD_SUFFIX = "_legacy";
 
-    private static final String NS = "jsc";
+    private static final String NS = JsComputers.MODID;
 
     /*
      * Whether a file is there, asked once per path: the fallback walks several paths a frame, and the answer

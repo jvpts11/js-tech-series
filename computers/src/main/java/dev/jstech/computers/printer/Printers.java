@@ -62,8 +62,12 @@ public final class Printers {
         final List<String> pages = PrintLayout.pages(title, text, landscape);
         final int first = Math.max(1, fromPage) - 1;
         final int last = toPage <= 0 ? pages.size() : Math.min(pages.size(), toPage);
-        final List<String> kept = first < last ? pages.subList(first, last) : pages.subList(0, 1);
-        return PrintedDocument.text(title, machine, program, kept);
+        if (first >= last) {
+            // A range past the end selects no page. A document with no title and no print is refused by print() as
+            // nothing to print, instead of quietly printing page 1 in place of the pages that were asked for.
+            return PrintedDocument.text("", machine, program, List.of());
+        }
+        return PrintedDocument.text(title, machine, program, pages.subList(first, last));
     }
 
     /**

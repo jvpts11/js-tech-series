@@ -162,6 +162,8 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     @Nullable
     private PatternStudioStatePayload state;
+    /* The rail's rows, built when a state arrives rather than on every frame. */
+    private List<FileRow> fileRows = List.of();
     private String status = "";
     private int statusFrames;
     private int refreshFrames;
@@ -177,7 +179,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
     private int lastMouseY;
     @Nullable
     private Font lastFont;
-    private final List<int[]> ghostCells = new ArrayList<>(); // {x, y, w, h, kind(0 bench,1 in,2 out), index}
+    private final List<GhostCell> ghostCells = new ArrayList<>();
 
     // The content: one tree, the components of the other tabs hidden.
     private final Panel root = new Panel();
@@ -342,6 +344,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
             return;
         }
         active.state = payload;
+        active.fileRows = active.buildFileRows();
         final String status = GameText.resolve(payload.status());
         if (!status.isEmpty()) {
             active.status = status;
@@ -393,7 +396,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
      * The ghost cells the last frame drew, as desktop-local rectangles with what a dropped item does there:
      * {@code kind} 0 is a bench cell, 1 a machine input, 2 a machine output; {@code index} the cell.
      */
-    public List<int[]> ghostCells() {
+    public List<GhostCell> ghostCells() {
         return List.copyOf(ghostCells);
     }
 
@@ -842,10 +845,21 @@ public final class PatternStudioApp implements IInventoryBandApp {
     // rail
 
     /** A flat list of the rail's file rows: drive headers and files, for drawing and clicking. */
+    /**
+     * A cell the last frame drew, as a desktop-local rectangle with what a dropped item does there:
+     * {@code kind} 0 is a bench cell, 1 a machine input, 2 a machine output; {@code index} the cell.
+     */
+    public record GhostCell(int x, int y, int w, int h, int kind, int index) {
+    }
+
     private record FileRow(String driveKey, String label, boolean header, String file) {
     }
 
     private List<FileRow> fileRows() {
+        return fileRows;
+    }
+
+    private List<FileRow> buildFileRows() {
         final List<FileRow> rows = new ArrayList<>();
         if (state == null) {
             return rows;
@@ -1109,13 +1123,13 @@ public final class PatternStudioApp implements IInventoryBandApp {
         if (state == null || modalActive()) {
             return;
         }
-        for (final int[] c : ghostCells) {
-            if (!in(mouseX, mouseY, c[0], c[1], c[2], c[3])) {
+        for (final GhostCell c : ghostCells) {
+            if (!in(mouseX, mouseY, c.x(), c.y(), c.w(), c.h())) {
                 continue;
             }
             final List<Component> lines = new ArrayList<>();
-            if (c[4] == 0) {
-                final PatternStudioStatePayload.BenchCell cell = state.bench().get(c[5]);
+            if (c.kind() == 0) {
+                final PatternStudioStatePayload.BenchCell cell = state.bench().get(c.index());
                 if (cell.stack().isEmpty()) {
                     return;
                 }
@@ -1130,14 +1144,15 @@ public final class PatternStudioApp implements IInventoryBandApp {
                 }
                 lines.add(GameText.component(IN_STOCK.with(cell.stock())).withStyle(ChatFormatting.GRAY));
             } else {
-                final PatternStudioStatePayload.ProcCell cell = procCell(c[4] == 2 ? state.outputs() : state.inputs(), c[5]);
+                final PatternStudioStatePayload.ProcCell cell = procCell(
+                        c.kind() == 2 ? state.outputs() : state.inputs(), c.index());
                 if (cell == null) {
                     return;
                 }
                 lines.add(cell.cell().key().displayName());
                 lines.add(GameText.component((cell.cell().estimated() ? PER_RUN_ESTIMATED : PER_RUN)
                         .with(amountLabel(cell.cell().key(), cell.cell().amount()))).withStyle(ChatFormatting.GRAY));
-                if (c[4] == 2 && cell.chance() < ProcessingPattern.FULL_CHANCE) {
+                if (c.kind() == 2 && cell.chance() < ProcessingPattern.FULL_CHANCE) {
                     lines.add(GameText.component(CHANCE.with(cell.chance() + "%")).withStyle(ChatFormatting.GRAY));
                 }
                 lines.add(GameText.component(IN_STOCK.with(amountLabel(cell.cell().key(), cell.stock())))
@@ -1157,7 +1172,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
             for (int i = 0; i < 9; i++) {
                 final int[] r = benchGrid.cellRect(i);
                 if (r != null) {
-                    ghostCells.add(new int[] {r[0], r[1], r[2], r[3], 0, i});
+                    ghostCells.add(new GhostCell(r[0], r[1], r[2], r[3], 0, i));
                 }
             }
         } else if (tab == TAB_MACHINE) {
@@ -1172,7 +1187,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
                 final int index = (grid.scroll() + row) * PROC_COLS + col;
                 final int[] r = grid.cellRect(index);
                 if (r != null) {
-                    ghostCells.add(new int[] {r[0], r[1], r[2], r[3], kind, index});
+                    ghostCells.add(new GhostCell(r[0], r[1], r[2], r[3], kind, index));
                 }
             }
         }

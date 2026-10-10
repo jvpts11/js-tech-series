@@ -8,9 +8,7 @@
 package dev.jstech.computers.os.devices;
 
 import dev.jstech.computers.block.DataLinkNames;
-import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
-import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
-import dev.jstech.computers.blockentity.SpeakerBlockEntity;
+import dev.jstech.computers.blockentity.INamedDevice;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.FormFactor;
@@ -63,7 +61,7 @@ public final class DeviceMaps {
         final List<Text> processors = new ArrayList<>();
         final List<Text> memory = new ArrayList<>();
         final List<Text> disks = new ArrayList<>();
-        final List<ItemStack> gpus = new ArrayList<>();
+        final List<GpuCard> gpus = new ArrayList<>();
         final List<Text> soundCards = new ArrayList<>();
         final List<Text> network = new ArrayList<>();
         final List<Text> cards = new ArrayList<>();
@@ -76,7 +74,7 @@ public final class DeviceMaps {
                 case CpuItem ignored -> processors.add(name);
                 case RamItem ignored -> memory.add(name);
                 case DiskItem ignored -> disks.add(name);
-                case GpuItem ignored -> gpus.add(part);
+                case GpuItem gpu -> gpus.add(new GpuCard(name, MachinePorts.videoOutputs(gpu.spec().era())));
                 case SoundCardItem ignored -> soundCards.add(name);
                 case NetworkCardItem ignored -> network.add(name);
                 case CraftingCardItem ignored -> addCard(cards, cardIcons, name, DeviceMap.CARD_ICON);
@@ -98,6 +96,10 @@ public final class DeviceMaps {
                 network, cards, cardIcons);
     }
 
+    /** A graphics card as the device list needs it: its name and how many video outputs its generation carries. */
+    private record GpuCard(Text name, int outputs) {
+    }
+
     /** The kind of device port a board of {@code era} has. */
     public static DeviceMap.PortFamily family(final HardwareEra era) {
         if (era == HardwareEra.VINTAGE) {
@@ -115,7 +117,7 @@ public final class DeviceMaps {
         icons.add(icon);
     }
 
-    private static List<DeviceMap.VideoCard> video(final ComputerBuild build, final List<ItemStack> gpus,
+    private static List<DeviceMap.VideoCard> video(final ComputerBuild build, final List<GpuCard> gpus,
                                                    final Linked linked) {
         final List<DeviceMap.VideoCard> out = new ArrayList<>();
         final Deque<Long> monitors = linked.ofKind(PortKind.VIDEO);
@@ -129,9 +131,8 @@ public final class DeviceMaps {
                 break;
             }
         }
-        for (final ItemStack gpu : gpus) {
-            final int count = gpu.getItem() instanceof GpuItem item ? MachinePorts.videoOutputs(item.spec().era()) : 1;
-            out.add(new DeviceMap.VideoCard(GameText.of(gpu.getHoverName()), outputs(count, monitors, linked)));
+        for (final GpuCard gpu : gpus) {
+            out.add(new DeviceMap.VideoCard(gpu.name(), outputs(gpu.outputs(), monitors, linked)));
         }
         return out;
     }
@@ -256,12 +257,7 @@ public final class DeviceMaps {
 
         /* The name a player gave the device, for the kinds that take one. */
         private static String givenName(final BlockEntity be) {
-            return switch (be) {
-                case SpeakerBlockEntity speaker -> speaker.name();
-                case RedstoneInterfaceBlockEntity sensor -> sensor.name();
-                case NetworkGatewayBlockEntity gateway -> gateway.name();
-                default -> "";
-            };
+            return be instanceof INamedDevice named ? named.name() : "";
         }
     }
 }

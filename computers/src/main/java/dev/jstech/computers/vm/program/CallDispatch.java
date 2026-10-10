@@ -53,6 +53,10 @@ final class CallDispatch {
     /** Makes a delegate of the method named, bound to the object on top of the stack. */
     void handler(final Frame frame, final IOperand.Method method, final int line) {
         final Object target = frame.pop();
+        // A static method or a lambda with no closure is bound to nothing, but a freed object is never bound.
+        if (target != null) {
+            this.heap.alive(target, line);
+        }
         final Values.Bound bound = new Values.Bound(target, method.owner().value(), method.name(),
                 method.parameters(), method.returns().value());
         final Values.DelegateValue made = new Values.DelegateValue(method.owner().value(), List.of(bound));

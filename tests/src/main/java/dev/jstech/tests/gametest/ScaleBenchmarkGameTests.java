@@ -21,6 +21,7 @@ import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.BenchReport;
+import dev.jstech.tests.testkit.BenchSupport;
 import dev.jstech.tests.testkit.BenchmarkLoad;
 import dev.jstech.tests.testkit.BigBaseScenario;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -32,7 +33,6 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -46,9 +46,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -115,7 +113,7 @@ public final class ScaleBenchmarkGameTests {
         }
         final BigBaseScenario.Built base = BigBaseScenario.build(TestWorldBuilder.forGameTest(helper), params);
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + 20, () -> guarded(() -> {
+                .thenExecuteAfter(SETTLE + 20, () -> BenchSupport.guarded(() -> {
                     final NetworkUuid net = base.mainframe().networkUuid();
                     helper.assertTrue(net != null, "the Mainframe joined a network even though it was buried");
                     final int servers = NetworkSystem.get(helper.getLevel()).serversOf(net).size();
@@ -187,7 +185,7 @@ public final class ScaleBenchmarkGameTests {
         final double[] firstIdle = {Double.NaN};
         final double[] firstIdleFull = {Double.NaN};
         helper.startSequence()
-                .thenExecuteAfter(SETTLE + WARMUP_TICKS, () -> guarded(() -> {
+                .thenExecuteAfter(SETTLE + WARMUP_TICKS, () -> BenchSupport.guarded(() -> {
                     final boolean networked = base.mainframe().networkUuid() != null;
                     final int servers = networked
                             ? NetworkSystem.get(level).serversOf(base.mainframe().networkUuid()).size() : 0;
@@ -201,7 +199,7 @@ public final class ScaleBenchmarkGameTests {
                             "the base must come up whole: network " + networked + ", servers " + servers + "/"
                                     + params.servers() + ", supercomputers online " + online + "/" + base.hubs().size()
                                     + ", crafting computers " + craftingComputers + "/" + base.craftingComputers().size());
-                    firstIdle[0] = averageTickMs(server);
+                    firstIdle[0] = BenchSupport.averageTickMs(server);
                     report.put("idle_ms", firstIdle[0]);
                 }))
                 /*
@@ -212,13 +210,13 @@ public final class ScaleBenchmarkGameTests {
                  */
                 .thenExecuteAfter(TICK_AVERAGE_WINDOW, () -> {
                     if (!Double.isNaN(firstIdle[0])) {
-                        report.put("idle_ms", Math.min(firstIdle[0], averageTickMs(server)));
+                        report.put("idle_ms", Math.min(firstIdle[0], BenchSupport.averageTickMs(server)));
                     }
                 })
                 .thenWaitUntil(() -> drive(helper, small, crashed))
-                .thenExecute(() -> guarded(() -> {
+                .thenExecute(() -> BenchSupport.guarded(() -> {
                     helper.assertTrue(crashed[0] == null, "the load driver crashed: " + crashed[0]);
-                    report.put("load_small_ms", averageTickMs(server));
+                    report.put("load_small_ms", BenchSupport.averageTickMs(server));
                     report.put("ops_small_submitted", small.submitted()).put("ops_small_accepted", small.accepted())
                             .put("ops_small_in_flight", base.mainframe().activeOperationRecords().size());
                     helper.assertTrue(small.accepted() == small.submitted(),
@@ -257,19 +255,20 @@ public final class ScaleBenchmarkGameTests {
                  * catalog is one enormous tick; measured any sooner, a hundredth of THAT is what the number
                  * reports, which is a measurement of how fast the machine seeded and not of the idle cost.
                  */
-                .thenExecuteAfter(TICK_AVERAGE_WINDOW + 20, () -> firstIdleFull[0] = averageTickMs(server))
+                .thenExecuteAfter(TICK_AVERAGE_WINDOW + 20,
+                        () -> firstIdleFull[0] = BenchSupport.averageTickMs(server))
                 /*
                  * The full-catalog idle cost is the better of two consecutive windows as well: a run whose loaded
                  * tick came out cheaper than its idle one had an autosave inside the single window it measured.
                  */
                 .thenExecuteAfter(TICK_AVERAGE_WINDOW, () -> {
-                    report.put("idle_full_ms", Math.min(firstIdleFull[0], averageTickMs(server)));
+                    report.put("idle_full_ms", Math.min(firstIdleFull[0], BenchSupport.averageTickMs(server)));
                     craftedBefore[0] = craftedOutput(level, base);
                 })
                 .thenWaitUntil(() -> drive(helper, full, crashed))
-                .thenExecute(() -> guarded(() -> {
+                .thenExecute(() -> BenchSupport.guarded(() -> {
                     helper.assertTrue(crashed[0] == null, "the load driver crashed: " + crashed[0]);
-                    report.put("load_full_ms", averageTickMs(server));
+                    report.put("load_full_ms", BenchSupport.averageTickMs(server));
                     report.put("ops_full_submitted", full.submitted()).put("ops_full_accepted", full.accepted());
                     final double smallMs = Math.max(report.get("load_small_ms"), 0.001);
                     report.put("load_full_over_small", report.get("load_full_ms") / smallMs);
@@ -279,13 +278,14 @@ public final class ScaleBenchmarkGameTests {
                     report.put("ops_full_in_flight", base.mainframe().activeOperationRecords().size());
                 }))
                 .thenWaitUntil(() -> drive(helper, ramp4, crashed))
-                .thenExecute(() -> report.put("load_x4_ms", averageTickMs(server))
+                .thenExecute(() -> report.put("load_x4_ms", BenchSupport.averageTickMs(server))
                         .put("ops_x4_accepted", ramp4.accepted())
                         .put("ops_x4_in_flight", base.mainframe().activeOperationRecords().size()))
                 .thenWaitUntil(() -> drive(helper, ramp16, crashed))
-                .thenExecute(() -> guarded(() -> {
+                .thenExecute(() -> BenchSupport.guarded(() -> {
                     helper.assertTrue(crashed[0] == null, "the load driver crashed: " + crashed[0]);
-                    report.put("load_x16_ms", averageTickMs(server)).put("ops_x16_accepted", ramp16.accepted())
+                    report.put("load_x16_ms", BenchSupport.averageTickMs(server))
+                            .put("ops_x16_accepted", ramp16.accepted())
                             .put("ops_x16_in_flight", base.mainframe().activeOperationRecords().size());
                     // What one operation costs on the tick, from the slope between the two heaviest runs.
                     final double perOpMs = (report.get("load_x16_ms") - report.get("load_x4_ms"))
@@ -392,17 +392,6 @@ public final class ScaleBenchmarkGameTests {
         helper.assertTrue(session.done(), "the load is still running");
     }
 
-    /** Turns any crash in a measurement step into a test failure instead of a server crash. */
-    private static void guarded(final Runnable step) {
-        try {
-            step.run();
-        } catch (final GameTestAssertException e) {
-            throw e;
-        } catch (final RuntimeException e) {
-            throw new GameTestAssertException("benchmark step crashed: " + e);
-        }
-    }
-
     /** The bytes the catalog costs on the wire, from the three things that carry it. */
     private static void measureWire(final ServerLevel level, final BigBaseScenario.Built base,
                                     final BenchReport report) {
@@ -423,7 +412,7 @@ public final class ScaleBenchmarkGameTests {
         report.put("drive_stack_bytes", heaviestBytes);
         report.put("drive_stack_types", heaviest.isEmpty() ? 0 : DriveVolumes.contents(heaviest).items().size());
         // The cabinet's update tag, sent whenever its visuals change.
-        report.put("rack_update_tag_bytes", nbtBytes(rack.getUpdateTag(level.registryAccess())));
+        report.put("rack_update_tag_bytes", BenchSupport.nbtBytes(rack.getUpdateTag(level.registryAccess())));
         // One page of the item catalog, as the terminal receives it.
         final Map<StorageKey, Long> totals = NetworkStorage.of(level, base.mainframe().networkUuid()).query();
         final List<NetworkItemEntry> page = new ArrayList<>(NetworkSnapshotPayload.MAX_ENTRIES);
@@ -465,7 +454,7 @@ public final class ScaleBenchmarkGameTests {
         });
         long bytes = 0;
         for (final CompoundTag tag : tags) {
-            bytes += nbtBytes(tag);
+            bytes += BenchSupport.nbtBytes(tag);
         }
         report.put("save_ms", saveNanos / 1_000_000.0).put("save_bytes", bytes);
 
@@ -496,7 +485,7 @@ public final class ScaleBenchmarkGameTests {
         for (final Tag tag : encoded) {
             final CompoundTag holder = new CompoundTag();
             holder.put("Items", tag);
-            volumeBytes += nbtBytes(holder);
+            volumeBytes += BenchSupport.nbtBytes(holder);
         }
         report.put("volumes_save_ms", volumesNanos / 1_000_000.0).put("volumes_save_bytes", volumeBytes)
                 .put("volumes_count", volumes.size());
@@ -541,15 +530,6 @@ public final class ScaleBenchmarkGameTests {
         helper.assertTrue(slower.isEmpty(), "slower than the recorded baseline: " + slower);
     }
 
-    /**
-     * The server's mean tick over its last {@link #TICK_AVERAGE_WINDOW} ticks. A measurement must therefore
-     * be taken at least that many ticks after any one-off heavy tick, or that tick's whole cost is divided
-     * into the average and reported as if the server were doing it every tick.
-     */
-    private static double averageTickMs(final MinecraftServer server) {
-        return server.getAverageTickTimeNanos() / 1_000_000.0;
-    }
-
     /** How many ticks {@link MinecraftServer#getAverageTickTimeNanos()} averages over. */
     private static final int TICK_AVERAGE_WINDOW = 100;
 
@@ -563,24 +543,4 @@ public final class ScaleBenchmarkGameTests {
         }
     }
 
-    private static int nbtBytes(final CompoundTag tag) {
-        final long[] count = new long[1];
-        final OutputStream counter = new OutputStream() {
-            @Override
-            public void write(final int b) {
-                count[0]++;
-            }
-
-            @Override
-            public void write(final byte[] b, final int off, final int len) {
-                count[0] += len;
-            }
-        };
-        try {
-            NbtIo.write(tag, new DataOutputStream(counter));
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        return (int) count[0];
-    }
 }

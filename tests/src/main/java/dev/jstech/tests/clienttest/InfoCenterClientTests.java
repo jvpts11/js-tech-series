@@ -83,6 +83,6 @@ public final class InfoCenterClientTests {
         if (window == null || local == null) {
             throw new ClientTestFailure("the Info Center or the place in it is gone");
         }
-        return new int[] {window.x() + 4 + local[0], window.y() + 18 + local[1]};
+        return DesktopSteps.contentPoint(window, local);
     }
 }

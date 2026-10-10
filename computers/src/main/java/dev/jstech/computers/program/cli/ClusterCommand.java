@@ -177,6 +177,29 @@ public final class ClusterCommand implements ICliCommand {
         return out;
     }
 
+    /** A node together with the 1-based position of its rack among the racks of the cluster. */
+    private record RackedNode(int rackIndex, ClusterManagementComputerBlockEntity.NodeRef node) {
+    }
+
+    /**
+     * The nodes of a cluster with their rack numbers. The rule that says which rack is which lives only here,
+     * so the listing and the power switch always agree: a new number starts wherever the rack changes.
+     */
+    private static List<RackedNode> rackedNodes(final ClusterManagementComputerBlockEntity cmc,
+                                                final ClusterManagementComputerBlockEntity.ClusterRef ref) {
+        final List<RackedNode> racked = new ArrayList<>();
+        int rackIndex = 0;
+        BlockPos lastRack = null;
+        for (final ClusterManagementComputerBlockEntity.NodeRef node : cmc.nodesOf(ref)) {
+            if (!node.rack().equals(lastRack)) {
+                rackIndex++;
+                lastRack = node.rack();
+            }
+            racked.add(new RackedNode(rackIndex, node));
+        }
+        return racked;
+    }
+
     private static Named find(final ClusterManagementComputerBlockEntity cmc, final String name) {
         for (final Named c : clusters(cmc)) {
             if (c.name().equalsIgnoreCase(name)) {
@@ -220,13 +243,9 @@ public final class ClusterCommand implements ICliCommand {
                 CliSpan.of(COL_NODE, CliStyle.HEADER), CliSpan.pad(NODES_SYSTEM_AT),
                 CliSpan.of(COL_SYSTEM, CliStyle.HEADER), CliSpan.pad(NODES_POWER_AT),
                 CliSpan.of(COL_POWER, CliStyle.HEADER)));
-        int rackIndex = 0;
-        BlockPos lastRack = null;
-        for (final ClusterManagementComputerBlockEntity.NodeRef node : cmc.nodesOf(c.ref())) {
-            if (!node.rack().equals(lastRack)) {
-                rackIndex++;
-                lastRack = node.rack();
-            }
+        for (final RackedNode racked : rackedNodes(cmc, c.ref())) {
+            final ClusterManagementComputerBlockEntity.NodeRef node = racked.node();
+            final int rackIndex = racked.rackIndex();
             if (!(Loaded.blockEntity(cmc.getLevel(), node.rack()) instanceof ServerRackBlockEntity rack)) {
                 continue;
             }
@@ -260,32 +279,29 @@ public final class ClusterCommand implements ICliCommand {
         if (ctx.argCount() >= 4) {
             // R:U addresses one node: rack index in cluster order, unit row from 1.
             final String[] parts = ctx.arg(2).toUpperCase(Locale.ROOT).replace("R", "").replace("U", "").split(":");
+            final int rackIndex;
+            final int row;
             try {
-                final int rackIndex = Integer.parseInt(parts[0]);
-                final int row = Integer.parseInt(parts[1]) - 1;
-                int index = 0;
-                BlockPos lastRack = null;
-                for (final ClusterManagementComputerBlockEntity.NodeRef node : cmc.nodesOf(c.ref())) {
-                    if (!node.rack().equals(lastRack)) {
-                        index++;
-                        lastRack = node.rack();
-                    }
-                    if (index == rackIndex && node.row() == row) {
-                        final ServerRackBlockEntity rack =
-                                (ServerRackBlockEntity) Loaded.blockEntity(cmc.getLevel(), node.rack());
-                        if (rack != null && rack.bayPowerOn(row) != on && cmc.toggleNode(c.ref(), node)) {
-                            ctx.out().ok(BAY_SWITCHED.with(ClusterManagementComputerBlockEntity.nodeName(rack, row),
-                                    switched));
-                        } else {
-                            ctx.out().dim(ALREADY.with(switched));
-                        }
-                        return;
-                    }
-                }
-                ctx.out().error(CliTexts.SAID_BY.with(NAME, NO_NODE.with(ctx.arg(2))));
-            } catch (final RuntimeException badAddress) {
+                rackIndex = Integer.parseInt(parts[0]);
+                row = Integer.parseInt(parts[1]) - 1;
+            } catch (final NumberFormatException | ArrayIndexOutOfBoundsException badAddress) {
                 ctx.out().error(CliTexts.USAGE.with(NAME, POWER_NODE_USAGE));
+                return;
             }
+            for (final RackedNode racked : rackedNodes(cmc, c.ref())) {
+                if (racked.rackIndex() == rackIndex && racked.node().row() == row) {
+                    final ClusterManagementComputerBlockEntity.NodeRef node = racked.node();
+                    if (Loaded.blockEntity(cmc.getLevel(), node.rack()) instanceof ServerRackBlockEntity rack
+                            && rack.bayPowerOn(row) != on && cmc.toggleNode(c.ref(), node)) {
+                        ctx.out().ok(BAY_SWITCHED.with(ClusterManagementComputerBlockEntity.nodeName(rack, row),
+                                switched));
+                    } else {
+                        ctx.out().dim(ALREADY.with(switched));
+                    }
+                    return;
+                }
+            }
+            ctx.out().error(CliTexts.SAID_BY.with(NAME, NO_NODE.with(ctx.arg(2))));
             return;
         }
         final int changed = cmc.powerAll(c.ref(), on);

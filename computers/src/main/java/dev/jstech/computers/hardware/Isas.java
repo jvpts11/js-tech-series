@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.vm.listing.Opcode;
 import dev.jstech.core.tier.HardwareEra;
@@ -187,7 +186,7 @@ public final class Isas {
      * Minecraft with it, into hardware that is tested without the game.
      */
     private static IsaSpec own(final String path, final String name, final int bits, final IsaSpec... succeeds) {
-        final String id = JsComputers.MODID + ":" + path;
+        final String id = HardwareIds.own(path);
         final Set<String> runs = new HashSet<>();
         runs.add(id);
         for (final IsaSpec older : succeeds) {

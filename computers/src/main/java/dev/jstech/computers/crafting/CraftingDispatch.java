@@ -18,6 +18,7 @@ import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -135,6 +136,7 @@ public final class CraftingDispatch {
                 waiting.add(job);
             }
         }
+        final Map<String, Boolean> held = new HashMap<>();
         for (final NetworkProcessingOperation job : waiting) {
             Slot best = null;
             boolean anyHolds = false;
@@ -151,7 +153,9 @@ public final class CraftingDispatch {
                 best.take(job);
                 job.place(best.floor, best.site, best.part.id(), best.executor, ++nextSeq);
             } else {
-                job.unplace(anyHolds || heldByAny(level, floors, job.pattern()));
+                // What the interfaces hold does not change within this pass, so each recipe is searched for once.
+                job.unplace(anyHolds || held.computeIfAbsent(job.pattern().identity(),
+                        recipe -> heldByAny(level, floors, job.pattern())));
             }
         }
     }

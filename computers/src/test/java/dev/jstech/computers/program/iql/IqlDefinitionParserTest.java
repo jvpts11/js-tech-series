@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class IqlDefinitionParserTest {
@@ -135,5 +136,20 @@ class IqlDefinitionParserTest {
         assertTrue(drop.ok());
         assertFalse(drop.isDefinition());
         assertEquals(IqlVerb.DROP, drop.operation().verb());
+    }
+
+    @Test
+    void splitBody_keepsASemicolonInsideQuotesInOneStatement() {
+        assertEquals(List.of("UPDATE 1 stone SET NAME 'Hot; cold'", "QUERY items"),
+                IqlDefinitionParser.splitBody("{ UPDATE 1 stone SET NAME 'Hot; cold'; QUERY items }"));
+    }
+
+    @Test
+    void tryParse_jobTriggerKeywordInsideAQuotedNameIsPartOfTheBody() {
+        final IqlDefinition def = IqlDefinitionParser.tryParse("CREATE JOB j AS SET BUS 'When Bus' OFF EVERY 5m");
+
+        assertEquals("SET BUS 'When Bus' OFF", def.body());
+        assertEquals(IqlDefinition.TriggerKind.EVERY, def.triggerKind());
+        assertEquals("5m", def.triggerSpec());
     }
 }

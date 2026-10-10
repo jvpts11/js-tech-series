@@ -15,6 +15,7 @@ import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -39,8 +40,8 @@ final class InteractorOps {
     private final List<OperationRecord> recent = new ArrayList<>();
     private final List<OperationRecord> active = new ArrayList<>();
 
-    /** The row whose detail is showing, or -1 while none is. */
-    private int selected = -1;
+    /** The Operation whose detail is showing, or null while none is; the list shifts as Operations finish. */
+    private UUID selectedId;
 
     /** How many of a supercomputer's parallel craft slots are taken, and how many it has. */
     private int slotsUsed;
@@ -125,12 +126,26 @@ final class InteractorOps {
 
     /** The row whose detail is showing, or -1. */
     int selected() {
-        return selected;
+        if (selectedId == null) {
+            return -1;
+        }
+        for (int i = 0; i < active.size(); i++) {
+            if (active.get(i).id().equals(selectedId)) {
+                return i;
+            }
+        }
+        for (int i = 0; i < recent.size(); i++) {
+            if (recent.get(i).id().equals(selectedId)) {
+                return active.size() + i;
+            }
+        }
+        // Not listed (yet): the active and recent lists arrive separately, so the id is kept for the next look.
+        return -1;
     }
 
     /** Puts the detail away, which leaving the tab does. */
     void clearSelection() {
-        selected = -1;
+        selectedId = null;
     }
 
     /** How many Operations are live, which the network's own card reports. */
@@ -164,7 +179,7 @@ final class InteractorOps {
                    final boolean picked) {
         final boolean live = index < active.size();
         final InteractorPalette.Colours c = InteractorPalette.get();
-        if (index == selected) {
+        if (op.id().equals(selectedId)) {
             g.fill(x, y, x + w, y + h, c.rowChosen());
         } else if (hovered) {
             g.fill(x, y, x + w, y + h, c.rowHover());
@@ -183,7 +198,9 @@ final class InteractorOps {
 
     /** Clicking a row opens its detail, and clicking the open one closes it again. */
     void clicked(final int index, final int button, final double mx, final double my) {
-        selected = index < 0 || selected == index ? -1 : index;
+        final List<OperationRecord> all = all();
+        final UUID clicked = index < 0 || index >= all.size() ? null : all.get(index).id();
+        selectedId = clicked == null || clicked.equals(selectedId) ? null : clicked;
     }
 
     /** The picked Operation's detail: amounts, status, and either its machines or where its items came from. */
@@ -191,7 +208,8 @@ final class InteractorOps {
                        final int dh) {
         final List<OperationRecord> all = all();
         final int px = dx + 5;
-        if (selected < 0 || selected >= all.size()) {
+        final int selected = selected();
+        if (selected < 0) {
             app.renderNetworkCardIn(g, font, dx, dy, dw, dh);
             return;
         }

@@ -72,14 +72,6 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
             "The drive already holds a disc - sneak-click to eject it.");
     private static final TextKey CANNOT_READ = TextKey.of("jsc.media.media_reader_block.cannot_read",
             "This %s cannot read that disc.");
-    private static final TextKey FLOPPY_DRIVE = TextKey.of("jsc.media.media_reader_block.floppy_drive",
-            "floppy drive");
-    private static final TextKey CD_DRIVE = TextKey.of("jsc.media.media_reader_block.cd_drive", "CD drive");
-    private static final TextKey DVD_DRIVE = TextKey.of("jsc.media.media_reader_block.dvd_drive", "DVD drive");
-    private static final TextKey BLU_RAY_DRIVE = TextKey.of("jsc.media.media_reader_block.blu_ray_drive",
-            "Blu-ray drive");
-    private static final TextKey DOCK_STATION = TextKey.of("jsc.media.media_reader_block.dock_station",
-            "dock station");
 
     public MediaReaderBlock(final MediaDriveType driveType, final Properties properties) {
         this(driveType, properties, DEVICE);
@@ -152,7 +144,7 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
          * a DVD at a CD drive has no other way to learn the difference.
          */
         if (heldStack.getItem() instanceof MediaItem) {
-            player.displayClientMessage(GameText.component(CANNOT_READ.with(driveName(reader))), true);
+            player.displayClientMessage(GameText.component(CANNOT_READ.with(reader.driveType().inSentence())), true);
             return ItemInteractionResult.SUCCESS;
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
@@ -163,16 +155,5 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector {
     protected VoxelShape getShape(final BlockState state, final BlockGetter level, final BlockPos pos,
                                   final CollisionContext context) {
         return Shapes.block();
-    }
-
-    /** A readable name for this drive, for the message a refused disc gets. */
-    private static TextKey driveName(final MediaReaderBlockEntity reader) {
-        return switch (reader.driveType()) {
-            case FLOPPY_DRIVE -> FLOPPY_DRIVE;
-            case CD_DRIVE -> CD_DRIVE;
-            case DVD_DRIVE -> DVD_DRIVE;
-            case BLU_RAY_DRIVE -> BLU_RAY_DRIVE;
-            case DOCK_STATION -> DOCK_STATION;
-        };
     }
 }

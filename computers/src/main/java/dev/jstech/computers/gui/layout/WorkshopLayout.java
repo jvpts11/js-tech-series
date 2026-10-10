@@ -50,7 +50,6 @@ public final class WorkshopLayout {
     public static final int FURNACE_OUT_X = FURNACE_ARROW_X + FURNACE_ARROW_W + 10;
     /** The note under a cell that has no fuel or lapis beside it, two lines. */
     public static final int NOTE_Y = FURNACE_IN_Y + CELL + 4;
-    public static final int NOTE_W = 76;
     /** The longest line of that note, in characters of the small text it is drawn in. */
     public static final int NOTE_CHARS = 14;
     public static final float NOTE_SCALE = 0.85f;

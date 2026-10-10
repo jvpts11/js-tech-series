@@ -13,6 +13,7 @@ import dev.jstech.tests.testkit.ChunkLoadWatch;
 import dev.jstech.tests.testkit.TestComponents;
 import dev.jstech.tests.testkit.TestDesktopPrograms;
 import dev.jstech.tests.testkit.TestEngines;
+import dev.jstech.tests.testkit.TestFetchCommand;
 import dev.jstech.tests.testkit.TestPlanner;
 import dev.jstech.tests.testkit.TestSettings;
 import dev.jstech.tests.testkit.TestStates;
@@ -84,6 +85,8 @@ public final class JsTests {
             TestEngines.register(modEventBus);
             // A rule, a hint, a statistic and a note added to NextgreIQL's planner the way another mod adds them.
             TestPlanner.register(modEventBus);
+            // A command that holds the terminal for a while, added the way another mod adds one.
+            TestFetchCommand.register();
             // A program with a window of its own that draws a picture, the way another mod adds one.
             TestDesktopPrograms.register(modEventBus);
             // Any chunk the series' code loads by reading it is reported with the line that read it.

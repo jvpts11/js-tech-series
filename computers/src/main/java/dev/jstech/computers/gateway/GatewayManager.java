@@ -303,11 +303,10 @@ public final class GatewayManager {
                 slots.setStackInSlot(i, held);
                 continue;
             }
-            final ItemStackHandler back = slots;
             op.onSettle(() -> {
                 final long leftover = op.leftover();
                 if (leftover > 0L) {
-                    returnToBuffer(back, key.stack((int) Math.min(Integer.MAX_VALUE, leftover)));
+                    GatewayService.returnToBuffer(level, g, key, leftover, by);
                 }
             });
             moved++;
@@ -318,14 +317,6 @@ public final class GatewayManager {
                         : (moved == 1 ? LOG_MOVED_ONE : LOG_MOVED_MANY).with(items, moved),
                 moved == 0 ? GatewayLog.Tone.BUSY : GatewayLog.Tone.OK);
         return moved == 0 ? BUFFER_EMPTY.text() : ON_THEIR_WAY.with(items);
-    }
-
-    /** Puts what the network would not take back into the first slots with room. */
-    private static void returnToBuffer(final ItemStackHandler slots, final ItemStack stack) {
-        ItemStack rest = stack;
-        for (int i = 0; i < slots.getSlots() && !rest.isEmpty(); i++) {
-            rest = slots.insertItem(i, rest, false);
-        }
     }
 
     private static Text onOff(final boolean on) {

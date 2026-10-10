@@ -13,6 +13,7 @@ import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.SubframeNode;
 import dev.jstech.core.uuid.NodeUuid;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.StorageNetworkFixture;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Items;
@@ -41,13 +42,13 @@ public final class SubframePoolingGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void subframe_addsItsShareOfCapacityAndItsQueues(final GameTestHelper helper) {
-        final MainframeBlockEntity mainframe = OperationSchedulingGameTests.storageNetwork(helper);
+        final MainframeBlockEntity mainframe = StorageNetworkFixture.storageNetwork(helper);
         final ItemStackHandler first = new ItemStackHandler(9);
         final ItemStackHandler second = new ItemStackHandler(9);
         final NodeUuid subframeId = NodeUuid.random();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 4, () -> {
-                    OperationSchedulingGameTests.rack(helper).getServerStorage(0).insert(Items.COBBLESTONE, 100);
+                    StorageNetworkFixture.rack(helper).getServerStorage(0).insert(Items.COBBLESTONE, 100);
                     final long own = mainframe.capacity();
                     final int ownQueues = mainframe.parallelQueues();
                     helper.assertTrue(mainframe.pooledCapacity() == own && mainframe.pooledQueues() == ownQueues,
@@ -63,9 +64,9 @@ public final class SubframePoolingGameTests {
                 .thenExecuteAfter(2, () -> {
                     // Two pulls on what used to be a single queue: both run at once now.
                     helper.assertTrue(mainframe.submitNetworkSelect(Items.COBBLESTONE, 30,
-                            OperationSchedulingGameTests.port(first), "first") != null, "first dispatched");
+                            StorageNetworkFixture.port(first), "first") != null, "first dispatched");
                     helper.assertTrue(mainframe.submitNetworkSelect(Items.COBBLESTONE, 30,
-                            OperationSchedulingGameTests.port(second), "second") != null, "second dispatched");
+                            StorageNetworkFixture.port(second), "second") != null, "second dispatched");
                 })
                 .thenExecuteAfter(6, () -> {
                     final List<OperationRecord> live = mainframe.activeOperationRecords();
@@ -74,8 +75,8 @@ public final class SubframePoolingGameTests {
                             "both pulls hold a queue at once; got " + live);
                 })
                 .thenExecuteAfter(30, () -> {
-                    helper.assertTrue(OperationSchedulingGameTests.count(first) == 30
-                            && OperationSchedulingGameTests.count(second) == 30, "both delivered");
+                    helper.assertTrue(StorageNetworkFixture.count(first) == 30
+                            && StorageNetworkFixture.count(second) == 30, "both delivered");
                     // The Subframe goes away: the pool shrinks back to the Mainframe alone.
                     NetworkSystem.get(helper.getLevel()).unregisterSubframe(mainframe.networkUuid(), subframeId);
                     helper.assertTrue(mainframe.pooledQueues() == mainframe.parallelQueues()
@@ -87,7 +88,7 @@ public final class SubframePoolingGameTests {
 
     @GameTest(template = ARENA)
     public static void subframe_idleOneLendsNothing(final GameTestHelper helper) {
-        final MainframeBlockEntity mainframe = OperationSchedulingGameTests.storageNetwork(helper);
+        final MainframeBlockEntity mainframe = StorageNetworkFixture.storageNetwork(helper);
         final NodeUuid subframeId = NodeUuid.random();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 4, () -> {

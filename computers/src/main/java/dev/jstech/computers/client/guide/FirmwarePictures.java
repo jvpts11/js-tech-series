@@ -13,7 +13,9 @@ import dev.jstech.computers.client.AbstractComputerScreen;
 import dev.jstech.computers.client.FirmwareScreen;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.os.FirmwareKind;
@@ -22,6 +24,7 @@ import dev.jstech.core.api.client.IGuideBlockRenderer;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
+import java.lang.ref.WeakReference;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
@@ -34,6 +37,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
@@ -52,6 +56,8 @@ public final class FirmwarePictures implements IGuideBlockRenderer {
     /* The setups built so far, one a look, and the language they were built in. */
     private final Map<FirmwareKind, AbstractComputerScreen<?>> built = new EnumMap<>(FirmwareKind.class);
     private String builtIn = "";
+    /* Who the setups were built for: each holds that player's inventory, and through it their world. */
+    private WeakReference<Player> builtFor = new WeakReference<>(null);
 
     @Override
     public void draw(final GuiGraphics graphics, final Font font, final int x, final int y, final int width,
@@ -61,9 +67,10 @@ public final class FirmwarePictures implements IGuideBlockRenderer {
             return;
         }
         final String language = minecraft.getLanguageManager().getSelected();
-        if (!language.equals(this.builtIn)) {
+        if (!language.equals(this.builtIn) || this.builtFor.get() != minecraft.player) {
             this.built.clear();
             this.builtIn = language;
+            this.builtFor = new WeakReference<>(minecraft.player);
         }
         final FirmwareKind look = lookOf(data.getString("look"));
         final AbstractComputerScreen<?> screen = this.built.computeIfAbsent(look, FirmwarePictures::build);
@@ -131,21 +138,22 @@ public final class FirmwarePictures implements IGuideBlockRenderer {
         final int guided = InstallMode.GUIDED.id();
         return switch (look) {
             case CLI_BIOS -> List.of(
-                    disk(0, Text.literal("MC-DOS"), text(HardwareItems.DISK_TRENCH_20M), "20 MB"),
+                    disk(0, Text.literal("MC-DOS"), HardwareItems.DISK_TRENCH_20M),
                     medium(Text.literal("MC-DOS"), text(ComputingModule.FLOPPY_DRIVE), guided));
             case BLUE_BIOS -> List.of(
-                    disk(0, Text.literal("Frames XP"), text(HardwareItems.DISK_LINK_IDE_40G), "40 GB"),
-                    disk(1, Text.literal("Debian"), text(HardwareItems.DISK_LINK_IDE_20G), "20 GB"));
+                    disk(0, Text.literal("Frames XP"), HardwareItems.DISK_LINK_IDE_40G),
+                    disk(1, Text.literal("Debian"), HardwareItems.DISK_LINK_IDE_20G));
             case UEFI -> List.of(
-                    disk(0, Text.literal("Frames 10"), text(() -> ComputingModule.disk(StorageTier.SSD, DiskSize.TB_1)),
-                            "1 TB"),
+                    disk(0, Text.literal("Frames 10"), () -> ComputingModule.disk(StorageTier.SSD, DiskSize.TB_1)),
                     medium(Text.literal("Frames 10"), text(ComputingModule.DOCK_STATION), guided));
         };
     }
 
-    private static FirmwareStatePayload.Entry disk(final int slot, final Text system, final Text device,
-                                                   final String size) {
-        return new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, slot, "", system, device, size,
+    /* A disk entry whose size is the label the disk itself would show, as the real firmware screen writes it. */
+    private static FirmwareStatePayload.Entry disk(final int slot, final Text system,
+                                                   final Supplier<? extends DiskItem> device) {
+        final String size = DiskSpec.sizeLabel(device.get().spec().capacityMb());
+        return new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, slot, "", system, text(device), size,
                 Text.EMPTY, true, -1);
     }
 

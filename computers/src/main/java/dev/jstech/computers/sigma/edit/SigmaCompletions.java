@@ -351,10 +351,20 @@ public final class SigmaCompletions {
 
     private static List<Item> membersOf(final NamedType type, final String prefix, final boolean staticSide) {
         final String wanted = prefix == null ? "" : prefix.toLowerCase(Locale.ROOT);
-        final Set<String> seen = new LinkedHashSet<>();
+        return memberItems(type, wanted, new LinkedHashSet<>(), staticSide);
+    }
+
+    /**
+     * The members of {@code type} that start with {@code wanted} (already lower case), sorted by name and
+     * then signature. A null {@code staticSide} keeps both halves; {@code seen} carries the name and
+     * signature pairs already offered, so a member reached twice is listed once.
+     */
+    private static List<Item> memberItems(final NamedType type, final String wanted, final Set<String> seen,
+                                          final Boolean staticSide) {
         final List<Item> items = new ArrayList<>();
         for (final IMemberSymbol member : type.allMembers()) {
-            if (member instanceof IMemberSymbol.ConstructorSymbol || member.isStatic() != staticSide) {
+            if (member instanceof IMemberSymbol.ConstructorSymbol
+                    || staticSide != null && member.isStatic() != staticSide) {
                 continue;
             }
             final String name = member.name();
@@ -387,17 +397,7 @@ public final class SigmaCompletions {
         variables.sort(Comparator.comparing(Item::label));
         items.addAll(variables);
         if (scope.enclosing() != null) {
-            final List<Item> own = new ArrayList<>();
-            for (final IMemberSymbol member : scope.enclosing().allMembers()) {
-                if (member instanceof IMemberSymbol.ConstructorSymbol
-                        || !member.name().toLowerCase(Locale.ROOT).startsWith(wanted)
-                        || !seen.add(member.name() + signatureOf(member))) {
-                    continue;
-                }
-                own.add(new Item(member.name(), signatureOf(member), sortOf(member), member.owner().name()));
-            }
-            own.sort(Comparator.comparing(Item::label).thenComparing(Item::signature));
-            items.addAll(own);
+            items.addAll(memberItems(scope.enclosing(), wanted, seen, null));
         }
         // The calls written with no type in front of them, each unless the program has its own by that name above.
         if (!wanted.isEmpty()) {
@@ -445,12 +445,40 @@ public final class SigmaCompletions {
         }
         items.sort(Comparator.comparing(Item::label));
         if (!inside.isEmpty()) {
-            for (final Item type : types(builtIns, model, prefix)) {
+            for (final Item type : typesIn(builtIns, model, inside, wanted)) {
                 if (seen.add(type.label())) {
                     items.add(type);
                 }
             }
         }
+        return items;
+    }
+
+    /**
+     * The types declared directly in {@code namespace}, which is all a using can name there: a using
+     * resolves a type by its full name, so one from another namespace would be accepted by the list and
+     * then rejected by the compiler.
+     */
+    private static List<Item> typesIn(final BuiltIns builtIns, final SemanticModel model, final String namespace,
+                                      final String wanted) {
+        final Set<String> seen = new LinkedHashSet<>();
+        final List<Item> items = new ArrayList<>();
+        for (final NamedType type : declared(model)) {
+            if (type.namespace().equals(namespace)) {
+                offer(items, seen, type, wanted, OWN);
+            }
+        }
+        if (builtIns != null) {
+            for (final NamedType type : builtIns.all()) {
+                // The subset's library holds types that the full language keeps under other namespaces.
+                if (type.namespace().equals(namespace)
+                        || BuiltIns.SUBSET_LIBRARY.equals(namespace)
+                        && builtIns.qualified(BuiltIns.SUBSET_LIBRARY + "." + type.name(), -1) == type) {
+                    offer(items, seen, type, wanted, namespace);
+                }
+            }
+        }
+        items.sort(Comparator.comparing(Item::label));
         return items;
     }
 

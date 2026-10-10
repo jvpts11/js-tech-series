@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.TerminalHit.inRect;
+
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
@@ -309,10 +311,5 @@ final class TerminalDropPopup {
         PacketDistributor.sendToServer(new TerminalDropPayload(
                 menu.monitorPos(), menu.hostPos(), this.scope, chosen, serverKey));
         screen.maintHint = TerminalTexts.LOGGED.with("DROP");
-    }
-
-    private static boolean inRect(final double mx, final double my, final int x, final int y,
-                                  final int w, final int h) {
-        return mx >= x && mx < x + w && my >= y && my < y + h;
     }
 }

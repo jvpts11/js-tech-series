@@ -17,6 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A CPU component item.
@@ -40,7 +41,8 @@ public class CpuItem extends SpecItem<CpuSpec> {
     public void appendHoverText(final ItemStack stack, final TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
         final CpuSpec spec = spec();
-        tooltip.add(GameText.component(CORES.with(spec.cores(), String.format("%.2f", spec.freqMhz() / 1000.0)))
+        tooltip.add(GameText.component(CORES.with(spec.cores(),
+                        String.format(Locale.ROOT, "%.2f", spec.freqMhz() / 1000.0)))
                 .withStyle(ChatFormatting.GRAY));
         HardwareTooltip.appendDesign(tooltip, spec.design().label());
         if (spec.hasIntegratedGraphics()) {

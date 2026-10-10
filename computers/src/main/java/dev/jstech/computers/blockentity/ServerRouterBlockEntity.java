@@ -406,7 +406,7 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
         boolean hasMainframe = false;
         for (final BlockPos cable : Cables.blocksOf(level, branchCables)) {
             for (final Direction direction : Direction.values()) {
-                final BlockEntity neighbor = level.getBlockEntity(cable.relative(direction));
+                final BlockEntity neighbor = Loaded.blockEntity(level, cable.relative(direction));
                 /*
                  * A datacenter is made of Server Racks. A Supercomputer Rack lives on the compute fabric
                  * behind its HBW Interface and is never a section member, even if the branch walk

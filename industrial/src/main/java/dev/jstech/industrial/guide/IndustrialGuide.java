@@ -117,6 +117,9 @@ public final class IndustrialGuide {
                 .note(SET_UP_NEXT)
                 .nextColumn()
                 .whatItIs("A block that burns fuel to make energy: 20 FE a tick while the fuel burns.")
+                .define("FE", "Forge Energy, the energy most machine mods count in. A generator makes it, a cable"
+                        + " carries it, a machine spends it.")
+                .define("Tick", "The game's beat: 20 ticks make a second.")
                 .whatItIsFor("Powering the other machines, at the start, before anything better exists.")
                 .howToGetIt(FROM_THE_TAB)
                 .warning("Do not burn a lava bucket in it: it takes the whole bucket and gives no empty one back.")
@@ -259,9 +262,6 @@ public final class IndustrialGuide {
                 .subheading("What each machine spends")
                 .paragraph("Coal Generator: makes 20 FE a tick. Macerator: 40. Compressor: 30. Electric Furnace: 30.")
                 .nextPage()
-                .define("FE", "Forge Energy, the energy most machine mods count in. A generator makes it, a cable"
-                        + " carries it, a machine spends it.")
-                .define("Tick", "The game's beat: 20 ticks make a second.")
                 .paragraph("The Energy Cable carries any amount of energy, any distance, and loses none. It is laid"
                         + " in the shared cable block of the series, in a lane of its own, so it runs beside the"
                         + " cables of other mods without joining them.")

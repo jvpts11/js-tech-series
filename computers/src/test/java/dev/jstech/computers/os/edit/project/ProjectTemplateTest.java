@@ -129,4 +129,17 @@ class ProjectTemplateTest {
         assertTrue(ProjectTemplate.SCRIPT.isKind(""));
         assertTrue(ProjectTemplate.SCRIPT.isKind(null));
     }
+
+    @Test
+    void isValidProjectName_acceptsOnlyIdentifiers() {
+        assertTrue(ProjectTemplate.isValidProjectName("Sorter_2"));
+        assertTrue(ProjectTemplate.isValidProjectName("_x"));
+        assertFalse(ProjectTemplate.isValidProjectName(""));
+        assertFalse(ProjectTemplate.isValidProjectName(null));
+        assertFalse(ProjectTemplate.isValidProjectName("2048"));
+        assertFalse(ProjectTemplate.isValidProjectName("my-app"));
+        assertFalse(ProjectTemplate.isValidProjectName("a\"b"));
+        assertFalse(ProjectTemplate.isValidProjectName("Sorter,v2"));
+        assertFalse(ProjectTemplate.isValidProjectName("My.App"));
+    }
 }

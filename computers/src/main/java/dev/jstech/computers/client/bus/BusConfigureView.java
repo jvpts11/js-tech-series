@@ -21,7 +21,6 @@ import dev.jstech.computers.operation.payload.BusStatePayload;
 import dev.jstech.computers.operation.payload.CraftingView;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
-import dev.jstech.core.id.StableIds;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.gui.Font;
@@ -63,6 +62,9 @@ final class BusConfigureView {
     private List<CraftRow> craftRows = List.of();
     private boolean picking;
 
+    /** The condition kinds in the order the editor offers them, which is the order of its toggle's words. */
+    private static final List<BusCondition.Kind> OFFERED_KINDS = List.of(BusCondition.Kind.STOCK,
+            BusCondition.Kind.HOURS, BusCondition.Kind.AFTER);
     private static final int STEP = 1;
     private static final int SHIFT_STEP = 16;
     private static final int BELOW_SHIFT_STEP = 64;
@@ -722,9 +724,7 @@ final class BusConfigureView {
         final Toggle kinds = toggle(BusLayout.Kind.CONDITION_EDITOR);
         for (int i = 0; i < kinds.words().size(); i++) {
             if (over(x, y, kinds.xs()[i], 0, kinds.ws()[i], BusLayout.CONTROL_H)) {
-                // The kinds are offered in the order of their ids: stock, hours, after.
-                final BusCondition.Kind kind = StableIds.of(BusCondition.Kind.class).find(i);
-                editKind = kind == null ? editKind : kind;
+                editKind = OFFERED_KINDS.get(i);
                 conditionField.setValue("");
                 return true;
             }

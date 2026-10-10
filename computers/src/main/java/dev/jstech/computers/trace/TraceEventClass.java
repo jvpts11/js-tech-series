@@ -46,8 +46,8 @@ public enum TraceEventClass implements IStableId {
         PLANS(8),
         BUSES(16);
 
-        /** Every group at once. */
-        public static final int ALL = 31;
+        /** Every group at once, worked out from the groups so a new one is never left out. */
+        public static final int ALL = allBits();
 
         private final int bit;
 
@@ -63,6 +63,14 @@ public enum TraceEventClass implements IStableId {
         /** Whether {@code mask} picks this group. */
         public boolean in(final int mask) {
             return (mask & bit) != 0;
+        }
+
+        private static int allBits() {
+            int all = 0;
+            for (final Group group : values()) {
+                all |= group.bit;
+            }
+            return all;
         }
     }
 

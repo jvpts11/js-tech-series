@@ -28,12 +28,24 @@ class HeapTest {
         final Heap heap = new Heap(ROOM);
         final Values.ListValue list = heap.allocate(new Values.ListValue(), LIST, 3);
 
-        heap.dispose(list, 4);
+        heap.dispose(list);
 
         assertEquals(0, heap.used());
         assertTrue(heap.isFreed(list));
         assertEquals(0, heap.bytesOf(list));
         assertEquals(List.of(), heap.live());
+    }
+
+    @Test
+    void count_countsTheHeldThingsThatPassTheTest() {
+        final Heap heap = new Heap(ROOM);
+        final Values.ListValue kept = heap.allocate(new Values.ListValue(), LIST, 1);
+        final Values.ListValue freed = heap.allocate(new Values.ListValue(), LIST, 2);
+        heap.dispose(freed);
+
+        assertEquals(1, heap.count(held -> held instanceof Values.ListValue));
+        assertEquals(0, heap.count(held -> held == freed));
+        assertEquals(1, heap.count(held -> held == kept));
     }
 
     @Test
@@ -64,8 +76,8 @@ class HeapTest {
         final Values.ListValue kept = heap.allocate(new Values.ListValue(), LIST, 1);
         final Values.ListValue list = heap.allocate(new Values.ListValue(), LIST, 2);
 
-        heap.dispose(list, 3);
-        heap.dispose(list, 4);
+        heap.dispose(list);
+        heap.dispose(list);
 
         assertEquals(LIST, heap.used());
         assertTrue(heap.isFreed(list));
@@ -78,7 +90,7 @@ class HeapTest {
         final String one = heap.allocate(new String("same".toCharArray()), Heap.sizeOfText("same"), 1);
         final String two = heap.allocate(new String("same".toCharArray()), Heap.sizeOfText("same"), 1);
 
-        heap.dispose(one, 2);
+        heap.dispose(one);
 
         assertTrue(heap.isFreed(one));
         assertFalse(heap.isFreed(two));
@@ -92,7 +104,7 @@ class HeapTest {
         final Values.ListValue second = heap.allocate(new Values.ListValue(), LIST, 2);
         final Values.ListValue third = heap.allocate(new Values.ListValue(), LIST, 3);
 
-        heap.dispose(second, 4);
+        heap.dispose(second);
 
         assertEquals(List.of(first, third), heap.live());
     }
@@ -115,7 +127,7 @@ class HeapTest {
     void dispose_keepsNothingOfAProgramThatAllocatesAndFreesForever() {
         final Heap heap = new Heap(ROOM);
         for (int i = 0; i < 100_000; i++) {
-            heap.dispose(heap.allocate(new Values.ListValue(), LIST, i), i);
+            heap.dispose(heap.allocate(new Values.ListValue(), LIST, i));
         }
         assertEquals(0, heap.used());
         assertEquals(List.of(), heap.live());
@@ -199,7 +211,7 @@ class HeapTest {
     void alive_haltsOnWhatWasFreed() {
         final Heap heap = new Heap(ROOM);
         final Values.ListValue list = heap.allocate(new Values.ListValue(), LIST, 1);
-        heap.dispose(list, 2);
+        heap.dispose(list);
 
         final Halt halt = assertThrows(Halt.class, () -> heap.alive(list, 3));
 
@@ -208,7 +220,7 @@ class HeapTest {
 
     private static WeakReference<Values.ListValue> freeOne(final Heap heap) {
         final Values.ListValue list = heap.allocate(new Values.ListValue(), LIST, 1);
-        heap.dispose(list, 2);
+        heap.dispose(list);
         return new WeakReference<>(list);
     }
 }

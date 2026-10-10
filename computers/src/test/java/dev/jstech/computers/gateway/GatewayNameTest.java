@@ -46,6 +46,12 @@ final class GatewayNameTest {
     }
 
     @Test
+    void clean_cutDoesNotLeaveADashAtTheEnd() {
+        final String typed = "a".repeat(GatewayName.MAX - 1) + " b";
+        assertEquals("a".repeat(GatewayName.MAX - 1), GatewayName.clean(typed));
+    }
+
+    @Test
     void peripheralName_prefixesAndUsesUnderscores() {
         assertEquals("jsc_gateway_cc_bridge", GatewayName.peripheralName("cc-bridge"));
         assertEquals("jsc_gateway_gateway_1", GatewayName.peripheralName(GatewayName.defaultFor(1)));

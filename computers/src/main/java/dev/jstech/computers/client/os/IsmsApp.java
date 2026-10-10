@@ -120,7 +120,6 @@ public final class IsmsApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final String COMMENT = "-- ";
     private static final String STATE_FILE = "file\t";
     private static final String STATE_QUERY = "query\t";
-    private static final String NEWLINE = "\\n";
     private static final String SCRIPT_EXTENSION = "iql";
     private static final String RESULTS_EXTENSION = "csv";
 
@@ -255,7 +254,7 @@ public final class IsmsApp implements IDesktopApp, CodeFileReplies.IReader {
             } else {
                 final String text = doc.code.text();
                 final String kept = text.length() > MOST_SAVED_TEXT ? text.substring(0, MOST_SAVED_TEXT) : text;
-                out.append(STATE_QUERY).append(kept.replace("\\", "\\\\").replace("\n", NEWLINE)).append('\n');
+                out.append(STATE_QUERY).append(IsmsQueryEscaping.escape(kept)).append('\n');
             }
         }
         return out.toString();
@@ -267,9 +266,7 @@ public final class IsmsApp implements IDesktopApp, CodeFileReplies.IReader {
             if (line.startsWith(STATE_FILE)) {
                 openPath(line.substring(STATE_FILE.length()));
             } else if (line.startsWith(STATE_QUERY)) {
-                final String text = line.substring(STATE_QUERY.length()).replace(NEWLINE, "\n")
-                        .replace("\\\\", "\\");
-                openNew("", text);
+                openNew("", IsmsQueryEscaping.unescape(line.substring(STATE_QUERY.length())));
             }
         }
     }
@@ -885,7 +882,7 @@ public final class IsmsApp implements IDesktopApp, CodeFileReplies.IReader {
 
     void indexMaintenance() {
         final IsmsSchemaPayload s = schema;
-        if (s == null) {
+        if (s == null || s.index() == null) {
             return;
         }
         final Text standing = IsmsTexts.INDEX_TEXT.with(IsmsExplorer.health(s.index().state()).text(),
@@ -1416,8 +1413,9 @@ public final class IsmsApp implements IDesktopApp, CodeFileReplies.IReader {
         final int pickerW = Math.min(font.width(picker) + IsmsLayout.BUTTON_PAD + 10, width - x - rightW
                 - IsmsLayout.BUTTON_GAP);
         if (pickerW >= 40) {
+            final int pickerX = x;
             toolbar.add(new ToolButton(picker, x, pickerW, true, false, true, Icon.NONE,
-                    () -> context.open(menus.server(), originX + toolbar.get(toolbar.size() - 1).x(),
+                    () -> context.open(menus.server(), originX + pickerX,
                             originY + IsmsLayout.BODY_Y, originX, originY, width, height)));
             x += pickerW + IsmsLayout.BUTTON_GAP;
             toolbar.add(separator(x));

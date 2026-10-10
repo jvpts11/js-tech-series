@@ -44,7 +44,7 @@ public final class TestComponents {
 
                 @Override
                 public boolean action(final String name, final Object value) {
-                    return TURN.equals(name) && value instanceof Integer by && Math.abs(by) < FULL_TURN;
+                    return TURN.equals(name) && value instanceof Integer by && by > -FULL_TURN && by < FULL_TURN;
                 }
             }));
             event.componentKind(new ComponentKind(BROWSER, true, IComponentValidator.ANYTHING));

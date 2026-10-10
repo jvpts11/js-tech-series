@@ -152,6 +152,8 @@ public final class UiWidgets {
     /** The most columns a table has, menu entries a menu holds, sections a status bar shows. */
     public static final int MOST_COLUMNS = 8;
     public static final int MOST_MENU = 64;
+    /** The most pages a tab view holds. */
+    public static final int MOST_TABS = 64;
     public static final int MOST_SECTIONS = 4;
     /** The most numbers a chart keeps, and lines a log view; past these the oldest go. */
     public static final int MOST_POINTS = 120;
@@ -267,7 +269,7 @@ public final class UiWidgets {
                 if (RADIO_GROUP.equals(type)) {
                     made.set(ACROSS, Boolean.TRUE);
                 } else if (ITEM_PICKER.equals(type)) {
-                    made.set(PICKED, "");
+                    made.set(PICKED, nothing());
                 }
             }
             case LOG_VIEW -> {
@@ -448,9 +450,21 @@ public final class UiWidgets {
 
     /** Whether a window shows that widget, anywhere inside what it holds. */
     static boolean shows(final Values.Obj window, final Values.Obj widget) {
+        // One pass with one visited set over every top-level widget, rather than a fresh walk for each of them.
+        final Set<Values.Obj> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        final Deque<Values.Obj> left = new ArrayDeque<>();
         for (final Values.Obj top : tops(window)) {
-            if (holds(top, widget)) {
+            left.push(top);
+        }
+        while (!left.isEmpty()) {
+            final Values.Obj at = left.pop();
+            if (at == widget) {
                 return true;
+            }
+            if (seen.add(at)) {
+                for (final Values.Obj one : held(at)) {
+                    left.push(one);
+                }
             }
         }
         return false;

@@ -10,7 +10,6 @@ package dev.jstech.computers.os.devices;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.text.TextLists;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,8 +81,7 @@ public final class WorkstationDeviceRows {
             return new Row(label, ON.with(of, FREE.text()), true, false, DeviceRows.NO_DEVICE);
         }
         final DeviceMap.Device first = output.plugged().getFirst();
-        final List<Text> names = output.plugged().stream().map(DeviceMap.Device::name).toList();
-        return new Row(label, ON.with(of, TextLists.join(", ", names)), false, first.disabled(), first.pos());
+        return new Row(label, ON.with(of, output.pluggedNames()), false, first.disabled(), first.pos());
     }
 
     /* A device port with what is plugged into it, and a hub's own ports after it. */

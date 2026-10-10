@@ -9,6 +9,7 @@ package dev.jstech.computers.program.install;
 
 import dev.jstech.computers.program.install.voice.ArchiveVoice;
 import dev.jstech.computers.program.install.voice.FetchVoice;
+import dev.jstech.computers.program.install.voice.GentooProfiles;
 import dev.jstech.computers.program.install.voice.KernelVoices;
 import dev.jstech.computers.program.install.voice.PortageVoices;
 import dev.jstech.computers.program.install.voice.WorldStamp;
@@ -286,7 +287,7 @@ final class GentooSteps {
             if (parts.length < 4) {
                 return LiveTurn.refused(NO_SYMLINK_TARGET.text(), EXITING.text());
             }
-            final int chosen = PortageVoices.profileOf(parts[3]);
+            final int chosen = GentooProfiles.profileOf(parts[3]);
             if (chosen == 0) {
                 return LiveTurn.refused(NOT_VALID.with(parts[3]), EXITING.text());
             }
@@ -340,7 +341,7 @@ final class GentooSteps {
         final boolean builds = line.matches("(?s)^make(\\s+-j\\s*\\d*)?\\s*(&&.*)?$");
         final boolean installs = line.contains("make " + INSTALL_TARGET) || line.endsWith(" " + INSTALL_TARGET);
         final Matcher asked = Pattern.compile("-j\\s*(\\d+)").matcher(line);
-        final int jobs = LiveTimes.jobs(asked.find() ? Integer.parseInt(asked.group(1)) : this.makeJobs(), env);
+        final int jobs = LiveTimes.jobs(asked.find() ? MakeOpts.count(asked.group(1)) : this.makeJobs(), env);
         if (builds) {
             return LiveTurn.running(KernelVoices.make(KERNEL, jobs,
                     LiveTimes.compile(LiveTimes.KERNEL_WORK, jobs, env), () -> {

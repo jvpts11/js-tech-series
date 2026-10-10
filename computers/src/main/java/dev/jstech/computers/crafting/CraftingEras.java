@@ -16,6 +16,12 @@ import dev.jstech.core.tier.HardwareEra;
  */
 public final class CraftingEras {
 
+    /**
+     * The most recipes a Crafting Card's ROM list may hold on the wire. It is above every era's {@link #romPerCard}
+     * (a test keeps it so) and leaves room for a card filled by a command, so a synced list is never refused.
+     */
+    public static final int MAX_ROM_PER_CARD = 16;
+
     private CraftingEras() {
     }
 

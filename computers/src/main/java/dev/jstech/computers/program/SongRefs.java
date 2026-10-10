@@ -30,7 +30,12 @@ public final class SongRefs {
 
     /** A song of the catalogue, by its album and its file. */
     public static String catalog(final String album, final String file) {
-        return CATALOG + album + "/" + file;
+        return CATALOG + catalogPath(album, file);
+    }
+
+    /** Where a catalogue song is found, as its album and its file. */
+    public static String catalogPath(final String album, final String file) {
+        return album + "/" + file;
     }
 
     /** A song of the network's library, by its path on the server keeping it. */

@@ -264,7 +264,7 @@ public final class DiskFilesystem {
         }
         final FilesystemContents current = disk.getOrDefault(
                 ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
-        if (namesAFolder(current, path)) {
+        if (namesAFolder(current, path) || standsUnderAFile(current, path)) {
             return WriteResult.INVALID_PATH;
         }
         final FilesystemContents updated = current.with(new StoredFile(path, type, content, now));
@@ -295,7 +295,7 @@ public final class DiskFilesystem {
         if (had != null && (had.type().virtualProjection() || had.type().recording())) {
             return WriteResult.READ_ONLY;
         }
-        if (namesAFolder(current, path)) {
+        if (namesAFolder(current, path) || standsUnderAFile(current, path)) {
             return WriteResult.INVALID_PATH;
         }
         if ((long) (had == null ? 0 : had.content().length()) + addition.length() > StoredFile.MOST_CHARS) {
@@ -308,6 +308,9 @@ public final class DiskFilesystem {
             return WriteResult.DISK_FULL;
         }
         final String content = had == null ? addition : had.content() + addition;
+        if (!holdsItsKind(type, content)) {
+            return WriteResult.READ_ONLY;
+        }
         disk.set(ComputingComponents.FILESYSTEM.get(), current.with(new StoredFile(path, type, content, now)));
         return WriteResult.OK;
     }
@@ -509,7 +512,7 @@ public final class DiskFilesystem {
      * @return true if at least one directory or file was removed
      */
     public static boolean rmdir(final ItemStack disk, final String path, final FilesystemKind kind) {
-        if (kind != FilesystemKind.HIERARCHICAL) {
+        if (kind != FilesystemKind.HIERARCHICAL || installerLocked(disk)) {
             return false;
         }
         final FilesystemContents fs = disk.getOrDefault(
@@ -616,6 +619,21 @@ public final class DiskFilesystem {
     }
 
     /**
+     * Whether a proper ancestor of {@code path} is a stored file, so nothing can be put at {@code path}: the disk
+     * would hold one name as both a file and a folder.
+     */
+    private static boolean standsUnderAFile(final FilesystemContents fs, final String path) {
+        int slash = path.indexOf('/');
+        while (slash >= 0) {
+            if (fs.files().containsKey(path.substring(0, slash))) {
+                return true;
+            }
+            slash = path.indexOf('/', slash + 1);
+        }
+        return false;
+    }
+
+    /**
      * Re-keys a file or directory from {@code src} to the full path {@code dest}.
      *
      * <p>Returns {@code false}, without mutation, when the kind is not hierarchical, the
@@ -637,7 +655,8 @@ public final class DiskFilesystem {
         // File: re-key the single stored file.
         final StoredFile file = fs.files().get(src);
         if (file != null) {
-            if (file.type().virtualProjection() || fs.files().containsKey(dest) || namesAFolder(fs, dest)) {
+            if (file.type().virtualProjection() || fs.files().containsKey(dest) || namesAFolder(fs, dest)
+                    || standsUnderAFile(fs, dest)) {
                 return false;
             }
             /*
@@ -677,7 +696,7 @@ public final class DiskFilesystem {
          * directory (or over an existing file) would silently overwrite colliding entries and destroy
          * data. Mirrors the collision guard on the file-rename branch above.
          */
-        if (fs.hasDir(dest) || fs.files().containsKey(dest)
+        if (fs.hasDir(dest) || fs.files().containsKey(dest) || standsUnderAFile(fs, dest)
                 || fs.files().keySet().stream().anyMatch(p -> FsPaths.isUnder(dest, p))) {
             return false;
         }
@@ -707,7 +726,8 @@ public final class DiskFilesystem {
      */
     public static boolean copy(final ItemStack disk, final String src, final String dest,
                                final long freeWeight, final FilesystemKind kind) {
-        if (kind != FilesystemKind.HIERARCHICAL || dest.equals(src) || !FsPaths.isValidPath(dest, kind)) {
+        if (kind != FilesystemKind.HIERARCHICAL || dest.equals(src) || !FsPaths.isValidPath(dest, kind)
+                || installerLocked(disk)) {
             return false;
         }
         final FilesystemContents fs = disk.getOrDefault(
@@ -716,7 +736,8 @@ public final class DiskFilesystem {
         // File: duplicate the single stored file at the new path.
         final StoredFile file = fs.files().get(src);
         if (file != null) {
-            if (file.type().virtualProjection() || fs.files().containsKey(dest) || namesAFolder(fs, dest)) {
+            if (file.type().virtualProjection() || fs.files().containsKey(dest) || namesAFolder(fs, dest)
+                    || standsUnderAFile(fs, dest)) {
                 return false;
             }
             if (file.weight(eraOf(disk)) > freeWeight) {
@@ -733,7 +754,7 @@ public final class DiskFilesystem {
         if (!isDir || FsPaths.isUnder(src, dest)) {
             return false;
         }
-        if (fs.hasDir(dest) || fs.files().containsKey(dest)
+        if (fs.hasDir(dest) || fs.files().containsKey(dest) || standsUnderAFile(fs, dest)
                 || fs.files().keySet().stream().anyMatch(p -> FsPaths.isUnder(dest, p))) {
             return false;
         }

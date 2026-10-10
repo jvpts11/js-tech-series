@@ -36,12 +36,6 @@ final class SoftwareCommands {
     }
 
     /**
-     * The package manager every Frames edition ships with: one verb set over the network Mirror, so a
-     * player who never touches a Linux distribution still installs, removes, searches and updates
-     * software the same way. Linux distributions keep their own managers (apt, dnf, pacman, emerge);
-     * this is the Frames-side equivalent, and it speaks to the same Mirror.
-     */
-    /**
      * A package manager over the network's Mirror, under whichever name its family gave it.
      *
      * <p>The Frames family calls it {@code pckmgr} and the network appliance calls it {@code netgetter}, and
@@ -179,14 +173,13 @@ final class SoftwareCommands {
                 ctx.out().error(NO_MIRROR);
                 return;
             }
-            final String needle = filter == null ? "" : filter.toLowerCase(Locale.ROOT);
+            final String needle = filter == null ? "" : filter.trim();
             int shown = 0;
             for (final ICliComputer.PackageInfo info : packages) {
                 if (onlyInstalled && !info.installed()) {
                     continue;
                 }
-                if (!needle.isEmpty() && !info.name().toLowerCase(Locale.ROOT).contains(needle)
-                        && !info.description().toLowerCase(Locale.ROOT).contains(needle)) {
+                if (!info.matches(needle)) {
                     continue;
                 }
                 /*
@@ -282,8 +275,15 @@ final class SoftwareCommands {
         }
     }
 
+    /**
+     * Takes a program off the machine. Every family says it the same way, so one implementation serves them
+     * all and only the scope and the related commands differ.
+     */
     @TextHolder
     static final class Uninstall implements ICliCommand {
+
+        private final CommandScope scope;
+        private final List<String> seeAlso;
 
         private static final TextKey SUMMARY = TextKey.of("jsc.cli.software.uninstall.summary",
                 "remove an installed program from this computer");
@@ -291,8 +291,17 @@ final class SoftwareCommands {
         private static final TextKey SEE_PROGRAMS = TextKey.of("jsc.cli.software.uninstall.see_programs",
                 "usage: uninstall <program-id>   (see 'programs')");
 
+        Uninstall(final CommandScope scope, final List<String> seeAlso) {
+            this.scope = scope;
+            this.seeAlso = seeAlso;
+        }
+
         @Override public CommandScope scope() {
-            return CommandScope.everywhere();
+            return this.scope;
+        }
+
+        @Override public List<String> seeAlso() {
+            return this.seeAlso;
         }
 
         @Override public String name() {
@@ -500,14 +509,6 @@ final class SoftwareCommands {
         }
     }
 
-    /**
-     * Lists the files on the system disk. Each entry shows the file name, its size in mB-equivalents,
-     * and a {@code [RO]} marker for read-only {@code .dat} projection entries.
-     */
-    /**
-     * Restarts the computer. With {@code --firmware} the restart lands in the firmware setup (the boot
-     * manager) instead of the installed OS, which is how the player reaches it once a system is installed.
-     */
     /** Installs or reports the Mirror, the Mainframe's package repository the Linux package managers use. */
     @TextHolder
     static final class MirrorCommand implements ICliCommand {

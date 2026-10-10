@@ -17,6 +17,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Everything a process has allocated, counted to the byte.
@@ -77,11 +78,6 @@ public final class Heap implements IPureContext {
 
     public Heap(final long budget) {
         this.budget = budget;
-    }
-
-    /** What running out reads like when an allocation does not fit in what is left. */
-    public Text overBudget() {
-        return this.outOfMemory(0);
     }
 
     /** How many bytes this process may hold at once. */
@@ -195,7 +191,7 @@ public final class Heap implements IPureContext {
      * Frees something. A second free of the same thing is not a mistake in itself, because the
      * reference that named it is set to null by the same statement; using a freed one is.
      */
-    public void dispose(final Object value, final int line) {
+    public void dispose(final Object value) {
         final Entry entry = this.live.remove(value);
         if (entry == null) {
             return;
@@ -214,6 +210,17 @@ public final class Heap implements IPureContext {
         if (entry != null) {
             this.used -= entry.bytes;
         }
+    }
+
+    /** How many things held now satisfy the test, counted in place with no copy and no ordering. */
+    int count(final Predicate<Object> test) {
+        int found = 0;
+        for (final Object held : this.live.keySet()) {
+            if (test.test(held)) {
+                found++;
+            }
+        }
+        return found;
     }
 
     /** Whether this was freed and may no longer be read. */

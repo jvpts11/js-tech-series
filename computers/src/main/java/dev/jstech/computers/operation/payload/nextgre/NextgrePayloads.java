@@ -85,6 +85,9 @@ public final class NextgrePayloads {
             case NextgreActionPayload.EXPLAIN, NextgreActionPayload.EXPLAIN_ANALYZE -> {
                 final String statement = (payload.action() == NextgreActionPayload.EXPLAIN ? EXPLAIN
                         : EXPLAIN + ANALYZE) + bare(payload.arg());
+                // The newest plan before the query: a plan is this query's only if it is newer than this.
+                final List<NextgrePlanView> earlier = nextgre.history(mainframe);
+                final int newestBefore = earlier.isEmpty() ? -1 : earlier.get(0).id();
                 final ServerCliComputer computer = new ServerCliComputer(host, level);
                 final AtomicReference<IqlEngine.Outcome> outcome = new AtomicReference<>();
                 Acting.as(player, () -> outcome.set(mainframe.networkOperations().query(IqlEngine.viewOf(computer),
@@ -92,7 +95,8 @@ public final class NextgrePayloads {
                 ok = outcome.get().ok();
                 message = outcome.get().said();
                 final List<NextgrePlanView> history = nextgre.history(mainframe);
-                if (!history.isEmpty() && history.get(0).statement().equals(statement)) {
+                if (!history.isEmpty() && history.get(0).id() != newestBefore
+                        && history.get(0).statement().equals(statement)) {
                     plan = history.get(0);
                 }
             }

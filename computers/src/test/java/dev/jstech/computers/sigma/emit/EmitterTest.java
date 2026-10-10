@@ -211,6 +211,41 @@ class EmitterTest {
     }
 
     @Test
+    void emit_startsACapturedStructLocalAsAnEmptyStruct() {
+        final String listing = compile("delegate int Count(string t);\nstruct Vec { public int X; }\n", """
+                    void Use(Count c) { }
+                    void M() { Vec v; Use((t) => v.X); }
+                """);
+        assertTrue(bodyOf(listing, "M").stream().anyMatch(line -> line.startsWith("newobj Tests.Vec")), listing);
+    }
+
+    @Test
+    void emit_putsTheObjectUnderAnOutValueStoredToAnInstanceField() {
+        final String listing = compile("""
+                    int stored;
+                    bool Find(out int value) { value = 0; return true; }
+                    void M() { Find(out stored); }
+                """);
+        final List<String> body = bodyOf(listing, "M");
+        assertEquals(2, body.stream().filter("ldthis"::equals).count(), listing);
+        assertTrue(body.stream().anyMatch(line -> line.startsWith("stfld")), listing);
+    }
+
+    @Test
+    void emit_chainsToTheConstructorWhoseTypesFitNotJustTheFirstOfThatSize() {
+        final String listing = compile("""
+                class Foo {
+                    public Foo(int a) { }
+                    public Foo(string s) { }
+                    public Foo() : this("x") { }
+                }
+                """, "");
+        final List<String> body = bodyOf(listing, ".ctor");
+        assertTrue(body.contains("call Tests.Foo..ctor(string) -> void"), listing);
+        assertFalse(body.contains("call Tests.Foo..ctor(int) -> void"), listing);
+    }
+
+    @Test
     void emit_keepsAVariableALambdaReadsOnlyInsideAStringHole() {
         // Read only through ${...}, the variable was left in a slot of the lambda's own frame, which holds nothing.
         final String listing = compile("delegate string Label(string t);\n", """

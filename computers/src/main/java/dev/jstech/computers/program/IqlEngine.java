@@ -258,10 +258,15 @@ public final class IqlEngine {
     }
 
     private Outcome drop(final IqlDefinition definition) {
-        if (!mainframe.iqlCatalog().remove(definition.objectType(), definition.name())) {
+        final boolean removed = definition.objectType() == IqlDefinition.ObjectType.JOB
+                ? mainframe.deleteJob(definition.name())
+                : mainframe.iqlCatalog().remove(definition.objectType(), definition.name());
+        if (!removed) {
             return Outcome.fail(NO_SUCH_OBJECT.with(typeName(definition.objectType()), definition.name()));
         }
-        mainframe.markIqlCatalogChanged();
+        if (definition.objectType() != IqlDefinition.ObjectType.JOB) {
+            mainframe.markIqlCatalogChanged();
+        }
         return Outcome.ok(DROPPED.with(typeName(definition.objectType()), definition.name()));
     }
 

@@ -9,6 +9,7 @@ package dev.jstech.computers.api.planner;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -78,12 +79,15 @@ public final class PlanCandidate {
 
     /** Adds {@code ticks} to the cost (or takes them off, when negative, never below nothing), saying why. */
     public void addCost(final long ticks, final Component why) {
-        cost = Math.max(0L, cost + ticks);
+        Objects.requireNonNull(why, "why");
+        // Saturates instead of wrapping, so an extreme penalty makes the plan the dearest and never the cheapest.
+        cost = ticks > 0 && cost > Long.MAX_VALUE - ticks ? Long.MAX_VALUE : Math.max(0L, cost + ticks);
         notes.add(why);
     }
 
     /** Sets the plan aside, saying why: the network will not run it whatever it costs. */
     public void setAside(final Component why) {
+        Objects.requireNonNull(why, "why");
         if (setAside == null) {
             setAside = why;
         }

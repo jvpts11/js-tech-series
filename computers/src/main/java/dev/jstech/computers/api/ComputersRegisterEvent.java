@@ -19,6 +19,7 @@ import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OperatingSpaceDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ProgramSpec;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.Event;
 import net.neoforged.fml.event.IModBusEvent;
 import org.jetbrains.annotations.ApiStatus;
@@ -52,6 +53,9 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
     @Deprecated(since = "0.5.0a", forRemoval = true)
     @SuppressWarnings("removal")
     public void architecture(final ArchitectureSpec architecture) {
+        if (architecture == null) {
+            return;
+        }
         isa(architecture.toIsa());
     }
 
@@ -80,6 +84,17 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
      */
     public void fileOpener(final String programId) {
         JsComputersApi.registerFileOpener(programId);
+    }
+
+    /**
+     * Says the windows of a program draw through a surface, which holds video memory on the machine while they are
+     * open. The server counts that memory, so this is said here, on both sides, and not only in client setup.
+     *
+     * @param programId the program's id, as it was registered
+     */
+    @ApiStatus.Experimental
+    public void graphicsProgram(final ResourceLocation programId) {
+        JsComputersApi.registerGraphicsProgram(programId);
     }
 
     /** Adds a desktop, which a Linux computer installs as a package or an operating system bundles. */

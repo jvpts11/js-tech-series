@@ -342,8 +342,8 @@ public final class GatewayCommand implements ICliCommand {
             }
             case "cap" -> {
                 int index = -1;
-                for (int i = 0; i < GatewayPermissions.CAPS.length; i++) {
-                    if (to.equals(String.valueOf(GatewayPermissions.CAPS[i]))) {
+                for (int i = 0; i < GatewayPermissions.capCount(); i++) {
+                    if (to.equals(String.valueOf(GatewayPermissions.capAt(i)))) {
                         index = i;
                     }
                 }

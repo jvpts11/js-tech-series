@@ -11,7 +11,6 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.InstallerScreen;
-import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.media.MediaItem;
@@ -24,7 +23,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.neoforge.items.ItemStackHandler;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -132,18 +130,7 @@ public final class GuidedInstallerClientTests {
         return ctx.thenBuild(0, world -> {
                     world.setBlock(MACHINE, ComputingModule.MAINFRAME.get());
                     final MainframeBlockEntity mainframe = world.blockEntity(MACHINE, MainframeBlockEntity.class);
-                    final ItemStackHandler inv = mainframe.getInventory();
-                    inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                            new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                            new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
-                            new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
-                            new ItemStack(ComputingModule.GPU_HD_7970.get()));
-                    inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
-                            new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+                    TestWorldBuilder.installMainframeParts(mainframe, StorageTier.HDD, true);
                     mainframe.togglePower();
                     world.setBlock(DRIVE, driveBlock);
                     final ItemStack disc = new ItemStack(mediumItem);

@@ -149,6 +149,9 @@ public final class ShellView extends Panel implements ShellViews.IListener {
      */
     private boolean toolSpoke;
 
+    /** Whether the line run last printed anything in the error colour, which is how a failed command shows. */
+    private boolean failedLastRun;
+
     /**
      * A view of the console of the computer at {@code host}.
      *
@@ -351,6 +354,14 @@ public final class ShellView extends Panel implements ShellViews.IListener {
         return this.busy;
     }
 
+    /**
+     * Whether the line most recently given to {@link #run} printed an error. The console reports no exit status,
+     * so a window that chains a line behind another reads the error colour to know the first one failed.
+     */
+    public boolean failedLastRun() {
+        return this.failedLastRun;
+    }
+
     /** Puts a line in this view's scrollback without asking the machine anything. */
     public void say(final String text, final CliStyle style) {
         push(text, style);
@@ -358,6 +369,7 @@ public final class ShellView extends Panel implements ShellViews.IListener {
 
     /** Runs a line as though the player had typed it. */
     public void run(final String line) {
+        this.failedLastRun = false;
         submit(line);
     }
 
@@ -377,6 +389,9 @@ public final class ShellView extends Panel implements ShellViews.IListener {
                 this.scrollback.push(line.toLine());
             }
             this.toolSpoke = this.toolSpoke || payload.keyboard().busy();
+            if (!payload.informational() && line.style() == CliStyle.ERROR.id()) {
+                this.failedLastRun = true;
+            }
         }
         // Lines the machine printed on its own say nothing about who has the prompt.
         if (payload.informational()) {

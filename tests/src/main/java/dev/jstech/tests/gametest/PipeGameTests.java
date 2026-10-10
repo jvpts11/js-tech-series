@@ -56,7 +56,7 @@ public final class PipeGameTests {
     @GameTest(template = ARENA)
     public static void pipe_movesWhatItsRateAllowsFromAnOutputIntoAnInput(final GameTestHelper helper) {
         final FluidTank output = ends(helper, new FluidStack(Fluids.WATER, 10_000), TestCableTypes.PLAIN_PIPE);
-        final FluidTank input = TestFluidEnds.tankAt(helper.absolutePos(INPUT));
+        final FluidTank input = TestFluidEnds.tankAt(helper.getLevel(), helper.absolutePos(INPUT));
 
         helper.succeedWhen(() -> {
             final OptionalLong moved = FluidGrids.movedLastTickAt(helper.getLevel(),
@@ -105,7 +105,7 @@ public final class PipeGameTests {
     @GameTest(template = ARENA)
     public static void pressurePipe_carriesGasesCorrosivesAndLava(final GameTestHelper helper) {
         final FluidTank output = ends(helper, TestFluids.GAS.stack(5_000), TestCableTypes.PRESSURE_PIPE);
-        final FluidTank input = TestFluidEnds.tankAt(helper.absolutePos(INPUT));
+        final FluidTank input = TestFluidEnds.tankAt(helper.getLevel(), helper.absolutePos(INPUT));
         final PipeLimits limits = TestCableTypes.PRESSURE_PIPE.get().pipe();
         helper.assertTrue(limits.carries(TestFluids.ACID.source()) && limits.carries(Fluids.LAVA),
                 "it is made for corrosives and stands lava");
@@ -135,9 +135,9 @@ public final class PipeGameTests {
     /* An output holding {@code fluid}, a run of {@code pipe} and an input; the output's tank. */
     private static FluidTank ends(final GameTestHelper helper, final FluidStack fluid,
                                   final Supplier<CableType> pipe) {
-        TestFluidEnds.clear(helper.absolutePos(OUTPUT));
-        TestFluidEnds.clear(helper.absolutePos(INPUT));
-        final FluidTank output = TestFluidEnds.tankAt(helper.absolutePos(OUTPUT));
+        TestFluidEnds.clear(helper.getLevel(), helper.absolutePos(OUTPUT));
+        TestFluidEnds.clear(helper.getLevel(), helper.absolutePos(INPUT));
+        final FluidTank output = TestFluidEnds.tankAt(helper.getLevel(), helper.absolutePos(OUTPUT));
         output.fill(fluid, IFluidHandler.FluidAction.EXECUTE);
         helper.setBlock(OUTPUT, Blocks.CHISELED_TUFF);
         helper.setBlock(INPUT, Blocks.CHISELED_TUFF_BRICKS);
@@ -150,7 +150,7 @@ public final class PipeGameTests {
     /* A plain run between an output of {@code fluid} and an input moves none of it. */
     private static void stays(final GameTestHelper helper, final FluidStack fluid) {
         final FluidTank output = ends(helper, fluid, TestCableTypes.PLAIN_PIPE);
-        final FluidTank input = TestFluidEnds.tankAt(helper.absolutePos(INPUT));
+        final FluidTank input = TestFluidEnds.tankAt(helper.getLevel(), helper.absolutePos(INPUT));
         helper.runAfterDelay(WAIT, () -> {
             final CableBlockEntity last = TestCables.cable(helper, RUN.get(RUN.size() - 1));
             helper.assertTrue((last.plugs(last.wire(TestCableTypes.PLAIN_PIPE.get()).slot())

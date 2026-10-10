@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.tests.testkit.ServerStacks;
+import dev.jstech.tests.testkit.TestFetchCommand;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
@@ -19,18 +20,9 @@ import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
 import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliContext;
-import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
-import dev.jstech.computers.program.cli.CommandScope;
-import dev.jstech.computers.program.cli.ICliCommand;
-import dev.jstech.computers.program.tty.TtyScript;
-import dev.jstech.computers.program.tty.TtyScriptProcess;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -58,19 +50,12 @@ public final class TerminalToolGameTests {
     private static final int WIDTH = 64;
 
     /** How long the test tool works for, in ticks. */
-    private static final int WORK = 20;
+    private static final int WORK = TestFetchCommand.WORK;
 
     /** Long enough for a server just mounted in a rack to be a running machine. */
     private static final int SETTLE = 8;
 
     private static final ResourceLocation MC_NET = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
-
-    /** The machines whose tool ran to its end, by the name each answers to, since a tool has nowhere to say. */
-    private static final Set<String> FETCHED = ConcurrentHashMap.newKeySet();
-
-    static {
-        CliCommands.register(new FetchForTests());
-    }
 
     private TerminalToolGameTests() {
     }
@@ -85,17 +70,17 @@ public final class TerminalToolGameTests {
         helper.assertTrue(opening.keyboard().busy(), "the tool has the keyboard, not the prompt");
         helper.assertTrue(text(opening).contains("fetching"), "and it said what it says at once: " + text(opening));
         helper.assertTrue(computer.console().foreground().running(), "the machine has a tool in front");
-        helper.assertFalse(FETCHED.contains(idOf(helper, computer)), "and nothing is fetched at the start");
+        helper.assertFalse(TestFetchCommand.fetched(idOf(helper, computer)), "and nothing is fetched at the start");
 
         final TerminalTools.Turn ignored = TerminalTools.typed(computer, helper.getLevel(), "lsblk");
         helper.assertTrue(ignored != null && ignored.lines().isEmpty(),
                 "a line typed at a tool that asked nothing goes nowhere, as at a real terminal");
 
         helper.startSequence()
-                .thenExecuteAfter(WORK / 2, () -> helper.assertFalse(FETCHED.contains(idOf(helper, computer)),
+                .thenExecuteAfter(WORK / 2, () -> helper.assertFalse(TestFetchCommand.fetched(idOf(helper, computer)),
                         "half way through it has still fetched nothing"))
                 .thenExecuteAfter(WORK, () -> {
-                    helper.assertTrue(FETCHED.contains(idOf(helper, computer)),
+                    helper.assertTrue(TestFetchCommand.fetched(idOf(helper, computer)),
                             "the machine moved the tool along by itself, to the end");
                     helper.assertFalse(computer.console().foreground().running(), "and the prompt is back");
                 })
@@ -117,7 +102,7 @@ public final class TerminalToolGameTests {
                     helper.assertTrue(text(stopped).contains("^C"), "and says so: " + text(stopped));
                     helper.assertFalse(stopped.keyboard().busy(), "the prompt is back at once");
                 })
-                .thenExecuteAfter(WORK * 2, () -> helper.assertFalse(FETCHED.contains(idOf(helper, computer)),
+                .thenExecuteAfter(WORK * 2, () -> helper.assertFalse(TestFetchCommand.fetched(idOf(helper, computer)),
                         "and what it had not finished stays not done, however long it is left"))
                 .thenSucceed();
     }
@@ -145,7 +130,7 @@ public final class TerminalToolGameTests {
                             "though the tool itself did not survive the save");
                 })
                 .thenExecuteAfter(WORK, () -> {
-                    helper.assertTrue(FETCHED.contains(idOf(helper, computer)),
+                    helper.assertTrue(TestFetchCommand.fetched(idOf(helper, computer)),
                             "found again and carried on from where it was, to the end");
                     helper.assertFalse(computer.console().foreground().running(), "and the prompt is back");
                 })
@@ -169,10 +154,10 @@ public final class TerminalToolGameTests {
                     helper.assertTrue(rack.installOs(MC_NET), "the server takes a system");
                     helper.assertTrue(start(helper, rack).keyboard().busy(), "the tool has the server's keyboard");
                 })
-                .thenExecuteAfter(WORK / 2, () -> helper.assertFalse(FETCHED.contains(idOf(helper, rack)),
+                .thenExecuteAfter(WORK / 2, () -> helper.assertFalse(TestFetchCommand.fetched(idOf(helper, rack)),
                         "half way through it has fetched nothing"))
                 .thenExecuteAfter(WORK, () -> {
-                    helper.assertTrue(FETCHED.contains(idOf(helper, rack)),
+                    helper.assertTrue(TestFetchCommand.fetched(idOf(helper, rack)),
                             "the rack moved its server's tool along, to the end");
                     helper.assertFalse(rack.consoleOf(0).foreground().running(), "and the prompt is back");
                 })
@@ -180,13 +165,13 @@ public final class TerminalToolGameTests {
     }
 
     private static TerminalTools.Turn start(final GameTestHelper helper, final IComputerTerminalHost computer) {
-        FETCHED.remove(idOf(helper, computer));
+        TestFetchCommand.forget(idOf(helper, computer));
         final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
-        final CliShell.Response response = CliCommands.shellFor(cli, WIDTH).run(FetchForTests.NAME, cli);
+        final CliShell.Response response = CliCommands.shellFor(cli, WIDTH).run(TestFetchCommand.NAME, cli);
         if (response.started() == null) {
             helper.fail("the test command did not leave a tool running");
         }
-        return TerminalTools.started(computer, helper.getLevel(), FetchForTests.NAME, response.started());
+        return TerminalTools.started(computer, helper.getLevel(), TestFetchCommand.NAME, response.started());
     }
 
     private static String idOf(final GameTestHelper helper, final IComputerTerminalHost computer) {
@@ -221,37 +206,5 @@ public final class TerminalToolGameTests {
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         computer.togglePower();
         return computer;
-    }
-
-    /** A tool that fetches nothing, for a while, and says it has: enough of one to hold a terminal. */
-    private static final class FetchForTests implements ICliCommand {
-
-        private static final String NAME = "jstests-fetch";
-
-        @Override
-        public CommandScope scope() {
-            return CommandScope.everywhere();
-        }
-
-        @Override
-        public String name() {
-            return NAME;
-        }
-
-        @Override
-        public Text summary() {
-            return Text.literal("A tool that holds the terminal for a while, for the tests.");
-        }
-
-        @Override
-        public void run(final CliContext context) {
-            final String at = context.computer().nodeId();
-            context.out().start(new TtyScriptProcess(TtyScript.script()
-                    .say("fetching")
-                    .flood(WORK, WORK * 2, index -> CliLine.plain("part " + index))
-                    .effect(() -> FETCHED.add(at))
-                    .say("fetched")
-                    .done()));
-        }
     }
 }

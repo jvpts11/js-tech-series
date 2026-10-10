@@ -420,6 +420,23 @@ class ComputerSettingsTest {
     }
 
     @Test
+    void share_aDifferentFolderWithTheSameNameIsRefused() {
+        assertTrue(settings.share("C:\\pub", false));
+
+        assertFalse(settings.share("D:\\work\\pub", true));
+        assertEquals("C:\\pub", settings.shareNamed("pub").path());
+        assertFalse(settings.shareNamed("pub").writable());
+    }
+
+    @Test
+    void share_theSameFolderAgainChangesWriteAccess() {
+        assertTrue(settings.share("C:\\pub", false));
+
+        assertTrue(settings.share("c:\\PUB", true));
+        assertTrue(settings.shareNamed("pub").writable());
+    }
+
+    @Test
     void summaryLines_reportEveryOwnedSetting() {
         settings.setClock12h(true);
         settings.setBrightness(80);

@@ -41,6 +41,7 @@ import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
+import net.minecraft.Util;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -82,7 +83,8 @@ public final class ClusterManagerApp implements IDesktopApp {
     private static final int CELL = 18;
     private static final int SWITCH_W = 18;
     private static final int RENAME_W = 44;
-    private static final int REFRESH_TICKS = 40;
+    /** Milliseconds between state requests, so the request rate does not follow the frame rate. */
+    private static final long REFRESH_MILLIS = 2000L;
     /**
      * The manager's own colours, {@code jsc:app/cluster_manager}: what is fine, what is busy, what is wrong, and the
      * band and ink of a warning.
@@ -99,7 +101,7 @@ public final class ClusterManagerApp implements IDesktopApp {
     private int tab;          // 0 supercomputers, 1 datacenters, 2 AI
     private int selIndex = -1;
     private int subTab;       // supercomputers: 0 nodes, 1 map, 2 queue; datacenters: 0 servers, 1 inventory
-    private int frames;
+    private long lastRequestMillis;
     private int lastX;
     private int lastY;
     private int lastW;
@@ -309,6 +311,7 @@ public final class ClusterManagerApp implements IDesktopApp {
     }
 
     private void request() {
+        lastRequestMillis = Util.getMillis();
         PacketDistributor.sendToServer(new RequestClusterManagerPayload(host, tab, selIndex));
     }
 
@@ -607,7 +610,7 @@ public final class ClusterManagerApp implements IDesktopApp {
         lastH = height;
         lastMouseX = mouseX;
         lastMouseY = mouseY;
-        if (++frames % REFRESH_TICKS == 0) {
+        if (Util.getMillis() - lastRequestMillis >= REFRESH_MILLIS) {
             request();
         }
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);

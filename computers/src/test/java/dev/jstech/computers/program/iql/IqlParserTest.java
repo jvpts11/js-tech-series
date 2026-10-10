@@ -394,4 +394,10 @@ class IqlParserTest {
         assertEquals("ServerA", op.from());
         assertEquals("ServerB", op.to());
     }
+
+    @Test
+    void parse_refusesANegativeQuantityInsteadOfReadingItAsAll() {
+        assertThrows(IllegalArgumentException.class, () -> IqlParser.parse("DELETE -1 cobblestone"));
+        assertThrows(IllegalArgumentException.class, () -> IqlParser.parse("DELETE -5 cobblestone"));
+    }
 }

@@ -27,7 +27,7 @@ public final class SemanticModel {
 
     private final Map<IExpr, ITypeSymbol> types = new IdentityHashMap<>();
     private final Map<IExpr, IBinding> bindings = new IdentityHashMap<>();
-    private final Map<IExpr, IMemberSymbol> calls = new IdentityHashMap<>();
+    private final Map<INode, IMemberSymbol> calls = new IdentityHashMap<>();
     private final Map<INode, IBinding.Variable> places = new IdentityHashMap<>();
     /**
      * What each expression was reduced to before being written down, where it was reduced at all.
@@ -123,12 +123,12 @@ public final class SemanticModel {
     }
 
     /** Records which method or constructor a call resolved to. */
-    public void setCall(final IExpr expression, final IMemberSymbol member) {
+    public void setCall(final INode expression, final IMemberSymbol member) {
         this.calls.put(expression, member);
     }
 
     /** The method or constructor a call resolved to, or null. */
-    public IMemberSymbol callOf(final IExpr expression) {
+    public IMemberSymbol callOf(final INode expression) {
         return this.calls.get(expression);
     }
 

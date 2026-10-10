@@ -44,7 +44,7 @@ public final class WorkstationInfoLayout {
     private static final int METER_OFFSET = 46;
     private static final int METER_W = 44;
     private static final int METER_H = 5;
-    /* Wide enough for "Dispositivos...", the longer of the two buttons' words in either language. */
+    /* Wide enough for the longer of the two buttons' words in the longest translation. */
     private static final int BUTTON_W = 70;
     private static final int BUTTON_H = 14;
     private static final int BUTTON_GAP = 6;

@@ -163,10 +163,17 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
         /*
          * Drop a buffered item back into the world; a buffered fluid (rare, transient) is discarded.
          * If an INSERT operation is in flight, the payload was already extracted from the source but
-         * not yet confirmed by the network, so drop the in-flight amount too; nothing is silently lost.
+         * not yet confirmed by the network, so drop what the network has not taken yet; nothing is silently
+         * lost, and the operation is stopped so it cannot also insert the dropped items.
          */
         final StorageKey drop = bufferKey != null ? bufferKey : flushedKey;
-        final long dropAmount = bufferKey != null ? bufferAmount : flushedAmount;
+        final long dropAmount = bufferKey != null ? bufferAmount : unconfirmedAmount();
+        if (activeOp != null) {
+            if (!activeOp.isDone()) {
+                activeOp.abandon();
+            }
+            activeOp = null;
+        }
         if (drop != null && drop.isItem() && dropAmount > 0L && host != null) {
             Containers.dropItemStack(level,
                     host.getBlockPos().getX(), host.getBlockPos().getY(), host.getBlockPos().getZ(),
@@ -188,12 +195,15 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
         }
         /*
          * Persist the in-flight payload so a save/reload cannot destroy items that were extracted
-         * from the source but whose INSERT operation has not yet been confirmed by the network.
+         * from the source but whose INSERT operation has not yet been confirmed by the network. Only
+         * what the network has not taken yet is saved: the rest is already in storage, and saving the
+         * full batch would insert it a second time after the reload.
          */
-        if (flushedKey != null && flushedAmount > 0L) {
+        final long unconfirmed = unconfirmedAmount();
+        if (flushedKey != null && unconfirmed > 0L) {
             StorageKey.CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), flushedKey)
                     .result().ifPresent(encoded -> tag.put("FlushedKey", encoded));
-            tag.putLong("FlushedAmount", flushedAmount);
+            tag.putLong("FlushedAmount", unconfirmed);
         }
     }
 
@@ -235,6 +245,14 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
                         }
                     });
         }
+    }
+
+    /* The part of the in-flight batch the network has not written into storage yet. */
+    private long unconfirmedAmount() {
+        if (flushedKey == null) {
+            return 0L;
+        }
+        return activeOp == null ? flushedAmount : Math.max(0L, flushedAmount - activeOp.writtenTotal());
     }
 
     /*

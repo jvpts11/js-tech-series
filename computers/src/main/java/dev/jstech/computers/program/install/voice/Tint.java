@@ -118,4 +118,9 @@ final class Tint {
     static CliSpan star() {
         return green(" * ");
     }
+
+    /** A share of the time a tool has, in hundredths, and never none of it. */
+    static int share(final int ticks, final int hundredths) {
+        return Math.max(1, ticks * hundredths / 100);
+    }
 }

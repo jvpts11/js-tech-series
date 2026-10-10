@@ -663,6 +663,9 @@ public abstract sealed class AbstractBusPart implements IFacePart
             lines.add(line);
         }
         tag.put("Activity", lines);
+        if (activity.lastMovedAt() != BusActivity.NEVER) {
+            tag.putLong("LastMoved", activity.lastMovedAt());
+        }
     }
 
     @Override
@@ -706,7 +709,11 @@ public abstract sealed class AbstractBusPart implements IFacePart
             lines.add(new BusActivity.Entry(line.getLong("Time"), line.getString("What"), line.getLong("Amount"),
                     line.getByte("Status"), line.getByte("Reason"), line.getLong("Detail")));
         }
-        activity.restore(lines);
+        if (tag.contains("LastMoved")) {
+            activity.restore(lines, tag.getLong("LastMoved"));
+        } else {
+            activity.restore(lines);
+        }
     }
 
     /* Records who set {@code setting}: a program by its name, or a hand, which clears the mark. */

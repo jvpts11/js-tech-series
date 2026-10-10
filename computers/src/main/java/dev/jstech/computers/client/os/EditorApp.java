@@ -74,6 +74,9 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     private final FileDialog dialog;
     private final Panel root = new Panel();
     private final TextArea body = new TextArea();
+    /** The size shown in the status bar, kept until the text changes so it is not re-encoded every frame. */
+    private String bytesLabel = "";
+    private long bytesRevision = -1;
     private final Button openButton;
     private final Button saveButton;
     private final Button saveAsButton;
@@ -490,13 +493,21 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         Draw.text(g, font, left, x + MARGIN, y + 1, skin.text());
         final String right = GameText.resolve(
                 (doc.lineCount() == 1 ? EditorTexts.ONE_LINE : EditorTexts.LINES).with(doc.lineCount()))
-                + "   " + bytes(body.text());
+                + "   " + bytesLabel(doc);
         Draw.text(g, font, right, x + width - MARGIN - font.width(right), y + 1, skin.dim());
         final int room = width - MARGIN * 2 - font.width(left) - font.width(right) - 12;
         if (room > 20) {
             Draw.text(g, font, font.plainSubstrByWidth(status, room),
                     x + MARGIN + font.width(left) + 6, y + 1, skin.dim());
         }
+    }
+
+    private String bytesLabel(final TextDocument doc) {
+        if (this.bytesRevision != doc.revision()) {
+            this.bytesLabel = bytes(body.text());
+            this.bytesRevision = doc.revision();
+        }
+        return this.bytesLabel;
     }
 
     private static String bytes(final String text) {

@@ -22,6 +22,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Server to client: the network as the IQL Server Management Studio's Object Explorer shows it: the network and the
@@ -38,7 +39,7 @@ import net.minecraft.resources.ResourceLocation;
 @TextHolder
 public record IsmsSchemaPayload(int window, Text network, String host, Engine engine, List<Integer> tableRows,
                                 List<Saved> views, List<Saved> procedures, List<Job> jobs, List<String> servers,
-                                Index index, List<Lock> locks) implements CustomPacketPayload {
+                                @Nullable Index index, List<Lock> locks) implements CustomPacketPayload {
 
     public static final int MAX_SERVERS = 128;
     public static final int MAX_OBJECTS = 256;
@@ -155,9 +156,12 @@ public record IsmsSchemaPayload(int window, Text network, String host, Engine en
             body(buf, job.body());
         }
         strings(buf, servers);
-        buf.writeVarInt(index.state().id());
-        buf.writeVarInt(index.catalog());
-        buf.writeVarInt(index.servers());
+        buf.writeBoolean(index != null);
+        if (index != null) {
+            buf.writeVarInt(index.state().id());
+            buf.writeVarInt(index.catalog());
+            buf.writeVarInt(index.servers());
+        }
         buf.writeVarInt(locks.size());
         for (final Lock lock : locks) {
             string(buf, lock.item());
@@ -185,7 +189,8 @@ public record IsmsSchemaPayload(int window, Text network, String host, Engine en
             jobs.add(new Job(string(buf), buf.readBoolean(), string(buf), body(buf)));
         }
         final List<String> servers = strings(buf, MAX_SERVERS);
-        final Index index = new Index(IndexHealth.State.byId(buf.readVarInt()), buf.readVarInt(), buf.readVarInt());
+        final Index index = buf.readBoolean()
+                ? new Index(IndexHealth.State.byId(buf.readVarInt()), buf.readVarInt(), buf.readVarInt()) : null;
         final int lockCount = Math.min(buf.readVarInt(), MAX_LOCKS);
         final List<Lock> locks = new ArrayList<>(lockCount);
         for (int i = 0; i < lockCount; i++) {

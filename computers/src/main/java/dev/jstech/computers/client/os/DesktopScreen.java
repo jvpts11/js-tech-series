@@ -9,7 +9,7 @@ package dev.jstech.computers.client.os;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.computers.client.MachineKeyboard;
-import dev.jstech.computers.client.monitor.PowerStrip;
+import dev.jstech.computers.client.monitor.MonitorTubes;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.config.ComputersClientConfig;
 import dev.jstech.computers.menu.DesktopMenu;
@@ -214,7 +214,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         showOsPointer(!(ownPointer() && lx >= 0 && ly >= 0 && lx < view.width() && ly < view.height()));
         // The desktop reaches the player through the monitor's tube, over the whole glass once it is drawn.
         TubeFilter.filterScreen(g, view.left(), view.top(), view.glassWidth(), view.glassHeight(),
-                PowerStrip.tubeAt(menu.monitorPos()));
+                MonitorTubes.tubeAt(menu.monitorPos()));
         /*
          * The container pass posts its foreground event with the pose at the gui origin and the depth test off, so a
          * listener draws over the finished screen without fighting the desktop's layered depth.

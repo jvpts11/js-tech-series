@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.RequestWelcomePayload;
 import dev.jstech.computers.operation.payload.WelcomePayload;
 import dev.jstech.computers.operation.payload.WelcomeStartupPayload;
@@ -56,7 +57,7 @@ public final class WelcomeApp implements IDesktopApp {
     private static final String TILE_LOOK = "frames_10_tile";
 
     /** The welcome's own picture: the lamp of the tips on the older editions, the star on the newest. */
-    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath("jsc", "welcome");
+    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "welcome");
 
     /** The windows waiting on an answer, so a machine's reply reaches the window that asked it. */
     private static final List<WelcomeApp> OPEN = new ArrayList<>();
@@ -284,7 +285,8 @@ public final class WelcomeApp implements IDesktopApp {
                         final String program, final String body) {
         final int side = ProgramIcons.SIZE;
         g.fill(x, y + 1, x + side, y + 1 + side, this.skin.accent());
-        ProgramIcons.draw(g, x, y + 1, side, side, ResourceLocation.fromNamespaceAndPath("jsc", program), TILE_LOOK);
+        ProgramIcons.draw(g, x, y + 1, side, side,
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, program), TILE_LOOK);
         Draw.text(g, font, clip(font, label(program), w - side - 4), x + side + 4, y, this.skin.text());
         Texts.small(g, font, clip(font, body, Texts.smallFits(w - side - 4)), x + side + 4, y + 9, this.skin.dim());
         this.doors.add(new Door(program, new int[]{x, y, w, TILE_ROW_H}));

@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.os.install;
 
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.IOsHost;
@@ -68,7 +67,7 @@ public final class Installers {
             }
             final HardwareEra era = disk.spec().era();
             final long sizeMb = disk.spec().capacityItems() * era.mbPerItem();
-            final long freeMb = OsDisks.systemDiskFreeWeight(stack) / StorageKey.MB_EQ_PER_ITEM * era.mbPerItem();
+            final long freeMb = OsDisks.systemDiskFreeWeight(stack) * era.mbPerItem() / StorageKey.MB_EQ_PER_ITEM;
             final String label = adaNames ? adaLabel(drive) : stack.getHoverName().getString();
             disks.add(new InstallerFlow.Disk(slot, label,
                     (int) Math.min(Integer.MAX_VALUE, sizeMb), (int) Math.min(Integer.MAX_VALUE, freeMb),

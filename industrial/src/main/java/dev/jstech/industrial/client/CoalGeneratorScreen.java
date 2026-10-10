@@ -34,12 +34,9 @@ public class CoalGeneratorScreen extends CoreContainerScreen<CoalGeneratorMenu> 
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
-        final GuiLayout.Box energy = layout.boxAt("energy");
-        if (hover(mouseX, mouseY, energy.x(), energy.y(), energy.width(), energy.height())) {
-            final CoalGeneratorBlockEntity generator = menu.generator();
-            g.renderTooltip(font, Component.literal(generator.getEnergy().getEnergyStored() + " / "
-                    + generator.getEnergy().getMaxEnergyStored() + " FE"), mouseX, mouseY);
-        }
+        final CoalGeneratorBlockEntity generator = menu.generator();
+        MachineScreenSupport.drawEnergyTooltip(g, font, leftPos, topPos, layout.boxAt("energy"),
+                generator.getEnergy(), mouseX, mouseY);
     }
 
     @Override
@@ -57,8 +54,6 @@ public class CoalGeneratorScreen extends CoreContainerScreen<CoalGeneratorMenu> 
         if (lit > 0) {
             g.fill(x, y + flame.height() - lit, x + flame.width(), y + flame.height(), colours.flameFull());
         }
-        final GuiLayout.Box energy = layout.boxAt("energy");
-        MachineScreenSupport.drawEnergyBar(g, leftPos + energy.x(), topPos + energy.y(), energy.width(),
-                energy.height(), generator.getEnergy().getEnergyStored(), generator.getEnergy().getMaxEnergyStored());
+        MachineScreenSupport.drawEnergyGauge(g, leftPos, topPos, layout.boxAt("energy"), generator.getEnergy());
     }
 }

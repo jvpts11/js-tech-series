@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.bus;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -37,6 +38,16 @@ class BusClaimsTest {
         claims.mayGo(network, "minecraft:iron_ore", 5, 10L);
 
         assertTrue(claims.mayGo(network, "minecraft:iron_ore", 1, 10L + BusClaims.LASTS + 1L));
+    }
+
+    @Test
+    void mayGo_sweepsLapsedWantsOfNetworksThatAreGone() {
+        claims.mayGo(NetworkUuid.random(), "minecraft:iron_ore", 5, 10L);
+        claims.mayGo(NetworkUuid.random(), "minecraft:coal", 5, 20L);
+
+        claims.mayGo(network, "minecraft:dirt", 1, 10L + BusClaims.SWEEP_EVERY + 5L);
+
+        assertEquals(1, claims.size());
     }
 
     @Test

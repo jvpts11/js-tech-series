@@ -128,6 +128,22 @@ final class NextgreState {
         }
     }
 
+    /**
+     * Swaps the kept plan with the same number for {@code plan}, leaving it where it stands in the history, so a
+     * plan that settles late does not jump ahead of newer ones. A plan that is no longer kept stays gone.
+     */
+    void replace(final NextgrePlanView plan) {
+        final List<NextgrePlanView> kept = new ArrayList<>(history);
+        for (int i = 0; i < kept.size(); i++) {
+            if (kept.get(i).id() == plan.id()) {
+                kept.set(i, plan);
+                history.clear();
+                history.addAll(kept);
+                return;
+            }
+        }
+    }
+
     /** The plan numbered {@code id}, or null when it is not kept. */
     @Nullable
     NextgrePlanView plan(final int id) {

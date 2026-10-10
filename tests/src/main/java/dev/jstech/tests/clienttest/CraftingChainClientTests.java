@@ -621,11 +621,7 @@ public final class CraftingChainClientTests {
     // helpers
 
     private static void launch(final ClientTestContext ctx, final String label) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
-        ctx.click(desktop.startButtonX(), desktop.startButtonY());
-        final int item = desktop.launcherLabels().indexOf(label);
-        ctx.assertTrue(item >= 0, "the Start menu must list " + label + "; got " + desktop.launcherLabels());
-        ctx.click(desktop.startMenuItemX(item), desktop.startMenuItemY(item));
+        DesktopSteps.launch(ctx, label);
     }
 
     private static NetworkInteractorApp networkInteractor(final ClientTestContext ctx) {
@@ -656,7 +652,7 @@ public final class CraftingChainClientTests {
         if (window == null) {
             throw new ClientTestFailure("the " + label + " window is gone");
         }
-        return new int[]{window.x() + 4 + local[0], window.y() + 18 + local[1]};
+        return DesktopSteps.contentPoint(window, local);
     }
 
     private static CraftingManagerApp craftingManager(final ClientTestContext ctx) {

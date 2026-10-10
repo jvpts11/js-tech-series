@@ -38,12 +38,17 @@ public final class IqlDuration {
         if (value < 0) {
             throw IqlError.of(IqlError.NEGATIVE_DURATION, spec);
         }
-        return switch (hasUnit ? last : 's') {
-            case 't' -> value;
-            case 's' -> value * TICKS_PER_SECOND;
-            case 'm' -> value * TICKS_PER_SECOND * 60L;
-            case 'h' -> value * TICKS_PER_SECOND * 3600L;
+        final long perUnit = switch (hasUnit ? last : 's') {
+            case 't' -> 1L;
+            case 's' -> TICKS_PER_SECOND;
+            case 'm' -> TICKS_PER_SECOND * 60L;
+            case 'h' -> TICKS_PER_SECOND * 3600L;
             default -> throw IqlError.of(IqlError.UNKNOWN_UNIT, String.valueOf(last), spec);
         };
+        try {
+            return Math.multiplyExact(value, perUnit);
+        } catch (final ArithmeticException e) {
+            throw IqlError.of(IqlError.NOT_A_DURATION, spec);
+        }
     }
 }

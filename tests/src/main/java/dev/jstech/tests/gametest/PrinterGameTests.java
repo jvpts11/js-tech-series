@@ -55,6 +55,14 @@ public final class PrinterGameTests {
     private PrinterGameTests() {
     }
 
+    @GameTest(template = ARENA)
+    public static void text_ofARangePastTheEndSelectsNoPage(final GameTestHelper helper) {
+        final PrintedDocument document = Printers.text("log.txt", "lab", "Editor", "one page of print", false, 5, 7);
+        helper.assertTrue(document.title().isEmpty() && document.bytes() == 0,
+                "a range past the last page prints nothing instead of page 1");
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void document_comesOutAPageASheetAsAPrintedPaper(final GameTestHelper helper) {
         final PersonalComputerBlockEntity pc = computer(helper);

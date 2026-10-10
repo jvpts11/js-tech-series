@@ -7,10 +7,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### API
-- J's Core's API is at version 4 and J's Computers' at version 5. Everything this release adds to either, or
+- J's Core's API is at version 4 and J's Computers' at version 6. Everything this release adds to either, or
   changes, carries `@ApiStatus.Experimental`: it keeps the mark through this release and loses it when the next
   cycle begins. Each mod's API is now kept line by line, every type and member a mod can reach with the version
   that brought it, and the tests fail when the code and that list disagree; `docs/API.md` says how.
+- Added: `ComputersRegisterEvent.graphicsProgram` and `JsComputersApi.registerGraphicsProgram`: a program whose
+  windows draw through a surface says so on both sides, so the server counts the video memory they hold too. An ISA
+  or a file opener registered after the game has loaded is refused with a line in the log.
 - Added: `GuideBlockRenderers` and `IGuideBlockRenderer` in J's Core's client API: what draws a mod's own kind of
   block on a manual's page, or a picture drawn as the page is shown, registered once from its client setup, handed
   the block's data as a tag.
@@ -2048,6 +2051,73 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A motion file with a number where a word goes, or the other way round, is refused with the reason, and so is a
   curve given a number that is not finite.
 - EMI's arrow for a very long recipe fills at the right speed.
+- The Σ compiler builds what it used to get wrong: a constructor chained to another picks the overload whose types
+  fit, not the first of that many arguments, and its arguments are compiled; a struct captured by a lambda before it
+  is given a value starts empty; an `out` argument written to a field keeps its object. A float or double literal too
+  large or too small for its type is an error rather than infinity or zero, an unclosed `{` in a string is reported
+  once, a `switch` whose section breaks out is checked for its missing `return`, and a record's own constructor,
+  `ToString` and `Equals` are left out only for a written one with the same parameters.
+- A Σ package (`.pkg`) is read whole and only as it was written: a `#` inside a value is kept, a file with no final
+  newline comes back without one, a name given twice or a name reaching outside the package's folder refuses the
+  package, and only a file that starts exactly with the format's head is taken for one.
+- An assembly listing that names a slot a method does not have, labels two lines the same, leaves text unquoted or
+  writes instructions after a method with no slots line is refused with the line, where it ran or dropped them.
+- A program that waits a very long time no longer wakes at once, a delegate bound to a disposed object stops the
+  program, and the calls that return lists cost by the rows they return.
+- An operating system installs only when the disk has room for it beside the systems already there, a disk refuses
+  a seventeenth system instead of dropping it, and the DOS boot screen shows the real free space.
+- A Virtual Studio project's name is one word of letters, digits and underscores, so a comma or a quote in it can no
+  longer split or break its sources when it is opened again.
+- A file can no longer be made under a path whose parent is a file, `append` keeps recordings out of text files,
+  and `rmdir` and `copy` respect an installer medium as the other commands do.
+- A system's setup is saved while it runs, so a reload in the middle of it goes on from where it was; formatting the
+  disk it runs from stops it.
+- `mv` with a bare new name moves the file into the current folder, as on a real shell; a move across drives that
+  cannot delete its source takes the copy back; a copy never overwrites a file when every copy name is taken.
+- Sharing a folder whose name another share already has is refused instead of replacing it, an unknown theme name is
+  an error, a bare `&` does nothing, and a live installer keeps the quotes and spaces of its lines.
+- `fdisk` keeps the partition number and first sector typed, a partition that takes the rest of the disk reserves
+  its room, and `mount -t` and `-o` are read right; a huge `MAKEOPTS` no longer stops every build step.
+- An IQL quantity below zero, a day name it does not know and a number past what it holds are refused instead of
+  read as something else; a job's trigger words and a procedure's semicolons inside quotes stay text; a schedule
+  goes on after the world's clock is set back; and `UPDATE ... FROM` with `ALL` takes all the named server holds.
+- Deleting an automation job forgets its pause and its trigger, so a new job of the same name runs.
+- `SELECT ... TO HAND` from the prompt hands the items over; it reported a failure every time.
+- An Operation's status reads in the player's language, and cancelling by a short id that several Operations start
+  with asks for more of it instead of stopping one of them.
+- A desktop with more than 256 entries opens, and the network, cluster and plan screens send at most what their
+  lists hold, where a big network could fail to open them.
+- An import bus broken mid-move drops only what the network has not taken, and a reload sends again only that part;
+  items a craft makes that the network cannot take are dropped above the machine, and a fluid or a chemical that
+  cannot be stored is said in the log, where they were lost.
+- A degraded RAID 1 or RAID 5 array keeps the size it was formed with, and a drive whose contents cannot be read in
+  full keeps them until it is written again.
+- A simulated insert into an inventory counts every slot, and a volume that cannot be written takes nothing.
+- A bus waits on another's last move even after many holds, and the wants of networks that are gone are dropped.
+- Two speakers, or two Redstone Interfaces, can no longer end up with the same name by naming them at once.
+- A rack with no addressable computer offers no storage of its own, and a supercomputer survey reaches every node.
+- The Soundfoundry keeps the rest of an album when one file cannot be read, never empties the catalogue on a cover
+  with no size, reads a data pack's file only after its size is checked, drops a seeked song's voices while it is
+  paused, keeps liked songs within the playlist's size, and a tag with a line break no longer adds playlist entries.
+- The Prophet engine saves how many times a watch fired, shows a watch read back disarmed as fired, and lets go of
+  the Operations it started once they settle; NextgreIQL's `EXPLAIN SELECT` lists its pulls in the order it counts
+  them, and a plan that settles stays where it was in the history.
+- A NextgreIQL plan may cost more than the largest number without becoming free, and a plan set aside always says
+  why.
+- A computer's screens: a value a program's widget cannot show leaves it working, a slider's preview goes when the
+  server settles on another value, a click just above a list no longer picks its first row, and hover and click
+  agree on the edge of a grid cell.
+- The crafting screen requests the quantity whose plan it shows, never zero, and an amount of more than nineteen
+  digits is refused instead of read as 1.
+- The editors save the document they were asked to, and close only once the save is confirmed; the explorer keeps a
+  listing asked for while another was on its way; Write Out with a new file name writes to that name.
+- The Knot client reaches every revision, the ISMS profiler opens a trace with a huge number and says when a saved
+  trace was cut, and the ISMS explorer says when the index is not there instead of failing.
+- Refreshing a folder no longer doubles its path in the title, a link clears the message at the foot of a help page,
+  and a copied selection keeps its line breaks.
+- The terminal's scrollback and the cached pictures of monitors are let go when a world is left, and two different
+  pictures can no longer share one texture.
+- Clusters, routers and nodes without a name read in the player's language.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

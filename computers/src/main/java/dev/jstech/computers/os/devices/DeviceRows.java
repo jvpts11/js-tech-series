@@ -10,7 +10,6 @@ package dev.jstech.computers.os.devices;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.text.TextLists;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -263,9 +262,8 @@ public final class DeviceRows {
                 return;
             }
             final DeviceMap.Device first = port.plugged().getFirst();
-            final List<Text> names = port.plugged().stream().map(DeviceMap.Device::name).toList();
             rows.add(new Row(depth, first.icon().isEmpty() ? portIcon : first.icon(),
-                    PORT_ROW.with(port.name(), TextLists.join(", ", names)),
+                    PORT_ROW.with(port.name(), port.pluggedNames()),
                     first.disabled() ? State.DISABLED : State.NORMAL, parent + "/" + first.pos(), false,
                     first.pos()));
         }

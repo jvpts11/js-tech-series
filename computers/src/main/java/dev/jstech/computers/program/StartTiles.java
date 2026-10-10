@@ -43,6 +43,11 @@ public final class StartTiles {
         return out;
     }
 
+    /** Puts the tiles back to what a fresh machine comes with. */
+    public void restoreDefaults() {
+        setEncoded(DEFAULTS);
+    }
+
     /** The tile kept as {@code <program>:<size>}, or null for text that names none. */
     @Nullable
     public static Tile parse(final String encoded) {

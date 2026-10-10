@@ -32,6 +32,14 @@ class FileTypeTest {
     }
 
     @Test
+    void ofPath_readsTheExtensionOfTheLastSegmentOnly() {
+        assertEquals(FileType.IQL, FileType.ofPath("jobs/run.IQL"));
+        assertEquals(FileType.OTHER, FileType.ofPath("v1.2/readme"));
+        assertEquals(FileType.OTHER, FileType.ofPath("notes."));
+        assertEquals(FileType.OTHER, FileType.ofPath("plain"));
+    }
+
+    @Test
     void fromExtension_neverAnswersOtherForAMissingExtension() {
         assertEquals(java.util.Optional.empty(), FileType.fromExtension(""));
     }

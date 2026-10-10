@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
@@ -237,7 +238,7 @@ public final class WreckedMachineGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     DiskFilesystem.write(computer.systemDisk(), "Users/Public/Desktop/notes.txt",
-                            dev.jstech.computers.os.fs.FileType.TXT, "the player's own", Long.MAX_VALUE,
+                            FileType.TXT, "the player's own", Long.MAX_VALUE,
                             FilesystemKind.HIERARCHICAL);
                     DiskFilesystem.delete(computer.systemDisk(),
                             SystemIntegrity.loaderOf(computer.installedOs()));

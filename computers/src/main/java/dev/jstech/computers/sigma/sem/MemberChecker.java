@@ -159,9 +159,17 @@ final class MemberChecker {
             return !found.isEmpty() && found.getFirst() instanceof IMemberSymbol.MethodSymbol;
         }
         if (expression instanceof IExpr.Member member) {
+            /*
+             * The target is checked again when the argument itself is, so this look-ahead works in a scope
+             * of its own: a name it declares, such as an out variable, must not be there already when the
+             * real check declares it.
+             */
+            final Scope saved = this.scope.scope();
+            this.scope.scope(new Scope(saved));
             this.scope.hush();
             final ITypeSymbol target = this.expressions.check(member.target(), null);
             this.scope.speakAgain();
+            this.scope.scope(saved);
             final NamedType named = this.scope.rules().named(target);
             if (named == null) {
                 return false;

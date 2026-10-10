@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.workshop;
 
+import dev.jstech.computers.workshop.Workshop;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -23,7 +24,7 @@ public record WorkshopActionPayload(BlockPos host, BlockPos monitorPos, int acti
                                     String text) implements CustomPacketPayload {
 
     /** The longest text an action carries: the anvil's name. */
-    public static final int MAX_TEXT = 64;
+    public static final int MAX_TEXT = Workshop.MAX_NAME;
 
     /** Asks for the state and changes nothing. */
     public static final int REFRESH = 0;

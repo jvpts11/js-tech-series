@@ -367,6 +367,23 @@ public final class NextgreGameTests {
                 .thenSucceed();
     }
 
+    /** EXPLAIN SELECT lists the part no server holds as a row of its own, so the rows add up to the seek. */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void explainSelect_listsWhatNoServerHoldsAsItsOwnRow(final GameTestHelper helper) {
+        final TestWorldBuilder.CraftingNetwork net = planksNetwork(helper, 8);
+        helper.startSequence()
+                .thenWaitUntil(() -> ready(helper, net, 8L))
+                .thenExecute(() -> {
+                    final IqlEngine.Outcome outcome = query(helper, net, "EXPLAIN SELECT 20 oak_log");
+                    helper.assertTrue(outcome.ok(), "EXPLAIN SELECT answers; said " + outcome.message());
+                    final List<String> steps = column(outcome, 0);
+                    helper.assertTrue(steps.stream().anyMatch(step -> step.contains("Pull Oak Log x8"))
+                                    && steps.stream().anyMatch(step -> step.contains("Pull Oak Log x12")),
+                            "the held part and the part nothing holds each have a row; " + steps);
+                })
+                .thenSucceed();
+    }
+
     /** The Planner Studio is answered with the plan it asked for, the planner's rules and its statistics. */
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void studio_isAnsweredWithThePlanRulesAndStatistics(final GameTestHelper helper) {

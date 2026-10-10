@@ -43,6 +43,7 @@ import dev.jstech.computers.operation.payload.RequestStorageInsightsPayload;
 import dev.jstech.computers.operation.payload.SetBusNamePayload;
 import dev.jstech.computers.operation.payload.StorageInsightsPayload;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.format.Unit;
@@ -173,18 +174,7 @@ public final class NetworkPayloads {
             rows.add(new NetworkServersPayload.ServerEntry(
                     mf.nodeUuid().asString(), "Mainframe", mf.localStore().free()));
         }
-        for (final ServerNode server : system.serversOf(net)) {
-            if (rows.size() >= NetworkServersPayload.MAX) {
-                break;
-            }
-            final NodeUuid node = server.nodeUuid();
-            final long free = system.locationOf(node)
-                    .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos()))
-                            instanceof ServerRackBlockEntity rack
-                            ? rack.getServerStorage(loc.slot()).free() : 0L)
-                    .orElse(0L);
-            rows.add(new NetworkServersPayload.ServerEntry(node.asString(), serverLabel(level, node), free));
-        }
+        addServerRows(level, net, rows);
         for (final NetworkSystem.PersonalComputerNode pc : system.personalComputersOf(net)) {
             if (rows.size() >= NetworkServersPayload.MAX) {
                 break;
@@ -199,21 +189,33 @@ public final class NetworkPayloads {
     }
 
     private static NetworkServersPayload collectServers(final ServerLevel level, final NetworkUuid net) {
-        final NetworkSystem system = NetworkSystem.get(level);
         final List<NetworkServersPayload.ServerEntry> rows = new ArrayList<>();
+        addServerRows(level, net, rows);
+        return new NetworkServersPayload(rows);
+    }
+
+    /* One row per server of the network, with its free room, until the list is full. */
+    private static void addServerRows(final ServerLevel level, final NetworkUuid net,
+                                      final List<NetworkServersPayload.ServerEntry> rows) {
+        final NetworkSystem system = NetworkSystem.get(level);
         for (final ServerNode server : system.serversOf(net)) {
             if (rows.size() >= NetworkServersPayload.MAX) {
                 break;
             }
             final NodeUuid node = server.nodeUuid();
-            final long free = system.locationOf(node)
-                    .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos()))
-                            instanceof ServerRackBlockEntity rack
-                            ? rack.getServerStorage(loc.slot()).free() : 0L)
-                    .orElse(0L);
-            rows.add(new NetworkServersPayload.ServerEntry(node.asString(), serverLabel(level, node), free));
+            final ServerStore store = storeOf(level, system, node);
+            rows.add(new NetworkServersPayload.ServerEntry(node.asString(), serverLabel(level, node),
+                    store == null ? 0L : store.free()));
         }
-        return new NetworkServersPayload(rows);
+    }
+
+    /* The storage of the server {@code node}, or null when its cabinet is unknown or not loaded. */
+    @Nullable
+    private static ServerStore storeOf(final ServerLevel level, final NetworkSystem system, final NodeUuid node) {
+        return system.locationOf(node)
+                .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos()))
+                        instanceof ServerRackBlockEntity rack ? rack.getServerStorage(loc.slot()) : null)
+                .orElse(null);
     }
 
     public static void dispatchNetworkServers(final ServerPlayer player, final NetworkUuid net,
@@ -330,7 +332,7 @@ public final class NetworkPayloads {
      */
     private static void lostNodes(final ServerLevel level, final NodeLinks links, final List<NetworkNodeInfo> nodes) {
         for (final Map.Entry<BlockPos, NodeLink> lost : links.lost().entrySet()) {
-            final BlockEntity entity = level.getBlockEntity(lost.getKey());
+            final BlockEntity entity = Loaded.blockEntity(level, lost.getKey());
             if (entity instanceof ServerRackBlockEntity rack) {
                 for (int slot = 0; slot < rack.getServers().getSlots(); slot++) {
                     final ItemStack stack = rack.getServers().getStackInSlot(slot);
@@ -361,7 +363,7 @@ public final class NetworkPayloads {
         if (links == null) {
             return NodeLink.NONE;
         }
-        final Set<Long> cables = level.getBlockEntity(pos) instanceof AbstractComputerBlockEntity computer
+        final Set<Long> cables = Loaded.blockEntity(level, pos) instanceof AbstractComputerBlockEntity computer
                 ? computer.networkCables(level)
                 : NetworkSystem.get(level).connectivity().bridgedBy(pos.asLong());
         return links.of(cables, links.optical(pos));
@@ -386,7 +388,7 @@ public final class NetworkPayloads {
                                                        final long posLong, final String detail,
                                                        @Nullable final NodeLinks links) {
         final BlockPos pos = BlockPos.of(posLong);
-        if (level.getBlockEntity(pos) instanceof IOsHost c) {
+        if (Loaded.blockEntity(level, pos) instanceof IOsHost c) {
             return computerNodeInfo(kind, c, uuid, detail, linkOf(level, links, pos));
         }
         return new NetworkNodeInfo(kind, ShortId.of(uuid), "", detail, false,
@@ -399,11 +401,8 @@ public final class NetworkPayloads {
                                                   @Nullable final NodeLinks links) {
         final long total = server.storageItems();
         final Optional<NetworkSystem.ServerLocation> location = system.locationOf(server.nodeUuid());
-        final long free = location
-                .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos()))
-                        instanceof ServerRackBlockEntity rack
-                        ? rack.getServerStorage(loc.slot()).free() : 0L)
-                .orElse(0L);
+        final ServerStore store = storeOf(level, system, server.nodeUuid());
+        final long free = store == null ? 0L : store.free();
         final NodeLink link = location.map(loc -> linkOf(level, links, BlockPos.of(loc.rackPos())))
                 .orElse(NodeLink.NONE);
         return new NetworkNodeInfo(NetworkNodeInfo.KIND_SERVER, ShortId.of(server.nodeUuid().asString()),
@@ -489,11 +488,8 @@ public final class NetworkPayloads {
             if (servers.size() >= StorageInsightsPayload.MAX_SERVERS) {
                 continue;
             }
-            final long used = system.locationOf(server.nodeUuid())
-                    .map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos()))
-                            instanceof ServerRackBlockEntity rack
-                            ? rack.getServerStorage(loc.slot()).used() : 0L)
-                    .orElse(0L);
+            final ServerStore store = storeOf(level, system, server.nodeUuid());
+            final long used = store == null ? 0L : store.used();
             servers.add(new NetworkItemEntry.StorageShare(Text.literal(serverLabel(level, server.nodeUuid())), used));
         }
         return new StorageInsightsPayload(totalItems, totals.size(), serverCount, top, low, servers);

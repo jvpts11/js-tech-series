@@ -7,9 +7,12 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.TerminalHit.inRect;
+
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
+import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.operation.payload.CraftPlanRequestPayload;
 import dev.jstech.computers.operation.payload.CraftSubmitPayload;
 import dev.jstech.computers.storage.StorageKey;
@@ -92,7 +95,7 @@ final class TerminalCraftPopup {
 
     /** Enter commits the whole craft, and only when the network says the whole craft is possible. */
     void submitIfPossible() {
-        final var plan = menu.craftPlan();
+        final var plan = currentPlan();
         if (plan != null && plan.feasible()) {
             submit(false);
         }
@@ -114,7 +117,7 @@ final class TerminalCraftPopup {
         if (pattern == null) {
             return;
         }
-        final var plan = menu.craftPlan();
+        final var plan = currentPlan();
         g.pose().pushPose();
         g.pose().translate(0, 0, 350);
         final int left = screen.left();
@@ -141,7 +144,7 @@ final class TerminalCraftPopup {
         for (int i = 0; i < STEP_LABELS.length; i++) {
             final int bx = px + 134 + i * 16;
             g.fill(bx, py + 30, bx + 15, py + 44,
-                    hover(mouseX, mouseY, bx, py + 30, 15, 14) ? JsTechTheme.hover() : JsTechTheme.screen());
+                    inRect(mouseX, mouseY, bx, py + 30, 15, 14) ? JsTechTheme.hover() : JsTechTheme.screen());
             Draw.textCentered(g,screen.tabFont(), STEP_LABELS[i], bx + 8, py + 33, JsTechTheme.accent());
         }
 
@@ -181,12 +184,12 @@ final class TerminalCraftPopup {
         final boolean partialUseful = plan != null && !plan.feasible() && plan.maxFeasible() > 0;
         button(g, px + 6, py + 156, 56, GameText.resolve(TerminalTexts.CRAFT),
                 feasible ? JsTechTheme.green() : JsTechTheme.dim(),
-                feasible && hover(mouseX, mouseY, px + 6, py + 156, 56, 14));
+                feasible && inRect(mouseX, mouseY, px + 6, py + 156, 56, 14));
         button(g, px + 66, py + 156, 84, GameText.resolve(TerminalTexts.PARTIAL_BUTTON),
                 partialUseful ? JsTechTheme.amber() : JsTechTheme.dim(),
-                partialUseful && hover(mouseX, mouseY, px + 66, py + 156, 84, 14));
+                partialUseful && inRect(mouseX, mouseY, px + 66, py + 156, 84, 14));
         button(g, px + 154, py + 156, 44, GameText.resolve(TerminalTexts.CLOSE), JsTechTheme.dim(),
-                hover(mouseX, mouseY, px + 154, py + 156, 44, 14));
+                inRect(mouseX, mouseY, px + 154, py + 156, 44, 14));
         g.pose().popPose();
     }
 
@@ -216,27 +219,37 @@ final class TerminalCraftPopup {
         }
         for (int i = 0; i < STEPS.length; i++) {
             final int bx = px + 134 + i * 16;
-            if (hover(mx, my, bx, py + 30, 15, 14)) {
+            if (inRect(mx, my, bx, py + 30, 15, 14)) {
                 setAmount(this.amount + STEPS[i]);
                 return true;
             }
         }
-        final var plan = menu.craftPlan();
+        final var plan = currentPlan();
         final boolean feasible = plan != null && plan.feasible();
         final boolean partialUseful = plan != null && !plan.feasible() && plan.maxFeasible() > 0;
-        if (feasible && hover(mx, my, px + 6, py + 156, 56, 14)) {
+        if (feasible && inRect(mx, my, px + 6, py + 156, 56, 14)) {
             submit(false);
             return true;
         }
-        if (partialUseful && hover(mx, my, px + 66, py + 156, 84, 14)) {
+        if (partialUseful && inRect(mx, my, px + 66, py + 156, 84, 14)) {
             submit(true);
             return true;
         }
-        if (hover(mx, my, px + 154, py + 156, 44, 14)) {
+        if (inRect(mx, my, px + 154, py + 156, 44, 14)) {
             close();
             return true;
         }
         return true;
+    }
+
+    /**
+     * The machine's plan, but only once it answers for the quantity now shown: a plan for another number says
+     * nothing about this one, so until the matching reply arrives the dialog shows that it is still planning.
+     */
+    @Nullable
+    private CraftPlanPayload currentPlan() {
+        final CraftPlanPayload plan = menu.craftPlan();
+        return plan != null && plan.quantity() == this.amount && this.planCountdown < 0 ? plan : null;
     }
 
     private void setAmount(final long value) {
@@ -278,11 +291,6 @@ final class TerminalCraftPopup {
         g.fill(x, y, x + w, y + 14, hovered ? JsTechTheme.hover() : JsTechTheme.screen());
         g.fill(x, y, x + w, y + 1, JsTechTheme.line());
         Draw.textCentered(g,screen.tabFont(), label, x + w / 2, y + 3, color);
-    }
-
-    private static boolean hover(final double mouseX, final double mouseY, final int x, final int y,
-                                 final int w, final int h) {
-        return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
     }
 
     private static String trim(final String s, final int max) {

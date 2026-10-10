@@ -90,7 +90,10 @@ public final class TermGrid {
         if (cells(line) <= cells) {
             return line;
         }
-        return first(line, Math.max(1, cells - 3)) + "...";
+        if (cells <= 3) {
+            return first(line, cells);
+        }
+        return first(line, cells - 3) + "...";
     }
 
     /**

@@ -65,9 +65,9 @@ public final class InfoCenterLayout {
         l.box("tabs", 0, 0, W, TABS_H - 1);
         l.box("list", PAGE_PAD, LIST_Y, W - 2 * PAGE_PAD, LIST_H);
         l.box("button", buttonX(), BUTTON_Y, BUTTON_W, BUTTON_H);
-        // "Sobre este sistema" and "Dispositivos por porta", the two pages' names, side by side.
+        // The two pages' names side by side in the longest translation (18 and 22 characters).
         l.text("tab-words", TAB_X + TAB_PAD, 4, 18 + 22 + 6, 0.75f);
-        // "Desativar o dispositivo escolhido", the longest the button says.
+        // The longest translation of the disable button's label (33 characters).
         l.text("button-words", buttonX() + 4, BUTTON_Y + 4, 33, 0.75f);
         // As much of a port's name as its column holds before the device's, and the longest device beside it.
         l.text("port", PORT_X + ICON + 2, LIST_Y + 2, 23, 0.75f);

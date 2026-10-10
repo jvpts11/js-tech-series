@@ -48,7 +48,7 @@ class InteracStateTest {
 
         assertEquals("Starred", last.tabName());
         assertEquals(0, last.selected(), "another tab is other rows, so nothing is picked yet");
-        assertEquals("Network", last.onTab(InteracState.TABS.length).tabName(), "and it walks round");
+        assertEquals("Network", last.onTab(InteracState.TABS.size()).tabName(), "and it walks round");
         assertEquals("Starred", last.onTab(-1).tabName(), "the other way too");
     }
 

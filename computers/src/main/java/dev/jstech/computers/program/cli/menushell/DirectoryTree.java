@@ -8,9 +8,11 @@
 package dev.jstech.computers.program.cli.menushell;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -24,11 +26,23 @@ public final class DirectoryTree {
     private final List<String> folders;
     private final Set<String> open = new HashSet<>();
 
+    /* Each folder's key to the folders right inside it, in disk order, so no paint has to scan the whole list. */
+    private final Map<String, List<String>> childrenOf = new HashMap<>();
+
+    /* The rows as last worked out; dropped whenever something that changes them happens. */
+    private List<Row> shown;
+
     /** A tree under {@code root} ({@code C:\}) of {@code folders}, each written whole; the root starts open. */
     public DirectoryTree(final String root, final List<String> folders) {
         this.root = root;
         this.folders = List.copyOf(folders);
         this.open.add(key(root));
+        for (final String each : this.folders) {
+            final String parent = parentOf(each);
+            if (parent != null) {
+                this.childrenOf.computeIfAbsent(key(parent), unused -> new ArrayList<>()).add(each);
+            }
+        }
     }
 
     /**
@@ -48,19 +62,24 @@ public final class DirectoryTree {
 
     /** The rows shown, from the root down, each folder under its parent when the parent is open. */
     public List<Row> rows() {
-        final List<Row> out = new ArrayList<>();
-        out.add(new Row(root, "", hasChildren(root), isOpen(root), 0));
-        addChildren(out, root, "", 1);
-        return out;
+        if (shown == null) {
+            final List<Row> out = new ArrayList<>();
+            out.add(new Row(root, "", hasChildren(root), isOpen(root), 0));
+            addChildren(out, root, "", 1);
+            shown = List.copyOf(out);
+        }
+        return shown;
     }
 
     /** Opens {@code folder} one level: its folders are shown. */
     public void expand(final String folder) {
+        shown = null;
         open.add(key(folder));
     }
 
     /** Opens {@code folder} and every folder under it. */
     public void expandBranch(final String folder) {
+        shown = null;
         open.add(key(folder));
         for (final String each : folders) {
             if (under(each, folder)) {
@@ -76,6 +95,7 @@ public final class DirectoryTree {
 
     /** Closes {@code folder}, and every folder under it with it. */
     public void collapse(final String folder) {
+        shown = null;
         open.remove(key(folder));
         for (final String each : folders) {
             if (under(each, folder)) {
@@ -86,6 +106,7 @@ public final class DirectoryTree {
 
     /** Opens every folder on the way down to {@code folder}, so it is shown. */
     public void reveal(final String folder) {
+        shown = null;
         String parent = parentOf(folder);
         while (parent != null) {
             open.add(key(parent));
@@ -95,12 +116,7 @@ public final class DirectoryTree {
 
     /** Whether {@code folder} has folders of its own. */
     public boolean hasChildren(final String folder) {
-        for (final String each : folders) {
-            if (isChild(each, folder)) {
-                return true;
-            }
-        }
-        return false;
+        return childrenOf.containsKey(key(folder));
     }
 
     /** Whether {@code folder} is open. */
@@ -112,24 +128,13 @@ public final class DirectoryTree {
         if (!isOpen(parent)) {
             return;
         }
-        final List<String> children = new ArrayList<>();
-        for (final String each : folders) {
-            if (isChild(each, parent)) {
-                children.add(each);
-            }
-        }
+        final List<String> children = childrenOf.getOrDefault(key(parent), List.of());
         for (int i = 0; i < children.size(); i++) {
             final String child = children.get(i);
             final boolean last = i == children.size() - 1;
             out.add(new Row(child, lead + (last ? "└─" : "├─"), hasChildren(child), isOpen(child), depth));
             addChildren(out, child, lead + (last ? "  " : "│ "), depth + 1);
         }
-    }
-
-    /* Whether {@code folder} sits right inside {@code parent}. */
-    private boolean isChild(final String folder, final String parent) {
-        final String p = parentOf(folder);
-        return p != null && key(p).equals(key(parent));
     }
 
     /* Whether {@code folder} sits anywhere under {@code parent}. */

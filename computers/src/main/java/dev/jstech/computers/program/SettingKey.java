@@ -26,7 +26,11 @@ public enum SettingKey {
 
     /** A theme's name and accent; the wallpaper that comes with it is the desktop's, set by whoever owns that. */
     THEME("theme", (s, v) -> {
-        ThemePreset.byId(v).applyTo(s);
+        final ThemePreset preset = ThemePreset.find(v);
+        if (preset == null) {
+            return false;
+        }
+        preset.applyTo(s);
         return true;
     }),
 

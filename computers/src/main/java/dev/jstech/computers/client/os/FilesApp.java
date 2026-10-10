@@ -309,7 +309,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     public FilesApp(final BlockPos host, final String os, final String initialDir, @Nullable final BlockPos monitorPos) {
         this.host = host;
         this.monitorPos = monitorPos;
-        this.skin = OsSkin.forDesktop(ResourceLocation.fromNamespaceAndPath("jsc", os));
+        this.skin = OsSkin.forDesktop(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, os));
 
         backButton = root.add(new Button("<", this::goBack));
         forwardButton = root.add(new Button(">", this::goForward));
@@ -789,30 +789,12 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /* A volume's name with its drive letter after it, or on its own where the desktop has no letters. */
     private static String onDrive(final String label, final String letter) {
-        return letter.isEmpty() ? label : GameText.resolve(FileDialogTexts.ON_DRIVE.with(label, letter));
+        return DrivePaths.onDrive(label, letter);
     }
 
     /** The drive letter of a volume: the system disk is C:, then the media in the order the tree lists them. */
     private String letterOf(final String key) {
-        if (linux()) {
-            return "";
-        }
-        if (key.isEmpty()) {
-            return "C:";
-        }
-        if (key.equals(NET_ROOT)) {
-            return "";
-        }
-        int n = 0;
-        for (final DiskFilesPayload.WireVolume v : volumes) {
-            if (v.removable()) {
-                n++;
-                if (v.key().equals(key)) {
-                    return (char) ('C' + n) + ":";
-                }
-            }
-        }
-        return "";
+        return key.equals(NET_ROOT) ? "" : DrivePaths.letterOf(linux(), volumes, key);
     }
 
     private boolean linux() {
@@ -1391,7 +1373,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             final DesktopState desktop = DesktopScreen.current();
             final boolean full = desktop != null && desktop.trashFull();
             ProgramIcons.draw(g, x + 2, y, FilesLayout.ICON_W, FilesLayout.ROW_H,
-                    ResourceLocation.fromNamespaceAndPath("jsc", full ? "trash_full" : "trash"), iconSet());
+                    ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, full ? "trash_full" : "trash"), iconSet());
         } else {
             FileIcons.draw(g, x + 2, y, item.target().equals(STORAGE_PLACE) ? FileIcons.Kind.DAT
                     : (isVolumeItem(item) ? (item.removable() ? FileIcons.Kind.BIN : FileIcons.Kind.HOME)
@@ -2678,8 +2660,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** The parent directory of {@code dir} (everything before the final {@code /}), or {@code ""} at the root. */
     private static String parentOf(final String dir) {
-        final int slash = dir.lastIndexOf('/');
-        return slash < 0 ? "" : dir.substring(0, slash);
+        return DrivePaths.parentOf(dir);
     }
 
     /** Joins a directory and a child name; the root ({@code ""}) yields the bare name. */

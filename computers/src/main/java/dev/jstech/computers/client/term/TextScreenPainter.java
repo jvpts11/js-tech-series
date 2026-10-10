@@ -7,7 +7,10 @@
  */
 package dev.jstech.computers.client.term;
 
+import dev.jstech.core.font.GridSpan;
 import dev.jstech.core.gui.TextScreen;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -40,20 +43,27 @@ public final class TextScreenPainter {
                 g.fill(x + start * cell, ry, x + end * cell, ry + pitch, ground);
                 start = end;
             }
-            start = 0;
+            // The whole row goes to the grid as one line of coloured runs, so it is laid out and sent once.
             final String line = screen.text(row);
+            final List<GridSpan<Integer>> runs = new ArrayList<>();
+            int shownRuns = 0;
+            start = 0;
             while (start < screen.columns()) {
                 final int ink = screen.ink(start, row);
-                final int ground = screen.ground(start, row);
                 int end = start + 1;
-                while (end < screen.columns() && screen.ink(end, row) == ink && screen.ground(end, row) == ground) {
+                while (end < screen.columns() && screen.ink(end, row) == ink) {
                     end++;
                 }
                 final String run = line.substring(start, end);
+                runs.add(new GridSpan<>(run, ink));
                 if (!run.isBlank()) {
-                    TermText.draw(face, g, font, run, x + start * cell, ry, ink, ground);
+                    shownRuns = runs.size();
                 }
                 start = end;
+            }
+            // Blanks after the last character draw nothing, so they are left off.
+            if (shownRuns > 0) {
+                TermText.drawRuns(face, g, font, runs.subList(0, shownRuns), x, ry);
             }
         }
     }

@@ -95,7 +95,11 @@ public final class LiveInstallCommands {
         @Override public Text summary() { return SUMMARY.with(verb); }
 
         @Override public void run(final CliContext ctx) {
-            final String line = ctx.hasArgs() ? verb + " " + ctx.rest(0) : verb;
+            runLine(ctx, ctx.hasArgs() ? verb + " " + ctx.rest(0) : verb);
+        }
+
+        /** Runs the verb against the line exactly as the player typed it. */
+        void runLine(final CliContext ctx, final String line) {
             final LiveTurn turn = ctx.computer().liveRun(line);
             /*
              * Every line as the tool wrote it, the blank ones included: the gaps in a real tool's output are

@@ -35,6 +35,7 @@ import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLink;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextHolder;
@@ -75,7 +76,7 @@ import java.util.Optional;
  * items; its ComputerCraft side simply never comes up.
  */
 @TextHolder
-public class NetworkGatewayBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint {
+public class NetworkGatewayBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, INamedDevice {
 
     private final PeripheralLink link = new PeripheralLink(fields(), PeripheralCableType.COMPUTING,
             PeripheralLinks.COMPUTING);
@@ -119,7 +120,8 @@ public class NetworkGatewayBlockEntity extends SyncedBlockEntity implements IPer
 
     public static final int BUFFER_SLOTS = 9;
 
-    private static final TextKey NOT_LINKED = TextKey.of("jsc.gateway.not_linked", "not linked");
+    private static final TextKey HOST_FALLBACK = TextKey.of("jsc.gateway.host_fallback", "host");
+    private static final TextKey NOT_LINKED =TextKey.of("jsc.gateway.not_linked", "not linked");
     private static final TextKey ADJACENT = TextKey.of("jsc.gateway.adjacent", "adjacent");
     private static final TextKey CABLE_ONE_BLOCK = TextKey.of("jsc.gateway.cable_one_block", "cable, %s block");
     private static final TextKey CABLE_BLOCKS = TextKey.of("jsc.gateway.cable_blocks", "cable, %s blocks");
@@ -248,6 +250,7 @@ public class NetworkGatewayBlockEntity extends SyncedBlockEntity implements IPer
     // Name, permissions, log, stats
 
     /** The Gateway's name: the one it was given, or the default it took when it first linked. */
+    @Override
     public String name() {
         return name.get().isEmpty() ? GatewayName.UNNAMED : name.get();
     }
@@ -545,7 +548,7 @@ public class NetworkGatewayBlockEntity extends SyncedBlockEntity implements IPer
         if (owner instanceof IOsHost host && host.console() != null) {
             return host.console().computerName();
         }
-        return owner == null ? "" : "host";
+        return owner == null ? "" : GameText.resolve(HOST_FALLBACK);
     }
 
     /**

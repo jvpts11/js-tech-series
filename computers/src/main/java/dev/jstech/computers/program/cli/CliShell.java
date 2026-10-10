@@ -40,7 +40,9 @@ public final class CliShell {
             "%s: not found. Try: apropos <word>, or man intro");
     private static final TextKey NO_JOB_MEMORY =
             TextKey.of("jsc.cli.shell.no_job_memory", "the machine has no memory left for another job");
-    private static final TextKey NO_JOBS = TextKey.of("jsc.cli.shell.no_jobs", "this machine keeps no jobs");
+    private static final TextKey SYNTAX_ERROR = TextKey.of("jsc.cli.shell.syntax_error",
+            "syntax error near unexpected token `%s'");
+    private static final TextKey NO_JOBS =TextKey.of("jsc.cli.shell.no_jobs", "this machine keeps no jobs");
 
     public CliShell(final List<ICliCommand> commands, final int width) {
         this.width = width;
@@ -90,8 +92,8 @@ public final class CliShell {
         }
         /*
          * A live medium's installer is a shell of its own, swapped in whole: its verbs take the line as it was
-         * typed, arrows and all, because on a real one the arrow is part of the step being taught. So the line
-         * is only taken apart when an installed system is the one reading it.
+         * typed, arrows and all, because on a real one the arrow is part of the step being taught. The words
+         * are still found so the verb can be looked up, but the verb is handed the typed text itself below.
          */
         /*
          * A line that ends in & is not run here at all: it is left with the machine, which runs it on its own
@@ -102,6 +104,10 @@ public final class CliShell {
             return backgrounded(line.substring(0, line.lastIndexOf('&')).strip(), computer, out);
         }
         final ShLine whole = live ? ShLine.NOTHING : ShLine.of(words);
+        if (!whole.badToken().isEmpty()) {
+            out.error(SYNTAX_ERROR.with(whole.badToken()));
+            return new Response(out.lines(), false);
+        }
         if (!whole.isEmpty() && !whole.isSimple()) {
             return ShRunner.run(this, whole, computer, out);
         }
@@ -177,7 +183,14 @@ public final class CliShell {
         }
         final CliContext context = new CliContext(args, computer, out, this);
         try {
-            command.run(context);
+            final String typedLine = line.strip();
+            if (live && command instanceof LiveInstallCommands.LiveVerb verb
+                    && typedLine.regionMatches(true, 0, word, 0, word.length())) {
+                // The installer reads the rest exactly as typed: quotes and runs of spaces are part of it.
+                verb.runLine(context, word + typedLine.substring(word.length()));
+            } else {
+                command.run(context);
+            }
         } catch (final RuntimeException unexpected) {
             /*
              * A command must not throw for ordinary errors; if one does anyway, the shell stays alive
@@ -214,6 +227,11 @@ public final class CliShell {
      * left with; a machine with none left says so rather than quietly dropping the line.
      */
     private Response backgrounded(final String typed, final ICliComputer computer, final CliOutput out) {
+        if (typed.isBlank()) {
+            // A lone mark has nothing to leave with the machine; it would only burn a job number.
+            out.error(JobCommands.NOTHING_TO_RUN);
+            return new Response(out.lines(), false);
+        }
         final ICliComputer.MemoryUse memory = computer.memory();
         if (memory.totalMb() > 0 && memory.usedMb() + MachineJobs.JOB_MB > memory.totalMb()) {
             out.error(NO_JOB_MEMORY);

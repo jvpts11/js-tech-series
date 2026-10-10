@@ -76,7 +76,7 @@ public final class SystemMotionClientTests {
     }
 
     @ClientTest(timeoutTicks = 2400)
-    public static void window_growsInFadingAndAClosedOneFadesAwayOnFrames11(final ClientTestContext ctx) {
+    public static void window_growsInFadingOnFrames11(final ClientTestContext ctx) {
         booted(ctx, "frames_11", null)
                 .then(0, () -> moving(true))
                 .then(SETTLE, () -> DesktopScreen.requestOpen(CALCULATOR))
@@ -200,9 +200,9 @@ public final class SystemMotionClientTests {
                 .thenAssert(2, () -> !desktop(ctx).osPointerHidden(), "off the glass the game's pointer is back");
     }
 
-    /** Frames 7's arrow and its Start orb, both drawn with their soft edges blended into what is under them. */
+    /** Frames 7 draws its own arrow on the glass; the screenshot is there for a visual check of the soft edges. */
     @ClientTest(timeoutTicks = 2400)
-    public static void pointer_framesSevenArrowAndOrbAreDrawnSoft(final ClientTestContext ctx) {
+    public static void pointer_framesSevenDrawsItsArrow(final ClientTestContext ctx) {
         booted(ctx, "frames_7", null)
                 .then(SETTLE, () -> {
                     final int[] middle = desktop(ctx).glassPoint(60, 60);

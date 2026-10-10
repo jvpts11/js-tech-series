@@ -47,8 +47,6 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
     private String nameValue;
     private int tab = BusLayout.TAB_CONFIGURE;
 
-    /** How much brighter the lamp's lens corner is than its light, per channel. */
-    private static final int LENS_LIFT = 70;
     private static final TextKey[] TAB_WORDS = {BusTexts.TAB_CONFIGURE, BusTexts.TAB_ACTIVITY, BusTexts.TAB_SOFTWARE};
 
     protected AbstractBusScreen(final T menu, final Inventory inventory, final Component title) {
@@ -142,7 +140,7 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
             // A longer title, as some languages give, takes the small letters rather than run under the lamp.
             BusDraw.fitted(g, font, title, x + BusLayout.TITLE_X, y + BusLayout.TITLE_Y + 1, titleColour, room);
         }
-        drawLamp(g, x + BusLayout.LAMP_X, y + BusLayout.LAMP_Y, linked());
+        BusDraw.lamp(g, x + BusLayout.LAMP_X, y + BusLayout.LAMP_Y, BusLayout.LAMP_SIZE, linked());
         drawTabs(g, x, y, mouseX, mouseY);
         switch (tab) {
             case BusLayout.TAB_ACTIVITY -> activity.render(g, x, y);
@@ -266,26 +264,6 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
             BusDraw.smallCentered(g, font, word, tx + tw / 2, ty + 2,
                     chosen ? JsTechTheme.tabLabelOn() : JsTechTheme.dim());
         }
-    }
-
-    /*
-     * The link as a lamp at the header's right end, green when it reaches the network and red when it does not: a
-     * lit square in a dark bezel, with a lighter corner so it reads as a lens.
-     */
-    private static void drawLamp(final GuiGraphics g, final int x, final int y, final boolean linked) {
-        final int colour = linked ? JsTechTheme.green() : JsTechTheme.red();
-        final int size = BusLayout.LAMP_SIZE;
-        g.fill(x, y, x + size, y + size, JsTechTheme.outer());
-        g.fill(x + 1, y + 1, x + size - 1, y + size - 1, colour);
-        g.fill(x + 1, y + 1, x + 2, y + 2, lens(colour));
-    }
-
-    /** The colour lit a step brighter, for the lamp's lens. */
-    private static int lens(final int argb) {
-        final int r = Math.min(255, ((argb >> 16) & 0xFF) + LENS_LIFT);
-        final int gr = Math.min(255, ((argb >> 8) & 0xFF) + LENS_LIFT);
-        final int b = Math.min(255, (argb & 0xFF) + LENS_LIFT);
-        return (argb >>> 24) << 24 | r << 16 | gr << 8 | b;
     }
 
     private void onNameChanged(final String value) {

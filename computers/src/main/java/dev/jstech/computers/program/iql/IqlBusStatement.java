@@ -194,7 +194,7 @@ public record IqlBusStatement(String bus, Change change) {
                 case "MATCH" -> new Match(either("FUZZY", "EXACT"));
                 case "KEEP" -> quantities(true);
                 case "MAX" -> quantities(false);
-                case "PRIORITY" -> new Priority((int) number());
+                case "PRIORITY" -> new Priority(intNumber());
                 case "WHEN" -> when();
                 case "AFTER" -> {
                     keyword("BUS");
@@ -244,7 +244,7 @@ public record IqlBusStatement(String bus, Change change) {
         private Change quantities(final boolean keepFirst) {
             if (pos < tokens.size() && tokens.get(pos).type() == Type.WORD) {
                 final String item = tokens.get(pos++).text();
-                final int first = (int) number();
+                final int first = intNumber();
                 int second = UNCHANGED;
                 if (keepFirst && peek("MAX")) {
                     pos++;
@@ -252,15 +252,15 @@ public record IqlBusStatement(String bus, Change change) {
                     if (!again.equalsIgnoreCase(item)) {
                         throw IqlError.of(IqlError.UNEXPECTED_TOKEN, again);
                     }
-                    second = (int) number();
+                    second = intNumber();
                 }
                 return keepFirst ? new ItemQuantities(item, first, second) : new ItemQuantities(item, UNCHANGED,
                         first);
             }
-            final int first = (int) number();
+            final int first = intNumber();
             if (keepFirst && peek("MAX")) {
                 pos++;
-                return new Quantities(first, (int) number());
+                return new Quantities(first, intNumber());
             }
             return keepFirst ? new Quantities(first, UNCHANGED) : new Quantities(UNCHANGED, first);
         }
@@ -336,6 +336,16 @@ public record IqlBusStatement(String bus, Change change) {
             }
             keyword(no);
             return false;
+        }
+
+        /** A count that fits an int and is not negative, so no typed value wraps or means "unchanged". */
+        private int intNumber() {
+            final int at = pos;
+            final long value = number();
+            if (value < 0 || value > Integer.MAX_VALUE) {
+                throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.A_COUNT, tokens.get(at).text());
+            }
+            return (int) value;
         }
 
         private long number() {

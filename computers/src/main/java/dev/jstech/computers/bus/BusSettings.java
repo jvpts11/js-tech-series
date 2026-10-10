@@ -9,6 +9,7 @@ package dev.jstech.computers.bus;
 
 import dev.jstech.core.tier.HardwareEra;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -60,8 +61,8 @@ public record BusSettings(String name, HardwareEra era, List<String> filter, boo
     public BusSettings {
         name = name == null ? "" : name;
         filter = List.copyOf(filter);
-        itemKeep = List.copyOf(itemKeep);
-        itemMax = List.copyOf(itemMax);
+        itemKeep = perSlot(itemKeep, filter.size());
+        itemMax = perSlot(itemMax, filter.size());
         conditions = List.copyOf(conditions);
         tags = List.copyOf(tags);
         setBy = Map.copyOf(setBy);
@@ -106,5 +107,20 @@ public record BusSettings(String name, HardwareEra era, List<String> filter, boo
     /** The program that set {@code setting} last, or empty when a hand did or nothing has. */
     public String setByOf(final String setting) {
         return setBy.getOrDefault(setting, "");
+    }
+
+    /*
+     * A per-slot list made exactly {@code slots} long: cut short, or padded with zeros. A filter whose size changed
+     * since the bus was saved would otherwise leave a slot with no quantity to read.
+     */
+    private static List<Integer> perSlot(final List<Integer> values, final int slots) {
+        if (values.size() == slots) {
+            return List.copyOf(values);
+        }
+        final List<Integer> fitted = new ArrayList<>(values.subList(0, Math.min(values.size(), slots)));
+        while (fitted.size() < slots) {
+            fitted.add(0);
+        }
+        return List.copyOf(fitted);
     }
 }

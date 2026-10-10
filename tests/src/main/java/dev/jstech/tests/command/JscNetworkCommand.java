@@ -92,6 +92,11 @@ public final class JscNetworkCommand {
         // The scenario's floor row is y = 2 of its box; the box starts one block east of the player.
         final BlockPos origin = player.blockPosition().offset(1, -2, 0);
         final int types = params.types();
+        // A load still running would keep submitting to the old Mainframe, which this build may overwrite.
+        if (BenchmarkLoad.stop()) {
+            source.sendSuccess(() -> Component.literal("Stopped the running benchmark load before rebuilding."),
+                    false);
+        }
         final long start = System.nanoTime();
         final TestWorldBuilder world = TestWorldBuilder.at(level, origin);
         final BigBaseScenario.Built built = BigBaseScenario.build(world, params);

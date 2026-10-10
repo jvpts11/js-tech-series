@@ -70,4 +70,22 @@ class BusActivityTest {
         assertFalse(activity.idleFor(100L, 20L), "it moved ten ticks ago");
         assertTrue(activity.idleFor(120L, 20L), "and thirty ticks after, it has been idle long enough");
     }
+
+    @Test
+    void idleFor_survivesTheMoveLeavingTheLog() {
+        activity.moved(90L, "minecraft:dirt", 1L, false);
+        for (int i = 0; i < BusActivity.KEPT + 2; i++) {
+            activity.held(95L + i, "minecraft:item_" + i, BusActivity.KEEPS, 1L);
+        }
+
+        assertFalse(activity.idleFor(100L, 20L), "the last move is still recent after the log forgot it");
+    }
+
+    @Test
+    void restore_keepsTheSavedLastMove() {
+        activity.restore(List.of(), 90L);
+
+        assertFalse(activity.idleFor(100L, 20L));
+        assertEquals(90L, activity.lastMovedAt());
+    }
 }

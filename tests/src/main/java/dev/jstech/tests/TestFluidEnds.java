@@ -10,11 +10,14 @@ package dev.jstech.tests;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
@@ -29,27 +32,37 @@ public final class TestFluidEnds {
 
     public static final int CAPACITY = 64_000;
 
-    private static final Map<BlockPos, FluidTank> TANKS = new ConcurrentHashMap<>();
+    private static final Map<End, FluidTank> TANKS = new ConcurrentHashMap<>();
 
     private TestFluidEnds() {
     }
 
-    /** The tank behind the end at the world's {@code pos}. */
-    public static FluidTank tankAt(final BlockPos pos) {
-        return TANKS.computeIfAbsent(pos.immutable(), key -> new FluidTank(CAPACITY));
+    /** The tank behind the end at {@code pos} in {@code level}'s dimension. */
+    public static FluidTank tankAt(final Level level, final BlockPos pos) {
+        return TANKS.computeIfAbsent(new End(level.dimension(), pos.immutable()), key -> new FluidTank(CAPACITY));
     }
 
     /** Forgets the tank behind the end at {@code pos}, so a test starts with an empty one. */
-    public static void clear(final BlockPos pos) {
-        TANKS.remove(pos.immutable());
+    public static void clear(final Level level, final BlockPos pos) {
+        TANKS.remove(new End(level.dimension(), pos.immutable()));
+    }
+
+    /** Lets go of every tank when a world closes, so the next world does not inherit its fluid. */
+    @SubscribeEvent
+    public static void onServerStopped(final ServerStoppedEvent event) {
+        TANKS.clear();
     }
 
     @SubscribeEvent
     public static void onRegisterCapabilities(final RegisterCapabilitiesEvent event) {
         event.registerBlock(Capabilities.FluidHandler.BLOCK,
-                (level, pos, state, entity, side) -> new Ends(tankAt(pos), false), Blocks.CHISELED_TUFF);
+                (level, pos, state, entity, side) -> new Ends(tankAt(level, pos), false), Blocks.CHISELED_TUFF);
         event.registerBlock(Capabilities.FluidHandler.BLOCK,
-                (level, pos, state, entity, side) -> new Ends(tankAt(pos), true), Blocks.CHISELED_TUFF_BRICKS);
+                (level, pos, state, entity, side) -> new Ends(tankAt(level, pos), true), Blocks.CHISELED_TUFF_BRICKS);
+    }
+
+    /* A place a tank is kept for: the same coordinates in two dimensions are two ends. */
+    private record End(ResourceKey<Level> dimension, BlockPos pos) {
     }
 
     /* A tank seen from one side: taking fluid in and giving none, or giving and taking none. */

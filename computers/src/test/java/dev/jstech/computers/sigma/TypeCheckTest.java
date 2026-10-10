@@ -572,4 +572,18 @@ class TypeCheckTest {
                 }
                 """))));
     }
+
+    @Test
+    void check_countsABreakAsAWayOutOfAnEndlessLoopAndOfASwitch() {
+        assertReports("S3012", check("class C { int F(bool b) { while (true) { if (b) { break; } } } }"));
+        assertReports("S3012", check("class C { int F(int v) { switch (v) { default: if (v > 1) { break; } "
+                + "return 1; } } }"));
+        assertClean(check("class C { int F(int v) { switch (v) { default: return 1; } } }"));
+    }
+
+    @Test
+    void check_refusesAnInstanceFieldHandedAsOutFromAStaticMethod() {
+        assertReports("S3014", check("class C { int x; static void Set(out int v) { v = 1; } "
+                + "static void M() { Set(out x); } }"));
+    }
 }

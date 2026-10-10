@@ -26,9 +26,21 @@ public final class TermText {
     }
 
     /**
+     * Writes a row of runs, each in its own colour and one after the other from ({@code x}, {@code y}), laying the
+     * row out and sending it once rather than once per run.
+     */
+    public static void drawRuns(final TermFace face, final GuiGraphics g, final Font font,
+                                final List<GridSpan<Integer>> runs, final int x, final int y) {
+        if (!runs.isEmpty()) {
+            face.lines().drawOnce(g, font, runs, x, y, face.height(), Integer::intValue, 0);
+        }
+    }
+
+    /**
      * Writes a line with the top left of its first cell at ({@code x}, {@code y}), in the units of the pose.
      *
-     * @param ground the colour the line is written on
+     * @param ground the colour the line is written on; the grid painter takes it but does not use it yet, so it
+     *               changes nothing that is drawn
      */
     public static void draw(final TermFace face, final GuiGraphics g, final Font font, final String line, final int x,
                             final int y, final int colour, final int ground) {

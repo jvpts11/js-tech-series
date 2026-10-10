@@ -34,18 +34,20 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
+import dev.jstech.core.uuid.NodeUuid;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static dev.jstech.computers.operation.payload.cluster.ClusterManagerPayloads.sectionStores;
 import static dev.jstech.computers.operation.payload.machine.MachineLabels.osLabel;
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.resolveMainframe;
 
@@ -122,9 +124,7 @@ public final class ClusterManagerStateBuilder {
                 used += store.usedWeight();
                 total += store.capacityWeight();
             }
-            final int mode = Loaded.blockEntity(level, ref.routerPos()) instanceof ServerRouterBlockEntity router
-                    ? router.loadBalanceMode(ref.face()).id()
-                    : LoadBalanceMode.ROUND_ROBIN.id();
+            final int mode = balanceModeId(level, ref.routerPos(), ref.face());
             clusters.add(new ClusterManagerStatePayload.WireCluster(ClusterManagerStatePayload.KIND_DATACENTER, i,
                     ref.label(), ref.section().serverCount() > 0, ref.section().serverCount(), used, total, mode,
                     SECTION_LINE.with(ref.section().rackCount(), ref.section().serverCount()),
@@ -135,152 +135,197 @@ public final class ClusterManagerStateBuilder {
         final List<NetworkItemEntry> items = new ArrayList<>();
         final List<ClusterManagerStatePayload.WireDest> dests = new ArrayList<>();
         if (selKind == ClusterManagerStatePayload.KIND_SUPERCOMPUTER && selIndex >= 0 && selIndex < hubs.size()) {
-            final var hub = hubs.get(selIndex);
-            final List<ClusterManagerStatePayload.WireNode> nodes = new ArrayList<>();
-            final Map<BlockPos, Integer> rackIndex = new LinkedHashMap<>();
-            final var slots = hub.clusterSlots();
-            int i = 0;
-            for (final var node : hub.clusterNodes()) {
-                if (Loaded.blockEntity(level, node.rack()) instanceof ServerRackBlockEntity rack
-                        && nodes.size() < ClusterManagerStatePayload.MAX_NODES) {
-                    final int rIdx = rackIndex.computeIfAbsent(node.rack(), r -> rackIndex.size() + 1);
-                    final ItemStack server = rack.getServers().getStackInSlot(node.row());
-                    final var host = rack.unitHost(node.row());
-                    final var phi = HbwInterfaceBlockEntity.installedPhi(server);
-                    final int slotIndex = i < slots.size() ? i : -1;
-                    final int code = slotIndex >= 0 ? slots.get(slotIndex).code()
-                            : HbwInterfaceBlockEntity.SLOT_EMPTY;
-                    nodes.add(new ClusterManagerStatePayload.WireNode(node.rack().asLong(), rIdx, node.row(),
-                            ClusterManagementComputerBlockEntity.nodeName(rack, node.row()),
-                            osLabel(host), programsLabel(host),
-                            phi == null ? -1 : HbwInterfaceBlockEntity.modelIndex(phi.spec()),
-                            rack.bayPowerOn(node.row()), slotIndex, code, 0L, 0L,
-                            nodeState(cmc, rack, node.row(), server, host, slotIndex, code)));
+            detail = supercomputerDetail(cmc, level, hubs.get(selIndex), selIndex);
+        } else if (selKind == ClusterManagerStatePayload.KIND_DATACENTER && selIndex >= 0
+                && selIndex < sections.size()) {
+            detail = sectionDetail(cmc, level, sections.get(selIndex), selIndex, items, dests);
+        }
+        return new ClusterManagerStatePayload(head, clusters, detail, wireJob(cmc, hubs, sections), items, dests);
+    }
+
+    /** The storage of each of these servers that sits in a loaded rack. */
+    static List<ServerStore> sectionStores(final ServerLevel level, final List<NodeUuid> servers) {
+        final NetworkSystem system = NetworkSystem.get(level);
+        final List<ServerStore> stores = new ArrayList<>();
+        for (final NodeUuid node : servers) {
+            system.locationOf(node).ifPresent(loc -> {
+                if (Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
+                    stores.add(rack.getServerStorage(loc.slot()));
                 }
-                i++;
+            });
+        }
+        return stores;
+    }
+
+    private static ClusterManagerStatePayload.Detail supercomputerDetail(
+            final ClusterManagementComputerBlockEntity cmc, final ServerLevel level, final HbwInterfaceBlockEntity hub,
+            final int selIndex) {
+        final List<ClusterManagerStatePayload.WireNode> nodes = new ArrayList<>();
+        final Map<BlockPos, Integer> rackIndex = new LinkedHashMap<>();
+        final var slots = hub.clusterSlots();
+        int i = 0;
+        for (final var node : hub.clusterNodes()) {
+            if (Loaded.blockEntity(level, node.rack()) instanceof ServerRackBlockEntity rack
+                    && nodes.size() < ClusterManagerStatePayload.MAX_NODES) {
+                final int rIdx = rackIndex.computeIfAbsent(node.rack(), r -> rackIndex.size() + 1);
+                final ItemStack server = rack.getServers().getStackInSlot(node.row());
+                final var host = rack.unitHost(node.row());
+                final var phi = HbwInterfaceBlockEntity.installedPhi(server);
+                final int slotIndex = i < slots.size() ? i : -1;
+                final int code = slotIndex >= 0 ? slots.get(slotIndex).code()
+                        : HbwInterfaceBlockEntity.SLOT_EMPTY;
+                nodes.add(new ClusterManagerStatePayload.WireNode(node.rack().asLong(), rIdx, node.row(),
+                        ClusterManagementComputerBlockEntity.nodeName(rack, node.row()),
+                        osLabel(host), programsLabel(host),
+                        phi == null ? -1 : HbwInterfaceBlockEntity.modelIndex(phi.spec()),
+                        rack.bayPowerOn(node.row()), slotIndex, code, 0L, 0L,
+                        nodeState(cmc, rack, node.row(), server, host, slotIndex, code)));
             }
-            final List<ClusterManagerStatePayload.WireCraft> queue = new ArrayList<>();
-            final NetworkUuid net = hub.networkUuid();
-            final MainframeBlockEntity mainframe = net == null ? null : resolveMainframe(level, net);
-            if (mainframe != null) {
-                final Map<UUID, Integer> held = hub.heldSlots();
-                final List<ClusterManagerStatePayload.WireCraft> waiting = new ArrayList<>();
-                for (final var operation : mainframe.liveOperations()) {
-                    if (!(operation instanceof NetworkCraftOperation craft)
-                            || craft.isDone()) {
-                        continue;
-                    }
-                    final OperationRecord record = craft.liveRecord();
-                    final Text label = CRAFT.with(GameText.of(record.key().displayName()), record.requested());
-                    final int held0 = held.getOrDefault(craft.operationId(), 0);
-                    if (held0 > 0) {
-                        queue.add(new ClusterManagerStatePayload.WireCraft(label, craft.requesterLabel(), held0, false));
-                    } else if (record.status() == OperationRecord.STATUS_WAITING && craft.usesSupercomputer(hub.getBlockPos())) {
-                        waiting.add(new ClusterManagerStatePayload.WireCraft(label, craft.requesterLabel(), 0, true));
-                    }
-                }
-                queue.addAll(waiting);
-            }
-            final BlockPos hp = hub.getBlockPos();
-            detail = new ClusterManagerStatePayload.Detail(selKind, selIndex,
-                    ClusterManagementComputerBlockEntity
-                            .supercomputerName(hub, selIndex),
-                    SUPERCOMPUTER_DETAIL.with(hp.getX(), hp.getY(), hp.getZ(), racks(rackIndex.size()),
-                            hub.craftSlotsInUse(), hub.parallelCrafts()),
-                    hub.clusterOnline(), 0, nodes,
-                    queue.size() > ClusterManagerStatePayload.MAX_QUEUE ? queue.subList(0, ClusterManagerStatePayload.MAX_QUEUE) : queue);
-        } else if (selKind == ClusterManagerStatePayload.KIND_DATACENTER && selIndex >= 0 && selIndex < sections.size()) {
-            final var ref = sections.get(selIndex);
-            final NetworkSystem system = NetworkSystem.get(level);
-            final List<ClusterManagerStatePayload.WireNode> nodes = new ArrayList<>();
-            final Map<BlockPos, Integer> rackIndex = new LinkedHashMap<>();
-            /*
-             * Every seated server in the section's cabinets, switched on or off: a bay the manager powered
-             * off has left the network, and must still be listed so the manager can power it back on.
-             */
-            for (final long rackLong : ref.section().rackPositions()) {
-                final BlockPos rackPos = BlockPos.of(rackLong);
-                if (!(level.getBlockEntity(rackPos) instanceof ServerRackBlockEntity rack)) {
+            i++;
+        }
+        final List<ClusterManagerStatePayload.WireCraft> queue = new ArrayList<>();
+        final NetworkUuid net = hub.networkUuid();
+        final MainframeBlockEntity mainframe = net == null ? null : resolveMainframe(level, net);
+        if (mainframe != null) {
+            final Map<UUID, Integer> held = hub.heldSlots();
+            final List<ClusterManagerStatePayload.WireCraft> waiting = new ArrayList<>();
+            for (final var operation : mainframe.liveOperations()) {
+                if (!(operation instanceof NetworkCraftOperation craft)
+                        || craft.isDone()) {
                     continue;
                 }
-                final int rIdx = rackIndex.computeIfAbsent(rackPos, r -> rackIndex.size() + 1);
-                for (final int row : rack.computerSlots()) {
-                    if (nodes.size() >= ClusterManagerStatePayload.MAX_NODES) {
-                        break;
-                    }
-                    final var host = rack.unitHost(row);
-                    final ServerStore store = rack.getServerStorage(row);
-                    nodes.add(new ClusterManagerStatePayload.WireNode(rackPos.asLong(), rIdx, row,
-                            ClusterManagementComputerBlockEntity.nodeName(rack, row),
-                            osLabel(host), programsLabel(host), -1, rack.bayPowerOn(row), -1, 0,
-                            store == null ? 0L : store.usedWeight(), store == null ? 0L : store.capacityWeight(),
-                            nodeState(cmc, rack, row, rack.getServers().getStackInSlot(row), host, -1, -1)));
+                final OperationRecord record = craft.liveRecord();
+                final Text label = CRAFT.with(GameText.of(record.key().displayName()), record.requested());
+                final int held0 = held.getOrDefault(craft.operationId(), 0);
+                if (held0 > 0) {
+                    queue.add(new ClusterManagerStatePayload.WireCraft(label, craft.requesterLabel(), held0, false));
+                } else if (record.status() == OperationRecord.STATUS_WAITING
+                        && craft.usesSupercomputer(hub.getBlockPos())) {
+                    waiting.add(new ClusterManagerStatePayload.WireCraft(label, craft.requesterLabel(), 0, true));
                 }
             }
-            final int mode = Loaded.blockEntity(level, ref.routerPos()) instanceof ServerRouterBlockEntity router
-                    ? router.loadBalanceMode(ref.face()).id()
-                    : LoadBalanceMode.ROUND_ROBIN.id();
-            final BlockPos rp = ref.routerPos();
-            detail = new ClusterManagerStatePayload.Detail(selKind, selIndex, ref.label(),
-                    SECTION_DETAIL.with(racks(ref.section().rackCount()), ref.section().serverCount(),
-                            rp.getX(), rp.getY(), rp.getZ()),
-                    ref.section().serverCount() > 0, mode, nodes, List.of());
-            // The section's inventory, and where a move-out can go: the network's computers with local storage.
-            final Map<StorageKey, Long> totals = NetworkStorage
-                    .ofServers(level, ref.section().servers()).query();
-            totals.entrySet().stream().limit(ClusterManagerStatePayload.MAX_ITEMS)
-                    .forEach(e -> items.add(new NetworkItemEntry(e.getKey(), e.getValue())));
-            final NetworkUuid net = cmc.networkUuid();
-            if (net != null) {
-                for (final var pc : system.personalComputersOf(net)) {
-                    if (Loaded.blockEntity(level, BlockPos.of(pc.pos())) instanceof IComputerTerminalHost pcHost
-                            && pcHost.localStorageCapacity() > 0L && dests.size() < ClusterManagerStatePayload.MAX_DESTS) {
-                        final String name = Loaded.blockEntity(level, BlockPos.of(pc.pos()))
-                                instanceof IOsHost os && !os.customName().isEmpty()
-                                ? os.customName() : "PC-" + pc.nodeUuid().asString().substring(0, 4);
-                        dests.add(new ClusterManagerStatePayload.WireDest(pc.pos(), Text.literal(name)));
-                    }
+            queue.addAll(waiting);
+        }
+        final BlockPos hp = hub.getBlockPos();
+        return new ClusterManagerStatePayload.Detail(ClusterManagerStatePayload.KIND_SUPERCOMPUTER, selIndex,
+                ClusterManagementComputerBlockEntity
+                        .supercomputerName(hub, selIndex),
+                SUPERCOMPUTER_DETAIL.with(hp.getX(), hp.getY(), hp.getZ(), racks(rackIndex.size()),
+                        hub.craftSlotsInUse(), hub.parallelCrafts()),
+                hub.clusterOnline(), 0, nodes,
+                queue.size() > ClusterManagerStatePayload.MAX_QUEUE
+                        ? queue.subList(0, ClusterManagerStatePayload.MAX_QUEUE) : queue);
+    }
+
+    /* Fills {@code items} with the section's inventory and {@code dests} with where a move-out can go. */
+    private static ClusterManagerStatePayload.Detail sectionDetail(
+            final ClusterManagementComputerBlockEntity cmc, final ServerLevel level,
+            final ClusterManagementComputerBlockEntity.SectionRef ref, final int selIndex,
+            final List<NetworkItemEntry> items, final List<ClusterManagerStatePayload.WireDest> dests) {
+        final List<ClusterManagerStatePayload.WireNode> nodes = new ArrayList<>();
+        final Map<BlockPos, Integer> rackIndex = new LinkedHashMap<>();
+        /*
+         * Every seated server in the section's cabinets, switched on or off: a bay the manager powered
+         * off has left the network, and must still be listed so the manager can power it back on.
+         */
+        for (final long rackLong : ref.section().rackPositions()) {
+            final BlockPos rackPos = BlockPos.of(rackLong);
+            if (!(level.getBlockEntity(rackPos) instanceof ServerRackBlockEntity rack)) {
+                continue;
+            }
+            final int rIdx = rackIndex.computeIfAbsent(rackPos, r -> rackIndex.size() + 1);
+            for (final int row : rack.computerSlots()) {
+                if (nodes.size() >= ClusterManagerStatePayload.MAX_NODES) {
+                    break;
                 }
-                system.mainframePositionOf(net).ifPresent(mfPos -> {
-                    if (Loaded.blockEntity(level, BlockPos.of(mfPos)) instanceof IComputerTerminalHost host
-                            && host.localStorageCapacity() > 0L) {
-                        dests.add(new ClusterManagerStatePayload.WireDest(mfPos, MAINFRAME.text()));
-                    }
-                });
+                final var host = rack.unitHost(row);
+                final ServerStore store = rack.getServerStorage(row);
+                nodes.add(new ClusterManagerStatePayload.WireNode(rackPos.asLong(), rIdx, row,
+                        ClusterManagementComputerBlockEntity.nodeName(rack, row),
+                        osLabel(host), programsLabel(host), -1, rack.bayPowerOn(row), -1, 0,
+                        store == null ? 0L : store.usedWeight(), store == null ? 0L : store.capacityWeight(),
+                        nodeState(cmc, rack, row, rack.getServers().getStackInSlot(row), host, -1, -1)));
             }
         }
-        // The job in flight, if any.
-        ClusterManagerStatePayload.WireJob job = ClusterManagerStatePayload.WireJob.none(cmc.lastJobSummary());
+        final BlockPos rp = ref.routerPos();
+        final ClusterManagerStatePayload.Detail detail = new ClusterManagerStatePayload.Detail(
+                ClusterManagerStatePayload.KIND_DATACENTER, selIndex, ref.label(),
+                SECTION_DETAIL.with(racks(ref.section().rackCount()), ref.section().serverCount(),
+                        rp.getX(), rp.getY(), rp.getZ()),
+                ref.section().serverCount() > 0, balanceModeId(level, ref.routerPos(), ref.face()), nodes, List.of());
+        final Map<StorageKey, Long> totals = NetworkStorage
+                .ofServers(level, ref.section().servers()).query();
+        totals.entrySet().stream().limit(ClusterManagerStatePayload.MAX_ITEMS)
+                .forEach(e -> items.add(new NetworkItemEntry(e.getKey(), e.getValue())));
+        final NetworkUuid net = cmc.networkUuid();
+        if (net != null) {
+            destinations(level, net, dests);
+        }
+        return detail;
+    }
+
+    /* The network's computers with local storage, which a move-out out of a section can go to. */
+    private static void destinations(final ServerLevel level, final NetworkUuid net,
+                                     final List<ClusterManagerStatePayload.WireDest> dests) {
+        final NetworkSystem system = NetworkSystem.get(level);
+        for (final var pc : system.personalComputersOf(net)) {
+            final BlockEntity be = Loaded.blockEntity(level, BlockPos.of(pc.pos()));
+            if (be instanceof IComputerTerminalHost pcHost
+                    && pcHost.localStorageCapacity() > 0L && dests.size() < ClusterManagerStatePayload.MAX_DESTS) {
+                final String name = be instanceof IOsHost os && !os.customName().isEmpty()
+                        ? os.customName() : "PC-" + pc.nodeUuid().asString().substring(0, 4);
+                dests.add(new ClusterManagerStatePayload.WireDest(pc.pos(), Text.literal(name)));
+            }
+        }
+        system.mainframePositionOf(net).ifPresent(mfPos -> {
+            if (Loaded.blockEntity(level, BlockPos.of(mfPos)) instanceof IComputerTerminalHost host
+                    && host.localStorageCapacity() > 0L) {
+                dests.add(new ClusterManagerStatePayload.WireDest(mfPos, MAINFRAME.text()));
+            }
+        });
+    }
+
+    /* The job in flight, or the idle one carrying the last summary. */
+    private static ClusterManagerStatePayload.WireJob wireJob(
+            final ClusterManagementComputerBlockEntity cmc, final List<HbwInterfaceBlockEntity> hubs,
+            final List<ClusterManagementComputerBlockEntity.SectionRef> sections) {
         final var running = cmc.job();
-        if (running != null) {
-            final List<ClusterManagerStatePayload.WireLane> lanes = new ArrayList<>();
-            for (final var lane : running.lanes()) {
-                if (lanes.size() < ClusterManagerStatePayload.MAX_LANES) {
-                    lanes.add(new ClusterManagerStatePayload.WireLane(lane.name(), lane.permille()));
-                }
-            }
-            final var ref = running.cluster();
-            int clusterIndex = -1;
-            final int clusterKind = ref.kind() == RackChassis.RackType.SUPERCOMPUTER
-                    ? ClusterManagerStatePayload.KIND_SUPERCOMPUTER : ClusterManagerStatePayload.KIND_DATACENTER;
-            if (clusterKind == ClusterManagerStatePayload.KIND_SUPERCOMPUTER) {
-                for (int i = 0; i < hubs.size(); i++) {
-                    if (hubs.get(i).getBlockPos().equals(ref.anchor())) {
-                        clusterIndex = i;
-                    }
-                }
-            } else {
-                for (int i = 0; i < sections.size(); i++) {
-                    if (sections.get(i).routerPos().equals(ref.anchor()) && sections.get(i).face() == ref.face()) {
-                        clusterIndex = i;
-                    }
-                }
-            }
-            job = new ClusterManagerStatePayload.WireJob(true, running.kind().id(), running.medium().label(),
-                    clusterKind, clusterIndex, running.done(), running.skipped(), running.queued(), running.total(),
-                    running.elapsedTicks(), running.cancelled(), lanes, cmc.lastJobSummary());
+        if (running == null) {
+            return ClusterManagerStatePayload.WireJob.none(cmc.lastJobSummary());
         }
-        return new ClusterManagerStatePayload(head, clusters, detail, job, items, dests);
+        final List<ClusterManagerStatePayload.WireLane> lanes = new ArrayList<>();
+        for (final var lane : running.lanes()) {
+            if (lanes.size() < ClusterManagerStatePayload.MAX_LANES) {
+                lanes.add(new ClusterManagerStatePayload.WireLane(lane.name(), lane.permille()));
+            }
+        }
+        final var ref = running.cluster();
+        int clusterIndex = -1;
+        final int clusterKind = ref.kind() == RackChassis.RackType.SUPERCOMPUTER
+                ? ClusterManagerStatePayload.KIND_SUPERCOMPUTER : ClusterManagerStatePayload.KIND_DATACENTER;
+        if (clusterKind == ClusterManagerStatePayload.KIND_SUPERCOMPUTER) {
+            for (int i = 0; i < hubs.size() && clusterIndex < 0; i++) {
+                if (hubs.get(i).getBlockPos().equals(ref.anchor())) {
+                    clusterIndex = i;
+                }
+            }
+        } else {
+            for (int i = 0; i < sections.size() && clusterIndex < 0; i++) {
+                if (sections.get(i).routerPos().equals(ref.anchor()) && sections.get(i).face() == ref.face()) {
+                    clusterIndex = i;
+                }
+            }
+        }
+        return new ClusterManagerStatePayload.WireJob(true, running.kind().id(), running.medium().label(),
+                clusterKind, clusterIndex, running.done(), running.skipped(), running.queued(), running.total(),
+                running.elapsedTicks(), running.cancelled(), lanes, cmc.lastJobSummary());
+    }
+
+    /* How the section's router spreads what is stored, as the id the wire carries. */
+    private static int balanceModeId(final ServerLevel level, final BlockPos routerPos, final Direction face) {
+        return Loaded.blockEntity(level, routerPos) instanceof ServerRouterBlockEntity router
+                ? router.loadBalanceMode(face).id()
+                : LoadBalanceMode.ROUND_ROBIN.id();
     }
 
     /**

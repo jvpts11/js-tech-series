@@ -197,7 +197,7 @@ final class DeskMenu {
         final List<ContextMenu.Item> entries = new ArrayList<>();
         final List<String> installed = desktop.installedPrograms();
         for (final String programId : FileOpeners.available(path, installed)) {
-            final ProgramSpec spec = Programs.get(ResourceLocation.fromNamespaceAndPath("jsc", programId));
+            final ProgramSpec spec = Programs.get(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, programId));
             final String label = spec == null ? programId : spec.displayName();
             entries.add(new ContextMenu.Item(label, true, () -> desktop.opener().openIn(programId, path)));
         }

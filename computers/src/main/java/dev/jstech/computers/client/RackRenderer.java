@@ -119,9 +119,4 @@ public final class RackRenderer extends GeoBlockRenderer<ServerRackBlockEntity> 
     public AABB getRenderBoundingBox(final ServerRackBlockEntity rack) {
         return rack.renderBox();
     }
-
-    /** Which bone a seated unit shows in a given row. */
-    public static String boneFor(final int row, final int unitCode) {
-        return "row_" + row + "_" + ServerRackBlockEntity.UNIT_BONES[unitCode];
-    }
 }

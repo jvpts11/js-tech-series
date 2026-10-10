@@ -20,6 +20,7 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.core.gui.TextScreen;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -200,15 +201,7 @@ public final class HelpTerminalClientTests {
     }
 
     private static void build(final MainframeBlockEntity machine) {
-        final ItemStackHandler inv = machine.getInventory();
-        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
-        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START, new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START, new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
-        inv.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START, new ItemStack(ComputingModule.GPU_HD_7970.get()));
-        inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
+        TestWorldBuilder.installMainframeParts(machine, StorageTier.SSD, true);
     }
 
     private static CommandPromptScreen<?> prompt(final ClientTestContext ctx) {

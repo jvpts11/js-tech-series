@@ -21,6 +21,7 @@ import dev.jstech.core.cable.Wire;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.Collection;
 import java.util.HashSet;
@@ -60,7 +61,8 @@ final class NodeLinks {
         this.index = system.connectivity();
         for (final long place : index.positionsOf(network)) {
             final BlockPos block = Cables.blockOf(level, place);
-            if (block != null && level.getBlockState(block).getBlock() instanceof RouterBlock router
+            if (block != null && level.isLoaded(block)
+                    && level.getBlockState(block).getBlock() instanceof RouterBlock router
                     && router.optical()) {
                 opticalRouters.add(place);
             }
@@ -90,6 +92,9 @@ final class NodeLinks {
 
     /** Whether the machine at {@code pos} holds an Optical Network Card, which its block's state says. */
     boolean optical(final BlockPos pos) {
+        if (!level.isLoaded(pos)) {
+            return false; // reading it would load the chunk
+        }
         final BlockState state = level.getBlockState(pos);
         return state.hasProperty(OpticalPort.OPTICAL) && state.getValue(OpticalPort.OPTICAL);
     }
@@ -130,7 +135,7 @@ final class NodeLinks {
      */
     private void bends(final long place, final DataLink link, final Map<BlockPos, NodeLink> lost) {
         final BlockPos block = Cables.blockOf(level, place);
-        final CableBlockEntity cable = block == null ? null : Cables.at(level, block);
+        final CableBlockEntity cable = block == null || !level.isLoaded(block) ? null : Cables.at(level, block);
         if (cable == null) {
             return;
         }
@@ -139,8 +144,8 @@ final class NodeLinks {
                 continue;
             }
             for (final Direction side : Direction.values()) {
-                final CableBlockEntity other = cable.crosses(wire.type(), side) ? null
-                        : Cables.at(level, block.relative(side));
+                final CableBlockEntity other = cable.crosses(wire.type(), side) || !level.isLoaded(block.relative(side))
+                        ? null : Cables.at(level, block.relative(side));
                 if (other == null || !other.holds(wire.type()) || !other.crosses(wire.type(), side)
                         || other.crosses(wire.type(), side.getOpposite())) {
                     continue;
@@ -185,7 +190,7 @@ final class NodeLinks {
     }
 
     private void addMachine(final BlockPos pos, final Set<BlockPos> machines) {
-        final BlockEntity entity = level.getBlockEntity(pos);
+        final BlockEntity entity = Loaded.blockEntity(level, pos);
         if (entity instanceof ServerRackPartBlockEntity part && part.controllerPos() != null) {
             addMachine(part.controllerPos(), machines);
         } else if (entity instanceof ServerRackBlockEntity rack && !network.equals(rack.networkUuid())) {

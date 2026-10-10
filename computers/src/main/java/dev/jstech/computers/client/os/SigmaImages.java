@@ -46,7 +46,7 @@ public final class SigmaImages {
     /** Takes a picture the machine sent back, when one of the widgets asked for it. */
     public static void accept(final String path, final String content) {
         if (PICTURES.containsKey(path)) {
-            PICTURES.put(path, content.isEmpty() ? Optional.empty() : Optional.of(PixImage.decode(content)));
+            PICTURES.put(path, content.isEmpty() ? Optional.empty() : Optional.ofNullable(PixImage.decode(content)));
         }
     }
 

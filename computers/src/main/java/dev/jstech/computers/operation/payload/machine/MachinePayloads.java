@@ -163,13 +163,12 @@ public final class MachinePayloads {
                 if (entries.size() >= RemoteHostsPayload.MAX_HOSTS) {
                     return;
                 }
-                final var remote = new ServerCliComputer(
-                        (IComputerTerminalHost) machine,
-                        level);
+                final var remote = (IComputerTerminalHost) machine;
                 final var os = machine instanceof IOsHost h
                         ? h.installedOs() : null;
                 entries.add(new RemoteHostsPayload.Entry(machine.getBlockPos().asLong(), hostname,
-                        RemoteComputerService.typeOf(machine), os == null ? "" : os.displayName(), remote.running()));
+                        RemoteComputerService.typeOf(machine), os == null ? "" : os.displayName(),
+                        remote.computerRunning()));
             });
             PacketDistributor.sendToPlayer(player, new RemoteHostsPayload(entries));
             return;

@@ -42,7 +42,7 @@ public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
     private static final String NAME = "interac";
 
     /** The words it takes, which is also the list a verb written as an option is looked for in. */
-    private static final List<String> VERBS = List.of("status", "list", "get", "put", "fill", "fav", "where",
+    private static final List<String> VERBS = List.of("status", "list", "ls", "get", "put", "fill", "fav", "where",
             "info", "craft", "ops", "cancel", "lock", "unlock", "locks", "stats");
 
     /** How many rows a listing shows before it says how many more there were. */
@@ -253,9 +253,8 @@ public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
     /** What the network holds, most first, with where each thing lives. */
     private static void list(final CliContext ctx, final InteracWords words) {
         final String text = words.item();
-        final List<ICliComputer.StoredItem> stock = ctx.computer().query(null, "", MOST_ROWS * 8);
-        final List<ICliComputer.StoredItem> rows = InteracRows.filtered(stock, text,
-                words.option("sort", "count"));
+        final List<ICliComputer.StoredItem> rows = InteracRows.search(ctx.computer(), text,
+                words.option("sort", "count"), MOST_ROWS * 8);
         if (rows.isEmpty()) {
             ctx.out().dim(text.isEmpty() ? HOLDS_NOTHING.text() : NOTHING_MATCHES.with(text));
             return;

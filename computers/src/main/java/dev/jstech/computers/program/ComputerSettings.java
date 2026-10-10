@@ -418,7 +418,8 @@ public final class ComputerSettings {
     /**
      * Shares a folder under its own name; sharing it again changes whether it may be written to. The
      * name is the last part of the path, or the drive letter for a drive's root. False when there is
-     * no room for one more.
+     * no room for one more, or when a different folder is already shared under that name: share names are
+     * unique, so the first folder is never silently replaced.
      */
     public boolean share(final String path, final boolean writable) {
         final String where = path == null ? "" : path.trim();
@@ -429,6 +430,9 @@ public final class ComputerSettings {
         final Share made = new Share(name, where, writable);
         for (int i = 0; i < shares.size(); i++) {
             if (shares.get(i).name().equalsIgnoreCase(name)) {
+                if (!shares.get(i).path().equalsIgnoreCase(where)) {
+                    return false;
+                }
                 shares.set(i, made);
                 return true;
             }

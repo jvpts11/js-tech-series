@@ -20,6 +20,7 @@ import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.boot.WelcomeFacts;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.tests.JsTests;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -175,7 +176,7 @@ public final class FirstBootGameTests {
         computer.setBootDiskSlot(0);
 
         helper.assertTrue(WelcomeFacts.bootedSlot(computer) == 0, "the machine boots the first disk");
-        final java.util.List<WelcomeFacts.Other> others = WelcomeFacts.others(computer);
+        final List<WelcomeFacts.Other> others = WelcomeFacts.others(computer);
         helper.assertTrue(others.size() == 1, "and knows of one other system: " + others);
         helper.assertTrue("Ubuntu".equals(others.getFirst().system()) && others.getFirst().slot() == 1,
                 "named, and on the disk it is really on: " + others.getFirst());
@@ -191,7 +192,7 @@ public final class FirstBootGameTests {
         final PersonalComputerBlockEntity computer = legacy(helper);
         helper.assertTrue(computer.installOs(FRAMES_95), "Frames 95 installs on the machine");
 
-        final java.util.List<String> alone = WelcomeFacts.tips(computer, "", false).stream()
+        final List<String> alone = WelcomeFacts.tips(computer, "", false).stream()
                 .map(tip -> tip.english()).toList();
         helper.assertTrue(alone.getFirst().contains("once a Mainframe on this network runs the Mirror"),
                 "with no Mirror it says where software would come from: " + alone.getFirst());
@@ -200,7 +201,7 @@ public final class FirstBootGameTests {
                     "and a machine on no network is told nothing about one: " + tip);
         }
 
-        final java.util.List<String> served = WelcomeFacts.tips(computer, "CORE", true).stream()
+        final List<String> served = WelcomeFacts.tips(computer, "CORE", true).stream()
                 .map(tip -> tip.english()).toList();
         helper.assertTrue(served.getFirst().contains("the Mirror on CORE"),
                 "with one answering it names it: " + served.getFirst());

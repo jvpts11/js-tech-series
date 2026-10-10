@@ -400,8 +400,8 @@ public record UiWindowPayload(BlockPos hostPos, int program, long window, String
             value = Numbers.toInt(widget.get(UiWidgets.AMOUNT));
             most = 0;
         } else if (UiWidgets.OPERATION_VIEW.equals(type)) {
-            value = (int) Math.min(Integer.MAX_VALUE, Numbers.toLong(widget.get(UiWidgets.DONE)));
-            most = (int) Math.min(Integer.MAX_VALUE, Numbers.toLong(widget.get(UiWidgets.TOTAL)));
+            value = (int) Math.clamp(Numbers.toLong(widget.get(UiWidgets.DONE)), Integer.MIN_VALUE, Integer.MAX_VALUE);
+            most = (int) Math.clamp(Numbers.toLong(widget.get(UiWidgets.TOTAL)), Integer.MIN_VALUE, Integer.MAX_VALUE);
         } else {
             value = Numbers.toInt(widget.get(UiWidgets.VALUE));
             most = Numbers.toInt(widget.get(UiWidgets.MOST));

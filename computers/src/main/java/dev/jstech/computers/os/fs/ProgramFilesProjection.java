@@ -53,6 +53,11 @@ public final class ProgramFilesProjection {
             "editor", "command_prompt", "system_monitor", "calculator", "network_manager", "task_manager",
             "workstation_info", "help_viewer", "disks");
 
+    /** Where each Unix-like system keeps what a program brings along, which is also where its readme goes. */
+    private static final String SYSV_SHARE = "usr/lib/";
+    private static final String FREEBSD_SHARE = "usr/local/share/";
+    private static final String LINUX_SHARE = "usr/share/";
+
     private ProgramFilesProjection() {
     }
 
@@ -88,7 +93,7 @@ public final class ProgramFilesProjection {
         for (final ProgramSpec spec : shown(host, Platform.UNIX)) {
             out.add(file("usr/bin/" + spec.commandName(), FileType.BIN));
             out.add(dir("usr/lib/" + spec.commandName()));
-            out.add(file("usr/lib/" + spec.commandName() + "/readme", FileType.TXT));
+            out.add(file(readmeUnder(SYSV_SHARE, spec), FileType.TXT));
         }
     }
 
@@ -118,7 +123,7 @@ public final class ProgramFilesProjection {
         for (final ProgramSpec spec : installed(host)) {
             out.add(file("usr/local/bin/" + spec.commandName(), FileType.BIN));
             out.add(dir("usr/local/share/" + spec.commandName()));
-            out.add(file("usr/local/share/" + spec.commandName() + "/readme", FileType.TXT));
+            out.add(file(readmeUnder(FREEBSD_SHARE, spec), FileType.TXT));
         }
     }
 
@@ -158,7 +163,7 @@ public final class ProgramFilesProjection {
         for (final ProgramSpec spec : installed(host)) {
             out.add(file("usr/bin/" + spec.commandName(), FileType.BIN));
             out.add(dir("usr/share/" + spec.commandName()));
-            out.add(file("usr/share/" + spec.commandName() + "/readme", FileType.TXT));
+            out.add(file(readmeUnder(LINUX_SHARE, spec), FileType.TXT));
         }
     }
 
@@ -310,9 +315,9 @@ public final class ProgramFilesProjection {
         for (final ProgramSpec spec : installed(host)) {
             final String frames = "/" + spec.displayName() + "/readme.txt";
             if (path.endsWith(frames) && (path.startsWith(PROGRAM_FILES) || path.startsWith(PROGRAM_FILES_X86))
-                    || path.equals("usr/share/" + spec.commandName() + "/readme")
-                    || path.equals("usr/local/share/" + spec.commandName() + "/readme")
-                    || path.equals("usr/lib/" + spec.commandName() + "/readme")
+                    || path.equals(readmeUnder(LINUX_SHARE, spec))
+                    || path.equals(readmeUnder(FREEBSD_SHARE, spec))
+                    || path.equals(readmeUnder(SYSV_SHARE, spec))
                     || path.equals(McDosTree.readmeOf(McDosTree.nameOf(spec.commandName())))) {
                 return Optional.of(readme(spec, os.platform() == Platform.FRAMES));
             }
@@ -349,6 +354,11 @@ public final class ProgramFilesProjection {
     /** The desktop shell a Frames edition starts: the first edition's own, and the one every edition after it has. */
     private static String shellOf(final OsDef os) {
         return os.familyRank() == 1 ? "explorer.exe" : "frames.exe";
+    }
+
+    /** The path of a program's readme under a Unix-like system's share folder; the layout and the matcher share it. */
+    private static String readmeUnder(final String share, final ProgramSpec spec) {
+        return share + spec.commandName() + "/readme";
     }
 
     /**

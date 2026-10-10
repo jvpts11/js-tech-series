@@ -18,12 +18,25 @@ public record PhiCoprocessorSpec(IndustrialTier tier, int maxSlot, int cores, in
     public static final int SLOT_COUNT = 6;
 
     public static long craftsForSlot(final int slotIndex) {
+        // A shift count wraps at 64, so a slot outside the six would quietly answer for another one.
+        if (slotIndex < 0 || slotIndex >= SLOT_COUNT) {
+            throw new IllegalArgumentException("slotIndex must be 0.." + (SLOT_COUNT - 1) + ", got " + slotIndex);
+        }
         return 8L << slotIndex;
     }
 
     public PhiCoprocessorSpec {
         if (maxSlot < 1 || maxSlot > SLOT_COUNT) {
             throw new IllegalArgumentException("maxSlot must be 1.." + SLOT_COUNT + ", got " + maxSlot);
+        }
+        if (cores < 1) {
+            throw new IllegalArgumentException("cores must be at least 1, got " + cores);
+        }
+        if (mhz < 1) {
+            throw new IllegalArgumentException("mhz must be at least 1, got " + mhz);
+        }
+        if (tdpWatts < 0) {
+            throw new IllegalArgumentException("tdpWatts must not be negative, got " + tdpWatts);
         }
     }
 

@@ -82,11 +82,7 @@ public class DockStationBlockEntity extends MediaReaderBlockEntity {
         if (!(stack.getItem() instanceof DiskItem disk)) {
             return -1;
         }
-        return switch (disk.spec().tier()) {
-            case HDD -> BAY_HDD;
-            case SSD -> BAY_SSD;
-            case NVME -> BAY_NVME;
-        };
+        return bayOf(disk.spec().tier());
     }
 
     /** The tray a size of disk goes in. */

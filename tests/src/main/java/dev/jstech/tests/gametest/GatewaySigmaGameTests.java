@@ -7,14 +7,23 @@
  */
 package dev.jstech.tests.gametest;
 
+import dan200.computercraft.api.filesystem.Mount;
+import dan200.computercraft.api.filesystem.WritableMount;
+import dan200.computercraft.api.lua.LuaException;
+import dan200.computercraft.api.peripheral.IComputerAccess;
+import dan200.computercraft.api.peripheral.IPeripheral;
+import dan200.computercraft.api.peripheral.PeripheralCapability;
+import dan200.computercraft.api.peripheral.WorkMonitor;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.integration.computercraft.GatewayPeripheral;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -77,29 +86,23 @@ public final class GatewaySigmaGameTests {
     }
 
     /** A ComputerCraft computer as far as the Gateway is concerned: a number and somewhere to put events. */
-    private static final class FakeComputer implements dan200.computercraft.api.peripheral.IComputerAccess {
+    private static final class FakeComputer implements IComputerAccess {
 
         private final int id;
-        private final List<Object[]> asked = new java.util.ArrayList<>();
 
         private FakeComputer(final int id) {
             this.id = id;
         }
 
-        /** What the Gateway last asked this computer to do, or null when it has been asked nothing. */
-        private Object[] lastQuestion() {
-            return this.asked.isEmpty() ? null : this.asked.getLast();
-        }
-
         @Override
-        public String mount(final String where, final dan200.computercraft.api.filesystem.Mount mount,
+        public String mount(final String where, final Mount mount,
                             final String drive) {
             return null;
         }
 
         @Override
         public String mountWritable(final String where,
-                                    final dan200.computercraft.api.filesystem.WritableMount mount,
+                                    final WritableMount mount,
                                     final String drive) {
             return null;
         }
@@ -115,9 +118,6 @@ public final class GatewaySigmaGameTests {
 
         @Override
         public void queueEvent(final String event, final Object... arguments) {
-            if ("jsc_ask".equals(event)) {
-                this.asked.add(arguments);
-            }
         }
 
         @Override
@@ -126,28 +126,28 @@ public final class GatewaySigmaGameTests {
         }
 
         @Override
-        public java.util.Map<String, dan200.computercraft.api.peripheral.IPeripheral> getAvailablePeripherals() {
-            return java.util.Map.of();
+        public Map<String, IPeripheral> getAvailablePeripherals() {
+            return Map.of();
         }
 
         @Override
-        public dan200.computercraft.api.peripheral.IPeripheral getAvailablePeripheral(final String name) {
+        public IPeripheral getAvailablePeripheral(final String name) {
             return null;
         }
 
         @Override
-        public dan200.computercraft.api.peripheral.WorkMonitor getMainThreadMonitor() {
+        public WorkMonitor getMainThreadMonitor() {
             throw new UnsupportedOperationException("no main thread monitor in this test");
         }
     }
 
     /** The Gateway's ComputerCraft side, with a computer attached to its front. */
-    private static dev.jstech.computers.integration.computercraft.GatewayPeripheral attach(
+    private static GatewayPeripheral attach(
             final GameTestHelper helper, final FakeComputer computer) {
-        final dan200.computercraft.api.peripheral.IPeripheral found = helper.getLevel().getCapability(
-                dan200.computercraft.api.peripheral.PeripheralCapability.get(),
+        final IPeripheral found = helper.getLevel().getCapability(
+                PeripheralCapability.get(),
                 helper.absolutePos(GATEWAY), Direction.EAST);
-        if (!(found instanceof dev.jstech.computers.integration.computercraft.GatewayPeripheral peripheral)) {
+        if (!(found instanceof GatewayPeripheral peripheral)) {
             throw new IllegalStateException("the Gateway's front is not a jsc_gateway peripheral: " + found);
         }
         peripheral.attach(computer);
@@ -191,7 +191,7 @@ public final class GatewaySigmaGameTests {
                     final FakeComputer cc = new FakeComputer(9);
                     try {
                         attach(helper, cc).send(cc, "from the other side");
-                    } catch (final dan200.computercraft.api.lua.LuaException refused) {
+                    } catch (final LuaException refused) {
                         helper.fail("the Gateway refused the message: " + refused.getMessage());
                     }
                 })

@@ -117,7 +117,7 @@ public final class GpuClientTests {
     }
 
     private static TaskManagerApp app(final ClientTestContext ctx) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
+        final DesktopScreen desktop = ctx.openScreen(DesktopScreen.class);
         final DesktopWindow window = desktop == null ? null : desktop.windowFor(TASK_MANAGER);
         return window != null && window.app() instanceof TaskManagerApp manager ? manager : null;
     }

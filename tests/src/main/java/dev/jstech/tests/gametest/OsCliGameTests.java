@@ -28,6 +28,7 @@ import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -559,6 +560,27 @@ public final class OsCliGameTests {
                 .thenSucceed();
     }
 
+    /** {@code mv} with a bare new name puts the file in the current folder, and with a folder moves it in. */
+    @GameTest(template = ARENA)
+    public static void cliMoveTo_readsABareNameFromTheCurrentFolder(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithMcDos(helper, pos);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
+                    helper.assertTrue(cli.makeDir("Src").ok(), "mkdir Src must succeed");
+                    helper.assertTrue(cli.makeDir("Docs").ok(), "mkdir Docs must succeed");
+                    helper.assertTrue(cli.writeFile("Src\\file.txt", "data").ok(), "write must succeed");
+                    helper.assertTrue(cli.moveTo("Src\\file.txt", "note.txt").ok(), "mv to a bare name must succeed");
+                    helper.assertFalse(cli.readFile("Src\\file.txt").ok(), "source must be gone");
+                    helper.assertFalse(cli.readFile("Src\\note.txt").ok(), "it must not be renamed in place");
+                    helper.assertTrue(cli.readFile("note.txt").ok(), "it must land in the current folder");
+                    helper.assertTrue(cli.moveTo("note.txt", "Docs").ok(), "mv into a folder must succeed");
+                    helper.assertTrue(cli.readFile("Docs\\note.txt").ok(), "it must sit inside the folder");
+                })
+                .thenSucceed();
+    }
+
     /** {@code ren} renames a file, keeping it in the same directory. */
     @GameTest(template = ARENA)
     public static void cliRen_renamesFileInPlace(final GameTestHelper helper) {
@@ -797,17 +819,8 @@ public final class OsCliGameTests {
         if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
             throw new IllegalStateException("no MainframeBlockEntity at " + pos);
         }
-        final ItemStackHandler inv = mainframe.getInventory();
-        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
-        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT,
-                new ItemStack(ComputingModule.PSU_650G.get()));
         // A 500 GB HDD provides 2 000 item slots; MC-DOS needs 256.
-        inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
+        TestWorldBuilder.installMainframeBuild(mainframe,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         mainframe.togglePower();
         // Install MC-DOS so the filesystem kind resolves to a hierarchical filesystem.
@@ -828,16 +841,8 @@ public final class OsCliGameTests {
         if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
             throw new IllegalStateException("no MainframeBlockEntity at " + pos);
         }
-        final ItemStackHandler inv = mainframe.getInventory();
-        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
-        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT,
-                new ItemStack(ComputingModule.PSU_650G.get()));
-        // No disk slot filled, so systemDisk() returns empty, resolveDiskCtx() returns null.
+        TestWorldBuilder.installMainframeBuild(mainframe, null); // no disk, so systemDisk() is empty
+        // and resolveDiskCtx() returns null.
         mainframe.togglePower();
         return mainframe;
     }
@@ -1024,7 +1029,7 @@ public final class OsCliGameTests {
                     shell.run("mirror install", cli);
                     helper.assertTrue(text(shell.run("apt install gnome", cli)).contains("Get:1"),
                             "apt must fetch the GNOME package from the mirror");
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     final ResourceLocation gnome = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "gnome");
                     helper.assertTrue(gnome.equals(mainframe.installedDesktopId()),
@@ -1048,7 +1053,7 @@ public final class OsCliGameTests {
 
                     // And removing it takes effect the same way: on the next boot, not immediately.
                     shell.run("apt remove gnome", cli);
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(dev.jstech.computers.os.boot.BootController
                                     .targetForComputer(mainframe)
@@ -1108,7 +1113,7 @@ public final class OsCliGameTests {
                     helper.assertTrue(mainframe.isMirrorInstalled(), "the mirror verb installs the service");
                     helper.assertTrue(text(shell.run("uninstall mirror", cli)).contains("Removing mirror"),
                             "uninstall removes an installed service by name");
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertFalse(mainframe.isMirrorInstalled(), "the service flag turns off with it");
                     helper.assertTrue(text(shell.run("format D:", cli)).contains("WILL BE LOST"),
@@ -1133,13 +1138,13 @@ public final class OsCliGameTests {
                     final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
                     final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
                     shell.run("apt install cinnamon", cli);
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(mainframe.installedDesktopId() != null,
                             "installing a desktop environment registers it");
                     helper.assertTrue(text(shell.run("apt remove cinnamon", cli)).contains("Removing cinnamon"),
                             "the package manager removes an installed package");
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(mainframe.installedDesktopId() == null,
                             "without the package the computer boots back to the TTY");
@@ -1164,7 +1169,7 @@ public final class OsCliGameTests {
                     final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
                     final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
                     shell.run("pacman -S cinnamon", cli);
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(mainframe.installedDesktopId() != null,
                             "pacman -S installs a package");
@@ -1172,7 +1177,7 @@ public final class OsCliGameTests {
                             "the usage line names the removal flag");
                     helper.assertTrue(text(shell.run("pacman -R cinnamon", cli)).contains("Removing cinnamon"),
                             "pacman -R removes an installed package");
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(mainframe.installedDesktopId() == null,
                             "the desktop environment is gone with its package");
@@ -1213,7 +1218,7 @@ public final class OsCliGameTests {
                     helper.assertTrue(text(legacyShell.run("apt install kde-plasma", legacyCli))
                                     .contains("Get:1"),
                             "KDE is old enough for a Legacy machine");
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(legacy, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(legacy, helper.getLevel(),
                             helper.absolutePos(legacyPos));
                     helper.assertTrue(text(legacyShell.run("apt install cinnamon", legacyCli))
                                     .contains("Standard hardware"),
@@ -1248,7 +1253,7 @@ public final class OsCliGameTests {
                     final var shell = dev.jstech.computers.program.cli.CliCommands
                             .shellFor(cli, 52);
                     shell.run("apt install cinnamon", cli);
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(mainframe.installedDesktopId() != null,
                             "the desktop environment installs on the original disk");
@@ -1422,7 +1427,7 @@ public final class OsCliGameTests {
                             "screenfetch is a package, absent on a fresh install");
                     mainframe.installMirror();
                     shell.run("apt install screenfetch", cli);
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     final String out = text(shell.run("screenfetch", cli));
                     helper.assertTrue(out.contains("player@ubuntu"), "the header is user@host; got " + out);
@@ -1432,7 +1437,7 @@ public final class OsCliGameTests {
                     helper.assertTrue(out.contains("DE: none (tty1)"), "without a DE the machine is a TTY");
                     helper.assertTrue(out.contains("CPU: 2000 MHz"), "the CPU line shows the clock");
                     shell.run("apt install cinnamon", cli);
-                    dev.jstech.tests.testkit.TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(),
                             helper.absolutePos(pos));
                     helper.assertTrue(text(shell.run("neofetch", cli)).contains("DE: Cinnamon"),
                             "with a desktop environment installed the DE line names it (alias included)");
@@ -1504,16 +1509,7 @@ public final class OsCliGameTests {
         if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
             throw new IllegalStateException("no MainframeBlockEntity at " + pos);
         }
-        final ItemStackHandler inv = mainframe.getInventory();
-        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
-                new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
-        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
-                new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT,
-                new ItemStack(ComputingModule.PSU_650G.get()));
-        inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
+        TestWorldBuilder.installMainframeBuild(mainframe,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         mainframe.togglePower();
         if (!mainframe.installOs(osId)) {

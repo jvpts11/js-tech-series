@@ -18,9 +18,13 @@ import dev.jstech.industrial.blockentity.MaceratorBlockEntity;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
 import java.util.EnumMap;
+import java.util.Locale;
 
 /**
  * Loops over every active (material, form) pair and emits the appropriate machine recipe.
@@ -41,9 +45,9 @@ public final class MaterialFormRecipes {
     }
 
     private static final EnumMap<MaterialForm, IFormRecipe> PRODUCTIONS = new EnumMap<>(MaterialForm.class);
-    /** How long pressing and grinding take at Tier 1, in ticks. */
+    /** How long pressing and grinding (ingots and ores alike) take at Tier 1, in ticks. */
     private static final int COMPRESSING_TICKS = 120;
-    private static final int MACERATING_TICKS = 200;
+    static final int MACERATING_TICKS = 200;
 
     static {
         // Compress one ingot into one plate.
@@ -56,11 +60,8 @@ public final class MaterialFormRecipes {
 
         // Macerate one ingot into one dust.
         PRODUCTIONS.put(MaterialForm.DUST, (out, mat, form) ->
-                ProcessingRecipeBuilder.of(IndustrialModule.MACERATING)
-                        .input(cTag(mat, MaterialForm.INGOT), 1)
-                        .output(MaterialItems.get(mat, form).get(), 1)
-                        .ticks(MACERATING_TICKS).energyPerTick(MaceratorBlockEntity.FE_PER_TICK)
-                        .save(out, rl("macerating/" + id(mat, MaterialForm.INGOT, form))));
+                macerating(out, cTag(mat, MaterialForm.INGOT),
+                        new ItemStack(MaterialItems.get(mat, form).get(), 1), id(mat, MaterialForm.INGOT, form)));
 
         /*
          * BOLT, ROD, GEAR: production routes not yet established.
@@ -82,9 +83,22 @@ public final class MaterialFormRecipes {
         }
     }
 
+    /** Adds a macerating recipe under the {@code macerating/} prefix; the one place the grinding cost is set. */
+    static void macerating(final RecipeOutput out, final Ingredient ingredient, final ItemStack result,
+                           final String name) {
+        ProcessingRecipeBuilder.of(IndustrialModule.MACERATING).input(ingredient, 1).output(result)
+                .ticks(MACERATING_TICKS).energyPerTick(MaceratorBlockEntity.FE_PER_TICK)
+                .save(out, rl("macerating/" + name));
+    }
+
+    /** The {@code c:} common item tag at {@code path}. */
+    static TagKey<Item> cTag(final String path) {
+        return ItemTags.create(ResourceLocation.fromNamespaceAndPath("c", path));
+    }
+
     private static String id(final ModMaterial mat, final MaterialForm inputForm, final MaterialForm outputForm) {
-        return mat.materialName() + "_" + inputForm.name().toLowerCase()
-                + "_to_" + outputForm.name().toLowerCase();
+        return mat.materialName() + "_" + inputForm.name().toLowerCase(Locale.ROOT)
+                + "_to_" + outputForm.name().toLowerCase(Locale.ROOT);
     }
 
     private static ResourceLocation rl(final String path) {
@@ -92,7 +106,6 @@ public final class MaterialFormRecipes {
     }
 
     private static Ingredient cTag(final ModMaterial mat, final MaterialForm inputForm) {
-        return Ingredient.of(ItemTags.create(
-                ResourceLocation.fromNamespaceAndPath("c", inputForm.tagPath(mat.materialName()))));
+        return Ingredient.of(cTag(inputForm.tagPath(mat.materialName())));
     }
 }

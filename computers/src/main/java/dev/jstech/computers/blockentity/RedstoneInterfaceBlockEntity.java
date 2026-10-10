@@ -50,7 +50,8 @@ import java.util.Optional;
  * cabled again.
  */
 @TextHolder
-public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, GeoBlockEntity {
+public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity
+        implements IPeripheralEndpoint, GeoBlockEntity, INamedDevice {
 
     private final PeripheralLink link = new PeripheralLink(fields(), PeripheralCableType.COMPUTING,
             PeripheralLinks.COMPUTING);
@@ -145,6 +146,7 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity implements I
     }
 
     /** The name a player gave it; empty while it has none. */
+    @Override
     public String name() {
         final String given = name.get();
         return given == null ? "" : given;
@@ -186,7 +188,9 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity implements I
      * empty name gives it back the word for it and never clashes.
      */
     public void takeAskedName() {
-        if (asked != null && !clash.get()) {
+        // The flag was worked out as the name was typed; the name is checked again at the moment it is given.
+        if (asked != null && !clash.get()
+                && !(!asked.isEmpty() && level instanceof ServerLevel server && anotherIsCalled(server, asked))) {
             name.set(asked);
         }
         asked = null;

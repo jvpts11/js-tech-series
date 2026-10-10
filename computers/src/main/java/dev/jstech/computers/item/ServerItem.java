@@ -113,6 +113,7 @@ public class ServerItem extends Item
         return stack.getOrDefault(ComputingComponents.SERVER_HARDWARE.get(), ItemContainerContents.EMPTY);
     }
 
+    @Nullable
     public static UUID nodeUuid(final ItemStack stack) {
         return stack.get(ComputingComponents.SERVER_NODE_UUID.get());
     }

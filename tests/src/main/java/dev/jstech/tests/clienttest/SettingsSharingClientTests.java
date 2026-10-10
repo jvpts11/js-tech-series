@@ -16,6 +16,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -83,22 +84,25 @@ public final class SettingsSharingClientTests {
                 .thenWaitUntil(() -> settings(ctx).sharesShown().contains("C:\\pub read"), SCREEN_WAIT,
                         "the share to turn read-only")
                 .thenServer(0, level -> {
-                    if (level.getBlockEntity(ctx.abs(COMPUTER)) instanceof CraftingComputerBlockEntity computer) {
-                        final var shares = computer.console().settings().shares();
-                        ctx.assertTrue(shares.size() == 1 && !shares.get(0).writable(),
-                                "the machine keeps the share read-only; got " + shares);
-                    }
+                    final var shares = computerAt(ctx, level).console().settings().shares();
+                    ctx.assertTrue(shares.size() == 1 && !shares.get(0).writable(),
+                            "the machine keeps the share read-only; got " + shares);
                 })
                 .then(SETTLE, () -> ctx.clickDesktop(settings(ctx).remoteRefusedCenter()))
                 .thenWaitUntil(() -> !settings(ctx).remoteAllowedShown(), SCREEN_WAIT, "programs from other computers to be refused")
-                .thenServer(0, level -> {
-                    if (level.getBlockEntity(ctx.abs(COMPUTER)) instanceof CraftingComputerBlockEntity computer) {
-                        ctx.assertTrue(!computer.console().settings().remoteAllowed(), "the machine says no to remote programs");
-                    }
-                })
+                .thenServer(0, level -> ctx.assertTrue(!computerAt(ctx, level).console().settings().remoteAllowed(),
+                        "the machine says no to remote programs"))
                 .thenScreenshot(2, "refused")
                 .then(SETTLE, () -> ctx.clickDesktop(settings(ctx).shareRowRemoveCenter(0)))
                 .thenWaitUntil(() -> settings(ctx).sharesShown().isEmpty(), SCREEN_WAIT, "the share to be removed")
                 .thenScreenshot(2, "removed");
+    }
+
+    /* The machine the test placed; a missing one fails the step instead of letting it pass unchecked. */
+    private static CraftingComputerBlockEntity computerAt(final ClientTestContext ctx, final ServerLevel level) {
+        if (level.getBlockEntity(ctx.abs(COMPUTER)) instanceof CraftingComputerBlockEntity computer) {
+            return computer;
+        }
+        throw new ClientTestFailure("the crafting computer is not where the test placed it");
     }
 }

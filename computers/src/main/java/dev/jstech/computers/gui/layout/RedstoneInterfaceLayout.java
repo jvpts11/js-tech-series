@@ -83,7 +83,8 @@ public final class RedstoneInterfaceLayout {
                 .box("cells", MARGIN, CELLS_Y, cellX(CELLS - 1) + CELL_W - MARGIN, CELL_H)
                 .box("software", MARGIN, SOFTWARE_Y, WIDTH - 2 * MARGIN, SOFTWARE_H);
         l.text("title", MARGIN, TITLE_Y, 18, 1.0f);                       // "REDSTONE INTERFACE"
-        l.text("era", WIDTH - MARGIN - 10 * 6, TITLE_Y, 10, 1.0f);        // "TRANSITION", right-aligned
+        // "TRANSITION", right-aligned
+        l.text("era", WIDTH - MARGIN - Math.round(10 * GuiLayout.GLYPH_WIDTH), TITLE_Y, 10, 1.0f);
         l.text("nameLabel", MARGIN + 1, NAME_LABEL_Y, 4, 0.75f);           // "NAME"
         l.text("note", MARGIN, NOTE_Y, 40, 0.75f);                        // "Programs find this interface by its name"
         l.text("modeLabel", MARGIN + 1, MODE_LABEL_Y, 4, 0.75f);           // "MODE"

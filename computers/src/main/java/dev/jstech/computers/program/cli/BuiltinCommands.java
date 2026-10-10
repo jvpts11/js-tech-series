@@ -123,7 +123,7 @@ public final class BuiltinCommands {
                 new ClusterCommand(),
                 new GatewayCommand(),
                 new SoftwareCommands.MirrorCommand(),
-                new SoftwareCommands.Uninstall(),
+                new SoftwareCommands.Uninstall(CommandScope.everywhere(), List.of()),
                 new DosFileCommands.Format(),
                 new DosFileCommands.Dir(),
                 new DosFileCommands.Cd(),

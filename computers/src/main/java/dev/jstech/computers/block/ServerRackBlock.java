@@ -91,12 +91,17 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
             TextKey.of("block.jsc.rack.row_taken", "That rack unit is taken or too small for this");
 
     public ServerRackBlock(final Properties properties, final HardwareEra era) {
-        super(properties);
-        this.era = era;
-        this.ports = FacePorts.builder()
+        this(properties, era, FacePorts.builder()
                 .port(FaceRule.BACK, DataLines.upTo(era, DataLine.BACKBONE))
                 .port(FaceRule.EVERY, PeripheralLine.of(era))
-                .build();
+                .build());
+    }
+
+    /* For a cabinet with a port set of its own, so the base never builds one that would go unused. */
+    protected ServerRackBlock(final Properties properties, final HardwareEra era, final FacePorts ports) {
+        super(properties);
+        this.era = era;
+        this.ports = ports;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(BAYS, 0)
                 .setValue(OpticalPort.OPTICAL, false));
     }

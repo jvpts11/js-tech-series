@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.BooleanSupplier;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -80,24 +81,12 @@ public final class MenuShellView {
         final String root = dos ? "C:\\" : "/";
         final String like = pattern.isBlank() ? "*" : pattern.trim();
         final List<String> results = new ArrayList<>();
-        final Deque<String> folders = new ArrayDeque<>();
-        folders.add(root);
-        int seen = 0;
-        while (!folders.isEmpty() && seen++ < MOST_FOLDERS && results.size() < MOST_RESULTS) {
-            final String folder = folders.poll();
-            final ICliComputer.FsResult listed = shell.listDisk(folder);
-            if (!listed.ok() || listed.entries() == null) {
-                continue;
+        walk(shell, root, dos, Integer.MAX_VALUE, () -> results.size() >= MOST_RESULTS, (whole, entry) -> {
+            if (!entry.isDir() && Wildcards.matches(like, entry.name()) && results.size() < MOST_RESULTS) {
+                results.add(whole);
             }
-            for (final ICliComputer.FsEntry entry : listed.entries()) {
-                final String whole = join(folder, entry.name(), dos);
-                if (entry.isDir()) {
-                    folders.add(whole);
-                } else if (Wildcards.matches(like, entry.name()) && results.size() < MOST_RESULTS) {
-                    results.add(whole);
-                }
-            }
-        }
+            return entry.isDir();
+        });
         return new MenuShellListing(root, true, false, List.of(), List.of(), List.of(), List.of(), results);
     }
 
@@ -118,11 +107,35 @@ public final class MenuShellView {
     /* Every folder of the drive under {@code root} ({@code C:\}), each written whole, as far as the limits go. */
     private static List<String> tree(final ServerCliComputer shell, final String root) {
         final List<String> out = new ArrayList<>();
+        walk(shell, root, true, MOST_DEPTH, () -> out.size() >= MOST_FOLDERS, (whole, entry) -> {
+            if (entry.isDir() && out.size() < MOST_FOLDERS) {
+                out.add(whole);
+                return true;
+            }
+            return false;
+        });
+        out.sort(String.CASE_INSENSITIVE_ORDER);
+        return out;
+    }
+
+    /** What a walk of the disk does with each thing it meets; true for a folder it wants the walk to go into. */
+    private interface EntryVisitor {
+        boolean visit(String whole, ICliComputer.FsEntry entry);
+    }
+
+    /*
+     * Goes over the disk folder by folder, nearest first, from {@code root}. It stops after MOST_FOLDERS folders
+     * have been read or as soon as {@code done} says so, never goes {@code deepest} levels down, and passes over a
+     * folder that cannot be read. One walk serves the tree and the search, so a limit means the same in both.
+     */
+    private static void walk(final ServerCliComputer shell, final String root, final boolean dos, final int deepest,
+                             final BooleanSupplier done, final EntryVisitor visitor) {
         final Deque<String> folders = new ArrayDeque<>();
         final Deque<Integer> depths = new ArrayDeque<>();
         folders.add(root);
         depths.add(0);
-        while (!folders.isEmpty() && out.size() < MOST_FOLDERS) {
+        int read = 0;
+        while (!folders.isEmpty() && read++ < MOST_FOLDERS && !done.getAsBoolean()) {
             final String folder = folders.poll();
             final int depth = depths.poll();
             final ICliComputer.FsResult listed = shell.listDisk(folder);
@@ -130,18 +143,13 @@ public final class MenuShellView {
                 continue;
             }
             for (final ICliComputer.FsEntry entry : listed.entries()) {
-                if (entry.isDir() && out.size() < MOST_FOLDERS) {
-                    final String whole = join(folder, entry.name(), true);
-                    out.add(whole);
-                    if (depth + 1 < MOST_DEPTH) {
-                        folders.add(whole);
-                        depths.add(depth + 1);
-                    }
+                final String whole = join(folder, entry.name(), dos);
+                if (visitor.visit(whole, entry) && entry.isDir() && depth + 1 < deepest) {
+                    folders.add(whole);
+                    depths.add(depth + 1);
                 }
             }
         }
-        out.sort(String.CASE_INSENSITIVE_ORDER);
-        return out;
     }
 
     /* The programs installed, by the names their makers gave them and the commands that start them. */

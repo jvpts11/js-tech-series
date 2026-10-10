@@ -52,6 +52,8 @@ final class IsmsProfilerTexts {
     static final TextKey NO_EVENTS = TextKey.of("jsc.isms_profiler.no_events",
             "No events yet. Start the trace to record what the network does.");
     static final TextKey SAVED = TextKey.of("jsc.isms_profiler.saved", "The trace was saved to %s.");
+    static final TextKey SAVED_CUT = TextKey.of("jsc.isms_profiler.saved_cut",
+            "The trace was saved to %s, but it was too long: it was cut to %s rows and %s rows were left out.");
     static final TextKey NOT_FOUND = TextKey.of("jsc.isms_profiler.not_found", "Nothing more holds %s.");
 
     private IsmsProfilerTexts() {

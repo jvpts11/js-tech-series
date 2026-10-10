@@ -7,8 +7,6 @@
  */
 package dev.jstech.computers.hardware;
 
-import dev.jstech.computers.JsComputers;
-
 import java.util.Locale;
 import java.util.Objects;
 
@@ -67,19 +65,12 @@ public record CpuSocketId(String id) {
 
     public CpuSocketId {
         Objects.requireNonNull(id, "a socket must have an id");
-        final int colon = id.indexOf(':');
-        if (colon <= 0 || colon == id.length() - 1) {
-            throw new IllegalArgumentException("a socket id reads namespace:path; got '" + id + "'");
-        }
+        HardwareIds.requireNamespaced(id, "a socket");
     }
 
-    /*
-     * One of this mod's own sockets. The mod id is a constant the compiler writes in here as the text itself, so
-     * naming it costs nothing and does not drag the mod class, and Minecraft with it, into hardware that is
-     * tested without the game.
-     */
+    /* One of this mod's own sockets. */
     private static CpuSocketId own(final String path) {
-        return new CpuSocketId(JsComputers.MODID + ":" + path);
+        return new CpuSocketId(HardwareIds.own(path));
     }
 
     /**

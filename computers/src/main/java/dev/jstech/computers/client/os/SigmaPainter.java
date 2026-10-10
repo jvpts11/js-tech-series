@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -52,6 +53,8 @@ final class SigmaPainter {
     private final Set<Long> failed = new HashSet<>();
     /** The stacks each item id shows as, made once. */
     private final Map<String, ItemStack> stacks = new HashMap<>();
+    /** Each text area's text laid out in lines, kept until its text or width changes, so it is not re-measured. */
+    private final Map<Long, Wrapped> wrappedLines = new HashMap<>();
 
     /** How tall a row of a list, a table, a tree, a log or a menu is, and a table's header. */
     static final int ROW_H = 11;
@@ -60,6 +63,8 @@ final class SigmaPainter {
     static final int SLOT = 18;
     /** How tall an item picker's search line is. */
     static final int SEARCH_H = 14;
+    /** A clock time at the start of a log line, compiled once because every visible line is tested each frame. */
+    private static final Pattern TIME = Pattern.compile("\\d{1,2}:\\d\\d(:\\d\\d)?");
 
     SigmaPainter(final SigmaUiState ui, final BlockPos host) {
         this.ui = ui;
@@ -181,7 +186,7 @@ final class SigmaPainter {
     private void textArea(final GuiGraphics g, final Font font, final OsSkin skin,
                           final UiWindowPayload.Widget widget, final UiLayout.Rect rect) {
         skin.field(g, rect.x(), rect.y(), rect.w(), rect.h(), this.ui.focused == widget.id());
-        final List<String> lines = wrap(font, this.ui.textOf(widget), rect.w() - 12);
+        final List<String> lines = this.wrapped(font, widget.id(), this.ui.textOf(widget), rect.w() - 12);
         final int rows = Math.max(1, (rect.h() - 4) / (font.lineHeight + 1));
         final int most = Math.max(0, lines.size() - rows);
         final int top = this.ui.focused == widget.id() ? most : Math.min(this.ui.scroll(widget.id()), most);
@@ -533,7 +538,7 @@ final class SigmaPainter {
             int x = rect.x() + 4;
             final String[] words = line.split(" ", 3);
             int from = 0;
-            if (words.length > 1 && words[0].matches("\\d{1,2}:\\d\\d(:\\d\\d)?")) {
+            if (words.length > 1 && TIME.matcher(words[0]).matches()) {
                 Draw.text(g, font, words[0], x, y, colours.logTime());
                 x += font.width(words[0] + " ");
                 from = 1;
@@ -692,11 +697,7 @@ final class SigmaPainter {
 
     /** A text's end that fits in that width, which is what a box being typed in shows. */
     static String tail(final Font font, final String said, final int width) {
-        String shown = said;
-        while (!shown.isEmpty() && font.width(shown) > width) {
-            shown = shown.substring(1);
-        }
-        return shown;
+        return font.plainSubstrByWidth(said, width, true);
     }
 
     /** A text broken into lines no wider than that width, at its own line breaks and between words where it can. */
@@ -716,6 +717,16 @@ final class SigmaPainter {
         return lines;
     }
 
+    private List<String> wrapped(final Font font, final long id, final String text, final int width) {
+        final Wrapped kept = this.wrappedLines.get(id);
+        if (kept != null && kept.width() == width && kept.text().equals(text)) {
+            return kept.lines();
+        }
+        final List<String> lines = wrap(font, text, width);
+        this.wrappedLines.put(id, new Wrapped(text, width, lines));
+        return lines;
+    }
+
     private static boolean blink() {
         return System.currentTimeMillis() / 500 % 2 == 0;
     }
@@ -726,6 +737,10 @@ final class SigmaPainter {
         } catch (final NumberFormatException unreadable) {
             return 0;
         }
+    }
+
+    /** A text laid out for a width, and the lines it came to. */
+    private record Wrapped(String text, int width, List<String> lines) {
     }
 
     /** A component's value as it was last read, and the letters it was read from. */

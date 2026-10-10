@@ -76,7 +76,7 @@ public final class OsInstallRunner {
             return;
         }
         if (flow == null && !job.tick()) {
-            machine.markChanged();
+            machine.markUnsaved();
             return;
         }
         finish(machine, level, pos, job, flow, system);
@@ -102,7 +102,7 @@ public final class OsInstallRunner {
                                  final BlockPos pos, final OsInstallJob job, final InstallerFlow flow) {
         if (job.ticksTotal() - job.ticksLeft() < flow.ticksUnlocked()) {
             job.tick();
-            machine.markChanged();
+            machine.markUnsaved();
         }
         final boolean moved = flow.advance(job.ticksTotal() - job.ticksLeft());
         final boolean over = job.finished() && !flow.stage().asks();

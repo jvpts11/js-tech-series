@@ -113,19 +113,36 @@ public final class LegacySaveGameTests {
     /* Writes {@code old} as the saved data file {@code name} of a world of before, and opens it as a world does. */
     private static <V> StateSave<V> readOld(final ServerLevel level, final CompoundTag old,
                                             final SavedData.Factory<StateSave<V>> factory, final String name) {
-        final Path folder;
+        Path folder = null;
+        Path file = null;
         try {
             folder = Files.createTempDirectory("jstests-legacy");
+            file = folder.resolve(name + ".dat");
             final CompoundTag root = new CompoundTag();
             root.put("data", old);
             NbtUtils.addCurrentDataVersion(root);
-            NbtIo.writeCompressed(root, folder.resolve(name + ".dat"));
+            NbtIo.writeCompressed(root, file);
+            final DimensionDataStorage storage = new DimensionDataStorage(folder.toFile(),
+                    level.getServer().getFixerUpper(), level.registryAccess());
+            return Objects.requireNonNull(storage.get(factory, name), "the file " + name);
         } catch (final IOException cannotWrite) {
             throw new UncheckedIOException("the old file " + name + " could not be written", cannotWrite);
+        } finally {
+            // The folder is scratch space for this one read; leaving it would pile up in the temp directory.
+            deleteQuietly(file);
+            deleteQuietly(folder);
         }
-        final DimensionDataStorage storage = new DimensionDataStorage(folder.toFile(),
-                level.getServer().getFixerUpper(), level.registryAccess());
-        return Objects.requireNonNull(storage.get(factory, name), "the file " + name);
+    }
+
+    private static void deleteQuietly(final Path path) {
+        if (path == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(path);
+        } catch (final IOException ignored) {
+            // A leftover scratch file is harmless; the read result is what the test needs.
+        }
     }
 
     private static void same(final GameTestHelper helper, final Object expected, final Object actual,

@@ -190,7 +190,7 @@ final class TaskbarModel {
                 x[i] = appsX + i * DesktopScreen.WIN11_SLOT;
                 w[i] = DesktopScreen.WIN11_SLOT;
             }
-            return new TaskStrip(entries, x, w, 0, 0, sw);
+            return new TaskStrip(entries, x, w, 0, 0, right);
         }
         // Frames 7 and 10 give every program one button of icon alone, pinned and open in one row after Start.
         if (style == PanelStyle.FRAMES_7 || style == PanelStyle.FRAMES_10) {

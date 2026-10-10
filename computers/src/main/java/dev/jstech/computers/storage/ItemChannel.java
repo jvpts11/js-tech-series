@@ -29,25 +29,22 @@ public record ItemChannel(IItemHandler items) implements IDataChannel {
         if (amount <= 0L || !key.isItem()) {
             return 0L;
         }
-        /*
-         * Items insert in vanilla-sized stacks; EXECUTE mutates the handler so each batch sees the remaining
-         * room. (Simulation is best-effort; the operation path always executes.)
-         */
         final int batch = Math.max(1, key.stack(1).getMaxStackSize());
+        if (simulate) {
+            return simulateInsert(key, amount, batch);
+        }
+        // EXECUTE mutates the handler, so each batch sees the room the previous one left.
         long inserted = 0L;
         long remaining = amount;
         while (remaining > 0L) {
             final int chunk = (int) Math.min(remaining, batch);
-            final ItemStack leftover = ItemHandlerHelper.insertItem(items, key.stack(chunk), simulate);
+            final ItemStack leftover = ItemHandlerHelper.insertItem(items, key.stack(chunk), false);
             final int accepted = chunk - leftover.getCount();
             if (accepted <= 0) {
                 break;
             }
             inserted += accepted;
             remaining -= accepted;
-            if (simulate) {
-                break; // can't loop a non-mutating simulate; report one batch
-            }
         }
         return inserted;
     }
@@ -122,5 +119,20 @@ public record ItemChannel(IItemHandler items) implements IDataChannel {
                     : Math.max(0, Math.min(limit, inSlot.getMaxStackSize()) - inSlot.getCount());
         }
         return free * StorageKey.MB_EQ_PER_ITEM;
+    }
+
+    /*
+     * A simulated insert does not mutate the handler, so looping on it would see the same room every time. Each slot
+     * is asked on its own instead, and the sum is what the executing loop would place, with the slot's own item
+     * validity respected.
+     */
+    private long simulateInsert(final StorageKey key, final long amount, final int batch) {
+        long accepted = 0L;
+        for (int slot = 0; slot < items.getSlots() && accepted < amount; slot++) {
+            final int chunk = (int) Math.min(amount - accepted, batch);
+            final ItemStack leftover = items.insertItem(slot, key.stack(chunk), true);
+            accepted += chunk - leftover.getCount();
+        }
+        return accepted;
     }
 }

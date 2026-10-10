@@ -67,7 +67,7 @@ final class ProgramOpener {
         if (programId.equals(FileOpeners.EDITOR)) {
             return GameText.resolve(DesktopTexts.EDITOR);
         }
-        final ProgramSpec spec = Programs.get(ResourceLocation.fromNamespaceAndPath("jsc", programId));
+        final ProgramSpec spec = Programs.get(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, programId));
         return spec == null ? programId : GameText.resolve(spec.name());
     }
 
@@ -127,8 +127,9 @@ final class ProgramOpener {
                 if (payload.open()) {
                     app.accept(payload);
                 } else {
-                    // The program closed it: the window goes without telling the program again.
-                    windows.remove(open);
+                    // The program closed it: the window goes, with its dialogs, without telling the program again.
+                    app.closedByProgram();
+                    desktop.wm().close(open);
                 }
                 return;
             }
@@ -318,7 +319,7 @@ final class ProgramOpener {
             runAtTerminal(path);
             return;
         }
-        final ProgramSpec spec = Programs.get(ResourceLocation.fromNamespaceAndPath("jsc", programId));
+        final ProgramSpec spec = Programs.get(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, programId));
         final Launcher launcher = spec == null ? null : desktop.catalogue().byProgram(spec.id());
         if (launcher == null) {
             cannotOpen(path);

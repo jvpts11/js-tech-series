@@ -54,9 +54,9 @@ public record MonitorFrameStyle(
                     0xFF161618, 0xFF2A2A2E, 0xFF050506, 0, 0xFF5A5A60, 0xFF7FB8FF, 0)));
 
     /**
-     * The frame for a hardware era. Vintage is a cream CRT, Legacy a grey LCD, Standard a thin flat bezel. The
-     * future eras (Advanced, Exa, Singularity) reuse the flat bezel until they get their own look, mirroring how
-     * {@code EraThemes} resolves them to the Standard skin.
+     * The frame for a hardware era. Vintage is a cream CRT, Legacy and Transition a grey LCD, Standard a thin flat
+     * bezel. The future eras (Advanced, Exa, Singularity) reuse the flat bezel until they get their own look.
+     * The bezel is a look of its own, chosen apart from the skin of the operating system's windows.
      */
     public static MonitorFrameStyle forEra(final HardwareEra era) {
         return switch (era) {

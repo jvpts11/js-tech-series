@@ -56,6 +56,7 @@ public final class MachineSoundClientTests {
     public static void computer_hardDriveTurnsWhileItRuns(final ClientTestContext ctx) {
         final CapturingAudioSink sink = new CapturingAudioSink();
         final PersonalComputerBlockEntity[] pc = new PersonalComputerBlockEntity[1];
+        ctx.afterTest(AudioEngine::restoreSink);
         ctx.then(0, () -> AudioEngine.useSink(sink))
                 .thenTeleport(SETTLE, STAND, Direction.SOUTH)
                 .thenBuild(SETTLE, builder -> pc[0] = legacyWithHardDrive(builder))
@@ -63,17 +64,17 @@ public final class MachineSoundClientTests {
                         "the running computer's hard drive is heard turning once it has spun up")
                 .thenServer(0, level -> pc[0].togglePower())
                 .thenWaitUntil(() -> !playing(ComputingSounds.HARD_DRIVE_IDLE), 100,
-                        "and it stops being heard when the computer goes off")
-                .then(0, AudioEngine::restoreSink);
+                        "and it stops being heard when the computer goes off");
     }
 
     @ClientTest(timeoutTicks = 500)
     public static void rack_serversAreHeardByTheirFansThenAsTheRoom(final ClientTestContext ctx) {
         final CapturingAudioSink sink = new CapturingAudioSink();
         final ServerRackBlockEntity[] rack = new ServerRackBlockEntity[1];
+        ctx.afterTest(AudioEngine::restoreSink);
         ctx.then(0, () -> AudioEngine.useSink(sink))
                 .thenTeleport(SETTLE, STAND, Direction.SOUTH)
-                .thenBuild(SETTLE, builder -> rack[0] = builder.placeSeededRack(RACK))
+                .thenBuild(SETTLE, builder -> rack[0] =builder.placeSeededRack(RACK))
                 .thenWaitUntil(() -> playing(ComputingSounds.SERVER_FAN), 200,
                         "a running server is heard by its fans")
                 .thenServer(0, level -> {
@@ -86,8 +87,7 @@ public final class MachineSoundClientTests {
                         level -> "running bays " + Integer.toBinaryString(runningBays(rack[0], level)))
                 .thenWaitUntil(() -> playingRoom() && !playing(ComputingSounds.SERVER_FAN), 200,
                         "five running servers close together are heard as the room, and their fans no more",
-                        () -> "playing " + SoundDirector.playing() + ", rooms " + SoundDirector.stats().rooms())
-                .then(0, AudioEngine::restoreSink);
+                        () -> "playing " + SoundDirector.playing() + ", rooms " + SoundDirector.stats().rooms());
     }
 
     @ClientTest(timeoutTicks = 700)

@@ -172,7 +172,7 @@ public final class Lowerer {
         final IrStmt body = this.reduce(lock.body());
         this.locksOpen--;
         return new IrStmt.Block(List.of(
-                new IrStmt.Keep(place, lock.target(), true),
+                new IrStmt.Keep(place, lock.target()),
                 new IrStmt.MonitorEnter(place),
                 body,
                 new IrStmt.MonitorExit(place)));
@@ -213,8 +213,7 @@ public final class Lowerer {
     /** Whether each turn of a walk takes its own copy, which it does when what it finds is a value. */
     private boolean copiesEachTurn(final IStmt.ForEach loop) {
         final IBinding.Variable walker = this.model.declaredAt(loop);
-        return walker != null && this.rules.named(walker.type()) != null
-                && this.rules.named(walker.type()).kind() == NamedType.Kind.STRUCT;
+        return walker != null && this.isStruct(walker.type());
     }
 
     /** What each method's statements came to, for the stage that writes them down. */
@@ -308,18 +307,19 @@ public final class Lowerer {
 
     /** The number one, written as the kind of number that place holds, and typed as it is made. */
     private IExpr one(final ITypeSymbol type, final IExpr at) {
+        final ITypeSymbol kind = type == ITypeSymbol.Primitive.LONG || type == ITypeSymbol.Primitive.FLOAT
+                || type == ITypeSymbol.Primitive.DOUBLE ? type : ITypeSymbol.Primitive.INT;
         final IExpr made;
-        if (type == ITypeSymbol.Primitive.LONG) {
+        if (kind == ITypeSymbol.Primitive.LONG) {
             made = new IExpr.Literal(TokenKind.LONG_LITERAL, 1L, at.line(), at.column());
-        } else if (type == ITypeSymbol.Primitive.FLOAT) {
+        } else if (kind == ITypeSymbol.Primitive.FLOAT) {
             made = new IExpr.Literal(TokenKind.FLOAT_LITERAL, 1.0F, at.line(), at.column());
-        } else if (type == ITypeSymbol.Primitive.DOUBLE) {
+        } else if (kind == ITypeSymbol.Primitive.DOUBLE) {
             made = new IExpr.Literal(TokenKind.DOUBLE_LITERAL, 1.0D, at.line(), at.column());
         } else {
             made = new IExpr.Literal(TokenKind.INT_LITERAL, 1, at.line(), at.column());
         }
-        this.model.setType(made, type == ITypeSymbol.Primitive.LONG || type == ITypeSymbol.Primitive.FLOAT
-                || type == ITypeSymbol.Primitive.DOUBLE ? type : ITypeSymbol.Primitive.INT);
+        this.model.setType(made, kind);
         return made;
     }
 
@@ -349,6 +349,9 @@ public final class Lowerer {
                 }
                 case IDecl.ConstructorDecl constructor -> {
                     this.kept = this.keptBy(constructor, constructor.parameters(), constructor.body());
+                    if (constructor.chained() != null) {
+                        constructor.chained().arguments().forEach(this::replaceIn);
+                    }
                     this.block(constructor.body());
                     this.bodies.put(constructor, this.body(constructor.body()));
                 }

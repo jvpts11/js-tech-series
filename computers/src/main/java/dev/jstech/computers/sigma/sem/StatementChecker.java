@@ -61,15 +61,44 @@ final class StatementChecker {
             case IStmt.Block block -> block.statements().stream().anyMatch(StatementChecker::alwaysReturns);
             case IStmt.If branch -> branch.otherwise() != null
                     && alwaysReturns(branch.then()) && alwaysReturns(branch.otherwise());
-            case IStmt.While loop -> isAlwaysTrue(loop.condition());
-            case IStmt.DoWhile loop -> alwaysReturns(loop.body()) || isAlwaysTrue(loop.condition());
-            case IStmt.For loop -> loop.condition() == null || isAlwaysTrue(loop.condition());
+            case IStmt.While loop -> isAlwaysTrue(loop.condition()) && !breaksOut(loop.body());
+            case IStmt.DoWhile loop -> (alwaysReturns(loop.body()) || isAlwaysTrue(loop.condition()))
+                    && !breaksOut(loop.body());
+            case IStmt.For loop -> (loop.condition() == null || isAlwaysTrue(loop.condition()))
+                    && !breaksOut(loop.body());
             case IStmt.Switch choice -> choice.sections().stream().anyMatch(IStmt.SwitchSection::fallback)
-                    && choice.sections().stream().allMatch(section ->
-                            section.statements().stream().anyMatch(StatementChecker::alwaysReturns));
+                    && choice.sections().stream().allMatch(StatementChecker::sectionReturns);
             case IStmt.Lock lock -> alwaysReturns(lock.body());
             default -> false;
         };
+    }
+
+    /*
+     * Whether a break in this statement leaves the loop or switch that holds it. A break inside a loop or a
+     * switch nested in it leaves that one instead, and a lambda is an expression, so neither is looked into.
+     */
+    private static boolean breaksOut(final IStmt statement) {
+        return switch (statement) {
+            case IStmt.Break ignored -> true;
+            case IStmt.Block block -> block.statements().stream().anyMatch(StatementChecker::breaksOut);
+            case IStmt.If branch -> breaksOut(branch.then())
+                    || branch.otherwise() != null && breaksOut(branch.otherwise());
+            case IStmt.Lock lock -> breaksOut(lock.body());
+            default -> false;
+        };
+    }
+
+    /* A section returns when a statement of it does and no break comes before that one; one after it never runs. */
+    private static boolean sectionReturns(final IStmt.SwitchSection section) {
+        for (final IStmt statement : section.statements()) {
+            if (breaksOut(statement)) {
+                return false;
+            }
+            if (alwaysReturns(statement)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     void checkBlock(final IStmt.Block block, final boolean newScope) {
@@ -217,6 +246,8 @@ final class StatementChecker {
         return switch (value) {
             case null -> "null";
             case Character character -> "number:" + (int) character;
+            case Float real when !Float.isFinite(real) -> "number:" + real;
+            case Double real when !Double.isFinite(real) -> "number:" + real;
             case Number number -> "number:" + new BigDecimal(number.toString()).stripTrailingZeros().toPlainString();
             default -> value.getClass().getSimpleName() + ":" + value;
         };

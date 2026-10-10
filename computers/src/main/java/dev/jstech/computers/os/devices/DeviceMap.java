@@ -12,6 +12,7 @@ import dev.jstech.core.id.IStableId;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.text.TextLists;
 import dev.jstech.core.tier.HardwareEra;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,6 +122,11 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
 
         public boolean isFree() {
             return plugged.isEmpty();
+        }
+
+        /** The names of everything plugged into the port, joined with commas. */
+        public Text pluggedNames() {
+            return TextLists.join(", ", plugged.stream().map(Device::name).toList());
         }
     }
 
@@ -291,7 +297,12 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
     /** The device standing at the packed position {@code pos}, or null when none of the machine's does. */
     @Nullable
     public Device device(final long pos) {
-        for (final Device device : devices()) {
+        // Walks the ports without building the list of every device: this is asked of each frame a page draws.
+        final Port port = portOf(pos);
+        if (port == null) {
+            return null;
+        }
+        for (final Device device : port.plugged()) {
             if (device.pos() == pos) {
                 return device;
             }

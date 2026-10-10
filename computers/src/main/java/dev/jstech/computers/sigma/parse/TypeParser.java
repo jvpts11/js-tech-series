@@ -106,6 +106,12 @@ final class TypeParser {
         return new TypeRef(name.toString(), arguments, arrayRank, start.line(), start.column());
     }
 
+    /** Whether a type is written at the cursor and a name follows it: what a declaration or a typed parameter is. */
+    boolean typedNameAhead() {
+        final int after = this.scanType(this.cursor.at());
+        return after > this.cursor.at() && this.cursor.kindAt(after) == TokenKind.IDENTIFIER;
+    }
+
     /*
      * Looks past a type without reporting anything, and answers where it ends, or -1 if what is
      * there is not a type at all. Used only to tell a declaration from an expression.

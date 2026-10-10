@@ -113,8 +113,13 @@ public final class OwnershipGameTests {
             helper.assertTrue(ScoreboardTeams.INSTANCE.teamOf(server, mate.getUUID())
                             .equals(ScoreboardTeams.idOf(team)),
                     "a player online on a scoreboard team is on it, found by their name");
-            if (CoreTeams.source() == ScoreboardTeams.INSTANCE) {
+            // Forced to the scoreboard source so the check runs whichever team mod the run has loaded.
+            final ITeamSource before = CoreTeams.source();
+            CoreTeams.use(ScoreboardTeams.INSTANCE);
+            try {
                 helper.assertTrue(shared.mayUse(mate), "and may use what the owner shares with the team");
+            } finally {
+                CoreTeams.use(before);
             }
         } finally {
             scoreboard.removePlayerTeam(team);

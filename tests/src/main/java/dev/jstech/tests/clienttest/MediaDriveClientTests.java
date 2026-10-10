@@ -15,12 +15,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 /**
  * The floppy, CD, DVD and Blu-ray drives as a player sees them: each the drive of its day, the very medium the player put in
@@ -31,14 +27,6 @@ import net.minecraft.world.phys.Vec3;
 public final class MediaDriveClientTests {
 
     private static final int SETTLE = 4;
-    /** The floppy half out of its slot, before the hand takes it. */
-    private static final int FLOPPY_OUT = 9;
-    /** The tray fully out with its disc on it, before the hand takes the disc. */
-    private static final int TRAY_OUT = 21;
-    /** Past every eject clip, when a medium taken out is no longer drawn. */
-    private static final int AFTER_EJECT = 45;
-    /** How far below level the player looks at a drive close up, in degrees. */
-    private static final float CLOSE_UP_PITCH = 28F;
 
     private static final BlockPos FLOPPY = new BlockPos(4, 2, 2);
     private static final BlockPos CD = new BlockPos(6, 2, 2);
@@ -55,11 +43,11 @@ public final class MediaDriveClientTests {
     @ClientTest(timeoutTicks = 1000)
     public static void mediaDrives_drawThePlayersOwnMediaAndSeeThemOut(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {
-                    world.setBlock(FLOPPY, facingPlayer(ComputingModule.FLOPPY_DRIVE.get()));
-                    world.setBlock(CD, facingPlayer(ComputingModule.CD_DRIVE.get()));
-                    world.setBlock(DVD, facingPlayer(ComputingModule.DVD_DRIVE.get()));
-                    world.setBlock(DOCK, facingPlayer(ComputingModule.DOCK_STATION.get()));
-                    world.setBlock(BLU_RAY, facingPlayer(ComputingModule.BLU_RAY_DRIVE.get()));
+                    world.setBlock(FLOPPY, DeviceCloseUp.facingPlayer(ComputingModule.FLOPPY_DRIVE.get()));
+                    world.setBlock(CD, DeviceCloseUp.facingPlayer(ComputingModule.CD_DRIVE.get()));
+                    world.setBlock(DVD, DeviceCloseUp.facingPlayer(ComputingModule.DVD_DRIVE.get()));
+                    world.setBlock(DOCK, DeviceCloseUp.facingPlayer(ComputingModule.DOCK_STATION.get()));
+                    world.setBlock(BLU_RAY, DeviceCloseUp.facingPlayer(ComputingModule.BLU_RAY_DRIVE.get()));
                 })
                 .thenTeleport(SETTLE, PLAYER, Direction.NORTH)
                 .thenServer(SETTLE, level -> {
@@ -73,32 +61,32 @@ public final class MediaDriveClientTests {
                 .thenAssert(0, () -> drawn(ctx, CD).is(ComputingModule.CD_ROM.get()),
                         "the CD Drive draws the CD-ROM the player put in");
 
-        closeUp(ctx, FLOPPY)
+        DeviceCloseUp.closeUp(ctx, FLOPPY)
                 .thenScreenshot(SETTLE, "floppy-loaded")
                 .thenServer(0, level -> insert(ctx, level, FLOPPY, null))
-                .thenScreenshot(FLOPPY_OUT, "floppy-leaving")
+                .thenScreenshot(DeviceCloseUp.FLOPPY_OUT, "floppy-leaving")
                 .thenAssert(0, () -> drawn(ctx, FLOPPY).is(ComputingModule.FLOPPY_DISK.get()),
                         "a floppy taken out is still drawn on its way out");
 
-        closeUp(ctx, CD)
+        DeviceCloseUp.closeUp(ctx, CD)
                 .thenServer(SETTLE, level -> insert(ctx, level, CD, null))
-                .thenScreenshot(TRAY_OUT, "cd-tray-out")
+                .thenScreenshot(DeviceCloseUp.TRAY_OUT, "cd-tray-out")
                 .thenAssert(0, () -> drawn(ctx, CD).is(ComputingModule.CD_ROM.get()),
                         "a disc taken out is still drawn on the open tray")
-                .thenAssert(AFTER_EJECT, () -> drawn(ctx, CD).isEmpty() && drawn(ctx, FLOPPY).isEmpty(),
+                .thenAssert(DeviceCloseUp.AFTER_EJECT, () -> drawn(ctx, CD).isEmpty() && drawn(ctx, FLOPPY).isEmpty(),
                         "and no longer once it is out");
 
-        closeUp(ctx, DVD)
+        DeviceCloseUp.closeUp(ctx, DVD)
                 .thenServer(SETTLE, level -> insert(ctx, level, DVD, null))
-                .thenScreenshot(TRAY_OUT, "dvd-tray-out")
-                .thenServer(AFTER_EJECT, level -> insert(ctx, level, DVD, ComputingModule.CD_RW.get()))
+                .thenScreenshot(DeviceCloseUp.TRAY_OUT, "dvd-tray-out")
+                .thenServer(DeviceCloseUp.AFTER_EJECT, level -> insert(ctx, level, DVD, ComputingModule.CD_RW.get()))
                 .thenScreenshot(30, "dvd-reads-a-cd");
 
         // The Blu-ray drive, white all over, its slim tray high on the front, with the BD-ROM on it.
-        closeUp(ctx, BLU_RAY)
+        DeviceCloseUp.closeUp(ctx, BLU_RAY)
                 .thenScreenshot(SETTLE, "blu-ray-loaded")
                 .thenServer(0, level -> insert(ctx, level, BLU_RAY, null))
-                .thenScreenshot(TRAY_OUT, "blu-ray-tray-out")
+                .thenScreenshot(DeviceCloseUp.TRAY_OUT, "blu-ray-tray-out")
                 .thenAssert(0, () -> drawn(ctx, BLU_RAY).is(ComputingModule.BD_ROM.get()),
                         "the Blu-ray drive draws its disc on the open tray");
 
@@ -118,27 +106,10 @@ public final class MediaDriveClientTests {
                 })
                 .thenWaitUntil(() -> clientDrive(ctx, FLOPPY) != null && clientDrive(ctx, FLOPPY).ownerPos() != null,
                         100, "the client to see the Floppy Drive linked to the computer behind it");
-        closeUp(ctx, FLOPPY)
+        DeviceCloseUp.closeUp(ctx, FLOPPY)
                 .thenScreenshot(SETTLE, "floppy-linked")
                 .thenServer(0, level -> level.getEntitiesOfClass(ItemFrame.class,
                         new AABB(ctx.abs(FRAME_WALL.south()))).forEach(ItemFrame::discard));
-    }
-
-    private static BlockState facingPlayer(final Block block) {
-        return block.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH);
-    }
-
-    /* Stands the player two blocks in front of that drive, looking down at its front. */
-    private static ClientTestContext closeUp(final ClientTestContext ctx, final BlockPos drive) {
-        final BlockPos at = drive.south(2);
-        return ctx.thenServer(0, level -> {
-                    final BlockPos abs = ctx.abs(at);
-                    ctx.serverPlayer().teleportTo(level, abs.getX() + 0.5, abs.getY(), abs.getZ() + 0.5,
-                            Direction.NORTH.toYRot(), CLOSE_UP_PITCH);
-                })
-                .thenWaitUntil(() -> ctx.player() != null
-                                && ctx.player().position().distanceTo(Vec3.atBottomCenterOf(ctx.abs(at))) < 0.1,
-                        200, "the client's player to stand at " + at);
     }
 
     /* Puts that medium in the drive the way its slot takes it, or empties the drive for null. */

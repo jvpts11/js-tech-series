@@ -179,10 +179,14 @@ public final class ComputingOperations {
         return new OperationType<>(id, args, category, IndustrialTier.T1, ORCHESTRATED, handler);
     }
 
+    /**
+     * An Operation whose handler settles at once. It is the same type as a timed one: the difference lives
+     * in what the handler returns, not in the type, so this only names the intent at the call site.
+     */
     private static <T extends IOperationArgs> OperationType<T> instant(final String id, final Class<T> args,
                                                                      final OperationCategory category,
                                                                      final IOperationHandler<T> handler) {
-        return new OperationType<>(id, args, category, IndustrialTier.T1, ORCHESTRATED, handler);
+        return timed(id, args, category, handler);
     }
 
     /** A submitted timed Operation is PENDING until the Mainframe ticks it; a refused one is FAILED. */

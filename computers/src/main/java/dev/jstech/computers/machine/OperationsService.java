@@ -282,7 +282,7 @@ public final class OperationsService {
         }
         final DataHandoff.Outcome outcome = DataHandoff.toPlayer(mainframe, this.level, net, player,
                 this.terminal.localStore(), key, demand(quantity), this.terminal.originLabel(origin), () -> { });
-        if (outcome != DataHandoff.Outcome.DEPOSITED) {
+        if (outcome != DataHandoff.Outcome.PULLED) {
             return ICliComputer.OpResult.fail(SELECT_FAILED);
         }
         return ICliComputer.OpResult.ok(TO_HAND_QUEUED.with(qtyLabel(quantity), key.displayName().getString()));

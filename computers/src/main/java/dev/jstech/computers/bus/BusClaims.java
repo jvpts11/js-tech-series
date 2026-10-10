@@ -21,15 +21,19 @@ import java.util.Map;
 public final class BusClaims {
 
     private final Map<NetworkUuid, Map<String, Claim>> claims = new HashMap<>();
+    private long sweptAt;
 
     /** How many ticks a want lasts after it was last said: long enough for every bus to have ticked once. */
     public static final long LASTS = 2L;
+    /** How many ticks pass between two sweeps that drop the wants nobody says any more. */
+    public static final long SWEEP_EVERY = 1200L;
 
     /**
      * Says that a bus of {@code priority} wants {@code what} on {@code network} at {@code tick}, and answers whether it
      * may go now: no bus of a higher priority wanted it in the last {@link #LASTS} ticks.
      */
     public boolean mayGo(final NetworkUuid network, final String what, final int priority, final long tick) {
+        sweepIfDue(tick);
         final Map<String, Claim> wants = claims.computeIfAbsent(network, n -> new HashMap<>());
         final Claim held = wants.get(what);
         if (held != null && held.priority() > priority && tick - held.tick() <= LASTS) {
@@ -41,9 +45,28 @@ public final class BusClaims {
         return true;
     }
 
-    /** Forgets every want of {@code network}, as when it is gone. */
-    public void forget(final NetworkUuid network) {
-        claims.remove(network);
+    /** How many wants are held, expired ones included until the next sweep. */
+    public int size() {
+        int total = 0;
+        for (final Map<String, Claim> wants : claims.values()) {
+            total += wants.size();
+        }
+        return total;
+    }
+
+    /*
+     * Drops the wants that have lapsed and the networks left with none, now and then, so a network that is gone or an
+     * item nobody wants any more does not stay in the maps for as long as the level is loaded.
+     */
+    private void sweepIfDue(final long tick) {
+        if (tick >= sweptAt && tick - sweptAt < SWEEP_EVERY) {
+            return;
+        }
+        sweptAt = tick;
+        claims.values().removeIf(wants -> {
+            wants.values().removeIf(claim -> tick - claim.tick() > LASTS);
+            return wants.isEmpty();
+        });
     }
 
     /* The highest priority that wanted a thing, and when it last said so. */

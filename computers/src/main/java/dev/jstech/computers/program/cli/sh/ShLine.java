@@ -26,8 +26,16 @@ import java.util.List;
  * @param from    the file the first command reads instead of the keyboard, or empty
  * @param into    the file the last command writes instead of the glass, or empty
  * @param append  whether writing adds to that file rather than replacing it
+ * @param badToken the mark or word a shell would report as unexpected when a pipe or an arrow has nothing on
+ *                 one side ({@code newline} when the line ended there), or empty when the line is well formed
  */
-public record ShLine(List<Stage> stages, String from, String into, boolean append) {
+public record ShLine(List<Stage> stages, String from, String into, boolean append, String badToken) {
+
+    /** A line with nothing on it, which is what an empty prompt is. */
+    public static final ShLine NOTHING = new ShLine(List.of(), "", "", false, "");
+
+    /** What a shell calls the end of the line when it is the thing that came too soon. */
+    private static final String NEWLINE = "newline";
 
     /** One command of a line: the word that names it and the words after it. */
     public record Stage(String word, List<String> args) {
@@ -35,24 +43,14 @@ public record ShLine(List<Stage> stages, String from, String into, boolean appen
         public Stage {
             args = List.copyOf(args);
         }
-
-        /** The whole stage as words again, which is what a shell hands to whatever runs it. */
-        public List<String> tokens() {
-            final List<String> out = new ArrayList<>(this.args.size() + 1);
-            out.add(this.word);
-            out.addAll(this.args);
-            return out;
-        }
     }
 
     public ShLine {
         stages = List.copyOf(stages);
         from = from == null ? "" : from;
         into = into == null ? "" : into;
+        badToken = badToken == null ? "" : badToken;
     }
-
-    /** A line with nothing on it, which is what an empty prompt is. */
-    public static final ShLine NOTHING = new ShLine(List.of(), "", "", false);
 
     /**
      * Reads a line's words the way a shell reads them.
@@ -60,6 +58,10 @@ public record ShLine(List<Stage> stages, String from, String into, boolean appen
      * <p>A pipe ends a stage and starts the next. A redirection takes the word after it, whether it was
      * written against the arrow or apart from it, since both are typed at real shells every day. Only a word that
      * was typed as one of the shell's marks is read as one; any other word is a command's, whatever it says.
+     *
+     * <p>A pipe with no command on one side and an arrow with no name after it are mistakes, and a shell says
+     * so rather than guess what was meant; the line comes back with {@link #badToken()} set to the token a shell
+     * would point at.
      */
     public static ShLine of(final List<ShWord> tokens) {
         final List<Stage> stages = new ArrayList<>();
@@ -67,23 +69,40 @@ public record ShLine(List<Stage> stages, String from, String into, boolean appen
         String from = "";
         String into = "";
         boolean append = false;
+        boolean afterPipe = false;
         for (int i = 0; i < tokens.size(); i++) {
             final ShWord token = tokens.get(i);
             if (!token.operator()) {
                 words.add(token.text());
+                afterPipe = false;
                 continue;
             }
             if (token.text().equals("|")) {
+                if (words.isEmpty()) {
+                    return malformed(stages, from, into, append, "|");
+                }
                 addStage(stages, words);
+                afterPipe = true;
                 continue;
             }
             final Redirection redirection = redirectionOf(token.text());
             if (redirection == null) {
                 words.add(token.text());
+                afterPipe = false;
                 continue;
             }
-            final String named = redirection.name().isEmpty() && i + 1 < tokens.size()
-                    ? tokens.get(++i).text() : redirection.name();
+            afterPipe = false;
+            String named = redirection.name();
+            if (named.isEmpty()) {
+                if (i + 1 >= tokens.size()) {
+                    return malformed(stages, from, into, append, NEWLINE);
+                }
+                final ShWord next = tokens.get(++i);
+                if (next.operator() && (next.text().equals("|") || redirectionOf(next.text()) != null)) {
+                    return malformed(stages, from, into, append, next.text());
+                }
+                named = next.text();
+            }
             if (redirection.reading()) {
                 from = named;
             } else {
@@ -91,8 +110,11 @@ public record ShLine(List<Stage> stages, String from, String into, boolean appen
                 append = redirection.append();
             }
         }
+        if (afterPipe) {
+            return malformed(stages, from, into, append, NEWLINE);
+        }
         addStage(stages, words);
-        return new ShLine(stages, from, into, append);
+        return new ShLine(stages, from, into, append, "");
     }
 
     /** Whether the line has anything to run at all. */
@@ -108,6 +130,11 @@ public record ShLine(List<Stage> stages, String from, String into, boolean appen
     /** Whether anything at all is to be written to a file. */
     public boolean writes() {
         return !this.into.isEmpty();
+    }
+
+    private static ShLine malformed(final List<Stage> stages, final String from, final String into,
+                                    final boolean append, final String badToken) {
+        return new ShLine(stages, from, into, append, badToken);
     }
 
     private static void addStage(final List<Stage> stages, final List<String> words) {

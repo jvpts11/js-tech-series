@@ -56,7 +56,7 @@ public final class GatewayManagerClientTests {
 
     @Nullable
     private static GatewayManagerApp manager(final ClientTestContext ctx) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
+        final DesktopScreen desktop = ctx.openScreen(DesktopScreen.class);
         if (desktop == null) {
             return null;
         }

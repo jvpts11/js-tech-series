@@ -530,7 +530,10 @@ class SigmaCompletionsTest {
         assertTrue(under.contains("Collections"), () -> "and System.Collections; got " + under);
         assertTrue(under.contains("*"), () -> "with the star that opens the whole of it; got " + under);
         // The types in that namespace belong on a using too, since a using may name one.
-        assertTrue(under.contains("Console"), () -> "and the types it holds; got " + under);
+        assertTrue(under.contains("IScript"), () -> "and the types it holds; got " + under);
+        assertFalse(under.contains("Console"), () -> "but not the ones that live deeper; got " + under);
+        final List<String> io = labels(SigmaCompletions.namespaces(this.builtIns, null, "System.IO", ""));
+        assertTrue(io.contains("Console"), () -> "Console is under System.IO; got " + io);
     }
 
     @Test

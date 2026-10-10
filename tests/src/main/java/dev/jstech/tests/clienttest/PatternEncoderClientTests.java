@@ -15,12 +15,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 /**
  * The Pattern Encoders as a player sees them: each era's device with the very medium the player put in drawn in its
@@ -30,18 +26,10 @@ import net.minecraft.world.phys.Vec3;
 public final class PatternEncoderClientTests {
 
     private static final int SETTLE = 4;
-    /** The floppy half out of its slot, before the hand takes it. */
-    private static final int FLOPPY_OUT = 9;
-    /** The tray fully out with its disc on it, before the hand takes the disc. */
-    private static final int TRAY_OUT = 21;
     /** The stick half out of its port, before the hand takes it. */
     private static final int USB_OUT = 6;
-    /** Past every eject clip, when a medium taken out is no longer drawn. */
-    private static final int AFTER_EJECT = 45;
     /** Shots this far apart catch a lamp that blinks twice a second both lit and dark within four shots. */
     private static final int BLINK_STEP = 3;
-    /** How far below level the player looks at a device close up, in degrees. */
-    private static final float CLOSE_UP_PITCH = 28F;
 
     private static final BlockPos VINTAGE = new BlockPos(4, 2, 2);
     private static final BlockPos LEGACY = new BlockPos(6, 2, 2);
@@ -58,11 +46,13 @@ public final class PatternEncoderClientTests {
     @ClientTest(timeoutTicks = 1000)
     public static void patternEncoders_drawThePlayersOwnMediaAndSeeThemOut(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {
-                    world.setBlock(VINTAGE, facingPlayer(ComputingModule.VINTAGE_PATTERN_ENCODER.get()));
-                    world.setBlock(LEGACY, facingPlayer(ComputingModule.LEGACY_PATTERN_ENCODER.get()));
-                    world.setBlock(STANDARD, facingPlayer(ComputingModule.PATTERN_ENCODER.get()));
-                    world.setBlock(TRANSITION, facingPlayer(ComputingModule.TRANSITION_PATTERN_ENCODER.get()));
-                    world.setBlock(ADVANCED, facingPlayer(ComputingModule.ADVANCED_PATTERN_ENCODER.get()));
+                    world.setBlock(VINTAGE, DeviceCloseUp.facingPlayer(ComputingModule.VINTAGE_PATTERN_ENCODER.get()));
+                    world.setBlock(LEGACY, DeviceCloseUp.facingPlayer(ComputingModule.LEGACY_PATTERN_ENCODER.get()));
+                    world.setBlock(STANDARD, DeviceCloseUp.facingPlayer(ComputingModule.PATTERN_ENCODER.get()));
+                    world.setBlock(TRANSITION,
+                            DeviceCloseUp.facingPlayer(ComputingModule.TRANSITION_PATTERN_ENCODER.get()));
+                    world.setBlock(ADVANCED,
+                            DeviceCloseUp.facingPlayer(ComputingModule.ADVANCED_PATTERN_ENCODER.get()));
                 })
                 .thenTeleport(SETTLE, PLAYER, Direction.NORTH)
                 .thenServer(SETTLE, level -> {
@@ -76,25 +66,27 @@ public final class PatternEncoderClientTests {
                 .thenAssert(0, () -> drawn(ctx, LEGACY).is(ComputingModule.CD_RW.get()),
                         "the Legacy encoder draws the CD-RW the player put in");
 
-        closeUp(ctx, VINTAGE)
+        DeviceCloseUp.closeUp(ctx, VINTAGE)
                 .thenScreenshot(SETTLE, "vintage-loaded")
                 .thenServer(0, level -> insert(ctx, level, VINTAGE, null))
-                .thenScreenshot(FLOPPY_OUT, "vintage-floppy-leaving")
+                .thenScreenshot(DeviceCloseUp.FLOPPY_OUT, "vintage-floppy-leaving")
                 .thenAssert(0, () -> drawn(ctx, VINTAGE).is(ComputingModule.FLOPPY_DISK.get()),
                         "a floppy taken out is still drawn on its way out");
 
-        closeUp(ctx, LEGACY)
+        DeviceCloseUp.closeUp(ctx, LEGACY)
                 .thenServer(SETTLE, level -> insert(ctx, level, LEGACY, null))
-                .thenScreenshot(TRAY_OUT, "legacy-tray-out")
+                .thenScreenshot(DeviceCloseUp.TRAY_OUT, "legacy-tray-out")
                 .thenAssert(0, () -> drawn(ctx, LEGACY).is(ComputingModule.CD_RW.get()),
                         "a disc taken out is still drawn on the open tray")
-                .thenAssert(AFTER_EJECT, () -> drawn(ctx, LEGACY).isEmpty() && drawn(ctx, VINTAGE).isEmpty(),
+                .thenAssert(DeviceCloseUp.AFTER_EJECT,
+                        () -> drawn(ctx, LEGACY).isEmpty() && drawn(ctx, VINTAGE).isEmpty(),
                         "and no longer once it is out");
 
-        closeUp(ctx, STANDARD)
+        DeviceCloseUp.closeUp(ctx, STANDARD)
                 .thenServer(SETTLE, level -> insert(ctx, level, STANDARD, null))
-                .thenScreenshot(TRAY_OUT, "standard-tray-out")
-                .thenServer(AFTER_EJECT, level -> insert(ctx, level, STANDARD, ComputingModule.USB_FLASH_DRIVE.get()))
+                .thenScreenshot(DeviceCloseUp.TRAY_OUT, "standard-tray-out")
+                .thenServer(DeviceCloseUp.AFTER_EJECT,
+                        level -> insert(ctx, level, STANDARD, ComputingModule.USB_FLASH_DRIVE.get()))
                 .thenScreenshot(20, "standard-usb-in")
                 .thenAssert(0, () -> drawn(ctx, STANDARD).is(ComputingModule.USB_FLASH_DRIVE.get()),
                         "the Standard encoder draws the stick in its port")
@@ -102,27 +94,29 @@ public final class PatternEncoderClientTests {
                 .thenScreenshot(USB_OUT, "standard-usb-leaving");
 
         // The Transition's LightScribe burner and the Advanced's Blu-ray writer, each with its disc on its tray.
-        closeUp(ctx, TRANSITION)
+        DeviceCloseUp.closeUp(ctx, TRANSITION)
                 .thenScreenshot(SETTLE, "transition-loaded")
                 .thenServer(0, level -> insert(ctx, level, TRANSITION, null))
-                .thenScreenshot(TRAY_OUT, "transition-tray-out")
+                .thenScreenshot(DeviceCloseUp.TRAY_OUT, "transition-tray-out")
                 .thenAssert(0, () -> drawn(ctx, TRANSITION).is(ComputingModule.DVD_RW.get()),
                         "the Transition encoder draws its DVD on the open tray");
 
-        closeUp(ctx, ADVANCED)
+        DeviceCloseUp.closeUp(ctx, ADVANCED)
                 .thenScreenshot(SETTLE, "advanced-loaded")
                 .thenServer(0, level -> insert(ctx, level, ADVANCED, null))
-                .thenScreenshot(TRAY_OUT, "advanced-tray-out")
+                .thenScreenshot(DeviceCloseUp.TRAY_OUT, "advanced-tray-out")
                 .thenAssert(0, () -> drawn(ctx, ADVANCED).is(ComputingModule.BD_RE.get()),
                         "the Advanced encoder draws its BD-RE on the open tray")
-                .thenServer(AFTER_EJECT, level -> insert(ctx, level, ADVANCED, ComputingModule.USB_FLASH_DRIVE.get()))
+                .thenServer(DeviceCloseUp.AFTER_EJECT,
+                        level -> insert(ctx, level, ADVANCED, ComputingModule.USB_FLASH_DRIVE.get()))
                 .thenScreenshot(20, "advanced-usb-in")
                 .thenAssert(0, () -> drawn(ctx, ADVANCED).is(ComputingModule.USB_FLASH_DRIVE.get()),
                         "and the stick in its USB-C port");
 
         // From the side the stick shows it stands straight out of the port.
-        standAt(ctx, STANDARD.east(2).south(), Direction.WEST)
-                .thenServer(AFTER_EJECT, level -> insert(ctx, level, STANDARD, ComputingModule.USB_FLASH_DRIVE.get()))
+        DeviceCloseUp.standAt(ctx, STANDARD.east(2).south(), Direction.WEST)
+                .thenServer(DeviceCloseUp.AFTER_EJECT,
+                        level -> insert(ctx, level, STANDARD, ComputingModule.USB_FLASH_DRIVE.get()))
                 .thenScreenshot(20, "standard-usb-side");
 
         /*
@@ -141,7 +135,7 @@ public final class PatternEncoderClientTests {
                 })
                 .thenWaitUntilServer(level -> encoder(ctx, level, VINTAGE).ownerPos() != null, 100,
                         "the Vintage encoder to link to the computer behind it", level -> "no link");
-        closeUp(ctx, VINTAGE)
+        DeviceCloseUp.closeUp(ctx, VINTAGE)
                 .thenServer(SETTLE, level -> encoder(ctx, level, VINTAGE).queueBurn("smelt_iron", "x".repeat(5000)))
                 .thenWaitUntil(() -> clientEncoder(ctx, VINTAGE) != null && clientEncoder(ctx, VINTAGE).busy(), 60,
                         "the client to see the pattern being written")
@@ -152,27 +146,6 @@ public final class PatternEncoderClientTests {
                 .thenAssert(0, () -> clientEncoder(ctx, VINTAGE).busy(), "the pattern is still being written")
                 .thenServer(0, level -> level.getEntitiesOfClass(ItemFrame.class,
                         new AABB(ctx.abs(FRAME_WALL.south()))).forEach(ItemFrame::discard));
-    }
-
-    private static BlockState facingPlayer(final Block block) {
-        return block.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH);
-    }
-
-    /* Stands the player two blocks in front of that device, looking down at its front. */
-    private static ClientTestContext closeUp(final ClientTestContext ctx, final BlockPos device) {
-        return standAt(ctx, device.south(2), Direction.NORTH);
-    }
-
-    /* Stands the player there looking that way and down, and waits for the client to have got there. */
-    private static ClientTestContext standAt(final ClientTestContext ctx, final BlockPos at, final Direction facing) {
-        return ctx.thenServer(0, level -> {
-                    final BlockPos abs = ctx.abs(at);
-                    ctx.serverPlayer().teleportTo(level, abs.getX() + 0.5, abs.getY(), abs.getZ() + 0.5,
-                            facing.toYRot(), CLOSE_UP_PITCH);
-                })
-                .thenWaitUntil(() -> ctx.player() != null
-                                && ctx.player().position().distanceTo(Vec3.atBottomCenterOf(ctx.abs(at))) < 0.1,
-                        200, "the client's player to stand at " + at);
     }
 
     /* Puts that medium in the bay the way the bay's slot takes it, or empties the bay for null. */

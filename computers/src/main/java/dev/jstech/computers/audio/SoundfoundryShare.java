@@ -23,6 +23,7 @@ import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.RecordingFile;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.SongDownload;
+import dev.jstech.computers.program.SongRefs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.network.DataLink;
@@ -264,7 +265,7 @@ public final class SoundfoundryShare {
     }
 
     private static String catalogPath(final CatalogAlbum album, final CatalogTrack track) {
-        return album.id() + "/" + track.file();
+        return SongRefs.catalogPath(album.id(), track.file());
     }
 
     /* Whether a machine of the network is one whose songs a search looks through. */

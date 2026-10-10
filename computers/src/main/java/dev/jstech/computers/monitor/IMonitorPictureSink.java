@@ -7,7 +7,8 @@
  */
 package dev.jstech.computers.monitor;
 
-import org.jetbrains.annotations.Nullable;
+import dev.jstech.computers.registry.ClientHook;
+
 
 /**
  * Where a client keeps what the monitors near it show. The payload's handler is common code, so the client sets the
@@ -20,20 +21,17 @@ public interface IMonitorPictureSink {
 
     final class Holder {
 
-        @Nullable
-        private static IMonitorPictureSink instance;
+        private static final ClientHook<IMonitorPictureSink> HOOK = new ClientHook<>();
 
         private Holder() {
         }
 
         public static void set(final IMonitorPictureSink sink) {
-            instance = sink;
+            HOOK.set(sink);
         }
 
         public static void accept(final MonitorPicturePayload payload) {
-            if (instance != null) {
-                instance.accept(payload);
-            }
+            HOOK.ifPresent(target -> target.accept(payload));
         }
     }
 }

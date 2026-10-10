@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.gui.layout.ServerAssemblyLayout;
+import dev.jstech.computers.hardware.BuildValidation;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
@@ -23,6 +24,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -32,6 +34,12 @@ import java.util.List;
 public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyMenu> {
 
     private final UnitFormatter fmt = UnitFormatter.forCurrentLocale();
+
+    /* The build the slots hold and its checks, taken at the start of each frame. */
+    @Nullable
+    private ComputerBuild frameBuild;
+    @Nullable
+    private BuildValidation frameChecks;
 
     public ServerAssemblyScreen(final ServerAssemblyMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
@@ -80,7 +88,7 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
         nameWell(g, x + ServerAssemblyLayout.NAME_WELL_LEFT, y + ServerAssemblyLayout.NAME_WELL_TOP,
                 x + ServerAssemblyLayout.NAME_WELL_RIGHT);
 
-        final ComputerBuild build = menu.currentBuild();
+        final ComputerBuild build = this.frameBuild;
 
         // Spec tiles (4 across).
         JsTechTheme.panel(g, x + ServerAssemblyLayout.TILE_X_ORCHESTRATION, y + ServerAssemblyLayout.TILE_Y,
@@ -129,7 +137,7 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
 
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        final ComputerBuild build = menu.currentBuild();
+        final ComputerBuild build = this.frameBuild;
 
         JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.TITLE_SERVER), 12, 11, JsTechTheme.text());
         final String status;
@@ -137,7 +145,7 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
         if (build == null) {
             status = GameText.resolve(AssemblyTexts.UNASSEMBLED);
             statusColor = JsTechTheme.dim();
-        } else if (!build.validate().valid()) {
+        } else if (!this.frameChecks.valid()) {
             status = GameText.resolve(AssemblyTexts.ERROR);
             statusColor = JsTechTheme.red();
         } else if (build.rams().isEmpty()) {
@@ -212,7 +220,7 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
                     ServerAssemblyLayout.PROBLEMS_TEXT_X, ServerAssemblyLayout.PROBLEMS_TEXT_Y, JsTechTheme.dim());
             return;
         }
-        final List<Text> problems = build.validate().problems();
+        final List<Text> problems = this.frameChecks.problems();
         if (problems.isEmpty()) {
             JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.ALL_CHECKS_PASSED),
                     ServerAssemblyLayout.PROBLEMS_TEXT_X, ServerAssemblyLayout.PROBLEMS_TEXT_Y, JsTechTheme.green());
@@ -234,14 +242,17 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
 
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
+        // The build cannot change within a frame, so it is made and checked once for every part that draws it.
+        this.frameBuild = menu.currentBuild();
+        this.frameChecks = this.frameBuild == null ? null : this.frameBuild.validate();
         // super.render binds the era skin, draws the background and widgets, and renders the slot tooltip.
         super.render(g, mouseX, mouseY, partialTick);
         // Full problem list on hover over the strip.
         if (hover(mouseX, mouseY, ServerAssemblyLayout.PROBLEMS_X, ServerAssemblyLayout.PROBLEMS_Y,
                 ServerAssemblyLayout.PROBLEMS_W, ServerAssemblyLayout.PROBLEMS_H)) {
-            final ComputerBuild build = menu.currentBuild();
+            final ComputerBuild build = this.frameBuild;
             if (build != null) {
-                final List<Text> problems = build.validate().problems();
+                final List<Text> problems = this.frameChecks.problems();
                 if (problems.size() > 1) {
                     g.renderComponentTooltip(font,
                             problems.stream().map(p -> (Component) GameText.component(p).withStyle(ChatFormatting.RED))

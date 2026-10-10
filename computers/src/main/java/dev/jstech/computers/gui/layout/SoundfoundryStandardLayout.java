@@ -251,9 +251,12 @@ public final class SoundfoundryStandardLayout {
     /** Every part of the window at that size, for the test that nothing overlaps. */
     public static GuiLayout layout(final int w, final int h) {
         final GuiLayout l = new GuiLayout(w, h);
-        l.box("minimize", minimize(w).x(), minimize(w).y(), minimize(w).w(), minimize(w).h());
-        l.box("maximize", maximize(w).x(), maximize(w).y(), maximize(w).w(), maximize(w).h());
-        l.box("close", close(w).x(), close(w).y(), close(w).w(), close(w).h());
+        final Rect minimize = minimize(w);
+        l.box("minimize", minimize.x(), minimize.y(), minimize.w(), minimize.h());
+        final Rect maximize = maximize(w);
+        l.box("maximize", maximize.x(), maximize.y(), maximize.w(), maximize.h());
+        final Rect close = close(w);
+        l.box("close", close.x(), close.y(), close.w(), close.h());
         for (int i = 0; i < 3; i++) {
             final Rect nav = nav(i);
             l.box("nav" + i, nav.x(), nav.y(), nav.w(), nav.h());

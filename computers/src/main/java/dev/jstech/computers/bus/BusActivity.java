@@ -21,9 +21,12 @@ import java.util.List;
 public final class BusActivity {
 
     private final Deque<Entry> entries = new ArrayDeque<>();
+    private long lastMovedAt = NEVER;
 
     /** How many lines it keeps. */
     public static final int KEPT = 16;
+    /** The last-move time of a bus that has not moved anything. */
+    public static final long NEVER = Long.MIN_VALUE;
     public static final byte COMPLETED = 0;
     public static final byte PARTIAL = 1;
     public static final byte WAITING = 2;
@@ -52,6 +55,7 @@ public final class BusActivity {
 
     /** A move of {@code amount} of {@code what}, all of it or {@code partial}ly. */
     public void moved(final long time, final String what, final long amount, final boolean partial) {
+        lastMovedAt = time;
         add(new Entry(time, what, amount, partial ? PARTIAL : COMPLETED, MOVED, 0L));
     }
 
@@ -73,17 +77,30 @@ public final class BusActivity {
 
     /** Whether the bus has made no move for {@code ticks} up to {@code now}: what another bus waits on it for. */
     public boolean idleFor(final long now, final long ticks) {
-        for (final Entry entry : entries) {
-            if (entry.reason() == MOVED) {
-                return now - entry.time() >= ticks;
-            }
-        }
-        return true;
+        // Kept apart from the log: a run of holds on different items can push the last move out of it.
+        return lastMovedAt == NEVER || now - lastMovedAt >= ticks;
     }
 
-    /** Puts back lines read from a save, oldest first. */
+    /** The game time of the last move, or {@link #NEVER}; saved with the lines. */
+    public long lastMovedAt() {
+        return lastMovedAt;
+    }
+
+    /** Puts back lines read from a save, oldest first; the last move is taken from them. */
     public void restore(final List<Entry> oldestFirst) {
+        long newestMove = NEVER;
+        for (final Entry entry : oldestFirst) {
+            if (entry.reason() == MOVED) {
+                newestMove = entry.time();
+            }
+        }
+        restore(oldestFirst, newestMove);
+    }
+
+    /** Puts back lines and the time of the last move read from a save, oldest first. */
+    public void restore(final List<Entry> oldestFirst, final long lastMoved) {
         entries.clear();
+        lastMovedAt = lastMoved;
         for (final Entry entry : oldestFirst) {
             add(entry);
         }

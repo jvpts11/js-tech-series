@@ -209,6 +209,8 @@ public final class SetupRunner {
             return;
         }
         if (job.ticksLeft() % PUSH_EVERY == 0) {
+            // Progress reaches the next save of the block, so a world closed mid-setup carries on near here.
+            host.markUnsaved();
             pushWindow(host, level, pos, progress(pos, job, SetupProgressPayload.STATE_RUNNING, Text.EMPTY));
             // The first drawing takes a line of its own; every one after it grows over that line.
             final boolean first = job.drawBar();

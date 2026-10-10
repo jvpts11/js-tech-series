@@ -35,6 +35,12 @@ public final class KeyActionClientTests {
     public static void keyAction_pressReachesTheServer(final ClientTestContext ctx) {
         final InputConstants.Key key = InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_KP_9);
         final KeyMapping mapping = KeyActionsClient.mapping(CoreKeys.CHANGE_ITEM_MODE);
+        // Undone also when a wait below times out: the binding lives in the running client, the tool in the hand.
+        ctx.afterTest(() -> {
+            mapping.setKey(InputConstants.UNKNOWN);
+            KeyMapping.resetMapping();
+            ctx.server().submit(() -> holder(ctx).setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY));
+        });
         ctx.thenAssert(0, () -> {
             final List<KeyMapping> keys = List.of(ctx.mc().options.keyMappings);
             for (final KeyAction action : KeyActions.all()) {
@@ -56,12 +62,7 @@ public final class KeyActionClientTests {
                 .thenWaitUntilServer(level -> ItemStates.mode(holder(ctx).getMainHandItem())
                                 .equals(Optional.of(TestItems.MARK)), 40,
                         "the press to change the mode on the server",
-                        level -> "the tool is in " + ItemStates.mode(holder(ctx).getMainHandItem()))
-                .then(0, () -> {
-                    mapping.setKey(InputConstants.UNKNOWN);
-                    KeyMapping.resetMapping();
-                })
-                .thenServer(0, level -> holder(ctx).setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY));
+                        level -> "the tool is in " + ItemStates.mode(holder(ctx).getMainHandItem()));
     }
 
     private static ServerPlayer holder(final ClientTestContext ctx) {

@@ -64,6 +64,9 @@ final class LiveDisks {
     /** How long a mechanical disk takes to have a filesystem made on it, in ticks; a faster one takes less. */
     private static final int FORMAT_TICKS = 140;
 
+    /** The filesystem types that are the medium's own places rather than a device, which a mount only binds in. */
+    private static final Set<String> VIRTUAL_TYPES = Set.of("proc", "sysfs", "devtmpfs", "devpts", "tmpfs", "efivarfs");
+
     private static final TextKey EXT4_USAGE = TextKey.of("jsc.install.live_disks.ext4_usage",
             "Usage: mkfs.ext4 /dev/<device>");
     private static final TextKey NO_DEVICE_SIZE = TextKey.of("jsc.install.live_disks.no_device_size",
@@ -241,9 +244,15 @@ final class LiveDisks {
         boolean binding = false;
         for (int i = 1; i < parts.length; i++) {
             final String word = parts[i];
-            if (word.equals("--rbind") || word.equals("--bind") || word.equals("--types") || word.equals("-t")
-                    || word.startsWith("--make-")) {
+            if (word.equals("--rbind") || word.equals("--bind") || word.startsWith("--make-")) {
                 binding = true;
+            } else if (word.equals("-t") || word.equals("--types")) {
+                // The type is the flag's own argument, not a device; only a virtual one makes the mount a bind.
+                final String type = i + 1 < parts.length ? parts[++i] : "";
+                binding |= VIRTUAL_TYPES.contains(type);
+            } else if (word.equals("-o") || word.equals("--options")) {
+                // Mount options such as rw or noatime are the flag's argument too, and never a device or a point.
+                i++;
             } else if (!word.startsWith("-")) {
                 words.add(word);
             }

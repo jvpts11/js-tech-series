@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.api.client.IComponentActions;
 import dev.jstech.computers.api.client.IComponentRenderer;
 import dev.jstech.computers.gui.layout.UiLayout;

@@ -12,13 +12,16 @@ import dev.jstech.computers.block.part.CraftingRouterPart;
 import dev.jstech.computers.block.part.ReceivingBusPart;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.crafting.CraftingFloor;
+import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.testkit.CraftingRig;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import mekanism.api.Upgrade;
 import mekanism.common.tile.component.TileComponentUpgrade;
 import mekanism.common.tile.factory.TileEntityFactory;
@@ -31,6 +34,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -103,6 +107,79 @@ public final class MekanismRig {
 
     public static StorageKey water() {
         return StorageKey.of(new FluidStack(Fluids.WATER, 1));
+    }
+
+    /** A Mekanism item by its registry path. */
+    public static Item mekItem(final String path) {
+        return item(mek(path));
+    }
+
+    /** A Mekanism Generators item by its registry path. */
+    public static Item generatorsItem(final String path) {
+        return item(generators(path));
+    }
+
+    /** A 3x3 bench pattern from a 9-character layout and a key map (' ' = empty). */
+    public static CraftingPattern bench(final String layout, final Map<Character, Item> keys, final Item result,
+                                        final int count) {
+        final List<ItemStack> grid = new ArrayList<>(CraftingPattern.GRID_SIZE);
+        for (int i = 0; i < CraftingPattern.GRID_SIZE; i++) {
+            final char c = layout.charAt(i);
+            grid.add(c == ' ' ? ItemStack.EMPTY : new ItemStack(keys.get(c)));
+        }
+        return new CraftingPattern(grid, new ItemStack(result, count));
+    }
+
+    /** A Metallurgic Infuser pattern: one {@code in} and {@code extraCount} of {@code extra} make one {@code out}. */
+    public static ProcessingPattern infuse(final Item in, final Item extra, final long extraCount, final Item out) {
+        return new ProcessingPattern(
+                List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(in), 1),
+                        new ProcessingPattern.ProcessingInput(StorageKey.of(extra), extraCount)),
+                List.of(new ProcessingPattern.ProcessingOutput(StorageKey.of(out), 1, 100)),
+                400);
+    }
+
+    /** The five Metallurgic Infuser patterns the Fusion Reactor shell is made through. */
+    public static List<ProcessingPattern> shellMachines() {
+        return List.of(
+                infuse(Items.COPPER_INGOT, Items.REDSTONE, 1, mekItem("alloy_infused")),
+                infuse(mekItem("alloy_infused"), mekItem("dust_diamond"), 2, mekItem("alloy_reinforced")),
+                infuse(mekItem("alloy_reinforced"), mekItem("dust_refined_obsidian"), 4, mekItem("alloy_atomic")),
+                // Basic circuit: osmium + 20 mB of redstone (two dusts).
+                infuse(mekItem("ingot_osmium"), Items.REDSTONE, 2, mekItem("basic_control_circuit")),
+                // Enriched iron: iron + 10 mB of carbon (one coal).
+                infuse(Items.IRON_INGOT, Items.COAL, 1, mekItem("enriched_iron")));
+    }
+
+    /** The nine bench patterns the Fusion Reactor shell is made through, in dependency order. */
+    public static List<CraftingPattern> shellBenches() {
+        final Item frame = generatorsItem("fusion_reactor_frame");
+        final Item atomic = mekItem("alloy_atomic");
+        final Item ultimate = mekItem("ultimate_control_circuit");
+        final List<CraftingPattern> patterns = new ArrayList<>();
+        patterns.add(bench("A#A#X#A#A",
+                Map.of('A', atomic, '#', mekItem("pellet_polonium"), 'X', mekItem("steel_casing")), frame, 4));
+        patterns.add(bench("ACA      ", Map.of('A', atomic, 'C', mekItem("elite_control_circuit")), ultimate, 1));
+        patterns.add(bench("ACA      ",
+                Map.of('A', mekItem("alloy_reinforced"), 'C', mekItem("advanced_control_circuit")),
+                mekItem("elite_control_circuit"), 1));
+        patterns.add(bench("ACA      ",
+                Map.of('A', mekItem("alloy_infused"), 'C', mekItem("basic_control_circuit")),
+                mekItem("advanced_control_circuit"), 1));
+        patterns.add(bench("AOAO OAOA",
+                Map.of('A', mekItem("alloy_infused"), 'O', mekItem("ingot_osmium")),
+                mekItem("basic_chemical_tank"), 1));
+        patterns.add(bench("CGCFTFFFF",
+                Map.of('C', ultimate, 'G', Items.GLASS_PANE, 'F', frame, 'T', mekItem("basic_chemical_tank")),
+                generatorsItem("fusion_reactor_controller"), 1));
+        patterns.add(bench(" F FCF F ", Map.of('F', frame, 'C', ultimate),
+                generatorsItem("fusion_reactor_port"), 2));
+        patterns.add(bench(" R RFR R ", Map.of('F', frame, 'R', Items.REDSTONE),
+                generatorsItem("fusion_reactor_logic_adapter"), 1));
+        patterns.add(bench("SISIGISIS",
+                Map.of('S', mekItem("enriched_iron"), 'I', mekItem("ingot_lead"), 'G', Items.GLASS),
+                generatorsItem("reactor_glass"), 4));
+        return patterns;
     }
 
     /** Builds the crafting network and the machine rig in {@code world}; fails loudly if the machine is missing. */

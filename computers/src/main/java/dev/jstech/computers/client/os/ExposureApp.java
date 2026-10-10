@@ -147,9 +147,7 @@ public final class ExposureApp implements IDesktopApp {
         this.askClose.add(new Button(GameText.resolve(StudioTexts.SAVE), () -> {
             this.askClose.close();
             final int index = this.closing;
-            this.workspace.setCurrent(index);
-            this.workspace.save();
-            this.workspace.close(index);
+            this.workspace.saveAndClose(index);
         }).setPrimary(true));
         this.askClose.add(new Button(GameText.resolve(StudioTexts.DONT_SAVE), () -> {
             this.askClose.close();
@@ -497,11 +495,12 @@ public final class ExposureApp implements IDesktopApp {
         if (doc == null) {
             return List.of();
         }
-        final String text = doc.area().text();
-        final String key = doc.path() + ":" + text.length() + ":" + text.hashCode();
+        // The revision moves with every edit, so the text is not copied and hashed on every frame.
+        final String key = doc.path() + ":" + doc.area().document().revision();
         if (key.equals(this.outlineOf)) {
             return this.outlineRows;
         }
+        final String text = doc.area().text();
         final List<Outline> rows = new ArrayList<>();
         if (LanguageLevel.ofSource(doc.path()) != null) {
             for (final NamedType type : SigmaSemantics.check(

@@ -57,8 +57,8 @@ import org.jetbrains.annotations.Nullable;
 
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.craftFileNameFor;
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.deleteCraftFromDisk;
+import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.mirrorFileName;
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.reconcileCraftsFolder;
-import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.sanitizeFileBase;
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.writeCraftToDisk;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaStackFor;
 
@@ -189,6 +189,8 @@ public final class CraftManagerPayloads {
         int loaded = 0;
         int parsed = 0;
         boolean full = false;
+        // The places are live views of the card and the interfaces, so one built here stays right as recipes go in.
+        final CraftPlaces places = CraftPlaces.of(cc, level);
         for (final String fileName : toLoad) {
             final Optional<String> content = DiskFilesystem.read(media, fileName);
             if (content.isEmpty()) {
@@ -199,10 +201,9 @@ public final class CraftManagerPayloads {
                 continue;
             }
             parsed++;
-            if (keeps(cc, level, recipe)) {
+            if (keeps(places, recipe)) {
                 continue;
             }
-            final CraftPlaces places = CraftPlaces.of(cc, level);
             final CraftPlaces.Place chosen = places.at(payload.place());
             final CraftPlaces.Place into = chosen != null && chosen.isCard() == recipe.bench().isPresent()
                     ? chosen : recipe.bench().isPresent() ? places.cardWithRoom() : places.interfaceWithRoom();
@@ -320,8 +321,7 @@ public final class CraftManagerPayloads {
             if (content.isEmpty()) {
                 continue;
             }
-            final String base = recipe.bench().isPresent() ? craftFileNameFor(recipe.bench().get())
-                    : sanitizeFileBase(recipe.displayName());
+            final String base = mirrorFileName(recipe);
             /*
              * A recipe already on the disc under this name is never overwritten: a different one gets the next free
              * suffix, the same one is simply there already. The encoder writes by the same rule.
@@ -388,8 +388,7 @@ public final class CraftManagerPayloads {
             final List<NetworkRecipe> recipes = place.recipes();
             for (int e = 0; e < recipes.size(); e++) {
                 final NetworkRecipe recipe = recipes.get(e);
-                final String fileName = (recipe.bench().isPresent() ? craftFileNameFor(recipe.bench().get())
-                        : sanitizeFileBase(recipe.displayName())) + ".craft";
+                final String fileName = mirrorFileName(recipe) + ".craft";
                 entries.add(new CraftManagerStatePayload.WireRomEntry(CraftPlaces.ref(p, e), recipe.displayText(),
                         onMedia.contains(fileName), recipe.bench().isPresent() ? CraftManagerStatePayload.BENCH
                                 : recipe.multi().isPresent() ? CraftManagerStatePayload.PIPELINE
@@ -445,9 +444,8 @@ public final class CraftManagerPayloads {
     }
 
     /* Whether the computer keeps {@code recipe} already: a card's ROM, or an interface it drives. */
-    private static boolean keeps(final CraftingComputerBlockEntity cc, final ServerLevel level,
-                                 final NetworkRecipe recipe) {
-        for (final CraftPlaces.Place place : CraftPlaces.of(cc, level).all()) {
+    private static boolean keeps(final CraftPlaces places, final NetworkRecipe recipe) {
+        for (final CraftPlaces.Place place : places.all()) {
             if (place.recipes().stream().anyMatch(held -> held.sameRecipe(recipe))) {
                 return true;
             }

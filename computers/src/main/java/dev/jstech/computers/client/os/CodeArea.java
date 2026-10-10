@@ -117,7 +117,11 @@ public final class CodeArea extends UiComponent {
     private boolean sweeping;
     /** The colouring stands until the text changes; painting is not a reason to read the program again. */
     private List<List<CodeRuns.Run>> cached = List.of();
-    private String colouredText;
+    /** The document revision the cached colouring and widest row were worked out for, or -1 for none. */
+    private long colouredRevision = -1;
+    private long widestRevision = -1;
+    private Font widestFont;
+    private int widestWidth;
     /** How many spaces the Tab key puts down; four unless an editor's settings say otherwise. */
     private int tabSize = 4;
     /** Whether the rows are numbered in the gutter, as every editor does but the oldest. */
@@ -138,7 +142,7 @@ public final class CodeArea extends UiComponent {
         this.doc.setText(value);
         this.scroll = 0;
         this.shift = 0;
-        this.colouredText = null;
+        this.colouredRevision = -1;
         return this;
     }
 
@@ -155,7 +159,7 @@ public final class CodeArea extends UiComponent {
     /** Says how to colour the rows. */
     public CodeArea setColouring(final IColouring value) {
         this.colouring = value == null ? lines -> List.of() : value;
-        this.colouredText = null;
+        this.colouredRevision = -1;
         return this;
     }
 
@@ -260,11 +264,17 @@ public final class CodeArea extends UiComponent {
 
     /** The widest row, in unscaled units, which is how far the view can slide. */
     private int widestLine(final Font font) {
-        int widest = 0;
-        for (int i = 0; i < this.doc.lineCount(); i++) {
-            widest = Math.max(widest, font.width(this.doc.line(i)));
+        // Measuring every row is work in proportion to the program, so it is redone only when the text changes.
+        if (this.widestRevision != this.doc.revision() || this.widestFont != font) {
+            int most = 0;
+            for (int i = 0; i < this.doc.lineCount(); i++) {
+                most = Math.max(most, font.width(this.doc.line(i)));
+            }
+            this.widestWidth = most;
+            this.widestRevision = this.doc.revision();
+            this.widestFont = font;
         }
-        return widest;
+        return this.widestWidth;
     }
 
     /** Slides the rows so the caret stays in view, and never past the end of the widest one. */
@@ -285,14 +295,13 @@ public final class CodeArea extends UiComponent {
 
     /** The rows, coloured, reading the program again only when it is not the one already coloured. */
     private List<List<CodeRuns.Run>> runs() {
-        final String text = this.doc.text();
-        if (!text.equals(this.colouredText)) {
+        if (this.colouredRevision != this.doc.revision()) {
             final List<String> lines = new ArrayList<>(this.doc.lineCount());
             for (int i = 0; i < this.doc.lineCount(); i++) {
                 lines.add(this.doc.line(i));
             }
             this.cached = this.colouring.runsOf(lines);
-            this.colouredText = text;
+            this.colouredRevision = this.doc.revision();
         }
         return this.cached;
     }

@@ -25,7 +25,6 @@ import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.core.text.Text;
-import java.util.Locale;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -35,12 +34,12 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import static dev.jstech.computers.operation.payload.files.FileAccess.NET_ROOT;
 import static dev.jstech.computers.operation.payload.files.FileAccess.commitMedia;
-import static dev.jstech.computers.operation.payload.files.FileAccess.filesystemKindOf;
+import static dev.jstech.computers.operation.payload.files.FileAccess.kindOf;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaFreeWeight;
-import static dev.jstech.computers.operation.payload.files.FileAccess.mediaStackFor;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaSubPath;
 import static dev.jstech.computers.operation.payload.files.FileAccess.netDos;
 import static dev.jstech.computers.operation.payload.files.FileAccess.netShell;
+import static dev.jstech.computers.operation.payload.files.FileAccess.volumeOf;
 
 /**
  * The payloads that save, delete and rename files and create folders.
@@ -88,16 +87,10 @@ public final class FileEditPayloads {
                 return;
             }
             final boolean media = path.startsWith("media:");
-            final ItemStack vol =
-                    media ? mediaStackFor(level, computer, path) : computer.systemDisk();
+            final ItemStack vol = volumeOf(level, computer, path);
             final String real = media ? mediaSubPath(path) : path;
-            final FilesystemKind kind = media
-                    ? FilesystemKind.HIERARCHICAL
-                    : filesystemKindOf(computer);
-            final int dot = real.lastIndexOf('.');
-            final String ext = dot >= 0 && dot < real.length() - 1
-                    ? real.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
-            final FileType type = FileType.of(ext);
+            final FilesystemKind kind = kindOf(computer, path);
+            final FileType type = FileType.ofPath(real);
             if (vol.isEmpty()
                     || kind == FilesystemKind.NONE) {
                 msg = (media ? FileSavedPayload.NO_MEDIUM : FileSavedPayload.NO_SYSTEM_DISK).text();
@@ -151,15 +144,12 @@ public final class FileEditPayloads {
             return;
         }
         final boolean media = path.startsWith("media:");
-        final ItemStack vol =
-                media ? mediaStackFor(level, computer, path) : computer.systemDisk();
+        final ItemStack vol = volumeOf(level, computer, path);
         if (vol.isEmpty()) {
             return;
         }
         final String real = media ? mediaSubPath(path) : path;
-        final FilesystemKind kind = media
-                ? FilesystemKind.HIERARCHICAL
-                : filesystemKindOf(computer);
+        final FilesystemKind kind = kindOf(computer, path);
         // Try removing a real file first; if the path is a folder, remove it recursively.
         if (DiskFilesystem.delete(vol, real)
                 || DiskFilesystem.rmdir(vol, real, kind)) {
@@ -184,15 +174,12 @@ public final class FileEditPayloads {
             return;
         }
         final boolean media = path.startsWith("media:");
-        final ItemStack vol =
-                media ? mediaStackFor(level, computer, path) : computer.systemDisk();
+        final ItemStack vol = volumeOf(level, computer, path);
         if (vol.isEmpty()) {
             return;
         }
         final String real = media ? mediaSubPath(path) : path;
-        final FilesystemKind kind = media
-                ? FilesystemKind.HIERARCHICAL
-                : filesystemKindOf(computer);
+        final FilesystemKind kind = kindOf(computer, path);
         if (DiskFilesystem.mkdir(vol, real, kind)) {
             if (media) {
                 commitMedia(level, computer, path);
@@ -214,14 +201,11 @@ public final class FileEditPayloads {
             return;
         }
         final boolean media = oldPath.startsWith("media:");
-        final ItemStack vol =
-                media ? mediaStackFor(level, computer, oldPath) : computer.systemDisk();
+        final ItemStack vol = volumeOf(level, computer, oldPath);
         if (vol.isEmpty()) {
             return;
         }
-        final FilesystemKind kind = media
-                ? FilesystemKind.HIERARCHICAL
-                : filesystemKindOf(computer);
+        final FilesystemKind kind = kindOf(computer, oldPath);
         // rename() re-keys a real file or directory in place (rejecting .dat projections).
         if (DiskFilesystem.rename(vol,
                 media ? mediaSubPath(oldPath) : oldPath,

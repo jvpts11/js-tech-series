@@ -37,6 +37,16 @@
       "text": "jsindustrial.guide.coal_generator.what"
     },
     {
+      "type": "define",
+      "definition": "jsindustrial.guide.coal_generator.definition1",
+      "term": "jsindustrial.guide.coal_generator.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsindustrial.guide.coal_generator.definition2",
+      "term": "jsindustrial.guide.coal_generator.term2"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.what_it_is_for"
     },

@@ -209,7 +209,9 @@ final class IsmsExplorer {
                 }
             }
             case INDEX -> {
-                if (s != null) {
+                if (s != null && s.index() == null) {
+                    out.add(new Property(IsmsTexts.STATE, GameText.resolve(IsmsTexts.INDEX_UNAVAILABLE)));
+                } else if (s != null) {
                     out.add(new Property(IsmsTexts.STATE, GameText.resolve(health(s.index().state()))));
                     out.add(new Property(IsmsTexts.ROWS_COLUMN, Integer.toString(s.index().catalog())));
                 }
@@ -398,7 +400,8 @@ final class IsmsExplorer {
                 jobs.children.add(new Node(Kind.JOB, "job/" + job.name(), job.name(), job.paused()
                         ? "(" + GameText.resolve(IsmsTexts.PAUSED) + ")" : "", job.name()));
             }
-            indexNote = "(" + GameText.resolve(health(s.index().state())) + ")";
+            indexNote = "(" + GameText.resolve(s.index() == null ? IsmsTexts.INDEX_UNAVAILABLE
+                    : health(s.index().state())) + ")";
         }
         counted(views);
         counted(procedures);

@@ -40,6 +40,7 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.Util;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -93,7 +94,8 @@ public final class GatewayManagerApp implements IDesktopApp {
     private static final int CHOICE_W = 60;
     private static final int POPUP_W = 220;
     private static final int POPUP_H = 62;
-    private static final int REFRESH_TICKS = 40;
+    /** Milliseconds between state requests, so the request rate does not follow the frame rate. */
+    private static final long REFRESH_MILLIS = 2000L;
     /**
      * The manager's own colours, {@code jsc:app/gateway_manager}: what is fine, what is busy, what is wrong, and the
      * edges that tell this mod's side of a bridge from the other side's.
@@ -109,7 +111,7 @@ public final class GatewayManagerApp implements IDesktopApp {
     private GatewayManagerStatePayload state;
     private long selected;
     private int tab;
-    private int frames;
+    private long lastRequestMillis;
     private int lastX;
     private int lastY;
     private int lastW;
@@ -341,6 +343,7 @@ public final class GatewayManagerApp implements IDesktopApp {
     }
 
     private void request() {
+        lastRequestMillis = Util.getMillis();
         PacketDistributor.sendToServer(new RequestGatewayManagerPayload(host, selected));
     }
 
@@ -528,7 +531,7 @@ public final class GatewayManagerApp implements IDesktopApp {
         lastH = height;
         lastMouseX = mouseX;
         lastMouseY = mouseY;
-        if (++frames % REFRESH_TICKS == 0) {
+        if (Util.getMillis() - lastRequestMillis >= REFRESH_MILLIS) {
             request();
         }
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);

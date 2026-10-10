@@ -37,7 +37,7 @@ final class LiveSaved {
         for (final String line : written.split(String.valueOf(LINE), -1)) {
             final int split = line.indexOf('=');
             if (split > 0) {
-                saved.values.put(line.substring(0, split), unescape(line.substring(split + 1)));
+                saved.values.put(unescapeKey(line.substring(0, split)), unescape(line.substring(split + 1)));
             }
         }
         return saved;
@@ -78,7 +78,7 @@ final class LiveSaved {
             if (!out.isEmpty()) {
                 out.append(LINE);
             }
-            out.append(one.getKey()).append('=').append(escape(one.getValue()));
+            out.append(escapeKey(one.getKey())).append('=').append(escape(one.getValue()));
         }
         return out.toString();
     }
@@ -88,7 +88,23 @@ final class LiveSaved {
         return value.replace("\\", "\\\\").replace("\n", "\\n");
     }
 
+    /**
+     * A name written the same way, and its equals sign too: a name is cut from its value at the first equals sign,
+     * so one inside a file's path would otherwise move the cut and read back as a different file.
+     */
+    private static String escapeKey(final String key) {
+        return escape(key).replace("=", "\\e");
+    }
+
     private static String unescape(final String value) {
+        return unescape(value, false);
+    }
+
+    private static String unescapeKey(final String key) {
+        return unescape(key, true);
+    }
+
+    private static String unescape(final String value, final boolean key) {
         final StringBuilder out = new StringBuilder(value.length());
         for (int i = 0; i < value.length(); i++) {
             final char c = value.charAt(i);
@@ -97,7 +113,7 @@ final class LiveSaved {
                 continue;
             }
             final char next = value.charAt(++i);
-            out.append(next == 'n' ? '\n' : next);
+            out.append(next == 'n' ? '\n' : key && next == 'e' ? '=' : next);
         }
         return out.toString();
     }

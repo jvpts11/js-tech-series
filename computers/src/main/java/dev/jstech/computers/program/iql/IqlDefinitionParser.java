@@ -39,11 +39,9 @@ public final class IqlDefinitionParser {
             inner = inner.substring(1, inner.length() - 1);
         }
         final List<String> statements = new ArrayList<>();
-        for (final String part : inner.split(";")) {
-            final String statement = part.strip();
-            if (!statement.isEmpty()) {
-                statements.add(statement);
-            }
+        /* The same quote- and brace-aware split as a script, so a semicolon inside a name ends nothing. */
+        for (final IqlScript.Statement statement : IqlScript.split(inner)) {
+            statements.add(statement.text());
         }
         return statements;
     }
@@ -98,7 +96,7 @@ public final class IqlDefinitionParser {
         if (every < 0 && when < 0) {
             throw IqlError.of(IqlError.JOB_NEEDS_TRIGGER);
         }
-        final boolean useEvery = every >= 0 && (when < 0 || every < when);
+        final boolean useEvery = every > when;
         final int at = useEvery ? every : when;
         final int keywordLength = useEvery ? "EVERY".length() : "WHEN".length();
         final String body = afterAs.substring(0, at).strip();
@@ -155,9 +153,38 @@ public final class IqlDefinitionParser {
                 && (text.length() == keyword.length() || Character.isWhitespace(text.charAt(keyword.length())));
     }
 
-    /** Index of {@code keyword} as a standalone word in {@code text} (case-insensitive), or -1. */
+    /**
+     * Index of the last {@code keyword} standing alone in {@code text} (case-insensitive) outside any quoted
+     * name and any braces, or -1. The last one is the job's trigger: a bus or item name that happens to be
+     * the word is quoted, and a bus setting may itself say WHEN earlier in the body.
+     */
     private static int keywordIndex(final String text, final String keyword) {
         final Matcher matcher = Pattern.compile("(?i)\\b" + keyword + "\\b").matcher(text);
-        return matcher.find() ? matcher.start() : -1;
+        int found = -1;
+        while (matcher.find()) {
+            if (isTopLevel(text, matcher.start())) {
+                found = matcher.start();
+            }
+        }
+        return found;
+    }
+
+    /** Whether the position in {@code text} is outside every quoted run and every brace block. */
+    private static boolean isTopLevel(final String text, final int position) {
+        int depth = 0;
+        char quote = 0;
+        for (int i = 0; i < position; i++) {
+            final char c = text.charAt(i);
+            if (quote != 0) {
+                quote = c == quote ? 0 : quote;
+            } else if (c == '"' || c == '\'') {
+                quote = c;
+            } else if (c == '{') {
+                depth++;
+            } else if (c == '}') {
+                depth = Math.max(0, depth - 1);
+            }
+        }
+        return quote == 0 && depth == 0;
     }
 }

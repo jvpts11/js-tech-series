@@ -54,10 +54,14 @@ public final class GatewayName {
             }
         }
         String name = out.toString();
+        if (name.length() > MAX) {
+            name = name.substring(0, MAX);
+        }
+        // After the cut, so a cut right behind an interior dash does not leave one at the end.
         while (name.endsWith("-")) {
             name = name.substring(0, name.length() - 1);
         }
-        return name.length() > MAX ? name.substring(0, MAX) : name;
+        return name;
     }
 
     /** The name a ComputerCraft computer wraps this Gateway by: {@code jsc_gateway_} and the name. */

@@ -14,50 +14,23 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.FaceRule;
-import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.util.BlockDrops;
-import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.SimpleMenuProvider;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * The Crafting Computer block: an ATX-class computer that executes recipes for the network.
  */
-public class CraftingComputerBlock extends HorizontalDirectionalBlock
-        implements EntityBlock, IFaceConnector, IComputerCase {
-
-    private final HardwareEra era;
-    private final CaseStyle caseStyle;
-    /*
-     * Data over its era's access line on the back (through a router to the backbone), and the crafting cable to its
-     * Crafting Interfaces on any face, since the search for the crafting network walks out of all six.
-     */
-    private final FacePorts ports;
+public class CraftingComputerBlock extends AbstractSmallComputerBlock<CraftingComputerBlockEntity> {
 
     public static final MapCodec<CraftingComputerBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
@@ -65,109 +38,23 @@ public class CraftingComputerBlock extends HorizontalDirectionalBlock
             StableCodecs.byName(CaseStyle.class).fieldOf("case").forGetter(CraftingComputerBlock::caseStyle)
     ).apply(i, CraftingComputerBlock::new));
 
-    public CraftingComputerBlock(final Properties properties, final HardwareEra era, final CaseStyle caseStyle) {
-        super(properties);
-        this.era = era;
-        this.caseStyle = caseStyle;
-        this.ports = FacePorts.builder()
-                .port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS))
-                .port(FaceRule.EVERY, DataLines.upTo(era, DataLine.CRAFTING), PeripheralLine.of(era))
-                .build();
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
-    }
-
-    /**
-     * The hardware era this Crafting Computer belongs to. It selects the block's skin and gates which
-     * board the machine accepts: only a board of this era (and of the era's form factor) installs.
+    /*
+     * Data over its era's access line on the back (through a router to the backbone), and the crafting cable to its
+     * Crafting Interfaces on any face, since the search for the crafting network walks out of all six.
      */
-    public HardwareEra era() {
-        return era;
-    }
-
-    @Override
-    public HardwareEra chassisEra() {
-        return era();
-    }
-
-    @Override
-    public CaseStyle caseStyle() {
-        return caseStyle;
+    public CraftingComputerBlock(final Properties properties, final HardwareEra era, final CaseStyle caseStyle) {
+        super(properties, era, caseStyle,
+                FacePorts.builder()
+                        .port(FaceRule.BACK, DataLines.upTo(era, DataLine.ACCESS))
+                        .port(FaceRule.EVERY, DataLines.upTo(era, DataLine.CRAFTING), PeripheralLine.of(era))
+                        .build(),
+                CraftingComputerBlockEntity.class, ComputingModule.CRAFTING_COMPUTER_BE::get,
+                CraftingComputerBlockEntity::serverTick);
     }
 
     @Override
     public String machineName() {
         return "crafting_computer";
-    }
-
-    /** The case is one model drawn by the block entity; the block itself paints nothing over it. */
-    @Override
-    protected RenderShape getRenderShape(final BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
-    }
-
-    @Override
-    protected MapCodec<? extends CraftingComputerBlock> codec() {
-        return CODEC;
-    }
-
-    @Override
-    public FacePorts ports() {
-        return ports;
-    }
-
-    @Override
-    protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
-    }
-
-    @Override
-    public BlockState getStateForPlacement(final BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
-    }
-
-    @Override
-    protected InteractionResult useWithoutItem(
-            final BlockState state, final Level level, final BlockPos pos,
-            final Player player,
-            final BlockHitResult hit) {
-        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer
-                && level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity computer) {
-            // Sneaking takes the left side off the case, or puts it back, to see what is inside.
-            if (player.isShiftKeyDown()) {
-                computer.toggleSidePanel();
-                return InteractionResult.sidedSuccess(false);
-            }
-            serverPlayer.openMenu(
-                    new SimpleMenuProvider(
-                            (id, inventory, p) -> new CraftingComputerMenu(
-                                    id, inventory, computer),
-                            Component.translatable("block.jsc.crafting_computer")),
-                    buf -> buf.writeBlockPos(pos));
-        }
-        return InteractionResult.sidedSuccess(level.isClientSide());
-    }
-
-    @Override
-    protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
-                            final BlockState newState, final boolean movedByPiston) {
-        if (!state.is(newState.getBlock())
-                && level instanceof ServerLevel serverLevel
-                && level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity computer) {
-            computer.onBroken(serverLevel); // drop this computer's network-node registration
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
-
-    @Override
-    public BlockState playerWillDestroy(final Level level, final BlockPos pos, final BlockState state,
-                                        final Player player) {
-        // Spill the installed hardware so a broken Crafting Computer never destroys its components.
-        if (level instanceof ServerLevel serverLevel
-                && !player.getAbilities().instabuild
-                && level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity computer) {
-            BlockDrops.spill(serverLevel, pos, computer.getHardware());
-        }
-        return super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override
@@ -177,14 +64,18 @@ public class CraftingComputerBlock extends HorizontalDirectionalBlock
     }
 
     @Override
-    @Nullable
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
-            final Level level, final BlockState state, final BlockEntityType<T> type) {
-        if (level.isClientSide()) {
-            return null;
-        }
-        return BlockEntityTickers.create(type, ComputingModule.CRAFTING_COMPUTER_BE.get(),
-                CraftingComputerBlockEntity::serverTick);
+    protected MapCodec<? extends CraftingComputerBlock> codec() {
+        return CODEC;
     }
 
+    @Override
+    protected AbstractContainerMenu createMenu(final int containerId, final Inventory inventory,
+                                               final CraftingComputerBlockEntity computer) {
+        return new CraftingComputerMenu(containerId, inventory, computer);
+    }
+
+    @Override
+    protected Component menuTitle() {
+        return Component.translatable("block.jsc.crafting_computer");
+    }
 }

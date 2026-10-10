@@ -85,6 +85,24 @@ public abstract class AbstractAssemblyScreen<T extends AbstractContainerMenu> ex
         return super.charTyped(c, mods);
     }
 
+    /**
+     * Handles a click against the rename field: one on it focuses it and is taken, one anywhere else lets the field
+     * go. Call it first in {@code mouseClicked}, and stop when it answers true.
+     */
+    protected boolean clickNameBox(final double mouseX, final double mouseY, final int button) {
+        if (nameBox == null) {
+            return false;
+        }
+        if (nameBox.isMouseOver(mouseX, mouseY)) {
+            setFocused(nameBox);
+            nameBox.setFocused(true);
+            nameBox.mouseClicked(mouseX, mouseY, button);
+            return true;
+        }
+        nameBox.setFocused(false);
+        return false;
+    }
+
     /** The well the rename field is drawn over, from {@code left} to {@code right} on the header row at {@code top}. */
     protected static void nameWell(final GuiGraphics g, final int left, final int top, final int right) {
         final NameWell well = NAME_WELL.get();

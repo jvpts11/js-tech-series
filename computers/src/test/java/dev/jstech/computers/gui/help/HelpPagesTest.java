@@ -70,6 +70,17 @@ class HelpPagesTest {
     }
 
     @Test
+    void article_dosWrapsATableCellWiderThanTheGlass() {
+        final int narrow = 12;
+        for (final String line : text(HelpPages.article(reader(), article(), HelpPages.Voice.DOS, narrow,
+                ITextLanguage.ENGLISH, (type, output) -> List.of()))) {
+            if (line.contains("Cores") || line.contains("2,880")) {
+                assertTrue(line.length() <= narrow, "'" + line + "' is " + line.length() + " wide");
+            }
+        }
+    }
+
+    @Test
     void article_keepsEveryLineInsideTheGlass() {
         for (final HelpPages.Voice voice : HelpPages.Voice.values()) {
             for (final String line : text(HelpPages.article(reader(), article(), voice, 30, ITextLanguage.ENGLISH,

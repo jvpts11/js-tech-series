@@ -76,9 +76,10 @@ public final class InteracScreen {
     private static final TextKey ROWS_MANY = TextKey.of("jsc.cli.interac.screen.rows_many", "%s rows");
 
     /** The keys along the foot, in the order those managers had them. */
-    public static final String[] KEYS = {english(KEY_HELP), english(KEY_GET), english(KEY_PUT), english(KEY_CRAFT),
-            english(KEY_LOCK), english(KEY_FREE), english(KEY_FAV), english(KEY_STOP), english(KEY_FIND),
-            english(KEY_QUIT)};
+    public static final List<String> KEYS = List.of(english(KEY_HELP), english(KEY_GET), english(KEY_PUT),
+            english(KEY_CRAFT), english(KEY_LOCK), english(KEY_FREE), english(KEY_FAV), english(KEY_STOP),
+            english(KEY_FIND),
+            english(KEY_QUIT));
 
     /** What the bar along the top calls the program, after the word it is typed as. */
     private static final String TITLE = " interac  " + english(PROGRAM);
@@ -118,8 +119,8 @@ public final class InteracScreen {
      */
     public static int tabAt(final int column) {
         int at = 1;
-        for (int i = 0; i < InteracState.TABS.length; i++) {
-            final int wide = InteracState.TABS[i].length() + 2;
+        for (int i = 0; i < InteracState.TABS.size(); i++) {
+            final int wide = InteracState.TABS.get(i).length() + 2;
             if (column >= at && column < at + wide) {
                 return i;
             }
@@ -131,8 +132,8 @@ public final class InteracScreen {
     /** The key along the foot that column falls on, or {@code -1} for a column between two of them. */
     public static int keyAt(final int column) {
         int at = 0;
-        for (int i = 0; i < KEYS.length; i++) {
-            final int wide = String.valueOf(i + 1).length() + KEYS[i].length() + 1;
+        for (int i = 0; i < KEYS.size(); i++) {
+            final int wide = String.valueOf(i + 1).length() + KEYS.get(i).length() + 1;
             if (column >= at && column < at + wide - 1) {
                 return i;
             }
@@ -242,8 +243,8 @@ public final class InteracScreen {
     /** The row of tabs, the one that is up marked the way a text screen marks a thing. */
     private static String tabs(final InteracState state, final int wide) {
         final StringBuilder out = new StringBuilder(" ");
-        for (int i = 0; i < InteracState.TABS.length; i++) {
-            out.append(i == state.tab() ? "[" : " ").append(InteracState.TABS[i])
+        for (int i = 0; i < InteracState.TABS.size(); i++) {
+            out.append(i == state.tab() ? "[" : " ").append(InteracState.TABS.get(i))
                     .append(i == state.tab() ? "]" : " ");
         }
         return CliText.pad(out.toString(), wide);
@@ -321,8 +322,8 @@ public final class InteracScreen {
      */
     private static String keys(final int wide) {
         final StringBuilder out = new StringBuilder();
-        for (int i = 0; i < KEYS.length; i++) {
-            final String one = (i + 1) + KEYS[i] + " ";
+        for (int i = 0; i < KEYS.size(); i++) {
+            final String one = (i + 1) + KEYS.get(i) + " ";
             if (out.length() + one.length() > wide) {
                 break;
             }

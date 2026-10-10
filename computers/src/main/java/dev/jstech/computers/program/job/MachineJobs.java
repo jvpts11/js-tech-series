@@ -34,18 +34,18 @@ public final class MachineJobs {
     /** How many ticks a game hour is, which is the shortest a schedule may repeat. */
     public static final int HOUR_TICKS = 1000;
 
-    /** One job: what to run, when, and how it is getting on. */
-    public record Job(int id, String line, JobWhen when, long lastRun, boolean running) {
+    /** One job: what to run, when, and when it last ran. */
+    public record Job(int id, String line, JobWhen when, long lastRun) {
 
         /** The same job, having just been run. */
         public Job ran(final long at) {
-            return new Job(this.id, this.line, this.when, at, this.when.once() ? false : this.running);
+            return new Job(this.id, this.line, this.when, at);
         }
     }
 
     /** Puts a line in the list. */
     public Job add(final String line, final JobWhen when) {
-        final Job job = new Job(this.nextId++, line, when, -1L, true);
+        final Job job = new Job(this.nextId++, line, when, -1L);
         this.jobs.add(job);
         return job;
     }
@@ -81,7 +81,8 @@ public final class MachineJobs {
     }
 
     /**
-     * The jobs that are due at that moment, in the order they were added, each marked as having run.
+     * The jobs that are due at that moment, in the order they were added. A job on a schedule is stamped in the
+     * list as having run; the jobs returned are as they were before that stamp.
      *
      * <p>A job that runs once leaves the list when it has; one on a schedule stays and waits for its hour to
      * come round again. Nothing is run twice in the same hour however often this is asked.
@@ -119,6 +120,10 @@ public final class MachineJobs {
     public void restore(final List<Job> kept, final int nextId) {
         this.jobs.clear();
         this.jobs.addAll(kept);
-        this.nextId = Math.max(1, nextId);
+        int next = Math.max(1, nextId);
+        for (final Job job : kept) {
+            next = Math.max(next, job.id() + 1);
+        }
+        this.nextId = next;
     }
 }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.trace;
 
+import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.OperationTypeId;
 import dev.jstech.computers.operation.payload.OperationRecord;
@@ -121,7 +122,7 @@ public final class TracePoints {
         IsmsTraces.post(level, network, TraceEventClass.PLAN_CHOSEN, () -> {
             final String type = operation.typeId();
             final TextKey how = type.equals(OperationTypeId.CRAFT.registryId()) ? BENCH
-                    : type.endsWith(":multi_stage") ? STAGES : MACHINE;
+                    : ComputingOperations.MULTI_STAGE.equals(type) ? STAGES : MACHINE;
             return IsmsTraces.event(level, network, TraceEventClass.PLAN_CHOSEN, PLAN.with(
                     ShortId.of(operation.operationId().toString()), how), TraceEvent.NONE, TraceEvent.NONE, List.of());
         });

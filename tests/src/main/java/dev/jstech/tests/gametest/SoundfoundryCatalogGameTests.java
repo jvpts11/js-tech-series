@@ -18,7 +18,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;
@@ -44,8 +46,42 @@ public final class SoundfoundryCatalogGameTests {
 
     @GameTest(template = ARENA)
     public static void load_readsAnOwnersFolderAndTheDataPacks(final GameTestHelper helper) {
-        final MediaStore store = MediaStore.current().orElseThrow();
         final Path folder = folder();
+        try {
+            readAndCheck(helper, folder);
+        } finally {
+            delete(folder);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void current_holdsTheCatalogueReadWhenTheServerStarted(final GameTestHelper helper) {
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(album(SoundfoundryCatalog.current(), TONES) != null,
+                        "the catalogue read at the start has the data pack's album"))
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void command_readsTheCatalogueAgain(final GameTestHelper helper) {
+        final MinecraftServer server = helper.getLevel().getServer();
+        final int ran;
+        try {
+            ran = server.getCommands().getDispatcher().execute("soundfoundry catalog reload",
+                    server.createCommandSourceStack().withSuppressedOutput());
+        } catch (final CommandSyntaxException unknown) {
+            throw new IllegalStateException("the command is there for an operator", unknown);
+        }
+        helper.assertTrue(ran == 1, "an operator's reload is taken");
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(album(SoundfoundryCatalog.current(), TONES) != null,
+                        "and the catalogue read again still has the data pack's album"))
+                .thenSucceed();
+    }
+
+    private static void readAndCheck(final GameTestHelper helper, final Path folder) {
+        final MediaStore store = MediaStore.current().orElseThrow();
         final String salt = Long.toString(System.nanoTime());
         write(folder.resolve("Some Album").resolve("b song.wav"), TestMedia.wav(300, "Second " + salt));
         write(folder.resolve("Some Album").resolve("a song.wav"), TestMedia.wav(300, "First " + salt));
@@ -76,32 +112,27 @@ public final class SoundfoundryCatalogGameTests {
                         && tones.artist().equals("J's Tech Series")
                         && tones.tracks().stream().map(CatalogTrack::title).toList().equals(List.of("Tone A", "Tone B")),
                 "a data pack's album is read the same way; got " + tones);
+    }
+
+    @GameTest(template = ARENA)
+    public static void load_keepsTheSongsAfterANotesFileThatIsNotUtf8(final GameTestHelper helper) {
+        final MediaStore store = MediaStore.current().orElseThrow();
+        final Path folder = folder();
+        final String salt = Long.toString(System.nanoTime());
+        final Path album = folder.resolve("Accents");
+        write(album.resolve("a song.wav"), TestMedia.wav(300, "Before " + salt));
+        // A Windows-1252 accent: the byte 0xE9 on its own is not valid UTF-8.
+        write(album.resolve(SoundfoundryCatalog.NOTES), new byte[]{'{', '"', 't', 'i', 't', 'l', 'e', '"', ':', '"',
+                'C', 'a', 'f', (byte) 0xE9, '"', '}'});
+        write(album.resolve("z song.wav"), TestMedia.wav(300, "After " + salt));
+
+        final SoundfoundryCatalog.Snapshot read = SoundfoundryCatalog.load(folder,
+                helper.getLevel().getServer().getResourceManager(), store);
+
+        final CatalogAlbum found = album(read, "config/Accents");
+        helper.assertTrue(found != null && found.tracks().size() == 2,
+                "the songs on both sides of the odd notes file are kept; got " + found);
         helper.succeed();
-    }
-
-    @GameTest(template = ARENA, timeoutTicks = 200)
-    public static void current_holdsTheCatalogueReadWhenTheServerStarted(final GameTestHelper helper) {
-        helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(album(SoundfoundryCatalog.current(), TONES) != null,
-                        "the catalogue read at the start has the data pack's album"))
-                .thenSucceed();
-    }
-
-    @GameTest(template = ARENA, timeoutTicks = 200)
-    public static void command_readsTheCatalogueAgain(final GameTestHelper helper) {
-        final MinecraftServer server = helper.getLevel().getServer();
-        final int ran;
-        try {
-            ran = server.getCommands().getDispatcher().execute("soundfoundry catalog reload",
-                    server.createCommandSourceStack().withSuppressedOutput());
-        } catch (final CommandSyntaxException unknown) {
-            throw new IllegalStateException("the command is there for an operator", unknown);
-        }
-        helper.assertTrue(ran == 1, "an operator's reload is taken");
-        helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(album(SoundfoundryCatalog.current(), TONES) != null,
-                        "and the catalogue read again still has the data pack's album"))
-                .thenSucceed();
     }
 
     @Nullable
@@ -123,6 +154,17 @@ public final class SoundfoundryCatalogGameTests {
             Files.write(file, content);
         } catch (final IOException unexpected) {
             throw new IllegalStateException("a temporary file can be written", unexpected);
+        }
+    }
+
+    private static void delete(final Path root) {
+        try (Stream<Path> walk = Files.walk(root)) {
+            // Deepest paths first, so a folder is empty by the time it is deleted.
+            for (final Path path : walk.sorted(Comparator.reverseOrder()).toList()) {
+                Files.deleteIfExists(path);
+            }
+        } catch (final IOException unexpected) {
+            throw new IllegalStateException("the temporary folder can be removed", unexpected);
         }
     }
 }

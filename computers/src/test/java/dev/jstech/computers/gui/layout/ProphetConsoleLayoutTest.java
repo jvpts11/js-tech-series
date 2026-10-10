@@ -54,4 +54,19 @@ class ProphetConsoleLayoutTest {
         assertEquals(1650L, ProphetConsoleLayout.graphTop(1000, Long.MAX_VALUE, 900));
         assertEquals(2200L, ProphetConsoleLayout.graphTop(500, 1000, 2000));
     }
+
+    @Test
+    void scaled_staysInsideTheAxisForLevelsNearTheLargestLong() {
+        final long big = 900_000_000_000_000_000L;
+        assertEquals(50, ProphetConsoleLayout.scaled(big, big, 50));
+        assertEquals(25, ProphetConsoleLayout.scaled(big / 2, big, 50));
+        assertEquals(0, ProphetConsoleLayout.scaled(-5, big, 50));
+    }
+
+    @Test
+    void graphTop_stopsAtTheLargestLongInsteadOfWrapping() {
+        assertEquals(Long.MAX_VALUE, ProphetConsoleLayout.graphTop(0, Long.MAX_VALUE - 1, 0));
+        assertEquals(1_000_000_000_000_000_000L + 100_000_000_000_000_000L,
+                ProphetConsoleLayout.graphTop(0, 1_000_000_000_000_000_000L, 0));
+    }
 }

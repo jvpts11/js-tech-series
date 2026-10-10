@@ -17,7 +17,9 @@ import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.gateway.GatewayLog;
 import dev.jstech.computers.gateway.GatewayPermissions;
+import dev.jstech.computers.gateway.GatewayService;
 import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
@@ -150,6 +152,30 @@ public final class NetworkGatewayGameTests {
                             .english().equals("set everything"), "and the log, newest first");
                     helper.assertTrue(fresh.buffer().getStackInSlot(2).getCount() == 7, "and the buffer");
                     helper.assertTrue(fresh.log().entries().get(0).tone() == GatewayLog.Tone.OK, "with its tones");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void returnToBuffer_dropsWhatNoLongerFitsAndLogsIt(final GameTestHelper helper) {
+        final BlockPos at = new BlockPos(2, 2, 2);
+        helper.setBlock(at, gateway(Direction.EAST));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final NetworkGatewayBlockEntity g = gatewayAt(helper, at);
+                    // The buffer refilled while the items were away: eight slots full, one with room for 4.
+                    for (int slot = 0; slot < g.buffer().getSlots() - 1; slot++) {
+                        g.buffer().setStackInSlot(slot, new ItemStack(Items.COBBLESTONE, 64));
+                    }
+                    g.buffer().setStackInSlot(g.buffer().getSlots() - 1, new ItemStack(Items.COBBLESTONE, 60));
+                    GatewayService.returnToBuffer(helper.getLevel(), g, StorageKey.of(new ItemStack(Items.COBBLESTONE)),
+                            10L, "desk");
+                    helper.assertTrue(g.buffer().getStackInSlot(g.buffer().getSlots() - 1).getCount() == 64,
+                            "what fits goes back into the buffer");
+                    helper.assertItemEntityPresent(Items.COBBLESTONE, at, 3.0D);
+                    helper.assertTrue(g.log().entries().stream()
+                                    .anyMatch(e -> e.what().english().equals("return to buffer")),
+                            "and the rest is dropped at the Gateway and logged, never lost");
                 })
                 .thenSucceed();
     }

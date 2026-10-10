@@ -8,16 +8,13 @@
 package dev.jstech.computers.client.monitor;
 
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.gui.layout.PowerStripLayout;
 import dev.jstech.computers.operation.payload.MachinePowerPayload;
-import dev.jstech.core.gui.Tube;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -65,16 +62,6 @@ public final class PowerStrip {
     };
 
     private PowerStrip() {
-    }
-
-    /** The tube of the monitor at {@code monitor} as this client sees it; a colour tube when there is none there. */
-    public static Tube tubeAt(@Nullable final BlockPos monitor) {
-        final Minecraft minecraft = Minecraft.getInstance();
-        if (monitor == null || minecraft.level == null
-                || !(minecraft.level.getBlockState(monitor).getBlock() instanceof MonitorBlock block)) {
-            return Tube.COLOUR;
-        }
-        return block.kind().tube();
     }
 
     /**

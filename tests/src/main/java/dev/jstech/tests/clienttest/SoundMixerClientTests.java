@@ -19,7 +19,6 @@ import java.util.List;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.AbstractSliderButton;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
@@ -198,10 +197,12 @@ public final class SoundMixerClientTests {
         return (Button) ((ContainerEventHandler) row).children().get(1);
     }
 
+    /* The "N of M" count label, found by its content so another label added before it cannot be mistaken for it. */
     private static String count(final Screen screen) {
-        for (final AbstractWidget text : of(screen, StringWidget.class)) {
-            return text.getMessage().getString();
-        }
-        return "";
+        return of(screen, StringWidget.class).stream()
+                .map(text -> text.getMessage().getString())
+                .filter(label -> label.matches("\\d+ of .*"))
+                .findFirst()
+                .orElse("");
     }
 }

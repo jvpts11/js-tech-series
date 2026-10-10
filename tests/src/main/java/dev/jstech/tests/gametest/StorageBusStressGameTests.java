@@ -81,14 +81,15 @@ public final class StorageBusStressGameTests {
                         final BlockPos sink = new BlockPos(2 + i, 1, 2);   // below: the Export Bus pushes to here
                         world.setBlock(source, Blocks.BARREL);
                         world.setBlock(sink, Blocks.BARREL);
-                        if (helper.getBlockEntity(cablePos) instanceof CableBlockEntity cable) {
-                            final ImportBusPart in = ComputingParts.IMPORT.get().create();
-                            cable.addPart(Direction.UP, in);
-                            in.setFilter(new ItemStack(item));
-                            final ExportBusPart out = ComputingParts.EXPORT.get().create();
-                            cable.addPart(Direction.DOWN, out);
-                            out.setFilter(new ItemStack(item));
+                        if (!(helper.getBlockEntity(cablePos) instanceof CableBlockEntity cable)) {
+                            throw new GameTestAssertException("no cable at " + cablePos);
                         }
+                        final ImportBusPart in = ComputingParts.IMPORT.get().create();
+                        cable.addPart(Direction.UP, in);
+                        in.setFilter(new ItemStack(item));
+                        final ExportBusPart out = ComputingParts.EXPORT.get().create();
+                        cable.addPart(Direction.DOWN, out);
+                        out.setFilter(new ItemStack(item));
                         if (helper.getBlockEntity(source) instanceof Container container) {
                             container.setItem(0, new ItemStack(item, PER_ITEM));
                         }

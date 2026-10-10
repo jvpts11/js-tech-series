@@ -324,4 +324,43 @@ class AsmRoundTripTest {
         assertFalse(this.reader.hasProblems());
         assertEquals(1, read.type("C").methods().getFirst().body().size());
     }
+
+    @Test
+    void read_reportsInstructionsUnderAHeaderWithNoSlotsLine() {
+        this.read(".asm 2\n.class C\n.method void M()\n    ret\n");
+        assertEquals(List.of("A4016"), this.codes());
+    }
+
+    @Test
+    void read_reportsAPlaceTheMethodDoesNotHave() {
+        this.read(".asm 2\n.class C\n.method void M() slots 1\n    ldloc 1\n    ldloc -1\n    ret\n");
+        assertEquals(List.of("A4017", "A4017"), this.codes());
+    }
+
+    @Test
+    void read_acceptsAPlaceWithinTheSlotsAndTheParameters() {
+        this.read(".asm 2\n.class C\n.method void M(int, int) slots 0\n    ldloc 1\n    ret\n");
+        assertFalse(this.reader.hasProblems());
+    }
+
+    @Test
+    void read_reportsALabelThatMarksTwoLines() {
+        this.read(".asm 2\n.class C\n.method void M() slots 0\nL1: ldnull\nL1: ret\n");
+        assertEquals(List.of("A4018"), this.codes());
+        assertEquals(5, this.reader.problems().getFirst().line());
+    }
+
+    @Test
+    void read_reportsOperandsWhoseTypeNameIsBlankWithoutThrowing() {
+        this.read(".asm 2\n.class C\n.method void M() slots 0\n    ldfld .x\n    call .M() -> void\n"
+                + "    call A.M() ->\n    newobj (int)\n    ret\n");
+        assertEquals(List.of("A4006", "A4006", "A4006", "A4006"), this.codes());
+    }
+
+    @Test
+    void read_reportsTextThatIsNotQuoted() {
+        this.read(".asm 2\n.class C\n.method void M() slots 0\n    ldstr hello\n    ldstr \"abc\n"
+                + "    ldstr \"abc\\\"\n    ret\n");
+        assertEquals(List.of("A4006", "A4006", "A4006"), this.codes());
+    }
 }

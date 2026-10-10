@@ -74,6 +74,11 @@ public class CablePartItem extends Item {
         this.type = type;
     }
 
+    /** The kind of part this item mounts. */
+    public PartType<?> partType() {
+        return type.get();
+    }
+
     @Override
     public void appendHoverText(final ItemStack stack, final TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {

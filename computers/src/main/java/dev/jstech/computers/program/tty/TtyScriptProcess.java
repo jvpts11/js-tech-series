@@ -150,8 +150,9 @@ public final class TtyScriptProcess implements ITtyProcess {
             } else {
                 out.redraw(drawn);
             }
+            /* Only a drawing that reached the glass counts, or the first one seen would overwrite a line. */
+            this.printed = 1;
         }
-        this.printed = 1;
         if (done) {
             this.cursor += redraw.ticks();
         }

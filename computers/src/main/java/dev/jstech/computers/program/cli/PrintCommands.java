@@ -26,9 +26,6 @@ final class PrintCommands {
             CommandScope.on(CommandScope.DOS_SYSTEMS).needing(CommandScope.Need.FILES);
     private static final CommandScope POSIX_FILES =
             CommandScope.on(CommandScope.UNIX_SYSTEMS).needing(CommandScope.Need.FILES);
-    /** How many ticks a day of the world lasts, and the hour it starts at. */
-    private static final long DAY_TICKS = 24_000L;
-    private static final long DAY_STARTS = 6L * 60L;
 
     private PrintCommands() {
     }
@@ -41,17 +38,6 @@ final class PrintCommands {
     /** The Unix family's lp and lpstat. */
     static List<ICliCommand> posix() {
         return List.of(new Lp(), new Lpstat());
-    }
-
-    /** The hour of the world's day a request was sent at, as {@code lpstat} gives it beside the day. */
-    static String clock(final long gameTime) {
-        final long minutes = (gameTime % DAY_TICKS) * 60L / 1000L + DAY_STARTS;
-        return String.format(Locale.ROOT, "%02d:%02d", minutes / 60L % 24L, minutes % 60L);
-    }
-
-    /** The world's day a request was sent on, counted from one. */
-    static long day(final long gameTime) {
-        return gameTime / DAY_TICKS + 1L;
     }
 
     /**
@@ -245,8 +231,8 @@ final class PrintCommands {
                     final ICliComputer.PrintJobInfo job = printer.jobs().get(i);
                     final String columns = String.format(Locale.ROOT, "%-12s %-8s %6d", job.id(), job.user(),
                             job.bytes());
-                    final long day = day(job.submitted());
-                    final String clock = clock(job.submitted());
+                    final long day = Stamps.day(job.submitted());
+                    final String clock = Stamps.clock(job.submitted());
                     ctx.out().line(i == 0 && printer.printing() ? ROW_ON.with(columns, day, clock, printer.queue())
                             : ROW.with(columns, day, clock));
                 }

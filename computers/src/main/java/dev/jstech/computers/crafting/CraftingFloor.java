@@ -181,17 +181,6 @@ public final class CraftingFloor {
         return out;
     }
 
-    /** The interface whose own cable the router at {@code site} sits on, or null for none. */
-    @Nullable
-    public Site cableOf(final Site router) {
-        for (final Site site : interfaces) {
-            if (reach(site).routers().contains(router)) {
-                return site;
-            }
-        }
-        return null;
-    }
-
     /* Follows the crafting wire from {@code starts}, gathering the cable blocks, the computers and the parts. */
     private static CraftingFloor scan(final ServerLevel level, final List<BlockPos> starts) {
         final CableType crafting = ComputingModule.CRAFTING_CABLE.get();

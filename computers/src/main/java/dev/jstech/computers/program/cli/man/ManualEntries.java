@@ -14,6 +14,7 @@ import dev.jstech.core.guide.ModGuide;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * The entries of the manuals every mod of the series declares, as {@code man} finds them at a prompt: by the last part
@@ -25,7 +26,7 @@ import java.util.Optional;
 public final class ManualEntries {
 
     /** The characters a typed name may spell a gap with, all read alike. */
-    private static final String GAPS = "[-_\\s]+";
+    private static final Pattern GAPS = Pattern.compile("[-_\\s]+");
 
     private ManualEntries() {
     }
@@ -51,6 +52,6 @@ public final class ManualEntries {
     }
 
     private static String loose(final String name) {
-        return name.strip().toLowerCase(Locale.ROOT).replaceAll(GAPS, "_");
+        return GAPS.matcher(name.strip().toLowerCase(Locale.ROOT)).replaceAll("_");
     }
 }

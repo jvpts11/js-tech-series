@@ -93,7 +93,7 @@ public final class ManualLockGameTests {
     @GameTest(template = ARENA)
     public static void manualLock_holdsNothingOnAnEmptyNetwork(final GameTestHelper helper) {
         final BlockPos at = new BlockPos(2, 2, 2);
-        final MainframeBlockEntity mainframe = NetworkGameTests.placeRunningMainframe(helper, at);
+        final MainframeBlockEntity mainframe = TestWorldBuilder.forGameTest(helper).placeRunningMainframe(at);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final StorageKey iron = StorageKey.of(Items.IRON_INGOT);

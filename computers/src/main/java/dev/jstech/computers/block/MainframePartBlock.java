@@ -18,7 +18,6 @@ import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
-import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;

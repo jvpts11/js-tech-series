@@ -125,6 +125,8 @@ public final class SettingsScreenClientTests {
     public static void settingsScreen_keepsAChangeOnlyWhenDone(final ClientTestContext ctx) {
         final ConfigFile file = fileOf(ComputersServerConfig.SHOW_BOOT_MENU);
         final boolean before = file.get(ComputersServerConfig.SHOW_BOOT_MENU);
+        // Put back also when a check below fails, so later boot tests see the value they expect.
+        ctx.afterTest(() -> file.set(ComputersServerConfig.SHOW_BOOT_MENU, before));
         ctx.then(0, () -> open(ctx, JsComputers.MODID))
                 .thenAwaitScreen(CoreConfigScreen.class, 40)
                 .then(1, () -> {
@@ -143,8 +145,7 @@ public final class SettingsScreenClientTests {
                 .thenScreenshot(2, "computers-boot-changed")
                 .then(0, () -> screen(ctx).done())
                 .thenAssert(1, () -> file.get(ComputersServerConfig.SHOW_BOOT_MENU) != before,
-                        "Done keeps it in the world's settings")
-                .then(0, () -> file.set(ComputersServerConfig.SHOW_BOOT_MENU, before));
+                        "Done keeps it in the world's settings");
     }
 
     /** Opens a mod's settings screen the way the mods list does. */

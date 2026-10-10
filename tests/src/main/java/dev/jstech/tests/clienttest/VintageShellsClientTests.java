@@ -107,25 +107,25 @@ public final class VintageShellsClientTests {
     public static void dosShell_keepsAPromptAsATaskAndSwitchesWithAltTab(final ClientTestContext ctx) {
         atDosShell(ctx)
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_F9, GLFW.GLFW_MOD_SHIFT))
-                .thenWaitUntil(() -> shell(ctx).taskInFront() && shows(ctx, "C:\\>"), SCREEN_WAIT,
+                .thenWaitUntil(() -> shellIs(ctx, true) && shows(ctx, "C:\\>"), SCREEN_WAIT,
                         "Shift+F9 to bring a command prompt up as a task")
                 .then(SETTLE, () -> ctx.type("dir"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> shows(ctx, "AUTOEXEC"), SCREEN_WAIT, "DIR to list the root in the task")
                 .thenScreenshot(2, "dosshell-task")
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_ALT))
-                .thenAssert(0, () -> shell(ctx).banner().equals("MC-DOS Shell"), "Alt+Tab names the shell")
-                .thenWaitUntil(() -> !shell(ctx).taskInFront() && shows(ctx, "Active Task List"), SCREEN_WAIT,
+                .thenAssert(0, () -> "MC-DOS Shell".equals(shellBanner(ctx)), "Alt+Tab names the shell")
+                .thenWaitUntil(() -> shellIs(ctx, false) && shows(ctx, "Active Task List"), SCREEN_WAIT,
                         "letting go of Alt to bring the shell back")
-                .thenAssert(0, () -> shell(ctx).taskCount() == 1, "the prompt is in the Active Task List")
+                .thenAssert(0, () -> shellTasks(ctx) == 1, "the prompt is in the Active Task List")
                 .thenScreenshot(2, "dosshell-task-list")
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_TAB, GLFW.GLFW_MOD_ALT))
-                .thenAssert(0, () -> shell(ctx).banner().equals("Command Prompt"), "Alt+Tab names the task")
-                .thenWaitUntil(() -> shell(ctx).taskInFront() && shows(ctx, "AUTOEXEC"), SCREEN_WAIT,
+                .thenAssert(0, () -> "Command Prompt".equals(shellBanner(ctx)), "Alt+Tab names the task")
+                .thenWaitUntil(() -> shellIs(ctx, true) && shows(ctx, "AUTOEXEC"), SCREEN_WAIT,
                         "the task back with its screen as it was")
                 .then(SETTLE, () -> ctx.type("exit"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
-                .thenWaitUntil(() -> !shell(ctx).taskInFront() && shell(ctx).taskCount() == 0, SCREEN_WAIT,
+                .thenWaitUntil(() -> shellIs(ctx, false) && shellTasks(ctx) == 0, SCREEN_WAIT,
                         "EXIT to end the task and bring the shell back")
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_F3))
                 .thenWaitUntil(() -> !prompt(ctx).editing(), SCREEN_WAIT, "F3 to leave the shell for the prompt");
@@ -156,10 +156,10 @@ public final class VintageShellsClientTests {
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_DOWN))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_DOWN))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
-                .thenWaitUntil(() -> pace(ctx).taskInFront(), SCREEN_WAIT, "the UNIX System over the frames")
+                .thenWaitUntil(() -> paceIs(ctx, true), SCREEN_WAIT, "the UNIX System over the frames")
                 .then(SETTLE, () -> ctx.type("exit"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
-                .thenWaitUntil(() -> !pace(ctx).taskInFront() && shows(ctx, "1  PACE"), SCREEN_WAIT,
+                .thenWaitUntil(() -> paceIs(ctx, false) && shows(ctx, "1  PACE"), SCREEN_WAIT,
                         "exit to bring PACE back")
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_DOWN))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
@@ -211,17 +211,43 @@ public final class VintageShellsClientTests {
         return ctx.screen(CommandPromptScreen.class);
     }
 
+    /* The shell's keys, or null while the console is in another editor, so a wait polls instead of failing. */
+    @Nullable
     private static DosShellKeys shell(final ClientTestContext ctx) {
-        return (DosShellKeys) prompt(ctx).editorKeys();
+        final CommandPromptScreen<?> prompt = ctx.openScreen(CommandPromptScreen.class);
+        return prompt != null && prompt.editorKeys() instanceof DosShellKeys keys ? keys : null;
     }
 
+    @Nullable
     private static PaceKeys pace(final ClientTestContext ctx) {
-        return (PaceKeys) prompt(ctx).editorKeys();
+        final CommandPromptScreen<?> prompt = ctx.openScreen(CommandPromptScreen.class);
+        return prompt != null && prompt.editorKeys() instanceof PaceKeys keys ? keys : null;
+    }
+
+    /* Whether the shell is up and its task is in front (or, with false, up and behind another). */
+    private static boolean shellIs(final ClientTestContext ctx, final boolean inFront) {
+        final DosShellKeys shell = shell(ctx);
+        return shell != null && shell.taskInFront() == inFront;
+    }
+
+    private static boolean paceIs(final ClientTestContext ctx, final boolean inFront) {
+        final PaceKeys pace = pace(ctx);
+        return pace != null && pace.taskInFront() == inFront;
+    }
+
+    private static String shellBanner(final ClientTestContext ctx) {
+        final DosShellKeys shell = shell(ctx);
+        return shell == null ? "" : shell.banner();
+    }
+
+    private static int shellTasks(final ClientTestContext ctx) {
+        final DosShellKeys shell = shell(ctx);
+        return shell == null ? -1 : shell.taskCount();
     }
 
     @Nullable
     private static TextScreen screenOf(final ClientTestContext ctx) {
-        final CommandPromptScreen<?> prompt = ctx.screen(CommandPromptScreen.class);
+        final CommandPromptScreen<?> prompt = ctx.openScreen(CommandPromptScreen.class);
         return prompt == null ? null : prompt.editorScreen();
     }
 

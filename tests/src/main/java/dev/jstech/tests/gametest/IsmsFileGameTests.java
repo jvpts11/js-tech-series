@@ -18,6 +18,7 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -52,8 +53,7 @@ public final class IsmsFileGameTests {
     private static MainframeBlockEntity placeMainframe(final GameTestHelper helper, final BlockPos pos) {
         helper.setBlock(pos, ComputingModule.MAINFRAME.get());
         if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mf)) {
-            helper.fail("no MainframeBlockEntity at " + pos);
-            return null;
+            throw new GameTestAssertException("no MainframeBlockEntity at " + pos);
         }
         final ItemStackHandler hw = mf.getInventory();
         hw.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
@@ -69,8 +69,7 @@ public final class IsmsFileGameTests {
         // installOs writes the systems component onto the disk component and returns true on success.
         final boolean installed = mf.installOs(SO_REDE);
         if (!installed) {
-            helper.fail("installOs returned false at " + pos);
-            return null;
+            throw new GameTestAssertException("installOs returned false at " + pos);
         }
         return mf;
     }
@@ -89,10 +88,6 @@ public final class IsmsFileGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final MainframeBlockEntity mf = placeMainframe(helper, mfPos);
-                    if (mf == null) {
-                        return;
-                    }
-
                     final ItemStack sysDisk = mf.systemDisk();
                     helper.assertFalse(sysDisk.isEmpty(), "system disk must be present after installOs");
 
@@ -139,10 +134,6 @@ public final class IsmsFileGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final MainframeBlockEntity mf = placeMainframe(helper, mfPos);
-                    if (mf == null) {
-                        return;
-                    }
-
                     final ItemStack sysDisk = mf.systemDisk();
                     final FilesystemKind kind = FilesystemKind.FLAT;
 
@@ -187,10 +178,6 @@ public final class IsmsFileGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final MainframeBlockEntity mf = placeMainframe(helper, mfPos);
-                    if (mf == null) {
-                        return;
-                    }
-
                     final ItemStack sysDisk = mf.systemDisk();
                     final FilesystemKind kind = FilesystemKind.FLAT;
                     final String content =
@@ -225,10 +212,6 @@ public final class IsmsFileGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final MainframeBlockEntity mf = placeMainframe(helper, mfPos);
-                    if (mf == null) {
-                        return;
-                    }
-
                     final ItemStack sysDisk = mf.systemDisk();
                     final FilesystemKind kind = FilesystemKind.FLAT;
                     final String settings = "ask_first=false\nresults=text\n";

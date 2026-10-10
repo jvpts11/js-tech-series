@@ -465,7 +465,7 @@ public final class BigBaseScenario {
 
     private static CraftingComputerBlockEntity placeCraftingComputer(final TestWorldBuilder world, final BlockPos desk) {
         final CraftingComputerBlockEntity cc = world.placeRunningCraftingComputer(desk);
-        cc.loadPattern(planksPattern());
+        cc.loadPattern(CraftFiles.oakPlanks());
         cc.loadPattern(sticksPattern());
         return cc;
     }
@@ -493,25 +493,11 @@ public final class BigBaseScenario {
         return world.blockEntity(machine, MachineBlockEntity.class);
     }
 
-    private static CraftingPattern planksPattern() {
-        final List<ItemStack> grid = emptyGrid();
-        grid.set(0, new ItemStack(Items.OAK_LOG));
-        return new CraftingPattern(grid, new ItemStack(Items.OAK_PLANKS, 4));
-    }
-
     private static CraftingPattern sticksPattern() {
-        final List<ItemStack> grid = emptyGrid();
+        final List<ItemStack> grid = CraftFiles.emptyGrid();
         grid.set(0, new ItemStack(Items.OAK_PLANKS));
         grid.set(3, new ItemStack(Items.OAK_PLANKS));
         return new CraftingPattern(grid, new ItemStack(Items.STICK, 4));
-    }
-
-    private static List<ItemStack> emptyGrid() {
-        final List<ItemStack> grid = new ArrayList<>(CraftingPattern.GRID_SIZE);
-        for (int i = 0; i < CraftingPattern.GRID_SIZE; i++) {
-            grid.add(ItemStack.EMPTY);
-        }
-        return grid;
     }
 
     /** The Compressor's ingot-to-plate recipe as a processing pattern, or null when the plate item is not registered. */

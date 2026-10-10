@@ -126,7 +126,7 @@ public final class DockStationClientTests {
 
     @Nullable
     private static ThisPcApp thisPc(final ClientTestContext ctx) {
-        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
+        final DesktopScreen desktop = ctx.openScreen(DesktopScreen.class);
         final DesktopWindow window = desktop == null ? null : desktop.windowFor(THIS_PC);
         return window != null && window.app() instanceof ThisPcApp app ? app : null;
     }

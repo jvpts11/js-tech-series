@@ -33,6 +33,9 @@ final class BusSoftwareView {
     private final List<Section> sections = new ArrayList<>();
     private int contentHeight;
     private int scroll;
+    /* What the sections were last laid out for: they change only when the settings or the window do. */
+    private BusSettings laidOutFor;
+    private BusLayout.Window laidOutWindow;
 
     /** The room a line of code has in its box. */
     private static final int CODE_ROOM = BusLayout.ROW_W - 2 * BusLayout.BOX_PAD - 2;
@@ -80,6 +83,11 @@ final class BusSoftwareView {
 
     private void layOut() {
         final BusSettings s = menu.settings();
+        if (s.equals(laidOutFor) && menu.window() == laidOutWindow) {
+            return;
+        }
+        laidOutFor = s;
+        laidOutWindow = menu.window();
         sections.clear();
         if (s.name().isEmpty()) {
             sections.add(new Section(BusTexts.ADDRESS, wrap(GameText.resolve(BusTexts.NO_NAME)), false));

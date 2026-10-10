@@ -11,7 +11,6 @@ import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.client.os.ClusterManagerApp;
 import dev.jstech.computers.datacenter.LoadBalanceMode;
@@ -28,7 +27,6 @@ import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.util.Loaded;
@@ -44,10 +42,10 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static dev.jstech.computers.operation.payload.cluster.ClusterManagerStateBuilder.buildClusterManagerState;
+import static dev.jstech.computers.operation.payload.cluster.ClusterManagerStateBuilder.sectionStores;
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.resolveMainframe;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,19 +71,6 @@ public final class ClusterManagerPayloads {
                 ComputerAccess.machine(ClusterRenamePayload::hostPos), ClusterManagerPayloads::handleClusterRename);
         registrar.playToClient(ClusterManagerStatePayload.TYPE, ClusterManagerStatePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ClusterManagerPayloads::handleClusterManagerState));
-    }
-
-    static List<ServerStore> sectionStores(final ServerLevel level, final List<NodeUuid> servers) {
-        final NetworkSystem system = NetworkSystem.get(level);
-        final List<ServerStore> stores = new ArrayList<>();
-        for (final NodeUuid node : servers) {
-            system.locationOf(node).ifPresent(loc -> {
-                if (Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
-                    stores.add(rack.getServerStorage(loc.slot()));
-                }
-            });
-        }
-        return stores;
     }
 
     private static void handleRequestClusterManager(final RequestClusterManagerPayload payload,
@@ -116,12 +101,8 @@ public final class ClusterManagerPayloads {
         } else {
             final var node = new ClusterManagementComputerBlockEntity
                     .NodeRef(BlockPos.of(payload.rackPos()), payload.row());
-            // Running a cluster is sending the whole of it one order: power it all on, or install on it all.
-            if (payload.action() == ClusterManagerActionPayload.ACTION_POWER_ALL_ON
-                    || payload.action() == ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_ALL
-                    || payload.action() == ClusterManagerActionPayload.ACTION_INSTALL_PROGRAM_ALL) {
-                JscEvents.award(player, JscEvents.CLUSTER_RUN);
-            }
+            final boolean hadJob = cmc.job() != null;
+            final int[] poweredOn = {0};
             status = switch (payload.action()) {
                 case ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_ALL -> cmc.startJob(ref,
                         ClusterManagementComputerBlockEntity.JobKind.SYSTEM);
@@ -133,8 +114,10 @@ public final class ClusterManagerPayloads {
                 case ClusterManagerActionPayload.ACTION_INSTALL_PROGRAM_NODE -> cmc.startJob(ref,
                         ClusterManagementComputerBlockEntity.JobKind.PROGRAM,
                         List.of(node));
-                case ClusterManagerActionPayload.ACTION_POWER_ALL_ON ->
-                        ClusterManagerStateBuilder.BAYS_ON.with(cmc.powerAll(ref, true));
+                case ClusterManagerActionPayload.ACTION_POWER_ALL_ON -> {
+                    poweredOn[0] = cmc.powerAll(ref, true);
+                    yield ClusterManagerStateBuilder.BAYS_ON.with(poweredOn[0]);
+                }
                 case ClusterManagerActionPayload.ACTION_POWER_ALL_OFF ->
                         ClusterManagerStateBuilder.BAYS_OFF.with(cmc.powerAll(ref, false));
                 case ClusterManagerActionPayload.ACTION_TOGGLE_NODE -> cmc.toggleNode(ref, node)
@@ -152,6 +135,14 @@ public final class ClusterManagerPayloads {
                                 payload.action() == ClusterManagerActionPayload.ACTION_DEPOSIT_ONE);
                 default -> Text.EMPTY;
             };
+            // Running a cluster is sending the whole of it one order: power it all on, or install on it all. The
+            // reward is for an order that took effect, not for one the machine refused.
+            final boolean installedAll = (payload.action() == ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_ALL
+                    || payload.action() == ClusterManagerActionPayload.ACTION_INSTALL_PROGRAM_ALL)
+                    && !hadJob && cmc.job() != null;
+            if (installedAll || poweredOn[0] > 0) {
+                JscEvents.award(player, JscEvents.CLUSTER_RUN);
+            }
         }
         PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level, payload.kind(), payload.index(), status));
     }

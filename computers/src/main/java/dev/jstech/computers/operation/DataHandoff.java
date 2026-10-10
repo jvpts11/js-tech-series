@@ -22,6 +22,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Optional;
+import java.util.function.LongConsumer;
 
 /**
  * What passes between a player's hands and a computer, by every route the GUIs offer (the cursor, a menu
@@ -47,6 +48,8 @@ public final class DataHandoff {
     public enum Outcome {
         /** Data left the source: an INSERT is running, or the local store has taken it. */
         DEPOSITED,
+        /** Items are coming out of the network into the player's hands: a SELECT is running. */
+        PULLED,
         /** A container is filling: a SELECT is running, or the local store has filled it already. */
         FILLED,
         /** Nothing to hand over: an empty source, an amount of zero, or an entry that is not fluid or chemical. */
@@ -245,11 +248,8 @@ public final class DataHandoff {
         stack.shrink(1);
         source.set(stack);
         op.onSettle(() -> {
-            final DataContainers.Filled filled = DataContainers.fill(container, key, sink.total());
-            final long leftover = sink.total() - filled.taken();
-            if (leftover > 0L) {
-                NetworkStorage.of(level, network).insert(key, leftover);
-            }
+            final DataContainers.Filled filled = fillSendingLeftover(container, key, sink.total(),
+                    leftover -> NetworkStorage.of(level, network).insert(key, leftover));
             handBack(player, source, filled.container());
             afterSettle.run();
         });
@@ -299,7 +299,7 @@ public final class DataHandoff {
             }
             afterSettle.run();
         });
-        return Outcome.DEPOSITED;
+        return Outcome.PULLED;
     }
 
     /** Fills ONE held container with {@code key} from a computer's own disks, at once. */
@@ -314,11 +314,8 @@ public final class DataHandoff {
             return Outcome.NO_ROOM;
         }
         final long got = store.extract(key, want);
-        final DataContainers.Filled filled = DataContainers.fill(stack.copyWithCount(1), key, got);
-        final long leftover = got - filled.taken();
-        if (leftover > 0L) {
-            store.insert(key, leftover);
-        }
+        final DataContainers.Filled filled = fillSendingLeftover(stack.copyWithCount(1), key, got,
+                leftover -> store.insert(key, leftover));
         if (filled.taken() <= 0L) {
             return Outcome.NO_ROOM;
         }
@@ -338,6 +335,20 @@ public final class DataHandoff {
         } else {
             player.getInventory().placeItemBackInInventory(stack);
         }
+    }
+
+    /**
+     * Fills {@code container} from {@code got} and sends whatever it could not take to {@code sink}, so the
+     * leftover rule is the same wherever the data came from.
+     */
+    private static DataContainers.Filled fillSendingLeftover(final ItemStack container, final StorageKey key,
+                                                             final long got, final LongConsumer sink) {
+        final DataContainers.Filled filled = DataContainers.fill(container, key, got);
+        final long leftover = got - filled.taken();
+        if (leftover > 0L) {
+            sink.accept(leftover);
+        }
+        return filled;
     }
 
     /** A container going back where it came from when that place is still free, else to the inventory. */

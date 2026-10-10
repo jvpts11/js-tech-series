@@ -27,6 +27,7 @@ import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.HashSet;
@@ -168,6 +169,8 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             final long amount = row.getLong("Amount");
             if (key != null && amount > 0) {
                 final long stored = storage.insert(key, amount);
+                // What storage cannot take now (full, or its chunks not loaded yet) is dropped, not lost.
+                spill(level, mainframe.getBlockPos(), key, amount - stored);
                 if (key.equals(result)) {
                     delivered += stored;
                 }
@@ -743,7 +746,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         final List<HbwInterfaceBlockEntity> online =
                 new ArrayList<>();
         for (final BlockPos pos : supercomputers) {
-            if (level.getBlockEntity(pos)
+            if (Loaded.blockEntity(level, pos)
                     instanceof HbwInterfaceBlockEntity sc
                     && sc.clusterOnline()) {
                 online.add(sc);
@@ -796,7 +799,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
              * An embedded pattern travels with the request (a multi-stage's bench stage), so knowing
              * it does not require a Recipe ROM entry of its own.
              */
-            if (level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc
+            if (Loaded.blockEntity(level, pos) instanceof CraftingComputerBlockEntity cc
                     && cc.canCraft()
                     && (root == null || cc.romContains(root) || root.equals(embeddedPattern))) {
                 capable.add(cc);
@@ -994,22 +997,53 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         final ItemStack prototype = key.stack(1);
         final NetworkStorage storage = NetworkStorage.of(level, network);
         if (prototype.isEmpty()) {
-            storage.insert(key, amount); // a fluid or chemical made by a machine step goes back as data
+            // A fluid or chemical made by a machine step goes back as data; what does not fit is reported.
+            spill(level, spillPoint(), key, amount - storage.insert(key, amount));
+            return;
+        }
+        long remaining = amount;
+        long overflow = 0;
+        while (remaining > 0) {
+            final int chunk = (int) Math.min(remaining, prototype.getMaxStackSize());
+            final int accepted = storage.insert(prototype.copyWithCount(chunk));
+            remaining -= chunk;
+            overflow += chunk - accepted;
+        }
+        // Network storage filled mid-craft: surface the items in the world, never void them.
+        spill(level, spillPoint(), key, overflow);
+    }
+
+    /* Where leftovers that the network cannot take surface: above the first executor, else above the Mainframe. */
+    @Nullable
+    private BlockPos spillPoint() {
+        for (final CraftingComputerBlockEntity executor : executors) {
+            if (executor != null) {
+                return executor.getBlockPos();
+            }
+        }
+        return mainframe == null ? null : mainframe.getBlockPos();
+    }
+
+    /*
+     * Puts {@code amount} of {@code key} that network storage could not take into the world above {@code at}, as
+     * stacks. A fluid or a chemical cannot be dropped, so its loss is logged rather than passing unseen.
+     */
+    private static void spill(final ServerLevel level, @Nullable final BlockPos at, final StorageKey key,
+                              final long amount) {
+        if (amount <= 0) {
+            return;
+        }
+        final ItemStack prototype = key.stack(1);
+        if (prototype.isEmpty() || at == null) {
+            JsComputers.LOGGER.warn("A craft lost {} of {} because network storage was full", amount, key.id());
             return;
         }
         long remaining = amount;
         while (remaining > 0) {
             final int chunk = (int) Math.min(remaining, prototype.getMaxStackSize());
-            final int accepted = storage.insert(prototype.copyWithCount(chunk));
+            Containers.dropItemStack(level, at.getX() + 0.5, at.getY() + 1.0, at.getZ() + 0.5,
+                    prototype.copyWithCount(chunk));
             remaining -= chunk;
-            final int overflow = chunk - accepted;
-            final CraftingComputerBlockEntity drop = executors.isEmpty() ? null : executors.get(0);
-            if (overflow > 0 && drop != null) {
-                // Network storage filled mid-craft: surface the items in the world, never void them.
-                Containers.dropItemStack(level,
-                        drop.getBlockPos().getX() + 0.5, drop.getBlockPos().getY() + 1.0,
-                        drop.getBlockPos().getZ() + 0.5, prototype.copyWithCount(overflow));
-            }
         }
     }
 

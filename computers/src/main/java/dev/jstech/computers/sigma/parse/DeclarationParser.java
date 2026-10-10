@@ -17,8 +17,10 @@ import dev.jstech.computers.sigma.ast.TypeRef;
 import dev.jstech.computers.sigma.lex.Token;
 import dev.jstech.computers.sigma.lex.TokenKind;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,9 +42,16 @@ final class DeclarationParser {
     private final StatementParser statements;
     private final ExpressionParser expressions;
 
-    private static final Set<TokenKind> MODIFIERS = EnumSet.of(
-            TokenKind.PUBLIC, TokenKind.PRIVATE, TokenKind.PROTECTED, TokenKind.STATIC, TokenKind.READONLY,
-            TokenKind.VIRTUAL, TokenKind.OVERRIDE, TokenKind.ABSTRACT);
+    /** Each word that can stand before a declaration, with the modifier it stands for. */
+    private static final Map<TokenKind, IDecl.Modifier> MODIFIERS = new EnumMap<>(Map.of(
+            TokenKind.PUBLIC, IDecl.Modifier.PUBLIC,
+            TokenKind.PRIVATE, IDecl.Modifier.PRIVATE,
+            TokenKind.PROTECTED, IDecl.Modifier.PROTECTED,
+            TokenKind.STATIC, IDecl.Modifier.STATIC,
+            TokenKind.READONLY, IDecl.Modifier.READONLY,
+            TokenKind.VIRTUAL, IDecl.Modifier.VIRTUAL,
+            TokenKind.OVERRIDE, IDecl.Modifier.OVERRIDE,
+            TokenKind.ABSTRACT, IDecl.Modifier.ABSTRACT));
 
     private static final Set<TokenKind> TYPE_DECLARATION_STARTS = EnumSet.of(
             TokenKind.CLASS, TokenKind.STRUCT, TokenKind.RECORD, TokenKind.INTERFACE, TokenKind.ENUM,
@@ -68,7 +77,7 @@ final class DeclarationParser {
     void skipToTypeDeclaration() {
         while (!this.cursor.atEnd()) {
             final TokenKind kind = this.cursor.peek().kind();
-            if (TYPE_DECLARATION_STARTS.contains(kind) || MODIFIERS.contains(kind)) {
+            if (TYPE_DECLARATION_STARTS.contains(kind) || MODIFIERS.containsKey(kind)) {
                 return;
             }
             this.cursor.advance();
@@ -200,8 +209,9 @@ final class DeclarationParser {
                     new IExpr.Member(new IExpr.This(line, column), component.name(), line, column),
                     Operator.ASSIGN, new IExpr.Name(component.name(), line, column), line, column), line, column));
         }
+        final List<String> componentTypes = components.stream().map(c -> c.type().describe()).toList();
         final boolean hasConstructor = written.stream().anyMatch(member -> member instanceof IDecl.ConstructorDecl c
-                && c.parameters().size() == components.size());
+                && typesOf(c.parameters()).equals(componentTypes));
         if (!hasConstructor) {
             final List<IDecl.Parameter> taken = new ArrayList<>();
             for (final IDecl.Parameter component : components) {
@@ -211,7 +221,7 @@ final class DeclarationParser {
             made.add(new IDecl.ConstructorDecl(EnumSet.of(IDecl.Modifier.PUBLIC), name, taken, null,
                     new IStmt.Block(stores, line, column), line, column));
         }
-        if (!declares(written, IDecl.MethodDecl.class, "ToString")) {
+        if (!writesMethod(written, "ToString", List.of())) {
             // Name { X = 1, Y = 2 }, or Name { } with nothing to show.
             IExpr text = new IExpr.Literal(TokenKind.STRING_LITERAL, name + " {", line, column);
             for (int i = 0; i < components.size(); i++) {
@@ -225,7 +235,7 @@ final class DeclarationParser {
                     "ToString", List.of(), new IStmt.Block(List.of(new IStmt.Return(text, line, column)), line, column),
                     line, column));
         }
-        if (!declares(written, IDecl.MethodDecl.class, "Equals")) {
+        if (!writesMethod(written, "Equals", List.of(TypeRef.named(name, line, column).describe()))) {
             // other != null && X == other.X && Y == other.Y
             IExpr same = new IExpr.Binary(Operator.NOT_EQUAL, new IExpr.Name("other", line, column),
                     new IExpr.Literal(TokenKind.NULL, null, line, column), line, column);
@@ -246,6 +256,23 @@ final class DeclarationParser {
 
     private static IExpr plus(final IExpr left, final IExpr right, final int line, final int column) {
         return new IExpr.Binary(Operator.ADD, left, right, line, column);
+    }
+
+    /** The written form of each parameter's type, in order, which is what tells two overloads apart. */
+    private static List<String> typesOf(final List<IDecl.Parameter> parameters) {
+        return parameters.stream().map(parameter -> parameter.type().describe()).toList();
+    }
+
+    /** Whether the body writes that very method; an overload with other parameters leaves the made one alone. */
+    private static boolean writesMethod(final List<IDecl.IMemberDecl> members, final String name,
+                                        final List<String> parameterTypes) {
+        for (final IDecl.IMemberDecl member : members) {
+            if (member instanceof IDecl.MethodDecl method && method.name().equals(name)
+                    && typesOf(method.parameters()).equals(parameterTypes)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean declares(final List<IDecl.IMemberDecl> members, final Class<? extends IDecl> kind,
@@ -460,18 +487,9 @@ final class DeclarationParser {
 
     private Set<IDecl.Modifier> parseModifiers() {
         final Set<IDecl.Modifier> modifiers = EnumSet.noneOf(IDecl.Modifier.class);
-        while (MODIFIERS.contains(this.cursor.peek().kind())) {
+        while (MODIFIERS.containsKey(this.cursor.peek().kind())) {
             final Token word = this.cursor.advance();
-            final IDecl.Modifier modifier = switch (word.kind()) {
-                case PUBLIC -> IDecl.Modifier.PUBLIC;
-                case PRIVATE -> IDecl.Modifier.PRIVATE;
-                case PROTECTED -> IDecl.Modifier.PROTECTED;
-                case STATIC -> IDecl.Modifier.STATIC;
-                case VIRTUAL -> IDecl.Modifier.VIRTUAL;
-                case OVERRIDE -> IDecl.Modifier.OVERRIDE;
-                case ABSTRACT -> IDecl.Modifier.ABSTRACT;
-                default -> IDecl.Modifier.READONLY;
-            };
+            final IDecl.Modifier modifier = MODIFIERS.get(word.kind());
             if (!modifiers.add(modifier)) {
                 this.diagnostics.error(word.line(), word.column(),
                         SigmaError.DUPLICATE_MODIFIER, modifier.text());

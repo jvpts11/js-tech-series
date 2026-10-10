@@ -137,6 +137,7 @@ final class IsmsTexts {
     static final TextKey AGENT = TextKey.of("jsc.isms_app.agent", "Automation Agent");
     static final TextKey JOBS = TextKey.of("jsc.isms_app.jobs", "Jobs");
     static final TextKey HEALTHY = TextKey.of("jsc.isms_app.healthy", "healthy");
+    static final TextKey INDEX_UNAVAILABLE = TextKey.of("jsc.isms_app.index_unavailable", "unavailable");
     static final TextKey STALE = TextKey.of("jsc.isms_app.stale", "stale");
     static final TextKey FRAGMENTED = TextKey.of("jsc.isms_app.fragmented", "fragmented");
     static final TextKey PAUSED = TextKey.of("jsc.isms_app.paused", "paused");

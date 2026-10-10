@@ -35,9 +35,6 @@ final class MachineToolCommands {
     private static final TextKey WORLD_CLOCK =
             TextKey.of("jsc.cli.tool.date.summary", "the day and the time by the world's own clock");
 
-    /** These are about the machine itself, so they are wherever a machine is. */
-    private static final CommandScope ANY_MACHINE = CommandScope.everywhere();
-
     private MachineToolCommands() {
     }
 

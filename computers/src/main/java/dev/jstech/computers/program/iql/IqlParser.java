@@ -255,11 +255,17 @@ public final class IqlParser {
         if (token.endsWith("%")) {
             throw IqlError.of(IqlError.PERCENTAGE, token);
         }
+        final long value;
         try {
-            return Long.parseLong(token);
+            value = Long.parseLong(token);
         } catch (final NumberFormatException e) {
             throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.A_QUANTITY, token);
         }
+        /* A typed number must never collide with the ALL sentinel or read as "everything" downstream. */
+        if (value < 0L) {
+            throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.A_QUANTITY, token);
+        }
+        return value;
     }
 
     /** Mutable accumulator for the optional clauses that follow the item/object. */

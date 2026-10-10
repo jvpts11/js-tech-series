@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.TerminalHit.inRect;
+
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
@@ -204,6 +206,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     // Optimistic per-disk values shown while dragging; overwritten by the authoritative sync each frame.
     private final int[] sliderPreview = new int[LocalStorageSnapshotPayload.MAX_DISKS];
     private final boolean[] sliderPreviewActive = new boolean[LocalStorageSnapshotPayload.MAX_DISKS];
+    /** How many ticks each slider's preview has stood without being dragged. */
+    private final int[] sliderPreviewIdle = new int[LocalStorageSnapshotPayload.MAX_DISKS];
 
     // Operations tab layout (content-relative); the tab and this hit test read the one number.
     private static final int OPS_ROWS = ComputerTerminalLayout.OPS_ROWS;
@@ -660,6 +664,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         if (disk >= 0 && disk < sliderPreview.length) {
             sliderPreview[disk] = permille;
             sliderPreviewActive[disk] = true;
+            sliderPreviewIdle[disk] = 0;
         }
     }
 
@@ -906,10 +911,18 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         if (mouseX < gx || mouseX >= gx + CRAFT_COLS * 18 || mouseY < gy || mouseY >= gy + CRAFT_ROWS * 18) {
             return null;
         }
+        if (!onCell(mouseX - gx) || !onCell(mouseY - gy)) {
+            return null;
+        }
         final int col = (mouseX - gx) / 18;
         final int row = (mouseY - gy) / 18;
         final int index = (row + craftScroll) * CRAFT_COLS + col;
         return index < catalog.size() ? catalog.get(index) : null;
+    }
+
+    /* Whether an offset from a grid's corner is on a cell and not in the 2 pixel gap after it. */
+    private static boolean onCell(final int offset) {
+        return offset >= 0 && offset % 18 < 16;
     }
 
     private void openCraftPopup(final CraftCatalogPayload.Entry entry) {
@@ -1030,7 +1043,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     private NetworkItemEntry networkItemAt(final int mx, final int my) {
         final int relX = mx - (leftPos + NET_X);
         final int relY = my - (topPos + NET_Y);
-        if (relX < 0 || relY < 0 || relX % 18 > 16 || relY % 18 > 16) {
+        if (!onCell(relX) || !onCell(relY)) {
             return null;
         }
         final int col = relX / 18;
@@ -1583,6 +1596,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
 
     /* Ticks to wait for the menu's synchronised data before trusting it to shape the rail. */
     private static final int SETTLE_TICKS = 5;
+    /** How many ticks a released slider keeps its preview waiting for the server to agree. */
+    private static final int SLIDER_PREVIEW_TICKS = 20;
 
     private int ticksOpen;
 
@@ -1595,13 +1610,17 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         }
         qtyBox.setTextColor(theme.text());
         /*
-         * Drop a slider's optimistic preview once the authoritative sync has caught up to it (or while
-         * it is not being dragged and the server reports a different, clamped value), so a rejected
-         * value visibly corrects and later syncs drive the display.
+         * Drop a slider's optimistic preview once the authoritative sync has caught up to it, or, when the
+         * server settled on another value (the disk was pulled, or something else set it first), once the
+         * preview has stood a moment without being dragged, so a rejected value visibly corrects and later
+         * syncs drive the display.
          */
         for (int d = 0; d < sliderPreviewActive.length; d++) {
-            if (sliderPreviewActive[d] && draggingSliderDisk != d
-                    && d < menu.diskCount() && menu.diskPermille(d) == sliderPreview[d]) {
+            if (!sliderPreviewActive[d] || draggingSliderDisk == d) {
+                continue;
+            }
+            if (d < menu.diskCount() && menu.diskPermille(d) == sliderPreview[d]
+                    || ++sliderPreviewIdle[d] > SLIDER_PREVIEW_TICKS) {
                 sliderPreviewActive[d] = false;
             }
         }
@@ -1694,11 +1713,6 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     }
 
 
-    private static boolean inRect(final double mx, final double my, final int x, final int y,
-                                  final int w, final int h) {
-        return mx >= x && mx < x + w && my >= y && my < y + h;
-    }
-
 
     void drawDataIcon(final GuiGraphics g, final StorageKey key, final long count,
                               final int x, final int y) {
@@ -1724,13 +1738,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     }
 
     static String fmt(final long n) {
-        if (n < 10_000) {
-            return String.format("%,d", n);
-        }
-        if (n < 1_000_000) {
-            return String.format("%.1fk", n / 1_000.0);
-        }
-        return String.format("%.1fM", n / 1_000_000.0);
+        return JsTechTheme.fmt(n);
     }
 
     @Override
@@ -1822,7 +1830,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         final int gy = topPos + NET_Y;
         final int relX = mx - gx;
         final int relY = my - gy;
-        if (relX < 0 || relY < 0 || relX % 18 > 15 || relY % 18 > 15) {
+        if (!onCell(relX) || !onCell(relY)) {
             return;
         }
         final int col = relX / 18;

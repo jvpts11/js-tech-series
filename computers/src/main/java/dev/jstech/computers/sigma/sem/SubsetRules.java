@@ -20,6 +20,7 @@ import dev.jstech.computers.sigma.lower.Lowerer;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -135,6 +136,9 @@ public final class SubsetRules {
 
     private final DiagnosticBag diagnostics;
 
+    /** The names of the types the program declares itself, which are the program's own whatever they are called. */
+    private final Set<String> ownTypes = new HashSet<>();
+
     public SubsetRules(final DiagnosticBag diagnostics) {
         this.diagnostics = diagnostics;
     }
@@ -158,6 +162,10 @@ public final class SubsetRules {
         if (level.full()) {
             return;
         }
+        this.ownTypes.clear();
+        for (final CompilationUnit unit : units) {
+            unit.types().forEach(this::collectOwnTypes);
+        }
         for (final CompilationUnit unit : units) {
             this.diagnostics.setFile(unit.file());
             for (final CompilationUnit.Using using : unit.usings()) {
@@ -174,6 +182,17 @@ public final class SubsetRules {
             }
             for (final IDecl.ITypeDecl type : unit.types()) {
                 this.type(type);
+            }
+        }
+    }
+
+    private void collectOwnTypes(final IDecl.ITypeDecl declaration) {
+        this.ownTypes.add(declaration.name());
+        if (declaration instanceof IDecl.ClassDecl klass) {
+            for (final IDecl.IMemberDecl member : klass.members()) {
+                if (member instanceof IDecl.TypeMember nested) {
+                    this.collectOwnTypes(nested.type());
+                }
             }
         }
     }
@@ -342,8 +361,8 @@ public final class SubsetRules {
                 this.arguments(call.arguments());
             }
             case IExpr.Member member -> {
-                this.libraryMember(member);
-                this.expression(member.target());
+                this.libraryMember(member, true);
+                this.inChain(member.target());
             }
             case IExpr.Index index -> {
                 this.expression(index.target());
@@ -395,22 +414,36 @@ public final class SubsetRules {
      * the type: {@code Console.ReadLong} and nothing else. That is also the limit of it, and it is the right
      * limit here, since the checker proper reports anything this misses as a member that is simply not there.
      */
-    private void libraryMember(final IExpr.Member member) {
+    private void libraryMember(final IExpr.Member member, final boolean outermost) {
         /*
          * Written out in full, a name walks past the refused using: System.Utils.Random.Next() never asks for a
          * using at all. It is caught at the root of the chain, where the namespace is still a name of its own.
          */
         if (root(member) instanceof IExpr.Name first && "System".equals(first.identifier())) {
-            this.refuse(first, LIBRARY_NAMED.with("System"), LIBRARY_INSTEAD.with(BuiltIns.SUBSET_LIBRARY));
+            // Once per chain: the inner links of the same chain share the root and would repeat the report.
+            if (outermost) {
+                this.refuse(first, LIBRARY_NAMED.with("System"), LIBRARY_INSTEAD.with(BuiltIns.SUBSET_LIBRARY));
+            }
             return;
         }
-        if (!(member.target() instanceof IExpr.Name owner)) {
+        // A type the program declares is its own, even when it is called Time or Random.
+        if (!(member.target() instanceof IExpr.Name owner) || this.ownTypes.contains(owner.identifier())) {
             return;
         }
         final Set<String> offered = LIBRARY.get(owner.identifier());
         if (offered != null && !offered.contains(member.name())) {
             this.refuse(member, Text.literal("'" + owner.identifier() + "." + member.name() + "'"),
                     LIBRARY_MEMBERS.with(owner.identifier(), String.join(", ", new TreeSet<>(offered))));
+        }
+    }
+
+    /** Walks what a member access is reached through, checking each link of a written-out chain but its root once. */
+    private void inChain(final IExpr target) {
+        if (target instanceof IExpr.Member inner) {
+            this.libraryMember(inner, false);
+            this.inChain(inner.target());
+        } else {
+            this.expression(target);
         }
     }
 

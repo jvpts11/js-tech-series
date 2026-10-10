@@ -58,16 +58,6 @@
       "to": "page"
     },
     {
-      "type": "define",
-      "definition": "jsindustrial.guide.making_and_moving_power.definition2",
-      "term": "jsindustrial.guide.making_and_moving_power.term2"
-    },
-    {
-      "type": "define",
-      "definition": "jsindustrial.guide.making_and_moving_power.definition3",
-      "term": "jsindustrial.guide.making_and_moving_power.term3"
-    },
-    {
       "type": "text",
       "text": "jsindustrial.guide.making_and_moving_power.text2"
     },

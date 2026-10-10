@@ -67,8 +67,15 @@ public final class MusicImporter {
         final String title = GameText.resolve(PICK_TITLE.text());
         final String filter = GameText.resolve(PICK_FILTER.text());
         final Thread picker = new Thread(() -> {
-            final List<Path> picked = openDialog(title, filter);
-            Minecraft.getInstance().execute(() -> bring(picked, host, folder, playlist, listener));
+            List<Path> picked;
+            try {
+                picked = openDialog(title, filter);
+            } catch (final RuntimeException failed) {
+                // A dialog that cannot open still has to end the import so the caller's state is released.
+                picked = List.of();
+            }
+            final List<Path> chosen = picked;
+            Minecraft.getInstance().execute(() -> bring(chosen, host, folder, playlist, listener));
         }, "jsc-music-picker");
         picker.setDaemon(true);
         picker.start();

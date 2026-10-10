@@ -14,6 +14,8 @@ import dev.jstech.computers.block.MainframePartBlock;
 import dev.jstech.computers.block.MainframeStructure;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.menu.CraftingComputerMenu;
+import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
@@ -72,7 +74,7 @@ public final class EraMachineGameTests {
         final Player player = helper.makeMockPlayer(GameType.CREATIVE);
         final BlockPos absolute = helper.absolutePos(pos);
         player.setPos(absolute.getX() + 0.5, absolute.getY(), absolute.getZ() + 0.5);
-        final var menu = new dev.jstech.computers.menu.CraftingComputerMenu(
+        final var menu = new CraftingComputerMenu(
                 1, player.getInventory(), be);
         helper.assertFalse(menu.slots.isEmpty(), "the Crafting Computer menu must build its slots for " + block);
         helper.assertTrue(menu.stillValid(player),
@@ -118,7 +120,7 @@ public final class EraMachineGameTests {
         final Player player = helper.makeMockPlayer(GameType.CREATIVE);
         final BlockPos absolute = helper.absolutePos(pos);
         player.setPos(absolute.getX() + 0.5, absolute.getY(), absolute.getZ() + 0.5);
-        final var menu = new dev.jstech.computers.menu.MainframeMenu(
+        final var menu = new MainframeMenu(
                 1, player.getInventory(), be);
         helper.assertFalse(menu.slots.isEmpty(), "the Mainframe menu must build its slots for " + block);
         helper.assertTrue(menu.stillValid(player),

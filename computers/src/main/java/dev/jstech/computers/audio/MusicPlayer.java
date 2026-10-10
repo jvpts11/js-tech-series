@@ -161,6 +161,8 @@ public final class MusicPlayer {
         start(level, state().current(), Math.max(0L, millis));
         if (wasPaused) {
             MediaSessions.pause(level, key());
+            // start took voices for the rest of the song; a paused song holds none.
+            computer.voices().release(key());
         }
     }
 

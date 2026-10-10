@@ -112,6 +112,13 @@ class VimCommandTest {
     }
 
     @Test
+    void of_readsLeadingZerosAsPartOfTheNumber() {
+        assertEquals(5, VimCommand.of("0000005").goTo());
+        assertEquals(1, VimCommand.of("0000000").goTo());
+        assertEquals(Integer.MAX_VALUE, VimCommand.of("99999999").goTo());
+    }
+
+    @Test
     void unknown_namesWhatWasTyped() {
         assertEquals("E492: not an editor command: zz", VimCommand.unknown("zz").error().english());
     }

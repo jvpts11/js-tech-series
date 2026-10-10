@@ -325,14 +325,8 @@ public final class DosHelp {
             return;
         }
         final List<String> order = reader.get().entries();
-        final int here = this.shown.kind() == HelpTarget.Kind.NODE ? order.indexOf(this.shown.id()) : -1;
-        String pick = found.getFirst();
-        for (final String entry : found) {
-            if (order.indexOf(entry) > here) {
-                pick = entry;
-                break;
-            }
-        }
+        final String pick = HelpSearch.nextHit(order, found,
+                this.shown.kind() == HelpTarget.Kind.NODE ? this.shown.id() : null);
         this.go(HelpTarget.node(reader.get().manualId(), pick));
     }
 
@@ -461,6 +455,7 @@ public final class DosHelp {
     }
 
     private void go(final HelpTarget target) {
+        this.message = "";
         if (!target.equals(this.shown)) {
             this.back.add(this.shown);
             this.shown = target;

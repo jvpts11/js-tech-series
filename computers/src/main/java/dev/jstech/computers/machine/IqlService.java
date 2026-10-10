@@ -215,10 +215,7 @@ public final class IqlService {
             }
         }
         if (!op.orderBy().isEmpty()) {
-            final Comparator<Map.Entry<StorageKey, Long>> order = Comparator.comparing(
-                    entry -> NetworkReadService.rowOf(entry.getKey(), entry.getValue(), server).apply(op.orderBy()),
-                    IqlService::compareFields);
-            rows.sort(op.orderByDescending() ? order.reversed() : order);
+            sortByField(rows, op, server);
         }
         final int cap = op.limit() > 0 ? Math.min(op.limit(), MAX_WILDCARD_TYPES) : MAX_WILDCARD_TYPES;
         return rows.stream().limit(cap).map(Map.Entry::getKey).toList();
@@ -654,7 +651,10 @@ public final class IqlService {
                         : UpdateDoor.NO_MATERIAL.with(key.displayName().getString()));
             }
         }
-        final long quantity = op.quantity() == IqlOperation.ALL ? stock.getOrDefault(key, 1L)
+        // ALL means all the named server holds when FROM is given; the network-wide stock only feeds WITH.
+        final Map<StorageKey, Long> source = from == null ? stock
+                : NetworkStorage.ofServers(this.level, List.of(from)).query();
+        final long quantity = op.quantity() == IqlOperation.ALL ? source.getOrDefault(key, 1L)
                 : Math.max(1L, op.quantity());
         final UpdateRequest request = new UpdateRequest(((BlockEntity) this.terminal).getBlockPos(), key, quantity,
                 set.action(), set.offer() - 1, set.name(), with, from, payer == null ? null : payer.getUUID(),
@@ -688,21 +688,35 @@ public final class IqlService {
                 rows.add(entry);
             }
         }
-        final Comparator<Map.Entry<StorageKey, Long>> order;
         if (!op.orderBy().isEmpty()) {
-            final Comparator<Map.Entry<StorageKey, Long>> byField = Comparator.comparing(
-                    entry -> NetworkReadService.rowOf(entry.getKey(), entry.getValue(), server).apply(op.orderBy()),
-                    IqlService::compareFields);
-            order = op.orderByDescending() ? byField.reversed() : byField;
+            sortByField(rows, op, server);
         } else if (action == UpdateAction.REPAIR) {
-            order = Comparator.comparingInt((Map.Entry<StorageKey, Long> entry) -> entry.getKey().stack(1)
-                    .getDamageValue()).reversed();
+            rows.sort(Comparator.comparingInt((Map.Entry<StorageKey, Long> entry) -> entry.getKey().stack(1)
+                    .getDamageValue()).reversed());
         } else {
-            order = Map.Entry.<StorageKey, Long>comparingByValue().reversed();
+            rows.sort(Map.Entry.<StorageKey, Long>comparingByValue().reversed());
         }
-        rows.sort(order);
         final int cap = op.limit() > 0 ? Math.min(op.limit(), MAX_WILDCARD_TYPES) : MAX_WILDCARD_TYPES;
         return rows.stream().limit(cap).map(Map.Entry::getKey).toList();
+    }
+
+    /*
+     * Sorts the rows by the statement's ORDER BY field. The field is read once per row, not once per comparison:
+     * for the stack-backed fields every read builds an item stack, which a comparator would repeat O(n log n) times.
+     */
+    private static void sortByField(final List<Map.Entry<StorageKey, Long>> rows, final IqlOperation op,
+                                    final String server) {
+        final List<SortKeyed> keyed = new ArrayList<>(rows.size());
+        for (final Map.Entry<StorageKey, Long> entry : rows) {
+            keyed.add(new SortKeyed(entry,
+                    NetworkReadService.rowOf(entry.getKey(), entry.getValue(), server).apply(op.orderBy())));
+        }
+        final Comparator<SortKeyed> order = Comparator.comparing(SortKeyed::value, IqlService::compareFields);
+        keyed.sort(op.orderByDescending() ? order.reversed() : order);
+        rows.clear();
+        for (final SortKeyed row : keyed) {
+            rows.add(row.entry());
+        }
     }
 
     /* The variant of {@code named}'s item the network holds most of, or null when it holds none. */
@@ -854,5 +868,9 @@ public final class IqlService {
     private static boolean serving(final MainframeBlockEntity mainframe) {
         return NetworkEngines.MIDSOFT_IQL_SERVER.program().equals(mainframe.activeEngine())
                 && mainframe.engineRunning();
+    }
+
+    /* A storage row paired with the ORDER BY value read from it once. */
+    private record SortKeyed(Map.Entry<StorageKey, Long> entry, @Nullable String value) {
     }
 }

@@ -531,7 +531,7 @@ public final class DesktopWindow {
             textLeft = x + 4;
         }
         final DesktopEnvironmentDef desktop = OsRegistry.getDesktop(
-                ResourceLocation.fromNamespaceAndPath("jsc", skin.osPath()));
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, skin.osPath()));
         Draw.text(g, font, titleOn(desktop), textLeft, y + 3, skin.titleText());
         g.disableScissor();
     }
@@ -570,7 +570,7 @@ public final class DesktopWindow {
          */
         final DesktopEnvironmentDef desktop =
                 OsRegistry.getDesktop(
-                        ResourceLocation.fromNamespaceAndPath("jsc", skin.osPath()));
+                        ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, skin.osPath()));
         final ProgramSpec program = WindowKeys.program(appKey);
         final ResourceLocation icon = program != null ? program.iconId() : app.iconId();
         final boolean titleIcon = icon != null && !skin.titleCentered();
