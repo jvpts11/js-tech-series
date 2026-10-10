@@ -23,9 +23,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The Operation dispatcher: runs CPU-bound Operation work on virtual threads while keeping every world mutation on the main (server) thread. A task does its computation on a virtual thread and uses its {@link IOperationContext} to bounce world reads/writes back to the main thread and to wait on whole game ticks, so disk latency and throughput are paced deterministically by ticks, never by a wall clock. Multiple disks (one task per server) therefore process in parallel without ever touching the world off-thread.
@@ -41,8 +40,6 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
                     .thenComparingLong(PendingOp::sequence);
 
     private static final int MAX_TERMINAL_HISTORY = 256;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(OperationDispatch.class);
 
     /** An Operation that ran to the end and then answered with nothing at all, which is a mistake in its code. */
     private static final TextKey NO_RESULT = TextKey.of("jscore.operation.failure.no_result",
@@ -82,6 +79,8 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
     private final ArrayDeque<UUID> terminalOrder = new ArrayDeque<>();
     private final Set<CompletableFuture<?>> inFlight = ConcurrentHashMap.newKeySet();
     private final Object tickMonitor = new Object();
+    /* Told of a main-thread step that threw, which the tick then goes on past. */
+    private final Consumer<Throwable> stepFailed;
 
     private volatile long tickCount;
     private volatile boolean closed;
@@ -98,12 +97,21 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
      * free of any knowledge of what a server is.
      */
     public OperationDispatch(final int parallelQueues) {
+        this(parallelQueues, OperationDispatch::reportToTheJdkLog);
+    }
+
+    /**
+     * The same, telling {@code stepFailed} of a main-thread step that throws, so the game can log it its own way;
+     * the Core stays free of any logging library this way, and so does a test that builds a dispatcher.
+     */
+    public OperationDispatch(final int parallelQueues, final Consumer<Throwable> stepFailed) {
         if (parallelQueues < 1) {
             throw new IllegalArgumentException("parallelQueues must be >= 1; got " + parallelQueues);
         }
         this.parallelQueues = parallelQueues;
         this.owner = Thread.currentThread();
         this.workers = Executors.newVirtualThreadPerTaskExecutor();
+        this.stepFailed = Objects.requireNonNull(stepFailed, "stepFailed");
     }
 
     /**
@@ -145,7 +153,7 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
             try {
                 action.run();
             } catch (final RuntimeException | Error error) {
-                LOGGER.error("An Operation's main-thread step failed", error);
+                stepFailed.accept(error);
             }
         }
         // 2. Promote pending Operations onto virtual threads, up to the parallel-queue capacity.
@@ -458,5 +466,11 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
         public boolean isActive() {
             return !closed;
         }
+    }
+
+    /* Where a failing step is reported when nobody says otherwise: the JDK's own log, which needs no library. */
+    private static void reportToTheJdkLog(final Throwable error) {
+        System.getLogger(OperationDispatch.class.getName())
+                .log(System.Logger.Level.ERROR, "An Operation's main-thread step failed", error);
     }
 }

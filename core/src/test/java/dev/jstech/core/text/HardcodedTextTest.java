@@ -108,7 +108,7 @@ class HardcodedTextTest {
                     QUERY + ": the studio's templates, the statements its explorer writes, and its reference"),
             data(COMPUTERS + "operation/payload/terminal/TerminalPayloads.java", 3, QUERY),
             data(COMPUTERS + "engine/nextgre/NextgreStatement.java", 5, QUERY + ": the hints of NextgreIQL's dialect"),
-            data(COMPUTERS + "bus/BusScript.java", 17,
+            data(COMPUTERS + "bus/BusScript.java", 15,
                     QUERY + ", writing a bus's or a router's settings as software sets them"),
             data(COMPUTERS + "crafting/InterfaceScript.java", 3,
                     QUERY + ", writing a Crafting Interface's settings as software sets them"),
@@ -123,6 +123,10 @@ class HardcodedTextTest {
             data(COMPUTERS + "client/os/VirtualStudioCodeApp.java", 7, COMMANDS + "; and the editor's own name"),
             data(COMPUTERS + "audio/SoundfoundryPlaylists.java", 1,
                     FILES + ": the liked songs' playlist, whose name is translated where it is shown"),
+            data(COMPUTERS + "audio/SoundfoundryCovers.java", 1,
+                    "the name of the covers' worker thread, which only a thread dump shows"),
+            data(COMPUTERS + "hardware/IsaSpec.java", 1,
+                    "the kind of thing an exception's message names when an id has no namespace"),
             data(COMPUTERS + "blockentity/AbstractComputerBlockEntity.java", 1, SAVE_TAG),
             data(COMPUTERS + "blockentity/MainframeBlockEntity.java", 1, SAVE_TAG),
             data(COMPUTERS + "client/os/ItemCategories.java", 7,
@@ -170,13 +174,16 @@ class HardcodedTextTest {
             data(COMPUTERS + "sigma/SigmaVersions.java", 11, SIGNATURES + ", keyed by the version they came in"),
             data(COMPUTERS + "vm/program/NumberFunctions.java", 4, SIGNATURES),
             data(COMPUTERS + "vm/system/SystemApi.java", 1, SIGNATURES),
-            data("core/src/main/java/dev/jstech/core/config/ConfigValidator.java", 11,
+            data("core/src/main/java/dev/jstech/core/config/ConfigValidator.java", 13,
                     "why a configuration value was set aside, written to the log"),
             data("core/src/main/java/dev/jstech/core/config/ConfigKey.java", 1, SETTINGS_FILE),
+            data("core/src/main/java/dev/jstech/core/multiblock/MultiblockPatterns.java", 2,
+                    "why a pattern file is refused, written to the log"),
+            data("core/src/main/java/dev/jstech/core/operation/OperationDispatch.java", 1,
+                    "a line for the log, when nobody gives the dispatcher a log of its own"),
             data("core/src/main/java/dev/jstech/core/font/CoreFonts.java", 4,
                     "a font's licence and who made it, named as its makers name them"),
-            data(INDUSTRIAL + "client/CoalGeneratorScreen.java", 1, "the energy unit's symbol"),
-            data(INDUSTRIAL + "client/ProcessingMachineScreen.java", 1, "the energy unit's symbol"));
+            data(INDUSTRIAL + "client/MachineScreenSupport.java", 1, "the energy unit's symbol"));
 
     /** Who a line for the developer is written through. */
     private static final Set<String> LOGGERS = Set.of("LOGGER", "LOG", "logger", "log");

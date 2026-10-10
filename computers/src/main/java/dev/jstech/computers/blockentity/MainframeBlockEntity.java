@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.block.MainframeBlock;
@@ -586,7 +587,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     private void runDispatch() {
         final int queues = Math.max(1, pooledQueues());
         if (dispatch == null) {
-            dispatch = new OperationDispatch(queues);
+            dispatch = newDispatch(queues);
             dispatchQueues = queues;
         } else if (dispatchQueues != queues) {
             /*
@@ -608,10 +609,16 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     private OperationDispatch ensureDispatch() {
         if (dispatch == null) {
             final int queues = Math.max(1, pooledQueues());
-            dispatch = new OperationDispatch(queues);
+            dispatch = newDispatch(queues);
             dispatchQueues = queues;
         }
         return dispatch;
+    }
+
+    /* A dispatcher whose failing main-thread steps go to the mod's log. */
+    private static OperationDispatch newDispatch(final int queues) {
+        return new OperationDispatch(queues,
+                error -> JsComputers.LOGGER.error("An Operation's main-thread step failed", error));
     }
 
     private void closeDispatch() {

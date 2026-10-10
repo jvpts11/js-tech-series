@@ -194,7 +194,7 @@ public record IqlBusStatement(String bus, Change change) {
                 case "MATCH" -> new Match(either("FUZZY", "EXACT"));
                 case "KEEP" -> quantities(true);
                 case "MAX" -> quantities(false);
-                case "PRIORITY" -> new Priority(intNumber());
+                case "PRIORITY" -> new Priority(signedIntNumber());
                 case "WHEN" -> when();
                 case "AFTER" -> {
                     keyword("BUS");
@@ -343,6 +343,16 @@ public record IqlBusStatement(String bus, Change change) {
             final int at = pos;
             final long value = number();
             if (value < 0 || value > Integer.MAX_VALUE) {
+                throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.A_COUNT, tokens.get(at).text());
+            }
+            return (int) value;
+        }
+
+        /* A whole number that fits an int, below zero too: a priority under another bus's is negative. */
+        private int signedIntNumber() {
+            final int at = pos;
+            final long value = number();
+            if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
                 throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.A_COUNT, tokens.get(at).text());
             }
             return (int) value;

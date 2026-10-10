@@ -131,6 +131,7 @@ class IqlBusStatementTest {
     void parse_refusesCountsThatDoNotFitAnIntOrAreNegative() {
         assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x MAX 4294967297"));
         assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x KEEP -1"));
-        assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x PRIORITY -1"));
+        // A priority may be below zero, but never past what an int holds.
+        assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x PRIORITY 4294967297"));
     }
 }

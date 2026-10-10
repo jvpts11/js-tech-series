@@ -104,6 +104,20 @@ public final class ConfigKeyGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void validator_refusesANumberThatIsNotANumber(final GameTestHelper helper) {
+        final List<String> log = new ArrayList<>();
+        final ConfigValidator validator = new ConfigValidator(log::add);
+
+        final IConfigValidationResult<Double> result =
+                validator.validate(ConfigKey.number("share", 0.5).range(0.0, 1.0), Double.NaN);
+
+        helper.assertTrue(result instanceof IConfigValidationResult.Rejected<Double>,
+                "not a number is refused rather than pulled to the top of the range: " + result);
+        same(helper, 0.5, result.value(), "the default is used instead");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
     public static void validator_pullsANumberOutsideItsRangeToTheNearerEnd(final GameTestHelper helper) {
         final List<String> log = new ArrayList<>();
         final ConfigValidator validator = new ConfigValidator(log::add);
