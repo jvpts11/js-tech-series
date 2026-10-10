@@ -2,11 +2,11 @@
   "blocks": [
     {
       "type": "text",
-      "text": "jsc.guide.tank.text1"
+      "text": "jsc.guide.fluids.text1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.tank.text2"
+      "text": "jsc.guide.fluids.text2"
     },
     {
       "type": "heading",
@@ -16,18 +16,15 @@
       "type": "problems",
       "problems": [
         {
-          "fix": "jsc.guide.tank.fix1",
-          "problem": "jsc.guide.tank.problem1"
+          "fix": "jsc.guide.fluids.fix1",
+          "problem": "jsc.guide.fluids.problem1"
         }
       ]
     }
   ],
-  "icon": "jsc:tank",
-  "id": "jsc:tank",
-  "items": [
-    "jsc:tank"
-  ],
+  "icon": "minecraft:water_bucket",
+  "id": "jsc:fluids",
   "order": 37,
   "section": "jsc:storage",
-  "title": "jsc.guide.tank.title"
+  "title": "jsc.guide.fluids.title"
 }

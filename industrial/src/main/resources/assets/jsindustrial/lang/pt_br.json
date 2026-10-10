@@ -3,6 +3,7 @@
   "block.jsindustrial.compressor": "Compressor",
   "block.jsindustrial.electric_furnace": "Forno Elétrico",
   "block.jsindustrial.macerator": "Macerador",
+  "block.jsindustrial.tank": "Tanque",
   "item.jsindustrial.energy_cable": "Cabo de Energia",
   "itemGroup.jsindustrial.industrial": "J's Industrial",
   "jsindustrial.cable.energy": "Linha de energia: leva a energia dos geradores às máquinas, a qualquer distância, sem perder nada",
@@ -34,7 +35,6 @@
   "jsindustrial.guide.coal_generator.use2": "Ponha combustível no slot: carvão, carvão vegetal, tábuas, toras.",
   "jsindustrial.guide.coal_generator.use3": "Um carvão queima 1.600 ticks e faz 32.000 FE.",
   "jsindustrial.guide.coal_generator.use4": "Guarda 16.000 FE e entrega até 1.000 FE por tick.",
-  "jsindustrial.guide.coal_generator.warning1": "Não queime um balde de lava nele: ele leva o balde inteiro e não devolve o balde vazio.",
   "jsindustrial.guide.coal_generator.what": "Um bloco que queima combustível para fazer energia: 20 FE por tick enquanto queima.",
   "jsindustrial.guide.compressor.fix1": "Sem energia: o gerador precisa de carvão e tem de encostar no Compressor.",
   "jsindustrial.guide.compressor.fix2": "Um gerador faz 20 FE (unidades de energia) por tick (um vigésimo de segundo); o Compressor precisa de 30. Acrescente um segundo gerador.",
@@ -136,5 +136,13 @@
   "jsindustrial.guide.section.machines": "Máquinas",
   "jsindustrial.guide.section.materials": "Materiais",
   "jsindustrial.guide.section.power": "Energia",
-  "jsindustrial.guide.section.reading": "Lendo os desenhos"
+  "jsindustrial.guide.section.reading": "Lendo os desenhos",
+  "jsindustrial.guide.section.storage": "Armazenamento",
+  "jsindustrial.guide.tank.title": "Tanque",
+  "jsindustrial.guide.tank.for": "Guardar um fluido e entregá-lo a canos, cabos e o que mais tire fluidos de um bloco.",
+  "jsindustrial.guide.tank.fix1": "Ele já tem outro fluido, ou está cheio.",
+  "jsindustrial.guide.tank.problem1": "O fluido não entra.",
+  "jsindustrial.guide.tank.use1": "Encha-o com um balde ou um cano, e esvazie-o do mesmo jeito.",
+  "jsindustrial.guide.tank.use2": "Quebre-o e o item guarda o fluido: coloque-o de novo e o fluido volta.",
+  "jsindustrial.guide.tank.what": "Um tanque simples que guarda até 16 baldes de um fluido."
 }

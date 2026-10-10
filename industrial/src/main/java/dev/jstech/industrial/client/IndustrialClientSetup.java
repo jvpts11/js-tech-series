@@ -14,6 +14,7 @@ import net.minecraft.client.gui.screens.MenuScreens;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 import java.util.function.ToIntFunction;
@@ -37,6 +38,11 @@ public final class IndustrialClientSetup {
                 processing(MachineScreenSupport.Colours::furnaceProgress));
         event.register(IndustrialModule.COMPRESSOR_MENU.get(),
                 processing(MachineScreenSupport.Colours::compressorProgress));
+    }
+
+    @SubscribeEvent
+    public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(IndustrialModule.TANK_BE.get(), TankRenderer::new);
     }
 
     private static MenuScreens.ScreenConstructor<ProcessingMachineMenu, ProcessingMachineScreen> processing(

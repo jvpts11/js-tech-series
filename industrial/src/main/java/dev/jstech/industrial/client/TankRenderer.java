@@ -3,13 +3,13 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Industrial.
  */
-package dev.jstech.computers.client;
+package dev.jstech.industrial.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import dev.jstech.computers.blockentity.TankBlockEntity;
+import dev.jstech.industrial.blockentity.TankBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -23,7 +23,8 @@ import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtension
 import net.neoforged.neoforge.fluids.FluidStack;
 
 /**
- * Draws the fluid held inside a {@link TankBlockEntity} as a coloured volume that rises with the fill level, so the player can read at a glance how much fits.
+ * Draws the fluid held inside a {@link TankBlockEntity} as a coloured volume that rises with the fill level, so the
+ * player can read at a glance how much fits.
  */
 public class TankRenderer implements BlockEntityRenderer<TankBlockEntity> {
 

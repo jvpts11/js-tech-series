@@ -11,7 +11,6 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
-import dev.jstech.computers.blockentity.TankBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
@@ -20,6 +19,7 @@ import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
+import dev.jstech.industrial.blockentity.TankBlockEntity;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.industrial.menu.ProcessingMachineMenu;
 import dev.jstech.tests.JsTests;
@@ -208,7 +208,7 @@ public final class CoreKitGameTests {
 
     @GameTest(template = ARENA)
     public static void fields_offerTheExposedTankOnEverySideAndSaveIt(final GameTestHelper helper) {
-        helper.setBlock(MACHINE, ComputingModule.TANK.get());
+        helper.setBlock(MACHINE, IndustrialModule.TANK.get());
         final TankBlockEntity tank = machine(helper, TankBlockEntity.class);
         final BlockPos at = helper.absolutePos(MACHINE);
         for (final Direction side : Direction.values()) {

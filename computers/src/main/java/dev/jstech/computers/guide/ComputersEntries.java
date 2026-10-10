@@ -31,7 +31,6 @@ import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.block.SubwooferBlock;
-import dev.jstech.computers.block.TankBlock;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
@@ -56,6 +55,7 @@ import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaReaderBlock;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.guide.ModGuide;
+import net.minecraft.world.item.Items;
 
 /**
  * The entries of J's Computers' chapter, written as a guide reads: what a computer is here and how to build one first,
@@ -939,12 +939,12 @@ final class ComputersEntries {
                 .ifSomethingGoesWrong("The bus moves nothing.",
                         "Its filter takes nothing, it waits for a redstone signal, or it is not on the network.")
                 .register();
-        guide.page("tank", section).titled("Tank").icon(ComputingModule.TANK)
-                .coversAll(blocksOf(TankBlock.class))
-                .paragraph("A plain fluid tank, and the network's way of handling fluids: an Import Bus on a cable"
-                        + " against it takes its fluid in, and an Export Bus fills it, the same way they move items.")
-                .paragraph("Fill it with a bucket or a pipe. Inside the network a bucket of fluid takes as much room"
-                        + " as an item ([](jsc:items_as_data)).")
+        guide.page("fluids", section).titled("Fluids").icon(() -> Items.WATER_BUCKET)
+                .paragraph("The network keeps fluids as it keeps items: an Import Bus on a cable against a tank takes"
+                        + " its fluid in, and an Export Bus fills one, the same way they move items. A tank of any"
+                        + " mod will do.")
+                .paragraph("Inside the network a bucket of fluid takes as much room as an item"
+                        + " ([](jsc:items_as_data)).")
                 .ifSomethingGoesWrong("The fluid does not go in.",
                         "The network's storage has no room left.")
                 .register();

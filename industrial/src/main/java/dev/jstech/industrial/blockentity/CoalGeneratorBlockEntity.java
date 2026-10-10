@@ -67,7 +67,12 @@ public class CoalGeneratorBlockEntity extends MachineBlockEntity {
             final ItemStack fuel = getInventory().getStackInSlot(FUEL_SLOT);
             final int duration = fuel.getBurnTime(null);
             if (duration > 0) {
+                // A fuel that leaves something behind (a lava bucket's empty bucket) gives it back, as a furnace does.
+                final ItemStack remainder = fuel.getCraftingRemainingItem();
                 getInventory().extractItem(FUEL_SLOT, 1, false);
+                if (!remainder.isEmpty() && getInventory().getStackInSlot(FUEL_SLOT).isEmpty()) {
+                    getInventory().setStackInSlot(FUEL_SLOT, remainder);
+                }
                 burnTime.set(duration);
                 maxBurnTime.set(duration);
                 getEnergy().generate(FE_PER_TICK);

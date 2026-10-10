@@ -7,11 +7,11 @@
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.fluid.FluidGrids;
 import dev.jstech.core.fluid.PipeLimits;
+import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestCableTypes;
 import dev.jstech.tests.TestFluidEnds;
@@ -119,7 +119,7 @@ public final class PipeGameTests {
     @GameTest(template = ARENA)
     public static void pipe_fillsATank(final GameTestHelper helper) {
         final FluidTank output = ends(helper, new FluidStack(Fluids.WATER, 2_000), TestCableTypes.PLAIN_PIPE);
-        helper.setBlock(INPUT, ComputingModule.TANK.get());
+        helper.setBlock(INPUT, IndustrialModule.TANK.get());
         final IFluidHandler tank = helper.getLevel().getCapability(Capabilities.FluidHandler.BLOCK,
                 helper.absolutePos(INPUT), null);
         helper.assertTrue(tank != null, "the tank holds fluids");

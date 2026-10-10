@@ -1402,8 +1402,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   installed compiler and says which one it is ("sgsc 2.0"), and a button for each version of the language. A
   version's button writes `langversion: N` into the project and Default takes the line out again; under them, the
   error a lower version gives for what came after it, and the line the choice wrote.
+- A block declared in J's Core with `Drops.SELF_WITH_CONTENTS` drops its item carrying what its block entity keeps,
+  as a shulker box keeps its items, and is placed again as it was.
 
 ### Changed
+- The Tank belongs to J's Industrial now (`jsindustrial:tank`), on its own Storage shelf and in its manual. A Tank
+  placed under the old name is gone from a world made before. J's Computers' manual explains fluids on a page of
+  their own, with a tank of any mod.
 - The settings screen of the series' mods is new: a tab for the world's settings, one for the player's and one for
   every game's, each with a line saying where they are kept; each section with its count of settings, a mark while
   one of them is changed and not saved, and a line saying what it is for; a card for each setting with its whole
@@ -2118,6 +2123,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The terminal's scrollback and the cached pictures of monitors are let go when a world is left, and two different
   pictures can no longer share one texture.
 - Clusters, routers and nodes without a name read in the player's language.
+- The Coal Generator gives the empty bucket back when it burns a lava bucket, as a furnace does.
+- A Tank broken keeps its fluid in its item, which says what it holds, and gives it back when it is placed.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

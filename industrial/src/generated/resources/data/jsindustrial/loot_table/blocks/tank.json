@@ -11,11 +11,17 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "jsc:tank"
+          "functions": [
+            {
+              "function": "minecraft:copy_components",
+              "source": "block_entity"
+            }
+          ],
+          "name": "jsindustrial:tank"
         }
       ],
       "rolls": 1.0
     }
   ],
-  "random_sequence": "jsc:blocks/tank"
+  "random_sequence": "jsindustrial:blocks/tank"
 }

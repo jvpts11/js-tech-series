@@ -189,7 +189,6 @@ public final class ComputingClientSetup {
 
     @SubscribeEvent
     public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(ComputingModule.TANK_BE.get(), TankRenderer::new);
         // Every rack cabinet (server, per era, and supercomputer) is one GeckoLib model on its controller.
         event.registerBlockEntityRenderer(ComputingModule.SERVER_RACK_BE.get(), RackRenderer::new);
         // The Mainframe is the same idea: one cabinet per era, drawn from the controller block.

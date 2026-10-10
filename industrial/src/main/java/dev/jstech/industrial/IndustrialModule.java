@@ -16,7 +16,9 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
+import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
+import dev.jstech.core.content.IBlockModel;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.machine.ProcessingKind;
@@ -24,16 +26,20 @@ import dev.jstech.core.machine.ProcessingMachineBlockEntity;
 import dev.jstech.core.material.MaterialForm;
 import dev.jstech.core.material.MaterialItems;
 import dev.jstech.core.material.ModMaterial;
+import dev.jstech.industrial.block.TankBlock;
 import dev.jstech.industrial.blockentity.CoalGeneratorBlockEntity;
 import dev.jstech.industrial.blockentity.CompressorBlockEntity;
 import dev.jstech.industrial.blockentity.ElectricFurnaceBlockEntity;
 import dev.jstech.industrial.blockentity.MaceratorBlockEntity;
+import dev.jstech.industrial.blockentity.TankBlockEntity;
+import dev.jstech.industrial.item.TankItem;
 import dev.jstech.industrial.menu.CoalGeneratorMenu;
 import dev.jstech.industrial.menu.ProcessingMachineMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
@@ -65,6 +71,7 @@ public final class IndustrialModule {
         }
     });
     private static final ContentTab.Section CABLES = INDUSTRIAL_TAB.section();
+    private static final ContentTab.Section STORAGE = INDUSTRIAL_TAB.section();
     /** The tab's last shelf: the mod's manual. */
     public static final ContentTab.Section MANUALS = INDUSTRIAL_TAB.section();
 
@@ -120,6 +127,20 @@ public final class IndustrialModule {
                     .plug(ResourceLocation.fromNamespaceAndPath(JsIndustrial.MODID, "block/cable/plug/energy")))
             .named("Energy Cable").tab(CABLES).register();
 
+    // Storage
+
+    /*
+     * The Tank: glass walls in a metal casing, so it reads as a vessel rather than a solid block. Broken, it keeps its
+     * fluid in its item.
+     */
+    public static final BlockEntry<TankBlock> TANK = CONTENT.block("tank", TankBlock::new)
+            .properties(properties -> properties.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(0.6F)
+                    .sound(SoundType.GLASS).noOcclusion())
+            .named("Tank")
+            .look(IBlockLook.fixed(new IBlockModel.BottomTop("tank", "minecraft:block/glass",
+                    "block/tank_casing", "block/tank_casing", "cutout")))
+            .item(TankItem::new).tab(STORAGE).drops(Drops.SELF_WITH_CONTENTS).register();
+
     // Block entities
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MaceratorBlockEntity>> MACERATOR_BE =
@@ -133,6 +154,9 @@ public final class IndustrialModule {
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CompressorBlockEntity>> COMPRESSOR_BE =
             CONTENT.blockEntity("compressor", CompressorBlockEntity::new, COMPRESSOR);
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TankBlockEntity>> TANK_BE =
+            CONTENT.blockEntity("tank", TankBlockEntity::new, TANK);
 
     // Menus
 

@@ -123,7 +123,7 @@ public final class BlockBuilder<B extends Block> {
             throw new IllegalStateException(content.modid() + ":" + id + " needs a name and a look");
         }
         final Drops dropped = drops != null ? drops : itemFactory != null ? Drops.SELF : Drops.NONE;
-        if (itemFactory == null && (dropped == Drops.SELF || section != null || itemLook != null)) {
+        if (itemFactory == null && (dropped != Drops.NONE || section != null || itemLook != null)) {
             throw new IllegalStateException(content.modid() + ":" + id + " has no item to drop, show or draw");
         }
         final BlockBehaviour.Properties madeWith = properties;

@@ -36,7 +36,6 @@ import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.block.SubwooferBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
-import dev.jstech.computers.block.TankBlock;
 import dev.jstech.computers.block.part.CablePartItem;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
@@ -57,7 +56,6 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
-import dev.jstech.computers.blockentity.TankBlockEntity;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.CpuSocketId;
 import dev.jstech.computers.hardware.CpuSpec;
@@ -384,17 +382,6 @@ public final class ComputingModule {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MonitorBlockEntity>> MONITOR_BE =
             CONTENT.blockEntity("monitor", MonitorBlockEntity::new, MONO_I_MONITOR, VINTAGE_MONITOR, AMBER_MONITOR,
                     CGA_MONITOR, LEGACY_MONITOR, TRANSITION_MONITOR, MONITOR, COLOR_MONITOR);
-
-    /* Tank: glass walls in a metal casing frame, so it reads as a containment vessel rather than a solid block. */
-    public static final BlockEntry<TankBlock> TANK = CONTENT.block("tank", TankBlock::new)
-            .properties(properties -> properties.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(0.6F)
-                    .sound(SoundType.GLASS).noOcclusion())
-            .named("Tank")
-            .look(IBlockLook.fixed(new IBlockModel.BottomTop("tank", "minecraft:block/glass",
-                    "block/mainframe_side", "block/mainframe_side", "cutout")))
-            .item().tab(shelf(Shelf.NETWORK, null)).register();
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TankBlockEntity>> TANK_BE =
-            CONTENT.blockEntity("tank", TankBlockEntity::new, TANK);
 
     /*
      * The small computers. Each machine comes in the tower of each age up to the Transition, and from the Standard

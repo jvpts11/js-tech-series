@@ -3,12 +3,12 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Industrial.
  */
-package dev.jstech.computers.block;
+package dev.jstech.industrial.block;
 
 import com.mojang.serialization.MapCodec;
-import dev.jstech.computers.blockentity.TankBlockEntity;
+import dev.jstech.industrial.blockentity.TankBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;

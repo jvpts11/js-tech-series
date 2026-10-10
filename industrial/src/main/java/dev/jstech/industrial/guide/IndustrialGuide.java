@@ -67,6 +67,8 @@ public final class IndustrialGuide {
                 .icon(IndustrialModule.COAL_GENERATOR).register();
         final ModGuide.SectionRef materials = guide.section("materials").titled("Materials")
                 .icon(() -> Items.IRON_INGOT).register();
+        final ModGuide.SectionRef storage = guide.section("storage").titled("Storage")
+                .icon(IndustrialModule.TANK).register();
         reading(guide, reading);
         coalGenerator(guide, machines);
         compressor(guide, machines);
@@ -74,6 +76,21 @@ public final class IndustrialGuide {
         electricFurnace(guide, machines);
         power(guide, power);
         materials(guide, materials);
+        tank(guide, storage);
+    }
+
+    private static void tank(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("tank", section).titled("Tank").icon(IndustrialModule.TANK).covers(IndustrialModule.TANK)
+                .whatItIs("A plain tank that holds up to 16 buckets of one fluid.")
+                .whatItIsFor("Keeping a fluid, and handing it to pipes, cables and whatever takes fluids from a"
+                        + " block.")
+                .howToGetIt(FROM_THE_TAB)
+                .nextColumn()
+                .howToUseIt("Fill it with a bucket or a pipe, and empty it the same way.",
+                        "Break it and its item keeps the fluid: place it again and the fluid is back.")
+                .whatCanGoWrong("The fluid does not go in.",
+                        "It already holds another fluid, or it is full.")
+                .register();
     }
 
     private static void reading(final ModGuide guide, final ModGuide.SectionRef section) {
@@ -122,7 +139,6 @@ public final class IndustrialGuide {
                 .define("Tick", "The game's beat: 20 ticks make a second.")
                 .whatItIsFor("Powering the other machines, at the start, before anything better exists.")
                 .howToGetIt(FROM_THE_TAB)
-                .warning("Do not burn a lava bucket in it: it takes the whole bucket and gives no empty one back.")
                 .nextPage()
                 .plan(SET_UP_PLAN)
                 .planPart(IndustrialModule.COAL_GENERATOR, GENERATOR)

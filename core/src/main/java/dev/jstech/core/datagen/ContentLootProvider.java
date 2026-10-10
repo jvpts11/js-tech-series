@@ -18,7 +18,12 @@ import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.data.loot.LootTableProvider;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.functions.CopyComponentsFunction;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 
 /**
  * Writes the loot table of every block a mod declared, from what it was declared to drop. Every declared block gets
@@ -47,9 +52,18 @@ public final class ContentLootProvider extends LootTableProvider {
             for (final BlockEntry<?> entry : content.declaredBlocks()) {
                 switch (entry.drops()) {
                     case SELF -> dropSelf(entry.get());
+                    case SELF_WITH_CONTENTS -> add(entry.get(), this::selfWithContents);
                     case NONE -> add(entry.get(), noDrop());
                 }
             }
+        }
+
+        /* The block's item, with every component its block entity writes into it, as a shulker box keeps its items. */
+        private LootTable.Builder selfWithContents(final Block block) {
+            final LootPool.Builder pool = LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F))
+                    .add(LootItem.lootTableItem(block).apply(
+                            CopyComponentsFunction.copyComponents(CopyComponentsFunction.Source.BLOCK_ENTITY)));
+            return LootTable.lootTable().withPool(applyExplosionCondition(block, pool));
         }
 
         @Override

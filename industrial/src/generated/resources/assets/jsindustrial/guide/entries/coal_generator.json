@@ -63,10 +63,6 @@
       "text": "jsindustrial.manual.from_the_tab"
     },
     {
-      "type": "warning",
-      "text": "jsindustrial.guide.coal_generator.warning1"
-    },
-    {
       "type": "break",
       "to": "page"
     },
