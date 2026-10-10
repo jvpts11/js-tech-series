@@ -1404,6 +1404,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   error a lower version gives for what came after it, and the line the choice wrote.
 - A block declared in J's Core with `Drops.SELF_WITH_CONTENTS` drops its item carrying what its block entity keeps,
   as a shulker box keeps its items, and is placed again as it was.
+- Every era's creative tab has, after its installers, a disk with each of its systems already on it, the way a
+  computer comes from the shop: put in a machine of that era, it comes up at once as "My Computer". Each is the era's
+  biggest disk, so the most room is left once the system is on it.
 
 ### Changed
 - The Tank belongs to J's Industrial now (`jsindustrial:tank`), on its own Storage shelf and in its manual. A Tank

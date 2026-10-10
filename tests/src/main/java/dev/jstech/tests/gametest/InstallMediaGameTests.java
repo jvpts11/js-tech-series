@@ -9,9 +9,16 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.os.OsBootstrap;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsGating;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.ReadyDisks;
+import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.media.InstallMedia;
 import dev.jstech.computers.os.media.InstallerProjection;
@@ -238,5 +245,24 @@ public final class InstallMediaGameTests {
                         helper.getBlockState(dockPos).getValue(MediaReaderBlock.LOADED),
                         "a docked stick flips the block state that shows it standing in the port"))
                 .thenSucceed();
+    }
+
+    /**
+     * Every system has a disk of its own era with the system already on it, for a machine that should simply come
+     * up, and the machine it comes up in is called My Computer.
+     */
+    @GameTest(template = ARENA)
+    public static void readyDisks_carryEverySystemOnADiskOfItsEraNamedMyComputer(final GameTestHelper helper) {
+        for (final OsDef os : OsBootstrap.builtinOses()) {
+            final ItemStack disk = ReadyDisks.withSystem(os.id(), os.minEra());
+            helper.assertTrue(disk.getItem() instanceof DiskItem item && item.spec().era() == os.minEra(),
+                    os.id() + " comes on a disk of its own era; got " + disk);
+            helper.assertTrue(OsDisks.systemsOn(disk).has(os.id()), os.id() + " is on its disk");
+            final ComputerConsoleState console = new ComputerConsoleState();
+            console.load(disk.get(ComputingComponents.DISK_CONSOLE.get()));
+            helper.assertTrue("My Computer".equals(console.computerName()),
+                    os.id() + "'s machine is called My Computer; got " + console.computerName());
+        }
+        helper.succeed();
     }
 }

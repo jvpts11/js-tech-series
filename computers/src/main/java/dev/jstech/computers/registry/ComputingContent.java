@@ -13,6 +13,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.ReadyDisks;
 import dev.jstech.computers.os.media.InstallMedia;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaItem;
@@ -160,6 +161,15 @@ public final class ComputingContent {
         for (final OsDef os : OsBootstrap.builtinOses()) {
             if (os.minEra() == era) {
                 output.accept(stamped(InstallMedia.forSystem(os.minEra()), MediaKind.OS_INSTALL, os.id()));
+            }
+        }
+        // Then each of those systems already on a disk of the era, for a machine that should simply come up.
+        for (final OsDef os : OsBootstrap.builtinOses()) {
+            if (os.minEra() == era) {
+                final ItemStack ready = ReadyDisks.withSystem(os.id(), era);
+                if (!ready.isEmpty()) {
+                    output.accept(ready);
+                }
             }
         }
         for (final ProgramSpec program : OsBootstrap.builtinPrograms()) {

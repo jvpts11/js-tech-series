@@ -6227,6 +6227,7 @@
   "jsc.rack.throttled": "%s/%sU  THROTTLED %s%%",
   "jsc.rack.unassigned_node": "Unassigned node",
   "jsc.rack.unit": "%sU",
+  "jsc.ready_disk.my_computer": "My Computer",
   "jsc.redstone_interface.clash": "Another interface already has this name",
   "jsc.redstone_interface.computer": "COMPUTER",
   "jsc.redstone_interface.default_name": "Redstone Interface",

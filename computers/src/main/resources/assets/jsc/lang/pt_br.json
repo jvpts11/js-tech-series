@@ -229,6 +229,7 @@
   "block.jsc.transition_redstone_interface": "Interface de Redstone Transition",
   "block.jsc.standard_redstone_interface": "Interface de Redstone Standard",
   "block.jsc.advanced_redstone_interface": "Interface de Redstone Advanced",
+  "jsc.ready_disk.my_computer": "My Computer",
   "jsc.redstone_interface.default_name": "Redstone Interface",
   "jsc.redstone_interface.title": "INTERFACE REDSTONE",
   "jsc.redstone_interface.name": "NOME",
