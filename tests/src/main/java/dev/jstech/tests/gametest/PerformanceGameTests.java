@@ -16,6 +16,7 @@ import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.CraftingRig;
+import dev.jstech.tests.testkit.NetworkFixtures;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -245,7 +246,7 @@ public final class PerformanceGameTests {
         helper.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
         TestCables.lay(helper, new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE);
         final CraftingComputerBlockEntity cc =
-                NetworkGameTests.placeRunningCraftingComputer(helper, new BlockPos(5, 2, 2));
+                NetworkFixtures.placeRunningCraftingComputer(helper, new BlockPos(5, 2, 2));
         final BlockPos rack = new BlockPos(2, 2, 3);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
