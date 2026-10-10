@@ -2215,6 +2215,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   ISMS's profiler copying a selection, deleting a selection in a text field whose anchor had been left behind, and a
   calculator or a spreadsheet formula nested hundreds deep no longer crash the game. The calculator takes 256
   characters, and a formula past that depth is an error in its cell.
+- The JSC Technologies mark on a modern machine's self-test and Frames 11's start, and the logos Frames 95 and
+  Frames XP come up behind, stand in the middle of the glass, where they stood well left of it. In Frames XP's
+  setup the lockup in the side panel's header starts in line with the steps listed under it.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

@@ -28,7 +28,8 @@ import org.lwjgl.glfw.GLFW;
 /**
  * bsdinstall and the System V installer, on the glass: opening on their first page and stepping through the ones
  * that ask nothing more than Enter; the System V case stops at the copy, and the bsdinstall case runs on through
- * its services page to the last one.
+ * its services page to the last one. Frames XP's setup is photographed where it turns graphical, on the side panel
+ * that carries the maker's lockup.
  *
  * <p>Every page a player sees belongs to the machine, the way every other installer's does; this only exercises
  * the two new shapes, {@code DIALOG_BOX} and the System V console, and the pages that are new to both of them.
@@ -48,6 +49,8 @@ public final class GuidedInstallerClientTests {
     private static final ResourceLocation FREEBSD =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "freebsd");
     private static final ResourceLocation UNIX = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "unix");
+    private static final ResourceLocation FRAMES_XP =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp");
 
     private GuidedInstallerClientTests() {
     }
@@ -115,6 +118,23 @@ public final class GuidedInstallerClientTests {
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> "COPY".equals(installer(ctx).pageName()), SCREEN_WAIT,
                         "the name typed in carries the page on to the one copy this system makes");
+    }
+
+    /**
+     * Frames XP's setup turns graphical partway through its copy: the side panel carries the maker's lockup in its
+     * header while it asks the name, and the lockup alone over the middle of the ground while the copy asks nothing.
+     */
+    @ClientTest(timeoutTicks = 2_400)
+    public static void framesXp_setupCarriesItsLockupOnTheSidePanel(final ClientTestContext ctx) {
+        atTheInstaller(ctx, FRAMES_XP, ComputingModule.CD_DRIVE.get(), ComputingModule.CD_ROM.get())
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> "NAME".equals(installer(ctx).pageName()), COPY_WAIT,
+                        "the text-mode copy to hand over to the graphical setup, which asks the name")
+                .thenScreenshot(2, "xp-setup-name")
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> "COPY".equals(installer(ctx).pageName()), SCREEN_WAIT,
+                        "the name carries the setup on to its graphical copy")
+                .thenScreenshot(2, "xp-setup-copy");
     }
 
     private static InstallerScreen installer(final ClientTestContext ctx) {

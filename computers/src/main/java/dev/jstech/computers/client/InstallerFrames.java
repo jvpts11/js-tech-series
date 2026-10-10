@@ -405,8 +405,10 @@ final class InstallerFrames {
         /*
          * The maker's lockup, not its name typed beside a mark. This header is the one place on the page that
          * says whose system is being installed, and it says it the way that system said it everywhere else.
+         * Its picture leaves clear room either side of it, about a tenth of the picture's width, so with the
+         * picture's edge on the panel's the lockup starts in line with the steps listed under it.
          */
-        SplashLogos.draw(g, SplashLogos.FRAMES_XP, sx + 4 + HEADER_MARK_W / 2, sy + 2,
+        SplashLogos.draw(g, SplashLogos.FRAMES_XP, sx + HEADER_MARK_W / 2, sy + 2,
                 HEADER_MARK_W, HEADER_MARK_H);
         g.fill(sx, sy + sh - 14, sx + sw, sy + sh, c.band());
         g.fill(sx, sy + sh - 15, sx + sw, sy + sh - 14, c.footerRule());
