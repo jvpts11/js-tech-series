@@ -342,6 +342,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     private final DerivedInt throttleShown = fields().derived("Throttle", this::thermalThrottlePercent).toMenu();
     /** Rebuild progress in permille, one handle per unit, filled in the constructor. */
     private final DerivedInt[] rebuildShown = new DerivedInt[CAPACITY_U];
+    /** The row a linked monitor shows, plus one so that nothing shown travels as 0: what the unit card's KVM line reads. */
+    private final DerivedInt screenShown = fields().derived("Screen", () -> soleComputerSlot() + 1).toMenu();
 
     private final ItemStackHandler servers = new ItemStackHandler(CAPACITY_U) {
         @Override
@@ -905,6 +907,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     /** Rebuild progress of unit {@code slot}'s array in permille, as last shown to the open menu. */
     public int rebuildShown(final int slot) {
         return slot >= 0 && slot < CAPACITY_U ? rebuildShown[slot].getAsInt() : 0;
+    }
+
+    /** The row whose machine a linked monitor shows, as last shown to the open menu, or -1 when it can show none. */
+    public int screenShown() {
+        return screenShown.getAsInt() - 1;
     }
 
     /** The occupancy and front-slot budgets of every mounted chassis. */

@@ -7,10 +7,11 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.gui.layout.AssemblyGeometry;
+import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.computers.gui.layout.ServerAssemblyLayout;
 import dev.jstech.computers.hardware.BuildValidation;
 import dev.jstech.computers.hardware.ComputerBuild;
-import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
 import dev.jstech.computers.operation.payload.RenameServerPayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
@@ -19,19 +20,23 @@ import dev.jstech.core.format.UnitFormatter;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
- * Screen for assembling a Server: a flat-dark "computer OS" modal.
+ * A rack server's assembly screen, for the server in the player's hand: its chassis with its cards in two I/O cages and
+ * its wall of fans, and on its front panel what it sends out a tick, its queues, its RAM buffer, what it draws against
+ * its supply and its storage (or what its graphics cards add). A server is switched on in its rack, so the panel's top
+ * is its checks: a lamp for whether the build is sound, and every problem in the tooltip.
  */
-public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyMenu> {
+public class ServerAssemblyScreen extends AbstractMachineAssemblyScreen<ServerAssemblyMenu> {
 
     private final UnitFormatter fmt = UnitFormatter.forCurrentLocale();
 
@@ -43,201 +48,6 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
 
     public ServerAssemblyScreen(final ServerAssemblyMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
-        this.imageWidth = ServerAssemblyLayout.WIDTH;
-        this.imageHeight = ServerAssemblyLayout.HEIGHT;
-        this.titleLabelX = -10000;
-        this.inventoryLabelY = -10000;
-    }
-
-    @Override
-    protected void init() {
-        super.init();
-        /*
-         * Name field in the header, since renaming a computer happens here, in its assembly GUI, never via
-         * an anvil. Each keystroke syncs the name to the held Server.
-         */
-        setupNameBox(ServerAssemblyLayout.NAME_BOX_X, ServerAssemblyLayout.NAME_BOX_Y,
-                ServerAssemblyLayout.NAME_BOX_W, RenameServerPayload.MAX_LEN,
-                GameText.component(AssemblyTexts.NAME_THIS_SERVER).withStyle(ChatFormatting.DARK_GRAY),
-                menu.serverName(),
-                s -> PacketDistributor.sendToServer(new RenameServerPayload(s)));
-    }
-
-    @Override
-    public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
-        // Clicking the name field selects it for typing; clicking elsewhere deselects it.
-        if (nameBox != null) {
-            if (nameBox.isMouseOver(mouseX, mouseY)) {
-                setFocused(nameBox);
-                nameBox.setFocused(true);
-                return nameBox.mouseClicked(mouseX, mouseY, button);
-            }
-            nameBox.setFocused(false);
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    @Override
-    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
-        final int x = leftPos;
-        final int y = topPos;
-        JsTechTheme.window(g, x, y, imageWidth, imageHeight);
-        JsTechTheme.headerBar(g, x + ServerAssemblyLayout.HEADER_X, y + ServerAssemblyLayout.HEADER_Y,
-                ServerAssemblyLayout.HEADER_W);
-        // Name field background (the field itself is an EditBox drawn over this).
-        nameWell(g, x + ServerAssemblyLayout.NAME_WELL_LEFT, y + ServerAssemblyLayout.NAME_WELL_TOP,
-                x + ServerAssemblyLayout.NAME_WELL_RIGHT);
-
-        final ComputerBuild build = this.frameBuild;
-
-        // Spec tiles (4 across).
-        JsTechTheme.panel(g, x + ServerAssemblyLayout.TILE_X_ORCHESTRATION, y + ServerAssemblyLayout.TILE_Y,
-                ServerAssemblyLayout.TILE_W, ServerAssemblyLayout.TILE_H);
-        JsTechTheme.panel(g, x + ServerAssemblyLayout.TILE_X_QUEUES, y + ServerAssemblyLayout.TILE_Y,
-                ServerAssemblyLayout.TILE_W, ServerAssemblyLayout.TILE_H);
-        JsTechTheme.panel(g, x + ServerAssemblyLayout.TILE_X_RAM, y + ServerAssemblyLayout.TILE_Y,
-                ServerAssemblyLayout.TILE_W, ServerAssemblyLayout.TILE_H);
-        JsTechTheme.panel(g, x + ServerAssemblyLayout.TILE_X_DRAW, y + ServerAssemblyLayout.TILE_Y,
-                ServerAssemblyLayout.TILE_W_LAST, ServerAssemblyLayout.TILE_H);
-
-        /*
-         * Power-headroom track. There is no storage track any more: drives live in the rack's
-         * hotswap bays, so the assembly has no storage of its own to meter.
-         */
-        final int draw = build == null ? 0 : build.powerDraw();
-        final int watt = build == null ? 0 : build.psu().wattage();
-        final double pf = watt <= 0 ? 0.0 : Math.min(1.0, (double) draw / watt);
-        JsTechTheme.track(g, x + ServerAssemblyLayout.TRACK_X, y + ServerAssemblyLayout.TRACK_Y,
-                ServerAssemblyLayout.TRACK_W, pf, draw > watt ? JsTechTheme.red() : JsTechTheme.green());
-
-        // Problems strip.
-        JsTechTheme.panel(g, x + ServerAssemblyLayout.PROBLEMS_X, y + ServerAssemblyLayout.PROBLEMS_Y,
-                ServerAssemblyLayout.PROBLEMS_W, ServerAssemblyLayout.PROBLEMS_H);
-
-        // Draw a cell behind every ACTIVE hardware slot, reading the menu's own slot positions.
-        for (int i = 0; i < ServerHardwareHandler.SLOTS; i++) {
-            final var slot = menu.getSlot(i);
-            if (slot.isActive()) {
-                JsTechTheme.slot(g, x + slot.x, y + slot.y);
-            }
-        }
-
-        // Player inventory.
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                JsTechTheme.slot(g, x + ServerAssemblyLayout.INV_X + col * ServerAssemblyLayout.SLOT,
-                        y + ServerAssemblyLayout.INV_Y + row * ServerAssemblyLayout.SLOT);
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            JsTechTheme.slot(g, x + ServerAssemblyLayout.INV_X + col * ServerAssemblyLayout.SLOT,
-                    y + ServerAssemblyLayout.INV_Y + ServerAssemblyLayout.HOTBAR_GAP);
-        }
-    }
-
-    @Override
-    protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        final ComputerBuild build = this.frameBuild;
-
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.TITLE_SERVER), 12, 11, JsTechTheme.text());
-        final String status;
-        final int statusColor;
-        if (build == null) {
-            status = GameText.resolve(AssemblyTexts.UNASSEMBLED);
-            statusColor = JsTechTheme.dim();
-        } else if (!this.frameChecks.valid()) {
-            status = GameText.resolve(AssemblyTexts.ERROR);
-            statusColor = JsTechTheme.red();
-        } else if (build.rams().isEmpty()) {
-            status = GameText.resolve(AssemblyTexts.WARN);
-            statusColor = JsTechTheme.amber();
-        } else {
-            status = GameText.resolve(AssemblyTexts.READY);
-            statusColor = JsTechTheme.green();
-        }
-        final int pillX = ServerAssemblyLayout.HEADER_W - font.width(status);
-        JsTechTheme.text(g, font, status, pillX, 11, statusColor);
-        g.fill(pillX - 6, 11, pillX - 2, 15, statusColor);
-
-        // Spec tiles.
-        JsTechTheme.tileTextS(g, font, ServerAssemblyLayout.TILE_X_ORCHESTRATION, ServerAssemblyLayout.TILE_Y,
-                GameText.resolve(AssemblyTexts.ORCHESTRATION),
-                build == null ? "0" : fmt.compact(build.totalCapacity(), Unit.IT_PER_TICK), JsTechTheme.text());
-        JsTechTheme.tileTextS(g, font, ServerAssemblyLayout.TILE_X_QUEUES, ServerAssemblyLayout.TILE_Y,
-                GameText.resolve(AssemblyTexts.QUEUES),
-                build == null ? "0" : String.valueOf(build.parallelQueues()), JsTechTheme.text());
-        JsTechTheme.tileTextS(g, font, ServerAssemblyLayout.TILE_X_RAM, ServerAssemblyLayout.TILE_Y,
-                GameText.resolve(AssemblyTexts.RAM_BUFFER_SHORT),
-                build == null ? "0" : JsTechTheme.fmt(build.ramBuffer()), JsTechTheme.text());
-        JsTechTheme.tileTextS(g, font, ServerAssemblyLayout.TILE_X_DRAW, ServerAssemblyLayout.TILE_Y,
-                GameText.resolve(AssemblyTexts.DRAW),
-                build == null ? "0" : GameText.resolve(AssemblyTexts.WATTS.with(build.powerDraw())),
-                JsTechTheme.text());
-
-        // Track labels + values.
-        final int draw = build == null ? 0 : build.powerDraw();
-        final int watt = build == null ? 0 : build.psu().wattage();
-        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.POWER), ServerAssemblyLayout.STAT_LABEL_X,
-                ServerAssemblyLayout.STAT_ROW_POWER_Y, JsTechTheme.text());
-        JsTechTheme.textSRight(g, font, GameText.resolve(build == null ? AssemblyTexts.NO_WATTS.text()
-                        : AssemblyTexts.DRAW_OF.with(draw, watt)), ServerAssemblyLayout.STAT_VALUE_X,
-                ServerAssemblyLayout.STAT_ROW_POWER_Y, draw > watt ? JsTechTheme.red() : JsTechTheme.dim());
-        /*
-         * Drives live in the rack's hotswap bays since the racks rework, so the assembly has no
-         * storage of its own to report, so point the player at the right place instead.
-         */
-        if (build != null && build.serverGpuBonus() > 0) {
-            // A server's graphics cards add to what it sends out: what they add, against its processor's capacity.
-            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.GPU_BONUS), ServerAssemblyLayout.STAT_LABEL_X,
-                    ServerAssemblyLayout.STAT_ROW_STORAGE_Y, JsTechTheme.text());
-            JsTechTheme.textSRight(g, font, GameText.resolve(AssemblyTexts.GPU_BONUS_VALUE.with(
-                            build.serverGpuBonusPercent(), fmt.compact(build.serverGpuBonus(), Unit.IT_PER_TICK))),
-                    ServerAssemblyLayout.STAT_VALUE_X, ServerAssemblyLayout.STAT_ROW_STORAGE_Y, JsTechTheme.accent());
-        } else {
-            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.STORAGE), ServerAssemblyLayout.STAT_LABEL_X,
-                    ServerAssemblyLayout.STAT_ROW_STORAGE_Y, JsTechTheme.text());
-            JsTechTheme.textSRight(g, font, GameText.resolve(AssemblyTexts.DRIVES_IN_BAYS),
-                    ServerAssemblyLayout.STAT_VALUE_X, ServerAssemblyLayout.STAT_ROW_STORAGE_Y, JsTechTheme.dim());
-        }
-
-        // Problems strip.
-        renderProblems(g, build);
-
-        // Hardware bay labels (names only, the slots show installed vs available).
-        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.BOARD), ServerAssemblyLayout.MOBO_X,
-                ServerAssemblyLayout.LABEL_ROW_1_Y, JsTechTheme.dim());
-        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.CPU), ServerAssemblyLayout.RIGHT_X,
-                ServerAssemblyLayout.LABEL_ROW_1_Y, JsTechTheme.dim());
-        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.RAM), ServerAssemblyLayout.RIGHT_X,
-                ServerAssemblyLayout.LABEL_ROW_2_Y, JsTechTheme.dim());
-        JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.GPU), ServerAssemblyLayout.RIGHT_X,
-                ServerAssemblyLayout.LABEL_ROW_3_Y, JsTechTheme.dim());
-    }
-
-    private void renderProblems(final GuiGraphics g, final ComputerBuild build) {
-        if (build == null) {
-            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.INSERT_TO_BEGIN),
-                    ServerAssemblyLayout.PROBLEMS_TEXT_X, ServerAssemblyLayout.PROBLEMS_TEXT_Y, JsTechTheme.dim());
-            return;
-        }
-        final List<Text> problems = this.frameChecks.problems();
-        if (problems.isEmpty()) {
-            JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.ALL_CHECKS_PASSED),
-                    ServerAssemblyLayout.PROBLEMS_TEXT_X, ServerAssemblyLayout.PROBLEMS_TEXT_Y, JsTechTheme.green());
-            return;
-        }
-        final String first = font.plainSubstrByWidth(GameText.resolve(problems.get(0)), 250);
-        JsTechTheme.textS(g, font, first, ServerAssemblyLayout.PROBLEMS_TEXT_X, ServerAssemblyLayout.PROBLEMS_TEXT_Y,
-                JsTechTheme.red());
-        if (problems.size() > 1) {
-            JsTechTheme.textSRight(g, font, GameText.resolve(AssemblyTexts.MORE.with(problems.size() - 1)),
-                    ServerAssemblyLayout.PROBLEMS_MORE_X, ServerAssemblyLayout.PROBLEMS_TEXT_Y, JsTechTheme.amber());
-        }
-    }
-
-    @Override
-    protected HardwareEra screenEra() {
-        return menu.hardwareEra();
     }
 
     @Override
@@ -245,21 +55,112 @@ public class ServerAssemblyScreen extends AbstractAssemblyScreen<ServerAssemblyM
         // The build cannot change within a frame, so it is made and checked once for every part that draws it.
         this.frameBuild = menu.currentBuild();
         this.frameChecks = this.frameBuild == null ? null : this.frameBuild.validate();
-        // super.render binds the era skin, draws the background and widgets, and renders the slot tooltip.
         super.render(g, mouseX, mouseY, partialTick);
-        // Full problem list on hover over the strip.
-        if (hover(mouseX, mouseY, ServerAssemblyLayout.PROBLEMS_X, ServerAssemblyLayout.PROBLEMS_Y,
-                ServerAssemblyLayout.PROBLEMS_W, ServerAssemblyLayout.PROBLEMS_H)) {
-            final ComputerBuild build = this.frameBuild;
-            if (build != null) {
-                final List<Text> problems = this.frameChecks.problems();
-                if (problems.size() > 1) {
-                    g.renderComponentTooltip(font,
-                            problems.stream().map(p -> (Component) GameText.component(p).withStyle(ChatFormatting.RED))
-                                    .toList(),
-                            mouseX, mouseY);
-                }
-            }
+    }
+
+    @Override
+    protected HardwareEra caseEra() {
+        final HardwareEra era = menu.hardwareEra();
+        return era == null ? HardwareEra.STANDARD : era;
+    }
+
+    @Override
+    protected AssemblyGeometry makeGeometry() {
+        return ServerAssemblyLayout.geometry();
+    }
+
+    @Override
+    protected String machineTitle() {
+        return GameText.resolve(AssemblyTexts.TITLE_SERVER);
+    }
+
+    @Override
+    protected NameField nameField() {
+        // Each keystroke names the Server in the hand.
+        return new NameField(GameText.component(AssemblyTexts.NAME_THIS_SERVER), menu.serverName(),
+                RenameServerPayload.MAX_LEN,
+                s -> PacketDistributor.sendToServer(new RenameServerPayload(s)));
+    }
+
+    @Override
+    protected String stateWord() {
+        return GameText.resolve(frameBuild == null ? AssemblyTexts.UNASSEMBLED
+                : !frameChecks.valid() ? AssemblyTexts.ERROR
+                : frameBuild.rams().isEmpty() ? AssemblyTexts.WARN : AssemblyTexts.READY);
+    }
+
+    @Override
+    protected int stateColour() {
+        return frameBuild == null ? JsTechTheme.dim() : !frameChecks.valid() ? JsTechTheme.red()
+                : frameBuild.rams().isEmpty() ? JsTechTheme.amber() : JsTechTheme.green();
+    }
+
+    @Override
+    protected List<Readout> readouts() {
+        final ComputerBuild build = frameBuild;
+        final int draw = build == null ? 0 : build.powerDraw();
+        final int watt = build == null ? 0 : build.psu().wattage();
+        final Readout storage = build != null && build.serverGpuBonus() > 0
+                // A server's graphics cards add to what it sends out: what they add, against its processor's capacity.
+                ? new Readout(GameText.resolve(AssemblyTexts.GPU_BONUS),
+                        GameText.resolve(AssemblyTexts.GPU_BONUS_VALUE.with(build.serverGpuBonusPercent(),
+                                fmt.compact(build.serverGpuBonus(), Unit.IT_PER_TICK))), JsTechTheme.accent())
+                // Its drives live in the rack's hot-swap bays, so the assembly has no storage of its own to meter.
+                : new Readout(GameText.resolve(AssemblyTexts.STORAGE), GameText.resolve(AssemblyTexts.IN_THE_RACK),
+                        JsTechTheme.dim(), List.of(GameText.component(AssemblyTexts.DRIVES_IN_BAYS)));
+        return List.of(
+                new Readout(GameText.resolve(AssemblyTexts.ORCHESTRATION),
+                        build == null ? "0" : fmt.compact(build.totalCapacity(), Unit.IT_PER_TICK), JsTechTheme.text()),
+                new Readout(GameText.resolve(AssemblyTexts.QUEUES),
+                        build == null ? "0" : String.valueOf(build.parallelQueues()), JsTechTheme.text()),
+                new Readout(GameText.resolve(AssemblyTexts.RAM_BUFFER),
+                        build == null ? "0" : JsTechTheme.fmt(build.ramBuffer()) + " "
+                                + GameText.resolve(AssemblyTexts.ITEMS), JsTechTheme.text()),
+                new Readout(GameText.resolve(AssemblyTexts.DRAW), GameText.resolve(build == null
+                        ? AssemblyTexts.NO_WATTS.text() : AssemblyTexts.DRAW_OF.with(draw, watt)),
+                        draw > watt ? JsTechTheme.red() : JsTechTheme.text()),
+                storage);
+    }
+
+    @Override
+    protected List<ServiceSwitch> serviceSwitches() {
+        return List.of();
+    }
+
+    @Override
+    protected boolean[] lampsLit() {
+        return new boolean[] {frameBuild != null && frameChecks.valid(), false, false};
+    }
+
+    @Override
+    protected boolean boardIn() {
+        final Slot board = seatSlot(geometry().seat(SeatKind.BOARD));
+        return board != null && board.hasItem();
+    }
+
+    @Override
+    protected String powerWord() {
+        return GameText.resolve(AssemblyTexts.CHECKS);
+    }
+
+    @Override
+    protected int powerLamp() {
+        return stateColour();
+    }
+
+    @Override
+    protected List<Component> powerTooltip() {
+        if (frameBuild == null) {
+            return List.of(GameText.component(AssemblyTexts.INSERT_TO_BEGIN).withStyle(ChatFormatting.GRAY));
         }
+        final List<Text> problems = frameChecks.problems();
+        if (problems.isEmpty()) {
+            return List.of(GameText.component(AssemblyTexts.ALL_CHECKS_PASSED).withStyle(ChatFormatting.GREEN));
+        }
+        final List<Component> lines = new ArrayList<>();
+        for (final Text problem : problems) {
+            lines.add(GameText.component(problem).withStyle(ChatFormatting.RED));
+        }
+        return lines;
     }
 }

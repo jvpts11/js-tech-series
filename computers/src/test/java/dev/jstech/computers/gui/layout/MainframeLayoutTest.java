@@ -10,6 +10,8 @@ package dev.jstech.computers.gui.layout;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
+import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.core.gui.layout.GuiLayout;
 import org.junit.jupiter.api.Test;
 
@@ -23,14 +25,27 @@ class MainframeLayoutTest {
     }
 
     @Test
-    void layout_keepsTheHardwareSlotsWhereTheMainframeAlwaysHadThem() {
+    void layout_seatsEachSlotWhereItsPartIsDrawn() {
+        final AssemblyGeometry geo = MainframeLayout.geometry();
         final GuiLayout l = MainframeLayout.layout();
-        assertEquals(new GuiLayout.SlotPosition(8, 40), l.slotAt("mobo"));
-        assertEquals(new GuiLayout.SlotPosition(8, 73), l.slotAt("psu"));
-        assertEquals(new GuiLayout.SlotPosition(44, 40), l.slotAt("cpu_0"));
-        assertEquals(new GuiLayout.SlotPosition(44, 73), l.slotAt("ram_0"));
-        assertEquals(new GuiLayout.SlotPosition(44, 124), l.slotAt("gpu_0"));
-        assertEquals(new GuiLayout.SlotPosition(8, 124), l.slotAt("disk_0"));
-        assertEquals(new GuiLayout.SlotPosition(8, 182), l.playerInventoryAt());
+        assertEquals(at(geo.seat(SeatKind.BOARD)), l.slotAt("mobo"));
+        assertEquals(at(geo.seat(SeatKind.PSU)), l.slotAt("psu"));
+        assertEquals(at(geo.seats(SeatKind.CPU).get(3)), l.slotAt("cpu_3"));
+        assertEquals(at(geo.seats(SeatKind.RAM).get(7)), l.slotAt("ram_7"));
+        assertEquals(at(geo.seats(SeatKind.CARD).get(5)), l.slotAt("gpu_5"));
+        assertEquals(at(geo.seats(SeatKind.DISK).get(3)), l.slotAt("disk_3"));
+        assertEquals(new GuiLayout.SlotPosition(AssemblyGeometry.INVENTORY_X, geo.inventoryY()), l.playerInventoryAt());
+    }
+
+    @Test
+    void geometry_carriesTheOperationsStripUnderTheCase() {
+        final AssemblyGeometry geo = MainframeLayout.geometry();
+        final AssemblyGeometry.Box ops = geo.operations();
+        assertTrue(ops != null && ops.y() >= geo.caseBox().y() + geo.caseBox().h(), "the strip sits under the case");
+        assertTrue(ops.y() + ops.h() <= geo.inventoryY(), "the strip ends above the inventory");
+    }
+
+    private static GuiLayout.SlotPosition at(final Seat seat) {
+        return new GuiLayout.SlotPosition(seat.x(), seat.y());
     }
 }

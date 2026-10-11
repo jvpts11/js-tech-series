@@ -1,0 +1,13 @@
+{
+  "advancedFace": "#FF141518",
+  "advancedMetal": "#FFDFE2E6",
+  "legacyFace": "#FF1B1D21",
+  "legacyMetal": "#FF9AA0A8",
+  "sheen": "#FFFFFFFF",
+  "standardFace": "#FF1B1D21",
+  "standardMetal": "#FF2E3035",
+  "transitionFace": "#FF1B1D21",
+  "transitionMetal": "#FF3A3E46",
+  "vintageFace": "#FF1B1D21",
+  "vintageMetal": "#FF061A08"
+}

@@ -8,133 +8,28 @@
 package dev.jstech.computers.gui.layout;
 
 import dev.jstech.core.gui.layout.GuiLayout;
+import dev.jstech.core.tier.HardwareEra;
 
 /**
- * Positions of the Personal Computer's assembly screen: hardware on the left, capacity and RAM buffer
- * tiles on the right with the power and autostart buttons under them. The Menu places the slots from
- * here and the Screen draws from here, so the two can never disagree.
+ * The Personal Computer's assembly screen: its era's tower case, its graphics cards' slots, and three readouts on its
+ * front panel (capacity, RAM buffer, network). The menu seats its slots from here and the screen draws from here, so
+ * the two can never disagree.
  */
 public final class PersonalComputerLayout {
 
-    public static final int WIDTH = 244;
-    public static final int HEIGHT = 218;
-
-    public static final int HEADER_X = 6;
-    public static final int HEADER_Y = 6;
-    public static final int HEADER_W = 232;
-
-    public static final int SLOT = 18;
-    public static final int MOBO_X = 8;
-    public static final int MOBO_Y = 40;
-    public static final int PSU_X = 8;
-    public static final int PSU_Y = 73;
-    public static final int RIGHT_X = 44;
-    public static final int CPU_Y = 40;
-    public static final int RAM_Y = 73;
-    public static final int RAM_SLOTS = 4;
-    public static final int GPU_Y = 106;
-    public static final int GPU_SLOTS = 4;
-    public static final int DISK_Y = 106;
-    public static final int DISK_SLOTS = 2;
-
-    public static final int VLINE_X = 121;
-    public static final int VLINE_Y = 24;
-    public static final int VLINE_H = 108;
-
-    public static final int COL_R = 126;
-    public static final int COL_R_W = 110;
-    /*
-     * A stat tile holds its caption, then its value with the unit two pixels lower: the unit's letters end 22 pixels
-     * under the tile's top, so a tile is 24 tall to keep them inside its frame.
-     */
-    public static final int TILE_Y_CAPACITY = 27;
-    public static final int TILE_H_CAPACITY = 24;
-    public static final int TILE_Y_RAM_BUFFER = 54;
-    public static final int TILE_H_RAM_BUFFER = 24;
-
-    public static final int BTN_H = 14;
-    public static final int POWER_X = COL_R;
-    public static final int POWER_Y = 102;
-    public static final int AUTO_X = COL_R;
-    public static final int AUTO_Y = 120;
-
-    public static final int INV_X = 8;
-    public static final int INV_Y = 138;
-    public static final int HOTBAR_GAP = 58;
-
-    /*
-     * The case's left side, off or on: a small button beside the inventory, under the end of the right column, its
-     * caption written small over its state. Its widest words (the Portuguese ones) are seven letters.
-     */
-    public static final int SIDE_X = 176;
-    public static final int SIDE_Y = INV_Y;
-    public static final int SIDE_W = 60;
-    public static final int SIDE_H = 20;
-    public static final int SIDE_CHARS = 7;
-
-    // Hardware caption rows, shared by the left column's labels and the layout's own text() entries.
-    public static final int LABEL_ROW_1_Y = 27;
-    public static final int LABEL_ROW_2_Y = 60;
-    public static final int LABEL_ROW_3_Y = 93;
-    public static final int NETWORK_Y = 81;
-    public static final int NETWORK_VALUE_Y = 91;
-
-    /* The PSU health dot drawn next to its caption. */
-    public static final int PSU_LED_X = 30;
-    public static final int PSU_LED_Y = LABEL_ROW_2_Y + 1;
-    public static final int PSU_LED_SIZE = 4;
-
-    // Header rename field: the well it sits over and the EditBox itself.
-    public static final int NAME_WELL_LEFT = 26;
-    public static final int NAME_WELL_TOP = 7;
-    public static final int NAME_WELL_RIGHT = 158;
-    public static final int NAME_BOX_X = 28;
-    public static final int NAME_BOX_Y = 8;
-    public static final int NAME_BOX_W = 126;
+    /** The front panel's readouts: capacity, RAM buffer, network. */
+    public static final int READOUTS = 3;
 
     private PersonalComputerLayout() {
     }
 
-    /**
-     * Builds the full element layout for the worst case: every hardware slot present. A clean result
-     * here guarantees the real screen's elements never overlap and nothing spills outside the panel.
-     */
-    public static GuiLayout layout() {
-        final GuiLayout l = new GuiLayout(WIDTH, HEIGHT)
-                .slot("mobo", MOBO_X, MOBO_Y)
-                .slot("psu", PSU_X, PSU_Y)
-                .slot("cpu", RIGHT_X, CPU_Y);
+    /** Where everything stands on the screen of a Personal Computer of that era. */
+    public static AssemblyGeometry geometry(final HardwareEra era) {
+        return AssemblyGeometry.tower(era, READOUTS);
+    }
 
-        for (int i = 0; i < RAM_SLOTS; i++) {
-            l.slot("ram_" + i, RIGHT_X + i * SLOT, RAM_Y);
-        }
-        for (int i = 0; i < GPU_SLOTS; i++) {
-            l.slot("gpu_" + i, RIGHT_X + i * SLOT, GPU_Y);
-        }
-        for (int i = 0; i < DISK_SLOTS; i++) {
-            l.slot("disk_" + i, MOBO_X + i * SLOT, DISK_Y);
-        }
-
-        l.box("tileCapacity", COL_R, TILE_Y_CAPACITY, COL_R_W, TILE_H_CAPACITY)
-                .box("tileRamBuffer", COL_R, TILE_Y_RAM_BUFFER, COL_R_W, TILE_H_RAM_BUFFER)
-                .box("btnPower", POWER_X, POWER_Y, COL_R_W, BTN_H)
-                .box("btnAuto", AUTO_X, AUTO_Y, COL_R_W, BTN_H)
-                .box("btnSide", SIDE_X, SIDE_Y, SIDE_W, SIDE_H);
-
-        l.playerInventory(INV_X, INV_Y);
-
-        l.text("titlePc", 12, 11, 2, 1.0f);
-        l.text("statusPill", WIDTH - Math.round(7 * GuiLayout.GLYPH_WIDTH), 11, 7, 1.0f);
-        l.text("lblBoard", MOBO_X, LABEL_ROW_1_Y, 5, 1.0f);
-        l.text("lblCpu", RIGHT_X, LABEL_ROW_1_Y, 3, 1.0f);
-        l.text("lblPsu", MOBO_X, LABEL_ROW_2_Y, 3, 1.0f);
-        l.text("lblRam", RIGHT_X, LABEL_ROW_2_Y, 3, 1.0f);
-        l.text("lblDisk", MOBO_X, LABEL_ROW_3_Y, 4, 1.0f);
-        l.text("lblGpu", RIGHT_X, LABEL_ROW_3_Y, 3, 1.0f);
-        l.text("lblNetwork", COL_R, NETWORK_Y, 7, 1.0f);
-        l.text("lblSide", SIDE_X + 3, SIDE_Y + 3, SIDE_CHARS, 0.75f);
-        l.text("valSide", SIDE_X + 3, SIDE_Y + 11, SIDE_CHARS, 0.75f);
-
-        return l;
+    /** The layout the menu seats its slots from: every seat, the panels, the inventory and the captions. */
+    public static GuiLayout layout(final HardwareEra era) {
+        return geometry(era).layout("gpu");
     }
 }

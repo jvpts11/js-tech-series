@@ -134,16 +134,15 @@ class LayoutAuditTest {
         c.add(new AuditCase("PatternEncoderLayout", PatternEncoderLayout.layout(), true));
         c.add(new AuditCase("NetworkGatewayLayout", NetworkGatewayLayout.layout(), true));
         c.add(new AuditCase("OpenWithLayout", OpenWithLayout.layout(), true));
-        c.add(new AuditCase("ClusterManagementComputerLayout", ClusterManagementComputerLayout.layout(), true));
-        c.add(new AuditCase("CraftingComputerLayout", CraftingComputerLayout.layout(), true));
-        c.add(new AuditCase("PersonalComputerLayout", PersonalComputerLayout.layout(), true));
-        /*
-         * The Mainframe (262px) and the Server assembly (294px) panels are taller than SCREEN_H_BUDGET, so,
-         * like a resizable window, they are held to cleanliness only (no overlaps, nothing out of frame)
-         * until their size is revisited.
-         */
-        c.add(new AuditCase("MainframeLayout", MainframeLayout.layout(), false));
-        c.add(new AuditCase("ServerAssemblyLayout", ServerAssemblyLayout.layout(), false));
+        // The three towers wear their era's case, whose bays and supply stand differently in each era.
+        for (final HardwareEra era : HardwareEra.values()) {
+            c.add(new AuditCase("ClusterManagementComputerLayout(" + era + ")",
+                    ClusterManagementComputerLayout.layout(era), true));
+            c.add(new AuditCase("CraftingComputerLayout(" + era + ")", CraftingComputerLayout.layout(era), true));
+            c.add(new AuditCase("PersonalComputerLayout(" + era + ")", PersonalComputerLayout.layout(era), true));
+        }
+        c.add(new AuditCase("MainframeLayout", MainframeLayout.layout(), true));
+        c.add(new AuditCase("ServerAssemblyLayout", ServerAssemblyLayout.layout(), true));
         // The KVM channel bar grows a row per channel; audit an empty bar and the most a switch reports.
         c.add(new AuditCase("KvmChannelLayout(0)", KvmChannelLayout.layout(0), true));
         c.add(new AuditCase("KvmChannelLayout(most)", KvmChannelLayout.layout(KvmChannelLayout.MOST_CHANNELS), true));

@@ -37,6 +37,7 @@ public final class ClientTestSuite {
             SigmaEditorClientTests.class,
             SigmaConsoleClientTests.class,
             CabinetItemClientTests.class,
+            AssemblyScreensClientTests.class,
             CdeClientTests.class,
             ComputerCaseClientTests.class,
             CoreStateClientTests.class,

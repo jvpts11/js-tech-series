@@ -7,218 +7,66 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.gui.layout.AssemblyGeometry;
 import dev.jstech.computers.gui.layout.ClusterManagementComputerLayout;
 import dev.jstech.computers.menu.ClusterManagementComputerMenu;
-import dev.jstech.computers.operation.payload.RenamePcPayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import dev.jstech.core.text.TextKey;
+import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * The Cluster Management Computer's assembly surface: hardware on the left, and on the right what makes
- * it a cluster master: whether the interface card is in, how many clusters the network reaches, and
- * whether the Cluster Manager is on its disk. Everything about the clusters themselves lives in that
- * program on the linked monitor, not here.
+ * The Cluster Management Computer's assembly screen: its era's tower case, and on its front panel what it moves a tick
+ * (its RAM buffer in the tooltip), whether it is on a network, the clusters its interface card reaches (each kind in the
+ * tooltip) and whether the Cluster Manager is installed.
  */
-public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<ClusterManagementComputerMenu> {
+public class ClusterManagementComputerScreen extends AbstractTowerAssemblyScreen<ClusterManagementComputerMenu> {
 
     public ClusterManagementComputerScreen(final ClusterManagementComputerMenu menu, final Inventory inventory,
                                            final Component title) {
         super(menu, inventory, title);
-        this.imageWidth = ClusterManagementComputerLayout.WIDTH;
-        this.imageHeight = ClusterManagementComputerLayout.HEIGHT;
-        this.titleLabelX = -10000;
-        this.inventoryLabelY = -10000;
     }
 
     @Override
-    protected void init() {
-        super.init();
-        setupNameBox(ClusterManagementComputerLayout.NAME_BOX_X, ClusterManagementComputerLayout.NAME_BOX_Y,
-                ClusterManagementComputerLayout.NAME_BOX_W, RenamePcPayload.MAX_LEN,
-                GameText.component(AssemblyTexts.NAME_THIS_COMPUTER).withStyle(ChatFormatting.DARK_GRAY),
-                menu.customName(),
-                s -> PacketDistributor.sendToServer(new RenamePcPayload(menu.computerPos(), s)));
+    protected AssemblyGeometry makeGeometry() {
+        return ClusterManagementComputerLayout.geometry(caseEra());
     }
 
     @Override
-    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
-        final int x = leftPos;
-        final int y = topPos;
-        JsTechTheme.window(g, x, y, imageWidth, imageHeight);
-        JsTechTheme.headerBar(g, x + ClusterManagementComputerLayout.HEADER_X,
-                y + ClusterManagementComputerLayout.HEADER_Y, ClusterManagementComputerLayout.HEADER_W);
-        nameWell(g, x + ClusterManagementComputerLayout.NAME_WELL_LEFT,
-                y + ClusterManagementComputerLayout.NAME_WELL_TOP, x + ClusterManagementComputerLayout.NAME_WELL_RIGHT);
-        JsTechTheme.vLine(g, x + ClusterManagementComputerLayout.VLINE_X, y + ClusterManagementComputerLayout.VLINE_Y,
-                ClusterManagementComputerLayout.VLINE_H);
-
-        // A cell behind every active hardware slot, reading the menu's own slot positions.
-        for (int i = 0; i < menu.hardwareSlots(); i++) {
-            final var slot = menu.getSlot(i);
-            if (slot.isActive()) {
-                JsTechTheme.slot(g, x + slot.x, y + slot.y);
-            }
-        }
-
-        JsTechTheme.panel(g, x + ClusterManagementComputerLayout.COL_R, y + ClusterManagementComputerLayout.TILE_Y0,
-                ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.TILE_H);
-        JsTechTheme.panel(g, x + ClusterManagementComputerLayout.COL_R, y + ClusterManagementComputerLayout.TILE_Y1,
-                ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.TILE_H);
-        JsTechTheme.panel(g, x + ClusterManagementComputerLayout.COL_R, y + ClusterManagementComputerLayout.TILE_Y2,
-                ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.TILE_H);
-        JsTechTheme.panel(g, x + ClusterManagementComputerLayout.COL_R, y + ClusterManagementComputerLayout.TILE_Y3,
-                ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.TILE_H);
-
-        final boolean auto = menu.isAutoStart();
-        JsTechTheme.button(g, x + ClusterManagementComputerLayout.POWER_X, y + ClusterManagementComputerLayout.POWER_Y,
-                ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.BTN_H,
-                !auto && hover(mouseX, mouseY, ClusterManagementComputerLayout.POWER_X,
-                        ClusterManagementComputerLayout.POWER_Y, ClusterManagementComputerLayout.COL_R_W,
-                        ClusterManagementComputerLayout.BTN_H));
-        JsTechTheme.button(g, x + ClusterManagementComputerLayout.AUTO_X, y + ClusterManagementComputerLayout.AUTO_Y,
-                ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.BTN_H,
-                hover(mouseX, mouseY, ClusterManagementComputerLayout.AUTO_X, ClusterManagementComputerLayout.AUTO_Y,
-                        ClusterManagementComputerLayout.COL_R_W, ClusterManagementComputerLayout.BTN_H));
-        JsTechTheme.button(g, x + ClusterManagementComputerLayout.SIDE_X, y + ClusterManagementComputerLayout.SIDE_Y,
-                ClusterManagementComputerLayout.SIDE_W, ClusterManagementComputerLayout.SIDE_H,
-                hover(mouseX, mouseY, ClusterManagementComputerLayout.SIDE_X, ClusterManagementComputerLayout.SIDE_Y,
-                        ClusterManagementComputerLayout.SIDE_W, ClusterManagementComputerLayout.SIDE_H));
-
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                JsTechTheme.slot(g,
-                        x + ClusterManagementComputerLayout.INV_X + col * ClusterManagementComputerLayout.SLOT,
-                        y + ClusterManagementComputerLayout.INV_Y + row * ClusterManagementComputerLayout.SLOT);
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            JsTechTheme.slot(g, x + ClusterManagementComputerLayout.INV_X + col * ClusterManagementComputerLayout.SLOT,
-                    y + ClusterManagementComputerLayout.INV_Y + ClusterManagementComputerLayout.HOTBAR_GAP);
-        }
+    protected String machineTitle() {
+        return GameText.resolve(AssemblyTexts.TITLE_CLUSTER_MANAGEMENT);
     }
 
     @Override
-    protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.TITLE_CLUSTER_MANAGEMENT), 12, 11, JsTechTheme.text());
-        final String status;
-        final int statusColor;
-        if (!menu.buildValid()) {
-            status = GameText.resolve(AssemblyTexts.OFFLINE);
-            statusColor = JsTechTheme.red();
-        } else if (menu.isRunning()) {
-            status = GameText.resolve(AssemblyTexts.ONLINE);
-            statusColor = JsTechTheme.green();
-        } else {
-            status = GameText.resolve(AssemblyTexts.READY);
-            statusColor = JsTechTheme.amber();
-        }
-        final int pillX = ClusterManagementComputerLayout.HEADER_W - font.width(status);
-        JsTechTheme.text(g, font, status, pillX, 11, statusColor);
-        g.fill(pillX - 6, 11, pillX - 2, 15, statusColor);
+    protected TextKey nameHint() {
+        return AssemblyTexts.NAME_THIS_COMPUTER;
+    }
 
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.BOARD), ClusterManagementComputerLayout.MOBO_X,
-                ClusterManagementComputerLayout.LABEL_ROW_1_Y,
-                menu.hasBoard() ? JsTechTheme.accent() : JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.CPU), ClusterManagementComputerLayout.RIGHT_X,
-                ClusterManagementComputerLayout.LABEL_ROW_1_Y, JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PSU), ClusterManagementComputerLayout.MOBO_X,
-                ClusterManagementComputerLayout.LABEL_ROW_2_Y, JsTechTheme.dim());
-        g.fill(ClusterManagementComputerLayout.PSU_LED_X, ClusterManagementComputerLayout.PSU_LED_Y,
-                ClusterManagementComputerLayout.PSU_LED_X + ClusterManagementComputerLayout.PSU_LED_SIZE,
-                ClusterManagementComputerLayout.PSU_LED_Y + ClusterManagementComputerLayout.PSU_LED_SIZE, psuColor());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.RAM), ClusterManagementComputerLayout.RIGHT_X,
-                ClusterManagementComputerLayout.LABEL_ROW_2_Y, JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.DISK), ClusterManagementComputerLayout.MOBO_X,
-                ClusterManagementComputerLayout.LABEL_ROW_3_Y, JsTechTheme.dim());
-        JsTechTheme.text(g, font, GameText.resolve(AssemblyTexts.PCIE), ClusterManagementComputerLayout.RIGHT_X,
-                ClusterManagementComputerLayout.LABEL_ROW_3_Y,
-                menu.hasCard() ? JsTechTheme.accent() : JsTechTheme.dim());
-
-        // Small-font tiles: four fit where the crafting computer keeps three.
-        JsTechTheme.tileTextS(g, font, ClusterManagementComputerLayout.COL_R, ClusterManagementComputerLayout.TILE_Y0,
-                GameText.resolve(AssemblyTexts.CAPACITY),
-                GameText.resolve(AssemblyTexts.CAPACITY_AND_BUFFER.with(JsTechTheme.fmt(menu.capacity()),
-                        JsTechTheme.fmt(menu.ramBuffer()))), JsTechTheme.text());
-        JsTechTheme.tileTextS(g, font, ClusterManagementComputerLayout.COL_R, ClusterManagementComputerLayout.TILE_Y1,
-                GameText.resolve(AssemblyTexts.NETWORK),
-                GameText.resolve(menu.isOnNetwork() ? AssemblyTexts.LINKED : AssemblyTexts.NO_LINK),
-                menu.isOnNetwork() ? JsTechTheme.green() : JsTechTheme.dim());
+    @Override
+    protected List<Readout> readouts() {
+        final Readout clusters;
         if (!menu.hasCard()) {
-            JsTechTheme.tileTextS(g, font, ClusterManagementComputerLayout.COL_R,
-                    ClusterManagementComputerLayout.TILE_Y2, GameText.resolve(AssemblyTexts.CLUSTERS_IN_REACH),
-                    GameText.resolve(AssemblyTexts.NO_INTERFACE_CARD), JsTechTheme.amber());
+            clusters = new Readout(GameText.resolve(AssemblyTexts.CLUSTERS_SHORT),
+                    GameText.resolve(AssemblyTexts.NO_CARD), JsTechTheme.amber(),
+                    List.of(GameText.component(AssemblyTexts.NO_INTERFACE_CARD)));
         } else {
-            JsTechTheme.tileTextS(g, font, ClusterManagementComputerLayout.COL_R,
-                    ClusterManagementComputerLayout.TILE_Y2, GameText.resolve(AssemblyTexts.CLUSTERS_IN_REACH),
-                    GameText.resolve(
-                            AssemblyTexts.CLUSTERS.with(menu.supercomputers(), menu.datacenters(), menu.lanes())),
-                    JsTechTheme.text());
+            final int reach = menu.supercomputers() + menu.datacenters();
+            clusters = new Readout(GameText.resolve(AssemblyTexts.CLUSTERS_SHORT),
+                    reach == 0 ? GameText.resolve(AssemblyTexts.NONE)
+                            : GameText.resolve(AssemblyTexts.IN_REACH.with(reach)),
+                    JsTechTheme.text(), List.of(GameText.component(AssemblyTexts.CLUSTERS.with(menu.supercomputers(),
+                            menu.datacenters(), menu.lanes()))));
         }
-        JsTechTheme.tileTextS(g, font, ClusterManagementComputerLayout.COL_R, ClusterManagementComputerLayout.TILE_Y3,
-                GameText.resolve(AssemblyTexts.MANAGEMENT),
-                GameText.resolve(
-                        menu.managerInstalled() ? AssemblyTexts.MANAGER_INSTALLED : AssemblyTexts.MANAGER_MISSING),
-                menu.managerInstalled() ? JsTechTheme.accent() : JsTechTheme.dim());
-
-        final boolean auto = menu.isAutoStart();
-        final String powerCap = GameText.resolve(auto ? AssemblyTexts.AUTO
-                : menu.isRunning() ? AssemblyTexts.TURN_OFF : AssemblyTexts.TURN_ON);
-        JsTechTheme.textCenter(g, font, powerCap, ClusterManagementComputerLayout.POWER_X
-                + ClusterManagementComputerLayout.COL_R_W / 2, ClusterManagementComputerLayout.POWER_Y + 4,
-                auto ? JsTechTheme.dim() : JsTechTheme.accent());
-        JsTechTheme.textCenter(g, font, GameText.resolve(auto ? AssemblyTexts.AUTO_ON : AssemblyTexts.AUTO_OFF),
-                ClusterManagementComputerLayout.AUTO_X + ClusterManagementComputerLayout.COL_R_W / 2,
-                ClusterManagementComputerLayout.AUTO_Y + 4, auto ? JsTechTheme.accent() : JsTechTheme.dim());
-        final boolean sideOff = menu.isSidePanelOff();
-        JsTechTheme.tileTextS(g, font, ClusterManagementComputerLayout.SIDE_X,
-                ClusterManagementComputerLayout.SIDE_Y, GameText.resolve(AssemblyTexts.SIDE),
-                GameText.resolve(sideOff ? AssemblyTexts.SIDE_OPEN : AssemblyTexts.SIDE_CLOSED),
-                sideOff ? JsTechTheme.accent() : JsTechTheme.text());
-    }
-
-    private int psuColor() {
-        if (!menu.hasPsu()) {
-            return JsTechTheme.dim();
-        }
-        return menu.buildValid() ? JsTechTheme.green() : JsTechTheme.amber();
-    }
-
-    @Override
-    public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
-        if (clickNameBox(mouseX, mouseY, button)) {
-            return true;
-        }
-        if (button == 0) {
-            if (!menu.isAutoStart() && hover((int) mouseX, (int) mouseY, ClusterManagementComputerLayout.POWER_X,
-                    ClusterManagementComputerLayout.POWER_Y, ClusterManagementComputerLayout.COL_R_W,
-                    ClusterManagementComputerLayout.BTN_H)) {
-                sendButton(ClusterManagementComputerMenu.BUTTON_POWER);
-                return true;
-            }
-            if (hover((int) mouseX, (int) mouseY, ClusterManagementComputerLayout.AUTO_X,
-                    ClusterManagementComputerLayout.AUTO_Y, ClusterManagementComputerLayout.COL_R_W,
-                    ClusterManagementComputerLayout.BTN_H)) {
-                sendButton(ClusterManagementComputerMenu.BUTTON_AUTOSTART);
-                return true;
-            }
-            if (hover((int) mouseX, (int) mouseY, ClusterManagementComputerLayout.SIDE_X,
-                    ClusterManagementComputerLayout.SIDE_Y, ClusterManagementComputerLayout.SIDE_W,
-                    ClusterManagementComputerLayout.SIDE_H)) {
-                sendButton(ClusterManagementComputerMenu.BUTTON_SIDE_PANEL);
-                return true;
-            }
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    @Override
-    protected HardwareEra screenEra() {
-        return menu.hardwareEra();
+        final boolean manager = menu.managerInstalled();
+        return List.of(
+                capacity(List.of(GameText.component(AssemblyTexts.RAM_BUFFER_LINE.with(
+                        JsTechTheme.fmt(menu.ramBuffer()))))),
+                network(List.of()),
+                clusters,
+                new Readout(GameText.resolve(AssemblyTexts.MANAGEMENT),
+                        GameText.resolve(manager ? AssemblyTexts.INSTALLED : AssemblyTexts.NOT_INSTALLED),
+                        manager ? JsTechTheme.accent() : JsTechTheme.amber()));
     }
 }

@@ -51,10 +51,10 @@ public class BayDriveItem extends SpecItem<BayDriveSpec> {
     /* The discs a drive reads by their formats' names, newest first: "Blu-ray, DVD, CD". */
     private static Text formats(final MediaDriveType drive) {
         final List<Text> names = new ArrayList<>();
-        final MediaFormat[] all = MediaFormat.values();
-        for (int i = all.length - 1; i >= 0; i--) {
-            if (all[i].onTray() && drive.accepts(all[i])) {
-                names.add(all[i].text());
+        for (final MediaFormat format : MediaFormat.values()) {
+            if (format.onTray() && drive.accepts(format)) {
+                // The formats run oldest first, so each one read goes ahead of those before it.
+                names.addFirst(format.text());
             }
         }
         return TextLists.join(", ", names);

@@ -15,6 +15,10 @@ import dev.jstech.computers.gui.layout.ServerRackLayout;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
@@ -31,7 +35,9 @@ import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -79,7 +85,7 @@ public class ServerRackMenu extends CoreMenu {
         final Slot[] serverSlots = new Slot[RACK_SLOTS];
         for (int i = 0; i < RACK_SLOTS; i++) {
             final GuiLayout.SlotPosition at = layout.slotAt("server" + i);
-            serverSlots[i] = new SlotItemHandler(servers, i, at.x(), at.y());
+            serverSlots[i] = new ServerBaySlot(servers, i, at.x(), at.y());
         }
         final SlotGroup serverGroup = slots(serverSlots);
         // The rack's hotswap slots, row-major: index = row * 5 + column.
@@ -89,7 +95,7 @@ public class ServerRackMenu extends CoreMenu {
             final int row = index / RackLayout.SLOTS_PER_U;
             final int column = index % RackLayout.SLOTS_PER_U;
             final GuiLayout.SlotPosition at = layout.slotAt("front" + row + "_" + column);
-            frontSlots[index] = new SlotItemHandler(front, index, at.x(), at.y());
+            frontSlots[index] = new FrontBaySlot(front, index, at.x(), at.y());
         }
         final SlotGroup frontGroup = slots(frontSlots);
         final PlayerSlots player = playerInventory(playerInventory, layout.playerInventoryAt());
@@ -146,18 +152,56 @@ public class ServerRackMenu extends CoreMenu {
                 mountedUnits());
     }
 
-    /** The mounted chassis, read from the synced server slots so the client agrees with the server. */
+    /**
+     * Everything mounted (servers and the rack's own units alike), read from the synced server slots so the client
+     * agrees with the server.
+     */
     public List<RackLayout.Unit> mountedUnits() {
         final List<RackLayout.Unit> mounted = new ArrayList<>();
         for (int i = 0; i < RACK_SLOTS; i++) {
-            final RackChassis chassis =
-                    ServerItem.chassisOf(serverInBay(i));
-            if (chassis != null) {
-                mounted.add(new RackLayout.Unit(i, chassis.heightU(),
-                        chassis.driveSlots(), chassis.gadgetSlots()));
+            final RackLayout.Unit unit = IMountableRackUnit.unitAt(serverInBay(i), i);
+            if (unit != null) {
+                mounted.add(unit);
             }
         }
         return mounted;
+    }
+
+    /** The top row of the unit occupying {@code row}, or -1 when nothing does. */
+    public int unitTopOf(final int row) {
+        final RackLayout.Unit unit = RackLayout.unitAt(row, mountedUnits());
+        return unit == null ? -1 : unit.topU();
+    }
+
+    /** How many rack units the unit topped at {@code topRow} takes, or 1 when nothing is mounted there. */
+    public int unitHeightAt(final int topRow) {
+        final IMountableRackUnit unit = IMountableRackUnit.of(serverInBay(topRow));
+        return unit == null ? 1 : unit.heightU();
+    }
+
+    /** The row whose machine a linked monitor shows, or -1 when it can show none. */
+    public int screenRow() {
+        return rack.screenShown();
+    }
+
+    /**
+     * The disk the machine topped at {@code topRow} boots from, counted among its drive bays from 0, or -1 when none
+     * of its disks carries a system: the one it prefers when that one carries a system, else the first that does.
+     */
+    public int bootDisk(final int topRow) {
+        final List<ItemStack> drives = driveStacks(topRow);
+        return OsDisks.systemDiskSlot(drives.size(), drives::get, preferredBootDisk(topRow));
+    }
+
+    /** The system the machine topped at {@code topRow} boots, or null when none of its disks carries one. */
+    @Nullable
+    public OsDef system(final int topRow) {
+        final int disk = bootDisk(topRow);
+        if (disk < 0) {
+            return null;
+        }
+        final ResourceLocation osId = OsDisks.systemOn(driveStacks(topRow).get(disk));
+        return osId == null ? null : OsRegistry.getOs(osId);
     }
 
     public BlockPos rackPos() {
@@ -243,5 +287,55 @@ public class ServerRackMenu extends CoreMenu {
                                              final RegistryFriendlyByteBuf buf) {
         return new ServerRackMenu(containerId, playerInventory,
                 MenuOpening.blockEntity(playerInventory, buf, ServerRackBlockEntity.class));
+    }
+
+    /* The stacks in the drive bays the unit topped at topRow cables, in bay order. */
+    private List<ItemStack> driveStacks(final int topRow) {
+        final List<ItemStack> out = new ArrayList<>();
+        for (final int index : claimedSlots(topRow, RackLayout.SlotRole.DRIVE)) {
+            out.add(frontSlotStack(index));
+        }
+        return out;
+    }
+
+    /*
+     * The disk the machine's firmware was last told to boot from, as its Server item carries it; -1 for none chosen.
+     * The item is written back when the machine's session is, so this can lag a choice just made, and a stale or
+     * missing choice only means the first disk with a system answers, which is what the firmware does too.
+     */
+    private int preferredBootDisk(final int topRow) {
+        final CompoundTag console = serverInBay(topRow).get(ComputingComponents.SERVER_CONSOLE.get());
+        return console != null && console.contains("BootDiskSlot") ? console.getInt("BootDiskSlot") : -1;
+    }
+
+    /** A row's server slot: hidden while the unit mounted above takes its row, which leaves it nothing to hold. */
+    private final class ServerBaySlot extends SlotItemHandler {
+
+        ServerBaySlot(final IItemHandler handler, final int index, final int x, final int y) {
+            super(handler, index, x, y);
+        }
+
+        @Override
+        public boolean isActive() {
+            final int top = unitTopOf(getSlotIndex());
+            return hasItem() || top < 0 || top == getSlotIndex();
+        }
+    }
+
+    /**
+     * A front-panel slot: there only while a mounted unit cables it, or while it still holds what was put in it before
+     * its unit came out, so that can always be taken back.
+     */
+    private final class FrontBaySlot extends SlotItemHandler {
+
+        FrontBaySlot(final IItemHandler handler, final int index, final int x, final int y) {
+            super(handler, index, x, y);
+        }
+
+        @Override
+        public boolean isActive() {
+            final RackLayout.SlotRole role = frontSlotRole(getSlotIndex());
+            return hasItem() || role == RackLayout.SlotRole.DRIVE || role == RackLayout.SlotRole.GADGET;
+        }
     }
 }

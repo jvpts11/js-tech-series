@@ -26,7 +26,7 @@ public class PersonalComputerMenu extends AbstractAssemblyComputerMenu {
     public PersonalComputerMenu(final int containerId, final Inventory playerInventory,
                                 final PersonalComputerBlockEntity be) {
         super(ComputingMenus.PERSONAL_COMPUTER_MENU.get(), containerId, playerInventory, be,
-                PersonalComputerLayout.layout(), "gpu");
+                PersonalComputerLayout.layout(caseEra(be)), "gpu");
         this.blockEntity = be;
     }
 

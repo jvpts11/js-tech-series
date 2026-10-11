@@ -26,7 +26,7 @@ public class CraftingComputerMenu extends AbstractAssemblyComputerMenu {
     public CraftingComputerMenu(final int containerId, final Inventory playerInventory,
                                 final CraftingComputerBlockEntity be) {
         super(ComputingMenus.CRAFTING_COMPUTER_MENU.get(), containerId, playerInventory, be,
-                CraftingComputerLayout.layout(), "pcie");
+                CraftingComputerLayout.layout(caseEra(be)), "pcie");
         this.blockEntity = be;
     }
 

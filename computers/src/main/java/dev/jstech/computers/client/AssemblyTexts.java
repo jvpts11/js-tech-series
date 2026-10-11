@@ -43,9 +43,7 @@ final class AssemblyTexts {
     static final TextKey WARN = TextKey.of("jsc.assembly.warn", "WARN");
 
     // The slots.
-    static final TextKey BOARD = TextKey.of("jsc.assembly.board", "BOARD");
     static final TextKey CPU = TextKey.of("jsc.assembly.cpu", "CPU");
-    static final TextKey PSU = TextKey.of("jsc.assembly.psu", "PSU");
     static final TextKey RAM = TextKey.of("jsc.assembly.ram", "RAM");
     static final TextKey DISK = TextKey.of("jsc.assembly.disk", "DISK");
     static final TextKey GPU = TextKey.of("jsc.assembly.gpu", "GPU");
@@ -68,38 +66,19 @@ final class AssemblyTexts {
     static final TextKey ONE_SERVER = TextKey.of("jsc.assembly.one_server", "%s server");
     static final TextKey SERVERS = TextKey.of("jsc.assembly.servers", "%s servers");
     static final TextKey CRAFT = TextKey.of("jsc.assembly.craft", "CRAFT");
-    /* The Crafting Card's two stats: how many stages it runs at once, and how much faster. */
-    static final TextKey CRAFT_CARD = TextKey.of("jsc.assembly.craft_card", "CRAFT %sT x%s");
     static final TextKey NO_CARD = TextKey.of("jsc.assembly.no_card", "NO CARD");
     static final TextKey RECIPE_ROM = TextKey.of("jsc.assembly.recipe_rom", "RECIPE ROM");
     static final TextKey OF = TextKey.of("jsc.assembly.of", "%s / %s");
 
-    // The power buttons.
-    static final TextKey AUTO = TextKey.of("jsc.assembly.auto", "AUTO");
-    static final TextKey TURN_OFF = TextKey.of("jsc.assembly.turn_off", "TURN OFF");
-    static final TextKey TURN_ON = TextKey.of("jsc.assembly.turn_on", "TURN ON");
-    static final TextKey AUTO_ON = TextKey.of("jsc.assembly.auto_on", "AUTO: ON");
-    static final TextKey AUTO_OFF = TextKey.of("jsc.assembly.auto_off", "AUTO: OFF");
-
-    // A small computer's left side, taken off or put back from its screen.
-    static final TextKey SIDE = TextKey.of("jsc.assembly.side", "SIDE");
-    static final TextKey SIDE_OPEN = TextKey.of("jsc.assembly.side_open", "OPEN");
-    static final TextKey SIDE_CLOSED = TextKey.of("jsc.assembly.side_closed", "CLOSED");
-
-    // The Mainframe's operations and its narrower buttons.
+    // The Mainframe's operations.
     static final TextKey QUEUED = TextKey.of("jsc.assembly.queued", "QUEUED");
     static final TextKey RUNNING = TextKey.of("jsc.assembly.running", "RUNNING");
     static final TextKey DONE = TextKey.of("jsc.assembly.done", "DONE");
-    static final TextKey AUTO_ON_SHORT = TextKey.of("jsc.assembly.auto_on_short", "AUTO ON");
-    static final TextKey AUTO_OFF_SHORT = TextKey.of("jsc.assembly.auto_off_short", "AUTO OFF");
-    static final TextKey FAILOVER_ON = TextKey.of("jsc.assembly.failover_on", "FAIL ON");
-    static final TextKey FAILOVER_OFF = TextKey.of("jsc.assembly.failover_off", "FAIL OFF");
 
     // The Server's assembly.
-    static final TextKey ORCHESTRATION = TextKey.of("jsc.assembly.orchestration", "ORCH");
+    static final TextKey ORCHESTRATION = TextKey.of("jsc.assembly.orchestration", "ORCHESTRATION");
     static final TextKey RAM_BUFFER_SHORT = TextKey.of("jsc.assembly.ram_buffer_short", "RAM BUF");
     static final TextKey DRAW = TextKey.of("jsc.assembly.draw", "DRAW");
-    static final TextKey WATTS = TextKey.of("jsc.assembly.watts", "%sW");
     static final TextKey DRAW_OF = TextKey.of("jsc.assembly.draw_of", "%s/%sW");
     static final TextKey NO_WATTS = TextKey.of("jsc.assembly.no_watts", "-- W");
     static final TextKey POWER = TextKey.of("jsc.assembly.power", "POWER");
@@ -110,18 +89,44 @@ final class AssemblyTexts {
     static final TextKey ALL_CHECKS_PASSED = TextKey.of("jsc.assembly.all_checks_passed", "All checks passed");
     static final TextKey MORE = TextKey.of("jsc.assembly.more", "+%s more");
 
-    // The Cluster Management Computer's tiles.
-    static final TextKey CAPACITY_AND_BUFFER = TextKey.of("jsc.assembly.capacity_and_buffer", "%s it/t · %s it");
-    static final TextKey NO_LINK = TextKey.of("jsc.assembly.no_link", "no link");
-    static final TextKey CLUSTERS_IN_REACH = TextKey.of("jsc.assembly.clusters_in_reach", "CLUSTERS IN REACH");
+    // The case: which way it faces, what its top row seats, the board's bus.
+    static final TextKey REAR = TextKey.of("jsc.assembly.rear", "REAR");
+    static final TextKey FRONT = TextKey.of("jsc.assembly.front", "FRONT");
+    static final TextKey DIMM = TextKey.of("jsc.assembly.dimm", "DIMM");
+    static final TextKey BUS_ISA = TextKey.of("jsc.assembly.bus_isa", "ISA");
+    static final TextKey BUS_PCI = TextKey.of("jsc.assembly.bus_pci", "PCI");
+
+    // The front panel and the service panel.
+    static final TextKey AUTO_START = TextKey.of("jsc.assembly.auto_start", "AUTO START");
+    static final TextKey SIDE_PANEL = TextKey.of("jsc.assembly.side_panel", "SIDE PANEL");
+    static final TextKey FAILOVER = TextKey.of("jsc.assembly.failover", "FAILOVER");
+    static final TextKey OPERATIONS = TextKey.of("jsc.assembly.operations", "OPERATIONS");
+    static final TextKey LAMP_POWER = TextKey.of("jsc.assembly.lamp_power", "PWR");
+    static final TextKey LAMP_DISK = TextKey.of("jsc.assembly.lamp_disk", "DISK");
+    static final TextKey LAMP_NETWORK = TextKey.of("jsc.assembly.lamp_network", "NET");
+    static final TextKey NOT_A_COMPUTER = TextKey.of("jsc.assembly.not_a_computer", "Not a computer yet");
+    static final TextKey NEEDS_PARTS = TextKey.of("jsc.assembly.needs_parts",
+            "Needs a board, a CPU, RAM, a disk and a PSU");
+    static final TextKey THEN_SWITCH_ON = TextKey.of("jsc.assembly.then_switch_on", "Then press to switch on");
+    static final TextKey AUTO_KEEPS_ON = TextKey.of("jsc.assembly.auto_keeps_on",
+            "Auto start keeps it on: switch auto start off to switch it off here");
+    static final TextKey CHECKS = TextKey.of("jsc.assembly.checks", "CHECKS");
+    static final TextKey IN_THE_RACK = TextKey.of("jsc.assembly.in_the_rack", "in the rack");
+    /* The Crafting Card's two stats as one readout: how many stages it runs at once, and how much faster. */
+    static final TextKey CRAFT_THREADS = TextKey.of("jsc.assembly.craft_threads", "%sT x%s");
+    static final TextKey CRAFT_THROUGHPUT = TextKey.of("jsc.assembly.craft_throughput", "Crafts %s it/t");
+    static final TextKey RAM_BUFFER_LINE = TextKey.of("jsc.assembly.ram_buffer_line", "RAM buffer: %s it");
+    static final TextKey CLUSTERS_SHORT = TextKey.of("jsc.assembly.clusters_short", "CLUSTERS");
+    static final TextKey IN_REACH = TextKey.of("jsc.assembly.in_reach", "%s in reach");
+    static final TextKey NONE = TextKey.of("jsc.assembly.none", "none");
+    static final TextKey INSTALLED = TextKey.of("jsc.assembly.installed", "installed");
+    static final TextKey NOT_INSTALLED = TextKey.of("jsc.assembly.not_installed", "not installed");
+
+    // The Cluster Management Computer's readouts.
     static final TextKey NO_INTERFACE_CARD = TextKey.of("jsc.assembly.no_interface_card", "no interface card");
     /* Supercomputers, datacenters and HPC lanes in reach. */
     static final TextKey CLUSTERS = TextKey.of("jsc.assembly.clusters", "%s SC · %s DC · %s lanes");
     static final TextKey MANAGEMENT = TextKey.of("jsc.assembly.management", "MANAGEMENT");
-    static final TextKey MANAGER_INSTALLED =
-            TextKey.of("jsc.assembly.manager_installed", "Cluster Manager · installed");
-    static final TextKey MANAGER_MISSING =
-            TextKey.of("jsc.assembly.manager_missing", "Cluster Manager · not installed");
 
     private AssemblyTexts() {
     }

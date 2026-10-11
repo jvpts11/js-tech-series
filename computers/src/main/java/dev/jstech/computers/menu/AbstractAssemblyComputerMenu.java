@@ -66,6 +66,10 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
         addBoardSlots(hardwareSlots, hw, layout, "ram_", map.ramStart(), map.ramCount(), be::boardRamSlots);
         addBoardSlots(hardwareSlots, hw, layout, pcieKey + "_", map.pcieStart(), map.pcieCount(), be::boardPcieSlots);
         addBoardSlots(hardwareSlots, hw, layout, "disk_", map.diskStart(), map.diskCount(), be::boardDiskSlots);
+        // The bays the case has, which take their drives whatever the board.
+        for (int i = 0; i < be.caseBays(); i++) {
+            hardwareSlots.add(slot(hw, map.bayStart() + i, layout.slotAt("bay_" + i)));
+        }
         final SlotGroup hardware = slots(hardwareSlots.toArray(Slot[]::new));
         this.hardwareSlots = hardwareSlots.size();
 
@@ -150,6 +154,17 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
 
     public boolean isOnNetwork() {
         return assembly.assemblyOnNetwork();
+    }
+
+    /** Whether the machine worked its disk a moment ago, as its disk lamp shows it. */
+    public boolean diskBusy() {
+        return computer.visualDiskBusy();
+    }
+
+    /** The era whose case the machine stands in, which seats the parts where that case has them. */
+    protected static HardwareEra caseEra(final AbstractSmallComputerBlockEntity be) {
+        final HardwareEra era = be.displayEra();
+        return era == null ? HardwareEra.STANDARD : era;
     }
 
     private static void addBoardSlots(final List<Slot> into, final IItemHandler hw, final GuiLayout layout,

@@ -22,14 +22,29 @@ final class ServerRackTexts {
     static final TextKey LINKED = TextKey.of("jsc.rack.linked", "%s/%sU  LINKED");
     static final TextKey OFFLINE = TextKey.of("jsc.rack.offline", "%s/%sU  OFFLINE");
     static final TextKey UNIT = TextKey.of("jsc.rack.unit", "%sU");
-    /* A row taken by the chassis mounted above it. */
-    static final TextKey COVERED = TextKey.of("jsc.rack.covered", "^ %sU");
     static final TextKey INCOMPLETE = TextKey.of("jsc.rack.incomplete", "INCOMPLETE");
     static final TextKey OFF = TextKey.of("jsc.rack.off", "OFF");
     static final TextKey ONLINE = TextKey.of("jsc.rack.online", "ONLINE");
     static final TextKey READY = TextKey.of("jsc.rack.ready", "READY");
     static final TextKey REBUILD = TextKey.of("jsc.rack.rebuild", "REBUILD %s%%");
     static final TextKey POWER = TextKey.of("jsc.rack.power", "PWR");
+
+    // The card of the selected unit: its lines' labels, then what they can say.
+    static final TextKey CARD_STATE = TextKey.of("jsc.rack.card_state", "STATE");
+    static final TextKey CARD_BOOT = TextKey.of("jsc.rack.card_boot", "BOOT");
+    static final TextKey CARD_SYSTEM = TextKey.of("jsc.rack.card_system", "SYSTEM");
+    static final TextKey CARD_NETWORK = TextKey.of("jsc.rack.card_network", "NETWORK");
+    static final TextKey CARD_RAID = TextKey.of("jsc.rack.card_raid", "RAID");
+    static final TextKey CARD_KVM = TextKey.of("jsc.rack.card_kvm", "KVM");
+    static final TextKey NO_UNIT = TextKey.of("jsc.rack.no_unit", "no unit");
+    /* The disk the machine boots from, counted among its drive bays from 0 as its firmware counts them. */
+    static final TextKey BOOT_DISK = TextKey.of("jsc.rack.boot_disk", "Disk %s");
+    static final TextKey NONE = TextKey.of("jsc.rack.none", "none");
+    static final TextKey NETWORK_LINKED = TextKey.of("jsc.rack.network_linked", "LINKED");
+    /* What a linked monitor shows: this unit, another (by its rack unit), or nothing, two machines and no switch. */
+    static final TextKey THIS_UNIT = TextKey.of("jsc.rack.this_unit", "this unit");
+    static final TextKey SHOWS_UNIT = TextKey.of("jsc.rack.shows_unit", "shows %sU");
+    static final TextKey NO_SWITCH = TextKey.of("jsc.rack.no_switch", "no switch");
 
     // The tooltips.
     static final TextKey BELONGS_IN_SERVER_RACK =

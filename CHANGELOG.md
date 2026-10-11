@@ -420,8 +420,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Neutral, closed and quiet; High Performance, mesh and more fans; Aesthetic, glass and light, with red LEDs in the
   Standard and addressable light in the Advanced. A plate at the foot of the front tells the machines apart. The
   Transition and Advanced machines are new blocks, and so are the High Performance and Aesthetic cases of the Standard.
-- A small computer's left side comes off, to see what is inside: sneak and use the case with an empty hand, or press
-  SIDE beside the inventory on its assembly screen. It stays as it was left, through a save and for every player.
+- A small computer's left side comes off, to see what is inside: sneak and use the case with an empty hand, or throw
+  the SIDE PANEL switch beside the inventory on its assembly screen. It stays as it was left, through a save and for
+  every player.
 - Inside a small computer, each part the player installed is drawn by a model of its own, the one of that item: the
   board on the tray, the processor in its socket, the memory in its slots, the cards hanging in theirs, the supply
   and the disks where the case of that age keeps them, an M.2 drive on the board; and on the processor the cooler
@@ -1414,6 +1415,23 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   biggest disk, so the most room is left once the system is on it.
 
 ### Changed
+- The assembly screens are drawn as the machine they assemble. On the left, the open case of its age, the board on
+  its tray once there is one, and every part's seat where that part sits: the processor in its socket, the memory
+  beside it, the cards along their slots, each drawn as its own model shows it, with its bracket on the back panel,
+  the supply where that age's case keeps it, the bays and the disk cage at the front. An empty seat shows the shape of
+  the part it takes. The Mainframe and a rack server carry their cards in two I/O cages. On the right, the machine's
+  front panel, its power button over its readouts; beside the inventory, the AUTO START and SIDE PANEL switches
+  (FAILOVER on the Mainframe) and the PWR, DISK and NET lamps. A server's panel shows its checks where the power
+  button would be, since it is switched on in its rack, with every problem in their tooltip. The Personal Computer's
+  servers, the Crafting Computer's throughput and the Cluster Management Computer's RAM buffer and kinds of cluster
+  show in their readouts' tooltips.
+- A server rack's screen shows the cabinet from the front: its posts, each mounted unit as its faceplate with its own
+  slot, its drive caddies and gadget bays, vents over what its chassis does not cable and, on a computer, its power
+  button with its lamp; an empty unit is a blank panel, and a KVM Switch, a UPS or a cooling unit is a unit too. A
+  drive caddy's lamp is lit while its drive sits in a switched-on unit, and an array being rebuilt fills a bar across
+  its unit. A click on a computer's faceplate puts it on the card beside the cabinet: its name, its state, the disk
+  it boots from, its system, its network, its array and what a linked monitor shows. A front slot still holding a
+  drive after its unit came out shows, so the drive can be taken back, and says why it takes nothing more.
 - A disk goes in a computer of its era or a newer one: an NVMe made for the Standard age no longer fits a Vintage
   computer, while an old disk still goes in a newer machine. A disk already in a computer stays.
 - A computer finds its removable drives in one place, and everything that asks for them gets the same answer in the
@@ -1777,6 +1795,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- The Mainframe's queues tooltip names the card behind each queue; it named the item in another slot.
 - The desktops' pointers, Frames 7's Start orb and the other pictures with soft edges (the systems' marks and logos,
   the panels' icons) have their edges blended into what is under them: a pointer's soft shadow came out as a hard
   black outline, and a pixel almost wholly clear in its full colour, the blue specks round the orb. A pointer's tip
