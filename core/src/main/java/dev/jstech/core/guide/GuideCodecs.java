@@ -71,15 +71,17 @@ public final class GuideCodecs {
             Codec.STRING.fieldOf("id").forGetter(GuideSection::id),
             Codec.INT.optionalFieldOf("order", 0).forGetter(GuideSection::order),
             Codec.STRING.fieldOf("title").forGetter(GuideSection::titleKey),
-            Codec.STRING.optionalFieldOf("icon", "").forGetter(GuideSection::icon)
+            Codec.STRING.optionalFieldOf("icon", "").forGetter(GuideSection::icon),
+            Codec.STRING.optionalFieldOf("chapter", "").forGetter(GuideSection::chapter)
     ).apply(instance, GuideSection::new));
 
     public static final Codec<GuideChapter> CHAPTER = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.STRING.fieldOf("namespace").forGetter(GuideChapter::namespace),
+            Codec.STRING.fieldOf("id").forGetter(GuideChapter::id),
             Codec.INT.optionalFieldOf("order", 0).forGetter(GuideChapter::order),
             Codec.STRING.fieldOf("title").forGetter(GuideChapter::titleKey),
             Codec.STRING.optionalFieldOf("tab", "").forGetter(GuideChapter::tab),
-            Codec.STRING.optionalFieldOf("about", "").forGetter(GuideChapter::aboutKey)
+            Codec.STRING.optionalFieldOf("about", "").forGetter(GuideChapter::aboutKey),
+            Codec.BOOL.optionalFieldOf("in_reference", true).forGetter(GuideChapter::inReference)
     ).apply(instance, GuideChapter::new));
 
     public static final Codec<GuideManual> MANUAL = RecordCodecBuilder.create(instance -> instance.group(

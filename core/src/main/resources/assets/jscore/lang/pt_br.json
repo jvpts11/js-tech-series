@@ -180,6 +180,7 @@
   "jscore.guide.if_something_goes_wrong": "Se algo der errado",
   "jscore.guide.items_line": "Itens: %s",
   "jscore.guide.items_more": "Itens: %s e mais %s",
+  "jscore.guide.in_book": "em %s",
   "jscore.guide.what_it_is": "O que é",
   "jscore.guide.what_it_is_for": "Para que serve",
   "jscore.item.energy": "Energia: %s de %s",

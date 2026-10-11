@@ -12,6 +12,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideBlock;
+import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.GuideCodecs;
 import dev.jstech.core.guide.GuideEntry;
 import dev.jstech.core.guide.GuideManual;
@@ -33,9 +34,10 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * What a mod declares for the manuals, as the data generation writes it: every entry, section, manual and style of the
- * test mod read back from its file the same, items named by their registered ids, every English sentence under a key
- * of the mod's own, and the five parts of an entry in their order.
+ * What a mod declares for the manuals, as the data generation writes it: every entry, section, chapter, manual and
+ * style of the test mod read back from its file the same, a chapter written for one book bound by it alone, items
+ * named by their registered ids, every English sentence under a key of the mod's own, and the five parts of an entry
+ * in their order.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -59,8 +61,35 @@ public final class GuideGameTests {
             helper.assertTrue(roundTrips(GuideCodecs.MANUAL, manual), manual.id() + " reads back the same");
         }
         helper.assertTrue(roundTrips(GuideCodecs.CHAPTER, guide.declaredChapter()), "the chapter reads back");
+        for (final GuideChapter chapter : guide.declaredOtherChapters()) {
+            helper.assertTrue(roundTrips(GuideCodecs.CHAPTER, chapter), chapter.id() + " reads back the same");
+        }
         final GuideStyle binder = CoreItems.CONTENT.guide().declaredStyles().get("binder");
         helper.assertTrue(binder != null && roundTrips(GuideCodecs.STYLE, binder), "the binder style reads back");
+        helper.succeed();
+    }
+
+    /*
+     * A mod writes a chapter for one of its books only: it has its own id, its sections say they sit in it, the
+     * series' reference leaves it out, and the book that binds it names it before the mod's main chapter.
+     */
+    @GameTest(template = ARENA)
+    public static void chapters_aBookBindsTheOnesItNamesInItsOrder(final GameTestHelper helper) {
+        final ModGuide guide = TestSounds.CONTENT.guide();
+        helper.assertTrue(TestGuide.SHARED.id().equals("jstests:shared") && !TestGuide.SHARED.inReference()
+                        && guide.declaredChapter().inReference(),
+                "the shared chapter has its own id and is left out of the reference; the main one is not");
+        final GuideSection notes = guide.declaredSections().stream().filter(s -> s.id().equals("jstests:notes"))
+                .findFirst().orElseThrow();
+        helper.assertTrue(notes.chapter().equals(TestGuide.SHARED.id()), "the notes sit in the shared chapter");
+        final GuideManual second = guide.declaredManuals().stream()
+                .filter(m -> m.id().equals(TestGuide.SECOND_BOOK)).findFirst().orElseThrow();
+        helper.assertTrue(second.chapters().equals(List.of("jstests:shared", "jstests")) && second.holds(
+                TestGuide.SHARED) && !second.holdsEvery(), "the second book binds the shared chapter, then the main");
+        final GuideManual reference = CoreItems.CONTENT.guide().declaredManuals().stream()
+                .filter(GuideManual::holdsEvery).findFirst().orElseThrow();
+        helper.assertTrue(!reference.holds(TestGuide.SHARED) && reference.holds(guide.declaredChapter()),
+                "the reference holds the main chapter and leaves the shared one out");
         helper.succeed();
     }
 

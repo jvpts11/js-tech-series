@@ -1,5 +1,5 @@
 {
-  "namespace": "jstests",
+  "id": "jstests",
   "order": 90,
   "tab": "#FFD04040",
   "title": "jstests.guide.chapter"

@@ -33,8 +33,9 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import org.slf4j.Logger;
 
 /**
- * Reads every manual from the loaded resource packs, under each namespace's {@code guide/}: {@code chapter.json},
- * and the folders {@code sections}, {@code entries}, {@code manuals} and {@code styles}. The top-most pack's file wins,
+ * Reads every manual from the loaded resource packs, under each namespace's {@code guide/}: {@code chapter.json}, the
+ * mod's main chapter, and the folders {@code chapters} (its other chapters), {@code sections}, {@code entries},
+ * {@code manuals} and {@code styles}. The top-most pack's file wins,
  * as for any resource; a file that cannot be read is left out with a line in the log, and the rest of the manuals
  * still open.
  */
@@ -45,10 +46,11 @@ public final class GuideReloadListener extends SimplePreparableReloadListener<Gu
 
     @Override
     protected GuideLibrary prepare(final ResourceManager resources, final ProfilerFiller profiler) {
-        final Map<String, GuideChapter> chapters = new HashMap<>();
+        final Map<String, GuideChapter> chapters = new HashMap<>(readAll(resources, "chapters", GuideCodecs.CHAPTER,
+                GuideChapter::id));
         for (final Map.Entry<ResourceLocation, Resource> file : resources.listResources(ROOT,
                 path -> path.getPath().equals(ROOT + "/chapter.json")).entrySet()) {
-            read(file, GuideCodecs.CHAPTER).ifPresent(chapter -> chapters.put(chapter.namespace(), chapter));
+            read(file, GuideCodecs.CHAPTER).ifPresent(chapter -> chapters.put(chapter.id(), chapter));
         }
         return new GuideLibrary(chapters,
                 readAll(resources, "sections", GuideCodecs.SECTION, GuideSection::id),

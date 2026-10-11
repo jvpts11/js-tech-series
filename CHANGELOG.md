@@ -160,6 +160,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   of blocks seen from above, and breaks to the next column or page; can make one entry the page of a whole family of
   items; can print a mark on a manual's cover and hand a manual to every player once; and can draw its manual as a
   binder or as a folder of drawings, in two columns, with its own palette.
+- A mod's manuals can be books made of chapters: a mod writes as many chapters as its books need, a book prints the
+  ones it names in the order it names them and numbers them by that order, and one chapter can be bound into several
+  books, a tab for each. A chapter written for one book only stays out of the Technical Reference, whose tabs are one
+  a mod. A link to a page another book holds names that book, "(in The Handbook)", and a click opens it there; and the
+  manual key over a stack whose page its mod chose, such as an installation disc, opens that page.
 - The manuals inside the computers, beside the manual pages of each machine's commands, in each system's own help.
   Every desktop has Help: Frames 95's Help Topics with its Contents, Index and Find and a topic window of its own,
   XP's Help and Support Center, 7's Help and Support, Get Help on 10 and 11, KDE's Help Center, the Help of GNOME and

@@ -14,7 +14,8 @@ import java.util.Objects;
  * A manual: a title, a style it is drawn in, and the chapters it holds.
  *
  * <p>A manual says nothing about its entries: it holds whole chapters, and every entry of those chapters is in it.
- * So a mod's entries are written once and show in the mod's own manual and in the series' one, each in its own look.
+ * So a mod's entries are written once and show in the mod's own manual and in the series' one, each in its own look,
+ * and a chapter can be bound into several of a mod's books at once.
  *
  * @param id          the manual's id, {@code namespace:path}
  * @param titleKey    its title, printed on its cover and at the foot of every page
@@ -22,7 +23,8 @@ import java.util.Objects;
  * @param edition     the line under the title on the cover, such as "First Edition", or empty
  * @param partNumber  the part number printed on the cover, data rather than words, or empty
  * @param style       the style it is drawn in, {@code namespace:path}
- * @param chapters    the namespaces of the chapters it holds, in the order the chapters say; {@code *} holds every one
+ * @param chapters    the ids of the chapters it holds, in the order it prints them; {@code *} holds every chapter
+ *                    written for the reference, in the order the chapters say
  * @param aboutKeys   the paragraphs of its "About this manual" page, or the notes under a drawing list
  * @param priority    which manual the manual key opens when several alike hold an item's entry: the highest
  * @param icon        the mark printed on its cover, a texture {@code namespace:path} of 32 by 32 pixels, or empty
@@ -45,13 +47,27 @@ public record GuideManual(String id, String titleKey, List<String> coverKeys, St
         icon = icon == null ? "" : icon;
     }
 
-    /** Whether the manual holds the chapter of that namespace. */
-    public boolean holds(final String namespace) {
-        return this.chapters.contains(EVERY_CHAPTER) || this.chapters.contains(namespace);
+    /**
+     * Whether the manual holds that chapter: it names it, or it holds every chapter and the chapter is one of those
+     * every such manual holds rather than one written for a mod's own book only.
+     */
+    public boolean holds(final GuideChapter chapter) {
+        return this.chapters.contains(chapter.id()) || this.holdsEvery() && chapter.inReference();
     }
 
-    /** Whether the manual names the chapter of that namespace, rather than holding it as one of every chapter. */
-    public boolean names(final String namespace) {
-        return this.chapters.contains(namespace);
+    /** Whether the manual names the chapter of that id, rather than holding it as one of every chapter. */
+    public boolean names(final String chapterId) {
+        return this.chapters.contains(chapterId);
+    }
+
+    /** Whether the manual holds every chapter there is, as the series' reference does: its tabs are then one a mod. */
+    public boolean holdsEvery() {
+        return this.chapters.contains(EVERY_CHAPTER);
+    }
+
+    /** Where a chapter it names stands in its list, so a book prints its chapters in the order it binds them. */
+    public int placeOf(final String chapterId) {
+        final int at = this.chapters.indexOf(chapterId);
+        return at < 0 ? Integer.MAX_VALUE : at;
     }
 }

@@ -10,6 +10,7 @@ package dev.jstech.core.datagen;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.GuideCodecs;
 import dev.jstech.core.guide.GuideEntry;
 import dev.jstech.core.guide.GuideIds;
@@ -27,9 +28,10 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Writes what a mod declared for the manuals to {@code assets/<mod>/guide/}: its chapter, its sections and entries,
- * and its manuals and styles, one file each. These are the files a manual is read from, so a resource pack can
- * replace any of them, and a pack maker can write a manual of their own the same way with no code at all.
+ * Writes what a mod declared for the manuals to {@code assets/<mod>/guide/}: its main chapter, its other chapters, its
+ * sections and entries, and its manuals and styles, one file each. These are the files a manual is read from, so a
+ * resource pack can replace any of them, and a pack maker can write a manual of their own the same way with no code
+ * at all.
  */
 public final class GuideProvider implements DataProvider {
 
@@ -53,6 +55,9 @@ public final class GuideProvider implements DataProvider {
         if (this.guide.declaredChapter() != null) {
             written.add(this.save(cache, GuideCodecs.CHAPTER, this.guide.declaredChapter(), "guide",
                     GuideIds.of(namespace, "chapter")));
+        }
+        for (final GuideChapter chapter : this.guide.declaredOtherChapters()) {
+            written.add(this.save(cache, GuideCodecs.CHAPTER, chapter, "guide/chapters", chapter.id()));
         }
         for (final GuideSection section : this.guide.declaredSections()) {
             written.add(this.save(cache, GuideCodecs.SECTION, section, "guide/sections", section.id()));

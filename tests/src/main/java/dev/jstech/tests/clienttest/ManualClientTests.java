@@ -12,7 +12,9 @@ import dev.jstech.computers.guide.ComputersGuide;
 import dev.jstech.core.client.guide.GuideClient;
 import dev.jstech.core.client.guide.ManualScreen;
 import dev.jstech.core.client.input.KeyActionsClient;
+import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideBook;
+import dev.jstech.core.guide.GuidePiece;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.text.GameText;
@@ -28,6 +30,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.InteractionHand;
@@ -35,6 +38,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -239,6 +243,60 @@ public final class ManualClientTests {
                 .thenGive(0);
     }
 
+    /*
+     * A book holds the chapters it names: a link to a page only another book holds says which book it is, and a click
+     * on it opens that book there; that book prints the chapter it names first as its chapter 1.
+     */
+    @ClientTest(timeoutTicks = 300)
+    public static void manual_linkToAPageOfAnotherBookOpensThatBookThere(final ClientTestContext ctx) {
+        ctx.then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.OTHER_BOOK))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> shows(TestGuide.OTHER_BOOK)
+                                && manual().book().pageOf(TestGuide.SHARED_PAGE).isEmpty(),
+                        "the test manual opens at the link's entry, and does not hold the shared page")
+                .thenAssert(0, () -> linkWords(TestGuide.OTHER_BOOK, TestGuide.SHARED_PAGE).contains(
+                        "Second Test Book"), "the link names the book that holds its page")
+                .thenScreenshot(2, "manual_link_to_another_book")
+                .then(0, () -> {
+                    final int[] at = manual().linkPoint(TestGuide.SHARED_PAGE);
+                    if (at == null) {
+                        throw new ClientTestFailure("the spread shows no link to the shared page");
+                    }
+                    manual().mouseClicked(at[0], at[1], 0);
+                })
+                .thenAssert(SETTLE, () -> manual().manual().id().equals(TestGuide.SECOND_BOOK)
+                        && shows(TestGuide.SHARED_PAGE), "the click opens the second book at the shared page")
+                .thenAssert(0, () -> manual().book().pages().get(manual().book().pageOf(TestGuide.SHARED.id())
+                        .orElseThrow()).folio().equals("1-1"), "the second book prints the shared chapter first")
+                .thenScreenshot(2, "manual_second_book")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN)
+                .then(0, () -> GuideClient.open(CoreGuide.TECHNICAL_REFERENCE, ""))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> manual().book().pageOf(TestGuide.SHARED.id()).isEmpty()
+                                && manual().book().pageOf("jstests").isPresent(),
+                        "the reference holds the test mod's main chapter and leaves the shared one out")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    /* The manual key over a stack whose page its mod chose opens that page, in the book that names its chapter. */
+    @ClientTest(timeoutTicks = 300)
+    public static void manualKey_overAStackOpensThePageItsModChose(final ClientTestContext ctx) {
+        final ItemStack named = new ItemStack(Items.PAPER);
+        named.set(DataComponents.CUSTOM_NAME, Component.literal(TestGuide.SHARED_PAPER));
+        ctx.thenGive(0, named)
+                .then(2, () -> ctx.selectHotbar(0))
+                .then(2, () -> manualKey().setDown(true))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> manual().manual().id().equals(TestGuide.SECOND_BOOK)
+                        && shows(TestGuide.SHARED_PAGE), "the named paper opens the shared page in the second book")
+                .then(0, () -> manualKey().setDown(false))
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN)
+                .thenGive(0);
+    }
+
     @ClientTest(timeoutTicks = 300)
     public static void manualItem_opensItsManual(final ClientTestContext ctx) {
         ctx.then(0, () -> {
@@ -265,6 +323,18 @@ public final class ManualClientTests {
 
     private static void close() {
         Minecraft.getInstance().setScreen(null);
+    }
+
+    /* The words of every piece of an entry's first page that leads to a target, joined as they read. */
+    private static String linkWords(final String entry, final String target) {
+        final GuideBook book = manual().book();
+        final List<String> words = new ArrayList<>();
+        for (final GuidePiece piece : book.pages().get(book.pageOf(entry).orElseThrow()).pieces()) {
+            if (piece instanceof GuidePiece.Text text && text.link().equals(target)) {
+                words.add(text.text().strip());
+            }
+        }
+        return String.join(" ", words);
     }
 
     /* The manual key's binding, held down and let go as the player's finger would. */

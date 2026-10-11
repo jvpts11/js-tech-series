@@ -84,6 +84,16 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_numbersAChapterByItsPlaceInEachBook() {
+        final List<GuideContents.Chapter> chapters = contents().chapters();
+        final GuideBook second = lay(new GuideContents(List.of(chapters.get(1), chapters.get(0))));
+
+        assertEquals("1-1", second.pages().get(second.pageOf("beta").orElseThrow()).folio(),
+                "the chapter bound first in this book is its chapter 1");
+        assertEquals("2-1", second.pages().get(second.pageOf("alpha").orElseThrow()).folio());
+    }
+
+    @Test
     void lay_numbersTheFrontMatterInRomanAndTheIndexAfterIt() {
         final GuideBook book = lay(contents());
 
@@ -308,6 +318,22 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_namesTheBookHoldingALinksTargetThisManualDoesNot() {
+        final FixedText text = new FixedText(Map.of("first.text", "read [the mill](gamma:mill) now"),
+                Map.of("gamma:mill", "Mill Book"));
+        final GuideBook book = lay(contents(), text);
+
+        // The link is long enough to run over two lines; its pieces read on from one to the next.
+        final List<GuidePiece.Text> link = book.pages().get(book.pageOf("alpha:first").orElseThrow()).pieces()
+                .stream().filter(piece -> piece instanceof GuidePiece.Text candidate
+                        && candidate.link().equals("gamma:mill")).map(piece -> (GuidePiece.Text) piece).toList();
+        assertEquals("the mill (jscore.guide.in_book[Mill Book])",
+                String.join(" ", link.stream().map(piece -> piece.text().strip()).toList()),
+                "the link names the book it opens");
+        assertTrue(link.stream().allMatch(piece -> piece.colour().equals(GuideStyle.LINK)));
+    }
+
+    @Test
     void lay_keepsALinksNumberAndTheCommaAfterItOnOneLine() {
         final FixedText text = new FixedText(Map.of("first.text", "aaaaaaaaaaaaaaaaaa [](alpha:second), b"));
         final GuideBook book = lay(contents(), text);
@@ -411,9 +437,18 @@ class GuideLayoutTest {
 
     /**
      * Words that are their own keys, with any arguments after them in brackets, six pixels to a character at every
-     * size, and no recipes but those of one kind.
+     * size, no recipes but those of one kind, and the books holding the targets this manual does not.
      */
-    private record FixedText(Map<String, String> words) implements IGuideText {
+    private record FixedText(Map<String, String> words, Map<String, String> books) implements IGuideText {
+
+        FixedText(final Map<String, String> words) {
+            this(words, Map.of());
+        }
+
+        @Override
+        public String elsewhere(final String target) {
+            return this.books.getOrDefault(target, "");
+        }
 
         @Override
         public String text(final String key, final Object... args) {

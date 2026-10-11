@@ -43,6 +43,29 @@ class GuideLinksTest {
     }
 
     @Test
+    void runs_nameTheBookThatHoldsATargetThisManualDoesNot() {
+        final Function<String, String> elsewhere = Map.of("mod:mill", "in The Mill Book")::get;
+        assertEquals(List.of(new GuideLinks.Run("see ", ""),
+                        new GuideLinks.Run("the mill (in The Mill Book)", "mod:mill")),
+                GuideLinks.runs("see [the mill](mod:mill)", NUMBERS, elsewhere));
+        assertEquals(List.of(new GuideLinks.Run("the kiln", "")),
+                GuideLinks.runs("[the kiln](mod:kiln)", NUMBERS, elsewhere));
+    }
+
+    @Test
+    void runs_preferTheNumberWhenThisManualHoldsTheTarget() {
+        final Function<String, String> elsewhere = target -> "in Another Book";
+        assertEquals(List.of(new GuideLinks.Run("the press (1.2.3)", "mod:press")),
+                GuideLinks.runs("[the press](mod:press)", NUMBERS, elsewhere));
+    }
+
+    @Test
+    void plain_writesALinkToAnotherBookWithThatBook() {
+        assertEquals("see the mill (in The Mill Book)", GuideLinks.plain("see [the mill](mod:mill)", NUMBERS,
+                Map.of("mod:mill", "in The Mill Book")::get));
+    }
+
+    @Test
     void runs_leaveBracketsThatAreNoLinkAsTheyAre() {
         assertEquals(List.of(new GuideLinks.Run("hold [M] to open it", "")),
                 GuideLinks.runs("hold [M] to open it", NUMBERS));

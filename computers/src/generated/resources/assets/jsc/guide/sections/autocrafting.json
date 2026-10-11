@@ -1,4 +1,5 @@
 {
+  "chapter": "jsc",
   "icon": "jsc:crafting_card_pcie3",
   "id": "jsc:autocrafting",
   "order": 7,

@@ -73,9 +73,9 @@ public final class GuideLibrary {
         return Optional.ofNullable(this.styles.get(id));
     }
 
-    /** The chapter of that namespace. */
-    public Optional<GuideChapter> chapter(final String namespace) {
-        return Optional.ofNullable(this.chapters.get(namespace));
+    /** The chapter of that id: a mod's id for its main chapter, {@code namespace:path} for any other. */
+    public Optional<GuideChapter> chapter(final String id) {
+        return Optional.ofNullable(this.chapters.get(id));
     }
 
     /** The entry of that id. */
@@ -89,35 +89,46 @@ public final class GuideLibrary {
     }
 
     /**
-     * The manual the manual key opens an entry in: of those holding the entry's chapter, one written for that chapter
-     * before one that holds every chapter, so a mod's item opens in the mod's own manual when it has one; then the one
+     * The manual the manual key opens an entry in: of those holding the entry's chapter, one that names that chapter
+     * before one that holds every chapter, so a mod's item opens in the mod's own book when it has one; then the one
      * of the highest priority, and of two alike the one whose id sorts first.
      */
     public Optional<GuideManual> manualFor(final String entry) {
-        final GuideEntry found = this.entries.get(entry);
-        if (found == null) {
-            return Optional.empty();
-        }
-        final String chapter = found.namespace();
-        return this.manuals.values().stream().filter(manual -> manual.holds(chapter))
-                .filter(manual -> this.chapters.containsKey(chapter))
-                .min(Comparator.comparing((GuideManual manual) -> !manual.names(chapter))
-                        .thenComparing(Comparator.comparingInt(GuideManual::priority).reversed())
-                        .thenComparing(GuideManual::id));
+        return this.chapterOf(entry).flatMap(this::bookOf);
     }
 
     /**
-     * What a manual holds, in print order: its chapters by their order, each chapter's sections by theirs, each
-     * section's entries by theirs. A chapter with no entries is left out, and so is an entry whose section is missing.
+     * The book a link's target opens in: for an entry, the one the manual key would open it in; for a section or a
+     * chapter, the same choice made for its chapter.
+     */
+    public Optional<GuideManual> manualForTarget(final String target) {
+        if (this.entries.containsKey(target)) {
+            return this.manualFor(target);
+        }
+        final GuideSection section = this.sections.get(target);
+        return (section != null ? this.chapter(section.chapter()) : this.chapter(target)).flatMap(this::bookOf);
+    }
+
+    /** The chapter an entry sits in, through its section; empty when either is missing. */
+    public Optional<GuideChapter> chapterOf(final String entry) {
+        final GuideEntry found = this.entries.get(entry);
+        final GuideSection section = found == null ? null : this.sections.get(found.section());
+        return section == null ? Optional.empty() : this.chapter(section.chapter());
+    }
+
+    /**
+     * What a manual holds, in print order: the chapters it names in the order it names them, or, for one holding every
+     * chapter, by the chapters' own order; each chapter's sections by theirs, each section's entries by theirs. A
+     * chapter with no entries is left out, and so is an entry whose section is missing.
      */
     public GuideContents contentsOf(final GuideManual manual) {
-        final List<GuideChapter> held = new ArrayList<>(this.chapters.values().stream()
-                .filter(chapter -> manual.holds(chapter.namespace())).toList());
-        held.sort(Comparator.comparingInt(GuideChapter::order).thenComparing(GuideChapter::namespace));
+        final List<GuideChapter> held = new ArrayList<>(this.chapters.values().stream().filter(manual::holds).toList());
+        held.sort(Comparator.comparingInt((GuideChapter chapter) -> manual.placeOf(chapter.id()))
+                .thenComparingInt(GuideChapter::order).thenComparing(GuideChapter::id));
         final List<GuideContents.Chapter> out = new ArrayList<>();
         for (final GuideChapter chapter : held) {
             final List<GuideSection> chapterSections = new ArrayList<>(this.sections.values().stream()
-                    .filter(section -> section.chapter().equals(chapter.namespace())).toList());
+                    .filter(section -> section.chapter().equals(chapter.id())).toList());
             chapterSections.sort(Comparator.comparingInt(GuideSection::order).thenComparing(GuideSection::id));
             final List<GuideContents.Section> parts = new ArrayList<>();
             for (final GuideSection section : chapterSections) {
@@ -146,5 +157,16 @@ public final class GuideLibrary {
         sorted.sort(Comparator.comparingInt(GuideManual::priority).reversed()
                 .thenComparing(GuideManual::id));
         return sorted;
+    }
+
+    /**
+     * Of the manuals holding a chapter, one that names it before one that holds every chapter, then the one of the
+     * highest priority, and of two alike the one whose id sorts first.
+     */
+    private Optional<GuideManual> bookOf(final GuideChapter chapter) {
+        return this.manuals.values().stream().filter(manual -> manual.holds(chapter))
+                .min(Comparator.comparing((GuideManual manual) -> !manual.names(chapter.id()))
+                        .thenComparing(Comparator.comparingInt(GuideManual::priority).reversed())
+                        .thenComparing(GuideManual::id));
     }
 }

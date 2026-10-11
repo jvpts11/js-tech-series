@@ -17,17 +17,19 @@ import java.util.Objects;
  * @param order    where it sits among its chapter's sections, smallest first
  * @param titleKey its title's sentence
  * @param icon     the item drawn beside it on the chapter's opening page, or empty
+ * @param chapter  the id of the chapter it belongs to
  */
-public record GuideSection(String id, int order, String titleKey, String icon) {
+public record GuideSection(String id, int order, String titleKey, String icon, String chapter) {
 
     public GuideSection {
         Objects.requireNonNull(id, "id");
         Objects.requireNonNull(titleKey, "titleKey");
         icon = icon == null ? "" : icon;
+        chapter = chapter == null || chapter.isEmpty() ? GuideIds.namespace(id) : chapter;
     }
 
-    /** The chapter the section belongs to: the namespace of its id. */
-    public String chapter() {
-        return GuideIds.namespace(this.id);
+    /** A section of its mod's main chapter. */
+    public GuideSection(final String id, final int order, final String titleKey, final String icon) {
+        this(id, order, titleKey, icon, GuideIds.namespace(id));
     }
 }

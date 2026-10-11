@@ -44,4 +44,13 @@ public interface IGuideText {
     default String itemName(final String item) {
         return GuideIds.path(item);
     }
+
+    /**
+     * The title, in the reader's language, of another book holding a link's target (an entry, a section or a chapter)
+     * that the manual being read does not hold; empty when no book does. Whoever knows only one manual, as a test
+     * does, knows of none.
+     */
+    default String elsewhere(final String target) {
+        return "";
+    }
 }

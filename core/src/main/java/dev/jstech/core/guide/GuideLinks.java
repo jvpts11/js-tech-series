@@ -20,8 +20,9 @@ import java.util.regex.Pattern;
  * chapter, a chapter named by its mod's namespace alone.
  *
  * <p>The number is the one the target has in the manual being read, so the same sentence reads "1.4.1" in a mod's
- * own manual and "3.4.1" in one holding every chapter. A target that manual does not hold reads as its words alone and
- * leads nowhere. A translation keeps the brackets and the target and translates the words.
+ * own manual and "3.4.1" in one holding every chapter. A target that manual does not hold but another book does reads
+ * as its words and that book, "Sigma (in The Book of Sigma)", and leads to it; one no book holds reads as its words
+ * alone and leads nowhere. A translation keeps the brackets and the target and translates the words.
  */
 public final class GuideLinks {
 
@@ -36,6 +37,18 @@ public final class GuideLinks {
      * @param numbers the number a target has in the manual being read, or null when that manual does not hold it
      */
     public static List<Run> runs(final String sentence, final Function<String, String> numbers) {
+        return runs(sentence, numbers, target -> null);
+    }
+
+    /**
+     * The sentence in runs of words, each run plain or one link's words and where it leads.
+     *
+     * @param numbers   the number a target has in the manual being read, or null when that manual does not hold it
+     * @param elsewhere for a target the manual does not hold, the words saying which book does ("in The Book of
+     *                  Sigma"), or null when none does
+     */
+    public static List<Run> runs(final String sentence, final Function<String, String> numbers,
+                                 final Function<String, String> elsewhere) {
         final List<Run> runs = new ArrayList<>();
         final Matcher matcher = LINK.matcher(sentence);
         int at = 0;
@@ -46,10 +59,13 @@ public final class GuideLinks {
             final String words = matcher.group(1).strip();
             final String target = matcher.group(2);
             final String number = numbers.apply(target);
-            if (number == null) {
-                runs.add(new Run(words.isEmpty() ? GuideIds.path(target) : words, ""));
-            } else {
+            final String shown = words.isEmpty() ? GuideIds.path(target) : words;
+            if (number != null) {
                 runs.add(new Run(words.isEmpty() ? number : words + " (" + number + ")", target));
+            } else {
+                final String book = elsewhere.apply(target);
+                runs.add(book == null || book.isEmpty() ? new Run(shown, "")
+                        : new Run(shown + " (" + book + ")", target));
             }
             at = matcher.end();
         }
@@ -61,8 +77,14 @@ public final class GuideLinks {
 
     /** The sentence as plain words, each link written as its words and number. */
     public static String plain(final String sentence, final Function<String, String> numbers) {
+        return plain(sentence, numbers, target -> null);
+    }
+
+    /** The sentence as plain words, each link written as its words and number, or the book that holds it. */
+    public static String plain(final String sentence, final Function<String, String> numbers,
+                               final Function<String, String> elsewhere) {
         final StringBuilder out = new StringBuilder();
-        for (final Run run : runs(sentence, numbers)) {
+        for (final Run run : runs(sentence, numbers, elsewhere)) {
             out.append(run.text());
         }
         return out.toString();

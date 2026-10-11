@@ -23,7 +23,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
 
 /**
- * What one mod writes in the manuals: its chapter, its sections and entries, and the manuals and styles it brings.
+ * What one mod writes in the manuals: its chapters, their sections and entries, and the manuals and styles it brings.
  *
  * <p>Everything is declared once, in English, and the data generation writes it out: the files a manual is read from
  * (under {@code assets/<mod>/guide/}) and the sentences, under keys made from the entry and the part, to the mod's
@@ -53,18 +53,28 @@ public final class ModGuide {
     private final Map<String, String> english = new LinkedHashMap<>();
     /** The ids of the sections and entries, which share one name space: a link names either by its id. */
     private final Set<String> ids = new LinkedHashSet<>();
+    /** The mod's chapters past its main one, by id, in the order declared. */
+    private final Map<String, GuideChapter> otherChapters = new LinkedHashMap<>();
     private GuideChapter chapter;
 
     public ModGuide(final String namespace) {
         this.namespace = Objects.requireNonNull(namespace, "namespace");
     }
 
-    /** The mod's chapter: its title, its place among the chapters, and its tab's colour. */
+    /** The mod's main chapter: its title, its place among the chapters, and its tab's colour. */
     public ChapterBuilder chapter() {
-        return new ChapterBuilder();
+        return new ChapterBuilder(null);
     }
 
-    /** A section of the mod's chapter. */
+    /**
+     * Another chapter of the mod's, {@code <mod>:<path>}: a mod writes as many as its books need, and a book binds
+     * the ones it holds.
+     */
+    public ChapterBuilder chapter(final String path) {
+        return new ChapterBuilder(Objects.requireNonNull(path, "path"));
+    }
+
+    /** A section, of the mod's main chapter unless it says {@link SectionBuilder#in} another. */
     public SectionBuilder section(final String path) {
         return new SectionBuilder(path);
     }
@@ -93,12 +103,18 @@ public final class ModGuide {
 
     /** Whether the mod declared anything for the manuals. */
     public boolean isEmpty() {
-        return this.chapter == null && this.entries.isEmpty() && this.manuals.isEmpty() && this.styles.isEmpty();
+        return this.chapter == null && this.otherChapters.isEmpty() && this.entries.isEmpty()
+                && this.manuals.isEmpty() && this.styles.isEmpty();
     }
 
-    /** The chapter, or null when the mod has none. */
+    /** The main chapter, or null when the mod has none. */
     public GuideChapter declaredChapter() {
         return this.chapter;
+    }
+
+    /** The chapters past the main one, in the order declared. */
+    public List<GuideChapter> declaredOtherChapters() {
+        return List.copyOf(this.otherChapters.values());
     }
 
     /** The sections, in the order declared, their icons read now. */
@@ -166,15 +182,27 @@ public final class ModGuide {
     public record SectionRef(String id) {
     }
 
-    /** The mod's chapter, declared. */
+    /** A chapter of the mod's, declared: its main one, or another when it has a path. */
     public final class ChapterBuilder {
 
+        private final String path;
         private String title;
         private int order;
         private String tab = "";
         private String about;
+        private boolean inReference = true;
 
-        private ChapterBuilder() {
+        private ChapterBuilder(final String path) {
+            this.path = path;
+        }
+
+        /**
+         * Leaves the chapter out of the manuals that hold every chapter, such as the series' reference: it is written
+         * for one of the mod's own books only, such as a book on one operating system.
+         */
+        public ChapterBuilder ownBooksOnly() {
+            this.inReference = false;
+            return this;
         }
 
         /** The paragraph on the chapter's opening page, in English: what the mod is about. */
@@ -202,16 +230,23 @@ public final class ModGuide {
         }
 
         public GuideChapter register() {
-            if (ModGuide.this.chapter != null) {
-                throw new IllegalStateException(ModGuide.this.namespace + " declares its chapter twice");
-            }
+            final String id = this.path == null ? ModGuide.this.namespace : ModGuide.this.id(this.path);
             if (this.title == null) {
-                throw new IllegalStateException(ModGuide.this.namespace + "'s chapter needs a title");
+                throw new IllegalStateException("the chapter " + id + " needs a title");
             }
-            ModGuide.this.chapter = new GuideChapter(ModGuide.this.namespace, this.order,
-                    ModGuide.this.key("chapter", this.title), this.tab,
-                    this.about == null ? "" : ModGuide.this.key("chapter.about", this.about));
-            return ModGuide.this.chapter;
+            // The main chapter keeps the keys it always had; another chapter's keys carry its path.
+            final String what = this.path == null ? "chapter" : "chapter." + this.path;
+            final GuideChapter made = new GuideChapter(id, this.order, ModGuide.this.key(what, this.title), this.tab,
+                    this.about == null ? "" : ModGuide.this.key(what + ".about", this.about), this.inReference);
+            if (this.path == null) {
+                if (ModGuide.this.chapter != null) {
+                    throw new IllegalStateException(ModGuide.this.namespace + " declares its main chapter twice");
+                }
+                ModGuide.this.chapter = made;
+            } else if (ModGuide.this.otherChapters.putIfAbsent(id, made) != null) {
+                throw new IllegalStateException("the chapter " + id + " is declared twice");
+            }
+            return made;
         }
     }
 
@@ -221,6 +256,7 @@ public final class ModGuide {
         private final String path;
         private String title;
         private Supplier<? extends ItemLike> icon;
+        private String chapterId;
 
         private SectionBuilder(final String path) {
             this.path = path;
@@ -229,6 +265,16 @@ public final class ModGuide {
         /** The section's title, in English. */
         public SectionBuilder titled(final String english) {
             this.title = english;
+            return this;
+        }
+
+        /** The chapter the section belongs to, when it is not the mod's main one. */
+        public SectionBuilder in(final GuideChapter chapter) {
+            if (!chapter.namespace().equals(ModGuide.this.namespace)) {
+                throw new IllegalStateException("the section " + ModGuide.this.id(this.path) + " cannot sit in "
+                        + chapter.id() + ", another mod's chapter");
+            }
+            this.chapterId = chapter.id();
             return this;
         }
 
@@ -246,7 +292,8 @@ public final class ModGuide {
             final String titleKey = ModGuide.this.key("section." + this.path, this.title);
             final int order = ModGuide.this.sections.size();
             final Supplier<? extends ItemLike> sectionIcon = this.icon;
-            ModGuide.this.sections.add(() -> new GuideSection(id, order, titleKey, itemId(sectionIcon)));
+            final String chapter = this.chapterId == null ? ModGuide.this.namespace : this.chapterId;
+            ModGuide.this.sections.add(() -> new GuideSection(id, order, titleKey, itemId(sectionIcon), chapter));
             return new SectionRef(id);
         }
     }
@@ -724,9 +771,20 @@ public final class ModGuide {
             return this;
         }
 
-        /** The namespaces of the chapters it holds, in their own order; {@code *} for every chapter. */
-        public ManualBuilder chapters(final String... namespaces) {
-            this.chapters.addAll(List.of(namespaces));
+        /**
+         * The ids of the chapters it holds, in the order it prints them (a mod's id names its main chapter); {@code *}
+         * for every chapter written for the reference.
+         */
+        public ManualBuilder chapters(final String... ids) {
+            this.chapters.addAll(List.of(ids));
+            return this;
+        }
+
+        /** The chapters it holds, in the order it prints them. */
+        public ManualBuilder chapters(final GuideChapter... held) {
+            for (final GuideChapter chapter : held) {
+                this.chapters.add(chapter.id());
+            }
             return this;
         }
 

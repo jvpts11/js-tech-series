@@ -1,4 +1,5 @@
 {
+  "chapter": "jsc",
   "icon": "jsc:monitor",
   "id": "jsc:peripherals",
   "order": 8,

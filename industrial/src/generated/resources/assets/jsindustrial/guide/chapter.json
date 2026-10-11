@@ -1,6 +1,6 @@
 {
   "about": "jsindustrial.guide.chapter.about",
-  "namespace": "jsindustrial",
+  "id": "jsindustrial",
   "order": 30,
   "tab": "#FFF0B23A",
   "title": "jsindustrial.guide.chapter"

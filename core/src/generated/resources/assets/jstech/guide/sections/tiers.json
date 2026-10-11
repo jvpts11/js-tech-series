@@ -1,4 +1,5 @@
 {
+  "chapter": "jstech",
   "icon": "minecraft:iron_ingot",
   "id": "jstech:tiers",
   "order": 1,

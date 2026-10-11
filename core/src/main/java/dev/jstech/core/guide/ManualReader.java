@@ -58,7 +58,7 @@ public final class ManualReader {
             int tables = 0;
             for (final GuideContents.Section section : chapter.sections()) {
                 for (final GuideEntry entry : section.entries()) {
-                    final Counted counted = this.read(entry, this.nodes.get(chapter.chapter().namespace()).number(),
+                    final Counted counted = this.read(entry, this.nodes.get(chapter.chapter().id()).number(),
                             figures, tables);
                     figures = counted.figures();
                     tables = counted.tables();
@@ -194,7 +194,7 @@ public final class ManualReader {
         int chapterNo = 0;
         for (final GuideContents.Chapter chapter : contents.chapters()) {
             chapterNo++;
-            final String chapterId = chapter.chapter().namespace();
+            final String chapterId = chapter.chapter().id();
             this.put(new Node(chapterId, Kind.CHAPTER, String.valueOf(chapterNo),
                     this.text.text(chapter.chapter().titleKey()), 0, ""), "");
             this.chapters.add(chapterId);
@@ -362,6 +362,9 @@ public final class ManualReader {
         return GuideLinks.plain(sentence, target -> {
             final Node node = this.nodes.get(target);
             return node == null ? null : node.number();
+        }, target -> {
+            final String book = this.text.elsewhere(target);
+            return book.isEmpty() ? null : this.text.text(GuideTexts.IN_BOOK.key(), book);
         });
     }
 

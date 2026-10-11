@@ -10,22 +10,33 @@ package dev.jstech.tests;
 import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.guide.CoreGuide;
+import dev.jstech.core.guide.GuideChapter;
+import dev.jstech.core.guide.GuidePages;
 import dev.jstech.core.guide.ManualItem;
 import dev.jstech.core.guide.ModGuide;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.Items;
 
 /**
- * A chapter, a manual and the item that opens it, to prove the Core's manuals: every kind of block an entry is made
- * of, a special block another mod draws, an entry an item's page opens to, and links between entries.
+ * Chapters, manuals and the item that opens one, to prove the Core's manuals: every kind of block an entry is made
+ * of, a special block another mod draws, an entry an item's page opens to, links between entries, a second book that
+ * binds a chapter written for it alone before the mod's main one, a link from one book into the other, and a stack
+ * whose page its mod chooses.
  */
 public final class TestGuide {
 
     /** The test manual's id. */
     public static final String MANUAL = "jstests:test_manual";
+    /** The second book, which binds the shared chapter before the main one. */
+    public static final String SECOND_BOOK = "jstests:second_book";
     /** The entries the tests open. */
     public static final String PRESS = "jstests:press";
     public static final String SWATCH = "jstests:swatch";
     public static final String LONG = "jstests:long";
+    public static final String OTHER_BOOK = "jstests:other_book";
+    public static final String SHARED_PAGE = "jstests:shared_page";
+    /** The name a sheet of paper takes to be the page of the shared entry. */
+    public static final String SHARED_PAPER = "Shared Notes";
     /** The kind of special block the test mod draws. */
     public static final String SWATCH_KIND = "jstests:swatch";
 
@@ -35,10 +46,16 @@ public final class TestGuide {
         GUIDE.chapter().titled("Test Mod").order(90).tab("#FFD04040").register();
     }
 
+    /** A chapter written for the second book only: the series' reference leaves it out. */
+    public static final GuideChapter SHARED = GUIDE.chapter("shared").titled("Shared Chapter").order(95)
+            .tab("#FF40A0D0").about("A chapter that only the second test book binds.").ownBooksOnly().register();
+
     public static final ModGuide.SectionRef MACHINES = GUIDE.section("machines").titled("Test Machines")
             .icon(() -> TestPress.UPGRADE).register();
     public static final ModGuide.SectionRef IDEAS = GUIDE.section("ideas").titled("Test Ideas")
             .icon(() -> Items.PAPER).register();
+    public static final ModGuide.SectionRef NOTES = GUIDE.section("notes").titled("Shared Notes")
+            .icon(() -> Items.MAP).in(SHARED).register();
 
     public static final ItemEntry<ManualItem> MANUAL_ITEM = TestSounds.CONTENT.item("test_manual",
             properties -> new ManualItem(properties, MANUAL)).named("Test Manual").look(IItemLook.HANDMADE)
@@ -82,17 +99,42 @@ public final class TestGuide {
                 .howToUseIt("Turn the page.")
                 .whatCanGoWrong("It ends on its first page.", "The layout lost a page.")
                 .register();
+        GUIDE.page("other_book", IDEAS).titled("A Link to Another Book").icon(() -> Items.COMPASS)
+                .whatItIs("An entry whose words lead to [a page of another book](jstests:shared_page), which this"
+                        + " manual does not hold.")
+                .whatItIsFor("Proving that a link names the book holding its page and opens it there.")
+                .howToGetIt("Open the test manual.")
+                .howToUseIt("Click the link.")
+                .whatCanGoWrong("The link leads nowhere.", "No book holds its page.")
+                .register();
+        GUIDE.page("shared_page", NOTES).titled("A Shared Page").icon(() -> Items.MAP)
+                .whatItIs("A page of a chapter that only the second test book binds.")
+                .whatItIsFor("Proving that a book holds the chapters it names, in the order it names them.")
+                .howToGetIt("Open the second test book, or hold the manual key over a sheet of paper named "
+                        + SHARED_PAPER + ".")
+                .howToUseIt("Read it.")
+                .whatCanGoWrong("It shows in the test manual.", "That manual holds a chapter it does not name.")
+                .register();
         GUIDE.manual("test_manual").titled("Test Manual").cover("J's Tech Series", "Test Library")
                 .edition("First Test Edition").partNumber("JTS-TEST").style(CoreGuide.BINDER).chapters("jstests")
                 .about("This manual holds the test mod's chapter, to prove the Core's manuals.").priority(-1)
+                .register();
+        GUIDE.manual("second_book").titled("Second Test Book").cover("J's Tech Series", "Test Library")
+                .edition("First Test Edition").style(CoreGuide.BINDER).chapters(SHARED.id(), "jstests")
+                .about("This book binds the shared chapter before the test mod's main one.").priority(-2)
                 .register();
     }
 
     private TestGuide() {
     }
 
-    /** Declares the chapter, its entries, the manual and its item, before the test mod's content is registered. */
+    /**
+     * Declares the chapters, their entries, the manuals and the item, before the test mod's content is registered,
+     * and says which page a named sheet of paper is.
+     */
     public static void declare() {
-        // Loading the class declares them.
+        // Loading the class declares the rest; a sheet of paper named for it is the shared page's.
+        GuidePages.byStack(Items.PAPER, stack -> stack.has(DataComponents.CUSTOM_NAME)
+                && SHARED_PAPER.equals(stack.getHoverName().getString()) ? SHARED_PAGE : "");
     }
 }

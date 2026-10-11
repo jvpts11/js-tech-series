@@ -29,10 +29,12 @@ import dev.jstech.core.palette.PaletteRoles;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalInt;
+import java.util.Set;
 import net.minecraft.Util;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -149,9 +151,14 @@ public final class ManualScreen extends Screen {
         final GuideLibrary library = GuideLibrary.loaded();
         final GuideContents contents = library.contentsOf(this.manual);
         this.chapters.clear();
+        final Set<String> mods = new HashSet<>();
         for (final GuideContents.Chapter chapter : contents.chapters()) {
-            this.chapters.add(chapter.chapter().namespace());
-            this.tabColours.put(chapter.chapter().namespace(), this.tabColour(chapter.chapter()));
+            final GuideChapter held = chapter.chapter();
+            this.tabColours.put(held.id(), this.tabColour(held));
+            // A book has a tab a chapter; a manual holding every chapter, a tab a mod, leading to its first chapter.
+            if (!this.manual.holdsEvery() || mods.add(held.namespace())) {
+                this.chapters.add(held.id());
+            }
         }
         final int keep = this.spread;
         this.book = GuideLayout.lay(this.manual, this.style, contents,
@@ -208,11 +215,18 @@ public final class ManualScreen extends Screen {
         this.spread = Math.max(0, Math.min(this.lastSpread(), this.style.spread() ? page / 2 : page));
     }
 
-    /** Shows the spread holding where that entry, section or chapter starts, when the manual holds it. */
+    /**
+     * Shows the spread holding where that entry, section or chapter starts, when the manual holds it; when another
+     * book holds it instead, as a link to it says, opens that book there.
+     */
     public boolean goTo(final String target) {
         final OptionalInt page = this.book.pageOf(target);
-        page.ifPresent(this::goToPage);
-        return page.isPresent();
+        if (page.isPresent()) {
+            this.goToPage(page.getAsInt());
+            return true;
+        }
+        return GuideLibrary.loaded().manualForTarget(target).filter(other -> !other.id().equals(this.manual.id()))
+                .map(other -> GuideClient.open(other.id(), target)).orElse(false);
     }
 
     /**
@@ -227,6 +241,20 @@ public final class ManualScreen extends Screen {
             return onLeft;
         }
         return this.plateItemOn(this.geometry.right(), this.rightPage(first), item);
+    }
+
+    /**
+     * Where a link leading to that target starts on the spread shown, in the screen's coordinates, a little inside its
+     * first letter; null when the spread shows no such link (client tests click it).
+     */
+    @Nullable
+    public int[] linkPoint(final String target) {
+        final int first = this.style.spread() ? this.spread * 2 : this.spread;
+        final int[] onLeft = this.linkPointOn(this.geometry.left(), first, target);
+        if (onLeft != null || this.geometry.right() == null) {
+            return onLeft;
+        }
+        return this.linkPointOn(this.geometry.right(), this.rightPage(first), target);
     }
 
     /** Opens or closes the search on the left page. */
@@ -615,7 +643,9 @@ public final class ManualScreen extends Screen {
         for (int i = 0; i < this.tabCount(); i++) {
             final ManualScreenLayout.Rect tab = ManualScreenLayout.tab(this.geometry, i);
             final String chapter = this.chapters.get(i);
-            final boolean on = chapter.equals(current);
+            final boolean on = this.manual.holdsEvery()
+                    ? GuideChapter.namespaceOf(chapter).equals(GuideChapter.namespaceOf(current))
+                    : chapter.equals(current);
             final int x = tab.x() - (on ? 2 : 0);
             g.fill(x, tab.y(), tab.x() + tab.width(), tab.y() + tab.height(), this.tabColours.get(chapter));
             Draw.outline(g, x, tab.y(), tab.x() + tab.width() - x, tab.height(), this.shadowOf(
@@ -626,8 +656,11 @@ public final class ManualScreen extends Screen {
             GuideFonts.draw(g, this.font, number, on ? TextSize.BOLD : TextSize.BODY, this.style, textX,
                     tab.y() + (tab.height() - 8) / 2, this.colour(GuideStyle.TAB_INK));
             if (tab.contains(mx, my)) {
-                this.hoveredWords = Component.literal(this.text(GuideLibrary.loaded().chapter(chapter)
-                        .map(GuideChapter::titleKey).orElse(chapter)));
+                // A tab of a manual holding every chapter stands for the mod, named by its main chapter.
+                final String named = this.manual.holdsEvery() ? GuideChapter.namespaceOf(chapter) : chapter;
+                this.hoveredWords = Component.literal(this.text(GuideLibrary.loaded().chapter(named)
+                        .or(() -> GuideLibrary.loaded().chapter(chapter)).map(GuideChapter::titleKey)
+                        .orElse(chapter)));
             }
         }
     }
@@ -884,6 +917,18 @@ public final class ManualScreen extends Screen {
                     return new int[]{this.left + page.x() + plate.x() + plateStart(plate, row.size())
                             + at * PLATE_PITCH + 8, this.top + page.y() + plate.y() + 10};
                 }
+            }
+        }
+        return null;
+    }
+
+    private int[] linkPointOn(final ManualScreenLayout.Rect page, final int index, final String target) {
+        if (index < 0 || index >= this.book.pages().size()) {
+            return null;
+        }
+        for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+            if (piece instanceof GuidePiece.Text text && text.link().equals(target)) {
+                return new int[]{this.left + page.x() + text.x() + 2, this.top + page.y() + text.y() + 3};
             }
         }
         return null;

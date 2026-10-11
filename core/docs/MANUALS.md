@@ -8,7 +8,9 @@ item. A mod writes what the pages say.
 ## The words
 
 - A **manual** is a book with a title, a style it is drawn in, and the chapters it holds.
-- A **chapter** is everything one mod writes; a **section** groups a chapter's entries under a title ("Machines").
+- A **chapter** is a run of one mod's sections under a title. Every mod has a main chapter, and may write more: each
+  is bound into the books that name it, and one chapter can be bound into several books. A **section** groups a
+  chapter's entries under a title ("Machines").
 - An **entry** is one thing a player can look up, and starts on a page of its own. It is made of **blocks**:
   paragraphs, headings, figures, tables, recipes, numbered steps, warnings, problems and their fixes, words explained,
   links to other entries, and special blocks a mod draws itself.
@@ -85,6 +87,32 @@ A chapter's `about` is the paragraph on its opening page. The series' chapters s
 the Core 10, J's Computers 20, J's Industrial 30; an addon picks an order after them. Sections and entries share one
 set of ids, so a section and an entry cannot both be `mymod:kilns`: the declaration stops and says so.
 
+### More chapters, more books
+
+*Added 2026-10-11.*
+
+A mod with a lot to explain writes more than one chapter, and more than one book. The main chapter, declared with
+`chapter()`, is named by your mod's id (`mymod`); any other, declared with `chapter("path")`, is `mymod:path`. A
+section says which chapter it sits in with `in(...)`; without it, it sits in the main one.
+
+```java
+// A chapter written for one book only: the series' Technical Reference leaves it out.
+public static final GuideChapter SHELL = GUIDE.chapter("shell").titled("The Shell").order(50)
+        .about("Typing commands, and what each one does.").ownBooksOnly().register();
+
+public static final ModGuide.SectionRef COMMANDS = GUIDE.section("commands").titled("Commands")
+        .icon(() -> MyContent.TERMINAL).in(SHELL).register();
+
+// Two books bind it, each in its own order; the first also binds the main chapter after it.
+GUIDE.manual("handbook").titled("The Handbook").style(CoreGuide.BINDER).chapters(SHELL.id(), "mymod").register();
+GUIDE.manual("pocket_guide").titled("Pocket Guide").style(CoreGuide.BINDER).chapters(SHELL.id()).register();
+```
+
+A book prints the chapters it names in the order it names them, and numbers them by that order: the same chapter is
+chapter 1 of one book and chapter 4 of another, and its entries' numbers follow. A chapter declared with
+`ownBooksOnly()` stays out of the manuals that hold every chapter, such as the Technical Reference; leave it out for
+a chapter everyone should find there.
+
 ### The five parts, or running text
 
 An entry is written in one of two forms. The Core's chapter and J's Industrial's drawings follow the same five
@@ -120,9 +148,11 @@ its own words. Write the words in square brackets and the target after them in r
 
 The first reads "the eras (2.1.4)", the second "(2.3.1)": the words and the number, or the number alone, drawn as a
 link the reader clicks. The number is the one the target has in the manual being read, so the same sentence is
-right in your own manual and in one holding every chapter; a target that manual does not hold reads as its words
-alone. A target is an entry or a section (`namespace:path`) or a chapter (its namespace). A translation keeps the
-brackets and the target and translates the words. Read as text, in a help program, a link is written as its words
+right in your own manual and in one holding every chapter. A target that manual does not hold but another book does
+reads as its words and that book, "the shell (in The Handbook)", and a click opens that book at the target
+(*added 2026-10-11*); a target no book holds reads as its words alone. A target is an entry or a section
+(`namespace:path`) or a chapter (its id: the mod's id for the main chapter). A translation keeps the brackets and the
+target and translates the words. Read as text, in a help program, a link is written as its words
 and number, and the entry lists every page it led to under "See also" at its end.
 
 ### The plate under the title
@@ -191,7 +221,7 @@ GUIDE.manual("handbook").titled("My Mod Handbook")
         .edition("First Edition")
         .partNumber("MM-0001")
         .style(CoreGuide.BINDER)
-        .chapters("mymod")                      // or "*" for every chapter of every mod
+        .chapters("mymod")                      // the chapters' ids, in print order; "*" for every chapter of every mod
         .about("This handbook holds everything My Mod adds.")
         .icon("mymod:gui/guide/cover_mark")      // a 32 by 32 texture printed on the cover
         .priority(5)
@@ -201,7 +231,9 @@ GUIDE.manual("handbook").titled("My Mod Handbook")
 The cover prints the first of its `cover` lines bold and the others small, the title large, and the edition under
 it; an edition may hold `%s`, which is the number of sheets the manual has ("Set A - Sheets 1 to %s"). The part
 number stands at the foot of a binder's cover as "Part No. MM-0001". The Technical Reference, which holds every
-chapter, has priority 100; the series' own manuals 50.
+chapter, has priority 100; the series' own manuals 50. A book has a tab for each chapter it holds; a manual holding
+every chapter has a tab for each mod instead, which opens the mod's first chapter, so a mod with many chapters does
+not crowd the edge.
 
 Give the player an item that opens it: a `ManualItem`, declared like any item,
 `CONTENT.item("handbook", props -> new ManualItem(props, "mymod:handbook"))`. To hand it to each player once, the
@@ -211,6 +243,15 @@ loads: it goes into the first free place above the hotbar, and the world keeps w
 When several manuals hold an item's entry, the manual key opens one that names the item's chapter before one that
 holds every chapter, so a mod's item opens in the mod's own manual when it has one, and in the Technical Reference
 when it has not. Among manuals alike, it opens the one with the highest `priority`.
+
+*Added 2026-10-11.* Some items stand for different things from stack to stack, such as an installation disc that
+holds one system or another. Say which entry a given stack is the page of with `GuidePages.byStack`, while the game
+loads; the manual key over that stack opens that entry, in the book that holds it, and a stack you answer nothing
+for (an empty id) opens its item's own page:
+
+```java
+GuidePages.byStack(MyContent.INSTALL_DISC.get(), stack -> "mymod:install_" + MyDiscs.systemOn(stack));
+```
 
 ## Styles
 
@@ -315,8 +356,9 @@ or a special block is left out. J's Computers reads the manuals this way in its 
 - The magnifier on the top edge turns the left page into a search of the index that filters as the player types; the
   right page shows the index around the first thing found.
 - Holding **M** (the player can change it, "Open Its Page in the Manual") for a moment over an item in any inventory,
-  or with the item in hand, opens the manual at its page. While it is held a small bar fills under the slot, or
-  under the crosshair, in the look of the manual it opens. The key has to be let go before it opens a page again.
+  or with the item in hand, opens the manual at its page. While it is held a bar fills in the item's tooltip, from one
+  side to the other, or under the crosshair, in the look of the manual it opens. The key has to be let go before it
+  opens a page again.
   An item with a page says so at the foot of its tooltip: "Hold [M] to open its page in the manual".
 - On a computer of J's Computers, every system's help reads the same manuals beside its own commands.
 
@@ -326,8 +368,11 @@ or a special block is left out. J's Computers reads the manuals this way in its 
   Run the data generation.
 - **A manual names "air" and the data generation stops.** A block with no item was named as an icon, a figure or an
   item an entry covers. Name the block's item, or another item.
-- **An entry is missing from a manual.** Its section is missing, or the manual does not hold its chapter.
-- **A "See" link shows a path instead of a number.** The entry it names is in no chapter of this manual.
+- **An entry is missing from a manual.** Its section is missing, or the manual does not hold its chapter: a book
+  holds only the chapters it names, and a section without `in(...)` sits in the mod's main chapter.
+- **A chapter shows in the Technical Reference though it was written for one book.** Declare it `ownBooksOnly()`.
+- **A "See" link shows a path instead of a number.** The entry it names is in no chapter of this manual, nor of any
+  other book.
 - **The manual key does nothing over an item.** No entry `covers` it, or the key is bound to something else.
 - **A drawing runs on to a sheet with a line or two.** Its text is longer than its column: shorten it, or move a
   `nextColumn` or `nextPage` so each sheet holds what it was written for. A translation that runs longer simply goes

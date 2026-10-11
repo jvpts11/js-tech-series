@@ -13,6 +13,7 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.guide.GuideHooks;
 import dev.jstech.core.guide.GuideManual;
+import dev.jstech.core.guide.GuidePages;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.input.CoreKeys;
@@ -101,14 +102,12 @@ public final class GuideClient {
      * @return whether the item has a page
      */
     public static boolean openPageOf(final ItemStack stack) {
-        final String item = withPage(stack);
-        if (item.isEmpty()) {
+        final String entry = pageFor(stack);
+        if (entry.isEmpty()) {
             return false;
         }
-        final GuideLibrary library = GuideLibrary.loaded();
-        final Optional<String> entry = library.pageOf(item);
-        final Optional<GuideManual> manual = entry.flatMap(library::manualFor);
-        return manual.isPresent() && open(manual.get().id(), entry.get());
+        final Optional<GuideManual> manual = GuideLibrary.loaded().manualFor(entry);
+        return manual.isPresent() && open(manual.get().id(), entry);
     }
 
     /** How far the manual key has been held over an item with a page, from 0 to 1; 0 when it is not. */
@@ -123,7 +122,7 @@ public final class GuideClient {
 
     @SubscribeEvent
     public static void onTooltip(final ItemTooltipEvent event) {
-        if (withPage(event.getItemStack()).isEmpty()) {
+        if (pageFor(event.getItemStack()).isEmpty()) {
             return;
         }
         holdLine().ifPresent(event.getToolTip()::add);
@@ -132,9 +131,9 @@ public final class GuideClient {
     /* While the key is held over the item, its bar fills in the tooltip, right under the line that says to hold it. */
     @SubscribeEvent
     public static void onTooltipGathered(final RenderTooltipEvent.GatherComponents event) {
-        final String item = withPage(event.getItemStack());
+        final String entry = pageFor(event.getItemStack());
         final Optional<Component> line = holdLine();
-        if (item.isEmpty() || !item.equals(HOLD.over()) || line.isEmpty()) {
+        if (entry.isEmpty() || !entry.equals(HOLD.over()) || line.isEmpty()) {
             return;
         }
         final String said = line.get().getString();
@@ -176,7 +175,7 @@ public final class GuideClient {
             return;
         }
         final ItemStack hand = minecraft.player.getMainHandItem();
-        if (HOLD.follow(withPage(hand), keyHeld(), Util.getMillis())) {
+        if (HOLD.follow(pageFor(hand), keyHeld(), Util.getMillis())) {
             openPageOf(hand);
         }
     }
@@ -205,7 +204,7 @@ public final class GuideClient {
         }
         final Slot slot = screen.getSlotUnderMouse();
         final ItemStack under = slot == null ? ItemStack.EMPTY : slot.getItem();
-        if (HOLD.follow(withPage(under), keyHeld(), now)) {
+        if (HOLD.follow(pageFor(under), keyHeld(), now)) {
             openPageOf(under);
         }
     }
@@ -220,21 +219,28 @@ public final class GuideClient {
                 key.getTranslatedKeyMessage()))).withStyle(ChatFormatting.DARK_GRAY));
     }
 
-    /* The look of the bar of the manual the held item opens in. */
+    /* The look of the bar of the manual the held item's page opens in. */
     private static GuideStyle.HoldBar barKind() {
         final GuideLibrary library = GuideLibrary.loaded();
-        return library.pageOf(HOLD.over()).flatMap(library::manualFor)
-                .flatMap(manual -> library.style(manual.style()))
+        return library.manualFor(HOLD.over()).flatMap(manual -> library.style(manual.style()))
                 .map(GuideStyle::holdBar).orElse(GuideStyle.HoldBar.PLAIN);
     }
 
-    /* The id of the stack's item when it has a page, or empty. */
-    private static String withPage(final ItemStack stack) {
+    /*
+     * The entry a stack is the page of, or empty: the one its item's mod chose for that very stack, when there is
+     * such an entry, else the one covering its item.
+     */
+    private static String pageFor(final ItemStack stack) {
         if (stack.isEmpty()) {
             return "";
         }
+        final GuideLibrary library = GuideLibrary.loaded();
+        final String chosen = GuidePages.entryOf(stack);
+        if (!chosen.isEmpty() && library.entry(chosen).isPresent()) {
+            return chosen;
+        }
         final ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        return GuideLibrary.loaded().pageOf(id.toString()).isPresent() ? id.toString() : "";
+        return library.pageOf(id.toString()).orElse("");
     }
 
     /*

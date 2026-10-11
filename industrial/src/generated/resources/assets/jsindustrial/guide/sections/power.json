@@ -1,4 +1,5 @@
 {
+  "chapter": "jsindustrial",
   "icon": "jsindustrial:coal_generator",
   "id": "jsindustrial:power",
   "order": 2,

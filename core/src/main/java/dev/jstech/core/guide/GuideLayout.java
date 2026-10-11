@@ -61,7 +61,7 @@ public final class GuideLayout {
     private int pageInChapter;
     private int figures;
     private int tables;
-    private String chapterNamespace = "";
+    private String chapterId = "";
     private String chapterTitle = "";
     private String sectionLabel = "";
     /** The head of the page being laid, as it was when the page was opened. */
@@ -289,7 +289,7 @@ public final class GuideLayout {
         int sectionsBefore = 0;
         for (final GuideContents.Chapter chapter : contents.chapters()) {
             chapterNo++;
-            this.chapterNumbers.put(chapter.chapter().namespace(), String.valueOf(chapterNo));
+            this.chapterNumbers.put(chapter.chapter().id(), String.valueOf(chapterNo));
             int sectionNo = 0;
             for (final GuideContents.Section section : chapter.sections()) {
                 sectionNo++;
@@ -322,15 +322,15 @@ public final class GuideLayout {
         this.pageInChapter = 0;
         this.figures = 0;
         this.tables = 0;
-        this.chapterNamespace = part.chapter().namespace();
+        this.chapterId = part.chapter().id();
         this.chapterTitle = this.text.text(part.chapter().titleKey());
         this.sectionLabel = this.chapterTitle;
         if (this.drawings) {
             // A set of drawings has no opening pages: its list says what each drawing is.
-            this.bodyTargets.put(this.chapterNamespace, this.body.size());
+            this.bodyTargets.put(this.chapterId, this.body.size());
         } else {
             this.startPage();
-            this.bodyTargets.put(this.chapterNamespace, this.body.size());
+            this.bodyTargets.put(this.chapterId, this.body.size());
             this.opener(part);
         }
         for (final GuideContents.Section section : part.sections()) {
@@ -815,7 +815,7 @@ public final class GuideLayout {
     private List<List<Run>> richWrap(final String sentence, final int room, final TextSize size) {
         final List<List<Run>> words = new ArrayList<>();
         List<Run> word = new ArrayList<>();
-        for (final Run run : GuideLinks.runs(sentence, this::numberOf)) {
+        for (final Run run : GuideLinks.runs(sentence, this::numberOf, this::elsewhere)) {
             int at = 0;
             final String runText = run.text();
             while (at < runText.length()) {
@@ -892,6 +892,12 @@ public final class GuideLayout {
         return number != null ? number : this.chapterNumbers.get(target);
     }
 
+    /** For a link's target this manual does not hold, the words naming the book that does, or null. */
+    private String elsewhere(final String target) {
+        final String book = this.text.elsewhere(target);
+        return book.isEmpty() ? null : this.text.text(GuideTexts.IN_BOOK.key(), book);
+    }
+
     /** Runs side by side that lead to the same place made one, so a link is one piece to point at. */
     private static List<Run> join(final List<Run> runs) {
         final List<Run> joined = new ArrayList<>();
@@ -944,7 +950,7 @@ public final class GuideLayout {
 
     private void finishPage() {
         if (this.open) {
-            this.body.add(new BodyPage(this.pieces, this.chapterNamespace, this.chapterTitle, this.pageLabel,
+            this.body.add(new BodyPage(this.pieces, this.chapterId, this.chapterTitle, this.pageLabel,
                     this.chapterNumber, this.pageInChapter, this.drawing, this.drawingTitle));
             this.open = false;
         }
@@ -1041,7 +1047,7 @@ public final class GuideLayout {
         for (final GuideContents.Chapter chapter : contents.chapters()) {
             chapterNo++;
             lines.add(new Leader(chapterNo + "  " + this.text.text(chapter.chapter().titleKey()),
-                    chapter.chapter().namespace(), TextSize.BOLD, 0));
+                    chapter.chapter().id(), TextSize.BOLD, 0));
             for (final GuideContents.Section section : chapter.sections()) {
                 lines.add(new Leader(this.numbers.get(section.section().id()) + "  "
                         + this.text.text(section.section().titleKey()), section.section().id(), TextSize.BODY,

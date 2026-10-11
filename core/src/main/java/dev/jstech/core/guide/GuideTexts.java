@@ -81,6 +81,8 @@ public final class GuideTexts {
     /** The items an entry shows under its title, named when there is no room to draw them. */
     public static final TextKey ITEMS_LINE = TextKey.of("jscore.guide.items_line", "Items: %s");
     public static final TextKey ITEMS_MORE = TextKey.of("jscore.guide.items_more", "Items: %s and %s more");
+    /** A link whose target another book holds, said after its words: "(in The Book of Sigma)". */
+    public static final TextKey IN_BOOK = TextKey.of("jscore.guide.in_book", "in %s");
 
     private GuideTexts() {
     }

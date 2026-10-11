@@ -1,4 +1,5 @@
 {
+  "chapter": "jsc",
   "icon": "jsc:gpu_vertex_8800_gt",
   "id": "jsc:hardware",
   "order": 1,

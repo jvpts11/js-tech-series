@@ -1,4 +1,5 @@
 {
+  "chapter": "jstech",
   "icon": "minecraft:redstone",
   "id": "jstech:network",
   "order": 2,
