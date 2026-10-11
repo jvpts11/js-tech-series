@@ -131,8 +131,17 @@ A player who knows the thing skips to the table or to what can go wrong; one who
 `ifSomethingGoesWrong(problem, fix, ...)`, the same problems and fixes under "If something goes wrong". Pick the
 form that suits your chapter and keep to it in every entry.
 
-Explain a word where an entry first uses it, with `define`: the index lists every such word with its page, which
-makes the index the manual's glossary.
+Explain a word where an entry first uses it, with `define`: the index lists every such word with its page.
+
+*Added 2026-10-11.* Every word explained with `define` also goes into the manual's glossary, printed between its last
+chapter and its index on pages numbered GL-1, GL-2: alphabetical under its letter, each word with the page that
+explains it and what it means set in under it. A word too long for its line goes on under itself, whole, with its
+page on the last line, and what a word means runs on to the next page only with two lines of it at least on either
+side. In every other entry, the first time a sentence uses a word the glossary holds, the word is drawn as a link to
+the entry that explains it, so a reader meeting it there is one click away from what it means. A word is found whole
+and whatever its case, the longest first ("network engine" before "network"); words already in a link and the words
+an entry explains itself are left alone. The contents end with a line leading to the glossary. A manual whose
+entries explain no word has none.
 
 ### Links inside a sentence
 

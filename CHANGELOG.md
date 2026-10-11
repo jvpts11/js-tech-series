@@ -193,6 +193,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   console with its green prompt, the Arch Linux media's red root prompt, FreeBSD's sh on its warm dark ground; the
   prompt, what was typed and what the system answered each in its colour. Keys named in a sentence, such as Ctrl+S,
   are drawn as keys.
+- A glossary at the back of every manual, before its index: each word a page explains, alphabetical under its
+  letter, with what it means and the page that explains it. The first time another page uses one of those words, the
+  word leads to where it is explained.
 - The manuals inside the computers, beside the manual pages of each machine's commands, in each system's own help.
   Every desktop has Help: Frames 95's Help Topics with its Contents, Index and Find and a topic window of its own,
   XP's Help and Support Center, 7's Help and Support, Get Help on 10 and 11, KDE's Help Center, the Help of GNOME and

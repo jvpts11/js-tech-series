@@ -201,6 +201,7 @@
   "jscore.guide.forward": "Forward",
   "jscore.guide.found": "%s found",
   "jscore.guide.found_none": "Nothing by that name",
+  "jscore.guide.glossary": "Glossary",
   "jscore.guide.hold_to_open": "Hold [%s] to open its page in the manual",
   "jscore.guide.how_to_get_it": "How to get it",
   "jscore.guide.how_to_use_it": "How to use it",

@@ -183,6 +183,20 @@ public final class ManualClientTests {
     }
 
     @ClientTest(timeoutTicks = 300)
+    public static void manual_printsAGlossaryOfEveryWordItExplains(final ClientTestContext ctx) {
+        ctx.then(0, () -> GuideClient.open(ComputersGuide.GUIDE_TO_OPERATIONS, GuideLayout.GLOSSARY))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> shows(GuideLayout.GLOSSARY) && manual().book().pages()
+                        .get(manual().book().pageOf(GuideLayout.GLOSSARY).orElseThrow()).folio().equals("GL-1"),
+                        "the Guide to Operations opens at its glossary, page GL-1")
+                .thenScreenshot(2, "manual_glossary")
+                .then(0, () -> manual().turn(1))
+                .thenScreenshot(2, "manual_glossary_on")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 300)
     public static void manual_soundsLikeABook(final ClientTestContext ctx) {
         final long[] since = {0L};
         ctx.then(0, () -> since[0] = Util.getMillis())

@@ -17,6 +17,7 @@ public final class GuideTexts {
     public static final TextKey CONTENTS = TextKey.of("jscore.guide.contents", "Contents");
     public static final TextKey ABOUT = TextKey.of("jscore.guide.about", "About this manual");
     public static final TextKey INDEX = TextKey.of("jscore.guide.index", "Index");
+    public static final TextKey GLOSSARY = TextKey.of("jscore.guide.glossary", "Glossary");
     public static final TextKey FIGURE = TextKey.of("jscore.guide.figure", "Figure %s.");
     public static final TextKey TABLE = TextKey.of("jscore.guide.table", "Table %s.");
     /** The caption of a table again over the part of it that runs on to the next page. */

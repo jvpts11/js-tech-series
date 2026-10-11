@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -152,7 +153,7 @@ class GuideLayoutTest {
         final List<String> links = book.pages().get(book.contents()).pieces().stream()
                 .filter(piece -> piece instanceof GuidePiece.Leader)
                 .map(piece -> ((GuidePiece.Leader) piece).link()).toList();
-        assertEquals(List.of("alpha", "alpha:parts", "beta", "beta:things", ""), links);
+        assertEquals(List.of("alpha", "alpha:parts", "beta", "beta:things", GuideLayout.GLOSSARY, ""), links);
     }
 
     @Test
@@ -524,6 +525,80 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_printsAGlossaryOfEveryWordExplainedBeforeTheIndex() {
+        final GuideBook book = lay(contents());
+
+        final int glossary = book.pageOf(GuideLayout.GLOSSARY).orElseThrow();
+        assertEquals(book.indexAt() - 1, glossary, "the glossary stands just before the index");
+        assertEquals("GL-1", book.pages().get(glossary).folio());
+        final List<GuidePiece> pieces = book.pages().get(glossary).pieces();
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Leader leader
+                && leader.left().equals("term.fe") && leader.link().equals("alpha:first")
+                && leader.right().equals(book.pages().get(book.pageOf("alpha:first").orElseThrow()).folio())),
+                () -> "the word, with the page that explains it: " + pieces);
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Text text
+                && text.text().equals("term.def")), "and what it means under it");
+    }
+
+    @Test
+    void lay_runsALongGlossaryWordOnUnderItselfWithItsPageOnTheLastLine() {
+        final String term = "ANALYZE, REINDEX, VACUUM, CHECKPOINT, CLUSTER AND EVERY OTHER CARE";
+        final GuideBook book = lay(contents(), new FixedText(Map.of("term.fe", term)));
+
+        final List<GuidePiece> pieces = book.pages().get(book.pageOf(GuideLayout.GLOSSARY).orElseThrow()).pieces();
+        final List<String> words = pieces.stream().filter(piece -> piece instanceof GuidePiece.Text text
+                && text.size() == TextSize.BOLD).map(piece -> ((GuidePiece.Text) piece).text()).toList();
+        final GuidePiece.Leader leader = pieces.stream().filter(piece -> piece instanceof GuidePiece.Leader)
+                .map(piece -> (GuidePiece.Leader) piece).findFirst().orElseThrow();
+        assertFalse(words.isEmpty(), "the word runs on to more than one line");
+        assertEquals(term, String.join(" ", words) + " " + leader.left(), "whole, nothing cut short");
+        assertFalse(leader.right().isEmpty(), "its page on the last line");
+    }
+
+    @Test
+    void lay_neverLeavesOneLineOfWhatAGlossaryWordMeansAloneOnAPage() {
+        final Map<String, String> words = new HashMap<>();
+        final List<GuideBlock> blocks = new ArrayList<>();
+        for (int i = 0; i < 40; i++) {
+            words.put("term." + i, "Word " + (100 + i));
+            words.put("def." + i, "meaning ".repeat(2 + i * 7 % 30).strip());
+            blocks.add(new GuideBlock.Define("term." + i, "def." + i));
+        }
+        final GuideEntry many = new GuideEntry("alpha:many", "alpha:parts", 0, "many.title", "", List.of(), blocks);
+        final GuideBook book = lay(new GuideContents(List.of(new GuideContents.Chapter(new GuideChapter("alpha", 0,
+                "alpha.title", "", ""), List.of(new GuideContents.Section(new GuideSection("alpha:parts", 0,
+                "parts.title", ""), List.of(many)))))), new FixedText(words));
+
+        final List<GuideBook.Page> glossary = book.pages().stream().filter(page -> page.folio().startsWith("GL-"))
+                .toList();
+        assertTrue(glossary.size() > 2, "enough words for several pages");
+        for (int p = 1; p < glossary.size(); p++) {
+            final int top = meaningLines(glossary.get(p).pieces());
+            final int foot = meaningLines(glossary.get(p - 1).pieces().reversed());
+            assertTrue(top == 0 || top >= 2 && foot >= 2,
+                    "page " + p + " runs on with " + foot + " lines over " + top);
+        }
+    }
+
+    @Test
+    void lay_leadsAWordsFirstUseInAnotherEntryToWhereItIsExplained() {
+        final FixedText text = new FixedText(Map.of("term.fe", "FE",
+                "only.text", "Give it FE: more FE than it uses."));
+        final GuideEntry only = new GuideEntry("beta:only", "beta:things", 0, "only.title", "", List.of(),
+                List.of(new GuideBlock.Paragraph("only.text")));
+        final List<GuideContents.Chapter> chapters = contents().chapters();
+        final GuideBook book = lay(new GuideContents(List.of(chapters.get(0), new GuideContents.Chapter(
+                chapters.get(1).chapter(), List.of(new GuideContents.Section(
+                        chapters.get(1).sections().getFirst().section(), List.of(only)))))), text);
+
+        final List<GuidePiece.Text> uses = book.pages().get(book.pageOf("beta:only").orElseThrow()).pieces().stream()
+                .filter(piece -> piece instanceof GuidePiece.Text words && words.text().contains("FE"))
+                .map(piece -> (GuidePiece.Text) piece).toList();
+        assertEquals("alpha:first", uses.getFirst().link(), "the first FE leads to the entry that explains it");
+        assertTrue(uses.stream().skip(1).allMatch(piece -> piece.link().isEmpty()), "and only the first");
+    }
+
+    @Test
     void roman_writesSmallRomanNumerals() {
         assertEquals("i", GuideLayout.roman(1));
         assertEquals("iv", GuideLayout.roman(4));
@@ -540,6 +615,16 @@ class GuideLayoutTest {
 
     private static GuideBook lay(final GuideContents contents) {
         return lay(contents, new FixedText(Map.of()));
+    }
+
+    /** How many lines of what a glossary's word means a page's pieces start with, before any word or letter. */
+    private static int meaningLines(final List<GuidePiece> pieces) {
+        int lines = 0;
+        while (lines < pieces.size() && pieces.get(lines) instanceof GuidePiece.Text text
+                && text.size() == TextSize.BODY) {
+            lines++;
+        }
+        return lines;
     }
 
     private static GuideBook lay(final GuideContents contents, final FixedText text) {

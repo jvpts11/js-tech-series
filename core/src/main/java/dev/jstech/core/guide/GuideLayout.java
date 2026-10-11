@@ -11,10 +11,12 @@ import dev.jstech.core.guide.GuideLinks.Run;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Lays a manual out on pages: the contents and the "About this manual" page first, then each chapter with its opening
@@ -54,6 +56,10 @@ public final class GuideLayout {
     private final Map<String, String> chapterNumbers = new HashMap<>();
     private final List<PendingLine> indexLines = new ArrayList<>();
     private final List<DrawingRow> drawingRows = new ArrayList<>();
+    /** The words of the glossary already led from in the entry being laid, so only a word's first use leads. */
+    private final Set<String> usedTerms = new HashSet<>();
+    private GuideGlossary glossary;
+    private String currentEntry = "";
     private List<GuidePiece> pieces = new ArrayList<>();
     private int y;
     private int column;
@@ -118,6 +124,8 @@ public final class GuideLayout {
     public static final int SESSION_PAD = 3;
     /** How much wider a key is drawn than its name: the room either side of it and its edges. */
     public static final int KEY_ROOM = 5;
+    /** What a link to a manual's glossary names. */
+    public static final String GLOSSARY = "glossary";
 
     private static final int PARAGRAPH_GAP = 4;
     private static final int BLOCK_GAP = 6;
@@ -145,6 +153,12 @@ public final class GuideLayout {
     private static final int DRAWING_SECTION = 100;
     private static final String TAB = GuideStyle.TAB;
     private static final String ELLIPSIS = "...";
+    /** How a manual's glossary pages are numbered: GL-1, GL-2. */
+    private static final String GLOSSARY_FOLIO = "GL-";
+    /** The least room a glossary's word leaves for the dots before its page, before it runs on to a second line. */
+    private static final int LEAST_DOTS = 12;
+    /** The fewest lines of what a glossary's word means at the foot of one page and at the top of the next. */
+    private static final int LEAST_LINES = 2;
 
     private GuideLayout(final GuideManual manual, final GuideStyle style, final IGuideText text) {
         this.manual = manual;
@@ -249,6 +263,7 @@ public final class GuideLayout {
 
     private GuideBook book(final GuideContents contents) {
         this.number(contents);
+        this.glossary = GuideGlossary.of(contents, this.text);
         final List<Leader> contentsLines = this.drawings ? List.of() : this.contentsLines(contents);
         final int contentsPages = this.drawings ? 0
                 : Math.max(1, this.pagesFor(contentsLines.size(), TextSize.BODY, TextSize.TITLE));
@@ -288,6 +303,10 @@ public final class GuideLayout {
         final Map<String, Integer> targets = new HashMap<>();
         this.bodyTargets.forEach((target, page) -> targets.put(target, page + this.front));
         final List<GuideBook.IndexLine> index = this.indexLines(bodyFolios);
+        if (!this.drawings && !this.glossary.isEmpty()) {
+            targets.put(GLOSSARY, pages.size());
+            this.layGlossary(pages, index);
+        }
         final int indexAt = pages.size();
         if (!this.drawings) {
             this.layIndex(pages, index);
@@ -415,6 +434,8 @@ public final class GuideLayout {
 
     private void entry(final GuideEntry entry) {
         this.startPage();
+        this.currentEntry = entry.id();
+        this.usedTerms.clear();
         final String number = this.numbers.get(entry.id());
         this.bodyTargets.put(entry.id(), this.body.size());
         final String title = this.text.text(entry.titleKey());
@@ -991,7 +1012,10 @@ public final class GuideLayout {
     private List<List<Run>> richWrap(final String sentence, final int room, final TextSize size) {
         final List<List<Run>> words = new ArrayList<>();
         List<Run> word = new ArrayList<>();
-        for (final Run run : GuideLinks.runs(sentence, this::numberOf, this::elsewhere)) {
+        // A word another entry explains leads there the first time this entry uses it.
+        final List<Run> runs = this.glossary.linked(GuideLinks.runs(sentence, this::numberOf, this::elsewhere),
+                this.currentEntry, this.usedTerms);
+        for (final Run run : runs) {
             if (run.key()) {
                 // A key is drawn as one key, its name never broken even where it has a space, as Page Up does.
                 word.add(run);
@@ -1259,6 +1283,9 @@ public final class GuideLayout {
                         SECTION_INDENT));
             }
         }
+        if (!this.glossary.isEmpty()) {
+            lines.add(new Leader(this.text.text(GuideTexts.GLOSSARY.key()), GLOSSARY, TextSize.BOLD, 0));
+        }
         lines.add(new Leader(this.text.text(GuideTexts.INDEX.key()), "", TextSize.BOLD, 0));
         return lines;
     }
@@ -1287,7 +1314,8 @@ public final class GuideLayout {
                 page = new ArrayList<>();
                 lineY = this.top;
             }
-            final String folio = line.target().isEmpty() ? "X-1" : this.folioOf(line.target(), bodyFolios);
+            final String folio = line.target().isEmpty() ? "X-1" : GLOSSARY.equals(line.target())
+                    ? GLOSSARY_FOLIO + "1" : this.folioOf(line.target(), bodyFolios);
             page.add(new GuidePiece.Leader(x + line.indent(), lineY, this.fullWidth - line.indent(), "", line.text(),
                     folio, line.size(), GuideStyle.INK, line.target(), ""));
             lineY += height;
@@ -1414,6 +1442,69 @@ public final class GuideLayout {
         lines.sort(Comparator.comparing((GuideBook.IndexLine line) -> line.text().toLowerCase(Locale.ROOT))
                 .thenComparing(GuideBook.IndexLine::folio));
         return lines;
+    }
+
+    /**
+     * The glossary, between the last chapter and the index: every word an entry explains, alphabetical under its
+     * letter, with the page that explains it and what it means set in under it.
+     */
+    private void layGlossary(final List<GuideBook.Page> pages, final List<GuideBook.IndexLine> index) {
+        final String header = this.text.text(GuideTexts.GLOSSARY.key());
+        final int x = this.style.margin();
+        final int bottom = bottom(this.style, 0);
+        int number = 1;
+        List<GuidePiece> page = new ArrayList<>();
+        int lineY = this.top;
+        String letter = "";
+        for (final GuideGlossary.Item item : this.glossary.items()) {
+            final String first = item.term().substring(0, 1).toUpperCase(Locale.ROOT);
+            final List<String> meaning = wrap(GuideLinks.plain(this.text.text(item.definitionKey()), this::numberOf,
+                    this::elsewhere), this.fullWidth - SECTION_INDENT, TextSize.BODY, this.text);
+            // The page that explains the word, as the index lists it.
+            final String folio = index.stream().filter(line -> line.term() && line.text().equals(item.term())
+                    && line.target().equals(item.entry())).map(GuideBook.IndexLine::folio).findFirst().orElse("");
+            // A word too long for its line runs on under itself, whole, the page on its last line.
+            final List<String> words = wrap(item.term(), this.fullWidth - this.text.width(folio, TextSize.BOLD)
+                    - LEAST_DOTS, TextSize.BOLD, this.text);
+            final int head = words.size() * TextSize.BODY.lineHeight() + 2 + (first.equals(letter) ? 0
+                    : TextSize.LETTER.lineHeight());
+            // What a word means runs on to the next page only with two lines of it at least on either side, so no
+            // line is ever left alone at the foot of a page or the top of the next; otherwise the word starts there.
+            int room = (bottom - lineY - head) / TextSize.BODY.lineHeight();
+            if (room < meaning.size() && Math.min(room, meaning.size() - LEAST_LINES) < LEAST_LINES
+                    && !page.isEmpty()) {
+                pages.add(new GuideBook.Page(GLOSSARY_FOLIO + number++, header, "", page));
+                page = new ArrayList<>();
+                lineY = this.top;
+                room = (bottom - lineY - head) / TextSize.BODY.lineHeight();
+            }
+            final int runsOn = room < meaning.size() ? Math.min(room, meaning.size() - LEAST_LINES)
+                    : meaning.size();
+            if (!first.equals(letter)) {
+                letter = first;
+                page.add(new GuidePiece.Text(x, lineY, letter, TextSize.LETTER, GuideStyle.HEADING, ""));
+                lineY += TextSize.LETTER.lineHeight();
+            }
+            for (final String line : words.subList(0, words.size() - 1)) {
+                page.add(new GuidePiece.Text(x, lineY, line, TextSize.BOLD, GuideStyle.INK, ""));
+                lineY += TextSize.BODY.lineHeight();
+            }
+            page.add(new GuidePiece.Leader(x, lineY, this.fullWidth, "", words.getLast(), folio, TextSize.BOLD,
+                    GuideStyle.INK, item.entry(), ""));
+            lineY += TextSize.BODY.lineHeight() + 2;
+            for (int i = 0; i < meaning.size(); i++) {
+                if (i == runsOn || lineY + TextSize.BODY.lineHeight() > bottom) {
+                    pages.add(new GuideBook.Page(GLOSSARY_FOLIO + number++, header, "", page));
+                    page = new ArrayList<>();
+                    lineY = this.top;
+                }
+                page.add(new GuidePiece.Text(x + SECTION_INDENT, lineY, meaning.get(i), TextSize.BODY,
+                        GuideStyle.INK, ""));
+                lineY += TextSize.BODY.lineHeight();
+            }
+            lineY += PARAGRAPH_GAP;
+        }
+        pages.add(new GuideBook.Page(GLOSSARY_FOLIO + number, header, "", page));
     }
 
     private void layIndex(final List<GuideBook.Page> pages, final List<GuideBook.IndexLine> lines) {
