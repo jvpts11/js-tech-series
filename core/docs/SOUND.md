@@ -69,7 +69,8 @@ in the middle when at least that many are close together, as a server room sound
 *Added 2026-09-24.*
 
 Every sound belongs to a channel, and each player sets each channel's volume on the **Sound Mixer** screen (in the
-game's sound options): Machines, Devices, Interface, Alerts, Ambience, Music and Voice. A mod adds its own with
+game's sound options): Machines, Devices, Interface, Alerts, Ambience, Music, Voice and Manuals (the books' pages,
+covers and buttons, which play the game's own book and click sounds). A mod adds its own with
 `AudioChannels.register(new AudioChannel(id, source, name, description))`. On the mixer a player can also mute any
 single sound of the game, turn on signs on screen for alerts, turn off muffling by walls, and have other sounds
 duck under an alert. A key ("Turn Off Last Sound", unbound until the player binds it) silences the last sound

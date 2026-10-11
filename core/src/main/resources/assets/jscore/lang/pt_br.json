@@ -36,6 +36,8 @@
   "jscore.audio_channel.interface.about": "O que uma tela responde a você: seus cliques e seus avisos.",
   "jscore.audio_channel.machines": "Máquinas",
   "jscore.audio_channel.machines.about": "Ventoinhas, drives, bombas, prensas: toda máquina que funciona.",
+  "jscore.audio_channel.manuals": "Manuais",
+  "jscore.audio_channel.manuals.about": "Os manuais: as páginas virando, as capas abrindo e fechando, os botões.",
   "jscore.audio_channel.music": "Música",
   "jscore.audio_channel.music.about": "Música tocada por computadores e máquinas.",
   "jscore.audio_channel.voice": "Voz",
@@ -394,5 +396,9 @@
   "jstech.guide.industrial_tiers.what": "Um tier é um degrau da indústria, de T0 a T9: quão difícil é fazer um material ou uma máquina, e o que precisa existir antes.",
   "jstech.guide.section.eras": "As eras",
   "jstech.guide.section.network": "A rede",
-  "jstech.guide.section.tiers": "Os tiers"
+  "jstech.guide.section.tiers": "Os tiers",
+  "subtitles.jscore.manual.click": "Manual faz clique",
+  "subtitles.jscore.manual.close": "Manual fecha",
+  "subtitles.jscore.manual.open": "Manual abre",
+  "subtitles.jscore.manual.page": "Página do manual vira"
 }

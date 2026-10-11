@@ -419,6 +419,9 @@ or a special block is left out. J's Computers reads the manuals this way in its 
   the pointer turns into a hand over whatever takes a click, a link's paper lights behind it, and the game's tooltip
   says where Back and Forward lead. A button's mark is drawn in whichever of the page's ink and the label's colour
   reads better on the style's cover, which a test checks for every style the series has.
+- A manual sounds like a book of the game: its page turns whatever turned it, it is heard opening and laid down when
+  it closes, and its buttons and tabs click as the game's buttons do. The sounds are the game's own, played in the
+  Manuals channel of the Sound Mixer, so a player can turn the books down apart from everything else.
 - The magnifier turns the left page into a search of the whole manual that finds as the player types: the titles and
   explained words of the index first, then every entry whose pages hold the words, with the line they were found on;
   the right page shows where the first thing found stands.

@@ -38,6 +38,8 @@
   "jscore.audio_channel.interface.about": "What a screen says back to you: its clicks and its chimes.",
   "jscore.audio_channel.machines": "Machines",
   "jscore.audio_channel.machines.about": "Fans, drives, pumps, presses: every machine that runs.",
+  "jscore.audio_channel.manuals": "Manuals",
+  "jscore.audio_channel.manuals.about": "The manuals: their pages turning, their covers opening and closing, their buttons.",
   "jscore.audio_channel.music": "Music",
   "jscore.audio_channel.music.about": "Music played by computers and machines.",
   "jscore.audio_channel.voice": "Voice",
@@ -393,6 +395,10 @@
   "key.jscore.item_mode": "Change Item Mode",
   "key.jscore.open_in_manual": "Open Its Page in the Manual",
   "key.jscore.turn_off_last_sound": "Turn Off Last Sound",
+  "subtitles.jscore.manual.click": "Manual clicks",
+  "subtitles.jscore.manual.close": "Manual closes",
+  "subtitles.jscore.manual.open": "Manual opens",
+  "subtitles.jscore.manual.page": "Manual page turns",
   "tag.fluid.jscore.corrosive": "Corrosive Fluids",
   "tag.fluid.jscore.gases": "Gases"
 }

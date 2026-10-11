@@ -24,6 +24,7 @@ import dev.jstech.core.event.CoreEventDispatcher;
 import dev.jstech.core.font.CoreFonts;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideGifts;
+import dev.jstech.core.guide.GuideSounds;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.integration.accessories.AccessoriesIntegration;
 import dev.jstech.core.integration.curios.CuriosIntegration;
@@ -101,6 +102,8 @@ public final class JsCore {
         CoreFonts.declare();
         // The manuals' binder style, which every manual of the series is drawn in unless it brings its own.
         CoreGuide.declare();
+        // What the manuals sound like: the game's own book and button sounds, in the Manuals channel.
+        GuideSounds.declare();
         CoreItems.register(modEventBus);
         // The units energy is counted in, FE first, and the energy an item holds.
         CoreEnergy.register(modEventBus);

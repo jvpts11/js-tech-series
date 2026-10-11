@@ -12,6 +12,7 @@ import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.api.client.GuideBlockRenderers;
 import dev.jstech.core.api.client.IGuideBlockRenderer;
+import dev.jstech.core.client.audio.AudioEngine;
 import dev.jstech.core.client.gui.PointerShape;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
@@ -25,6 +26,7 @@ import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.GuidePiece;
 import dev.jstech.core.guide.GuideSearch;
+import dev.jstech.core.guide.GuideSounds;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.guide.TextSize;
@@ -92,6 +94,8 @@ public final class ManualScreen extends Screen {
     private int spread = -1;
     /** Whether the manual has been laid out once and put at its first page. */
     private boolean placed;
+    /** The spread last drawn, so a page is heard turning whatever turned it; unset until the first is drawn. */
+    private int heard = UNSET;
     private boolean searching;
     private EditBox searchField;
     /** What the search found the last time it was asked, for the book and the words it was asked with. */
@@ -146,6 +150,8 @@ public final class ManualScreen extends Screen {
     private static final double LINK_LIGHT = 0.8;
     /** How far a line the search found is set in under its entry's title. */
     private static final int LINE_INDENT = 10;
+    /** No spread drawn yet. */
+    private static final int UNSET = Integer.MIN_VALUE;
     /** The mouse's side buttons, back and forward, as the game numbers them. */
     private static final int MOUSE_BACK = GLFW.GLFW_MOUSE_BUTTON_4;
     private static final int MOUSE_FORWARD = GLFW.GLFW_MOUSE_BUTTON_5;
@@ -197,6 +203,9 @@ public final class ManualScreen extends Screen {
             ManualPlaces.of(this.manual.id()).filter(place -> !place.cover())
                     .ifPresent(place -> this.book.pageOf(place.target())
                             .ifPresent(page -> this.goToPage(page + place.pagesIn())));
+        }
+        if (!this.placed) {
+            AudioEngine.playOnScreen(GuideSounds.OPEN);
         }
         this.placed = true;
     }
@@ -293,8 +302,12 @@ public final class ManualScreen extends Screen {
 
     /** The middle of the Back button, in the screen's coordinates (client tests point at it). */
     public int[] backButtonPoint() {
-        final ManualScreenLayout.Rect back = this.geometry.back();
-        return new int[] {this.left + back.x() + back.width() / 2, this.top + back.y() + back.height() / 2};
+        return this.middleOf(this.geometry.back());
+    }
+
+    /** The middle of the contents button, in the screen's coordinates (client tests click it). */
+    public int[] contentsButtonPoint() {
+        return this.middleOf(this.geometry.contents());
     }
 
     /** Opens or closes the search on the left page. */
@@ -344,6 +357,7 @@ public final class ManualScreen extends Screen {
     public void removed() {
         ManualPlaces.leave(this.manual.id(), this.place());
         PointerShape.reset();
+        AudioEngine.playOnScreen(GuideSounds.CLOSE);
         super.removed();
     }
 
@@ -367,6 +381,11 @@ public final class ManualScreen extends Screen {
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
+        // A page is heard turning whatever turned it: an arrow, the wheel, a key, a link, a tab, Back or Forward.
+        if (this.heard != UNSET && this.heard != this.spread) {
+            AudioEngine.playOnScreen(GuideSounds.PAGE);
+        }
+        this.heard = this.spread;
         PointerShape.point(this.clickable(mouseX - this.left, mouseY - this.top));
         if (!this.hoveredItem.isEmpty()) {
             g.renderTooltip(this.font, this.hoveredItem, mouseX, mouseY);
@@ -397,6 +416,17 @@ public final class ManualScreen extends Screen {
             if (control.contains(mx, my)) {
                 this.pressed = control;
             }
+        }
+        // The buttons and the tabs click as the game's buttons do; an arrow is heard as the page it turns.
+        final boolean onButton = this.geometry.contents().contains(mx, my) || this.geometry.search().contains(mx, my)
+                || this.geometry.back().contains(mx, my) && this.history.behind().isPresent()
+                || this.geometry.forward().contains(mx, my) && this.history.ahead().isPresent();
+        boolean onTab = false;
+        for (int i = 0; i < this.tabCount(); i++) {
+            onTab |= ManualScreenLayout.tab(this.geometry, i).contains(mx, my);
+        }
+        if (onButton || onTab) {
+            AudioEngine.playOnScreen(GuideSounds.CLICK);
         }
         if (this.geometry.contents().contains(mx, my)) {
             this.jump(this.book.contents());
@@ -479,6 +509,10 @@ public final class ManualScreen extends Screen {
     private int lastSpread() {
         final int pages = this.book.pages().size();
         return this.style.spread() ? (pages - 1) / 2 : pages - 1;
+    }
+
+    private int[] middleOf(final ManualScreenLayout.Rect control) {
+        return new int[] {this.left + control.x() + control.width() / 2, this.top + control.y() + control.height() / 2};
     }
 
     /** Jumps to the spread holding that page, leaving a mark Back returns to when it is another spread. */

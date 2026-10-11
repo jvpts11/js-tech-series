@@ -9,6 +9,8 @@ package dev.jstech.tests.clienttest;
 
 import com.mojang.datafixers.util.Either;
 import dev.jstech.computers.guide.ComputersGuide;
+import dev.jstech.core.audio.SoundKey;
+import dev.jstech.core.client.audio.AudioMixer;
 import dev.jstech.core.client.gui.PointerShape;
 import dev.jstech.core.client.guide.GuideClient;
 import dev.jstech.core.client.guide.ManualPlaces;
@@ -19,6 +21,7 @@ import dev.jstech.core.guide.GuideBook;
 import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuidePiece;
 import dev.jstech.core.guide.GuideSearch;
+import dev.jstech.core.guide.GuideSounds;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.guide.TextSize;
@@ -32,6 +35,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -129,6 +133,22 @@ public final class ManualClientTests {
                 .thenAssert(SETTLE, () -> manual().found().isEmpty(), "and nothing for a name no entry has")
                 .then(0, ManualClientTests::close)
                 .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 300)
+    public static void manual_soundsLikeABook(final ClientTestContext ctx) {
+        final long[] since = {0L};
+        ctx.then(0, () -> since[0] = Util.getMillis())
+                .then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.PRESS))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> heard(GuideSounds.OPEN, since[0]), "the manual is heard opening")
+                .then(0, () -> manual().turn(1))
+                .thenAssert(SETTLE, () -> heard(GuideSounds.PAGE, since[0]), "a page is heard turning")
+                .then(0, () -> ctx.click(manual().contentsButtonPoint()[0], manual().contentsButtonPoint()[1]))
+                .thenAssert(SETTLE, () -> heard(GuideSounds.CLICK, since[0]), "the contents button clicks")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN)
+                .thenAssert(SETTLE, () -> heard(GuideSounds.CLOSE, since[0]), "and the manual is heard closing");
     }
 
     @ClientTest(timeoutTicks = 300)
@@ -400,6 +420,11 @@ public final class ManualClientTests {
 
     private static void close() {
         Minecraft.getInstance().setScreen(null);
+    }
+
+    /* Whether that sound was let through to the speakers since the time given. */
+    private static boolean heard(final SoundKey sound, final long since) {
+        return AudioMixer.recent(Util.getMillis() - since + 1).contains(sound.id().toString());
     }
 
     /* The text on the pages of the tables' entry, from its first page to the end of its chapter. */

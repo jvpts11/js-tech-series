@@ -10,6 +10,9 @@ package dev.jstech.tests.gametest;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import dev.jstech.core.audio.AudioChannels;
+import dev.jstech.core.audio.SoundKey;
+import dev.jstech.core.audio.SoundSpace;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideChapter;
@@ -18,6 +21,7 @@ import dev.jstech.core.guide.GuideEntry;
 import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.GuideSection;
+import dev.jstech.core.guide.GuideSounds;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.guide.ModGuide;
@@ -154,6 +158,24 @@ public final class GuideGameTests {
         helper.assertTrue(GuideFacts.valueFor(TestGuide.PRESS_ENERGY).orElseThrow()
                         .equals(new GuideBlock.GuideValue.Amount(TestPress.ENERGY_PER_TICK, "FE/t")),
                 "the press's figure is the press's own");
+        helper.succeed();
+    }
+
+    /*
+     * The manuals sound like the game's own books and buttons, from the player's screen, in a channel of their own the
+     * player can turn down apart from everything else.
+     */
+    @GameTest(template = ARENA)
+    public static void sounds_playTheGamesBookSoundsInTheManualsChannel(final GameTestHelper helper) {
+        helper.assertTrue(AudioChannels.all().contains(AudioChannels.MANUALS), "the Manuals channel is declared");
+        for (final SoundKey sound : List.of(GuideSounds.PAGE, GuideSounds.OPEN, GuideSounds.CLOSE, GuideSounds.CLICK)) {
+            helper.assertTrue(sound.spec().channel() == AudioChannels.MANUALS
+                            && sound.spec().space() == SoundSpace.INTERFACE,
+                    sound.id() + " plays from the screen in the Manuals channel");
+            helper.assertTrue(!sound.spec().files().isEmpty() && sound.spec().files().stream()
+                            .allMatch(file -> file.getNamespace().equals("minecraft")),
+                    sound.id() + " plays the game's own files: " + sound.spec().files());
+        }
         helper.succeed();
     }
 

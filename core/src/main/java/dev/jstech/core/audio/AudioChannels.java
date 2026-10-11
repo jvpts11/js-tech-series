@@ -23,7 +23,8 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Machines are what runs: fans, disks, the hum of a rack. Devices are what a player works: a drive's tray, a disc
  * going in, a rail taking a server. The interface is what a screen says back to whoever uses it. Alerts are what
- * asks to be heard over the rest. Ambience is the room itself, music is music, and voice is people and radios.
+ * asks to be heard over the rest. Ambience is the room itself, music is music, voice is people and radios, and the
+ * manuals are the books' own pages, covers and buttons, which a reader may want quieter than everything else.
  */
 @TextHolder
 public final class AudioChannels {
@@ -35,6 +36,7 @@ public final class AudioChannels {
     private static final TextKey AMBIENCE_NAME = TextKey.of("jscore.audio_channel.ambience", "Ambience");
     private static final TextKey MUSIC_NAME = TextKey.of("jscore.audio_channel.music", "Music");
     private static final TextKey VOICE_NAME = TextKey.of("jscore.audio_channel.voice", "Voice");
+    private static final TextKey MANUALS_NAME = TextKey.of("jscore.audio_channel.manuals", "Manuals");
     private static final TextKey MACHINES_ABOUT = TextKey.of("jscore.audio_channel.machines.about",
             "Fans, drives, pumps, presses: every machine that runs.");
     private static final TextKey DEVICES_ABOUT = TextKey.of("jscore.audio_channel.devices.about",
@@ -49,6 +51,8 @@ public final class AudioChannels {
             "Music played by computers and machines.");
     private static final TextKey VOICE_ABOUT = TextKey.of("jscore.audio_channel.voice.about",
             "People and radios.");
+    private static final TextKey MANUALS_ABOUT = TextKey.of("jscore.audio_channel.manuals.about",
+            "The manuals: their pages turning, their covers opening and closing, their buttons.");
 
     private static final Map<ResourceLocation, AudioChannel> CHANNELS = new LinkedHashMap<>();
 
@@ -64,6 +68,8 @@ public final class AudioChannels {
             AMBIENCE_ABOUT));
     public static final AudioChannel MUSIC = register(channel("music", SoundSource.MUSIC, MUSIC_NAME, MUSIC_ABOUT));
     public static final AudioChannel VOICE = register(channel("voice", SoundSource.VOICE, VOICE_NAME, VOICE_ABOUT));
+    public static final AudioChannel MANUALS = register(channel("manuals", SoundSource.MASTER, MANUALS_NAME,
+            MANUALS_ABOUT));
 
     private AudioChannels() {
     }

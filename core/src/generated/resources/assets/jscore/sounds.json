@@ -1,0 +1,30 @@
+{
+  "manual/click": {
+    "sounds": [
+      "random/click_stereo"
+    ],
+    "subtitle": "subtitles.jscore.manual.click"
+  },
+  "manual/close": {
+    "sounds": [
+      "item/book/close_put1",
+      "item/book/close_put2"
+    ],
+    "subtitle": "subtitles.jscore.manual.close"
+  },
+  "manual/open": {
+    "sounds": [
+      "item/book/open_flip1",
+      "item/book/open_flip3"
+    ],
+    "subtitle": "subtitles.jscore.manual.open"
+  },
+  "manual/page": {
+    "sounds": [
+      "item/book/open_flip1",
+      "item/book/open_flip2",
+      "item/book/open_flip3"
+    ],
+    "subtitle": "subtitles.jscore.manual.page"
+  }
+}
