@@ -198,7 +198,7 @@ public final class LiveInstallClientTests {
                 .thenWaitUntilServer(level -> {
                     final MainframeBlockEntity machine = TestWorldBuilder.at(level, ctx.origin())
                             .blockEntity(MACHINE, MainframeBlockEntity.class);
-                    return LiveMedium.holding(level, machine.enabledEndpoints(), distro) == LiveMedium.Answer.PRESENT;
+                    return LiveMedium.holding(level, machine, distro) == LiveMedium.Answer.PRESENT;
                 }, BOOT_WAIT, "the machine to see the live medium in its drive",
                         level -> "drives cabled: " + TestWorldBuilder.at(level, ctx.origin())
                                 .blockEntity(MACHINE, MainframeBlockEntity.class).enabledEndpoints())

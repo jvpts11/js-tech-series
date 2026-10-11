@@ -43,10 +43,11 @@ import dev.jstech.computers.os.WorkstationFacts;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.machine.DriveTable;
-import dev.jstech.computers.os.media.DockStationBlockEntity;
-import dev.jstech.computers.os.media.MediaDriveType;
+import dev.jstech.computers.os.media.IMediaDrive;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
@@ -55,7 +56,6 @@ import dev.jstech.core.text.TextLists;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -65,7 +65,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -124,20 +123,9 @@ public final class ThisPcPayloads {
                 slot++;
             }
             // In the order the machine letters them, so a row's letter is the drive's; a dock's disks after its stick.
-            final List<Long> endpoints = new ArrayList<>(computer.enabledEndpoints());
-            Collections.sort(endpoints);
-            for (final long endpoint : endpoints) {
-                if (Loaded.blockEntity(level, BlockPos.of(endpoint))
-                        instanceof MediaReaderBlockEntity reader) {
-                    media.add(mediaRow(computer, payload.hostPos(), endpoint, reader));
-                    if (reader instanceof DockStationBlockEntity dock) {
-                        for (int bay = 0; bay < DockStationBlockEntity.BAYS; bay++) {
-                            if (!dock.disk(bay).isEmpty()) {
-                                media.add(dockedRow(payload.hostPos(), endpoint, dock, bay));
-                            }
-                        }
-                    }
-                }
+            for (final IMediaDrive drive : MachineMedia.of(computer, level).drives()) {
+                media.add(drive.volume().docked() ? dockedRow(payload.hostPos(), drive)
+                        : mediaRow(computer, payload.hostPos(), drive));
             }
             installed.addAll(computer.console().installed());
             PacketDistributor.sendToPlayer(player, new ThisPcPayload(payload.hostPos(),
@@ -149,24 +137,22 @@ public final class ThisPcPayloads {
     }
 
     /** A disk in a Dock Station's tray, as This PC lists it: an external drive, its name, size and use. */
-    private static ThisPcPayload.WireMedia dockedRow(final BlockPos host, final long endpoint,
-                                                     final DockStationBlockEntity dock, final int bay) {
-        final ItemStack disk = dock.disk(bay);
+    private static ThisPcPayload.WireMedia dockedRow(final BlockPos host, final IMediaDrive drive) {
+        final ItemStack disk = drive.medium();
         final long capItems = disk.getItem() instanceof DiskItem item ? item.spec().capacityItems() : 0L;
         final long usedItems = Math.max(0L, capItems - DriveTable.freeWeightOf(disk) / StorageKey.MB_EQ_PER_ITEM);
-        final int blocksAway = BlockPos.of(endpoint).distManhattan(host);
-        return new ThisPcPayload.WireMedia(endpoint, MediaDriveType.DOCK_STATION.serializedName(),
-                GameText.of(disk.getHoverName()), "", "", false, "", 0, "", List.of(), 0L, blocksAway, bay,
-                capItems, usedItems);
+        final int blocksAway = drive.pos().distManhattan(host);
+        return new ThisPcPayload.WireMedia(drive.volume().readerPos(), drive.type().serializedName(),
+                GameText.of(disk.getHoverName()), "", "", false, "", 0, "", List.of(), 0L, blocksAway,
+                drive.volume().bay(), capItems, usedItems);
     }
 
     /** One drive row for This PC: what is in the drive and, for an installer, what it would install. */
-    private static ThisPcPayload.WireMedia mediaRow(
-            final IOsHost computer, final BlockPos host,
-            final long endpoint, final MediaReaderBlockEntity reader) {
-        final ItemStack m = reader.readableMedium();
-        final MediaKind kind = m.isEmpty() ? null : reader.insertedKind();
-        final ResourceLocation pl = m.isEmpty() ? null : reader.insertedPayload();
+    private static ThisPcPayload.WireMedia mediaRow(final IOsHost computer, final BlockPos host,
+                                                    final IMediaDrive drive) {
+        final ItemStack m = drive.medium();
+        final MediaKind kind = drive.kind();
+        final ResourceLocation pl = drive.payload();
         String payloadName = "";
         int payloadYear = 0;
         String packageId = "";
@@ -192,10 +178,9 @@ public final class ThisPcPayloads {
                 needs = lines(MinSpecTooltip.osMinSpec(pl));
             }
         }
-        final long stored = kind == MediaKind.DATA
-                ? reader.insertedData().total() : 0L;
-        final int blocksAway = BlockPos.of(endpoint).distManhattan(host);
-        return new ThisPcPayload.WireMedia(endpoint, reader.driveType().serializedName(),
+        final long stored = kind == MediaKind.DATA ? drive.data().total() : 0L;
+        final int blocksAway = drive.pos().distManhattan(host);
+        return new ThisPcPayload.WireMedia(drive.volume().readerPos(), drive.type().serializedName(),
                 m.isEmpty() ? Text.EMPTY : GameText.of(m.getHoverName()), kind != null ? kind.serializedName() : "",
                 pl != null ? pl.getPath() : "", installable, payloadName, payloadYear, packageId, needs,
                 stored, blocksAway);
@@ -351,24 +336,13 @@ public final class ThisPcPayloads {
 
     private static void handleEjectMedia(final EjectMediaPayload payload, final ServerPlayer player,
                                          final ServerLevel level) {
-        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer
-                && computer.enabledEndpoints().contains(payload.readerPos())
-                && Loaded.blockEntity(level, BlockPos.of(payload.readerPos()))
-                        instanceof MediaReaderBlockEntity reader) {
-            // An optical drive's eject opens its tray, as its button does; the disc waits on it for the player's hand.
-            if (payload.bay() < 0 && reader.driveType().ejectButton() != null) {
-                if (!reader.reading() && !reader.tray().isOpen()) {
-                    reader.tray().press(level, reader.getBlockPos());
-                }
-                return;
-            }
-            final ItemStack ejected = payload.bay() < 0 ? reader.ejectMedia()
-                    : reader instanceof DockStationBlockEntity dock ? dock.ejectDisk(payload.bay()) : ItemStack.EMPTY;
-            if (!ejected.isEmpty() && !player.addItem(ejected)) {
-                final BlockPos at = BlockPos.of(payload.readerPos());
-                Containers.dropItemStack(level, at.getX() + 0.5, at.getY() + 1.0,
-                        at.getZ() + 0.5, ejected);
-            }
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
+            return;
+        }
+        final IMediaDrive drive = MachineMedia.of(computer, level)
+                .find(new MediaVolume(payload.readerPos(), Math.max(MediaVolume.MEDIUM, payload.bay())));
+        if (drive != null) {
+            drive.eject(level, player);
         }
     }
 
@@ -381,19 +355,13 @@ public final class ThisPcPayloads {
         if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
             return;
         }
-        // The drive must be a media reader currently linked to this computer.
-        if (!computer.enabledEndpoints().contains(payload.readerPos())
-                || !(Loaded.blockEntity(level, BlockPos.of(payload.readerPos()))
-                        instanceof MediaReaderBlockEntity reader)) {
+        // The drive must be one of this computer's, holding a program's installer.
+        final IMediaDrive drive = MachineMedia.of(computer, level)
+                .find(new MediaVolume(payload.readerPos(), MediaVolume.MEDIUM));
+        if (drive == null || !drive.installs(MediaKind.PROGRAM_INSTALL)) {
             return;
         }
-        if (reader.insertedKind()
-                != MediaKind.PROGRAM_INSTALL) {
-            return;
-        }
-        final ResourceLocation pl = reader.insertedPayload();
-        final ProgramSpec spec =
-                pl == null ? null : OsRegistry.getProgram(pl);
+        final ProgramSpec spec = OsRegistry.getProgram(drive.payload());
         if (spec == null) {
             return;
         }
@@ -403,7 +371,7 @@ public final class ThisPcPayloads {
          * when the program was already there, which is what made the disc's setup look inert.
          */
         SetupRunner.begin(computer, level, payload.hostPos(), spec,
-                reader.insertedFormat(), false, PackageManagerKind.NONE);
+                drive.format(), false, PackageManagerKind.NONE);
     }
 
     /** A machine telling a desktop how its setup is going: the desktop's Setup window is a view of it. */

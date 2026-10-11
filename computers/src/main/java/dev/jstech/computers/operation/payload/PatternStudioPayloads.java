@@ -72,7 +72,8 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.os.media.FormattedMediaItem;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.IMediaDrive;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
@@ -564,23 +565,21 @@ public final class PatternStudioPayloads {
             }
         }
 
-        // Drives: every linked reader holding a medium, then the system disk's crafts folder.
+        // Drives: every drive holding a medium, then the system disk's crafts folder.
         final List<PatternStudioStatePayload.Drive> drives = new ArrayList<>();
-        for (final long endpoint : host.enabledEndpoints()) {
+        for (final IMediaDrive media : MachineMedia.of(host, level).drives()) {
             if (drives.size() >= PatternStudioStatePayload.MAX_DRIVES - 1) {
                 break;
             }
-            if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader) {
-                final ItemStack m = reader.readableMedium();
-                if (m.isEmpty() || !(m.getItem() instanceof FormattedMediaItem fmt)) {
-                    continue;
-                }
-                // "CD Drive: Blank CD-RW": the reader, then the medium's own label or name.
-                final Text drive = GameText.of(level.getBlockState(BlockPos.of(endpoint)).getBlock().getName());
-                drives.add(new PatternStudioStatePayload.Drive("media:" + endpoint,
-                        DRIVE_MEDIUM.with(drive, VolumeLabel.text(m)),
-                        fmt.writable(), CraftManagerPayloads.craftFileListFromMedia(m)));
+            final ItemStack m = media.medium();
+            if (m.isEmpty() || !(m.getItem() instanceof FormattedMediaItem fmt)) {
+                continue;
             }
+            // "CD Drive: Blank CD-RW": the reader, then the medium's own label or name.
+            final Text drive = GameText.of(level.getBlockState(media.pos()).getBlock().getName());
+            drives.add(new PatternStudioStatePayload.Drive(media.volume().key(),
+                    DRIVE_MEDIUM.with(drive, VolumeLabel.text(m)),
+                    fmt.writable(), CraftManagerPayloads.craftFileListFromMedia(m)));
         }
         final ItemStack disk = host.systemDisk();
         final FilesystemKind fs = FileAccess.filesystemKindOf(host);

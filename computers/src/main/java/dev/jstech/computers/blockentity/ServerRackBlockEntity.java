@@ -42,8 +42,8 @@ import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.media.LiveMedium;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
@@ -74,7 +74,6 @@ import dev.jstech.core.peripheral.PeripheralPorts;
 import dev.jstech.core.peripheral.PeripheralReconciler;
 import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.Arrays;
@@ -1606,18 +1605,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     @Override
     public boolean hasBootableMedium() {
-        if (level == null) {
-            return false;
-        }
-        for (final long endpoint : enabledEndpoints()) {
-            if (Loaded.blockEntity(level, BlockPos.of(endpoint))
-                    instanceof MediaReaderBlockEntity reader
-                    && reader.insertedKind() == MediaKind.OS_INSTALL
-                    && reader.insertedPayload() != null) {
-                return true;
-            }
-        }
-        return false;
+        return level != null && MachineMedia.of(this, level).installing(MediaKind.OS_INSTALL) != null;
     }
 
     @Override
@@ -1969,14 +1957,14 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         final LiveInstallState live = liveInstall();
         /* Asked, never acted on: see the same method on a personal computer for why that matters. */
         return (live != null
-                && LiveMedium.holding(level, enabledEndpoints(), live.distro()) != LiveMedium.Answer.GONE)
+                && LiveMedium.holding(level, this, live.distro()) != LiveMedium.Answer.GONE)
                 || installedOsId() != null;
     }
 
     @Override
     public boolean settleLiveInstall() {
         final LiveInstallState live = liveInstall();
-        if (live == null || LiveMedium.holding(level, enabledEndpoints(), live.distro())
+        if (live == null || LiveMedium.holding(level, this, live.distro())
                 != LiveMedium.Answer.GONE) {
             return false;
         }

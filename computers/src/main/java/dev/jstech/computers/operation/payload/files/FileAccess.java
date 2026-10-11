@@ -17,23 +17,21 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.StorageProjection;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.machine.DriveTable;
-import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.IMediaDrive;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaItem;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.ServerStorageContents;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.util.Loaded;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -81,16 +79,8 @@ public final class FileAccess {
     public static ItemStack mediaStackFor(final ServerLevel level,
             final IOsHost computer,
             final String mediaPath) {
-        final MediaVolume volume = MediaVolume.parse(mediaPath);
-        if (volume == null || !computer.enabledEndpoints().contains(volume.readerPos())
-                || !(Loaded.blockEntity(level, BlockPos.of(volume.readerPos()))
-                        instanceof MediaReaderBlockEntity reader)) {
-            return ItemStack.EMPTY;
-        }
-        if (volume.docked()) {
-            return reader instanceof DockStationBlockEntity dock ? dock.disk(volume.bay()) : ItemStack.EMPTY;
-        }
-        return reader.readableMedium();
+        final IMediaDrive drive = driveOf(level, computer, mediaPath);
+        return drive == null ? ItemStack.EMPTY : drive.medium();
     }
 
     /**
@@ -115,11 +105,9 @@ public final class FileAccess {
     static void commitMedia(final ServerLevel level,
             final IOsHost computer,
             final String mediaPath) {
-        final MediaVolume volume = MediaVolume.parse(mediaPath);
-        if (volume != null && Loaded.blockEntity(level, BlockPos.of(volume.readerPos()))
-                instanceof MediaReaderBlockEntity reader) {
-            reader.setChanged();
-            reader.fields().syncToClients();
+        final IMediaDrive drive = driveOf(level, computer, mediaPath);
+        if (drive != null) {
+            drive.commit();
         }
     }
 
@@ -247,6 +235,13 @@ public final class FileAccess {
         final String rest = path.substring("media:".length());
         final int slash = rest.indexOf('/');
         return slash < 0 ? rest : rest.substring(0, slash);
+    }
+
+    /** The drive of this machine a media path's volume is in, or null when the machine has none there. */
+    @Nullable
+    private static IMediaDrive driveOf(final ServerLevel level, final IOsHost computer, final String mediaPath) {
+        final MediaVolume volume = MediaVolume.parse(mediaPath);
+        return volume == null ? null : MachineMedia.of(computer, level).find(volume);
     }
 
     /** The storage of a disk and the key behind each projected {@code .dat} path. */

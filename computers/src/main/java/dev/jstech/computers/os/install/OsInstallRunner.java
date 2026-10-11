@@ -18,13 +18,14 @@ import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.media.IMediaDrive;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -65,7 +66,7 @@ public final class OsInstallRunner {
             return;
         }
         final OsDef system = OsRegistry.getOs(ResourceLocation.tryParse(job.osId()));
-        if (mediumGone(level, job)) {
+        if (mediumGone(machine, level, job)) {
             machine.setInstalling(null);
             machine.setInstaller(null);
             tell(level, machine, pos, job, system, MEDIUM_TAKEN_OUT.text());
@@ -188,14 +189,14 @@ public final class OsInstallRunner {
     }
 
     /** Whether what was being read has left the drive it was in. */
-    private static boolean mediumGone(final ServerLevel level, final OsInstallJob job) {
+    private static boolean mediumGone(final IOsHost machine, final ServerLevel level, final OsInstallJob job) {
         if (!job.hasReader()) {
             return false;
         }
-        return !(Loaded.blockEntity(level, BlockPos.of(job.readerPos())) instanceof MediaReaderBlockEntity reader)
-                || reader.insertedKind() != MediaKind.OS_INSTALL
-                || reader.insertedPayload() == null
-                || !reader.insertedPayload().toString().equals(job.osId());
+        final IMediaDrive drive = MachineMedia.of(machine, level)
+                .find(new MediaVolume(job.readerPos(), MediaVolume.MEDIUM));
+        return drive == null || !drive.installs(MediaKind.OS_INSTALL)
+                || !drive.payload().toString().equals(job.osId());
     }
 
     /** Puts every player watching this machine on the installer's page, wherever it has got to. */

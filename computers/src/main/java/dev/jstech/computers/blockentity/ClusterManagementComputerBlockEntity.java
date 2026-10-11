@@ -26,8 +26,9 @@ import dev.jstech.computers.os.OsGating;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.media.IMediaDrive;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.storage.IDataSink;
@@ -345,17 +346,8 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
 
     @Nullable
     public Medium medium(final MediaKind kind) {
-        if (level == null) {
-            return null;
-        }
-        for (final long endpoint : enabledEndpoints()) {
-            if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
-                    && reader.insertedKind() == kind && reader.insertedPayload() != null) {
-                final ResourceLocation id = reader.insertedPayload();
-                return new Medium(id, labelFor(kind, id));
-            }
-        }
-        return null;
+        final IMediaDrive drive = level == null ? null : MachineMedia.of(this, level).installing(kind);
+        return drive == null ? null : new Medium(drive.payload(), labelFor(kind, drive.payload()));
     }
 
     private static String labelFor(final MediaKind kind, final ResourceLocation id) {

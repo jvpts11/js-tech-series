@@ -24,9 +24,10 @@ import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.program.install.LiveTurn;
 import dev.jstech.computers.program.install.MakeOpts;
+import dev.jstech.computers.os.media.IMediaDrive;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.cli.CliLine;
@@ -38,12 +39,10 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -329,22 +328,18 @@ public final class InstallService {
     }
 
     /**
-     * The programs whose install media sit in this machine's linked drives right now, in the order the drives
-     * were linked. What a tool that installs "whatever is in the drive" has to choose from.
+     * The programs whose install media sit in this machine's drives right now, in the machine's order of its drives.
+     * What a tool that installs "whatever is in the drive" has to choose from.
      */
     public List<ProgramSpec> onMedia() {
         final List<ProgramSpec> out = new ArrayList<>();
         if (!(this.terminal instanceof IOsHost computer)) {
             return out;
         }
-        for (final long endpoint : computer.enabledEndpoints()) {
-            if (Loaded.blockEntity(this.level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
-                    && reader.insertedKind() == MediaKind.PROGRAM_INSTALL) {
-                final ProgramSpec spec = reader.insertedPayload() == null ? null
-                        : Programs.get(reader.insertedPayload());
-                if (spec != null) {
-                    out.add(spec);
-                }
+        for (final IMediaDrive drive : MachineMedia.of(computer, this.level).drives()) {
+            final ProgramSpec spec = drive.installs(MediaKind.PROGRAM_INSTALL) ? Programs.get(drive.payload()) : null;
+            if (spec != null) {
+                out.add(spec);
             }
         }
         return out;
@@ -356,11 +351,9 @@ public final class InstallService {
         if (!(this.terminal instanceof IOsHost computer)) {
             return null;
         }
-        for (final long endpoint : computer.enabledEndpoints()) {
-            if (Loaded.blockEntity(this.level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
-                    && reader.insertedKind() == MediaKind.PROGRAM_INSTALL
-                    && programId.equals(reader.insertedPayload())) {
-                return reader.insertedFormat();
+        for (final IMediaDrive drive : MachineMedia.of(computer, this.level).drives()) {
+            if (drive.kind() == MediaKind.PROGRAM_INSTALL && programId.equals(drive.payload())) {
+                return drive.format();
             }
         }
         return null;

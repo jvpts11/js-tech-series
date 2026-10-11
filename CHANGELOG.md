@@ -1409,6 +1409,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   biggest disk, so the most room is left once the system is on it.
 
 ### Changed
+- A computer finds its removable drives in one place, and everything that asks for them gets the same answer in the
+  same order: the drive letters, This PC, the explorers, the firmware's boot menu and installer, the Setup of a
+  program, the Cluster Management Computer, the Crafting Manager, the Pattern Studio and the live media. With
+  several drives holding installers, each of them now takes the first in the order the drive letters go, where some
+  took the first one cabled. A system being copied from a drive stops if that drive is turned off for the computer.
 - The Tank belongs to J's Industrial now (`jsindustrial:tank`), on its own Storage shelf and in its manual. A Tank
   placed under the old name is gone from a world made before. J's Computers' manual explains fluids on a page of
   their own, with a tank of any mod.

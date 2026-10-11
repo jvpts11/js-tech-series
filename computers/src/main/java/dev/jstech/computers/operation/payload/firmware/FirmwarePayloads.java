@@ -68,16 +68,17 @@ import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.install.SetupTiming;
+import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.LiveMedium;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.util.Loaded;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -216,19 +217,20 @@ public final class FirmwarePayloads {
                     spec == null ? "" : DiskSpec.sizeLabel(spec.capacityMb()),
                     Text.EMPTY, os != null, -1));
         }
-        for (final long endpoint : computer.enabledEndpoints()) {
-            if (!(Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)) {
+        // The drives a machine can start a system from: its readers, a dock's docked disks being no installers.
+        for (final IMediaDrive reader : MachineMedia.of(computer, level).drives()) {
+            if (reader.volume().docked()) {
                 continue;
             }
-            final Text drive = reader.driveType().driveName();
-            final ItemStack media = reader.readableMedium();
+            final long endpoint = reader.volume().readerPos();
+            final Text drive = reader.type().driveName();
+            final ItemStack media = reader.medium();
             if (media.isEmpty()) {
                 entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint, "",
                         EMPTY_DRIVE.text(), drive, "", Text.EMPTY, false, -1));
                 continue;
             }
-            final OsDef os = reader.insertedKind() == MediaKind.OS_INSTALL && reader.insertedPayload() != null
-                    ? OsRegistry.getOs(reader.insertedPayload()) : null;
+            final OsDef os = reader.installs(MediaKind.OS_INSTALL) ? OsRegistry.getOs(reader.payload()) : null;
             if (os == null) {
                 entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint, "",
                         GameText.of(media.getHoverName()), drive, "", Text.EMPTY, false, -1));
@@ -444,12 +446,11 @@ public final class FirmwarePayloads {
                 MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
             }
             case FirmwareActionPayload.ACTION_BOOT_MEDIA -> {
-                // The reader comes from the player's screen, so it is only one the machine is linked to.
-                if (computer.enabledEndpoints().contains(payload.ref())
-                        && Loaded.blockEntity(level, BlockPos.of(payload.ref()))
-                                instanceof MediaReaderBlockEntity reader
-                        && reader.insertedKind() == MediaKind.OS_INSTALL && reader.insertedPayload() != null) {
-                    final OsDef os = OsRegistry.getOs(reader.insertedPayload());
+                // The reader comes from the player's screen, so it is only one of the machine's own drives.
+                final IMediaDrive reader = MachineMedia.of(computer, level)
+                        .find(new MediaVolume(payload.ref(), MediaVolume.MEDIUM));
+                if (reader != null && reader.installs(MediaKind.OS_INSTALL)) {
+                    final OsDef os = OsRegistry.getOs(reader.payload());
                     /*
                      * Which distribution's medium this is, asked of the medium rather than worked out from
                      * the one name that is not the other. A system that is installed by hand and is neither
@@ -524,21 +525,18 @@ public final class FirmwarePayloads {
                                     final long readerPos, final int targetSlot) {
         final HardwareEra hostEra = computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
         Text failure = null;
-        for (final long endpoint : computer.enabledEndpoints()) {
+        for (final IMediaDrive reader : MachineMedia.of(computer, level).drives()) {
+            final long endpoint = reader.volume().readerPos();
             /*
              * -1 is the word for "any drive with an installer in it"; anything else names one drive by its packed
              * position. Asking whether that position is positive is not the same question: a drive west or north
              * of the world's origin packs into a negative long, so on those bases naming a drive was read as
              * naming none of them, and the machine installed from whichever it found first.
              */
-            if (readerPos != ANY_READER && endpoint != readerPos) {
+            if (readerPos != ANY_READER && endpoint != readerPos || !reader.installs(MediaKind.OS_INSTALL)) {
                 continue;
             }
-            if (!(Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)
-                    || reader.insertedKind() != MediaKind.OS_INSTALL || reader.insertedPayload() == null) {
-                continue;
-            }
-            final OsDef def = OsRegistry.getOs(reader.insertedPayload());
+            final OsDef def = OsRegistry.getOs(reader.payload());
             if (def == null) {
                 failure = UNKNOWN_SYSTEM.text();
                 continue;
@@ -582,7 +580,7 @@ public final class FirmwarePayloads {
              * installer once the player has chosen one. A machine of an age used to take exactly as long as
              * every other machine of that age, so nothing a player put in it ever showed.
              */
-            final double baseRate = SetupTiming.installRate(reader.insertedFormat(), 1,
+            final double baseRate = SetupTiming.installRate(reader.format(), 1,
                     machine.cpuCores(), machine.maxCpuMhz());
             final InstallerFlow flow =
                     Installers.beginning(machine, level, def, baseRate);

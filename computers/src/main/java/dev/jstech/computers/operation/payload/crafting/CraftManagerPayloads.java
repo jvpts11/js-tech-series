@@ -34,6 +34,8 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.IMediaDrive;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
@@ -357,23 +359,21 @@ public final class CraftManagerPayloads {
          * A computer commonly has more than one drive linked (a floppy drive, a DVD drive, a dock), and the one with
          * a blank medium in it may well come first: the disc the player just wrote is the one they mean.
          */
-        for (final long endpoint : cc.enabledEndpoints()) {
-            if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader) {
-                final ItemStack m = reader.readableMedium();
-                if (m.isEmpty() || !(m.getItem() instanceof FormattedMediaItem fmt) || !fmt.writable()) {
-                    continue;
-                }
-                final List<String> files = craftFileListFromMedia(m);
-                if (mediaVolumeKey.isEmpty() || !files.isEmpty()) {
-                    mediaVolumeKey = "media:" + endpoint;
-                    final String label = VolumeLabel.of(m, "");
-                    mediaLabel = label.isEmpty() ? CraftTexts.REMOVABLE_DRIVE.text()
-                            : Text.literal(TextBounds.clip(label, 64));
-                    mediaFiles = files;
-                }
-                if (!files.isEmpty()) {
-                    break;
-                }
+        for (final IMediaDrive drive : MachineMedia.of(cc, level).drives()) {
+            final ItemStack m = drive.medium();
+            if (m.isEmpty() || !(m.getItem() instanceof FormattedMediaItem fmt) || !fmt.writable()) {
+                continue;
+            }
+            final List<String> files = craftFileListFromMedia(m);
+            if (mediaVolumeKey.isEmpty() || !files.isEmpty()) {
+                mediaVolumeKey = drive.volume().key();
+                final String label = VolumeLabel.of(m, "");
+                mediaLabel = label.isEmpty() ? CraftTexts.REMOVABLE_DRIVE.text()
+                        : Text.literal(TextBounds.clip(label, 64));
+                mediaFiles = files;
+            }
+            if (!files.isEmpty()) {
+                break;
             }
         }
         final Set<String> onMedia = new HashSet<>(mediaFiles);

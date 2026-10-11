@@ -28,9 +28,9 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.ProgramFilesProjection;
-import dev.jstech.computers.os.media.DockStationBlockEntity;
+import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.InstallerProjection;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
@@ -44,14 +44,12 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
-import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -106,30 +104,20 @@ public final class FilePayloads {
                 volumes.add(new DiskFilesPayload.WireVolume("",
                         VolumeLabel.of(computer.systemDisk(), DiskFilesPayload.LOCAL_DISK.text())));
             }
-            for (final long endpoint : computer.enabledEndpoints()) {
-                if (Loaded.blockEntity(level, BlockPos.of(endpoint))
-                        instanceof MediaReaderBlockEntity reader
-                        && !reader.readableMedium().isEmpty()) {
-                    /*
-                     * An installer's drive is named for what it installs ("Frames 11 Setup"), so the
-                     * tree says what is in the drive before it is opened.
-                     */
-                    final ItemStack medium = reader.readableMedium();
-                    final Text fallback = InstallerProjection.facts(medium)
-                            .map(f -> DiskFilesPayload.SETUP.with(f.name()))
-                            .orElse(DiskFilesPayload.REMOVABLE_DRIVE.text());
-                    volumes.add(new DiskFilesPayload.WireVolume("media:" + endpoint,
-                            VolumeLabel.of(medium, fallback)));
+            for (final IMediaDrive drive : MachineMedia.of(computer, level).drives()) {
+                final ItemStack medium = drive.medium();
+                if (medium.isEmpty()) {
+                    continue;
                 }
-                // A dock's disks follow its stick, each a drive of its own, named as the disk is.
-                if (Loaded.blockEntity(level, BlockPos.of(endpoint)) instanceof DockStationBlockEntity dock) {
-                    for (int bay = 0; bay < DockStationBlockEntity.BAYS; bay++) {
-                        if (!dock.disk(bay).isEmpty()) {
-                            volumes.add(new DiskFilesPayload.WireVolume(MediaVolume.key(endpoint, bay),
-                                    VolumeLabel.of(dock.disk(bay), GameText.of(dock.disk(bay).getHoverName()))));
-                        }
-                    }
-                }
+                /*
+                 * An installer's drive is named for what it installs ("Frames 11 Setup"), so the tree says what is
+                 * in the drive before it is opened. A docked disk is named as the disk is.
+                 */
+                final Text fallback = drive.volume().docked() ? GameText.of(medium.getHoverName())
+                        : InstallerProjection.facts(medium)
+                                .map(f -> DiskFilesPayload.SETUP.with(f.name()))
+                                .orElse(DiskFilesPayload.REMOVABLE_DRIVE.text());
+                volumes.add(new DiskFilesPayload.WireVolume(drive.volume().key(), VolumeLabel.of(medium, fallback)));
             }
             // The other machines' shared folders, reached through this machine's own shell.
             if (netShell(level, computer) != null) {

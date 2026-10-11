@@ -58,8 +58,8 @@ import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -732,18 +732,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     /** Whether a drive this machine reaches holds something it could boot instead of one of its own disks. */
     @Override
     public boolean hasBootableMedium() {
-        if (level == null) {
-            return false;
-        }
-        for (final long endpoint : enabledEndpoints()) {
-            if (Loaded.blockEntity(level, BlockPos.of(endpoint))
-                    instanceof MediaReaderBlockEntity reader
-                    && reader.insertedKind() == MediaKind.OS_INSTALL
-                    && reader.insertedPayload() != null) {
-                return true;
-            }
-        }
-        return false;
+        return level != null && MachineMedia.of(this, level).installing(MediaKind.OS_INSTALL) != null;
     }
 
     public void setNeedsPost(final boolean value) {

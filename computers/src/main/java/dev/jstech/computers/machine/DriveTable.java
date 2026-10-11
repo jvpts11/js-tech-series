@@ -20,19 +20,16 @@ import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.ProgramFilesProjection;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.InstallerProjection;
-import dev.jstech.computers.os.media.DockStationBlockEntity;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
-import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -99,29 +96,13 @@ public final class DriveTable {
             table.add(new Drive(letter, disk, FilesystemKind.HIERARCHICAL, computer::setChanged));
             letter++;
         }
-        // Enabled media readers, in ascending packed-position order for a stable letter assignment.
-        final List<Long> readers = new ArrayList<>(computer.enabledEndpoints());
-        Collections.sort(readers);
-        for (final long pos : readers) {
+        // Then the removable drives, in the order the machine keeps them, so a letter stays with its drive.
+        for (final IMediaDrive drive : MachineMedia.of(computer, level).drives()) {
             if (letter > 'Z') {
                 break;
             }
-            if (!(Loaded.blockEntity(level, BlockPos.of(pos)) instanceof MediaReaderBlockEntity reader)) {
-                continue;
-            }
-            final ItemStack media = reader.readableMedium();
-            table.add(new Drive(letter, media, FilesystemKind.HIERARCHICAL, () -> syncReader(reader)));
+            table.add(new Drive(letter, drive.medium(), FilesystemKind.HIERARCHICAL, drive::commit));
             letter++;
-            // A dock's disks follow its stick: each one docked is an external drive of its own, top tray first.
-            if (reader instanceof DockStationBlockEntity dock) {
-                for (int bay = 0; bay < DockStationBlockEntity.BAYS && letter <= 'Z'; bay++) {
-                    final ItemStack disk = dock.disk(bay);
-                    if (!disk.isEmpty()) {
-                        table.add(new Drive(letter, disk, FilesystemKind.HIERARCHICAL, dock::diskChanged));
-                        letter++;
-                    }
-                }
-            }
         }
         return new DriveTable(table);
     }
@@ -201,11 +182,5 @@ public final class DriveTable {
         final long osReserved = os != null
                 ? os.footprintItemsOn(DiskFilesystem.eraOf(stack)) * StorageKey.MB_EQ_PER_ITEM : 0L;
         return Math.max(0L, capacity - storageUsed - fsUsed - osReserved);
-    }
-
-    /** Saves and sends a medium whose filesystem was just changed in place, so players see it. */
-    private static void syncReader(final MediaReaderBlockEntity reader) {
-        reader.setChanged();
-        reader.fields().syncToClients();
     }
 }
