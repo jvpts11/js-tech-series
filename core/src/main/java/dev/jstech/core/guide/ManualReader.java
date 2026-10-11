@@ -43,6 +43,8 @@ public final class ManualReader {
     private final Map<String, Article> articles = new HashMap<>();
     private final Map<String, String> searchable = new HashMap<>();
     private final List<IndexLine> index = new ArrayList<>();
+    /** The entry that prints each command's page, by the command's name. */
+    private final Map<String, String> commandEntries;
 
     /** The characters a typed name may spell a gap with, all read alike: "graphics-cards" is "graphics cards". */
     private static final String GAPS = "[-_\\s]+";
@@ -52,6 +54,7 @@ public final class ManualReader {
     public ManualReader(final GuideManual manual, final GuideContents contents, final IGuideText text) {
         this.manual = Objects.requireNonNull(manual, "manual");
         this.text = Objects.requireNonNull(text, "text");
+        this.commandEntries = GuideCommandPage.entries(contents, text);
         this.number(contents);
         for (final GuideContents.Chapter chapter : contents.chapters()) {
             Counted counted = new Counted(0, 0, 0);
@@ -266,20 +269,8 @@ public final class ManualReader {
                     tables++;
                     final GuideBlock.Table table = declared.source().isEmpty() ? declared
                             : declared.withRows(this.text.rows(declared.source(), declared.columns()));
-                    final List<String> heads = new ArrayList<>();
-                    for (final String head : table.headKeys()) {
-                        heads.add(this.text.text(head));
-                    }
-                    final List<Row> rows = new ArrayList<>();
-                    for (final GuideBlock.TableRow row : table.rows()) {
-                        final List<String> cells = new ArrayList<>();
-                        for (final GuideBlock.GuideValue cell : row.cells()) {
-                            cells.add(this.text.valueText(cell));
-                        }
-                        rows.add(new Row(cells));
-                    }
-                    pieces.add(new Piece.Table(this.text.text(GuideTexts.TABLE.key(), chapterNo + "-" + tables)
-                            + " " + this.text.text(table.captionKey()), heads, rows));
+                    pieces.add(this.table(this.text.text(GuideTexts.TABLE.key(), chapterNo + "-" + tables) + " "
+                            + this.text.text(table.captionKey()), table));
                 }
                 case GuideBlock.Listing listing -> {
                     listings++;
@@ -333,6 +324,7 @@ public final class ManualReader {
                                 ? this.text.text(GuideTexts.OPTIONAL_PART.key(), label) : label));
                     }
                 }
+                case GuideBlock.Command command -> this.command(command, pieces, linked);
                 // Where a page breaks, and what another mod draws on one, have no place in running text.
                 case GuideBlock.Break cut -> {
                 }
@@ -363,11 +355,76 @@ public final class ManualReader {
     }
 
     /**
+     * A command's page as text ({@link GuideCommandPage}): what it is for, how it is typed as a line of code, what it
+     * does, its options and examples as tables, the systems it runs on, and the commands to read next, the pages of
+     * those this manual holds listed with the entry's other links.
+     */
+    private void command(final GuideBlock.Command block, final List<Piece> pieces, final Set<String> linked) {
+        final Optional<GuideCommand> found = this.text.command(block.source());
+        if (found.isEmpty()) {
+            pieces.add(new Piece.Paragraph(this.text.text(GuideTexts.NO_COMMAND.key(), block.source()),
+                    Tone.WARNING));
+            return;
+        }
+        final GuideCommand command = found.get();
+        this.paragraph(pieces, GuideCommandPage.lead(command, this.text), linked);
+        pieces.add(new Piece.Heading(this.text.text(GuideTexts.HOW_TO_TYPE_IT.key()), false));
+        pieces.add(new Piece.Code("", "", List.of(GuideCommandPage.synopsis(command, this.text))));
+        for (final String paragraph : GuideCommandPage.description(command, this.text)) {
+            this.paragraph(pieces, paragraph, linked);
+        }
+        if (!command.options().isEmpty()) {
+            pieces.add(new Piece.Heading(this.text.text(GuideTexts.OPTIONS.key()), false));
+            pieces.add(this.table("", GuideCommandPage.options(command)));
+        }
+        if (!command.examples().isEmpty()) {
+            pieces.add(new Piece.Heading(this.text.text(GuideTexts.EXAMPLES.key()), false));
+            pieces.add(this.table("", GuideCommandPage.examples(command)));
+        }
+        this.paragraph(pieces, GuideCommandPage.runsOn(command, this.text), linked);
+        this.paragraph(pieces, GuideCommandPage.readNext(command, this.text, name -> name), linked);
+        for (final String name : command.seeAlso()) {
+            final String entry = this.commandEntries.get(name);
+            if (entry != null && this.nodes.containsKey(entry)) {
+                linked.add(entry);
+            }
+        }
+    }
+
+    /** A sentence as a paragraph, its links written out; nothing for no words. */
+    private void paragraph(final List<Piece> pieces, final String sentence, final Set<String> linked) {
+        if (!sentence.isEmpty()) {
+            pieces.add(new Piece.Paragraph(this.written(sentence, linked), Tone.PLAIN));
+        }
+    }
+
+    /** A table as text under that caption, its heads and cells in the reader's language. */
+    private Piece.Table table(final String caption, final GuideBlock.Table table) {
+        final List<String> heads = new ArrayList<>();
+        for (final String head : table.headKeys()) {
+            heads.add(this.text.text(head));
+        }
+        final List<Row> rows = new ArrayList<>();
+        for (final GuideBlock.TableRow row : table.rows()) {
+            final List<String> cells = new ArrayList<>();
+            for (final GuideBlock.GuideValue cell : row.cells()) {
+                cells.add(this.text.valueText(cell));
+            }
+            rows.add(new Row(cells));
+        }
+        return new Piece.Table(caption, heads, rows);
+    }
+
+    /**
      * A sentence in the reader's language with its links written as their words and numbers, the entries they lead
      * to that this manual holds noted in {@code linked}.
      */
     private String linked(final String key, final Set<String> linked) {
-        final String sentence = this.text.text(key);
+        return this.written(this.text.text(key), linked);
+    }
+
+    /** A sentence already in the reader's language, with its links written as {@link #linked} writes them. */
+    private String written(final String sentence, final Set<String> linked) {
         for (final String target : GuideLinks.targets(sentence)) {
             if (this.nodes.containsKey(target)) {
                 linked.add(target);

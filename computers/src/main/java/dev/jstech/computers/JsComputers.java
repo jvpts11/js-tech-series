@@ -23,6 +23,7 @@ import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.os.OsMotions;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ComponentKinds;
+import dev.jstech.computers.program.cli.man.CommandGuidePages;
 import dev.jstech.core.api.CoreRegisterEvent;
 import dev.jstech.core.audio.media.MediaKeepers;
 import dev.jstech.core.state.CoreStates;
@@ -68,6 +69,8 @@ public class JsComputers {
         modEventBus.addListener(FMLLoadCompleteEvent.class, event -> event.enqueueWork(() -> {
             OsRegistry.freeze();
             ComponentKinds.freeze();
+            // Every system and every mod's commands are known now, so each command's page in the manuals is too.
+            CommandGuidePages.register();
         }));
 
         // The mod's chapter of the manuals and its own Guide to Operations, with the manual's item.

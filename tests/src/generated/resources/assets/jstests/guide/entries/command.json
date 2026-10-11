@@ -1,0 +1,60 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.command.what"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/dir"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.command.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.command.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstests.guide.command.use1"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jstests.guide.command.fix1",
+          "problem": "jstests.guide.command.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:command_block_minecart",
+  "id": "jstests:command",
+  "order": 5,
+  "section": "jstests:ideas",
+  "title": "jstests.guide.command.title"
+}

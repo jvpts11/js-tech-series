@@ -46,6 +46,21 @@ public final class GuideTexts {
     public static final TextKey IF_SOMETHING_GOES_WRONG = TextKey.of("jscore.guide.if_something_goes_wrong",
             "If something goes wrong");
 
+    /**
+     * The parts of a command's page: how it is typed, its options and its examples with what each does, the systems
+     * it runs on, and the commands to read next; and what is printed in its place when no mod answers for it.
+     */
+    public static final TextKey HOW_TO_TYPE_IT = TextKey.of("jscore.guide.how_to_type_it", "How to type it");
+    public static final TextKey OPTIONS = TextKey.of("jscore.guide.options", "Options");
+    public static final TextKey OPTION = TextKey.of("jscore.guide.option", "Option");
+    public static final TextKey EXAMPLES = TextKey.of("jscore.guide.examples", "Examples");
+    public static final TextKey EXAMPLE = TextKey.of("jscore.guide.example", "Example");
+    public static final TextKey WHAT_IT_DOES = TextKey.of("jscore.guide.what_it_does", "What it does");
+    public static final TextKey RUNS_ON = TextKey.of("jscore.guide.runs_on", "Runs on %s.");
+    public static final TextKey READ_NEXT = TextKey.of("jscore.guide.read_next", "Read next: %s.");
+    public static final TextKey NO_COMMAND = TextKey.of("jscore.guide.no_command",
+            "This page is missing: no mod answers for the command %s.");
+
     /** The search of the whole manual: its index and every line of its pages. */
     public static final TextKey SEARCH = TextKey.of("jscore.guide.search", "Search the manual");
     public static final TextKey FOUND = TextKey.of("jscore.guide.found", "%s found");

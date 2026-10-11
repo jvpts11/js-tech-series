@@ -610,6 +610,16 @@ public final class ModGuide {
             return this.add(() -> new GuideBlock.SeeAlso(list));
         }
 
+        /**
+         * The page of a command the mod's computers run, read from the command as the manual is laid out, from the
+         * source registered with {@link GuideFacts#command}: what it is for, how it is typed, what it does, its
+         * options and examples, the systems it runs on and the commands to read next.
+         */
+        public EntryBuilder command(final String source) {
+            Objects.requireNonNull(source, "source");
+            return this.add(() -> new GuideBlock.Command(source));
+        }
+
         /** A special block of a kind another mod draws, handed {@code data} (JSON). */
         public EntryBuilder custom(final String type, final int height, final String data) {
             return this.add(() -> new GuideBlock.Custom(type, height, data));

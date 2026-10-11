@@ -10,6 +10,7 @@ package dev.jstech.core.guide;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -173,6 +174,29 @@ class ManualReaderTest {
     }
 
     @Test
+    void article_readsACommandsPageAsText() {
+        final GuideEntry dir = entry("alpha:dir", new GuideBlock.Command("alpha:command/dir"));
+        final GuideEntry copy = entry("alpha:copy", new GuideBlock.Command("alpha:command/copy"));
+        final ManualReader reader = new ManualReader(MANUAL, new GuideContents(List.of(new GuideContents.Chapter(
+                new GuideChapter("alpha", 0, "alpha.title", "", ""), List.of(new GuideContents.Section(
+                        new GuideSection("alpha:parts", 0, "parts.title", ""), List.of(dir, copy)))))),
+                new FixedText());
+
+        final List<ManualReader.Piece> pieces = reader.article("alpha:dir").orElseThrow().pieces();
+        assertEquals(new ManualReader.Piece.Paragraph("List the files in a folder.", ManualReader.Tone.PLAIN),
+                pieces.getFirst());
+        assertTrue(pieces.contains(new ManualReader.Piece.Code("", "", List.of("dir [path]"))), "how it is typed");
+        final ManualReader.Piece.Table options = pieces.stream().filter(piece -> piece instanceof
+                ManualReader.Piece.Table).map(piece -> (ManualReader.Piece.Table) piece).findFirst().orElseThrow();
+        assertEquals(List.of(GuideTexts.OPTION.key(), GuideTexts.WHAT_IT_DOES.key()), options.heads());
+        assertEquals(List.of(new ManualReader.Row(List.of("/w", "Names only."))), options.rows());
+        assertTrue(pieces.stream().anyMatch(piece -> piece instanceof ManualReader.Piece.Links links
+                && links.links().stream().anyMatch(link -> link.target().equals("alpha:copy"))),
+                "the command to read next is listed with the entry's links");
+        assertEquals(List.of("alpha:dir"), reader.search("names only"));
+    }
+
+    @Test
     void search_findsEveryWordInTheTitleOrTheText() {
         final ManualReader reader = reader();
 
@@ -228,8 +252,19 @@ class ManualReaderTest {
                 List.of(blocks));
     }
 
-    /** Words that are their own keys, with any arguments after them in brackets. */
+    /** Words that are their own keys, with any arguments after them in brackets, and two commands' pages. */
     private record FixedText() implements IGuideText {
+
+        @Override
+        public Optional<GuideCommand> command(final String source) {
+            if (source.endsWith("/dir")) {
+                return Optional.of(new GuideCommand("dir", Text.literal("list the files in a folder"),
+                        Text.literal("[path]"), List.of(), List.of(new GuideCommand.Option("/w",
+                        Text.literal("Names only."))), List.of(), List.of(), List.of("copy")));
+            }
+            return source.endsWith("/copy") ? Optional.of(new GuideCommand("copy", Text.literal("copy a file"),
+                    Text.EMPTY, List.of(), List.of(), List.of(), List.of(), List.of())) : Optional.empty();
+        }
 
         @Override
         public String text(final String key, final Object... args) {

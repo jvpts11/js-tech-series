@@ -196,6 +196,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A glossary at the back of every manual, before its index: each word a page explains, alphabetical under its
   letter, with what it means and the page that explains it. The first time another page uses one of those words, the
   word leads to where it is explained.
+- Pages for the commands in the manuals, made from each command itself: what it is for, how it is typed, what it
+  does, a table of its options and one of its examples, every system it runs on (with the package to install first,
+  where one is needed) and the commands to read next, each leading to its own page. They say what `man`, `help` and
+  `/?` say at a prompt, word for word, so the book and the machine never disagree.
 - The manuals inside the computers, beside the manual pages of each machine's commands, in each system's own help.
   Every desktop has Help: Frames 95's Help Topics with its Contents, Index and Find and a topic window of its own,
   XP's Help and Support Center, 7's Help and Support, Get Help on 10 and 11, KDE's Help Center, the Help of GNOME and

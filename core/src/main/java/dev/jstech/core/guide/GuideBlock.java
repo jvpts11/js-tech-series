@@ -8,13 +8,14 @@
 package dev.jstech.core.guide;
 
 import dev.jstech.core.id.IStableName;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * One piece of a manual's entry: a paragraph, a heading, a figure, a picture, a table, the recipes of a kind, numbered
- * steps, a warning, the problems and their fixes, a word explained, links to other entries, or a special block
- * another mod draws.
+ * steps, a warning, the problems and their fixes, a word explained, links to other entries, a command's page, or a
+ * special block another mod draws.
  *
  * <p>An entry is a list of these, laid out on the pages in the order given. Words are never held here, only the keys
  * of the sentences, so a manual reads in each player's language and a resource pack can reword it. Ids are text in
@@ -451,12 +452,27 @@ public sealed interface GuideBlock {
         }
     }
 
-    /** A cell of a table: a sentence, an amount with its unit, or text that is data. */
+    /**
+     * The page of a command a mod's computers run, read from the command itself as the manual is laid out
+     * ({@link GuideFacts#command}): what it is for, how it is typed, what it does, a table of its options and one of
+     * its examples, the systems it runs on, and the commands to read next. A mod makes the command's page at its
+     * prompts from the same words, so the two never disagree.
+     *
+     * @param source the id its mod registered the command's page under, {@code namespace:path}
+     */
+    record Command(String source) implements GuideBlock {
+
+        public Command {
+            Objects.requireNonNull(source, "source");
+        }
+    }
+
+    /** A cell of a table: a sentence, an amount with its unit, text that is data, or words its mod says. */
     sealed interface GuideValue {
 
         /** Whether it is data, an amount or a literal, which is written in the code font; words are not. */
         default boolean data() {
-            return !(this instanceof Words);
+            return !(this instanceof Words || this instanceof Said);
         }
 
         /** A sentence to translate, such as "PC, Server, Mainframe". */
@@ -479,6 +495,18 @@ public sealed interface GuideBlock {
         record Literal(String text) implements GuideValue {
 
             public Literal {
+                Objects.requireNonNull(text, "text");
+            }
+        }
+
+        /**
+         * Words a mod says as the game runs, such as what an option of a command does: a sentence of the mod's own,
+         * put in the reader's language when it is shown. Only what a mod answers as a manual is laid out holds these
+         * ({@link GuideFacts}), so they are never written to a manual's files.
+         */
+        record Said(Text text) implements GuideValue {
+
+            public Said {
                 Objects.requireNonNull(text, "text");
             }
         }

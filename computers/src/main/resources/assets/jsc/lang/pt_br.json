@@ -7895,6 +7895,8 @@
   "subtitles.jsc.server.fan": "Ventoinhas do servidor zumbem",
   "subtitles.jsc.server.room": "Sala de servidores zumbe",
   "item.jsc.guide_to_operations": "Guia de Operações",
+  "jsc.guide.command.from_package": "%s, depois de instalar %s",
+  "jsc.guide.command.install_medium": "a mídia de instalação do %s",
   "jsc.guide.asking_for_a_craft.fix1": "Essa etapa ficou sem tempo: a máquina dela está sem energia, está cheia, ou nunca entregou a saída ao Barramento de Recepção. A fabricação diz qual etapa foi.",
   "jsc.guide.asking_for_a_craft.problem1": "Uma fabricação de muitas etapas falha numa delas.",
   "jsc.guide.asking_for_a_craft.text1": "Você pede uma fabricação do mesmo jeito que pede qualquer outra coisa: no programa Rede, ou em IQL, com CRAFT 512 piston.",

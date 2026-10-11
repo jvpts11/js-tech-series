@@ -7,6 +7,8 @@
  */
 package dev.jstech.tests;
 
+import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.program.cli.man.CommandGuidePages;
 import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.guide.CoreGuide;
@@ -26,8 +28,8 @@ import net.minecraft.world.item.Items;
 /**
  * Chapters, manuals and the item that opens one, to prove the Core's manuals: every kind of block an entry is made
  * of, a special block another mod draws, an entry an item's page opens to, links between entries, tables that run on
- * and that stack, a second book that binds a chapter written for it alone before the mod's main one, a link from one
- * book into the other, and a stack whose page its mod chooses.
+ * and that stack, a command's page read from the command, a second book that binds a chapter written for it alone
+ * before the mod's main one, a link from one book into the other, and a stack whose page its mod chooses.
  */
 public final class TestGuide {
 
@@ -43,6 +45,7 @@ public final class TestGuide {
     public static final String SHARED_PAGE = "jstests:shared_page";
     public static final String TABLES = "jstests:tables";
     public static final String CODE = "jstests:code";
+    public static final String COMMAND = "jstests:command";
     /** The listings of the code entry, by the files they are. */
     public static final String HELLO = "Hello.sgs";
     public static final String QUERY = "top.iql";
@@ -160,6 +163,15 @@ public final class TestGuide {
                 .howToGetIt("Open the test manual.")
                 .howToUseIt("Read the listings.", "Copy one.", "Open one over the whole book.")
                 .whatCanGoWrong("A listing is one colour.", "Its language has no colours registered for the manuals.")
+                .register();
+        GUIDE.page("command", IDEAS).titled("A Command's Page").icon(() -> Items.COMMAND_BLOCK_MINECART)
+                .whatItIs("An entry that prints a command's page from the command itself, the way its manual page"
+                        + " at a prompt is made.")
+                .command(CommandGuidePages.id(Platform.MC_DOS, "dir"))
+                .whatItIsFor("Proving that a manual and a machine say the same about a command.")
+                .howToGetIt("Open the test manual.")
+                .howToUseIt("Read it.")
+                .whatCanGoWrong("The page says it is missing.", "No mod registered the command's page.")
                 .register();
         GUIDE.page("other_book", IDEAS).titled("A Link to Another Book").icon(() -> Items.COMPASS)
                 .whatItIs("An entry whose words lead to [a page of another book](jstests:shared_page), which this"

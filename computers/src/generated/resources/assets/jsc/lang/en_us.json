@@ -3375,6 +3375,8 @@
   "jsc.guide.cluster_management_computers.text2": "Build it as you would a Personal Computer, and give it a Cluster Interface Card: without one it is an ordinary computer ([](jsc:expansion_cards)). Then open the Cluster Manager on it. Each newer card reaches more machines, and installs on several at once.",
   "jsc.guide.cluster_management_computers.text3": "From the Standard on, the Cluster Manager also runs every supercomputer and every datacenter section as one machine ([](jsc:server_router)).",
   "jsc.guide.cluster_management_computers.title": "Cluster Management Computers",
+  "jsc.guide.command.from_package": "%s, once %s is installed",
+  "jsc.guide.command.install_medium": "the %s install medium",
   "jsc.guide.crafting_computers.fix1": "It has no Crafting Card, or it is off.",
   "jsc.guide.crafting_computers.fix2": "It lives on the card: it went with the card to another computer.",
   "jsc.guide.crafting_computers.problem1": "It crafts nothing.",

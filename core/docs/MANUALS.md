@@ -200,6 +200,7 @@ A picture is numbered with the figures ("Figure 3-2.") and captioned like them, 
 | `table(caption)`, then `amount(label, value, unit)`, `property(label, words)`, `fixed(label, data)` | A numbered table of properties, headed "Property" and "Value". An amount is read from your code and written in the reader's way ("12,000 FE"); words are translated; fixed values (a model number) are not. |
 | `table(caption, heads...)`, then `row(cells...)` | A numbered table with heads of its own ("Command", "What it does"), a cell a column in each row: `GuideCell.words(english)`, `GuideCell.words(sharedKey)`, `GuideCell.code(text)` or `GuideCell.amount(value, unit)`. See [Tables](#tables). |
 | `tableFrom(source, caption, heads...)` | A numbered table whose rows your mod gives as the manual is laid out. See [Figures read from your mod](#figures-read-from-your-mod). |
+| `command(source)` | A command's page, read from the command as the manual is laid out. See [Commands](#commands). |
 | `listing(name, lines...)`, `listingIn(language, name, lines...)` | A numbered listing of code ("Listing 3-4."), headed by its file's name, its lines numbered and coloured by its language, with a Copy button. See [Listings of code](#listings-of-code). |
 | `session(look, title)`, then `typed(prompt, text)`, `answer(lines...)` | A session at a terminal, in the colours of the terminal's palette, under its name: what was typed after each prompt and what the system answered. See [Sessions at a terminal](#sessions-at-a-terminal). |
 | `recipes(type)`, `recipes(type, making)` | Every recipe of a type the world holds, or those making one item, with the time and energy over the arrow. |
@@ -318,6 +319,43 @@ manual is laid out, so a part another mod adds to the family, or a setting the p
 opened. A row of the wrong number of cells is left out, with a line in the log; a name no mod registered is printed
 as written, braces and all, so it is seen and fixed. The answers are asked for in the player's game: register from the
 client's setup anything only the client knows.
+
+A cell a source gives may also be `GuideBlock.GuideValue.Said`, words your mod says as a `Text` (a `TextKey`'s
+sentence, or a literal): it is put in the reader's language as the page is laid out. Only a source answers with
+these; a manual's files never hold one.
+
+### Commands
+
+*Added 2026-10-11.*
+
+A mod whose computers run commands writes what each command is once, on the command, and the manual prints the
+command's page from it, so the book and the command's own help at a prompt never disagree. Register each command's
+page with `GuideFacts.command`, as a `GuideCommand` answered from the command, and print it in an entry with
+`command(source)`:
+
+```java
+GuideFacts.command("mymod:command/scan", () -> new GuideCommand("scan", Text.literal("list what is near"),
+        Text.literal("[radius]"), List.of(MyTexts.SCAN_ABOUT.text()),
+        List.of(new GuideCommand.Option("-a", MyTexts.SCAN_ALL.text())),
+        List.of(new GuideCommand.Example("scan 16", MyTexts.SCAN_16.text())),
+        List.of(Text.literal("ScanOS 2")), List.of("probe")));
+
+.command("mymod:command/scan")
+```
+
+The page reads, in this order: what the command is for, as a sentence; "How to type it", its name and what it takes
+in the code font; what it does, a paragraph each; "Options" and "Examples", each a table of what is typed beside what
+it does, laid out as any table is but with no caption or number of its own; "Runs on" and the systems; and "Read
+next", each command named leading to the page of it this manual holds. A source no mod registered prints a line
+saying the page is missing, so the gap is seen and mended. Read as text, in a help program, the page is the same
+parts as paragraphs, a line of code and two tables.
+
+J's Computers registers a page for every command of every system, under `jsc:command/<family>/<name>` (the family
+of systems: `mc_dos`, `mc_net`, `frames`, `linux`, `unix`, `freebsd`), and for every verb of a live install medium
+under `jsc:command/live/<name>`; `CommandGuidePages.id(Platform.MC_DOS, "dir")` writes one. Its pages are made of
+what the command says about itself, the same words `man`, `help` and `/?` print, and name every system that has the
+command, with the package to install first where one is needed. A command an addon registers with `CliCommands`
+gets its page the same way.
 
 ## Writing a manual
 

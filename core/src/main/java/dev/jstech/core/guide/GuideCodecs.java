@@ -36,6 +36,7 @@ import net.minecraft.util.ExtraCodecs;
  * {"type": "session", "look": "jsc:guide/terminal/dos", "title": "MC-DOS 6.22",
  *  "lines": [{"prompt": "C:\\>", "text": "dir", "typed": true}, {"text": " Directory of C:\\"}]}
  * {"type": "recipes", "recipe_type": "jsindustrial:compressing"}
+ * {"type": "command", "command": "jsc:command/dos/dir"}
  * }</pre>
  */
 public final class GuideCodecs {
@@ -46,7 +47,7 @@ public final class GuideCodecs {
                     Codec.LONG.optionalFieldOf("amount").forGetter(RawValue::amount),
                     Codec.STRING.optionalFieldOf("unit", "").forGetter(RawValue::unit),
                     Codec.STRING.optionalFieldOf("literal").forGetter(RawValue::literal)
-            ).apply(instance, RawValue::new)).comapFlatMap(GuideCodecs::value, GuideCodecs::raw);
+            ).apply(instance, RawValue::new)).flatXmap(GuideCodecs::value, GuideCodecs::raw);
 
     /** A row of a table: its cells, left to right, as a list. */
     public static final Codec<GuideBlock.TableRow> TABLE_ROW = VALUE.listOf().xmap(GuideBlock.TableRow::new,
@@ -245,6 +246,9 @@ public final class GuideCodecs {
             Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Plan::captionKey),
             PLAN_PART.listOf().fieldOf("parts").forGetter(GuideBlock.Plan::parts)
     ).apply(instance, GuideBlock.Plan::new));
+    private static final MapCodec<GuideBlock.Command> COMMAND = RecordCodecBuilder.mapCodec(instance ->
+            instance.group(Codec.STRING.fieldOf("command").forGetter(GuideBlock.Command::source))
+                    .apply(instance, GuideBlock.Command::new));
 
     private GuideCodecs() {
     }
@@ -269,6 +273,7 @@ public final class GuideCodecs {
             case GuideBlock.Break cut -> "break";
             case GuideBlock.Views views -> "views";
             case GuideBlock.Plan plan -> "plan";
+            case GuideBlock.Command command -> "command";
         };
     }
 
@@ -292,6 +297,7 @@ public final class GuideCodecs {
             case "break" -> BREAK;
             case "views" -> VIEWS;
             case "plan" -> PLAN;
+            case "command" -> COMMAND;
             default -> throw new IllegalArgumentException("no block of the type " + type);
         };
     }
@@ -309,14 +315,17 @@ public final class GuideCodecs {
         return DataResult.error(() -> "a table's value says words, an amount or a literal");
     }
 
-    private static RawValue raw(final GuideBlock.GuideValue value) {
+    private static DataResult<RawValue> raw(final GuideBlock.GuideValue value) {
         return switch (value) {
-            case GuideBlock.GuideValue.Words words -> new RawValue(Optional.of(words.key()), Optional.empty(), "",
-                    Optional.empty());
-            case GuideBlock.GuideValue.Amount amount -> new RawValue(Optional.empty(), Optional.of(amount.value()),
-                    amount.unit(), Optional.empty());
-            case GuideBlock.GuideValue.Literal literal -> new RawValue(Optional.empty(), Optional.empty(), "",
-                    Optional.of(literal.text()));
+            case GuideBlock.GuideValue.Words words -> DataResult.success(new RawValue(Optional.of(words.key()),
+                    Optional.empty(), "", Optional.empty()));
+            case GuideBlock.GuideValue.Amount amount -> DataResult.success(new RawValue(Optional.empty(),
+                    Optional.of(amount.value()), amount.unit(), Optional.empty()));
+            case GuideBlock.GuideValue.Literal literal -> DataResult.success(new RawValue(Optional.empty(),
+                    Optional.empty(), "", Optional.of(literal.text())));
+            // What a mod says is answered as the manual is laid out, so a file has no place for it.
+            case GuideBlock.GuideValue.Said said -> DataResult.error(() -> "words a mod says as the game runs are"
+                    + " never written to a manual's files: " + said.text().english());
         };
     }
 

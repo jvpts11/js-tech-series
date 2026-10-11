@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -59,6 +60,8 @@ public final class GuideLayout {
     /** The words of the glossary already led from in the entry being laid, so only a word's first use leads. */
     private final Set<String> usedTerms = new HashSet<>();
     private GuideGlossary glossary;
+    /** The entry that prints each command's page, by the command's name, so a page's "Read next" leads there. */
+    private Map<String, String> commandEntries = Map.of();
     private String currentEntry = "";
     private List<GuidePiece> pieces = new ArrayList<>();
     private int y;
@@ -264,6 +267,7 @@ public final class GuideLayout {
     private GuideBook book(final GuideContents contents) {
         this.number(contents);
         this.glossary = GuideGlossary.of(contents, this.text);
+        this.commandEntries = GuideCommandPage.entries(contents, this.text);
         final List<Leader> contentsLines = this.drawings ? List.of() : this.contentsLines(contents);
         final int contentsPages = this.drawings ? 0
                 : Math.max(1, this.pagesFor(contentsLines.size(), TextSize.BODY, TextSize.TITLE));
@@ -462,11 +466,7 @@ public final class GuideLayout {
 
     private void block(final GuideBlock block, final GuideEntry entry) {
         switch (block) {
-            case GuideBlock.Paragraph paragraph -> {
-                this.richLines(this.text.text(paragraph.key()), 0, this.width, this.sized(TextSize.BODY),
-                        GuideStyle.INK);
-                this.y += PARAGRAPH_GAP;
-            }
+            case GuideBlock.Paragraph paragraph -> this.prose(this.text.text(paragraph.key()));
             case GuideBlock.Heading heading -> this.heading(heading);
             case GuideBlock.Figure figure -> this.figure(figure);
             case GuideBlock.Picture picture -> this.picture(picture);
@@ -487,6 +487,7 @@ public final class GuideLayout {
             case GuideBlock.Break cut -> this.cut(cut);
             case GuideBlock.Views views -> this.views(views);
             case GuideBlock.Plan plan -> this.plan(plan);
+            case GuideBlock.Command command -> this.command(command);
             case GuideBlock.Custom custom -> {
                 // A block taller than the text area would run past the page foot, so it is cut to the area.
                 final int height = Math.min(custom.height(), this.bottom() - this.top);
@@ -496,6 +497,61 @@ public final class GuideLayout {
                 this.y += height + BLOCK_GAP;
             }
         }
+    }
+
+    /** A paragraph of running text, its links and keys drawn as such; nothing at all for no words. */
+    private void prose(final String sentence) {
+        if (sentence.isEmpty()) {
+            return;
+        }
+        this.richLines(sentence, 0, this.width, this.sized(TextSize.BODY), GuideStyle.INK);
+        this.y += PARAGRAPH_GAP;
+    }
+
+    /**
+     * A command's page, as its mod answers it from the command itself ({@link GuideCommandPage}): what it is for, how
+     * it is typed in the code font, what it does, a table of its options and one of its examples, the systems it runs
+     * on, and the commands to read next, each leading to its page where this manual has one. A command no mod answers
+     * for prints a line saying so, so the gap is seen and mended.
+     */
+    private void command(final GuideBlock.Command block) {
+        final Optional<GuideCommand> found = this.text.command(block.source());
+        if (found.isEmpty()) {
+            this.richLines(this.text.text(GuideTexts.NO_COMMAND.key(), block.source()), 0, this.width,
+                    this.sized(TextSize.BODY), GuideStyle.ACCENT);
+            this.y += PARAGRAPH_GAP;
+            return;
+        }
+        final GuideCommand command = found.get();
+        this.prose(GuideCommandPage.lead(command, this.text));
+        this.heading(new GuideBlock.Heading(GuideTexts.HOW_TO_TYPE_IT.key()));
+        this.synopsis(GuideCommandPage.synopsis(command, this.text));
+        GuideCommandPage.description(command, this.text).forEach(this::prose);
+        if (!command.options().isEmpty()) {
+            this.heading(new GuideBlock.Heading(GuideTexts.OPTIONS.key()));
+            this.layTable(GuideCommandPage.options(command), "", "");
+        }
+        if (!command.examples().isEmpty()) {
+            this.heading(new GuideBlock.Heading(GuideTexts.EXAMPLES.key()));
+            this.layTable(GuideCommandPage.examples(command), "", "");
+        }
+        this.prose(GuideCommandPage.runsOn(command, this.text));
+        this.prose(GuideCommandPage.readNext(command, this.text, name -> {
+            final String entry = this.commandEntries.get(name);
+            return entry == null || entry.equals(this.currentEntry) ? name : "[" + name + "](" + entry + ")";
+        }));
+    }
+
+    /** How a command is typed, in the code font; a line too long for the column goes on under itself, set in. */
+    private void synopsis(final String synopsis) {
+        final List<String> lines = wrap(synopsis, this.width - SECTION_INDENT, TextSize.CODE, this.text);
+        for (int i = 0; i < lines.size(); i++) {
+            this.ensure(CODE_PITCH);
+            this.place(new GuidePiece.Text(this.x() + (i == 0 ? 0 : SECTION_INDENT), this.y, lines.get(i),
+                    TextSize.CODE, GuideStyle.INK, ""));
+            this.y += CODE_PITCH;
+        }
+        this.y += PARAGRAPH_GAP;
     }
 
     private void heading(final GuideBlock.Heading heading) {
@@ -558,13 +614,21 @@ public final class GuideLayout {
         this.tables++;
         final GuideBlock.Table block = declared.source().isEmpty() ? declared
                 : declared.withRows(this.text.rows(declared.source(), declared.columns()));
-        final String label = this.text.text(GuideTexts.TABLE.key(), this.chapterNumber + "-" + this.tables);
-        final String title = this.text.text(block.captionKey());
-        final List<String> caption = this.captionLines(label, title);
-        final List<String> continued = this.captionLines(label,
-                this.text.text(GuideTexts.TABLE_CONTINUED.key(), title));
+        this.layTable(block, this.text.text(GuideTexts.TABLE.key(), this.chapterNumber + "-" + this.tables),
+                this.text.text(block.captionKey()));
+    }
+
+    /**
+     * A table laid as {@link #table} lays it, under a caption of that label and title; with no label it has no
+     * caption and is not numbered, as a part of a command's page is, its head alone said again over each part.
+     */
+    private void layTable(final GuideBlock.Table block, final String label, final String title) {
+        final boolean captioned = !label.isEmpty();
+        final List<String> caption = captioned ? this.captionLines(label, title) : List.of();
+        final List<String> continued = captioned ? this.captionLines(label,
+                this.text.text(GuideTexts.TABLE_CONTINUED.key(), title)) : List.of();
         final GuideTable table = GuideTable.shape(block, this.width, this.text);
-        final int lead = this.captionHeight(label, caption) + CAPTION_GAP + table.headHeight();
+        final int lead = (captioned ? this.captionHeight(label, caption) + CAPTION_GAP : 0) + table.headHeight();
         final int whole = lead + table.height();
         if (whole <= this.bottom() - this.top) {
             this.ensure(whole);
@@ -573,8 +637,10 @@ public final class GuideLayout {
             // A table that must part starts on the next page rather than leave a row or two at this one's foot.
             this.nextColumn();
         }
-        this.caption(label, caption);
-        this.y += CAPTION_GAP;
+        if (captioned) {
+            this.caption(label, caption);
+            this.y += CAPTION_GAP;
+        }
         this.placeAll(table.head(this.x(), this.y));
         this.y += table.headHeight();
         int row = 0;
@@ -594,8 +660,10 @@ public final class GuideLayout {
             }
             if (row < table.rows()) {
                 this.nextColumn();
-                this.caption(label, continued);
-                this.y += CAPTION_GAP;
+                if (captioned) {
+                    this.caption(label, continued);
+                    this.y += CAPTION_GAP;
+                }
                 this.placeAll(table.head(this.x(), this.y));
                 this.y += table.headHeight();
             }

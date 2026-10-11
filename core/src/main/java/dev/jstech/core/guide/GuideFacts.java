@@ -12,12 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
  * What a manual reads from its mod as it is laid out, so a figure in it is never out of date: a single value, such as
- * how many memory modules a Personal Computer takes, or the rows of a table, such as how far each era's cable reaches.
+ * how many memory modules a Personal Computer takes, the rows of a table, such as how far each era's cable reaches, or
+ * the page of a command its computers run ({@link GuideCommand}).
  *
  * <p>A mod registers each under an id of its namespace while the game loads, as code that answers when asked. A
  * sentence names a value by its id between double braces, {@code {{mymod:memory_slots}}}, where the figure stands in
@@ -40,6 +42,7 @@ public final class GuideFacts {
 
     private static final Map<String, Supplier<GuideBlock.GuideValue>> VALUES = new ConcurrentHashMap<>();
     private static final Map<String, Supplier<List<GuideBlock.TableRow>>> ROWS = new ConcurrentHashMap<>();
+    private static final Map<String, Supplier<GuideCommand>> COMMANDS = new ConcurrentHashMap<>();
     /* What went wrong goes to the JDK's own log, which needs no library, so the class stays pure. */
     private static final System.Logger LOGGER = System.getLogger(GuideFacts.class.getName());
     private static final String OPEN = "{{";
@@ -61,6 +64,17 @@ public final class GuideFacts {
         Objects.requireNonNull(rows, "rows");
         if (ROWS.putIfAbsent(Objects.requireNonNull(id, "id"), rows) != null) {
             throw new IllegalStateException("the manuals' rows " + id + " are registered twice");
+        }
+    }
+
+    /**
+     * Registers the page of a command a mod's computers run, which an entry may print ({@link GuideBlock.Command}),
+     * answered from the command each time a manual is laid out.
+     */
+    public static void command(final String id, final Supplier<GuideCommand> command) {
+        Objects.requireNonNull(command, "command");
+        if (COMMANDS.putIfAbsent(Objects.requireNonNull(id, "id"), command) != null) {
+            throw new IllegalStateException("the manuals' command " + id + " is registered twice");
         }
     }
 
@@ -110,6 +124,29 @@ public final class GuideFacts {
             }
         }
         return fitting;
+    }
+
+    /**
+     * The page of the command registered under an id, answered now; empty when no mod registered it, or its answer
+     * failed, with a line in the log either way.
+     */
+    public static Optional<GuideCommand> commandOf(final String id) {
+        final Supplier<GuideCommand> command = COMMANDS.get(id);
+        if (command == null) {
+            LOGGER.log(System.Logger.Level.WARNING, "No mod registered the manuals' command " + id);
+            return Optional.empty();
+        }
+        try {
+            return Optional.ofNullable(command.get());
+        } catch (final RuntimeException e) {
+            LOGGER.log(System.Logger.Level.WARNING, "The manuals' command " + id + " could not be read", e);
+            return Optional.empty();
+        }
+    }
+
+    /** The ids every command's page is registered under, for whoever checks that each has its page in a manual. */
+    public static Set<String> commands() {
+        return Set.copyOf(COMMANDS.keySet());
     }
 
     /**

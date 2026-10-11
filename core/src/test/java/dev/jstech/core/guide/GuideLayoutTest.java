@@ -14,8 +14,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class GuideLayoutTest {
@@ -29,6 +31,12 @@ class GuideLayoutTest {
             GuideStyle.HoldBar.HAZARD);
     private static final GuideManual MANUAL = new GuideManual("test:manual", "manual.title", List.of(), "", "",
             "test:style", List.of(GuideManual.EVERY_CHAPTER), List.of("about.one"), 0, "");
+    /** A command as its mod would answer for it: what it is for, how it is typed, an option, an example, systems. */
+    private static final GuideCommand DIR = new GuideCommand("dir", Text.literal("list the files in a folder"),
+            Text.literal("[path] [/w]"), List.of(Text.literal("Lists what the folder holds.")),
+            List.of(new GuideCommand.Option("/w", Text.literal("Names only."))),
+            List.of(new GuideCommand.Example("dir C:\\GAMES", Text.literal("What the games folder holds."))),
+            List.of(Text.literal("MC-DOS 6.22"), Text.literal("Frames 95")), List.of("copy", "tree"));
     /** Short heads for a table of properties, so its columns stand side by side at six pixels a letter. */
     private static final Map<String, String> HEADS = Map.of(GuideTexts.PROPERTY.key(), "Part",
             GuideTexts.VALUE.key(), "Value");
@@ -599,6 +607,42 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_printsACommandsPageFromWhatTheCommandSaysAboutItself() {
+        final GuideBook book = lay(commandBook(), new FixedText(Map.of(GuideTexts.HOW_TO_TYPE_IT.key(), "Typing",
+                GuideTexts.OPTION.key(), "Option", GuideTexts.EXAMPLE.key(), "Example",
+                GuideTexts.WHAT_IT_DOES.key(), "Does"), Map.of(), Map.of(), Map.of("mod:command/dir", DIR,
+                "mod:command/copy", new GuideCommand("copy", Text.literal("copy a file"), Text.EMPTY, List.of(),
+                        List.of(), List.of(), List.of(), List.of()))));
+
+        final List<GuidePiece.Text> texts = texts(book, "mod:dir");
+        final List<String> words = texts.stream().map(GuidePiece.Text::text).toList();
+        final String page = String.join(" ", words);
+        assertTrue(page.contains("List the files in a folder."), () -> "what it is for, as a sentence: " + words);
+        assertTrue(words.contains("Typing"), "how it is typed, under its heading");
+        assertTrue(texts.stream().anyMatch(text -> text.size() == TextSize.CODE
+                && text.text().equals("dir [path] [/w]")), "in the code font");
+        assertTrue(page.contains("Lists what the folder holds."), "what it does");
+        assertTrue(words.contains("Option") && words.contains("Example"), "its options and examples under heads");
+        assertTrue(texts.stream().anyMatch(text -> text.size() == TextSize.CODE && text.text().equals("/w")),
+                "an option as typed");
+        assertTrue(words.contains("Names only."), "beside what it does");
+        assertFalse(words.stream().anyMatch(word -> word.startsWith(GuideTexts.TABLE.key())),
+                "a command's tables are parts of its page, not numbered tables of the chapter");
+        assertTrue(texts.stream().anyMatch(text -> text.link().equals("mod:copy")),
+                "the command to read next leads to its page");
+        assertFalse(texts.stream().anyMatch(text -> text.link().contains("tree")), "one with no page leads nowhere");
+        assertTrue(page.contains("MC-DOS 6.22"), "and the systems it runs on are named");
+    }
+
+    @Test
+    void lay_saysACommandsPageIsMissingWhenNoModAnswersForIt() {
+        final GuideBook book = lay(commandBook());
+
+        assertTrue(texts(book, "mod:dir").stream().anyMatch(text -> text.text().startsWith(
+                GuideTexts.NO_COMMAND.key())), "the gap is printed where the page would be");
+    }
+
+    @Test
     void roman_writesSmallRomanNumerals() {
         assertEquals("i", GuideLayout.roman(1));
         assertEquals("iv", GuideLayout.roman(4));
@@ -617,6 +661,10 @@ class GuideLayoutTest {
         return lay(contents, new FixedText(Map.of()));
     }
 
+    private static GuideBook lay(final GuideContents contents, final FixedText text) {
+        return GuideLayout.lay(MANUAL, STYLE, contents, text);
+    }
+
     /** How many lines of what a glossary's word means a page's pieces start with, before any word or letter. */
     private static int meaningLines(final List<GuidePiece> pieces) {
         int lines = 0;
@@ -625,10 +673,6 @@ class GuideLayoutTest {
             lines++;
         }
         return lines;
-    }
-
-    private static GuideBook lay(final GuideContents contents, final FixedText text) {
-        return GuideLayout.lay(MANUAL, STYLE, contents, text);
     }
 
     private static GuideContents contents() {
@@ -646,6 +690,15 @@ class GuideLayoutTest {
                 new GuideContents.Chapter(new GuideChapter("beta", 1, "beta.title", "", ""), List.of(
                         new GuideContents.Section(new GuideSection("beta:things", 0, "things.title", ""),
                                 List.of(only))))));
+    }
+
+    /** A chapter of two commands' pages, dir's and copy's. */
+    private static GuideContents commandBook() {
+        final GuideEntry dir = entry("mod:dir", new GuideBlock.Command("mod:command/dir"));
+        final GuideEntry copy = entry("mod:copy", new GuideBlock.Command("mod:command/copy"));
+        return new GuideContents(List.of(new GuideContents.Chapter(new GuideChapter("mod", 0, "mod.title", "", ""),
+                List.of(new GuideContents.Section(new GuideSection("mod:section", 0, "section.title", ""),
+                        List.of(dir, copy))))));
     }
 
     /** A set of drawings: a first section of one drawing, a second of two, the first of them two sheets long. */
@@ -709,23 +762,34 @@ class GuideLayoutTest {
 
     /**
      * Words that are their own keys, with any arguments after them in brackets, six pixels to a character at every
-     * size, no recipes but those of one kind, the books holding the targets this manual does not, and the rows of the
-     * tables read from a source.
+     * size, no recipes but those of one kind, the books holding the targets this manual does not, the rows of the
+     * tables read from a source, and the commands' pages.
      */
     private record FixedText(Map<String, String> words, Map<String, String> books,
-                             Map<String, List<GuideBlock.TableRow>> sources) implements IGuideText {
+                             Map<String, List<GuideBlock.TableRow>> sources, Map<String, GuideCommand> commands)
+            implements IGuideText {
 
         FixedText(final Map<String, String> words) {
-            this(words, Map.of(), Map.of());
+            this(words, Map.of(), Map.of(), Map.of());
         }
 
         FixedText(final Map<String, String> words, final Map<String, String> books) {
-            this(words, books, Map.of());
+            this(words, books, Map.of(), Map.of());
+        }
+
+        FixedText(final Map<String, String> words, final Map<String, String> books,
+                  final Map<String, List<GuideBlock.TableRow>> sources) {
+            this(words, books, sources, Map.of());
         }
 
         @Override
         public String elsewhere(final String target) {
             return this.books.getOrDefault(target, "");
+        }
+
+        @Override
+        public Optional<GuideCommand> command(final String source) {
+            return Optional.ofNullable(this.commands.get(source));
         }
 
         @Override
