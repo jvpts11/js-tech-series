@@ -143,6 +143,13 @@ and whatever its case, the longest first ("network engine" before "network"); wo
 an entry explains itself are left alone. The contents end with a line leading to the glossary. A manual whose
 entries explain no word has none.
 
+*Added 2026-10-11.* `GuideProse` holds running text to rules a machine can see, for your mod's tests:
+`speaksToTheReader(text)` (an explanation says "you"), `bareNumbers(sentence)` (a number with nothing after it saying
+what it measures or counts, such as the 4 of "it holds 4."; numbers in names, brackets, links, keys and figures read
+from your mod are left alone), and `usedBeforeExplained(contents, words)` (a word used in an entry printed before the
+one that explains it). `wordsOf(entry, words)` gives an entry's running text to check. The series holds each of its
+books to all three once the book is written to them.
+
 ### Links inside a sentence
 
 *Added 2026-10-06.*

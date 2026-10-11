@@ -19,6 +19,7 @@ import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideBook;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.GuideCodecs;
+import dev.jstech.core.guide.GuideContents;
 import dev.jstech.core.guide.GuideEntry;
 import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.guide.GuideGifts;
@@ -26,6 +27,7 @@ import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuideLinks;
 import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.GuidePiece;
+import dev.jstech.core.guide.GuideProse;
 import dev.jstech.core.guide.GuideSection;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
@@ -75,6 +77,11 @@ public final class SeriesManualsGameTests {
     private static final Set<String> PROSE = Set.of("jsc");
     /** How many faults a failure names. */
     private static final int FAULTS_NAMED = 12;
+    /**
+     * The books whose running text is held to the series' rules: each joins as its entries are written to them, the
+     * Guide to Operations once it is written anew.
+     */
+    private static final List<String> PROSE_RULED = List.of();
     /** An item drawn at its own size, before the scale it is drawn at. */
     private static final int ITEM = 16;
     /** The width of a cell of the code font, and the scales small, big and huge text are drawn at. */
@@ -223,6 +230,47 @@ public final class SeriesManualsGameTests {
             }
         }
         helper.assertTrue(books > 1, "the books are laid out: " + books);
+        helper.assertTrue(wrong.isEmpty(), wrong.size() + " faults: "
+                + String.join("; ", wrong.subList(0, Math.min(FAULTS_NAMED, wrong.size()))));
+        helper.succeed();
+    }
+
+    /*
+     * The books written to the series' rules of running text: every entry speaks to its reader, every number says what
+     * it measures, and every word is explained in the first entry that uses it. A book is held to them once its
+     * entries are written to them.
+     */
+    @GameTest(template = ARENA)
+    public static void seriesProse_speaksToTheReaderMeasuresItsNumbersAndExplainsFirst(final GameTestHelper helper) {
+        final GuideLibrary library = library();
+        final IGuideText text = new MeasuredText();
+        final List<String> wrong = new ArrayList<>();
+        for (final String id : PROSE_RULED) {
+            final GuideManual manual = library.manual(id).orElse(null);
+            if (manual == null) {
+                wrong.add("no book " + id);
+                continue;
+            }
+            final GuideContents contents = library.contentsOf(manual);
+            for (final GuideContents.Chapter chapter : contents.chapters()) {
+                for (final GuideContents.Section section : chapter.sections()) {
+                    for (final GuideEntry entry : section.entries()) {
+                        final String words = GuideProse.wordsOf(entry, text);
+                        if (!words.isBlank() && !GuideProse.speaksToTheReader(words)) {
+                            wrong.add(entry.id() + " never speaks to its reader");
+                        }
+                        final List<String> bare = GuideProse.bareNumbers(words);
+                        if (!bare.isEmpty()) {
+                            wrong.add(entry.id() + " says " + bare + " without what they measure");
+                        }
+                    }
+                }
+            }
+            for (final GuideProse.Early early : GuideProse.usedBeforeExplained(contents, text)) {
+                wrong.add(early.usedIn() + " uses " + early.term() + " before " + early.explainedIn()
+                        + " explains it");
+            }
+        }
         helper.assertTrue(wrong.isEmpty(), wrong.size() + " faults: "
                 + String.join("; ", wrong.subList(0, Math.min(FAULTS_NAMED, wrong.size()))));
         helper.succeed();

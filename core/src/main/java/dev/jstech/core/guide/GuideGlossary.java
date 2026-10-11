@@ -118,7 +118,7 @@ final class GuideGlossary {
     }
 
     /** Where the word stands whole in the lower-cased text, from {@code from} on, or -1. */
-    private static int wordAt(final String lower, final String word, final int from) {
+    static int wordAt(final String lower, final String word, final int from) {
         int at = lower.indexOf(word, from);
         while (at >= 0) {
             final boolean startsWhole = at == 0 || !Character.isLetterOrDigit(lower.charAt(at - 1));
