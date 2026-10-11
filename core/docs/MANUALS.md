@@ -201,6 +201,7 @@ A picture is numbered with the figures ("Figure 3-2.") and captioned like them, 
 | `table(caption, heads...)`, then `row(cells...)` | A numbered table with heads of its own ("Command", "What it does"), a cell a column in each row: `GuideCell.words(english)`, `GuideCell.words(sharedKey)`, `GuideCell.code(text)` or `GuideCell.amount(value, unit)`. See [Tables](#tables). |
 | `tableFrom(source, caption, heads...)` | A numbered table whose rows your mod gives as the manual is laid out. See [Figures read from your mod](#figures-read-from-your-mod). |
 | `command(source)` | A command's page, read from the command as the manual is laid out. See [Commands](#commands). |
+| `scene(caption, height)`, then `place(...)`, `view(...)`, `layers()`, `balloon(...)` | A scene of blocks drawn as the game draws them, which the reader turns and brings nearer, numbered with the figures. See [Scenes](#scenes). |
 | `listing(name, lines...)`, `listingIn(language, name, lines...)` | A numbered listing of code ("Listing 3-4."), headed by its file's name, its lines numbered and coloured by its language, with a Copy button. See [Listings of code](#listings-of-code). |
 | `session(look, title)`, then `typed(prompt, text)`, `answer(lines...)` | A session at a terminal, in the colours of the terminal's palette, under its name: what was typed after each prompt and what the system answered. See [Sessions at a terminal](#sessions-at-a-terminal). |
 | `recipes(type)`, `recipes(type, making)` | Every recipe of a type the world holds, or those making one item, with the time and energy over the arrow. |
@@ -323,6 +324,46 @@ client's setup anything only the client knows.
 A cell a source gives may also be `GuideBlock.GuideValue.Said`, words your mod says as a `Text` (a `TextKey`'s
 sentence, or a literal): it is put in the reader's language as the page is laid out. Only a source answers with
 these; a manual's files never hold one.
+
+### Scenes
+
+*Added 2026-10-11.*
+
+```java
+.scene("A furnace and a chest on grass. Drag them to see them from behind.", 90)
+.place(0, 0, 0, () -> Blocks.GRASS_BLOCK)
+.place(1, 0, 0, () -> Blocks.GRASS_BLOCK)
+.place(0, 1, 0, () -> Blocks.FURNACE, "facing=south,lit=true", "")
+.place(1, 1, 0, () -> Blocks.CHEST, "facing=south", "{Items:[{Slot:0b,id:\"minecraft:diamond\",count:1}]}")
+.view(-30, 25, 1)
+.layers()
+.balloon(1, GuideBlock.ScenePart.of(0, 1, 0).box(0, 0, 15, 16, 16, 16), "The furnace's front",
+        "It glows while it burns")
+.balloon(2, GuideBlock.ScenePart.of(1, 1, 0), "A chest")
+```
+
+A scene is a few blocks in a small grid (up to 32 each way), drawn on the page as the game draws them in a world:
+each block's model shaded by the blocks round it, and each block entity through its renderer, GeckoLib's models among
+them, in full light. `place` puts a block at a place of the grid (across, up, and back towards the north), in the
+state its properties give, with what its block entity holds written as a compound tag; both may be empty.
+
+The reader drags the scene to turn it (across turns it round, up and down tilts it), turns the wheel over it to bring
+it nearer or send it farther, within limits, and presses Reset on the strip under it to go back to how the book
+shows it. `view(yaw, pitch, zoom)` sets that: turned by no degrees the scene is seen from its south side, head on; a
+positive tilt looks down on it; a zoom of 1 fits the whole scene, turned any way, in its frame. A scene declared with
+`layers()` has two more buttons on its strip, which hide its top layer or show the next, to see inside a multiblock.
+
+Each balloon is numbered and pinned to a part: a whole block (`ScenePart.of(x, y, z)`), or a box inside one in its
+sixteen pixels each way (`box(...)`), such as the tray of a drive. It stands at the frame's side nearer its part,
+with a line to the part's middle, and its line of the legend under the scene says what the part is. The pointer on a
+balloon, or on its line of the legend, outlines the part and lights both, and its tooltip adds the second sentence
+given, such as what to do with the part. The legend is set in two columns when every line of it fits half the
+column.
+
+A scene is drawn into a picture of its own only when it is turned, brought nearer, peeled, or shown at another size,
+so a page holding one costs nothing frame to frame. Read as text, in a help program, a scene is its numbered caption
+and the list of its balloons. A block's state or data the game cannot read is drawn as air, with a line in the log;
+the test mod checks every scene every mod declares for that.
 
 ### Commands
 

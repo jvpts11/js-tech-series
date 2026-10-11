@@ -197,6 +197,21 @@ class ManualReaderTest {
     }
 
     @Test
+    void article_readsASceneAsItsNumberedCaptionAndTheListOfItsBalloons() {
+        final GuideEntry entry = entry("alpha:case", new GuideBlock.Scene(List.of(new GuideBlock.SceneBlock(0, 0, 0,
+                "mod:case", "")), GuideBlock.SceneView.CORNER, List.of(
+                new GuideBlock.SceneBalloon(2, GuideBlock.ScenePart.of(0, 0, 0), "tray", "push"),
+                new GuideBlock.SceneBalloon(1, GuideBlock.ScenePart.of(0, 0, 0), "fan", "")), false, 90,
+                "case.caption"));
+        final ManualReader reader = new ManualReader(MANUAL, new GuideContents(List.of(chapter("alpha", entry))),
+                new FixedText());
+
+        assertEquals(List.of(new ManualReader.Piece.Picture("", GuideTexts.FIGURE.key() + "[1-1] case.caption"),
+                new ManualReader.Piece.Item("1", "fan"), new ManualReader.Piece.Item("2", "tray. push")),
+                reader.article("alpha:case").orElseThrow().pieces());
+    }
+
+    @Test
     void search_findsEveryWordInTheTitleOrTheText() {
         final ManualReader reader = reader();
 

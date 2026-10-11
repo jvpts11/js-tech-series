@@ -8,11 +8,13 @@
 package dev.jstech.tests.gametest;
 
 import com.google.gson.JsonElement;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.SoundSpace;
+import dev.jstech.core.content.ModContent;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideChapter;
@@ -31,11 +33,14 @@ import dev.jstech.tests.TestGuide;
 import dev.jstech.tests.TestPress;
 import dev.jstech.tests.TestSounds;
 import java.util.List;
+import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -179,6 +184,35 @@ public final class GuideGameTests {
         helper.succeed();
     }
 
+    /*
+     * Every scene any mod declares names blocks the game has, in states it can read, and gives their block entities
+     * data the game reads as a compound tag; the test manual's scene keeps its blocks, its view, its layers and its
+     * balloons through its file.
+     */
+    @GameTest(template = ARENA)
+    public static void scenes_nameBlocksAndDataTheGameReads(final GameTestHelper helper) {
+        int scenes = 0;
+        for (final ModContent content : ModContent.all()) {
+            for (final ModGuide guide : content.declaredGuides()) {
+                for (final GuideEntry entry : guide.declaredEntries()) {
+                    for (final GuideBlock block : entry.blocks()) {
+                        if (block instanceof GuideBlock.Scene scene) {
+                            scenes++;
+                            scene.blocks().forEach(placed -> readable(helper, entry.id(), placed));
+                        }
+                    }
+                }
+            }
+        }
+        final GuideBlock.Scene scene = entry(TestGuide.SCENE).blocks().stream()
+                .filter(part -> part instanceof GuideBlock.Scene).map(part -> (GuideBlock.Scene) part).findFirst()
+                .orElseThrow();
+        helper.assertTrue(scenes > 0 && scene.blocks().size() == 4 && scene.layers()
+                && scene.balloons().size() == 3, "the test manual's scene is declared whole: " + scene);
+        helper.assertTrue(roundTrips(GuideCodecs.ENTRY, entry(TestGuide.SCENE)), "and reads back the same");
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void callout_keepsItsKeyApartAcrossTwoViewsOfOneEntry(final GameTestHelper helper) {
         final ModGuide guide = new ModGuide("jstests");
@@ -189,6 +223,20 @@ public final class GuideGameTests {
         helper.assertTrue(guide.translations().containsValue("The first legend")
                 && guide.translations().containsValue("The second legend"), "both legends keep their own key");
         helper.succeed();
+    }
+
+    /** Fails the test unless the game reads a scene block's state as a block it has, and its data as a tag. */
+    private static void readable(final GameTestHelper helper, final String entry, final GuideBlock.SceneBlock placed) {
+        try {
+            final BlockState state = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(),
+                    placed.state(), false).blockState();
+            helper.assertTrue(!state.isAir(), entry + " places " + placed.state() + ", which is air");
+            if (!placed.data().isEmpty()) {
+                TagParser.parseTag(placed.data());
+            }
+        } catch (final CommandSyntaxException e) {
+            helper.fail(entry + " places " + placed.state() + " with data the game cannot read: " + e.getMessage());
+        }
     }
 
     private static GuideEntry entry(final String id) {

@@ -63,6 +63,8 @@ public final class GuideLayout {
     /** The entry that prints each command's page, by the command's name, so a page's "Read next" leads there. */
     private Map<String, String> commandEntries = Map.of();
     private String currentEntry = "";
+    /** How many scenes the entry being laid has shown so far, which tells each from the others. */
+    private int entryScenes;
     private List<GuidePiece> pieces = new ArrayList<>();
     private int y;
     private int column;
@@ -129,6 +131,11 @@ public final class GuideLayout {
     public static final int KEY_ROOM = 5;
     /** What a link to a manual's glossary names. */
     public static final String GLOSSARY = "glossary";
+    /** The strip along the foot of a scene's frame, holding what the pointer does to it and its buttons. */
+    public static final int SCENE_STRIP = 11;
+    /** A line of a scene's legend: how tall it is, and how far its words are set in past its balloon. */
+    public static final int SCENE_KEY_ROW = 12;
+    public static final int SCENE_KEY_ROOM = 14;
 
     private static final int PARAGRAPH_GAP = 4;
     private static final int BLOCK_GAP = 6;
@@ -440,6 +447,7 @@ public final class GuideLayout {
         this.startPage();
         this.currentEntry = entry.id();
         this.usedTerms.clear();
+        this.entryScenes = 0;
         final String number = this.numbers.get(entry.id());
         this.bodyTargets.put(entry.id(), this.body.size());
         final String title = this.text.text(entry.titleKey());
@@ -488,6 +496,7 @@ public final class GuideLayout {
             case GuideBlock.Views views -> this.views(views);
             case GuideBlock.Plan plan -> this.plan(plan);
             case GuideBlock.Command command -> this.command(command);
+            case GuideBlock.Scene scene -> this.scene(scene);
             case GuideBlock.Custom custom -> {
                 // A block taller than the text area would run past the page foot, so it is cut to the area.
                 final int height = Math.min(custom.height(), this.bottom() - this.top);
@@ -981,6 +990,64 @@ public final class GuideLayout {
             this.y += 1;
         }
         this.y += PARAGRAPH_GAP;
+    }
+
+    /**
+     * A scene in its frame with the strip of its controls under it, then its caption, numbered with the figures, and
+     * the legend of its balloons: in two columns when every line of it fits half the column, as a short list does.
+     * The frame moves on whole with its caption.
+     */
+    private void scene(final GuideBlock.Scene scene) {
+        this.figures++;
+        final String label = this.text.text(GuideTexts.FIGURE.key(), this.chapterNumber + "-" + this.figures);
+        final List<String> caption = this.captionLines(label, this.text.text(scene.captionKey()));
+        final int frame = scene.height() + SCENE_STRIP;
+        this.ensure(frame + CAPTION_GAP + this.captionHeight(label, caption));
+        this.entryScenes++;
+        final String id = this.currentEntry + "#" + this.entryScenes;
+        this.place(new GuidePiece.Scene(this.x(), this.y, this.width, frame, id, scene));
+        this.y += frame + CAPTION_GAP;
+        this.caption(label, caption);
+        this.y += CAPTION_GAP;
+        if (!scene.balloons().isEmpty()) {
+            this.legend(scene.balloons(), id);
+        }
+        this.y += BLOCK_GAP;
+    }
+
+    /** The lines of a scene's legend, each its balloon's number and what it points at. */
+    private void legend(final List<GuideBlock.SceneBalloon> balloons, final String scene) {
+        final TextSize body = this.sized(TextSize.BODY);
+        final List<GuideBlock.SceneBalloon> sorted = balloons.stream()
+                .sorted(Comparator.comparingInt(GuideBlock.SceneBalloon::number)).toList();
+        final int half = (this.width - COLUMN_GAP) / 2;
+        final boolean twoColumns = sorted.size() > 1 && sorted.stream().allMatch(balloon ->
+                this.text.width(this.text.text(balloon.key()), body) <= half - SCENE_KEY_ROOM);
+        if (twoColumns) {
+            final int rows = (sorted.size() + 1) / 2;
+            this.ensure(rows * SCENE_KEY_ROW);
+            for (int i = 0; i < sorted.size(); i++) {
+                final int keyX = this.x() + i / rows * (half + COLUMN_GAP);
+                final int keyY = this.y + i % rows * SCENE_KEY_ROW;
+                this.place(new GuidePiece.SceneKey(keyX, keyY, half, SCENE_KEY_ROW, scene, sorted.get(i).number()));
+                this.place(new GuidePiece.Text(keyX + SCENE_KEY_ROOM, keyY + 1,
+                        this.text.text(sorted.get(i).key()), body, GuideStyle.INK, ""));
+            }
+            this.y += rows * SCENE_KEY_ROW;
+            return;
+        }
+        for (final GuideBlock.SceneBalloon balloon : sorted) {
+            final List<String> lines = wrap(this.text.text(balloon.key()), this.width - SCENE_KEY_ROOM, body,
+                    this.text);
+            final int height = Math.max(SCENE_KEY_ROW, lines.size() * body.lineHeight() + 2);
+            this.ensure(height);
+            this.place(new GuidePiece.SceneKey(this.x(), this.y, this.width, height, scene, balloon.number()));
+            for (int i = 0; i < lines.size(); i++) {
+                this.place(new GuidePiece.Text(this.x() + SCENE_KEY_ROOM, this.y + 1 + i * body.lineHeight(),
+                        lines.get(i), body, GuideStyle.INK, ""));
+            }
+            this.y += height;
+        }
     }
 
     /** Blocks seen from above as they are placed, under the plan's title. */

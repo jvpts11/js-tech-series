@@ -61,6 +61,14 @@ public final class GuideTexts {
     public static final TextKey NO_COMMAND = TextKey.of("jscore.guide.no_command",
             "This page is missing: no mod answers for the command %s.");
 
+    /** A scene's strip: what the pointer and the wheel do to it, its Reset, and how many of its layers are shown. */
+    public static final TextKey SCENE_HINT = TextKey.of("jscore.guide.scene_hint", "Drag to turn - wheel to zoom");
+    public static final TextKey SCENE_RESET = TextKey.of("jscore.guide.scene_reset", "Reset");
+    public static final TextKey SCENE_LAYER = TextKey.of("jscore.guide.scene_layer", "Layer %s of %s");
+    public static final TextKey SCENE_ALL_LAYERS = TextKey.of("jscore.guide.scene_all_layers", "All layers");
+    public static final TextKey SCENE_FEWER = TextKey.of("jscore.guide.scene_fewer", "Hide the top layer");
+    public static final TextKey SCENE_MORE = TextKey.of("jscore.guide.scene_more", "Show the next layer");
+
     /** The search of the whole manual: its index and every line of its pages. */
     public static final TextKey SEARCH = TextKey.of("jscore.guide.search", "Search the manual");
     public static final TextKey FOUND = TextKey.of("jscore.guide.found", "%s found");

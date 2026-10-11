@@ -36,7 +36,11 @@ import net.minecraft.util.ExtraCodecs;
  * {"type": "session", "look": "jsc:guide/terminal/dos", "title": "MC-DOS 6.22",
  *  "lines": [{"prompt": "C:\\>", "text": "dir", "typed": true}, {"text": " Directory of C:\\"}]}
  * {"type": "recipes", "recipe_type": "jsindustrial:compressing"}
- * {"type": "command", "command": "jsc:command/dos/dir"}
+ * {"type": "command", "command": "jsc:command/mc_dos/dir"}
+ * {"type": "scene", "caption": "...", "height": 120, "layers": false,
+ *  "blocks": [{"x": 0, "y": 0, "z": 0, "state": "jsc:transition_case[facing=south]", "data": "{...}"}],
+ *  "view": {"yaw": -35, "pitch": 25, "zoom": 1},
+ *  "balloons": [{"number": 1, "part": {"x": 0, "y": 0, "z": 0, "box": [5, 2, 15, 7, 4, 16]}, "text": "..."}]}
  * }</pre>
  */
 public final class GuideCodecs {
@@ -249,6 +253,52 @@ public final class GuideCodecs {
     private static final MapCodec<GuideBlock.Command> COMMAND = RecordCodecBuilder.mapCodec(instance ->
             instance.group(Codec.STRING.fieldOf("command").forGetter(GuideBlock.Command::source))
                     .apply(instance, GuideBlock.Command::new));
+    private static final Codec<GuideBlock.SceneBlock> SCENE_BLOCK = RecordCodecBuilder.create(instance ->
+            instance.group(
+                    Codec.INT.fieldOf("x").forGetter(GuideBlock.SceneBlock::x),
+                    Codec.INT.fieldOf("y").forGetter(GuideBlock.SceneBlock::y),
+                    Codec.INT.fieldOf("z").forGetter(GuideBlock.SceneBlock::z),
+                    Codec.STRING.fieldOf("state").forGetter(GuideBlock.SceneBlock::state),
+                    Codec.STRING.optionalFieldOf("data", "").forGetter(GuideBlock.SceneBlock::data)
+            ).apply(instance, GuideBlock.SceneBlock::new));
+    private static final Codec<GuideBlock.SceneView> SCENE_VIEW = RecordCodecBuilder.create(instance ->
+            instance.group(
+                    Codec.FLOAT.optionalFieldOf("yaw", GuideBlock.SceneView.CORNER.yaw())
+                            .forGetter(GuideBlock.SceneView::yaw),
+                    Codec.FLOAT.optionalFieldOf("pitch", GuideBlock.SceneView.CORNER.pitch())
+                            .forGetter(GuideBlock.SceneView::pitch),
+                    Codec.FLOAT.optionalFieldOf("zoom", GuideBlock.SceneView.CORNER.zoom())
+                            .forGetter(GuideBlock.SceneView::zoom)
+            ).apply(instance, GuideBlock.SceneView::new));
+    /** A part's box in its block, as six numbers: where it starts across, up and back, then where it ends. */
+    private static final Codec<List<Integer>> SCENE_BOX = Codec.INT.listOf().comapFlatMap(box -> box.size() == 6
+            ? DataResult.success(box) : DataResult.error(() -> "a part's box is six numbers; got " + box), box -> box);
+    private static final List<Integer> WHOLE_BLOCK = List.of(0, 0, 0, GuideBlock.ScenePart.PIXELS,
+            GuideBlock.ScenePart.PIXELS, GuideBlock.ScenePart.PIXELS);
+    private static final Codec<GuideBlock.ScenePart> SCENE_PART = RecordCodecBuilder.create(instance ->
+            instance.group(
+                    Codec.INT.fieldOf("x").forGetter(GuideBlock.ScenePart::x),
+                    Codec.INT.fieldOf("y").forGetter(GuideBlock.ScenePart::y),
+                    Codec.INT.fieldOf("z").forGetter(GuideBlock.ScenePart::z),
+                    SCENE_BOX.optionalFieldOf("box", WHOLE_BLOCK).forGetter(part -> List.of(part.fromX(),
+                            part.fromY(), part.fromZ(), part.toX(), part.toY(), part.toZ()))
+            ).apply(instance, (x, y, z, box) -> new GuideBlock.ScenePart(x, y, z, box.get(0), box.get(1), box.get(2),
+                    box.get(3), box.get(4), box.get(5))));
+    private static final Codec<GuideBlock.SceneBalloon> SCENE_BALLOON = RecordCodecBuilder.create(instance ->
+            instance.group(
+                    Codec.INT.fieldOf("number").forGetter(GuideBlock.SceneBalloon::number),
+                    SCENE_PART.fieldOf("part").forGetter(GuideBlock.SceneBalloon::part),
+                    Codec.STRING.fieldOf("text").forGetter(GuideBlock.SceneBalloon::key),
+                    Codec.STRING.optionalFieldOf("detail", "").forGetter(GuideBlock.SceneBalloon::detailKey)
+            ).apply(instance, GuideBlock.SceneBalloon::new));
+    private static final MapCodec<GuideBlock.Scene> SCENE = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            SCENE_BLOCK.listOf().fieldOf("blocks").forGetter(GuideBlock.Scene::blocks),
+            SCENE_VIEW.optionalFieldOf("view", GuideBlock.SceneView.CORNER).forGetter(GuideBlock.Scene::view),
+            SCENE_BALLOON.listOf().optionalFieldOf("balloons", List.of()).forGetter(GuideBlock.Scene::balloons),
+            Codec.BOOL.optionalFieldOf("layers", false).forGetter(GuideBlock.Scene::layers),
+            Codec.INT.fieldOf("height").forGetter(GuideBlock.Scene::height),
+            Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Scene::captionKey)
+    ).apply(instance, GuideBlock.Scene::new));
 
     private GuideCodecs() {
     }
@@ -274,6 +324,7 @@ public final class GuideCodecs {
             case GuideBlock.Views views -> "views";
             case GuideBlock.Plan plan -> "plan";
             case GuideBlock.Command command -> "command";
+            case GuideBlock.Scene scene -> "scene";
         };
     }
 
@@ -298,6 +349,7 @@ public final class GuideCodecs {
             case "views" -> VIEWS;
             case "plan" -> PLAN;
             case "command" -> COMMAND;
+            case "scene" -> SCENE;
             default -> throw new IllegalArgumentException("no block of the type " + type);
         };
     }

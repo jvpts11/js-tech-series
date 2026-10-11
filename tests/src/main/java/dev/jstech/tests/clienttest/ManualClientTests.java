@@ -17,6 +17,7 @@ import dev.jstech.core.client.guide.ManualPlaces;
 import dev.jstech.core.client.guide.ManualScreen;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.guide.CoreGuide;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideBook;
 import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuidePiece;
@@ -58,8 +59,9 @@ import org.lwjgl.glfw.GLFW;
  * The Core's manuals as a player reads them: the test manual opened at its cover and turned to its contents, opened
  * at an entry, a link and a tab followed, the whole manual searched as the player types, Back and Forward with the
  * buttons, the mouse and Backspace, the hand over what takes a click, a long entry run on to the pages after its
- * first, a table run on and a table stacked, the manual opened again where it was closed after the game was, an item's page opened by the manual key held over
- * it while a bar in the manual's look fills, and the manual item opening its manual.
+ * first, a table run on and a table stacked, a scene turned and brought nearer, the manual opened again where it was
+ * closed after the game was, an item's page opened by the manual key held over it while a bar in the manual's look
+ * fills, and the manual item opening its manual.
  */
 public final class ManualClientTests {
 
@@ -192,6 +194,39 @@ public final class ManualClientTests {
                 .thenScreenshot(2, "manual_glossary")
                 .then(0, () -> manual().turn(1))
                 .thenScreenshot(2, "manual_glossary_on")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 300)
+    public static void manual_turnsASceneDraggedAndBringsItNearerWithTheWheel(final ClientTestContext ctx) {
+        final String scene = TestGuide.SCENE + "#1";
+        final GuideBlock.SceneView book = new GuideBlock.SceneView(-30, 25, 1);
+        ctx.then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.SCENE))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> manual().scenePoint(scene, false) != null
+                        && manual().sceneView(scene).orElseThrow().equals(book),
+                        "the scene is drawn as the book shows it")
+                .thenScreenshot(2, "manual_scene")
+                .then(0, () -> {
+                    final int[] at = manual().scenePoint(scene, false);
+                    manual().mouseClicked(at[0], at[1], 0);
+                    manual().mouseDragged(at[0] + 40, at[1] + 10, 0, 40, 10);
+                    manual().mouseReleased(at[0] + 40, at[1] + 10, 0);
+                })
+                .thenAssert(SETTLE, () -> manual().sceneView(scene).orElseThrow().yaw() != book.yaw()
+                        && manual().sceneView(scene).orElseThrow().pitch() != book.pitch(),
+                        "dragged across and down, it turns round and tilts")
+                .then(0, () -> {
+                    final int[] at = manual().scenePoint(scene, false);
+                    manual().mouseScrolled(at[0], at[1], 0.0, 1.0);
+                })
+                .thenAssert(SETTLE, () -> manual().sceneView(scene).orElseThrow().zoom() > book.zoom(),
+                        "the wheel over it brings it nearer, and turns no page")
+                .thenScreenshot(2, "manual_scene_turned")
+                .then(0, () -> ctx.click(manual().scenePoint(scene, true)[0], manual().scenePoint(scene, true)[1]))
+                .thenAssert(SETTLE, () -> manual().sceneView(scene).orElseThrow().equals(book),
+                        "Reset brings back the book's own view")
                 .then(0, ManualClientTests::close)
                 .thenAwaitNoScreen(OPEN);
     }
@@ -543,7 +578,7 @@ public final class ManualClientTests {
         return KeyActionsClient.mapping(CoreKeys.OPEN_IN_MANUAL);
     }
 
-    /* Whether the stack's tooltip, gathered as the game gathers it to draw, has a picture line right under the key's. */
+    /* Whether the stack's tooltip, gathered as the game gathers it to draw, has a picture line under the key's. */
     private static boolean barUnderHoldLine(final ItemStack stack) {
         final Minecraft minecraft = Minecraft.getInstance();
         final List<Either<FormattedText, TooltipComponent>> elements = new ArrayList<>();

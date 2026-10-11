@@ -54,7 +54,7 @@
   ],
   "icon": "minecraft:command_block_minecart",
   "id": "jstests:command",
-  "order": 5,
+  "order": 6,
   "section": "jstests:ideas",
   "title": "jstests.guide.command.title"
 }

@@ -9,13 +9,16 @@ package dev.jstech.core.guide;
 
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.text.Text;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * One piece of a manual's entry: a paragraph, a heading, a figure, a picture, a table, the recipes of a kind, numbered
- * steps, a warning, the problems and their fixes, a word explained, links to other entries, a command's page, or a
- * special block another mod draws.
+ * steps, a warning, the problems and their fixes, a word explained, links to other entries, a command's page, a scene
+ * of blocks the reader turns, or a special block another mod draws.
  *
  * <p>An entry is a list of these, laid out on the pages in the order given. Words are never held here, only the keys
  * of the sentences, so a manual reads in each player's language and a resource pack can reword it. Ids are text in
@@ -397,6 +400,214 @@ public sealed interface GuideBlock {
     }
 
     /**
+     * A scene: blocks placed in a small grid and drawn as the game draws them, which the reader turns by dragging and
+     * brings nearer or farther with the wheel, with numbered balloons pinned to its parts and their legend under it;
+     * numbered and captioned with the figures ("Figure 1-14."). One the reader may peel layer by layer, such as a
+     * multiblock, has a control that hides the layers above the one chosen.
+     *
+     * @param blocks     its blocks, each where it stands, no two in one place
+     * @param view       how the book first shows it, and what Reset goes back to
+     * @param balloons   its balloons, each number once, in the order they are listed under it
+     * @param layers     whether the reader may peel it layer by layer
+     * @param height     how tall it is drawn on the page, its strip of controls under it apart
+     * @param captionKey the caption's sentence
+     */
+    record Scene(List<SceneBlock> blocks, SceneView view, List<SceneBalloon> balloons, boolean layers, int height,
+                 String captionKey) implements GuideBlock {
+
+        /** How many blocks a scene's grid holds along each side: a scene is a small piece of a world, never a build. */
+        public static final int GRID = 32;
+        /** The least and the most a scene is drawn tall on a page. */
+        public static final int MIN_HEIGHT = 48;
+        public static final int MAX_HEIGHT = 180;
+
+        public Scene {
+            blocks = List.copyOf(blocks);
+            Objects.requireNonNull(view, "view");
+            balloons = List.copyOf(balloons);
+            Objects.requireNonNull(captionKey, "captionKey");
+            if (blocks.isEmpty()) {
+                throw new IllegalArgumentException("a scene holds a block at least");
+            }
+            if (height < MIN_HEIGHT || height > MAX_HEIGHT) {
+                throw new IllegalArgumentException("a scene is drawn " + MIN_HEIGHT + " to " + MAX_HEIGHT
+                        + " pixels tall; got " + height);
+            }
+            final Set<Integer> places = new HashSet<>();
+            for (final SceneBlock block : blocks) {
+                if (!places.add(place(block.x(), block.y(), block.z()))) {
+                    throw new IllegalArgumentException("two blocks of a scene stand at " + block.x() + ", "
+                            + block.y() + ", " + block.z());
+                }
+            }
+            final Set<Integer> numbers = new HashSet<>();
+            for (final SceneBalloon balloon : balloons) {
+                if (!numbers.add(balloon.number())) {
+                    throw new IllegalArgumentException("a scene has two balloons numbered " + balloon.number());
+                }
+            }
+        }
+
+        /** How many blocks it spans across, from the grid's corner to its farthest block. */
+        public int width() {
+            return this.blocks.stream().mapToInt(SceneBlock::x).max().orElse(0) + 1;
+        }
+
+        /** How many blocks it stands tall: its layers, when it is peeled. */
+        public int tall() {
+            return this.blocks.stream().mapToInt(SceneBlock::y).max().orElse(0) + 1;
+        }
+
+        /** How many blocks deep it goes. */
+        public int depth() {
+            return this.blocks.stream().mapToInt(SceneBlock::z).max().orElse(0) + 1;
+        }
+
+        /** The block standing there, if one does. */
+        public Optional<SceneBlock> at(final int x, final int y, final int z) {
+            return this.blocks.stream().filter(block -> block.x() == x && block.y() == y && block.z() == z)
+                    .findFirst();
+        }
+
+        /** A place of the grid as one number, so two blocks in one place are told apart from two in two places. */
+        private static int place(final int x, final int y, final int z) {
+            return (x * GRID + y) * GRID + z;
+        }
+    }
+
+    /**
+     * A block of a scene, and where it stands.
+     *
+     * @param x     how far across the grid it stands, from 0
+     * @param y     how far up
+     * @param z     how far back, towards the north
+     * @param state the block and its properties, as the game writes a block's state: {@code minecraft:furnace} or
+     *              {@code minecraft:furnace[facing=south,lit=true]}
+     * @param data  what its block entity holds, as the game writes a compound tag, or empty for what a new one holds
+     */
+    record SceneBlock(int x, int y, int z, String state, String data) {
+
+        public SceneBlock {
+            Objects.requireNonNull(state, "state");
+            data = data == null ? "" : data;
+            if (state.isBlank()) {
+                throw new IllegalArgumentException("a block of a scene names its block");
+            }
+            inGrid(x, y, z);
+        }
+
+        /** The block's id, its state without its properties. */
+        public String block() {
+            final int open = this.state.indexOf('[');
+            return open < 0 ? this.state : this.state.substring(0, open);
+        }
+    }
+
+    /**
+     * How a scene is seen: turned round and tilted, and how near. Turned by none, the scene is seen from its south
+     * side, head on; tilted by a positive angle, from above.
+     *
+     * @param yaw   how far it is turned round, in degrees
+     * @param pitch how far it is tilted towards the reader, in degrees, from looking up at it to looking down on it
+     * @param zoom  how near it is, 1 for the whole scene filling its frame
+     */
+    record SceneView(float yaw, float pitch, float zoom) {
+
+        /** The farthest a reader tilts a scene either way: straight down on it, or straight up under it. */
+        public static final float MAX_PITCH = 90;
+        /** How far and how near a reader brings a scene. */
+        public static final float MIN_ZOOM = 0.5f;
+        public static final float MAX_ZOOM = 4;
+        /** The front corner of a scene, seen a little from above: how a book shows one it says nothing about. */
+        public static final SceneView CORNER = new SceneView(-35, 25, 1);
+
+        public SceneView {
+            pitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, pitch));
+            zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
+            // A turn is the same however many times round it goes, so it is kept between -180 and 180.
+            yaw = (float) Math.IEEEremainder(yaw, 360);
+        }
+
+        /** The same view turned by that many degrees more round and tilted by that many more. */
+        public SceneView turned(final float byYaw, final float byPitch) {
+            return new SceneView(this.yaw + byYaw, this.pitch + byPitch, this.zoom);
+        }
+
+        /** The same view, that many times nearer, within the nearest and the farthest. */
+        public SceneView zoomed(final float times) {
+            return new SceneView(this.yaw, this.pitch, this.zoom * times);
+        }
+    }
+
+    /**
+     * A numbered balloon pinned to a part of a scene, and the line of the legend that says what the part is. The
+     * balloon points at the middle of its part, and the part is outlined while the pointer is on its number.
+     *
+     * @param number    the number in the balloon
+     * @param part      what it points at
+     * @param key       the legend's sentence for it
+     * @param detailKey a second sentence its tooltip adds, such as what to do with it, or empty
+     */
+    record SceneBalloon(int number, ScenePart part, String key, String detailKey) {
+
+        public SceneBalloon {
+            Objects.requireNonNull(part, "part");
+            Objects.requireNonNull(key, "key");
+            detailKey = detailKey == null ? "" : detailKey;
+            if (number < 1) {
+                throw new IllegalArgumentException("a balloon is numbered from 1; got " + number);
+            }
+        }
+    }
+
+    /**
+     * A part of a scene: a box inside one of its blocks, in the block's sixteen pixels each way, such as the tray of a
+     * drive in the front of a case; or the whole block.
+     *
+     * @param x     the block, across the grid
+     * @param y     up
+     * @param z     back
+     * @param fromX where the box starts in the block, across, from 0
+     * @param fromY up
+     * @param fromZ back
+     * @param toX   where it ends, across, to 16
+     * @param toY   up
+     * @param toZ   back
+     */
+    record ScenePart(int x, int y, int z, int fromX, int fromY, int fromZ, int toX, int toY, int toZ) {
+
+        /** A block's sixteen pixels along each side. */
+        public static final int PIXELS = 16;
+
+        public ScenePart {
+            inGrid(x, y, z);
+            if (fromX < 0 || fromY < 0 || fromZ < 0 || toX > PIXELS || toY > PIXELS || toZ > PIXELS
+                    || fromX > toX || fromY > toY || fromZ > toZ) {
+                throw new IllegalArgumentException("a part is a box inside its block, from 0 to " + PIXELS
+                        + " each way; got " + fromX + ", " + fromY + ", " + fromZ + " to " + toX + ", " + toY + ", "
+                        + toZ);
+            }
+        }
+
+        /** The whole block standing there. */
+        public static ScenePart of(final int x, final int y, final int z) {
+            return new ScenePart(x, y, z, 0, 0, 0, PIXELS, PIXELS, PIXELS);
+        }
+
+        /** A box inside the same block, in its sixteen pixels each way. */
+        public ScenePart box(final int fromX, final int fromY, final int fromZ, final int toX, final int toY,
+                             final int toZ) {
+            return new ScenePart(this.x, this.y, this.z, fromX, fromY, fromZ, toX, toY, toZ);
+        }
+
+        /** Whether it is the whole block. */
+        public boolean whole() {
+            return this.fromX == 0 && this.fromY == 0 && this.fromZ == 0 && this.toX == PIXELS
+                    && this.toY == PIXELS && this.toZ == PIXELS;
+        }
+    }
+
+    /**
      * Blocks seen from above, side by side as they are to be placed, each named under it, those that are optional
      * outlined in dots: how to set something up.
      *
@@ -509,6 +720,15 @@ public sealed interface GuideBlock {
             public Said {
                 Objects.requireNonNull(text, "text");
             }
+        }
+    }
+
+    /** Fails for a place outside a scene's grid. */
+    private static void inGrid(final int x, final int y, final int z) {
+        final int last = Scene.GRID - 1;
+        if (x < 0 || y < 0 || z < 0 || x > last || y > last || z > last) {
+            throw new IllegalArgumentException("a scene's grid runs from 0 to " + last + " each way; got " + x + ", "
+                    + y + ", " + z);
         }
     }
 }

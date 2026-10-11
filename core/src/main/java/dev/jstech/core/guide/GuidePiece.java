@@ -169,6 +169,26 @@ public sealed interface GuidePiece {
         }
     }
 
+    /**
+     * A scene in its frame, the strip of its controls along the frame's foot.
+     *
+     * @param height the frame's height, the strip's included
+     * @param id     what tells this scene from every other in the manual, so how a reader turned it is kept
+     * @param scene  the scene, its blocks, its first view and its balloons
+     */
+    record Scene(int x, int y, int width, int height, String id, GuideBlock.Scene scene) implements GuidePiece {
+    }
+
+    /**
+     * A line of a scene's legend: its number in a balloon at the line's start, and the room the line takes, which
+     * lights with the part it names under the pointer. Its words are pieces of their own after it.
+     *
+     * @param scene  the id of the scene it belongs to
+     * @param number the balloon's number
+     */
+    record SceneKey(int x, int y, int width, int height, String scene, int number) implements GuidePiece {
+    }
+
     /** Blocks seen from above side by side, each named under it, the optional ones outlined in dots. */
     record Plan(int x, int y, int width, List<PlanPart> parts) implements GuidePiece {
 

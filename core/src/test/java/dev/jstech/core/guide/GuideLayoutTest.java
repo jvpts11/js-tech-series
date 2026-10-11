@@ -643,6 +643,35 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_framesASceneWithItsStripThenItsCaptionAndAShortLegendInTwoColumns() {
+        final GuideBook book = lay(sceneBook("one", "two", "six"), new FixedText(Map.of(
+                "one", "Fan", "two", "Tray", "six", "Vent")));
+
+        final List<GuidePiece> first = book.pages().get(book.pageOf("mod:case").orElseThrow()).pieces();
+        final GuidePiece.Scene scene = first.stream().filter(piece -> piece instanceof GuidePiece.Scene)
+                .map(piece -> (GuidePiece.Scene) piece).findFirst().orElseThrow();
+        assertEquals(90 + GuideLayout.SCENE_STRIP, scene.height(), "the frame holds the scene and its strip");
+        assertEquals("mod:case#1", scene.id());
+        assertTrue(first.stream().anyMatch(piece -> piece instanceof GuidePiece.Text text
+                && text.text().startsWith(GuideTexts.FIGURE.key() + "[1-1]") && text.y() > scene.y()
+                + scene.height()), "its caption under it, numbered with the figures");
+        final List<GuidePiece.SceneKey> keys = keys(book, "mod:case");
+        assertEquals(List.of(1, 2, 6), keys.stream().map(GuidePiece.SceneKey::number).toList());
+        assertEquals(2, keys.stream().map(GuidePiece.SceneKey::x).distinct().count(), "two columns");
+    }
+
+    @Test
+    void lay_listsALegendTooLongForTwoColumnsInOne() {
+        final GuideBook book = lay(sceneBook("one", "two"), new FixedText(Map.of(
+                "one", "The power button, which starts the computer", "two", "Tray")));
+
+        final List<GuidePiece.SceneKey> keys = keys(book, "mod:case");
+        assertEquals(2, keys.size());
+        assertEquals(1, keys.stream().map(GuidePiece.SceneKey::x).distinct().count());
+        assertTrue(keys.getFirst().height() > GuideLayout.SCENE_KEY_ROW, "the long line wraps under itself");
+    }
+
+    @Test
     void roman_writesSmallRomanNumerals() {
         assertEquals("i", GuideLayout.roman(1));
         assertEquals("iv", GuideLayout.roman(4));
@@ -690,6 +719,20 @@ class GuideLayoutTest {
                 new GuideContents.Chapter(new GuideChapter("beta", 1, "beta.title", "", ""), List.of(
                         new GuideContents.Section(new GuideSection("beta:things", 0, "things.title", ""),
                                 List.of(only))))));
+    }
+
+    /**
+     * A chapter of one entry holding a scene of a block, 90 pixels tall, with a balloon for each of the keys given,
+     * numbered 1, 2 and then 6.
+     */
+    private static GuideContents sceneBook(final String... keys) {
+        final List<GuideBlock.SceneBalloon> list = new ArrayList<>();
+        for (int i = 0; i < keys.length; i++) {
+            list.add(new GuideBlock.SceneBalloon(i < 2 ? i + 1 : 6, GuideBlock.ScenePart.of(0, 0, 0), keys[i], ""));
+        }
+        final GuideEntry entry = entry("mod:case", new GuideBlock.Scene(List.of(new GuideBlock.SceneBlock(0, 0, 0,
+                "mod:case", "")), GuideBlock.SceneView.CORNER, list, false, 90, "case.caption"));
+        return new GuideContents(List.of(chapter("mod", entry)));
     }
 
     /** A chapter of two commands' pages, dir's and copy's. */
@@ -746,6 +789,13 @@ class GuideLayoutTest {
                     new GuideBlock.GuideValue.Words(row.get(1)))));
         }
         return new GuideBlock.Table("table.caption", List.of("Command", "What it does"), list);
+    }
+
+    /** The lines of scenes' legends on the pages of an entry, from its first page to the end of the chapters. */
+    private static List<GuidePiece.SceneKey> keys(final GuideBook book, final String entry) {
+        return book.pages().subList(book.pageOf(entry).orElseThrow(), book.indexAt()).stream()
+                .flatMap(page -> page.pieces().stream()).filter(piece -> piece instanceof GuidePiece.SceneKey)
+                .map(piece -> (GuidePiece.SceneKey) piece).toList();
     }
 
     /** The text on the pages of an entry, from its first page to the end of the manual's chapters. */

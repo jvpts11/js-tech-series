@@ -21,6 +21,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
 
 /**
  * What one mod writes in the manuals: its chapters, their sections and entries, and the manuals and styles it brings.
@@ -178,8 +179,22 @@ public final class ModGuide {
         return BuiltInRegistries.ITEM.getKey(found).toString();
     }
 
+    /** The registered id of a block. */
+    private static String blockId(final Supplier<? extends Block> block) {
+        return BuiltInRegistries.BLOCK.getKey(block.get()).toString();
+    }
+
     /** A declared section, which entries are placed in. */
     public record SectionRef(String id) {
+    }
+
+    /** A scene being declared: its blocks, named when the files are written, how it is first seen, its balloons. */
+    private static final class SceneDraft {
+
+        private final List<Supplier<GuideBlock.SceneBlock>> blocks = new ArrayList<>();
+        private final List<GuideBlock.SceneBalloon> balloons = new ArrayList<>();
+        private GuideBlock.SceneView view = GuideBlock.SceneView.CORNER;
+        private boolean layers;
     }
 
     /** A chapter of the mod's, declared: its main one, or another when it has a path. */
@@ -329,6 +344,7 @@ public final class ModGuide {
         private List<GuideBlock.SessionLine> sessionLines;
         private List<GuideBlock.Callout> callouts;
         private List<Supplier<GuideBlock.PlanPart>> planParts;
+        private SceneDraft scene;
 
         private EntryBuilder(final String path, final SectionRef section) {
             this.path = path;
@@ -679,6 +695,69 @@ public final class ModGuide {
             return this;
         }
 
+        /**
+         * A scene of blocks the reader turns and brings nearer, drawn as the game draws them, {@code height} pixels
+         * tall and numbered with the figures: its blocks follow with {@link #place}, how it is first seen with
+         * {@link #view}, and its balloons with {@link #balloon}.
+         */
+        public EntryBuilder scene(final String caption, final int height) {
+            this.figures++;
+            final String key = this.key("figure" + this.figures, caption);
+            final SceneDraft draft = new SceneDraft();
+            this.scene = draft;
+            return this.add(() -> new GuideBlock.Scene(draft.blocks.stream().map(Supplier::get).toList(), draft.view,
+                    draft.balloons, draft.layers, height, key));
+        }
+
+        /** A block of the last scene, in the state it is placed in, where it stands in the scene's grid. */
+        public EntryBuilder place(final int x, final int y, final int z, final Supplier<? extends Block> block) {
+            return this.place(x, y, z, block, "", "");
+        }
+
+        /**
+         * A block of the last scene with its properties as the game writes them ({@code facing=south,lit=true}),
+         * and what its block entity holds as the game writes a compound tag ({@code {Items:[...]}}), each empty for
+         * the block as it is placed.
+         */
+        public EntryBuilder place(final int x, final int y, final int z, final Supplier<? extends Block> block,
+                                  final String properties, final String data) {
+            final SceneDraft draft = this.sceneDraft();
+            draft.blocks.add(() -> new GuideBlock.SceneBlock(x, y, z,
+                    properties.isEmpty() ? blockId(block) : blockId(block) + "[" + properties + "]", data));
+            return this;
+        }
+
+        /** How the last scene is first seen, and what Reset goes back to: turned, tilted, and how near. */
+        public EntryBuilder view(final float yaw, final float pitch, final float zoom) {
+            this.sceneDraft().view = new GuideBlock.SceneView(yaw, pitch, zoom);
+            return this;
+        }
+
+        /** The last scene may be peeled layer by layer, to see inside it, as a multiblock is. */
+        public EntryBuilder layers() {
+            this.sceneDraft().layers = true;
+            return this;
+        }
+
+        /** A numbered balloon of the last scene, pointing at a part of it, and what the legend says it is. */
+        public EntryBuilder balloon(final int number, final GuideBlock.ScenePart part, final String english) {
+            return this.balloon(number, part, english, "");
+        }
+
+        /**
+         * A numbered balloon of the last scene, and a second sentence its tooltip adds, such as what to do with the
+         * part; empty for none.
+         */
+        public EntryBuilder balloon(final int number, final GuideBlock.ScenePart part, final String english,
+                                    final String detail) {
+            final SceneDraft draft = this.sceneDraft();
+            this.balloons++;
+            final String key = this.key("balloon" + this.balloons, english);
+            final String detailKey = detail.isEmpty() ? "" : this.key("balloon" + this.balloons + "_detail", detail);
+            draft.balloons.add(new GuideBlock.SceneBalloon(number, part, key, detailKey));
+            return this;
+        }
+
         /** A plan of blocks seen from above, titled in English; its blocks follow with {@link #planPart}. */
         public EntryBuilder plan(final String caption) {
             this.plans++;
@@ -786,6 +865,13 @@ public final class ModGuide {
             }
             this.planParts.add(() -> new GuideBlock.PlanPart(itemId(block), key, optional));
             return this;
+        }
+
+        private SceneDraft sceneDraft() {
+            if (this.scene == null) {
+                throw new IllegalStateException("a scene's blocks, view and balloons follow the scene");
+            }
+            return this.scene;
         }
 
         private List<GuideBlock.SessionLine> sessionLines() {

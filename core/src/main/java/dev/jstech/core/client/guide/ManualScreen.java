@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import net.minecraft.Util;
@@ -108,6 +109,8 @@ public final class ManualScreen extends Screen {
     private String foundWords;
     private ItemStack hoveredItem = ItemStack.EMPTY;
     private List<Component> hoveredWords = List.of();
+    /** The scenes of the manual, as the reader has turned them; made with the screen's first layout. */
+    private ManualScenes scenes;
     /** The control held down under the pointer, drawn pressed until the button is let go; null when none is. */
     @Nullable
     private ManualScreenLayout.Rect pressed;
@@ -220,6 +223,11 @@ public final class ManualScreen extends Screen {
         final int keep = this.spread;
         this.book = GuideLayout.lay(this.manual, this.style, contents,
                 new ClientGuideText(this.font, this.style, this.recipes));
+        // Made once, so how the reader turned a scene outlasts the window being resized.
+        if (this.scenes == null) {
+            this.scenes = new ManualScenes(this.font, this.style, this::colour,
+                    new ClientGuideText(this.font, this.style, this.recipes));
+        }
         this.geometry = ManualScreenLayout.of(this.style.pageWidth(), this.style.pageHeight(), this.style.spread());
         this.left = (this.width - this.geometry.width()) / 2;
         this.top = (this.height - this.geometry.height()) / 2;
@@ -370,6 +378,35 @@ public final class ManualScreen extends Screen {
         return null;
     }
 
+    /**
+     * Where to point at the scene of that id on the spread shown, in the screen's coordinates: the middle of its
+     * picture, or its Reset button; null when the spread shows no such scene (client tests drag and click it).
+     */
+    @Nullable
+    public int[] scenePoint(final String id, final boolean reset) {
+        final int first = this.style.spread() ? this.spread * 2 : this.spread;
+        for (final int index : new int[] {first, this.rightPage(first)}) {
+            final ManualScreenLayout.Rect page = index == first ? this.geometry.left() : this.geometry.right();
+            if (page == null || index < 0 || index >= this.book.pages().size()) {
+                continue;
+            }
+            for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+                if (piece instanceof GuidePiece.Scene scene && scene.id().equals(id)) {
+                    final int x = page.x() + scene.x();
+                    final int y = page.y() + scene.y();
+                    return reset ? this.middleOf(this.scenes.resetButton(scene, x, y))
+                            : new int[] {this.left + x + scene.width() / 2, this.top + y + scene.scene().height() / 2};
+                }
+            }
+        }
+        return null;
+    }
+
+    /** How the reader has turned the scene of that id, once it has been drawn (client tests ask). */
+    public Optional<GuideBlock.SceneView> sceneView(final String id) {
+        return this.scenes.viewOf(id);
+    }
+
     /** Whether a listing is open over the whole book. */
     public boolean listingOpen() {
         return this.opened != null;
@@ -422,6 +459,9 @@ public final class ManualScreen extends Screen {
     public void removed() {
         ManualPlaces.leave(this.manual.id(), this.place());
         PointerShape.reset();
+        if (this.scenes != null) {
+            this.scenes.close();
+        }
         AudioEngine.playOnScreen(GuideSounds.CLOSE);
         super.removed();
     }
@@ -431,6 +471,7 @@ public final class ManualScreen extends Screen {
         super.renderBackground(g, mouseX, mouseY, partialTick);
         this.hoveredItem = ItemStack.EMPTY;
         this.hoveredWords = List.of();
+        this.scenes.frame();
         g.pose().pushPose();
         g.pose().translate(this.left, this.top, 0.0F);
         final int mx = mouseX - this.left;
@@ -495,6 +536,10 @@ public final class ManualScreen extends Screen {
         }
         if (this.spread < 0) {
             this.spread = 0;
+            return true;
+        }
+        final PlacedScene scene = this.sceneAt(mx, my);
+        if (scene != null && this.scenes.press(scene.scene(), scene.x(), scene.y(), mx, my)) {
             return true;
         }
         final PlacedListing listing = this.listingAt(mx, my);
@@ -563,7 +608,16 @@ public final class ManualScreen extends Screen {
     @Override
     public boolean mouseReleased(final double mouseX, final double mouseY, final int button) {
         this.pressed = null;
+        this.scenes.release();
         return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    /* A scene held by the pointer turns as it moves: across turns it round, up and down tilts it. */
+    @Override
+    public boolean mouseDragged(final double mouseX, final double mouseY, final int button, final double dragX,
+                                final double dragY) {
+        return this.scenes.drag(mouseX - this.left, mouseY - this.top)
+                || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 
     @Override
@@ -580,6 +634,12 @@ public final class ManualScreen extends Screen {
                 final int most = Math.max(0, this.opened.lines().size() - this.openedRows(this.opened));
                 this.openedScroll = Math.max(0, Math.min(most, this.openedScroll + (scrollY < 0.0 ? 1 : -1)));
             }
+            return true;
+        }
+        // Over a scene the wheel brings it nearer or sends it farther; anywhere else it turns the page.
+        final PlacedScene scene = this.sceneAt(mouseX - this.left, mouseY - this.top);
+        if (scene != null && this.scenes.scroll(scene.scene(), scene.x(), scene.y(), mouseX - this.left,
+                mouseY - this.top, scrollY)) {
             return true;
         }
         return scrollY != 0.0 && this.turn(scrollY < 0.0 ? 1 : -1);
@@ -674,6 +734,10 @@ public final class ManualScreen extends Screen {
             return openedCopyButton(box).contains(mx, my) || closeButton(box).contains(mx, my);
         }
         if (this.listingAt(mx, my) != null) {
+            return true;
+        }
+        final PlacedScene scene = this.sceneAt(mx, my);
+        if (scene != null && this.scenes.clickable(scene.scene(), scene.x(), scene.y(), mx, my)) {
             return true;
         }
         if (this.geometry.contents().contains(mx, my) || this.geometry.search().contains(mx, my)
@@ -1173,6 +1237,13 @@ public final class ManualScreen extends Screen {
             case GuidePiece.Plan plan -> this.drawPlan(g, x, y, plan, mx, my);
             case GuidePiece.Plate plate -> this.drawPlate(g, x, y, plate, chapter, mx, my);
             case GuidePiece.Picture picture -> this.drawPicture(g, x, y, picture, mx, my);
+            case GuidePiece.Scene scene -> {
+                final List<Component> words = this.scenes.draw(g, x, y, scene, mx, my);
+                if (!words.isEmpty()) {
+                    this.hoveredWords = words;
+                }
+            }
+            case GuidePiece.SceneKey key -> this.scenes.drawKey(g, x, y, key, mx, my);
         }
     }
 
@@ -1444,6 +1515,35 @@ public final class ManualScreen extends Screen {
                 if (rect.contains(mx, my)) {
                     return new PlacedListing(listing, rect.x(), rect.y());
                 }
+            }
+        }
+        return null;
+    }
+
+    /** The scene under the pointer on the pages shown, with where it stands on the screen; or null. */
+    @Nullable
+    private PlacedScene sceneAt(final double mx, final double my) {
+        if (this.spread < 0 || this.opened != null) {
+            return null;
+        }
+        final int first = this.style.spread() ? this.spread * 2 : this.spread;
+        final PlacedScene onLeft = this.sceneOn(this.geometry.left(), first, mx, my);
+        if (onLeft != null || this.geometry.right() == null || this.searching) {
+            return onLeft;
+        }
+        return this.sceneOn(this.geometry.right(), this.rightPage(first), mx, my);
+    }
+
+    @Nullable
+    private PlacedScene sceneOn(final ManualScreenLayout.Rect page, final int index, final double mx,
+                                final double my) {
+        if (this.searching && page == this.geometry.left() || index < 0 || index >= this.book.pages().size()) {
+            return null;
+        }
+        for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+            if (piece instanceof GuidePiece.Scene scene && new ManualScreenLayout.Rect(page.x() + scene.x(),
+                    page.y() + scene.y(), scene.width(), scene.height()).contains(mx, my)) {
+                return new PlacedScene(scene, page.x() + scene.x(), page.y() + scene.y());
             }
         }
         return null;
@@ -1993,5 +2093,9 @@ public final class ManualScreen extends Screen {
 
     /** A listing on a page shown, and where its frame stands on the binder. */
     private record PlacedListing(GuidePiece.Listing listing, int x, int y) {
+    }
+
+    /** A scene on a page shown, and where its frame stands on the screen. */
+    private record PlacedScene(GuidePiece.Scene scene, int x, int y) {
     }
 }

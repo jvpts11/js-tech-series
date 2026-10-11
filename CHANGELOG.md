@@ -196,6 +196,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A glossary at the back of every manual, before its index: each word a page explains, alphabetical under its
   letter, with what it means and the page that explains it. The first time another page uses one of those words, the
   word leads to where it is explained.
+- Scenes in the manuals: a few blocks drawn on the page as the game draws them, block entities and GeckoLib models
+  included, which the reader turns by dragging and brings nearer with the wheel, with Reset to go back. Numbered
+  balloons point at their parts, a legend under the scene says what each is, and pointing at a number outlines its
+  part and names it. A multiblock can be shown layer by layer to see inside it.
 - Pages for the commands in the manuals, made from each command itself: what it is for, how it is typed, what it
   does, a table of its options and one of its examples, every system it runs on (with the package to install first,
   where one is needed) and the commands to read next, each leading to its own page. They say what `man`, `help` and

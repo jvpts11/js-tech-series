@@ -325,6 +325,17 @@ public final class ManualReader {
                     }
                 }
                 case GuideBlock.Command command -> this.command(command, pieces, linked);
+                // Read as text, a scene is its caption, numbered with the figures, and the list of its balloons.
+                case GuideBlock.Scene scene -> {
+                    figures++;
+                    pieces.add(new Piece.Picture("", this.text.text(GuideTexts.FIGURE.key(), chapterNo + "-"
+                            + figures) + " " + this.text.text(scene.captionKey())));
+                    scene.balloons().stream().sorted(Comparator.comparingInt(GuideBlock.SceneBalloon::number))
+                            .forEach(balloon -> pieces.add(new Piece.Item(String.valueOf(balloon.number()),
+                                    balloon.detailKey().isEmpty() ? this.text.text(balloon.key())
+                                            : this.text.text(balloon.key()) + ". " + this.text.text(
+                                            balloon.detailKey()))));
+                }
                 // Where a page breaks, and what another mod draws on one, have no place in running text.
                 case GuideBlock.Break cut -> {
                 }

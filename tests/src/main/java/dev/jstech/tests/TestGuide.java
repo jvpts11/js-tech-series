@@ -24,12 +24,14 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 
 /**
  * Chapters, manuals and the item that opens one, to prove the Core's manuals: every kind of block an entry is made
  * of, a special block another mod draws, an entry an item's page opens to, links between entries, tables that run on
- * and that stack, a command's page read from the command, a second book that binds a chapter written for it alone
- * before the mod's main one, a link from one book into the other, and a stack whose page its mod chooses.
+ * and that stack, a scene the reader turns, a command's page read from the command, a second book that binds a chapter
+ * written for it alone before the mod's main one, a link from one book into the other, and a stack whose page its mod
+ * chooses.
  */
 public final class TestGuide {
 
@@ -46,6 +48,7 @@ public final class TestGuide {
     public static final String TABLES = "jstests:tables";
     public static final String CODE = "jstests:code";
     public static final String COMMAND = "jstests:command";
+    public static final String SCENE = "jstests:scene";
     /** The listings of the code entry, by the files they are. */
     public static final String HELLO = "Hello.sgs";
     public static final String QUERY = "top.iql";
@@ -163,6 +166,25 @@ public final class TestGuide {
                 .howToGetIt("Open the test manual.")
                 .howToUseIt("Read the listings.", "Copy one.", "Open one over the whole book.")
                 .whatCanGoWrong("A listing is one colour.", "Its language has no colours registered for the manuals.")
+                .register();
+        GUIDE.page("scene", IDEAS).titled("A Scene").icon(() -> Items.FURNACE)
+                .whatItIs("An entry with a scene the reader turns: a furnace and a chest standing on grass.")
+                .scene("A furnace and a chest on grass. Drag them to see them from behind.", 90)
+                .place(0, 0, 0, () -> Blocks.GRASS_BLOCK)
+                .place(1, 0, 0, () -> Blocks.GRASS_BLOCK)
+                .place(0, 1, 0, () -> Blocks.FURNACE, "facing=south,lit=true", "")
+                .place(1, 1, 0, () -> Blocks.CHEST, "facing=south",
+                        "{Items:[{Slot:0b,id:\"minecraft:diamond\",count:1}]}")
+                .view(-30, 25, 1)
+                .layers()
+                .balloon(1, GuideBlock.ScenePart.of(0, 1, 0).box(0, 0, 15, 16, 16, 16), "The furnace's front",
+                        "It glows while it burns")
+                .balloon(2, GuideBlock.ScenePart.of(1, 1, 0), "A chest")
+                .balloon(3, GuideBlock.ScenePart.of(0, 0, 0), "Grass")
+                .whatItIsFor("Proving the scenes: how they are drawn and turned, their balloons and their layers.")
+                .howToGetIt("Open the test manual.")
+                .howToUseIt("Drag the scene.", "Turn the wheel over it.", "Point at a balloon.", "Hide a layer.")
+                .whatCanGoWrong("The scene is empty.", "None of its blocks is one the game knows.")
                 .register();
         GUIDE.page("command", IDEAS).titled("A Command's Page").icon(() -> Items.COMMAND_BLOCK_MINECART)
                 .whatItIs("An entry that prints a command's page from the command itself, the way its manual page"
