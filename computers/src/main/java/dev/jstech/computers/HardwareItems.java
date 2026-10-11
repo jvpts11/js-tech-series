@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers;
 
+import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.hardware.CpuSocketId;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
@@ -21,6 +22,7 @@ import dev.jstech.computers.hardware.RamGeneration;
 import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.item.BayDriveItem;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.GpuItem;
@@ -1598,6 +1600,21 @@ public final class HardwareItems {
                     SoundCardSpec.SampleRate.KHZ_44))
                     .named("Artisan Tone Blaster Hi-Fi").register();
 
+    /*
+     * The parts a case's 5.25-inch bay takes, each in the era it came out in: the hot-swap bay of the AT towers, the
+     * CD drive of the late nineties, the DVD drive of the 2000s, and the Blu-ray drive, which has no bay to go in on
+     * an Advanced case and is there to read the newest discs in an older computer.
+     */
+    public static final DeferredItem<BayDriveItem> HOT_SWAP_DRIVE_BAY = bayDrive("hot_swap_drive_bay",
+            new BayDriveSpec(BayDriveSpec.Kind.HOT_SWAP, HardwareEra.VINTAGE)).named("Hot-Swap Drive Bay").register();
+    public static final DeferredItem<BayDriveItem> INTERNAL_CD_DRIVE = bayDrive("internal_cd_drive",
+            new BayDriveSpec(BayDriveSpec.Kind.CD, HardwareEra.LEGACY)).named("Internal CD Drive").register();
+    public static final DeferredItem<BayDriveItem> INTERNAL_DVD_DRIVE = bayDrive("internal_dvd_drive",
+            new BayDriveSpec(BayDriveSpec.Kind.DVD, HardwareEra.TRANSITION)).named("Internal DVD Drive").register();
+    public static final DeferredItem<BayDriveItem> INTERNAL_BLU_RAY_DRIVE = bayDrive("internal_blu_ray_drive",
+            new BayDriveSpec(BayDriveSpec.Kind.BLU_RAY, HardwareEra.ADVANCED)).named("Internal Blu-ray Drive")
+            .register();
+
     private HardwareItems() {
     }
 
@@ -1635,6 +1652,10 @@ public final class HardwareItems {
         return declare(id, spec.era(), properties -> new SoundCardItem(properties, spec));
     }
 
+    private static ItemBuilder<BayDriveItem> bayDrive(final String id, final BayDriveSpec spec) {
+        return declare(id, spec.era(), properties -> new BayDriveItem(properties, spec));
+    }
+
     /* A supply, which carries no era of its own: it is shown with the machines of the age it sold in. */
     private static ItemBuilder<PsuItem> psu(final String id, final HardwareEra era, final PsuSpec spec) {
         return declare(id, era, properties -> new PsuItem(properties, spec));
@@ -1660,6 +1681,7 @@ public final class HardwareItems {
             case RamItem ram -> ram.spec().era();
             case GpuItem gpu -> gpu.spec().era();
             case SoundCardItem sound -> sound.spec().era();
+            case BayDriveItem drive -> drive.spec().era();
             default -> HardwareEra.VINTAGE;
         };
     }
@@ -1671,7 +1693,8 @@ public final class HardwareItems {
             case RamItem ram -> 2;
             case GpuItem gpu -> 3;
             case SoundCardItem sound -> 4;
-            default -> 5;
+            case BayDriveItem drive -> 5;
+            default -> 6;
         };
     }
 }

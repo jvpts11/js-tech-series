@@ -93,6 +93,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   are J's Core's processing recipes.
 
 ### Added
+- The front of a computer's case: the Personal, Crafting and Cluster Management Computers have the 5.25-inch bays of
+  their era's case, one on the Vintage and Standard cases, two on the Legacy and Transition ones, none on the
+  Advanced. Four parts go in them, each in its era's tab: the Hot-Swap Drive Bay (Vintage), the Internal CD Drive
+  (Legacy), the Internal DVD Drive (Transition) and the Internal Blu-ray Drive (Advanced), which is there to read the
+  newest discs in an older computer.
 - Manuals, in J's Core, for every mod to write in: a mod declares its chapter once, as entries of ready blocks
   (paragraphs, figures, numbered tables whose amounts are read from the code, the recipes the world holds, steps,
   warnings, problems with their fixes, words explained, links), and they show in its own manual and in any manual

@@ -50,16 +50,20 @@ public final class CreativeTabsClientTests {
                 .then(2, () -> assertShows(ctx, ComputingModule.CRAFTING_CABLE.asItem(), "computing"))
                 .then(SETTLE, () -> openTab(ctx, "computing_vintage"))
                 .then(2, () -> assertShows(ctx, ComputingModule.FLOPPY_DISK.get(), "computing_vintage"))
+                .then(0, () -> assertShows(ctx, HardwareItems.HOT_SWAP_DRIVE_BAY.get(), "computing_vintage"))
                 .then(SETTLE, () -> openTab(ctx, "computing_legacy"))
                 .then(2, () -> assertShows(ctx, ComputingModule.CD_ROM.get(), "computing_legacy"))
+                .then(0, () -> assertShows(ctx, HardwareItems.INTERNAL_CD_DRIVE.get(), "computing_legacy"))
                 .then(SETTLE, () -> openTab(ctx, "computing_transition"))
                 .then(2, () -> assertShows(ctx, HardwareItems.GPU_VERTEX_8800_GT.get(), "computing_transition"))
+                .then(0, () -> assertShows(ctx, HardwareItems.INTERNAL_DVD_DRIVE.get(), "computing_transition"))
                 .thenScreenshot(2, "transition-tab")
                 .then(SETTLE, () -> openTab(ctx, "computing_standard"))
                 .then(2, () -> assertShows(ctx, HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get(),
                         "computing_standard"))
                 .then(SETTLE, () -> openTab(ctx, "computing_advanced"))
                 .then(2, () -> assertShows(ctx, HardwareItems.GPU_VERTEX_RTX_5090.get(), "computing_advanced"))
+                .then(0, () -> assertShows(ctx, HardwareItems.INTERNAL_BLU_RAY_DRIVE.get(), "computing_advanced"))
                 .thenScreenshot(2, "advanced-tab")
                 .then(SETTLE, () -> ctx.mc().setScreen(null));
     }

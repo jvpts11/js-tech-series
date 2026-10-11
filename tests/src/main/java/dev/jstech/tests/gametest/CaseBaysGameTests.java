@@ -9,9 +9,12 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.hardware.BayDriveSpec;
+import dev.jstech.computers.item.BayDriveItem;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import java.util.Map;
@@ -21,6 +24,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -66,6 +70,19 @@ public final class CaseBaysGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void bayParts_areRegisteredUnderTheirNames(final GameTestHelper helper) {
+        assertPart(helper, HardwareItems.HOT_SWAP_DRIVE_BAY.get(), "hot_swap_drive_bay", "Hot-Swap Drive Bay",
+                BayDriveSpec.Kind.HOT_SWAP, HardwareEra.VINTAGE);
+        assertPart(helper, HardwareItems.INTERNAL_CD_DRIVE.get(), "internal_cd_drive", "Internal CD Drive",
+                BayDriveSpec.Kind.CD, HardwareEra.LEGACY);
+        assertPart(helper, HardwareItems.INTERNAL_DVD_DRIVE.get(), "internal_dvd_drive", "Internal DVD Drive",
+                BayDriveSpec.Kind.DVD, HardwareEra.TRANSITION);
+        assertPart(helper, HardwareItems.INTERNAL_BLU_RAY_DRIVE.get(), "internal_blu_ray_drive",
+                "Internal Blu-ray Drive", BayDriveSpec.Kind.BLU_RAY, HardwareEra.ADVANCED);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
     public static void machineSavedBeforeTheBays_keepsItsPartsAndHasItsBays(final GameTestHelper helper) {
         helper.setBlock(WHERE, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
         final PersonalComputerBlockEntity pc = helper.getBlockEntity(WHERE);
@@ -86,6 +103,16 @@ public final class CaseBaysGameTests {
                 "the disk is in the slot it was saved in");
         helper.assertValueEqual(loaded.caseBays(), 2, "a Legacy case's bays");
         helper.succeed();
+    }
+
+    /** Fails unless the part is registered under that id and name, and is that kind of bay part of that era. */
+    private static void assertPart(final GameTestHelper helper, final BayDriveItem item, final String id,
+                                   final String name, final BayDriveSpec.Kind kind, final HardwareEra era) {
+        helper.assertValueEqual(BuiltInRegistries.ITEM.getKey(item),
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, id), "the id of " + name);
+        helper.assertValueEqual(item.getDescription().getString(), name, "the name of " + id);
+        helper.assertValueEqual(item.spec().kind(), kind, "what " + name + " is");
+        helper.assertValueEqual(item.spec().era(), era, "the era of " + name);
     }
 
     /** The saved slots of a machine's parts: the compound that says how many there are. */

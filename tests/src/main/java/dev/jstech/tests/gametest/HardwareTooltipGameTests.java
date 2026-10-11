@@ -184,6 +184,26 @@ public final class HardwareTooltipGameTests {
      * A sound card says what it plays and the slot it fits; the case, the board and the monitor say where the
      * sound comes from.
      */
+    /** The parts of a case's 5.25-inch bay: what each internal drive reads, the hot-swap bay's disk, the bay, the era. */
+    @GameTest(template = ARENA)
+    public static void bayDriveTooltips_sayWhatTheyReadAndThatAnyBayTakesThem(final GameTestHelper helper) {
+        final ItemStack cd = new ItemStack(HardwareItems.INTERNAL_CD_DRIVE.get());
+        assertTooltipHas(helper, cd, "Reads CD");
+        assertTooltipHas(helper, cd, "Fits any 5.25-inch bay");
+        assertEraColour(helper, cd, HardwareEra.LEGACY);
+        final ItemStack dvd = new ItemStack(HardwareItems.INTERNAL_DVD_DRIVE.get());
+        assertTooltipHas(helper, dvd, "Reads DVD, CD");
+        assertEraColour(helper, dvd, HardwareEra.TRANSITION);
+        final ItemStack bluRay = new ItemStack(HardwareItems.INTERNAL_BLU_RAY_DRIVE.get());
+        assertTooltipHas(helper, bluRay, "Reads Blu-ray, DVD, CD");
+        assertEraColour(helper, bluRay, HardwareEra.ADVANCED);
+        final ItemStack hotSwap = new ItemStack(HardwareItems.HOT_SWAP_DRIVE_BAY.get());
+        assertTooltipHas(helper, hotSwap, "Takes a disk at the front, put in or taken out with the computer on or off");
+        assertTooltipHas(helper, hotSwap, "Fits any 5.25-inch bay");
+        assertEraColour(helper, hotSwap, HardwareEra.VINTAGE);
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void soundTooltips_sayWhatPlaysAndWhereItFits(final GameTestHelper helper) {
         final ItemStack isa = new ItemStack(HardwareItems.SOUND_CARD_TONE_BLASTER.get());

@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.client;
 
-import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.gui.layout.ClusterManagementComputerLayout;
 import dev.jstech.computers.menu.ClusterManagementComputerMenu;
 import dev.jstech.computers.operation.payload.RenamePcPayload;

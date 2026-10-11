@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.client;
 
-import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.gui.layout.CraftingComputerLayout;
 import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
