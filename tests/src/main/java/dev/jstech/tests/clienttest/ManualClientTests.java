@@ -9,13 +9,16 @@ package dev.jstech.tests.clienttest;
 
 import com.mojang.datafixers.util.Either;
 import dev.jstech.computers.guide.ComputersGuide;
+import dev.jstech.core.client.gui.PointerShape;
 import dev.jstech.core.client.guide.GuideClient;
+import dev.jstech.core.client.guide.ManualPlaces;
 import dev.jstech.core.client.guide.ManualScreen;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideBook;
 import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuidePiece;
+import dev.jstech.core.guide.GuideSearch;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.guide.TextSize;
@@ -45,11 +48,13 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * The Core's manuals as a player reads them: the test manual opened at its cover and turned to its contents, opened
- * at an entry, a link and a tab followed, its index searched as the player types, a long entry run on to the pages
- * after its first, a table run on and a table stacked, the manual opened again where it was closed, an item's page opened by the manual key held over
+ * at an entry, a link and a tab followed, the whole manual searched as the player types, Back and Forward with the
+ * buttons, the mouse and Backspace, the hand over what takes a click, a long entry run on to the pages after its
+ * first, a table run on and a table stacked, the manual opened again where it was closed after the game was, an item's page opened by the manual key held over
  * it while a bar in the manual's look fills, and the manual item opening its manual.
  */
 public final class ManualClientTests {
@@ -109,15 +114,55 @@ public final class ManualClientTests {
                 .thenAwaitScreen(ManualScreen.class, OPEN)
                 .then(SETTLE, () -> manual().search("press"))
                 .thenAssert(SETTLE, () -> {
-                    final List<GuideBook.IndexLine> found = manual().found();
-                    return manual().searching() && !found.isEmpty() && found.stream()
-                            .allMatch(line -> line.text().toLowerCase(Locale.ROOT).contains("press"));
-                }, "the search finds the press, and only what has its name")
+                    final List<GuideSearch.Hit> found = manual().found();
+                    return manual().searching() && !found.isEmpty() && found.getFirst().line().isEmpty()
+                            && found.stream().allMatch(hit -> (hit.text() + " " + hit.line())
+                            .toLowerCase(Locale.ROOT).contains("press"));
+                }, "the search finds the press by its name first, and only what holds the word")
                 .thenScreenshot(2, "manual_search")
+                .then(0, () -> manual().search("mkdir"))
+                .thenAssert(SETTLE, () -> manual().found().stream().anyMatch(hit -> hit.target().equals(
+                        TestGuide.TABLES) && hit.line().equals("mkdir")),
+                        "a command in a table is found, with the line it stands on")
+                .thenScreenshot(2, "manual_search_words")
                 .then(0, () -> manual().search("nothing by this name"))
                 .thenAssert(SETTLE, () -> manual().found().isEmpty(), "and nothing for a name no entry has")
                 .then(0, ManualClientTests::close)
                 .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 300)
+    public static void manual_backAndForwardReturnWhereTheReaderJumpedFrom(final ClientTestContext ctx) {
+        final AtomicInteger from = new AtomicInteger(-2);
+        final AtomicInteger to = new AtomicInteger(-2);
+        ctx.then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.PRESS))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .then(SETTLE, () -> {
+                    from.set(manual().spread());
+                    manual().goTo(TestGuide.TABLES);
+                    to.set(manual().spread());
+                })
+                .thenAssert(0, () -> to.get() != from.get() && manual().back() && manual().spread() == from.get(),
+                        "Back returns to the press's page the link was followed from")
+                .thenAssert(0, () -> manual().forward() && manual().spread() == to.get(),
+                        "and Forward comes back to the tables")
+                .thenAssert(0, () -> manual().mouseClicked(0.0, 0.0, GLFW.GLFW_MOUSE_BUTTON_4)
+                        && manual().spread() == from.get(), "the mouse's back button goes back too")
+                .then(0, () -> manual().goTo(TestGuide.TABLES))
+                .thenAssert(0, () -> manual().keyPressed(GLFW.GLFW_KEY_BACKSPACE, 0, 0)
+                        && manual().spread() == from.get(), "and so does Backspace")
+                .then(0, () -> manual().goTo(TestGuide.TABLES))
+                .then(0, () -> ctx.pointAt(manual().backButtonPoint()[0], manual().backButtonPoint()[1]))
+                .thenAssert(2, () -> manual().pointing(), "the pointer is a hand over Back, which leads somewhere")
+                .thenScreenshot(1, "manual_back_hover")
+                .then(0, () -> ctx.click(manual().backButtonPoint()[0], manual().backButtonPoint()[1]))
+                .thenAssert(SETTLE, () -> manual().spread() == from.get() && !manual().back(),
+                        "clicking Back goes back, and then there is nowhere further back")
+                .then(0, () -> ctx.pointAt(manual().backButtonPoint()[0], manual().backButtonPoint()[1]))
+                .thenAssert(2, () -> !manual().pointing(), "Back leading nowhere takes no click, and shows no hand")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN)
+                .thenAssert(0, () -> !PointerShape.pointing(), "the arrow comes back when the manual closes");
     }
 
     @ClientTest(timeoutTicks = 300)
@@ -192,10 +237,12 @@ public final class ManualClientTests {
                 })
                 .then(0, ManualClientTests::close)
                 .thenAwaitNoScreen(OPEN)
+                // Forgetting what is held and reading the disk again is the game closed and opened anew.
+                .then(0, ManualPlaces::readAgain)
                 .then(0, () -> GuideClient.open(TestGuide.MANUAL, ""))
                 .thenAwaitScreen(ManualScreen.class, OPEN)
                 .thenAssert(SETTLE, () -> left.get() > 0 && manual().spread() == left.get(),
-                        "the manual opens at the spread it was closed at")
+                        "the manual opens at the spread it was closed at, the game closed in between")
                 .then(0, ManualClientTests::close)
                 .thenAwaitNoScreen(OPEN);
     }

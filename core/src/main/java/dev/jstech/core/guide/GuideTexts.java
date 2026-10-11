@@ -40,8 +40,8 @@ public final class GuideTexts {
     public static final TextKey IF_SOMETHING_GOES_WRONG = TextKey.of("jscore.guide.if_something_goes_wrong",
             "If something goes wrong");
 
-    /** The search on the index. */
-    public static final TextKey SEARCH = TextKey.of("jscore.guide.search", "Search the index");
+    /** The search of the whole manual: its index and every line of its pages. */
+    public static final TextKey SEARCH = TextKey.of("jscore.guide.search", "Search the manual");
     public static final TextKey FOUND = TextKey.of("jscore.guide.found", "%s found");
     public static final TextKey FOUND_NONE = TextKey.of("jscore.guide.found_none", "Nothing by that name");
 
@@ -52,6 +52,12 @@ public final class GuideTexts {
 
     /** The search button at the top of the binder, for a reader who points at it. */
     public static final TextKey TO_SEARCH = TextKey.of("jscore.guide.to_search", "Search");
+    /** The buttons that go back to where the reader came from and forward again, and where each leads. */
+    public static final TextKey BACK = TextKey.of("jscore.guide.back", "Back");
+    public static final TextKey FORWARD = TextKey.of("jscore.guide.forward", "Forward");
+    public static final TextKey LEADS_TO = TextKey.of("jscore.guide.leads_to", "%s, page %s");
+    public static final TextKey NOWHERE_BACK = TextKey.of("jscore.guide.nowhere_back",
+            "Nowhere yet: follow a link, a tab or the contents first");
 
     /** The part number at the foot of a binder's cover. */
     public static final TextKey PART_NUMBER = TextKey.of("jscore.guide.part_number", "Part No. %s");

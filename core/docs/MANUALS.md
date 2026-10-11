@@ -405,13 +405,23 @@ or a special block is left out. J's Computers reads the manuals this way in its 
 
 ## What a player does with it
 
-- Using the manual item opens it at its cover the first time; after that, at the page it was closed at, for as long
-  as the game runs. A click on the cover opens it to its contents.
+- Using the manual item opens it at its cover the first time; after that, at the page it was closed at, the game
+  closed and opened in between: each client keeps where every book was left, in `jstech/manuals.json` in the game's
+  folder. A click on the cover opens it to its contents.
 - The arrows, the arrow keys, Page Up and Page Down and the mouse wheel turn the pages; Home goes to the contents.
-- A line of the contents, a number after "See", a link in a sentence, a line of the index and a chapter's tab each
+- A line of the contents, a number after "See", a link in a sentence, a line of the search and a chapter's tab each
   go to their page; so does an item on the plate under an entry's title whose page is another.
-- The magnifier on the top edge turns the left page into a search of the index that filters as the player types; the
-  right page shows the index around the first thing found.
+- The top edge holds four buttons: the contents, Back and Forward at its left, the search at its right. Back returns
+  to where the reader jumped from (a link, a tab, the contents, a line of the search), and so do the mouse's back
+  button and Backspace; Forward comes back again. Turning pages one by one leaves no mark. Each book keeps its own way
+  back while the game runs.
+- Every control lights and is framed under the pointer, sinks while it is held, and fades when it leads nowhere;
+  the pointer turns into a hand over whatever takes a click, a link's paper lights behind it, and the game's tooltip
+  says where Back and Forward lead. A button's mark is drawn in whichever of the page's ink and the label's colour
+  reads better on the style's cover, which a test checks for every style the series has.
+- The magnifier turns the left page into a search of the whole manual that finds as the player types: the titles and
+  explained words of the index first, then every entry whose pages hold the words, with the line they were found on;
+  the right page shows where the first thing found stands.
 - Holding **M** (the player can change it, "Open Its Page in the Manual") for a moment over an item in any inventory,
   or with the item in hand, opens the manual at its page. While it is held a bar fills in the item's tooltip, from one
   side to the other, or under the crosshair, in the look of the manual it opens. The key has to be let go before it

@@ -175,6 +175,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A mod can have its manuals read their figures from the mod itself as the book is opened, rather than print numbers
   written by hand: a figure in a sentence, written the reader's way, and the rows of a whole table, such as every
   part of a family. A part another mod adds, or a setting changed, is in the next book opened.
+- The manuals have Back and Forward beside the contents on their top edge: Back returns to where the reader followed a
+  link, a tab, the contents or a line of the search from, and so do the mouse's back button and Backspace. A book
+  opens again at the page it was closed at after the game is closed and opened. The search finds words anywhere in
+  the manual, a command in a table or a word in a paragraph, and shows the line it found them on. Every button and
+  arrow lights and is framed under the pointer, sinks while held and fades when it leads nowhere; the pointer turns
+  into a hand over what takes a click; the page-turn arrows are bigger; and a book can hold thirteen chapter tabs, the
+  shown chapter's standing out.
 - The manuals inside the computers, beside the manual pages of each machine's commands, in each system's own help.
   Every desktop has Help: Frames 95's Help Topics with its Contents, Index and Find and a topic window of its own,
   XP's Help and Support Center, 7's Help and Support, Get Help on 10 and 11, KDE's Help Center, the Help of GNOME and

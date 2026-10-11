@@ -34,13 +34,25 @@ class ManualScreenLayoutTest {
     }
 
     @Test
-    void of_fitsTheTabsAboveTheArrow() {
+    void of_fitsThirteenTabsAboveTheArrow() {
         final ManualScreenLayout.Geometry binder = ManualScreenLayout.of(166, 201, true);
 
         final ManualScreenLayout.Rect last = ManualScreenLayout.tab(binder, binder.tabs() - 1);
-        assertTrue(last.y() + last.height() < binder.next().y(), () -> "the last tab ends at "
+        assertTrue(last.y() + last.height() <= binder.next().y(), () -> "the last tab ends at "
                 + (last.y() + last.height()));
-        assertEquals(6, binder.tabs());
+        assertEquals(13, binder.tabs(), "a tab for each chapter of the Guide to Operations");
+    }
+
+    @Test
+    void of_putsContentsBackAndForwardAtTheLeftOfTheTopEdgeAndSearchAtItsRight() {
+        final ManualScreenLayout.Geometry binder = ManualScreenLayout.of(166, 201, true);
+
+        assertEquals(9, binder.contents().x());
+        assertEquals(25, binder.back().x());
+        assertEquals(41, binder.forward().x());
+        assertEquals(331, binder.search().x());
+        assertTrue(binder.contents().y() + binder.contents().height() <= binder.left().y(),
+                "the buttons stand on the cover above the pages");
     }
 
     @Test

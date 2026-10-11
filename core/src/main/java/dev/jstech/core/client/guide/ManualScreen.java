@@ -12,21 +12,26 @@ import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.api.client.GuideBlockRenderers;
 import dev.jstech.core.api.client.IGuideBlockRenderer;
+import dev.jstech.core.client.gui.PointerShape;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.gui.ManualButtonLook;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideBook;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.GuideContents;
+import dev.jstech.core.guide.GuideHistory;
 import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.GuidePiece;
+import dev.jstech.core.guide.GuideSearch;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.guide.TextSize;
 import dev.jstech.core.gui.layout.ManualScreenLayout;
 import dev.jstech.core.palette.PaletteRoles;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,12 +59,14 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * An open manual: the binder or the folder in its style, one page or two at a time, with the chapter tabs at a
- * binder's edge, the contents and search buttons on its top edge and the arrows on its sides.
+ * binder's edge, the contents, back, forward and search buttons on its top edge and the arrows on its sides.
  *
- * <p>It opens at its cover, or at the page of an entry. Clicking a line of the contents, a number after "See", a line
- * of the index or a chapter's tab goes there; the arrows, the arrow keys, Page Up and Page Down and the mouse wheel
- * turn the pages; the search button turns the left page into a search of the index that filters as the player types.
- * Pointing at an item shows its name and what the game says of it.
+ * <p>It opens at its cover, at the page of an entry, or where the player left it, the game closed in between.
+ * Clicking a line of the contents, a link, a line of the search or a chapter's tab goes there, and Back, the mouse's
+ * back button or Backspace returns, Forward comes back again; the arrows, the arrow keys, Page Up and Page Down and
+ * the mouse wheel turn the pages; the search button turns the left page into a search of the whole manual that finds
+ * as the player types. Every control lights under the pointer, which turns into a hand over what takes a click, and
+ * the game's tooltip says where a button leads. Pointing at an item shows its name and what the game says of it.
  *
  * <p>A style of drawings draws its sheets as drawings are drawn: the grid, the frame with its zones, and the title
  * block in the corner in place of a page's head and foot.
@@ -75,20 +82,27 @@ public final class ManualScreen extends Screen {
     private final Map<String, Integer> tabColours = new HashMap<>();
     private final Map<String, CompoundTag> customData = new HashMap<>();
     private final List<String> chapters = new ArrayList<>();
+    /** Where the reader jumped from in this manual: the book's own way back. */
+    private final GuideHistory history;
     private GuideBook book;
     private ManualScreenLayout.Geometry geometry;
     private int left;
     private int top;
     /** The spread shown: -1 is the closed cover, then 0 for the first page or pair of pages. */
     private int spread = -1;
+    /** Whether the manual has been laid out once and put at its first page. */
+    private boolean placed;
     private boolean searching;
     private EditBox searchField;
     /** What the search found the last time it was asked, for the book and the words it was asked with. */
-    private List<GuideBook.IndexLine> foundCache = List.of();
+    private List<GuideSearch.Hit> foundCache = List.of();
     private GuideBook foundBook;
     private String foundWords;
     private ItemStack hoveredItem = ItemStack.EMPTY;
-    private Component hoveredWords;
+    private List<Component> hoveredWords = List.of();
+    /** The control held down under the pointer, drawn pressed until the button is let go; null when none is. */
+    @Nullable
+    private ManualScreenLayout.Rect pressed;
 
     /** How far below the lines of the index its dots sit, at the size they are drawn. */
     private static final int DOT_DROP = 6;
@@ -112,7 +126,6 @@ public final class ManualScreen extends Screen {
     /** How far apart the items of a plate stand, and how long it shows a row before turning to the next. */
     private static final int PLATE_PITCH = 18;
     private static final int PLATE_TURN_MILLIS = 2000;
-    private static final double SHADOW = 0.6;
     /** A drawing's grid, and its frame's zones: six across, four down. */
     private static final int GRID = 10;
     private static final int ZONES_ACROSS = 6;
@@ -129,20 +142,22 @@ public final class ManualScreen extends Screen {
     private static final int BALLOON_X = 80;
     private static final int BALLOON_STEP = 48;
     private static final int BALLOON_ROOM = 48;
-    /*
-     * The spread each manual was left open at, by its id, for as long as the game runs: a manual opened again from its
-     * item opens where it was closed, as a book does.
-     */
-    private static final Map<String, Integer> LEFT_AT = new HashMap<>();
+    /** The highlight behind a link under the pointer: its colour most of the way to white. */
+    private static final double LINK_LIGHT = 0.8;
+    /** How far a line the search found is set in under its entry's title. */
+    private static final int LINE_INDENT = 10;
+    /** The mouse's side buttons, back and forward, as the game numbers them. */
+    private static final int MOUSE_BACK = GLFW.GLFW_MOUSE_BUTTON_4;
+    private static final int MOUSE_FORWARD = GLFW.GLFW_MOUSE_BUTTON_5;
+    /* The way back of each manual, by its id, for as long as the game runs: the history is the book's own. */
+    private static final Map<String, GuideHistory> HISTORIES = new HashMap<>();
 
     public ManualScreen(final GuideManual manual, final GuideStyle style, final String openAt) {
         super(GameText.component(GuideTexts.CONTENTS));
         this.manual = manual;
         this.style = style;
         this.openAt = openAt == null ? "" : openAt;
-        if (this.openAt.isEmpty()) {
-            this.spread = LEFT_AT.getOrDefault(manual.id(), -1);
-        }
+        this.history = HISTORIES.computeIfAbsent(manual.id(), id -> new GuideHistory());
     }
 
     @Override
@@ -174,11 +189,16 @@ public final class ManualScreen extends Screen {
         this.searchField.setValue(typed);
         this.searchField.setVisible(this.searching);
         this.addRenderableWidget(this.searchField);
-        if (keep >= 0) {
+        if (this.placed) {
             this.spread = Math.min(keep, this.lastSpread());
         } else if (!this.openAt.isEmpty()) {
             this.book.pageOf(this.openAt).ifPresent(this::goToPage);
+        } else {
+            ManualPlaces.of(this.manual.id()).filter(place -> !place.cover())
+                    .ifPresent(place -> this.book.pageOf(place.target())
+                            .ifPresent(page -> this.goToPage(page + place.pagesIn())));
         }
+        this.placed = true;
     }
 
     /** The spread shown now: -1 for the cover. */
@@ -222,11 +242,25 @@ public final class ManualScreen extends Screen {
     public boolean goTo(final String target) {
         final OptionalInt page = this.book.pageOf(target);
         if (page.isPresent()) {
-            this.goToPage(page.getAsInt());
+            this.jump(page.getAsInt());
             return true;
         }
         return GuideLibrary.loaded().manualForTarget(target).filter(other -> !other.id().equals(this.manual.id()))
                 .map(other -> GuideClient.open(other.id(), target)).orElse(false);
+    }
+
+    /** Goes back to where the reader jumped from, as the Back button does; false when there is nowhere to go. */
+    public boolean back() {
+        final OptionalInt place = this.history.back(this.spread);
+        place.ifPresent(this::showSpread);
+        return place.isPresent();
+    }
+
+    /** Goes forward again after going back, as the Forward button does; false when there is nowhere to go. */
+    public boolean forward() {
+        final OptionalInt place = this.history.forward(this.spread);
+        place.ifPresent(this::showSpread);
+        return place.isPresent();
     }
 
     /**
@@ -257,6 +291,12 @@ public final class ManualScreen extends Screen {
         return this.linkPointOn(this.geometry.right(), this.rightPage(first), target);
     }
 
+    /** The middle of the Back button, in the screen's coordinates (client tests point at it). */
+    public int[] backButtonPoint() {
+        final ManualScreenLayout.Rect back = this.geometry.back();
+        return new int[] {this.left + back.x() + back.width() / 2, this.top + back.y() + back.height() / 2};
+    }
+
     /** Opens or closes the search on the left page. */
     public void toggleSearch() {
         this.searching = !this.searching;
@@ -276,24 +316,22 @@ public final class ManualScreen extends Screen {
         this.searchField.setValue(words);
     }
 
-    /** The index lines the search finds for what is typed, in index order. */
-    public List<GuideBook.IndexLine> found() {
-        final String wanted = this.searchField == null ? "" : this.searchField.getValue().strip()
-                .toLowerCase(Locale.ROOT);
+    /** What the search finds for what is typed: the index's lines first, then the entries found in their words. */
+    public List<GuideSearch.Hit> found() {
+        final String wanted = this.searchField == null ? "" : this.searchField.getValue();
         // Asked several times a frame while the search is open, yet it only changes when the player types.
         if (this.foundBook == this.book && wanted.equals(this.foundWords)) {
             return this.foundCache;
         }
-        final List<GuideBook.IndexLine> found = new ArrayList<>();
-        for (final GuideBook.IndexLine line : this.book.index()) {
-            if (wanted.isEmpty() || line.text().toLowerCase(Locale.ROOT).contains(wanted)) {
-                found.add(line);
-            }
-        }
-        this.foundCache = List.copyOf(found);
+        this.foundCache = GuideSearch.find(this.book, wanted);
         this.foundBook = this.book;
         this.foundWords = wanted;
         return this.foundCache;
+    }
+
+    /** Whether the pointer is a pointing hand now, over something that takes a click (client tests ask). */
+    public boolean pointing() {
+        return PointerShape.pointing();
     }
 
     @Override
@@ -301,10 +339,11 @@ public final class ManualScreen extends Screen {
         return false;
     }
 
-    /* The page the manual is closed at is where it opens next time from its item. */
+    /* The page the manual is closed at is where it opens next time from its item, the game closed in between. */
     @Override
     public void removed() {
-        LEFT_AT.put(this.manual.id(), this.spread);
+        ManualPlaces.leave(this.manual.id(), this.place());
+        PointerShape.reset();
         super.removed();
     }
 
@@ -312,7 +351,7 @@ public final class ManualScreen extends Screen {
     public void renderBackground(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         super.renderBackground(g, mouseX, mouseY, partialTick);
         this.hoveredItem = ItemStack.EMPTY;
-        this.hoveredWords = null;
+        this.hoveredWords = List.of();
         g.pose().pushPose();
         g.pose().translate(this.left, this.top, 0.0F);
         final int mx = mouseX - this.left;
@@ -328,15 +367,22 @@ public final class ManualScreen extends Screen {
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
+        PointerShape.point(this.clickable(mouseX - this.left, mouseY - this.top));
         if (!this.hoveredItem.isEmpty()) {
             g.renderTooltip(this.font, this.hoveredItem, mouseX, mouseY);
-        } else if (this.hoveredWords != null) {
-            g.renderTooltip(this.font, this.hoveredWords, mouseX, mouseY);
+        } else if (!this.hoveredWords.isEmpty()) {
+            g.renderComponentTooltip(this.font, this.hoveredWords, mouseX, mouseY);
         }
     }
 
     @Override
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
+        if (button == MOUSE_BACK) {
+            return this.back();
+        }
+        if (button == MOUSE_FORWARD) {
+            return this.forward();
+        }
         if (super.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }
@@ -346,9 +392,21 @@ public final class ManualScreen extends Screen {
             this.spread = 0;
             return true;
         }
+        for (final ManualScreenLayout.Rect control : List.of(this.geometry.contents(), this.geometry.back(),
+                this.geometry.forward(), this.geometry.search(), this.geometry.previous(), this.geometry.next())) {
+            if (control.contains(mx, my)) {
+                this.pressed = control;
+            }
+        }
         if (this.geometry.contents().contains(mx, my)) {
-            this.goToPage(this.book.contents());
+            this.jump(this.book.contents());
             return true;
+        }
+        if (this.geometry.back().contains(mx, my)) {
+            return this.back();
+        }
+        if (this.geometry.forward().contains(mx, my)) {
+            return this.forward();
         }
         if (this.geometry.search().contains(mx, my)) {
             this.toggleSearch();
@@ -365,8 +423,22 @@ public final class ManualScreen extends Screen {
                 return this.goTo(this.chapters.get(i));
             }
         }
+        if (this.searching && this.geometry.left().contains(mx, my)) {
+            final GuideSearch.Hit hit = this.searchResultAt(my);
+            if (hit != null && hit.page() >= 0) {
+                this.jump(hit.page());
+                return true;
+            }
+            return false;
+        }
         final String link = this.linkAt(mx, my);
         return !link.isEmpty() && this.goTo(link);
+    }
+
+    @Override
+    public boolean mouseReleased(final double mouseX, final double mouseY, final int button) {
+        this.pressed = null;
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
@@ -383,9 +455,10 @@ public final class ManualScreen extends Screen {
             case GLFW.GLFW_KEY_RIGHT, GLFW.GLFW_KEY_PAGE_DOWN -> this.turn(1);
             case GLFW.GLFW_KEY_LEFT, GLFW.GLFW_KEY_PAGE_UP -> this.turn(-1);
             case GLFW.GLFW_KEY_HOME -> {
-                this.goToPage(this.book.contents());
+                this.jump(this.book.contents());
                 yield true;
             }
+            case GLFW.GLFW_KEY_BACKSPACE -> this.back();
             default -> super.keyPressed(key, scanCode, modifiers);
         };
     }
@@ -406,6 +479,76 @@ public final class ManualScreen extends Screen {
     private int lastSpread() {
         final int pages = this.book.pages().size();
         return this.style.spread() ? (pages - 1) / 2 : pages - 1;
+    }
+
+    /** Jumps to the spread holding that page, leaving a mark Back returns to when it is another spread. */
+    private void jump(final int page) {
+        final int from = this.spread;
+        this.goToPage(page);
+        if (this.spread != from) {
+            this.history.left(from);
+        }
+    }
+
+    /** Shows a spread Back or Forward leads to, or the cover. */
+    private void showSpread(final int to) {
+        if (this.searching) {
+            this.toggleSearch();
+        }
+        this.spread = Math.max(-1, Math.min(this.lastSpread(), to));
+    }
+
+    /**
+     * Where the manual stands now, to open there next time: the entry, section or chapter the first page shown belongs
+     * to and how many pages into it, or the cover.
+     */
+    private ManualPlaces.Place place() {
+        final int first = this.style.spread() ? this.spread * 2 : this.spread;
+        String target = "";
+        int start = -1;
+        for (final Map.Entry<String, Integer> at : this.book.targets().entrySet()) {
+            if (at.getValue() <= first && at.getValue() > start) {
+                target = at.getKey();
+                start = at.getValue();
+            }
+        }
+        return this.spread < 0 || target.isEmpty() ? ManualPlaces.Place.COVER
+                : new ManualPlaces.Place(target, first - start);
+    }
+
+    /** Whether something under the pointer takes a click: the closed cover, a control, a tab, a link, a result. */
+    private boolean clickable(final double mx, final double my) {
+        if (this.spread < 0) {
+            return ManualScreenLayout.cover(this.geometry).contains(mx, my);
+        }
+        if (this.geometry.contents().contains(mx, my) || this.geometry.search().contains(mx, my)
+                || this.geometry.back().contains(mx, my) && this.history.behind().isPresent()
+                || this.geometry.forward().contains(mx, my) && this.history.ahead().isPresent()
+                || this.geometry.previous().contains(mx, my) || this.geometry.next().contains(mx, my)
+                && this.spread < this.lastSpread()) {
+            return true;
+        }
+        for (int i = 0; i < this.tabCount(); i++) {
+            if (ManualScreenLayout.tab(this.geometry, i).contains(mx, my)) {
+                return true;
+            }
+        }
+        if (this.searching && this.geometry.left().contains(mx, my)) {
+            return this.searchResultAt(my) != null;
+        }
+        return !this.linkAt(mx, my).isEmpty();
+    }
+
+    /** What a spread is, as a button leading there names it: its section, and the page it starts on. */
+    private String describe(final int to) {
+        final int first = this.style.spread() ? to * 2 : to;
+        if (first < 0 || first >= this.book.pages().size()) {
+            return this.text(this.manual.titleKey());
+        }
+        final GuideBook.Page page = this.book.pages().get(first);
+        final GuideBook.Page named = this.style.spread() && first + 1 < this.book.pages().size()
+                && !this.book.pages().get(first + 1).header().isEmpty() ? this.book.pages().get(first + 1) : page;
+        return this.text(GuideTexts.LEADS_TO.key(), named.header(), page.folio());
     }
 
     /** How many chapter tabs stand at the edge: a binder's, as many as fit; a folder has none. */
@@ -617,9 +760,8 @@ public final class ManualScreen extends Screen {
 
     private void drawOpen(final GuiGraphics g, final int mx, final int my) {
         final int fill = this.colour(GuideStyle.COVER);
-        this.bevel(g, 0, 0, this.geometry.coverRight(), this.geometry.height(), fill,
-                this.colour(GuideStyle.COVER_EDGE), this.shadowOf(fill));
-        this.drawTabs(g, mx, my);
+        ManualControls.bevel(g, 0, 0, this.geometry.coverRight(), this.geometry.height(), fill,
+                this.colour(GuideStyle.COVER_EDGE), ManualButtonLook.shaded(fill));
         final int first = this.style.spread() ? this.spread * 2 : this.spread;
         this.drawPage(g, this.geometry.left(), first, true, mx, my);
         if (this.geometry.right() != null) {
@@ -628,13 +770,22 @@ public final class ManualScreen extends Screen {
                 this.drawRings(g);
             }
         }
-        this.drawButton(g, this.geometry.contents(), false, mx, my);
-        this.drawButton(g, this.geometry.search(), true, mx, my);
+        // The tabs come after the pages, so the one shown and the one pointed at reach over the page's edge.
+        this.drawTabs(g, mx, my);
+        this.drawButton(g, this.geometry.contents(), ManualControls.Kind.CONTENTS, true,
+                List.of(GameText.component(GuideTexts.CONTENTS)), mx, my);
+        this.drawButton(g, this.geometry.back(), ManualControls.Kind.BACK, this.history.behind().isPresent(),
+                this.leadsTo(GuideTexts.BACK, this.history.behind()), mx, my);
+        this.drawButton(g, this.geometry.forward(), ManualControls.Kind.FORWARD, this.history.ahead().isPresent(),
+                this.leadsTo(GuideTexts.FORWARD, this.history.ahead()), mx, my);
+        this.drawButton(g, this.geometry.search(), ManualControls.Kind.SEARCH, true,
+                List.of(GameText.component(GuideTexts.TO_SEARCH)), mx, my);
         if (this.spread > -1) {
-            this.drawArrow(g, this.geometry.previous(), true);
+            ManualControls.arrow(g, this.geometry.previous(), true, this.lookOf(this.geometry.previous(), true, mx,
+                    my));
         }
         if (this.spread < this.lastSpread()) {
-            this.drawArrow(g, this.geometry.next(), false);
+            ManualControls.arrow(g, this.geometry.next(), false, this.lookOf(this.geometry.next(), true, mx, my));
         }
     }
 
@@ -646,23 +797,42 @@ public final class ManualScreen extends Screen {
             final boolean on = this.manual.holdsEvery()
                     ? GuideChapter.namespaceOf(chapter).equals(GuideChapter.namespaceOf(current))
                     : chapter.equals(current);
-            final int x = tab.x() - (on ? 2 : 0);
-            g.fill(x, tab.y(), tab.x() + tab.width(), tab.y() + tab.height(), this.tabColours.get(chapter));
-            Draw.outline(g, x, tab.y(), tab.x() + tab.width() - x, tab.height(), this.shadowOf(
-                    this.tabColours.get(chapter)));
-            final String number = String.valueOf(i + 1);
-            final int textX = this.geometry.coverRight() + (tab.x() + tab.width() - this.geometry.coverRight()) / 2
-                    - GuideFonts.width(this.font, number, TextSize.BOLD, this.style) / 2;
-            GuideFonts.draw(g, this.font, number, on ? TextSize.BOLD : TextSize.BODY, this.style, textX,
-                    tab.y() + (tab.height() - 8) / 2, this.colour(GuideStyle.TAB_INK));
-            if (tab.contains(mx, my)) {
+            final boolean pointed = tab.contains(mx, my);
+            ManualControls.tab(g, this.font, this.style, tab, i + 1, on, pointed, this.tabColours.get(chapter),
+                    this.colour(GuideStyle.TAB_INK));
+            if (pointed) {
                 // A tab of a manual holding every chapter stands for the mod, named by its main chapter.
                 final String named = this.manual.holdsEvery() ? GuideChapter.namespaceOf(chapter) : chapter;
-                this.hoveredWords = Component.literal(this.text(GuideLibrary.loaded().chapter(named)
+                this.hoveredWords = List.of(Component.literal(this.text(GuideLibrary.loaded().chapter(named)
                         .or(() -> GuideLibrary.loaded().chapter(chapter)).map(GuideChapter::titleKey)
-                        .orElse(chapter)));
+                        .orElse(chapter))));
             }
         }
+    }
+
+    /** A button on the top edge in the look of what it is doing, and what it says under the pointer. */
+    private void drawButton(final GuiGraphics g, final ManualScreenLayout.Rect button, final ManualControls.Kind kind,
+                            final boolean leads, final List<Component> says, final int mx, final int my) {
+        ManualControls.button(g, button, kind, this.lookOf(button, leads, mx, my));
+        if (button.contains(mx, my)) {
+            this.hoveredWords = says;
+        }
+    }
+
+    /** What Back or Forward says under the pointer: its name, and where it leads or that it leads nowhere yet. */
+    private List<Component> leadsTo(final TextKey name, final OptionalInt place) {
+        return List.of(GameText.component(name), Component.literal(place.isPresent()
+                ? this.describe(place.getAsInt()) : this.text(GuideTexts.NOWHERE_BACK.key())));
+    }
+
+    /** The look of a control in the state it is in: leading nowhere, held down, under the pointer, or at rest. */
+    private ManualButtonLook lookOf(final ManualScreenLayout.Rect control, final boolean leads, final int mx,
+                                    final int my) {
+        final ManualButtonLook.State state = !leads ? ManualButtonLook.State.DISABLED
+                : control.equals(this.pressed) && control.contains(mx, my) ? ManualButtonLook.State.PRESSED
+                : control.contains(mx, my) ? ManualButtonLook.State.HOVER : ManualButtonLook.State.NORMAL;
+        return ManualButtonLook.of(this.colour(GuideStyle.COVER_EDGE), this.colour(GuideStyle.INK),
+                this.colour(GuideStyle.LABEL), state);
     }
 
     private String currentChapter() {
@@ -954,6 +1124,11 @@ public final class ManualScreen extends Screen {
         final int width = GuideFonts.width(this.font, text.text(), text.size(), this.style);
         final boolean pointed = !text.link().isEmpty() && mx >= x && mx < x + width && my >= y - 1
                 && my < y + text.size().lineHeight();
+        if (pointed && !this.drawing()) {
+            // A link under the pointer lights the paper behind it with a pale wash of its own colour.
+            g.fill(x - 1, y - 1, x + width + 1, y + LINK_DROP + 1, ManualButtonLook.lighten(
+                    this.colour(GuideStyle.LINK, chapter), LINK_LIGHT));
+        }
         final String role = pointed && this.drawing() ? GuideStyle.ACCENT : text.colour();
         GuideFonts.draw(g, this.font, text.text(), text.size(), this.style, x, y, this.colour(role, chapter));
         if (!text.link().isEmpty() && !this.drawing()) {
@@ -1214,35 +1389,62 @@ public final class ManualScreen extends Screen {
         g.fill(field.x(), field.y(), field.x() + field.width(), field.y() + field.height(),
                 this.colour(GuideStyle.LABEL));
         Draw.outline(g, field.x(), field.y(), field.width(), field.height(), this.colour(GuideStyle.RULE));
-        final String head = this.text(GuideTexts.INDEX.key()).toUpperCase(Locale.ROOT);
+        final String head = this.text(GuideTexts.SEARCH.key()).toUpperCase(Locale.ROOT);
         final int margin = this.style.margin();
         GuideFonts.draw(g, this.font, head, TextSize.SMALL, this.style, page.x() + margin,
                 page.y() + GuideLayout.HEADER_Y, this.colour(GuideStyle.FAINT));
-        final List<GuideBook.IndexLine> found = this.found();
-        int y = field.y() + field.height() + 4;
+        final List<GuideSearch.Hit> found = this.found();
         final String count = found.isEmpty() ? this.text(GuideTexts.FOUND_NONE.key())
                 : this.text(GuideTexts.FOUND.key(), found.size());
-        GuideFonts.draw(g, this.font, count, TextSize.SMALL, this.style, page.x() + margin, y,
-                this.colour(GuideStyle.FAINT));
-        y += TextSize.SMALL.lineHeight() + 4;
-        final int lineHeight = TextSize.BODY.lineHeight() + 4;
-        final int bottom = page.y() + GuideLayout.bottom(this.style, this.style.pages().columns() - 1);
-        for (final GuideBook.IndexLine line : found) {
-            if (y + lineHeight > bottom) {
-                break;
+        GuideFonts.draw(g, this.font, count, TextSize.SMALL, this.style, page.x() + margin,
+                field.y() + field.height() + 4, this.colour(GuideStyle.FAINT));
+        final int width = page.width() - 2 * margin;
+        for (final ResultRow row : this.resultRows()) {
+            final GuideSearch.Hit hit = row.hit();
+            this.drawLeader(g, page.x() + margin, row.y(), new GuidePiece.Leader(0, 0, width, "", hit.text(),
+                    hit.folio(), hit.term() ? TextSize.BODY : TextSize.BOLD, GuideStyle.INK, hit.target(),
+                    hit.icon()), "", mx, my);
+            if (!hit.line().isEmpty()) {
+                // Where the words were found, set in under the entry's title: the line of its page that holds them.
+                GuideFonts.draw(g, this.font, this.fit(hit.line(), width - LINE_INDENT, TextSize.SMALL),
+                        TextSize.SMALL, this.style, page.x() + margin + LINE_INDENT,
+                        row.y() + TextSize.BODY.lineHeight() + 1, this.colour(GuideStyle.FAINT));
             }
-            this.drawLeader(g, page.x() + margin, y, new GuidePiece.Leader(0, 0, page.width() - 2 * margin, "",
-                    line.text(), line.folio(), line.term() ? TextSize.BODY : TextSize.BOLD, GuideStyle.INK,
-                    line.target(), line.icon()), "", mx, my);
-            y += lineHeight;
         }
     }
 
-    /** The target of the link under the pointer, on either page or among the search's results, or empty. */
-    private String linkAt(final double mx, final double my) {
-        if (this.searching && this.geometry.left().contains(mx, my)) {
-            return this.searchResultAt(mx, my);
+    /** Where each thing the search found stands on the left page, as many as fit above its foot. */
+    private List<ResultRow> resultRows() {
+        final ManualScreenLayout.Rect page = this.geometry.left();
+        final ManualScreenLayout.Rect field = ManualScreenLayout.searchField(this.geometry, this.style.margin());
+        final int bottom = page.y() + GuideLayout.bottom(this.style, this.style.pages().columns() - 1);
+        final List<ResultRow> rows = new ArrayList<>();
+        int y = field.y() + field.height() + 4 + TextSize.SMALL.lineHeight() + 4;
+        for (final GuideSearch.Hit hit : this.found()) {
+            final int height = TextSize.BODY.lineHeight() + 4 + (hit.line().isEmpty() ? 0
+                    : TextSize.SMALL.lineHeight());
+            if (y + height > bottom) {
+                break;
+            }
+            rows.add(new ResultRow(hit, y, height));
+            y += height;
         }
+        return rows;
+    }
+
+    /** The thing the search found under a height of the left page, or null. */
+    @Nullable
+    private GuideSearch.Hit searchResultAt(final double my) {
+        for (final ResultRow row : this.resultRows()) {
+            if (my >= row.y() - 1 && my < row.y() + row.height() - 1) {
+                return row.hit();
+            }
+        }
+        return null;
+    }
+
+    /** The target of the link under the pointer, on either page, or empty. */
+    private String linkAt(final double mx, final double my) {
         final int first = this.style.spread() ? this.spread * 2 : this.spread;
         final String onLeft = this.linkOn(this.geometry.left(), first, mx, my);
         if (!onLeft.isEmpty() || this.geometry.right() == null) {
@@ -1252,14 +1454,17 @@ public final class ManualScreen extends Screen {
     }
 
     /**
-     * The page on the right: the one after the left, or, while the search is open, the page of the index where the
-     * first thing found stands, so the reader sees it among its neighbours.
+     * The page on the right: the one after the left, or, while the search is open, where the first thing found
+     * stands, so the reader sees it among its neighbours: the page its words were found on, or its line of the index.
      */
     private int rightPage(final int first) {
         if (!this.searching) {
             return first + 1;
         }
-        final List<GuideBook.IndexLine> found = this.found();
+        final List<GuideSearch.Hit> found = this.found();
+        if (!found.isEmpty() && !found.getFirst().line().isEmpty()) {
+            return found.getFirst().page();
+        }
         if (!found.isEmpty()) {
             final String wanted = found.getFirst().text();
             for (int page = this.book.indexAt(); page < this.book.pages().size(); page++) {
@@ -1302,25 +1507,9 @@ public final class ManualScreen extends Screen {
         return "";
     }
 
-    private String searchResultAt(final double mx, final double my) {
-        final ManualScreenLayout.Rect field = ManualScreenLayout.searchField(this.geometry, this.style.margin());
-        final int lineHeight = TextSize.BODY.lineHeight() + 4;
-        final int first = field.y() + field.height() + 4 + TextSize.SMALL.lineHeight() + 4;
-        if (my < first) {
-            return "";
-        }
-        final int row = (int) ((my - first) / lineHeight);
-        final List<GuideBook.IndexLine> found = this.found();
-        return row >= 0 && row < found.size() ? found.get(row).target() : "";
-    }
-
     private void bevel(final GuiGraphics g, final int x, final int y, final int width, final int height,
                        final int fill, final int light, final int dark) {
-        g.fill(x, y, x + width, y + height, fill);
-        g.fill(x, y, x + width, y + 1, light);
-        g.fill(x, y, x + 1, y + height, light);
-        g.fill(x, y + height - 1, x + width, y + height, dark);
-        g.fill(x + width - 1, y, x + width, y + height, dark);
+        ManualControls.bevel(g, x, y, width, height, fill, light, dark);
     }
 
     private void drawRings(final GuiGraphics g) {
@@ -1335,40 +1524,6 @@ public final class ManualScreen extends Screen {
             g.fill(to - 5, y - 1, to - 2, y + 4, hole);
             g.fill(from, y, to, y + 3, ring);
             g.fill(from, y + 3, to, y + 4, this.shadowOf(ring));
-        }
-    }
-
-    private void drawButton(final GuiGraphics g, final ManualScreenLayout.Rect button, final boolean search,
-                            final int mx, final int my) {
-        final int fill = this.colour(GuideStyle.COVER_EDGE);
-        this.bevel(g, button.x(), button.y(), button.width(), button.height(), fill, this.lighter(fill),
-                this.shadowOf(fill));
-        final int mark = this.colour(GuideStyle.LABEL);
-        if (search) {
-            final int x = button.x() + 4;
-            final int y = button.y() + 1;
-            g.fill(x + 1, y, x + 3, y + 1, mark);
-            g.fill(x, y + 1, x + 1, y + 3, mark);
-            g.fill(x + 3, y + 1, x + 4, y + 3, mark);
-            g.fill(x + 1, y + 3, x + 3, y + 4, mark);
-            g.fill(x + 4, y + 4, x + 5, y + 5, mark);
-            g.fill(x + 5, y + 5, x + 6, y + 6, mark);
-        } else {
-            for (final int line : new int[] {2, 4, 6}) {
-                g.fill(button.x() + 3, button.y() + line - 1, button.x() + 11, button.y() + line, mark);
-            }
-        }
-        if (button.contains(mx, my)) {
-            this.hoveredWords = GameText.component(search ? GuideTexts.TO_SEARCH : GuideTexts.CONTENTS);
-        }
-    }
-
-    private void drawArrow(final GuiGraphics g, final ManualScreenLayout.Rect arrow, final boolean back) {
-        final int colour = this.colour(GuideStyle.LABEL);
-        for (int column = 0; column < arrow.width(); column++) {
-            final int reach = back ? column : arrow.width() - 1 - column;
-            g.fill(arrow.x() + column, arrow.y() + arrow.height() / 2 - reach, arrow.x() + column + 1,
-                    arrow.y() + arrow.height() / 2 + reach + 1, colour);
         }
     }
 
@@ -1396,27 +1551,17 @@ public final class ManualScreen extends Screen {
 
     /** The colour darkened, for the shaded edge of a bevel. */
     private int shadowOf(final int colour) {
-        final int red = (int) ((colour >> 16 & 0xFF) * SHADOW);
-        final int green = (int) ((colour >> 8 & 0xFF) * SHADOW);
-        final int blue = (int) ((colour & 0xFF) * SHADOW);
-        return colour >>> 24 << 24 | red << 16 | green << 8 | blue;
+        return ManualButtonLook.shaded(colour);
     }
 
     /** The colour lightened, for the lit edge of a bevel. */
     private int lighter(final int colour) {
-        final int red = colour >> 16 & 0xFF;
-        final int green = colour >> 8 & 0xFF;
-        final int blue = colour & 0xFF;
-        return colour >>> 24 << 24 | (red + (255 - red) * 2 / 5) << 16 | (green + (255 - green) * 2 / 5) << 8
-                | (blue + (255 - blue) * 2 / 5);
+        return ManualButtonLook.lit(colour);
     }
 
     /** The colour {@code share} of the way from {@code from} to {@code to}. */
     private int mix(final int from, final int to, final double share) {
-        final int red = (int) Math.round((from >> 16 & 0xFF) + ((to >> 16 & 0xFF) - (from >> 16 & 0xFF)) * share);
-        final int green = (int) Math.round((from >> 8 & 0xFF) + ((to >> 8 & 0xFF) - (from >> 8 & 0xFF)) * share);
-        final int blue = (int) Math.round((from & 0xFF) + ((to & 0xFF) - (from & 0xFF)) * share);
-        return from >>> 24 << 24 | red << 16 | green << 8 | blue;
+        return ManualButtonLook.mix(from, to, share);
     }
 
     /**
@@ -1448,5 +1593,9 @@ public final class ManualScreen extends Screen {
                 g.fill(cursorX, this.getY() - 1, cursorX + 1, this.getY() + 9, this.ink);
             }
         }
+    }
+
+    /** A thing the search found, where its row stands on the left page and how tall the row is. */
+    private record ResultRow(GuideSearch.Hit hit, int y, int height) {
     }
 }

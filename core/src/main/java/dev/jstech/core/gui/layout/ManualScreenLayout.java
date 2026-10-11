@@ -9,9 +9,9 @@ package dev.jstech.core.gui.layout;
 
 /**
  * Where everything sits on an open manual: the binder's covers round one page or two, the chapter tabs standing out
- * at the right edge, the contents and search buttons on the cover's top edge, the page-turn arrows on its sides, and
- * the search field on the left page. The screen draws from these, and a test checks nothing collides for the sizes a
- * style can ask for.
+ * at the right edge, the buttons on the cover's top edge (the contents, back and forward at its left, the search at
+ * its right), the page-turn arrows on its sides, and the search field on the left page. The screen draws from these,
+ * and a test checks nothing collides for the sizes a style can ask for.
  *
  * <p>Every x and y is from the top left of the binder, which the screen centres.
  */
@@ -19,24 +19,33 @@ public final class ManualScreenLayout {
 
     /** The vinyl round the pages, at the sides and the foot. */
     public static final int COVER = 7;
-    /** The vinyl over the pages, deeper than the rest so the two buttons stand on it. */
+    /** The vinyl over the pages, deeper than the rest so the buttons stand on it. */
     public static final int TOP = 10;
     /** The spine between two pages, the rings through it. */
     public static final int GUTTER = 8;
     /** How far the chapter tabs stand out past the cover's right edge. */
     public static final int TAB_OUT = 10;
-    public static final int TAB_WIDTH = 17;
-    public static final int TAB_HEIGHT = 22;
-    public static final int TAB_PITCH = 26;
-    public static final int TAB_TOP = 22;
+    /**
+     * A tab as it stands when its chapter is not shown; the shown chapter's reaches two pixels further over the page
+     * and one further out, the one under the pointer a pixel over the page. Twelve pixels tall, two apart, thirteen
+     * fit above the arrow, a chapter of the Guide each.
+     */
+    public static final int TAB_WIDTH = 16;
+    public static final int TAB_HEIGHT = 12;
+    public static final int TAB_PITCH = 14;
+    public static final int TAB_TOP = 12;
+    /** How far into the cover the tabs start: from the page's edge. */
+    public static final int TAB_UNDER = COVER;
     public static final int BUTTON_WIDTH = 14;
-    public static final int BUTTON_HEIGHT = 8;
-    public static final int BUTTON_Y = 1;
+    public static final int BUTTON_HEIGHT = 9;
+    public static final int BUTTON_Y = 0;
     public static final int BUTTON_INSET = 2;
-    public static final int ARROW_WIDTH = 5;
-    public static final int ARROW_HEIGHT = 9;
+    /** The room between two buttons side by side. */
+    public static final int BUTTON_GAP = 2;
+    public static final int ARROW_WIDTH = 7;
+    public static final int ARROW_HEIGHT = 13;
     /** How far above the binder's foot the arrows stand. */
-    public static final int ARROW_RISE = 22;
+    public static final int ARROW_RISE = 26;
     public static final int SEARCH_HEIGHT = 14;
     /** Where the search field stands on the left page, under the page's head. */
     public static final int SEARCH_Y = 22;
@@ -56,13 +65,16 @@ public final class ManualScreenLayout {
         final Rect left = new Rect(COVER, TOP, pageWidth, pageHeight);
         final Rect right = spread ? new Rect(COVER + pageWidth + GUTTER, TOP, pageWidth, pageHeight) : null;
         final Rect contents = new Rect(COVER + BUTTON_INSET, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT);
+        final Rect back = new Rect(contents.x() + BUTTON_WIDTH + BUTTON_GAP, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT);
+        final Rect forward = new Rect(back.x() + BUTTON_WIDTH + BUTTON_GAP, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT);
         final Rect search = new Rect(coverRight - COVER - BUTTON_INSET - BUTTON_WIDTH, BUTTON_Y, BUTTON_WIDTH,
                 BUTTON_HEIGHT);
-        final Rect previous = new Rect(1, height - ARROW_RISE, ARROW_WIDTH, ARROW_HEIGHT);
-        final Rect next = new Rect(coverRight - ARROW_WIDTH - 1, height - ARROW_RISE, ARROW_WIDTH, ARROW_HEIGHT);
-        final int tabsX = coverRight - COVER;
-        final int tabs = Math.max(0, (next.y() - 2 - TAB_TOP + (TAB_PITCH - TAB_HEIGHT)) / TAB_PITCH);
-        return new Geometry(width, height, coverRight, left, right, contents, search, previous, next, tabsX, tabs);
+        final Rect previous = new Rect(0, height - ARROW_RISE, ARROW_WIDTH, ARROW_HEIGHT);
+        final Rect next = new Rect(coverRight - ARROW_WIDTH, height - ARROW_RISE, ARROW_WIDTH, ARROW_HEIGHT);
+        final int tabsX = coverRight - TAB_UNDER;
+        final int tabs = Math.max(0, (next.y() - TAB_TOP + (TAB_PITCH - TAB_HEIGHT)) / TAB_PITCH);
+        return new Geometry(width, height, coverRight, left, right, contents, back, forward, search, previous, next,
+                tabsX, tabs);
     }
 
     /** A chapter's tab, counted from the top. */
@@ -100,6 +112,8 @@ public final class ManualScreenLayout {
             box(layout, "right", geometry.right());
         }
         box(layout, "contents", geometry.contents());
+        box(layout, "back", geometry.back());
+        box(layout, "forward", geometry.forward());
         box(layout, "search", geometry.search());
         box(layout, "previous", geometry.previous());
         box(layout, "next", geometry.next());
@@ -132,10 +146,16 @@ public final class ManualScreenLayout {
      * @param coverRight where the cover's right edge is, past which the tabs stand out
      * @param left       the left page, or the only page
      * @param right      the right page, or null for a style of one page
+     * @param contents   the button that turns to the contents
+     * @param back       the button that goes back to where the reader came from
+     * @param forward    the button that goes forward again after going back
+     * @param search     the button that opens the search
+     * @param previous   the arrow that turns back a page
+     * @param next       the arrow that turns on a page
      * @param tabsX      where the tabs start, under the cover's edge
      * @param tabs       how many tabs fit above the arrow
      */
-    public record Geometry(int width, int height, int coverRight, Rect left, Rect right, Rect contents, Rect search,
-                           Rect previous, Rect next, int tabsX, int tabs) {
+    public record Geometry(int width, int height, int coverRight, Rect left, Rect right, Rect contents, Rect back,
+                           Rect forward, Rect search, Rect previous, Rect next, int tabsX, int tabs) {
     }
 }
