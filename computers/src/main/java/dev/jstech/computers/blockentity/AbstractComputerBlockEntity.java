@@ -27,6 +27,7 @@ import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
+import dev.jstech.computers.item.BayDriveItem;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.IExpansionCardItem;
@@ -325,9 +326,27 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             return isValidPcieCard(stack) && !(isSoundCard(stack) && anotherSoundCardSeated(slot));
         }
         if (layout().isDisk(slot)) {
-            return stack.getItem() instanceof DiskItem;
+            return acceptsDisk(stack);
+        }
+        if (layout().isBay(slot)) {
+            // Any internal drive or the hot-swap bay, in a bay the case really has.
+            return stack.getItem() instanceof BayDriveItem && slot - layout().bayStart() < caseBays();
         }
         return false;
+    }
+
+    /**
+     * Whether a disk fits this computer, in one of its disk slots or in a hot-swap bay on its front: a disk of the
+     * computer's era or of an older one. A disk made for a later machine has no way into an earlier one (an NVMe made
+     * for the Standard age has nothing to plug into in an AT tower), while an old disk still goes into a newer machine,
+     * as old disks did. A disk put in before this rule stays where it is.
+     */
+    public boolean acceptsDisk(final ItemStack stack) {
+        if (!(stack.getItem() instanceof DiskItem disk)) {
+            return false;
+        }
+        final HardwareEra era = displayEra();
+        return era == null || disk.spec().era().isAtMost(era);
     }
 
     public ItemStackHandler getHardware() {

@@ -97,7 +97,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   their era's case, one on the Vintage and Standard cases, two on the Legacy and Transition ones, none on the
   Advanced. Four parts go in them, each in its era's tab: the Hot-Swap Drive Bay (Vintage), the Internal CD Drive
   (Legacy), the Internal DVD Drive (Transition) and the Internal Blu-ray Drive (Advanced), which is there to read the
-  newest discs in an older computer.
+  newest discs in an older computer. Any of the four goes in any bay, one to a bay.
 - Manuals, in J's Core, for every mod to write in: a mod declares its chapter once, as entries of ready blocks
   (paragraphs, figures, numbered tables whose amounts are read from the code, the recipes the world holds, steps,
   warnings, problems with their fixes, words explained, links), and they show in its own manual and in any manual
@@ -1414,6 +1414,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   biggest disk, so the most room is left once the system is on it.
 
 ### Changed
+- A disk goes in a computer of its era or a newer one: an NVMe made for the Standard age no longer fits a Vintage
+  computer, while an old disk still goes in a newer machine. A disk already in a computer stays.
 - A computer finds its removable drives in one place, and everything that asks for them gets the same answer in the
   same order: the drive letters, This PC, the explorers, the firmware's boot menu and installer, the Setup of a
   program, the Cluster Management Computer, the Crafting Manager, the Pattern Studio and the live media. With

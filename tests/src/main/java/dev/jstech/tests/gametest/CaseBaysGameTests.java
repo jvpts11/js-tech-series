@@ -14,9 +14,13 @@ import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.BayDriveSpec;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.BayDriveItem;
+import dev.jstech.computers.item.DiskItem;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -25,10 +29,12 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * The 5.25-inch bays on the front of a small computer's case, where an internal drive or the hot-swap bay goes: as many
@@ -66,6 +72,64 @@ public final class CaseBaysGameTests {
             cases++;
         }
         helper.assertValueEqual(cases, CASES, "the cases looked at");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void everyBayPart_goesInEveryBayACaseHas(final GameTestHelper helper) {
+        final List<Item> parts = List.of(HardwareItems.HOT_SWAP_DRIVE_BAY.get(), HardwareItems.INTERNAL_CD_DRIVE.get(),
+                HardwareItems.INTERNAL_DVD_DRIVE.get(), HardwareItems.INTERNAL_BLU_RAY_DRIVE.get());
+        for (final Block block : BuiltInRegistries.BLOCK) {
+            if (!(block instanceof IComputerCase)) {
+                continue;
+            }
+            helper.setBlock(WHERE, block);
+            final AbstractComputerBlockEntity machine = helper.getBlockEntity(WHERE);
+            final ItemStackHandler slots = machine.getHardware();
+            final String name = BuiltInRegistries.BLOCK.getKey(block).getPath();
+            for (int bay = 0; bay < PersonalComputerBlockEntity.BAY_SLOTS; bay++) {
+                final int slot = PersonalComputerBlockEntity.BAY_SLOTS_START + bay;
+                final boolean has = bay < machine.caseBays();
+                for (final Item part : parts) {
+                    helper.assertValueEqual(slots.isItemValid(slot, new ItemStack(part)), has,
+                            "whether bay " + bay + " of " + name + " takes " + part);
+                }
+                helper.assertFalse(slots.isItemValid(slot, new ItemStack(HardwareItems.DISK_LINK_IDE_4G.get())),
+                        "a bay of " + name + " takes no disk");
+            }
+            helper.assertFalse(slots.isItemValid(PersonalComputerBlockEntity.DISK_SLOTS_START,
+                    new ItemStack(HardwareItems.INTERNAL_CD_DRIVE.get())), "a disk slot of " + name + " takes no drive");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void aBay_holdsOnePart(final GameTestHelper helper) {
+        helper.setBlock(WHERE, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
+        final PersonalComputerBlockEntity pc = helper.getBlockEntity(WHERE);
+        final ItemStack left = pc.getHardware().insertItem(PersonalComputerBlockEntity.BAY_SLOTS_START,
+                new ItemStack(HardwareItems.INTERNAL_CD_DRIVE.get(), 2), false);
+        helper.assertValueEqual(left.getCount(), 1, "the drives a bay leaves out of two");
+        final ItemStack second = pc.getHardware().insertItem(PersonalComputerBlockEntity.BAY_SLOTS_START,
+                new ItemStack(HardwareItems.HOT_SWAP_DRIVE_BAY.get()), false);
+        helper.assertValueEqual(second.getCount(), 1, "a full bay takes nothing more");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void disks_goInAComputerOfTheirEraOrANewerOne(final GameTestHelper helper) {
+        final ItemStack nvme = new ItemStack(firstNvme());
+        final ItemStack vintage = new ItemStack(HardwareItems.DISK_TRENCH_20M.get());
+        helper.setBlock(WHERE, ComputingModule.VINTAGE_PERSONAL_COMPUTER.get());
+        final PersonalComputerBlockEntity old = helper.getBlockEntity(WHERE);
+        helper.assertFalse(old.acceptsDisk(nvme), "an NVMe goes in no Vintage computer");
+        helper.assertFalse(old.getHardware().isItemValid(PersonalComputerBlockEntity.DISK_SLOTS_START, nvme),
+                "a Vintage computer's disk slot refuses an NVMe");
+        helper.assertTrue(old.acceptsDisk(vintage), "a Vintage disk goes in a Vintage computer");
+        helper.setBlock(WHERE, ComputingModule.ADVANCED_PERSONAL_COMPUTER.get());
+        final PersonalComputerBlockEntity newest = helper.getBlockEntity(WHERE);
+        helper.assertTrue(newest.acceptsDisk(vintage), "an old disk goes in a newer computer");
+        helper.assertTrue(newest.acceptsDisk(nvme), "an NVMe goes in an Advanced computer");
         helper.succeed();
     }
 
@@ -113,6 +177,16 @@ public final class CaseBaysGameTests {
         helper.assertValueEqual(item.getDescription().getString(), name, "the name of " + id);
         helper.assertValueEqual(item.spec().kind(), kind, "what " + name + " is");
         helper.assertValueEqual(item.spec().era(), era, "the era of " + name);
+    }
+
+    /** The smallest NVMe disk there is. */
+    private static DiskItem firstNvme() {
+        for (final DiskSize size : DiskSize.values()) {
+            if (size.comesAs(StorageTier.NVME)) {
+                return ComputingModule.disk(StorageTier.NVME, size);
+            }
+        }
+        throw new IllegalStateException("no NVMe disk is registered");
     }
 
     /** The saved slots of a machine's parts: the compound that says how many there are. */
