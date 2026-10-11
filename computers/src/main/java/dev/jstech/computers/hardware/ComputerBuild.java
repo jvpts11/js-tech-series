@@ -18,6 +18,10 @@ import java.util.Objects;
 
 /**
  * An assembly of components on a motherboard, with a PSU.
+ *
+ * @param disks      the disks in the slots the board wires, which its disk slots are counted against
+ * @param frontDisks the disks slid into the case's hot-swap bays, which hold, draw and run as the others do but take
+ *                   none of the board's disk slots
  */
 @TextHolder
 public record ComputerBuild(MotherboardSpec motherboard,
@@ -25,7 +29,8 @@ public record ComputerBuild(MotherboardSpec motherboard,
                             List<IExpansionCardSpec> pcieCards,
                             List<RamSpec> rams,
                             PsuSpec psu,
-                            List<DiskSpec> disks) {
+                            List<DiskSpec> disks,
+                            List<DiskSpec> frontDisks) {
 
     /* What keeps a build from being a working computer. */
     /** What one of a graphics card's threads adds to what a server sends out, in items per tick. */
@@ -63,12 +68,30 @@ public record ComputerBuild(MotherboardSpec motherboard,
         pcieCards = List.copyOf(pcieCards);
         rams = List.copyOf(rams);
         disks = List.copyOf(disks);
+        frontDisks = List.copyOf(frontDisks);
+    }
+
+    /** A build whose disks are all in the slots the board wires. */
+    public ComputerBuild(final MotherboardSpec motherboard, final List<CpuSpec> cpus,
+                         final List<IExpansionCardSpec> pcieCards, final List<RamSpec> rams,
+                         final PsuSpec psu, final List<DiskSpec> disks) {
+        this(motherboard, cpus, pcieCards, rams, psu, disks, List.of());
     }
 
     public ComputerBuild(final MotherboardSpec motherboard, final List<CpuSpec> cpus,
                          final List<IExpansionCardSpec> pcieCards, final List<RamSpec> rams,
                          final PsuSpec psu) {
         this(motherboard, cpus, pcieCards, rams, psu, List.of());
+    }
+
+    /** Every disk the build runs: those in the board's slots, then those in the case's hot-swap bays. */
+    public List<DiskSpec> allDisks() {
+        if (frontDisks.isEmpty()) {
+            return disks;
+        }
+        final List<DiskSpec> all = new ArrayList<>(disks);
+        all.addAll(frontDisks);
+        return List.copyOf(all);
     }
 
     /**
@@ -171,7 +194,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
 
     public StorageTier fastestDiskTier() {
         StorageTier best = StorageTier.HDD;
-        for (final DiskSpec disk : disks) {
+        for (final DiskSpec disk : allDisks()) {
             best = best.faster(disk.tier());
         }
         return best;
@@ -192,7 +215,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
 
     public long totalStorageItems() {
         long sum = 0L;
-        for (final DiskSpec disk : disks) {
+        for (final DiskSpec disk : allDisks()) {
             sum += disk.capacityItems();
         }
         return sum;
@@ -200,7 +223,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
 
     public long storageMb() {
         long sum = 0L;
-        for (final DiskSpec disk : disks) {
+        for (final DiskSpec disk : allDisks()) {
             sum += disk.capacityMb();
         }
         return sum;
@@ -217,7 +240,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
         for (final RamSpec ram : rams) {
             draw += ram.tdpWatts();
         }
-        for (final DiskSpec disk : disks) {
+        for (final DiskSpec disk : allDisks()) {
             draw += disk.tdpWatts();
         }
         return draw;
@@ -284,6 +307,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
             }
         }
 
+        // Only the disks in the board's slots take one: a hot-swap bay's disk takes none.
         if (disks.size() > motherboard.diskSlots()) {
             problems.add(TOO_MANY_DISKS.with(disks.size(), motherboard.diskSlots()));
         }

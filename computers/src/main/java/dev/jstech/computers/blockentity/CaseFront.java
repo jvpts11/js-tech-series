@@ -316,6 +316,8 @@ public final class CaseFront {
             final ItemStack out = take(bay);
             if (!out.isEmpty()) {
                 Block.popResource(level, computer.getBlockPos(), out);
+                // A hot-swap bay's disk was part of the build, worked out before it fell.
+                computer.markBuildDirty();
             }
             if (trays[bay].isOpen()) {
                 trays[bay].press(level, computer.getBlockPos());
@@ -366,10 +368,12 @@ public final class CaseFront {
         if (slot < BAYS && kind(slot) == BayDriveSpec.Kind.HOT_SWAP) {
             final boolean in = !now.isEmpty();
             sounds[slot].settle(now);
-            computer.setChanged();
             if (in == wasIn) {
+                computer.setChanged();
                 return; // the system wrote to the disk in place: the same disk, still in
             }
+            // A disk in or out is a part put in or taken out, as on the assembly screen.
+            computer.frontDisksChanged();
             Audio.at(level, computer.getBlockPos(), in ? ComputingSounds.RACK_SLIDE_IN : ComputingSounds.RACK_SLIDE_OUT);
             deviceMoved(level, in);
             return;
@@ -394,6 +398,8 @@ public final class CaseFront {
         for (int bay = 0; bay < BAYS; bay++) {
             diskIn[bay] = !held(bay).isEmpty();
         }
+        // The disks in the hot-swap bays are part of the build, which reads them anew.
+        computer.markBuildDirty();
     }
 
     /* Whether a disk is in the hot-swap bay {@code bay}. */

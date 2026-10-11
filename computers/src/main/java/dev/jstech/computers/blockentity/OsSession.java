@@ -324,10 +324,6 @@ final class OsSession {
      * subtracted from the usable capacity, so the system competes for space with stored data.
      */
     long reservedByOs() {
-        // A system on a disk in a bay of the front takes its room from that disk, which stores no items here.
-        if (systemDiskSlot() >= this.machine.layout().diskCount()) {
-            return 0L;
-        }
         // One lookup of the system disk serves both the system and the era the system sits on.
         final ItemStack disk = systemDisk();
         /*

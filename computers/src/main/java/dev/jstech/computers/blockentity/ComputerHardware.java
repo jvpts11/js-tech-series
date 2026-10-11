@@ -266,6 +266,13 @@ final class ComputerHardware {
                 disks.add(disk.spec());
             }
         }
-        return new ComputerBuild(motherboard.spec(), cpus, pcieCards, rams, psu.spec(), disks);
+        // The disks in the case's hot-swap bays, which hold, draw and run as the board's do.
+        final List<DiskSpec> frontDisks = new ArrayList<>();
+        for (int bay = 0; bay < this.machine.frontDiskSlots(); bay++) {
+            if (this.machine.frontDisk(bay).getItem() instanceof DiskItem disk) {
+                frontDisks.add(disk.spec());
+            }
+        }
+        return new ComputerBuild(motherboard.spec(), cpus, pcieCards, rams, psu.spec(), disks, frontDisks);
     }
 }

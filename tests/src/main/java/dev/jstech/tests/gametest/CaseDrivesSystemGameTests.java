@@ -13,6 +13,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
@@ -33,6 +34,8 @@ import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.storage.LocalStore;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
@@ -50,6 +53,8 @@ import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
+
+import java.util.List;
 
 /**
  * The drives of a small computer's own front, as its system sees them: a drive in a bay and a stick in a port are
@@ -251,6 +256,29 @@ public final class CaseDrivesSystemGameTests {
         helper.assertTrue(FRAMES_XP.equals(OsDisks.systemOn(out)), "the disk leaves with its system on it");
         helper.assertFalse(pc.hasOs(), "and the machine has none left, as when the disk comes out on its screen");
         helper.assertFalse(pc.validateOsSession(), "so a session on it ends");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void hotSwapDisk_holdsItemsAndCountsInTheBuildAsTheOthersDo(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = legacy(helper, HardwareItems.HOT_SWAP_DRIVE_BAY.get());
+        final ComputerBuild empty = pc.currentBuild();
+        helper.assertTrue(empty != null && empty.totalStorageItems() == 0L, "the machine starts with no disk at all");
+        final CaseFront front = pc.front();
+        front.insert(0, new ItemStack(HardwareItems.DISK_LINK_IDE_20G.get()));
+        final ComputerBuild build = pc.currentBuild();
+        helper.assertTrue(build != null && build.frontDisks().size() == 1 && build.totalStorageItems() > 0L,
+                "the bay's disk counts in the build's capacity");
+        helper.assertTrue(build.isPowered() && build.disks().isEmpty(), "and takes no disk slot of the board");
+        helper.assertTrue(pc.diskPrivacyDiskCount() == PersonalComputerBlockEntity.DISK_SLOTS + 1,
+                "with a privacy slider of its own, and none for the bay after it, which holds no disk");
+        final StorageKey cobblestone = StorageKey.of(Items.COBBLESTONE);
+        helper.assertTrue(pc.localStore().insert(cobblestone, 10) == 10 && pc.localStore().count(cobblestone) == 10,
+                "the machine keeps its items on the bay's disk, its only disk");
+        final ItemStack out = front.take(0);
+        helper.assertTrue(pc.localStore().count(cobblestone) == 0, "taken out, the disk takes its items with it");
+        helper.assertTrue(new LocalStore(List.of(out), () -> { }).count(cobblestone) == 10, "held on the disk itself");
+        helper.assertTrue(pc.currentBuild().frontDisks().isEmpty(), "and leaves the build");
         helper.succeed();
     }
 

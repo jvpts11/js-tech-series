@@ -106,7 +106,7 @@ public record ExperienceIndex(int processor, int memory, int graphics, int gamin
     }
 
     private static int diskScore(final ComputerBuild build) {
-        if (build.disks().isEmpty()) {
+        if (build.allDisks().isEmpty()) {
             return LOWEST;
         }
         return switch (build.fastestDiskTier()) {

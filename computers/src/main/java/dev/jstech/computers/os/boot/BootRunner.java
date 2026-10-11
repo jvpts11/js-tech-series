@@ -421,7 +421,7 @@ public final class BootRunner {
     /** How many devices the self-test has to find: everything seated that is not memory. */
     private static int postDevices(final IOsHost machine) {
         final ComputerBuild build = machine.currentBuild();
-        return build == null ? 0 : build.disks().size() + build.pcieCards().size();
+        return build == null ? 0 : build.allDisks().size() + build.pcieCards().size();
     }
 
     /**

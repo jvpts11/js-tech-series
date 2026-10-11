@@ -507,9 +507,12 @@ final class ComputersEntries {
                         + " and sneak-click to take it out, with the computer on or off. It takes the disks the"
                         + " computer takes in its own disk slots, of the computer's era or older, so no NVMe drive in"
                         + " a Vintage computer ([](jsc:disks)). The disk in it is one of the computer's own: it has a"
-                        + " letter, a system goes on it and the computer boots from it. Take out the disk the"
-                        + " computer runs from while it runs, and it is the same as taking it out on the assembly"
-                        + " screen.")
+                        + " letter, a system goes on it and the computer boots from it, it keeps the computer's items,"
+                        + " and it adds to the computer's capacity and to the power it draws, like the disks inside."
+                        + " It takes none of the board's disk slots, so it is one more disk even on a full board."
+                        + " When the computer runs from the disk in the bay, the bay's lamp blinks while it works the"
+                        + " disk. Take a disk out and the items on it go with it; take out the disk the computer runs"
+                        + " from while it runs, and it is the same as taking it out on the assembly screen.")
                 .subheading("The USB ports")
                 .paragraph("Click a port with a USB flash drive to plug it in, and sneak-click to pull it out.")
                 .paragraph("To the computer's system, a drive in a bay and a stick in a port are drives like the"

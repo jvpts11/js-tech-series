@@ -282,11 +282,7 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
 
     @Override
     public LocalStore localStore() {
-        final List<ItemStack> disks = new ArrayList<>(DISK_SLOTS);
-        for (int i = 0; i < DISK_SLOTS; i++) {
-            disks.add(getHardware().getStackInSlot(DISK_SLOTS_START + i));
-        }
-        return new LocalStore(disks, this::setChanged);
+        return new LocalStore(storeDisks(), this::setChanged);
     }
 
     public Map<StorageKey, Long> localSnapshot() {
@@ -370,17 +366,19 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
         return true;
     }
 
+    /* Every disk the PC keeps items on has its slider: its own disk slots', then its hot-swap bays'. */
     @Override
     public int diskPrivacyDiskCount() {
-        return DISK_SLOTS;
+        return storeDisks().size();
     }
 
     @Override
     public int diskPrivacyPermille(final int diskIndex) {
-        if (diskIndex < 0 || diskIndex >= DISK_SLOTS) {
+        final List<ItemStack> disks = storeDisks();
+        if (diskIndex < 0 || diskIndex >= disks.size()) {
             return 0;
         }
-        return DiskItem.publicPermille(getHardware().getStackInSlot(DISK_SLOTS_START + diskIndex));
+        return DiskItem.publicPermille(disks.get(diskIndex));
     }
 
     @Override
@@ -397,10 +395,11 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
      * Writes a clamped public-share permille onto the disk in {@code diskIndex} and marks storage changed so the network re-reads this PC's public view. A no-op for an out-of-range index or an empty slot.
      */
     public void setDiskPrivacy(final int diskIndex, final int permille) {
-        if (diskIndex < 0 || diskIndex >= DISK_SLOTS) {
+        final List<ItemStack> disks = storeDisks();
+        if (diskIndex < 0 || diskIndex >= disks.size()) {
             return;
         }
-        final ItemStack disk = getHardware().getStackInSlot(DISK_SLOTS_START + diskIndex);
+        final ItemStack disk = disks.get(diskIndex);
         if (!(disk.getItem() instanceof DiskItem)) {
             return;
         }

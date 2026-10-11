@@ -310,6 +310,30 @@ class ComputerBuildTest {
     }
 
     @Test
+    void frontDisks_holdDrawAndRunButTakeNoDiskSlot() {
+        // Four disks fill mtxStandard's four slots; a fifth in a hot-swap bay takes none of them.
+        final List<DiskSpec> slots = List.of(disk(StorageTier.HDD, 100, 6), disk(StorageTier.HDD, 100, 6),
+                disk(StorageTier.HDD, 100, 6), disk(StorageTier.HDD, 100, 6));
+        final ComputerBuild build = new ComputerBuild(mtxStandard(), List.of(standardCpu()), List.of(),
+                List.of(ddr3()), psu(650), slots, List.of(disk(StorageTier.NVME, 1_000, 4)));
+        assertTrue(build.isPowered(), "a hot-swap bay's disk takes no disk slot of the board");
+        assertEquals(1_400L, build.totalStorageItems());
+        assertEquals(130 + 15 + 4 * 6 + 4, build.powerDraw());
+        assertEquals(StorageTier.NVME, build.fastestDiskTier());
+        assertEquals(5, build.allDisks().size());
+        assertEquals(4, build.disks().size());
+    }
+
+    @Test
+    void allDisks_isTheBoardsAloneWithNoFrontDisk() {
+        final List<DiskSpec> slots = List.of(disk(StorageTier.SSD, 50, 3));
+        final ComputerBuild build = new ComputerBuild(mtxStandard(), List.of(standardCpu()), List.of(),
+                List.of(ddr3()), psu(650), slots);
+        assertEquals(slots, build.allDisks());
+        assertTrue(build.frontDisks().isEmpty());
+    }
+
+    @Test
     void disksWithinSlots_isPowered() {
         final ComputerBuild build = new ComputerBuild(mtxStandard(),
                 List.of(standardCpu()), List.of(), List.of(ddr3()), psu(650),

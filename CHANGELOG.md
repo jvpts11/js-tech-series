@@ -109,9 +109,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   A USB flash drive plugs into a front port with a click and comes out with a sneak-click. A disk slides into the
   hot-swap bay with a click and comes out with a sneak-click, with the machine on or off, its caddy riding in and out
   and its lamp blinking while the machine runs its system from that disk and works it; the disk is one of the
-  machine's own, with a letter, taking a
-  system and booting it, and taken out with the machine running it takes its system with it, as on the assembly
-  screen. To the system each drive and port on the front is a drive like the external ones: a letter, This PC (whose
+  machine's own, with a letter, taking a system and booting it, keeping the machine's items (with its own share
+  offered to the network on a Personal Computer's Storage heading), and counting in its capacity and its power draw
+  as the disks inside do, though it takes none of the board's disk slots; taken out, it
+  takes its items with it, and with the machine running from it, its system too, as on the assembly screen. To the
+  system each drive and port on the front is a drive like the external ones: a letter, This PC (whose
   Eject opens a drive's tray), the explorers, installing systems and programs, the firmware and its boot menu, the
   Crafting Manager, the Pattern Studio and live media. The power button, each drive's eject button, each port and
   the hot-swap bay are outlined on their own while looked at, exactly where a click works them. The Guide to

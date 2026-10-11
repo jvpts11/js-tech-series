@@ -683,11 +683,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
 
     @Override
     public LocalStore localStore() {
-        final List<ItemStack> disks = new ArrayList<>(DISK_SLOTS);
-        for (int i = 0; i < DISK_SLOTS; i++) {
-            disks.add(getHardware().getStackInSlot(DISK_SLOTS_START + i));
-        }
-        return new LocalStore(disks, this::setChanged);
+        return new LocalStore(storeDisks(), this::setChanged);
     }
 
     private long netStorageItems() {

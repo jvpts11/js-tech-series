@@ -237,6 +237,15 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     protected void putFrontDisk(final int bay, final ItemStack disk) {
     }
 
+    /**
+     * A disk went into a bay of the case's front or came out of one: to the machine it is a part put in or taken out,
+     * so its build is worked out again, with all that follows from it, as for a part on the assembly screen.
+     */
+    void frontDisksChanged() {
+        hardware.markDirty();
+        hardwareChanged();
+    }
+
     // Hardware assembly
 
     protected abstract Set<FormFactor> acceptedFormFactors();

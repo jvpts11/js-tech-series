@@ -7,17 +7,21 @@
  */
 package dev.jstech.tests.clienttest;
 
+import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.client.ComputerTerminalScreen;
 import dev.jstech.computers.client.NetTerminalScreen;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
 
@@ -188,6 +192,37 @@ public final class McNetSpaceClientTests {
                 .thenWaitUntil(() -> space(ctx).requestOpen(), SCREEN_WAIT,
                         "the question about taking it out of the network")
                 .thenScreenshot(4, "mcnet_space_request");
+    }
+
+    /**
+     * A disk in the case's hot-swap bay is one of the machine's own, so the Storage heading gives it a slider
+     * beside the disks inside, and none to a bay the case does not have.
+     */
+    @ClientTest(timeoutTicks = 1800)
+    public static void theStorageHeading_slidesTheHotSwapDiskWithTheOthers(final ClientTestContext ctx) {
+        ctx.thenBuild(0, builder -> {
+                    final PersonalComputerBlockEntity pc = builder.placeRunningPersonalComputer(COMPUTER, MC_NET);
+                    pc.togglePower();
+                    pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.BAY_SLOTS_START,
+                            new ItemStack(HardwareItems.HOT_SWAP_DRIVE_BAY.get()));
+                    pc.front().insert(0, new ItemStack(HardwareItems.DISK_LINK_IDE_20G.get()));
+                    pc.togglePower();
+                    pc.localStore().insert(StorageKey.of(Items.COBBLESTONE), 64L);
+                    builder.placeMonitor(MONITOR, Direction.EAST);
+                })
+                .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
+                .thenRightClick(SETTLE, MONITOR)
+                .thenAwaitScreen(ComputerTerminalScreen.class, BOOT_WAIT)
+                .then(2, () -> ctx.clickGui(space(ctx).headingPoint("Storage")[0],
+                        space(ctx).headingPoint("Storage")[1]))
+                .thenWaitUntil(() -> space(ctx).activeHeading() == ComputerTerminalMenu.TAB_STORAGE
+                                && space(ctx).getMenu().diskCount() == PersonalComputerBlockEntity.DISK_SLOTS + 1,
+                        SCREEN_WAIT, "the Storage heading to list the two disk slots and the one hot-swap bay",
+                        () -> "disks=" + space(ctx).getMenu().diskCount())
+                .then(1, () -> ctx.assertTrue(
+                        space(ctx).getMenu().diskCapacityWeight(PersonalComputerBlockEntity.DISK_SLOTS) > 0L,
+                        "the bay's disk has room to offer"))
+                .thenScreenshot(2, "mcnet_space_storage_hot_swap");
     }
 
     /**

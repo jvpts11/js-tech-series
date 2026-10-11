@@ -148,14 +148,15 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
     }
 
     /*
-     * Every bay of the front counts once one of them is a hot-swap bay, a hot-swap bay or not, so a bay's disk slot
-     * keeps its number; a case with none adds no slot at all.
+     * Every bay up to the last hot-swap one counts, a hot-swap bay or not, so a bay's disk slot keeps its number
+     * whatever sits in the bays before it; a case with none adds no slot at all, and a bay past the last hot-swap
+     * one (or one the case does not have) adds none either, so no slot shows that could never hold a disk.
      */
     @Override
     protected int frontDiskSlots() {
-        for (int bay = 0; bay < CaseFront.BAYS; bay++) {
+        for (int bay = CaseFront.BAYS - 1; bay >= 0; bay--) {
             if (front.kind(bay) == BayDriveSpec.Kind.HOT_SWAP) {
-                return CaseFront.BAYS;
+                return bay + 1;
             }
         }
         return 0;
@@ -164,6 +165,23 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
     @Override
     protected ItemStack frontDisk(final int bay) {
         return front.hotSwapDisk(bay);
+    }
+
+    /**
+     * The disks the machine keeps its items on: those in its own disk slots, then those in its case's hot-swap bays,
+     * empty where a slot holds none, so a disk's place in the list is its place in the machine.
+     */
+    protected List<ItemStack> storeDisks() {
+        final ComputerHardwareLayout layout = hardwareLayout();
+        final int front = frontDiskSlots();
+        final List<ItemStack> disks = new ArrayList<>(layout.diskCount() + front);
+        for (int i = 0; i < layout.diskCount(); i++) {
+            disks.add(getHardware().getStackInSlot(layout.diskStart() + i));
+        }
+        for (int bay = 0; bay < front; bay++) {
+            disks.add(frontDisk(bay));
+        }
+        return disks;
     }
 
     @Override
