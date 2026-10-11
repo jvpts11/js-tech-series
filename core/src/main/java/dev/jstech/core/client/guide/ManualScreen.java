@@ -111,6 +111,8 @@ public final class ManualScreen extends Screen {
     private List<Component> hoveredWords = List.of();
     /** The scenes of the manual, as the reader has turned them; made with the screen's first layout. */
     private ManualScenes scenes;
+    /** The spread a ribbon keeps: the one the book was put down at last time, or none. */
+    private int kept = UNSET;
     /** The control held down under the pointer, drawn pressed until the button is let go; null when none is. */
     @Nullable
     private ManualScreenLayout.Rect pressed;
@@ -249,6 +251,7 @@ public final class ManualScreen extends Screen {
                             .ifPresent(page -> this.goToPage(page + place.pagesIn())));
         }
         if (!this.placed) {
+            this.kept = this.keptSpread();
             AudioEngine.playOnScreen(GuideSounds.OPEN);
         }
         this.placed = true;
@@ -563,7 +566,7 @@ public final class ManualScreen extends Screen {
                 || this.geometry.forward().contains(mx, my) && this.history.ahead().isPresent();
         boolean onTab = false;
         for (int i = 0; i < this.tabCount(); i++) {
-            onTab |= ManualScreenLayout.tab(this.geometry, i).contains(mx, my);
+            onTab |= this.markOf(i).contains(mx, my);
         }
         if (onButton || onTab) {
             AudioEngine.playOnScreen(GuideSounds.CLICK);
@@ -589,7 +592,7 @@ public final class ManualScreen extends Screen {
             return this.turn(1);
         }
         for (int i = 0; i < this.tabCount(); i++) {
-            if (ManualScreenLayout.tab(this.geometry, i).contains(mx, my)) {
+            if (this.markOf(i).contains(mx, my)) {
                 return this.goTo(this.chapters.get(i));
             }
         }
@@ -748,7 +751,7 @@ public final class ManualScreen extends Screen {
             return true;
         }
         for (int i = 0; i < this.tabCount(); i++) {
-            if (ManualScreenLayout.tab(this.geometry, i).contains(mx, my)) {
+            if (this.markOf(i).contains(mx, my)) {
                 return true;
             }
         }
@@ -772,8 +775,40 @@ public final class ManualScreen extends Screen {
 
     /** How many chapter tabs stand at the edge: a binder's, as many as fit; a folder has none. */
     private int tabCount() {
-        return this.style.cover().kind() == GuideStyle.CoverKind.BINDER
+        return this.style.cover().kind() != GuideStyle.CoverKind.FOLDER
                 ? Math.min(this.chapters.size(), this.geometry.tabs()) : 0;
+    }
+
+    /** Where the mark of the chapter of that tab stands: a binder's tab, a printed thumb block or a paper flag. */
+    private ManualScreenLayout.Rect markOf(final int index) {
+        return switch (this.style.make().marks()) {
+            case TABS -> ManualScreenLayout.tab(this.geometry, index);
+            case THUMB -> ManualScreenLayout.thumb(this.geometry, index, this.tabCount(), this.isOpen(index));
+            case FLAGS -> ManualScreenLayout.flag(this.geometry, index, this.isOpen(index));
+        };
+    }
+
+    /** Whether the chapter of that tab is the one shown. */
+    private boolean isOpen(final int index) {
+        final String chapter = this.chapters.get(index);
+        final String current = this.currentChapter();
+        return this.manual.holdsEvery()
+                ? GuideChapter.namespaceOf(chapter).equals(GuideChapter.namespaceOf(current))
+                : chapter.equals(current);
+    }
+
+    /** The spread a ribbon keeps: the one the book was put down at last time, or none. */
+    private int keptSpread() {
+        final Optional<ManualPlaces.Place> place = ManualPlaces.of(this.manual.id()).filter(found -> !found.cover());
+        if (place.isEmpty()) {
+            return UNSET;
+        }
+        final OptionalInt page = this.book.pageOf(place.get().target());
+        if (page.isEmpty()) {
+            return UNSET;
+        }
+        final int at = page.getAsInt() + place.get().pagesIn();
+        return this.style.spread() ? at / 2 : at;
     }
 
     private boolean drawing() {
@@ -822,10 +857,11 @@ public final class ManualScreen extends Screen {
 
     private void drawCover(final GuiGraphics g) {
         final ManualScreenLayout.Rect cover = ManualScreenLayout.cover(this.geometry);
-        if (this.style.cover().kind() == GuideStyle.CoverKind.FOLDER) {
-            this.drawFolder(g, cover);
-        } else {
-            this.drawClosedBinder(g, cover);
+        switch (this.style.cover().kind()) {
+            case FOLDER -> this.drawFolder(g, cover);
+            case BOOK -> ManualCovers.draw(g, this.font, this.style, this.manual, cover, this::colour,
+                    new ClientGuideText(this.font, this.style, this.recipes));
+            case BINDER -> this.drawClosedBinder(g, cover);
         }
     }
 
@@ -982,16 +1018,26 @@ public final class ManualScreen extends Screen {
         final int fill = this.colour(GuideStyle.COVER);
         ManualControls.bevel(g, 0, 0, this.geometry.coverRight(), this.geometry.height(), fill,
                 this.colour(GuideStyle.COVER_EDGE), ManualButtonLook.shaded(fill));
+        // Paper flags are stuck under the pages' edge, so they are drawn first and the pages over them.
+        final boolean flags = this.style.make().marks() == GuideStyle.Marks.FLAGS;
+        if (flags) {
+            this.drawTabs(g, mx, my);
+        }
         final int first = this.style.spread() ? this.spread * 2 : this.spread;
         this.drawPage(g, this.geometry.left(), first, true, mx, my);
         if (this.geometry.right() != null) {
             this.drawPage(g, this.geometry.right(), this.rightPage(first), false, mx, my);
             if (this.style.rings()) {
                 this.drawRings(g);
+            } else {
+                ManualMake.binding(g, this.geometry, this.style, this::colour);
             }
         }
         // The tabs come after the pages, so the one shown and the one pointed at reach over the page's edge.
-        this.drawTabs(g, mx, my);
+        if (!flags) {
+            this.drawTabs(g, mx, my);
+        }
+        ManualMake.ribbon(g, this.geometry, this.style, this::colour, this.spread == this.kept);
         this.drawButton(g, this.geometry.contents(), ManualControls.Kind.CONTENTS, true,
                 List.of(GameText.component(GuideTexts.CONTENTS)), mx, my);
         this.drawButton(g, this.geometry.back(), ManualControls.Kind.BACK, this.history.behind().isPresent(),
@@ -1010,16 +1056,18 @@ public final class ManualScreen extends Screen {
     }
 
     private void drawTabs(final GuiGraphics g, final int mx, final int my) {
-        final String current = this.currentChapter();
         for (int i = 0; i < this.tabCount(); i++) {
-            final ManualScreenLayout.Rect tab = ManualScreenLayout.tab(this.geometry, i);
+            final ManualScreenLayout.Rect tab = this.markOf(i);
             final String chapter = this.chapters.get(i);
-            final boolean on = this.manual.holdsEvery()
-                    ? GuideChapter.namespaceOf(chapter).equals(GuideChapter.namespaceOf(current))
-                    : chapter.equals(current);
+            final boolean on = this.isOpen(i);
             final boolean pointed = tab.contains(mx, my);
-            ManualControls.tab(g, this.font, this.style, tab, i + 1, on, pointed, this.tabColours.get(chapter),
-                    this.colour(GuideStyle.TAB_INK));
+            if (this.style.make().marks() == GuideStyle.Marks.TABS) {
+                ManualControls.tab(g, this.font, this.style, tab, i + 1, on, pointed, this.tabColours.get(chapter),
+                        this.colour(GuideStyle.TAB_INK));
+            } else {
+                ManualMake.mark(g, this.font, this.style, tab, i + 1, on, pointed, this.tabColours.get(chapter),
+                        this::colour);
+            }
             if (pointed) {
                 // A tab of a manual holding every chapter stands for the mod, named by its main chapter.
                 final String named = this.manual.holdsEvery() ? GuideChapter.namespaceOf(chapter) : chapter;
@@ -1073,7 +1121,9 @@ public final class ManualScreen extends Screen {
                           final boolean leftPage, final int mx, final int my) {
         g.fill(page.x(), page.y(), page.x() + page.width(), page.y() + page.height(),
                 this.colour(GuideStyle.PAPER));
-        if (this.geometry.right() != null) {
+        ManualMake.paper(g, page, this.style, this::colour, leftPage);
+        // A binder's pages lie flat against its rings; a bound book shades into its spine, drawn after both pages.
+        if (this.geometry.right() != null && this.style.rings()) {
             final int gutterX = leftPage ? page.x() + page.width() - 6 : page.x();
             g.fill(gutterX, page.y(), gutterX + (leftPage ? 6 : 5), page.y() + page.height(),
                     this.colour(GuideStyle.GUTTER));

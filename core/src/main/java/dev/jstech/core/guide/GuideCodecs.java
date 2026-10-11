@@ -125,12 +125,35 @@ public final class GuideCodecs {
             Codec.BOOL.optionalFieldOf("small_text", false).forGetter(GuideStyle.Decor::smallText)
     ).apply(instance, GuideStyle.Decor::new));
 
+    public static final Codec<GuideStyle.CoverPart> COVER_PART = RecordCodecBuilder.create(instance -> instance.group(
+            StableCodecs.byName(GuideStyle.PartKind.class).fieldOf("kind").forGetter(GuideStyle.CoverPart::kind),
+            Codec.INT.optionalFieldOf("x", 0).forGetter(GuideStyle.CoverPart::x),
+            Codec.INT.optionalFieldOf("y", 0).forGetter(GuideStyle.CoverPart::y),
+            Codec.INT.optionalFieldOf("width", 0).forGetter(GuideStyle.CoverPart::width),
+            Codec.INT.optionalFieldOf("height", 0).forGetter(GuideStyle.CoverPart::height),
+            Codec.STRING.optionalFieldOf("colour", "").forGetter(GuideStyle.CoverPart::colour),
+            Codec.INT.optionalFieldOf("line", 0).forGetter(GuideStyle.CoverPart::words),
+            Codec.STRING.optionalFieldOf("image", "").forGetter(GuideStyle.CoverPart::image),
+            Codec.FLOAT.optionalFieldOf("scale", 1.0F).forGetter(GuideStyle.CoverPart::scale),
+            Codec.INT.optionalFieldOf("turn", 0).forGetter(GuideStyle.CoverPart::turn)
+    ).apply(instance, GuideStyle.CoverPart::new));
+
     public static final Codec<GuideStyle.Cover> COVER = RecordCodecBuilder.create(instance -> instance.group(
             StableCodecs.byName(GuideStyle.CoverKind.class).optionalFieldOf("kind", GuideStyle.CoverKind.BINDER)
                     .forGetter(GuideStyle.Cover::kind),
             Codec.BOOL.optionalFieldOf("label", true).forGetter(GuideStyle.Cover::label),
-            Codec.BOOL.optionalFieldOf("band", false).forGetter(GuideStyle.Cover::band)
+            Codec.BOOL.optionalFieldOf("band", false).forGetter(GuideStyle.Cover::band),
+            COVER_PART.listOf().optionalFieldOf("parts", List.of()).forGetter(GuideStyle.Cover::parts)
     ).apply(instance, GuideStyle.Cover::new));
+
+    public static final Codec<GuideStyle.Make> MAKE = RecordCodecBuilder.create(instance -> instance.group(
+            StableCodecs.byName(GuideStyle.Binding.class).fieldOf("binding").forGetter(GuideStyle.Make::binding),
+            StableCodecs.byName(GuideStyle.Paper.class).optionalFieldOf("paper", GuideStyle.Paper.PLAIN)
+                    .forGetter(GuideStyle.Make::paper),
+            StableCodecs.byName(GuideStyle.Marks.class).optionalFieldOf("marks", GuideStyle.Marks.TABS)
+                    .forGetter(GuideStyle.Make::marks),
+            Codec.BOOL.optionalFieldOf("ribbon", false).forGetter(GuideStyle.Make::ribbon)
+    ).apply(instance, GuideStyle.Make::new));
 
     public static final Codec<GuideStyle> STYLE = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.optionalFieldOf("palette", "").forGetter(GuideStyle::palette),
@@ -146,8 +169,13 @@ public final class GuideCodecs {
             COVER.optionalFieldOf("cover", new GuideStyle.Cover(GuideStyle.CoverKind.BINDER, true, false))
                     .forGetter(GuideStyle::cover),
             StableCodecs.byName(GuideStyle.HoldBar.class).optionalFieldOf("hold_bar", GuideStyle.HoldBar.PLAIN)
-                    .forGetter(GuideStyle::holdBar)
-    ).apply(instance, GuideStyle::new));
+                    .forGetter(GuideStyle::holdBar),
+            // A style saying nothing of how it is made is made as its decor says, so older files read the same.
+            MAKE.optionalFieldOf("make").forGetter(style -> style.make().equals(GuideStyle.Make.of(style.decor()))
+                    ? Optional.empty() : Optional.of(style.make()))
+    ).apply(instance, (palette, colours, pages, decor, body, code, folios, prefix, cover, bar, make) ->
+            new GuideStyle(palette, colours, pages, decor, body, code, folios, prefix, cover, bar,
+                    make.orElseGet(() -> GuideStyle.Make.of(decor)))));
 
     public static final Codec<GuideBlock.Callout> CALLOUT = RecordCodecBuilder.create(instance -> instance.group(
             Codec.INT.fieldOf("number").forGetter(GuideBlock.Callout::number),

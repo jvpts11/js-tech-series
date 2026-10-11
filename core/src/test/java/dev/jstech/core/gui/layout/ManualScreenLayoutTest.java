@@ -34,6 +34,33 @@ class ManualScreenLayoutTest {
     }
 
     @Test
+    void thumb_printsABlockForEachChapterDownTheRightPagesEdgeTheOpenOneWidest() {
+        final ManualScreenLayout.Geometry binder = ManualScreenLayout.of(166, 201, true);
+        final ManualScreenLayout.Rect page = binder.right();
+
+        final ManualScreenLayout.Rect first = ManualScreenLayout.thumb(binder, 0, 6, true);
+        final ManualScreenLayout.Rect second = ManualScreenLayout.thumb(binder, 1, 6, false);
+        assertEquals(page.x() + page.width(), first.x() + first.width(), "flush with the page's edge");
+        assertEquals(page.x() + page.width(), second.x() + second.width());
+        assertTrue(first.width() > second.width(), "the open chapter's block is the widest");
+        assertTrue(second.y() >= first.y() + first.height(), "each under the one before");
+        assertTrue(ManualScreenLayout.thumb(binder, 12, 13, false).y() + ManualScreenLayout.thumb(binder, 12, 13,
+                false).height() <= page.y() + page.height(), "thirteen fit on the page");
+    }
+
+    @Test
+    void flag_standsOutPastTheCoverToTheEdgeTheTabsReach() {
+        final ManualScreenLayout.Geometry binder = ManualScreenLayout.of(166, 201, true);
+
+        final ManualScreenLayout.Rect open = ManualScreenLayout.flag(binder, 0, true);
+        final ManualScreenLayout.Rect shut = ManualScreenLayout.flag(binder, 1, false);
+        assertTrue(open.x() < binder.right().x() + binder.right().width(), "a flag is stuck under the page's edge");
+        assertEquals(binder.width(), open.x() + open.width(), "and stands out as far as a tab");
+        assertTrue(open.x() < shut.x(), "the open chapter's reaches further onto the page");
+        assertTrue(shut.y() >= open.y() + open.height(), "each under the one before");
+    }
+
+    @Test
     void of_fitsThirteenTabsAboveTheArrow() {
         final ManualScreenLayout.Geometry binder = ManualScreenLayout.of(166, 201, true);
 

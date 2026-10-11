@@ -24,7 +24,8 @@ public final class GuidePalettes {
             0xFF1F2B44, 0xFF2E3D5C, 0xFFEBE5D3, 0xFFD3CCB6, 0xFF23252A, 0xFF6E6A5E, 0xFF1F3F8A, 0xFF1F3F8A,
             0xFFA39C86, 0xFFE1DAC4, 0xFFF3E6C8, 0xFFC9CCD1, 0xFFF4F1E6, 0xFF23252A, 0xFFB8BCC2, 0xFF23252A,
             0xFF8A4F12, 0xFF1F3F8A, 0xFF23252A, 0xFF39D6C4, 0xFFD3CCB6, 0xFF121A2A, 0xFF1F3F8A,
-            0xFFF5F1E4, 0xFFD8CEB2, 0xFF1F3F8A, 0xFF0F6E66, 0xFF9A3B16, 0xFF7A2D8A, 0xFF6E6A5E, 0xFFCFE8CF));
+            0xFFF5F1E4, 0xFFD8CEB2, 0xFF1F3F8A, 0xFF0F6E66, 0xFF9A3B16, 0xFF7A2D8A, 0xFF6E6A5E, 0xFFCFE8CF,
+            0xFFE8B0B0, 0xFFC49A3A));
 
     /** The look of a terminal a session names when it names none of its own: a dark console with a green prompt. */
     public static final Palette<Terminal> TERMINAL = Palettes.declare(JsCore.MODID, "guide/terminal",
@@ -79,11 +80,13 @@ public final class GuidePalettes {
      * @param codeNumber  numbers
      * @param codeComment comments, which the program does not run
      * @param codeCopied  a listing's Copy button for a moment after it has copied
+     * @param margin      the line down the outer margin of a page of graph paper
+     * @param ribbon      a hardcover's ribbon bookmark
      */
     public record Binder(int cover, int coverEdge, int paper, int gutter, int ink, int faint, int heading, int link,
                          int rule, int shade, int highlight, int ring, int label, int labelInk, int tab, int tabInk,
                          int warning, int accent, int number, int band, int grid, int spine, int coverLine,
                          int codePaper, int codeHead, int codeKeyword, int codeName, int codeText, int codeNumber,
-                         int codeComment, int codeCopied) {
+                         int codeComment, int codeCopied, int margin, int ribbon) {
     }
 }

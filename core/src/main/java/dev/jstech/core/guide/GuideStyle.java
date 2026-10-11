@@ -8,6 +8,7 @@
 package dev.jstech.core.guide;
 
 import dev.jstech.core.id.IStableName;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -30,9 +31,11 @@ import java.util.Objects;
  * @param drawingPrefix the letters a drawing's number starts with ({@code JI} for JI-102), for drawing numbers
  * @param cover         how its cover looks
  * @param holdBar       the little bar that fills while the manual key is held over an item to open its page here
+ * @param make          how the book is made: its binding, its paper, the marks of its chapters and its ribbon
  */
 public record GuideStyle(String palette, Map<String, String> colours, Pages pages, Decor decor, String bodyFont,
-                         String codeFont, Folios folios, String drawingPrefix, Cover cover, HoldBar holdBar) {
+                         String codeFont, Folios folios, String drawingPrefix, Cover cover, HoldBar holdBar,
+                         Make make) {
 
     /**
      * The colour roles a style fills, each named as a palette's record names its components and as style files name
@@ -74,6 +77,9 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
     public static final String CODE_NUMBER = "codeNumber";
     public static final String CODE_COMMENT = "codeComment";
     public static final String CODE_COPIED = "codeCopied";
+    /** The line down a page of graph paper's outer margin, and a hardcover's ribbon. */
+    public static final String MARGIN = "margin";
+    public static final String RIBBON = "ribbon";
 
     public GuideStyle {
         palette = palette == null ? "" : palette;
@@ -86,12 +92,33 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
         drawingPrefix = drawingPrefix == null ? "" : drawingPrefix;
         Objects.requireNonNull(cover, "cover");
         Objects.requireNonNull(holdBar, "holdBar");
+        Objects.requireNonNull(make, "make");
+    }
+
+    /** A style made as its decor says: a binder with rings when it has them, otherwise glued. */
+    public GuideStyle(final String palette, final Map<String, String> colours, final Pages pages, final Decor decor,
+                      final String bodyFont, final String codeFont, final Folios folios, final String drawingPrefix,
+                      final Cover cover, final HoldBar holdBar) {
+        this(palette, colours, pages, decor, bodyFont, codeFont, folios, drawingPrefix, cover, holdBar,
+                Make.of(decor));
     }
 
     /** The same style with another bar filling while the manual key is held over an item. */
     public GuideStyle withHoldBar(final HoldBar bar) {
         return new GuideStyle(this.palette, this.colours, this.pages, this.decor, this.bodyFont, this.codeFont,
-                this.folios, this.drawingPrefix, this.cover, bar);
+                this.folios, this.drawingPrefix, this.cover, bar, this.make);
+    }
+
+    /** The same style made another way: bound, papered and marked so. */
+    public GuideStyle withMake(final Make made) {
+        return new GuideStyle(this.palette, this.colours, this.pages, this.decor, this.bodyFont, this.codeFont,
+                this.folios, this.drawingPrefix, this.cover, this.holdBar, made);
+    }
+
+    /** The same style with another cover. */
+    public GuideStyle withCover(final Cover covered) {
+        return new GuideStyle(this.palette, this.colours, this.pages, this.decor, this.bodyFont, this.codeFont,
+                this.folios, this.drawingPrefix, covered, this.holdBar, this.make);
     }
 
     /** Whether it opens as two pages side by side. */
@@ -113,7 +140,7 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
 
     /** Whether a binder's rings go through the pages. */
     public boolean rings() {
-        return this.decor.rings();
+        return this.make.binding() == Binding.RINGS;
     }
 
     /**
@@ -138,7 +165,8 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
     /**
      * What is drawn on and around the pages.
      *
-     * @param rings         a binder's rings through the pages
+     * @param rings         a binder's rings through the pages, which is how a style is made when it says nothing
+     *                      of that ({@link Make#of})
      * @param grid          a drawing's grid over the paper
      * @param frame         a drawing's frame, with its zones numbered along the top and lettered down the side
      * @param titleBlock    a drawing's title block in the corner: what it is, its number, its sheet and revision,
@@ -163,16 +191,220 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
     }
 
     /**
+     * How a book is made, past its pages.
+     *
+     * @param binding how its leaves are held together
+     * @param paper   the paper its pages are
+     * @param marks   how its chapters are marked at the edge
+     * @param ribbon  whether a ribbon bookmark keeps the page the reader stopped at
+     */
+    public record Make(Binding binding, Paper paper, Marks marks, boolean ribbon) {
+
+        public Make {
+            Objects.requireNonNull(binding, "binding");
+            Objects.requireNonNull(paper, "paper");
+            Objects.requireNonNull(marks, "marks");
+        }
+
+        /** How a style with that decor is made: a ring binder's with plastic tabs, or glued with them. */
+        public static Make of(final Decor decor) {
+            return new Make(decor.rings() ? Binding.RINGS : Binding.GLUED, Paper.PLAIN, Marks.TABS, false);
+        }
+    }
+
+    /** How a book's leaves are held together, seen in the middle of an open book. */
+    public enum Binding implements IStableName {
+        /** A ring binder's rings through punched holes. */
+        RINGS("rings"),
+        /** Glued at the spine, the pages meeting in a soft shadow. */
+        GLUED("glued"),
+        /** Sewn in signatures, the pages curving deep into the spine. */
+        SEWN("sewn"),
+        /** A wire coil through a row of holes, the pages lying flat. */
+        WIRE("wire");
+
+        private final String serializedName;
+
+        Binding(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return this.serializedName;
+        }
+    }
+
+    /** The paper a book's pages are. */
+    public enum Paper implements IStableName {
+        /** Plain paper. */
+        PLAIN("plain"),
+        /** A notebook's graph paper, a red line down each page's outer margin. */
+        GRAPH("graph");
+
+        private final String serializedName;
+
+        Paper(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return this.serializedName;
+        }
+    }
+
+    /** How a book's chapters are marked at the edge of its pages, each mark leading to its chapter. */
+    public enum Marks implements IStableName {
+        /** A binder's plastic tabs standing out past the pages. */
+        TABS("tabs"),
+        /** A thumb index printed on the edge of the right page, the open chapter's block the widest. */
+        THUMB("thumb"),
+        /** Paper flags stuck on the pages' edge by the book's owner, each its chapter's colour. */
+        FLAGS("flags");
+
+        private final String serializedName;
+
+        Marks(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return this.serializedName;
+        }
+    }
+
+    /**
      * How the cover looks.
      *
-     * @param kind  a ring binder, with its spine and rivets, or a folder, with its flap
+     * @param kind  a ring binder, with its spine and rivets; a folder, with its flap; or a book, drawn from its parts
      * @param label whether the cover's words stand on a pasted label, or on the cover itself
      * @param band  whether a stripe of the band's colour crosses the cover near its foot
+     * @param parts what a book's cover is drawn from, in order, each over the ones before it
      */
-    public record Cover(CoverKind kind, boolean label, boolean band) {
+    public record Cover(CoverKind kind, boolean label, boolean band, List<CoverPart> parts) {
 
         public Cover {
             Objects.requireNonNull(kind, "kind");
+            parts = List.copyOf(parts);
+        }
+
+        /** A binder's or a folder's cover, drawn as its kind is. */
+        public Cover(final CoverKind kind, final boolean label, final boolean band) {
+            this(kind, label, band, List.of());
+        }
+
+        /** A book's cover, drawn from those parts. */
+        public static Cover book(final List<CoverPart> parts) {
+            return new Cover(CoverKind.BOOK, false, false, parts);
+        }
+    }
+
+    /**
+     * A part of a book's cover, placed in the cover's pixels from its top left corner; the cover is the closed book
+     * seen from the front, its spine at its left edge.
+     *
+     * @param kind   what is drawn
+     * @param x      where it starts across
+     * @param y      where it starts down
+     * @param width  how wide it is; for words, how wide they may run before they wrap
+     * @param height how tall it is
+     * @param colour a role of the style's palette, or a colour written {@code #AARRGGBB}
+     * @param words  for words and a stamp, which of the manual's cover lines they are, from 1; or 0
+     * @param image  for an image, a texture {@code namespace:path} under {@code textures/}
+     * @param scale  for words, how large they are lettered, 1 for running text
+     * @param turn   for a stamp, how far its frame is turned, in degrees
+     */
+    public record CoverPart(PartKind kind, int x, int y, int width, int height, String colour, int words,
+                            String image, float scale, int turn) {
+
+        public CoverPart {
+            Objects.requireNonNull(kind, "kind");
+            colour = colour == null ? "" : colour;
+            image = image == null ? "" : image;
+            if (width < 0 || height < 0 || words < 0 || scale <= 0) {
+                throw new IllegalArgumentException("a cover's part has a size, a line from 1 and a scale; got "
+                        + width + " by " + height + ", line " + words + ", " + scale);
+            }
+        }
+
+        /** A rectangle of a colour. */
+        public static CoverPart fill(final int x, final int y, final int width, final int height,
+                                     final String colour) {
+            return new CoverPart(PartKind.FILL, x, y, width, height, colour, 0, "", 1, 0);
+        }
+
+        /** A rectangle's outline in a colour. */
+        public static CoverPart frame(final int x, final int y, final int width, final int height,
+                                      final String colour) {
+            return new CoverPart(PartKind.FRAME, x, y, width, height, colour, 0, "", 1, 0);
+        }
+
+        /** An image the mod ships, drawn at that size. */
+        public static CoverPart image(final int x, final int y, final int size, final String texture) {
+            return new CoverPart(PartKind.IMAGE, x, y, size, size, "", 0, texture, 1, 0);
+        }
+
+        /** One of the manual's cover lines, from 1, lettered at that scale in a colour, wrapping in that width. */
+        public static CoverPart words(final PartKind kind, final int x, final int y, final int width,
+                                      final int line, final float scale, final String colour) {
+            return new CoverPart(kind, x, y, width, 0, colour, line, "", scale, 0);
+        }
+
+        /** A rubber stamp: its frame turned by that many degrees, one of the cover lines inside it. */
+        public static CoverPart stamp(final int x, final int y, final int width, final int height, final int line,
+                                      final int turn, final String colour) {
+            return new CoverPart(PartKind.STAMP, x, y, width, height, colour, line, "", 1, turn);
+        }
+
+        /** A grain over a rectangle: a cloth's weave, kraft paper's flecks, or a wire coil down a spine. */
+        public static CoverPart grain(final PartKind kind, final int x, final int y, final int width,
+                                      final int height, final String colour) {
+            return new CoverPart(kind, x, y, width, height, colour, 0, "", 1, 0);
+        }
+    }
+
+    /** What a part of a book's cover is. */
+    public enum PartKind implements IStableName {
+        /** A rectangle of its colour. */
+        FILL("fill"),
+        /** The outline of a rectangle. */
+        FRAME("frame"),
+        /** A bevelled plate, lit along its top and left and shaded along the rest. */
+        PLATE("plate"),
+        /** An image. */
+        IMAGE("image"),
+        /** Words, small. */
+        SMALL("small"),
+        /** Words. */
+        WORDS("words"),
+        /** Words in bold. */
+        BOLD("bold"),
+        /** Words in bold, centred on the part's middle. */
+        CENTRED("centred"),
+        /** Words, small, centred on the part's middle. */
+        CENTRED_SMALL("centred_small"),
+        /** Words in the code font, each of its pixels as large as the part's scale says. */
+        CODE("code"),
+        /** A rubber stamp: a turned frame round words. */
+        STAMP("stamp"),
+        /** A cloth's fine weave: a darker line every other row. */
+        CLOTH("cloth"),
+        /** Kraft paper's flecks, scattered the same way each time. */
+        KRAFT("kraft"),
+        /** A wire coil down the spine. */
+        WIRE("wire");
+
+        private final String serializedName;
+
+        PartKind(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return this.serializedName;
         }
     }
 
@@ -181,7 +413,9 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
         /** A ring binder: a spine with rivets, the chapter tabs standing out at the edge. */
         BINDER("binder"),
         /** A folder of drawings: a flap across it, the sheets' edge showing at its side. */
-        FOLDER("folder");
+        FOLDER("folder"),
+        /** A bound book, its cover drawn from the parts its style lists. */
+        BOOK("book");
 
         private final String serializedName;
 

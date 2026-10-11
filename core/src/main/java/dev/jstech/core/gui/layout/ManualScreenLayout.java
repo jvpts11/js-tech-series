@@ -53,6 +53,16 @@ public final class ManualScreenLayout {
     public static final int COVER_WIDTH = 180;
     /** How far a closed binder's tabs stand out past its edge. */
     public static final int COVER_TAB_OUT = 11;
+    /** A printed thumb index: the tallest a block is, how far from the page's top and foot, and its widths. */
+    public static final int THUMB_HEIGHT = 14;
+    public static final int THUMB_TOP = 10;
+    public static final int THUMB_WIDTH = 6;
+    public static final int THUMB_OPEN = 9;
+    /** Paper flags: how far from the top the first stands, how far apart, how tall, and how far under the page. */
+    public static final int FLAG_TOP = 18;
+    public static final int FLAG_PITCH = 22;
+    public static final int FLAG_HEIGHT = 16;
+    public static final int FLAG_UNDER = 5;
 
     private ManualScreenLayout() {
     }
@@ -80,6 +90,26 @@ public final class ManualScreenLayout {
     /** A chapter's tab, counted from the top. */
     public static Rect tab(final Geometry geometry, final int index) {
         return new Rect(geometry.tabsX(), TAB_TOP + index * TAB_PITCH, TAB_WIDTH, TAB_HEIGHT);
+    }
+
+    /**
+     * A chapter's block of a thumb index printed on the right page's outer edge, counted from the top: as tall as
+     * {@code count} blocks share the page's height, at most {@link #THUMB_HEIGHT}; the open chapter's the widest.
+     */
+    public static Rect thumb(final Geometry geometry, final int index, final int count, final boolean open) {
+        final Rect page = geometry.right() != null ? geometry.right() : geometry.left();
+        final int height = Math.min(THUMB_HEIGHT, (page.height() - 2 * THUMB_TOP) / Math.max(1, count));
+        final int width = open ? THUMB_OPEN : THUMB_WIDTH;
+        return new Rect(page.x() + page.width() - width, page.y() + THUMB_TOP + index * height, width, height - 1);
+    }
+
+    /**
+     * A chapter's paper flag stuck on the pages' outer edge, counted from the top: standing out past the cover to where
+     * a tab would, the open chapter's reaching two pixels further onto the page.
+     */
+    public static Rect flag(final Geometry geometry, final int index, final boolean open) {
+        final int x = geometry.coverRight() - COVER - FLAG_UNDER - (open ? 2 : 0);
+        return new Rect(x, FLAG_TOP + index * FLAG_PITCH, geometry.width() - x - (open ? 0 : 1), FLAG_HEIGHT);
     }
 
     /** The closed manual, in the middle of where the open one stands, its tabs beside it. */

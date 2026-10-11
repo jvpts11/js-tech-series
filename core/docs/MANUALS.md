@@ -508,6 +508,60 @@ Two helpers make the usual ones in code:
   marked; J's Industrial). In code, `CoreGuide.binder(...).withHoldBar(GuideStyle.HoldBar.BLOCKS)`. Its colours are
   the palette `jscore:guide/hold_bar`.
 
+### How a book is made
+
+*Added 2026-10-11.*
+
+A binder is one way to hold pages together; a manual can be bound as the books of its time were. `make` says how,
+and a style that leaves it out is made the way its `decor` says: rings when `rings` is on, glued pages with tabs when
+it is off, so every style written before it keeps its looks.
+
+```json
+"make": { "binding": "wire", "paper": "graph", "marks": "flags", "ribbon": false }
+```
+
+- `binding`: `rings` (a binder's three rings through the pages), `glued` (a paperback's spine, the pages darkening a
+  little into it), `sewn` (a hardback sewn in sections, the pages curving deeper into the gutter) or `wire` (a coil
+  down the middle, each loop through its own hole, as a notebook is bound).
+- `paper`: `plain`, or `graph` (squared paper in the palette's `grid` colour, with a red margin line, the role
+  `margin`, down the outer side of each page).
+- `marks`: how the reader finds a chapter. `tabs` stand out past the cover, as a binder's do; `thumb` prints a
+  block for each chapter down the right page's edge, the open one widest, in the chapter's colour, as a reference
+  book's thumb index; `flags` are paper flags stuck under the pages' edge, each in its chapter's colour, the open
+  one reaching furthest onto the page.
+- `ribbon`: a bookmark ribbon sewn into the spine, in the palette's `ribbon` colour. It lies across the spread the
+  reader left the book open at, and hangs out under the book everywhere else.
+
+In code: `CoreGuide.binder(...).withMake(new GuideStyle.Make(GuideStyle.Binding.SEWN, GuideStyle.Paper.PLAIN,
+GuideStyle.Marks.THUMB, true))`.
+
+### A book's cover
+
+A `binder` and a `folder` draw their own covers. A `book` cover is drawn from the parts it lists, each over the ones
+before it, on a board in the palette's `cover` colour, so a manual can be dressed as a press of its time dressed
+theirs with nothing but data:
+
+```json
+"cover": { "kind": "book", "parts": [
+  { "kind": "fill", "x": 12, "y": 0, "width": 12, "height": 218, "colour": "spine" },
+  { "kind": "image", "x": 26, "y": 26, "width": 20, "height": 20, "image": "mymod:gui/splash/mark" },
+  { "kind": "bold", "x": 26, "y": 70, "width": 140, "line": 1, "scale": 2.5, "colour": "heading" },
+  { "kind": "stamp", "x": 84, "y": 150, "width": 80, "height": 26, "line": 3, "turn": -6, "colour": "#FFB3261E" }
+]}
+```
+
+A part's `x` and `y` are counted from the cover's top left corner, in the screen's pixels: the closed book is 180
+wide and as tall as its pages. Its `colour` is a role of the style's palette, or a colour written `#AARRGGBB`.
+
+- `fill`, `frame` and `plate`: a rectangle filled, outlined, or raised with a lit and a shaded edge.
+- `image`: a texture, `<namespace>:<path>` under `textures/`, stretched over the part.
+- `words`, `bold`, `small`, `centred`, `centred_small` and `code`: one of the manual's `cover` lines, `line` from 1,
+  in the reader's language, wrapped in the part's `width` at its `scale`; the centred ones stand on the part's
+  middle, and `code` is written in the style's code font.
+- `stamp`: a rubber stamp's double frame, turned `turn` degrees, with its line in bold inside it.
+- `cloth`, `kraft` and `wire`: a material over the part. A cloth's weave, kraft paper's flecks (scattered the same
+  way each time, so the cover does not shimmer), or a wire coil's loops down a spine.
+
 ## A special block
 
 *Added 2026-10-05.*
