@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.function.ToIntFunction;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -63,7 +64,10 @@ final class ManualScenes {
     private String nextScene = "";
     private int nextNumber;
 
-    /** A balloon's radius, and how far apart two balloons on one side stand at least. */
+    /**
+     * A balloon's radius, eleven pixels across so its small number clears the ring at every scale of the screen, and
+     * how far apart two balloons on one side stand at least.
+     */
     private static final int BALLOON = 5;
     private static final int BALLOON_PITCH = 12;
     /** How far a balloon stands in from the frame's side. */
@@ -253,10 +257,22 @@ final class ManualScenes {
         return this.reset(piece, x, y + piece.scene().height());
     }
 
+    /** The button that shows a layer more of a scene drawn at that place, or the one that hides its top layer. */
+    ManualScreenLayout.Rect layerButton(final GuidePiece.Scene piece, final int x, final int y, final boolean more) {
+        final ManualScreenLayout.Rect shown = this.more(this.reset(piece, x, y + piece.scene().height()));
+        return more ? shown : this.fewer(piece.scene(), shown);
+    }
+
     /** How the reader has turned a scene, once it has been drawn. */
     Optional<GuideBlock.SceneView> viewOf(final String id) {
         final State state = this.states.get(id);
         return state == null ? Optional.empty() : Optional.of(state.view);
+    }
+
+    /** How many layers of a scene are shown, counted up from the bottom, once it has been drawn. */
+    OptionalInt layersOf(final String id) {
+        final State state = this.states.get(id);
+        return state == null ? OptionalInt.empty() : OptionalInt.of(state.layers);
     }
 
     /** Lets every scene's picture go, for a manual being closed. */

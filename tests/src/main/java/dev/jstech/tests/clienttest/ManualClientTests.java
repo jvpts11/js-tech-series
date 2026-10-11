@@ -204,6 +204,7 @@ public final class ManualClientTests {
         final GuideBlock.SceneView book = new GuideBlock.SceneView(-30, 25, 1);
         ctx.then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.SCENE))
                 .thenAwaitScreen(ManualScreen.class, OPEN)
+                .then(SETTLE, () -> toScene(scene))
                 .thenAssert(SETTLE, () -> manual().scenePoint(scene, false) != null
                         && manual().sceneView(scene).orElseThrow().equals(book),
                         "the scene is drawn as the book shows it")
@@ -227,6 +228,41 @@ public final class ManualClientTests {
                 .then(0, () -> ctx.click(manual().scenePoint(scene, true)[0], manual().scenePoint(scene, true)[1]))
                 .thenAssert(SETTLE, () -> manual().sceneView(scene).orElseThrow().equals(book),
                         "Reset brings back the book's own view")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 300)
+    public static void manual_peelsASceneLayerByLayer(final ClientTestContext ctx) {
+        final String scene = TestGuide.SCENE + "#1";
+        ctx.then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.SCENE))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .then(SETTLE, () -> toScene(scene))
+                .thenAssert(SETTLE, () -> manual().sceneLayers(scene).orElse(0) == 2,
+                        "the scene shows both its layers, the grass and what stands on it")
+                .then(0, () -> ctx.click(manual().sceneLayerPoint(scene, false)[0],
+                        manual().sceneLayerPoint(scene, false)[1]))
+                .thenAssert(SETTLE, () -> manual().sceneLayers(scene).orElse(0) == 1,
+                        "the minus hides the top layer, the furnace and the chest")
+                .thenScreenshot(2, "manual_scene_layer")
+                .then(0, () -> ctx.click(manual().sceneLayerPoint(scene, true)[0],
+                        manual().sceneLayerPoint(scene, true)[1]))
+                .thenAssert(SETTLE, () -> manual().sceneLayers(scene).orElse(0) == 2, "and the plus shows it again")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 300)
+    public static void manual_printsACommandsPageFromTheCommand(final ClientTestContext ctx) {
+        ctx.then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.COMMAND))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> shows(TestGuide.COMMAND) && manual().book().pages().stream()
+                        .flatMap(page -> page.pieces().stream())
+                        .anyMatch(piece -> piece instanceof GuidePiece.Text text && text.text().contains("dir")),
+                        "the command's page is printed from MC-DOS's dir")
+                .thenScreenshot(2, "manual_command")
+                .then(0, () -> manual().turn(1))
+                .thenScreenshot(SETTLE, "manual_command_on")
                 .then(0, ManualClientTests::close)
                 .thenAwaitNoScreen(OPEN);
     }
@@ -505,6 +541,18 @@ public final class ManualClientTests {
 
     private static ManualScreen manual() {
         return (ManualScreen) Minecraft.getInstance().screen;
+    }
+
+    /* Shows the spread holding the scene of that id: a scene too tall for what is left of a page starts the next. */
+    private static void toScene(final String id) {
+        final GuideBook book = manual().book();
+        for (int page = 0; page < book.pages().size(); page++) {
+            if (book.pages().get(page).pieces().stream()
+                    .anyMatch(piece -> piece instanceof GuidePiece.Scene scene && scene.id().equals(id))) {
+                manual().goToPage(page);
+                return;
+            }
+        }
     }
 
     /** Whether the spread shown holds the page where that target starts. */

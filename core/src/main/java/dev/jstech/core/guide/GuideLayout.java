@@ -137,8 +137,10 @@ public final class GuideLayout {
     public static final int SCENE_STRIP = 11;
     /** A line of a scene's legend: how tall it is, and how far its words are set in past its balloon. */
     public static final int SCENE_KEY_ROW = 12;
-    public static final int SCENE_KEY_ROOM = 14;
+    public static final int SCENE_KEY_ROOM = 15;
 
+    /** How far below a legend line's top its small words start, level with the middle of its balloon. */
+    private static final int KEY_TEXT_DROP = 3;
     private static final int PARAGRAPH_GAP = 4;
     private static final int BLOCK_GAP = 6;
     private static final int CAPTION_GAP = 3;
@@ -1018,9 +1020,9 @@ public final class GuideLayout {
         this.y += BLOCK_GAP;
     }
 
-    /** The lines of a scene's legend, each its balloon's number and what it points at. */
+    /** The lines of a scene's legend in small letters, each its balloon's number and what it points at. */
     private void legend(final List<GuideBlock.SceneBalloon> balloons, final String scene) {
-        final TextSize body = this.sized(TextSize.BODY);
+        final TextSize body = TextSize.SMALL;
         final List<GuideBlock.SceneBalloon> sorted = balloons.stream()
                 .sorted(Comparator.comparingInt(GuideBlock.SceneBalloon::number)).toList();
         final int half = (this.width - COLUMN_GAP) / 2;
@@ -1033,7 +1035,7 @@ public final class GuideLayout {
                 final int keyX = this.x() + i / rows * (half + COLUMN_GAP);
                 final int keyY = this.y + i % rows * SCENE_KEY_ROW;
                 this.place(new GuidePiece.SceneKey(keyX, keyY, half, SCENE_KEY_ROW, scene, sorted.get(i).number()));
-                this.place(new GuidePiece.Text(keyX + SCENE_KEY_ROOM, keyY + 1,
+                this.place(new GuidePiece.Text(keyX + SCENE_KEY_ROOM, keyY + KEY_TEXT_DROP,
                         this.text.text(sorted.get(i).key()), body, GuideStyle.INK, ""));
             }
             this.y += rows * SCENE_KEY_ROW;
@@ -1042,12 +1044,12 @@ public final class GuideLayout {
         for (final GuideBlock.SceneBalloon balloon : sorted) {
             final List<String> lines = wrap(this.text.text(balloon.key()), this.width - SCENE_KEY_ROOM, body,
                     this.text);
-            final int height = Math.max(SCENE_KEY_ROW, lines.size() * body.lineHeight() + 2);
+            final int height = Math.max(SCENE_KEY_ROW, lines.size() * body.lineHeight() + 2 * KEY_TEXT_DROP);
             this.ensure(height);
             this.place(new GuidePiece.SceneKey(this.x(), this.y, this.width, height, scene, balloon.number()));
             for (int i = 0; i < lines.size(); i++) {
-                this.place(new GuidePiece.Text(this.x() + SCENE_KEY_ROOM, this.y + 1 + i * body.lineHeight(),
-                        lines.get(i), body, GuideStyle.INK, ""));
+                this.place(new GuidePiece.Text(this.x() + SCENE_KEY_ROOM,
+                        this.y + KEY_TEXT_DROP + i * body.lineHeight(), lines.get(i), body, GuideStyle.INK, ""));
             }
             this.y += height;
         }

@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.function.Function;
 import net.minecraft.Util;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -387,27 +388,49 @@ public final class ManualScreen extends Screen {
      */
     @Nullable
     public int[] scenePoint(final String id, final boolean reset) {
-        final int first = this.style.spread() ? this.spread * 2 : this.spread;
-        for (final int index : new int[] {first, this.rightPage(first)}) {
-            final ManualScreenLayout.Rect page = index == first ? this.geometry.left() : this.geometry.right();
-            if (page == null || index < 0 || index >= this.book.pages().size()) {
-                continue;
-            }
-            for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
-                if (piece instanceof GuidePiece.Scene scene && scene.id().equals(id)) {
-                    final int x = page.x() + scene.x();
-                    final int y = page.y() + scene.y();
-                    return reset ? this.middleOf(this.scenes.resetButton(scene, x, y))
-                            : new int[] {this.left + x + scene.width() / 2, this.top + y + scene.scene().height() / 2};
-                }
-            }
-        }
-        return null;
+        return this.onScene(id, placed -> reset
+                ? this.middleOf(this.scenes.resetButton(placed.scene(), placed.x(), placed.y()))
+                : new int[] {this.left + placed.x() + placed.scene().width() / 2,
+                        this.top + placed.y() + placed.scene().scene().height() / 2});
+    }
+
+    /**
+     * The middle of the button that shows a layer more of the scene of that id, or of the one that hides its top
+     * layer, in the screen's coordinates; null when the spread shows no such scene (client tests click them).
+     */
+    @Nullable
+    public int[] sceneLayerPoint(final String id, final boolean more) {
+        return this.onScene(id, placed -> this.middleOf(this.scenes.layerButton(placed.scene(), placed.x(), placed.y(),
+                more)));
     }
 
     /** How the reader has turned the scene of that id, once it has been drawn (client tests ask). */
     public Optional<GuideBlock.SceneView> sceneView(final String id) {
         return this.scenes.viewOf(id);
+    }
+
+    /** How many layers of the scene of that id are shown, once it has been drawn (client tests ask). */
+    public OptionalInt sceneLayers(final String id) {
+        return this.scenes.layersOf(id);
+    }
+
+    /** The style the manual is drawn in. */
+    public GuideStyle style() {
+        return this.style;
+    }
+
+    /**
+     * The middle of the mark of the {@code index}th chapter at the edge, in the screen's coordinates: its tab, its
+     * block of the thumb index or its paper flag; null when the book shows no mark for it (client tests click it).
+     */
+    @Nullable
+    public int[] markPoint(final int index) {
+        return index >= 0 && index < this.tabCount() ? this.middleOf(this.markOf(index)) : null;
+    }
+
+    /** The spread the ribbon keeps, the one the book was put down at last time; empty when it keeps none. */
+    public OptionalInt ribbonSpread() {
+        return this.kept == UNSET ? OptionalInt.empty() : OptionalInt.of(this.kept);
     }
 
     /** Whether a listing is open over the whole book. */
@@ -1594,6 +1617,24 @@ public final class ManualScreen extends Screen {
             return onLeft;
         }
         return this.sceneOn(this.geometry.right(), this.rightPage(first), mx, my);
+    }
+
+    /** What {@code at} gives for the scene of that id where it stands on the spread shown; null when none shows it. */
+    @Nullable
+    private int[] onScene(final String id, final Function<PlacedScene, int[]> at) {
+        final int first = this.style.spread() ? this.spread * 2 : this.spread;
+        for (final int index : new int[] {first, this.rightPage(first)}) {
+            final ManualScreenLayout.Rect page = index == first ? this.geometry.left() : this.geometry.right();
+            if (page == null || index < 0 || index >= this.book.pages().size()) {
+                continue;
+            }
+            for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+                if (piece instanceof GuidePiece.Scene scene && scene.id().equals(id)) {
+                    return at.apply(new PlacedScene(scene, page.x() + scene.x(), page.y() + scene.y()));
+                }
+            }
+        }
+        return null;
     }
 
     @Nullable
