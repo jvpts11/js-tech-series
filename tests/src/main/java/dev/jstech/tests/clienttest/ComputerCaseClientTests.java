@@ -10,13 +10,16 @@ package dev.jstech.tests.clienttest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
+import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
 import dev.jstech.core.content.BlockEntry;
 import java.util.List;
+import java.util.function.BiConsumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -62,6 +65,37 @@ public final class ComputerCaseClientTests {
             ComputingModule.TRANSITION_CRAFTING_COMPUTER, ComputingModule.TRANSITION_CLUSTER_MANAGEMENT_COMPUTER,
             ComputingModule.ADVANCED_PERSONAL_COMPUTER, ComputingModule.ADVANCED_CRAFTING_COMPUTER,
             ComputingModule.ADVANCED_CLUSTER_MANAGEMENT_COMPUTER);
+    /** The fronts with their bays filled stand in a row of their own, seen a little from above. */
+    private static final int FRONT_ROW_Z = 36;
+    private static final float FRONT_PITCH = 18F;
+    /** A front of each age with what its bays and ports hold. */
+    private static final List<Front> FRONTS = List.of(
+            new Front("vintage-hot-swap-with-a-disk", ComputingModule.VINTAGE_PERSONAL_COMPUTER,
+                    List.of("hot_swap_drive_bay"),
+                    (pc, level) -> pc.front().insert(0, Build.stack("disk_vaultis_trench_20m"))),
+            new Front("legacy-cd-tray-out-and-an-empty-hot-swap", ComputingModule.LEGACY_PERSONAL_COMPUTER,
+                    List.of("internal_cd_drive", "hot_swap_drive_bay"), (pc, level) -> {
+                        pc.front().tray(0).press(level, pc.getBlockPos());
+                        pc.front().insert(0, new ItemStack(ComputingModule.CD_ROM.get()));
+                    }),
+            new Front("transition-dvd-blu-ray-out-two-sticks", ComputingModule.TRANSITION_PERSONAL_COMPUTER,
+                    List.of("internal_dvd_drive", "internal_blu_ray_drive"), (pc, level) -> {
+                        pc.front().tray(1).press(level, pc.getBlockPos());
+                        pc.front().insert(1, new ItemStack(ComputingModule.BD_ROM.get()));
+                        pc.front().insert(CaseFront.portSlot(0), new ItemStack(ComputingModule.USB_FLASH_DRIVE.get()));
+                        pc.front().insert(CaseFront.portSlot(1), new ItemStack(ComputingModule.USB_FLASH_DRIVE.get()));
+                    }),
+            new Front("standard-dvd-in-and-a-stick", ComputingModule.PERSONAL_COMPUTER,
+                    List.of("internal_dvd_drive"), (pc, level) -> {
+                        pc.front().insert(0, new ItemStack(ComputingModule.DVD_RW.get()));
+                        pc.front().insert(CaseFront.portSlot(0), new ItemStack(ComputingModule.USB_FLASH_DRIVE.get()));
+                    }),
+            new Front("standard-aesthetic-empty-bay", ComputingModule.AESTHETIC_PERSONAL_COMPUTER, List.of(),
+                    (pc, level) -> { }),
+            new Front("advanced-two-sticks", ComputingModule.ADVANCED_PERSONAL_COMPUTER, List.of(), (pc, level) -> {
+                pc.front().insert(CaseFront.portSlot(0), new ItemStack(ComputingModule.USB_FLASH_DRIVE.get()));
+                pc.front().insert(CaseFront.portSlot(1), new ItemStack(ComputingModule.USB_FLASH_DRIVE.get()));
+            }));
     /** One machine per case, after the builds round 17 showed, and two holding parts of other ages. */
     private static final List<Build> BUILDS = List.of(
             new Build("vintage-486", ComputingModule.VINTAGE_PERSONAL_COMPUTER, "motherboard_babyat_vintage",
@@ -269,6 +303,35 @@ public final class ComputerCaseClientTests {
     }
 
     /**
+     * The fronts of every age with their bays filled: each part installed in a bay drawn in it, an empty bay showing its
+     * cover; a drive with its tray out and a disc on it, another with its tray in; the hot-swap bay with its caddy in
+     * and a disk in it, or with none; and a USB flash drive in each port of the cases that have them.
+     */
+    @ClientTest(timeoutTicks = 900)
+    public static void fronts_showWhatTheirBaysAndPortsHold(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+            for (int i = 0; i < FRONTS.size(); i++) {
+                final Front front = FRONTS.get(i);
+                final BlockPos at = new BlockPos(i * 2, 2, FRONT_ROW_Z);
+                world.setBlock(at, front.machine().get().defaultBlockState()
+                        .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+                final AbstractSmallComputerBlockEntity computer =
+                        world.blockEntity(at, AbstractSmallComputerBlockEntity.class);
+                final ComputerHardwareLayout layout = computer.hardwareLayout();
+                for (int bay = 0; bay < front.bays().size(); bay++) {
+                    computer.getHardware().setStackInSlot(layout.bayStart() + bay, Build.stack(front.bays().get(bay)));
+                }
+                front.fill(computer, world.level());
+            }
+        });
+        for (int i = 0; i < FRONTS.size(); i++) {
+            ctx.thenTeleport(SETTLE, new BlockPos(i * 2, 2, FRONT_ROW_Z + 3), Direction.NORTH)
+                    .then(0, () -> ctx.player().setXRot(FRONT_PITCH))
+                    .thenScreenshot(SETTLE * 4, FRONTS.get(i).name());
+        }
+    }
+
+    /**
      * The assembly screens of the Transition and Advanced machines, each in the skin of its age: the case says the
      * age, whatever board is in it.
      */
@@ -301,6 +364,15 @@ public final class ComputerCaseClientTests {
 
     /** An age's cases, row by row from the floor up. */
     private record Age(String name, List<List<BlockEntry<?>>> rows) {
+    }
+
+    /** A case with a part in each of its bays, by item id, and what its bays and ports are then given to hold. */
+    private record Front(String name, BlockEntry<?> machine, List<String> bays,
+                         BiConsumer<AbstractSmallComputerBlockEntity, ServerLevel> filling) {
+
+        void fill(final AbstractSmallComputerBlockEntity computer, final ServerLevel level) {
+            filling.accept(computer, level);
+        }
     }
 
     /**

@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.block.IEraChassisBlock;
+import dev.jstech.computers.hardware.CasePorts;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.ValueField;
@@ -15,6 +17,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -48,14 +51,40 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
     /** The lamps on the front, worked out on the server: the power lamp's and the disk lamp's. */
     private final DerivedInt lamps =
             fields().derived("Lamps", () -> (isRunning() ? POWER_LAMP : 0) | (diskBusy() ? DISK_LAMP : 0)).toClient();
+    /** What the case's bays and front ports hold, and the trays of the drives in its bays. */
+    private final CaseFront front = new CaseFront(this, fields());
 
     private static final int POWER_LAMP = 1;
     private static final int DISK_LAMP = 2;
     private static final RawAnimation WORK = RawAnimation.begin().thenLoop("animation.computer.work");
+    /** The controller the power button's press plays on, and the press. */
+    private static final String POWER = "power";
+    private static final String PRESS = "press_power";
+    private static final RawAnimation PRESS_POWER = RawAnimation.begin().thenPlay("animation.computer.press_power");
 
     protected AbstractSmallComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
                                                final BlockState state, final ComputerHardwareLayout layout) {
         super(type, pos, state, layout);
+    }
+
+    /** The front of the case: its bays, its USB ports and what they hold. */
+    public CaseFront front() {
+        return front;
+    }
+
+    /** How many USB ports the case has on its front: its era's. */
+    public int casePorts() {
+        return getBlockState().getBlock() instanceof IEraChassisBlock chassis ? CasePorts.of(chassis.chassisEra()) : 0;
+    }
+
+    /** Spills what the case's bays and ports hold, as the case breaks. */
+    public void spillFront(final ServerLevel level, final BlockPos pos) {
+        front.spill(level, pos);
+    }
+
+    /** The power button pressed on the front: the button goes in for whoever sees the case. */
+    public void showPowerPressed() {
+        triggerAnim(POWER, PRESS);
     }
 
     /** Whether the left side is off the case. */
@@ -98,6 +127,14 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
         // The case's fans turn while the machine runs; its lamps and the parts inside are the renderer's to draw.
         controllers.add(new AnimationController<>(this, "work", 0,
                 state -> visualRunning() ? state.setAndContinue(WORK) : PlayState.STOP));
+        // The power button goes in when pressed, a clip the server sets off for whoever sees the case.
+        controllers.add(new AnimationController<>(this, POWER, 0, state -> PlayState.STOP)
+                .triggerableAnim(PRESS, PRESS_POWER));
+        // Each bay's tray rides out and in with the clips of the drive in it.
+        for (int bay = 0; bay < CaseFront.BAYS; bay++) {
+            final int which = bay;
+            controllers.add(front.tray(bay).controller(this, "tray_" + bay, () -> front.trayClips(which)));
+        }
     }
 
     @Override
@@ -112,6 +149,9 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
         for (int slot = 0; slot < slots.getSlots(); slot++) {
             parts.add(BuiltInRegistries.ITEM.getKey(slots.getStackInSlot(slot).getItem()));
         }
+        final List<ResourceLocation> before = installed.get();
         installed.set(List.copyOf(parts));
+        // A part taken out of a bay, or swapped for another, lets fall what it held.
+        front.partsChanged(before, installed.get());
     }
 }

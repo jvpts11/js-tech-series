@@ -13,6 +13,7 @@ import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
+import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
 import dev.jstech.core.client.geo.LookGeoModel;
 import java.util.Map;
@@ -66,6 +67,9 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
     /** Half a supply's height, in the model's units: a supply turned over turns about its middle. */
     private static final float PSU_HALF_HEIGHT = 1.75f;
     private static final float UNITS = 16f;
+    /** What a bay's model can show, as its bones name it: drive_<bay>_<part>. */
+    private static final String[] BAY_PARTS = {"cd", "dvd", "bd", "hotswap", "hotswap_empty"};
+    private static final String[][] DRIVE_BONES = driveBones();
 
     /**
      * Where each part's model and texture are, by the item that names it. The model itself is asked of GeckoLib's
@@ -75,6 +79,7 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
 
     public ComputerRenderer(final BlockEntityRendererProvider.Context context) {
         super(new LookGeoModel<>(ComputingLooks.COMPUTER));
+        addRenderLayer(new CaseFrontLayer<>(this));
     }
 
     @Override
@@ -88,6 +93,14 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
         DeviceLamps.show(model, ComputingLooks.COMPUTER_DISK_LAMP,
                 running && computer.visualDiskBusy() && DeviceLamps.blinkLit(computer.getLevel()));
         DeviceLamps.show(model, ComputingLooks.COMPUTER_SIDE_PANEL, !computer.sidePanelOff());
+        // A bay's model carries every part it takes, each hidden but the one installed; an empty bay shows its cover.
+        final CaseFront front = computer.front();
+        for (int bay = 0; bay < CaseFront.BAYS; bay++) {
+            final String shown = front.shown(bay);
+            for (int part = 0; part < BAY_PARTS.length; part++) {
+                DeviceLamps.show(model, DRIVE_BONES[bay][part], BAY_PARTS[part].equals(shown));
+            }
+        }
     }
 
     @Override
@@ -103,6 +116,17 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
         }
         new Drawing(poseStack, computer, chassis, model, bufferSource, partialTick, packedLight, packedOverlay, colour)
                 .parts();
+    }
+
+    /* The bones of each part in each bay, named once rather than every frame. */
+    private static String[][] driveBones() {
+        final String[][] out = new String[CaseFront.BAYS][BAY_PARTS.length];
+        for (int bay = 0; bay < CaseFront.BAYS; bay++) {
+            for (int part = 0; part < BAY_PARTS.length; part++) {
+                out[bay][part] = "drive_" + bay + "_" + BAY_PARTS[part];
+            }
+        }
+        return out;
     }
 
     /** The part an item is drawn as, or null for no item or an item with no model of its own. */

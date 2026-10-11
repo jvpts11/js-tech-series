@@ -97,7 +97,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   their era's case, one on the Vintage and Standard cases, two on the Legacy and Transition ones, none on the
   Advanced. Four parts go in them, each in its era's tab: the Hot-Swap Drive Bay (Vintage), the Internal CD Drive
   (Legacy), the Internal DVD Drive (Transition) and the Internal Blu-ray Drive (Advanced), which is there to read the
-  newest discs in an older computer. Any of the four goes in any bay, one to a bay.
+  newest discs in an older computer. Any of the four goes in any bay, one to a bay. The cases are drawn with their
+  fronts as they now are: the power button, the lamps and, from the Transition on, two USB ports on the left of the
+  face, an empty bay showing its cover and a part in a bay drawn in it, a drive with its tray and the hot-swap bay with
+  its caddy; a disc lies on a drive's tray and a USB flash drive plugs into a port, each drawn as the item it is. What
+  the bays and ports hold falls out when the case is broken, or when the part holding it is taken out of its bay.
 - Manuals, in J's Core, for every mod to write in: a mod declares its chapter once, as entries of ready blocks
   (paragraphs, figures, numbered tables whose amounts are read from the code, the recipes the world holds, steps,
   warnings, problems with their fixes, words explained, links), and they show in its own manual and in any manual

@@ -14,6 +14,7 @@ import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -52,8 +53,16 @@ public final class DiscTray {
 
     /** The tray of a device whose block entity keeps {@code fields}, closed until its button is pressed. */
     public DiscTray(final BlockEntityFields fields) {
-        this.open = fields.flag("TrayOpen", false).save().toClient();
-        this.movedAt = fields.longInteger("TrayMovedAt", NEVER).toClient();
+        this(fields, "Tray");
+    }
+
+    /**
+     * One of the trays of a block entity that keeps several, such as a computer with a drive in each of its bays: its
+     * fields named from {@code key}, {@code <key>Open} and {@code <key>MovedAt}.
+     */
+    public DiscTray(final BlockEntityFields fields, final String key) {
+        this.open = fields.flag(key + "Open", false).save().toClient();
+        this.movedAt = fields.longInteger(key + "MovedAt", NEVER).toClient();
     }
 
     /** Whether the tray is out. */
@@ -90,21 +99,50 @@ public final class DiscTray {
      */
     public <T extends BlockEntity & GeoAnimatable> AnimationController<T> controller(final T device,
                                                                                      final String animations) {
-        final RawAnimation opening = RawAnimation.begin().thenPlayAndHold("animation." + animations + ".open_tray");
-        final RawAnimation closing = RawAnimation.begin().thenPlayAndHold("animation." + animations + ".close_tray");
-        final RawAnimation standingOut = RawAnimation.begin().thenLoop("animation." + animations + ".tray_out");
-        return new AnimationController<>(device, CONTROLLER, 0, state -> {
+        final Clips clips = new Clips("animation." + animations + ".open_tray",
+                "animation." + animations + ".close_tray", "animation." + animations + ".tray_out");
+        return controller(device, CONTROLLER, () -> clips);
+    }
+
+    /**
+     * The controller {@code name} of a tray whose clips are named apart from the device's others, as {@code clips} names
+     * them at the moment: a computer's bay plays the clips of the drive in it. Null clips stop it, as for a bay with no
+     * drive.
+     */
+    public <T extends BlockEntity & GeoAnimatable> AnimationController<T> controller(
+            final T device, final String name, final Supplier<@Nullable Clips> clips) {
+        return new AnimationController<>(device, name, 0, state -> {
+            final Clips now = clips.get();
+            if (now == null) {
+                return PlayState.STOP;
+            }
             final boolean moving = moving(device.getLevel());
             if (open.get()) {
-                return state.setAndContinue(moving ? opening : standingOut);
+                return state.setAndContinue(moving ? now.opening() : now.standingOut());
             }
-            return moving ? state.setAndContinue(closing) : PlayState.STOP;
+            return moving ? state.setAndContinue(now.closing()) : PlayState.STOP;
         });
     }
 
-    /* Whether the tray is still riding from its last press. */
-    private boolean moving(@Nullable final Level level) {
+    /** Whether the tray is still riding from its last press, which the device draws it doing. */
+    public boolean moving(@Nullable final Level level) {
         return level != null && level.getGameTime() - movedAt.get() < MOVING_TICKS;
+    }
+
+    /**
+     * A tray's three clips: riding out and held there, riding back in, and standing out for a device that comes into
+     * view with it open.
+     *
+     * @param opening     out, and held
+     * @param closing     back in
+     * @param standingOut held out
+     */
+    public record Clips(RawAnimation opening, RawAnimation closing, RawAnimation standingOut) {
+
+        public Clips(final String open, final String close, final String out) {
+            this(RawAnimation.begin().thenPlayAndHold(open), RawAnimation.begin().thenPlayAndHold(close),
+                    RawAnimation.begin().thenLoop(out));
+        }
     }
 
     /* Whether that medium lies on a tray rather than going through a slot or into a port. */

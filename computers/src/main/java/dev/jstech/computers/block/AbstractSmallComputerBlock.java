@@ -101,9 +101,10 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
     @Override
     public BlockState playerWillDestroy(final Level level, final BlockPos pos, final BlockState state,
                                         final Player player) {
-        // Spill the installed hardware so a broken computer never destroys its components.
+        // Spill the installed hardware so a broken computer never destroys its components, nor what its front holds.
         final E computer = computerAt(level, pos);
         if (level instanceof ServerLevel serverLevel && !player.getAbilities().instabuild && computer != null) {
+            computer.spillFront(serverLevel, pos);
             BlockDrops.spill(serverLevel, pos, computer.getHardware());
         }
         return super.playerWillDestroy(level, pos, state, player);
