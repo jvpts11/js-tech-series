@@ -8,36 +8,46 @@
       "type": "table",
       "caption": "jsc.guide.eras.table1",
       "rows": [
-        {
-          "label": "jsc.guide.eras.table1_1",
-          "value": {
+        [
+          {
+            "words": "jsc.guide.eras.table1_1"
+          },
+          {
             "words": "jsc.guide.eras.value1_1"
           }
-        },
-        {
-          "label": "jsc.guide.eras.table1_2",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.eras.table1_2"
+          },
+          {
             "words": "jsc.guide.eras.value1_2"
           }
-        },
-        {
-          "label": "jsc.guide.eras.table1_3",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.eras.table1_3"
+          },
+          {
             "words": "jsc.guide.eras.value1_3"
           }
-        },
-        {
-          "label": "jsc.guide.eras.table1_4",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.eras.table1_4"
+          },
+          {
             "words": "jsc.guide.eras.value1_4"
           }
-        },
-        {
-          "label": "jsc.guide.eras.table1_5",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.eras.table1_5"
+          },
+          {
             "words": "jsc.guide.eras.value1_5"
           }
-        }
+        ]
       ]
     },
     {

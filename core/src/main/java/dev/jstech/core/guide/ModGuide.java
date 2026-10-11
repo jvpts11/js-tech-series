@@ -323,6 +323,8 @@ public final class ModGuide {
         private int notes;
         private int plans;
         private int balloons;
+        /** How many columns the last table has, which every row of it fills. */
+        private int columns;
         private List<GuideBlock.TableRow> rows;
         private List<GuideBlock.Callout> callouts;
         private List<Supplier<GuideBlock.PlanPart>> planParts;
@@ -458,35 +460,70 @@ public final class ModGuide {
             return this.add(() -> new GuideBlock.Picture("", kind, data, 0, height, key));
         }
 
-        /** A table; its rows follow with {@link #property}, {@link #amount} and {@link #fixed}. */
+        /**
+         * A table of properties and their values, headed "Property" and "Value"; its rows follow with
+         * {@link #property}, {@link #amount} and {@link #fixed}.
+         */
         public EntryBuilder table(final String caption) {
-            this.tables++;
-            final String key = this.key("table" + this.tables, caption);
-            final List<GuideBlock.TableRow> list = new ArrayList<>();
-            this.rows = list;
-            return this.add(() -> new GuideBlock.Table(key, list));
+            return this.tableOf(caption, List.of(), GuideBlock.Table.PROPERTY_COLUMNS);
+        }
+
+        /**
+         * A table with heads of its own, in English, left to right, such as "Command" and "What it does"; its rows
+         * follow with {@link #row}.
+         */
+        public EntryBuilder table(final String caption, final String... heads) {
+            if (heads.length == 0) {
+                return this.table(caption);
+            }
+            final List<String> keys = new ArrayList<>();
+            for (int i = 0; i < heads.length; i++) {
+                keys.add(this.key("table" + (this.tables + 1) + "_head" + (i + 1), heads[i]));
+            }
+            return this.tableOf(caption, keys, heads.length);
+        }
+
+        /** A row of the last table, a cell for each of its columns, left to right. */
+        public EntryBuilder row(final GuideCell... cells) {
+            final List<GuideBlock.TableRow> list = this.rowList(cells.length);
+            final String number = this.tables + "_" + (list.size() + 1);
+            final List<GuideBlock.GuideValue> values = new ArrayList<>();
+            for (int i = 0; i < cells.length; i++) {
+                values.add(switch (cells[i]) {
+                    case GuideCell.Words words -> new GuideBlock.GuideValue.Words(
+                            this.key("table" + number + "_" + (i + 1), words.english()));
+                    case GuideCell.Shared shared -> new GuideBlock.GuideValue.Words(shared.key().key());
+                    case GuideCell.Code code -> new GuideBlock.GuideValue.Literal(code.text());
+                    case GuideCell.Amount amount -> new GuideBlock.GuideValue.Amount(amount.value(), amount.unit());
+                });
+            }
+            list.add(new GuideBlock.TableRow(values));
+            return this;
         }
 
         /** A row of the last table whose value is words, translated like any sentence. */
         public EntryBuilder property(final String label, final String value) {
-            final String number = this.tables + "_" + (this.rowList().size() + 1);
-            this.rowList().add(new GuideBlock.TableRow(this.key("table" + number, label),
+            final List<GuideBlock.TableRow> list = this.rowList(GuideBlock.Table.PROPERTY_COLUMNS);
+            final String number = this.tables + "_" + (list.size() + 1);
+            list.add(new GuideBlock.TableRow(this.key("table" + number, label),
                     new GuideBlock.GuideValue.Words(this.key("value" + number, value))));
             return this;
         }
 
         /** A row of the last table whose value is an amount with its unit, read from the code: "12,000 FE". */
         public EntryBuilder amount(final String label, final long value, final String unit) {
-            final String number = this.tables + "_" + (this.rowList().size() + 1);
-            this.rowList().add(new GuideBlock.TableRow(this.key("table" + number, label),
+            final List<GuideBlock.TableRow> list = this.rowList(GuideBlock.Table.PROPERTY_COLUMNS);
+            final String number = this.tables + "_" + (list.size() + 1);
+            list.add(new GuideBlock.TableRow(this.key("table" + number, label),
                     new GuideBlock.GuideValue.Amount(value, unit)));
             return this;
         }
 
         /** A row of the last table whose value is data, the same in every language: a model number, a bus. */
         public EntryBuilder fixed(final String label, final String value) {
-            final String number = this.tables + "_" + (this.rowList().size() + 1);
-            this.rowList().add(new GuideBlock.TableRow(this.key("table" + number, label),
+            final List<GuideBlock.TableRow> list = this.rowList(GuideBlock.Table.PROPERTY_COLUMNS);
+            final String number = this.tables + "_" + (list.size() + 1);
+            list.add(new GuideBlock.TableRow(this.key("table" + number, label),
                     new GuideBlock.GuideValue.Literal(value)));
             return this;
         }
@@ -695,9 +732,23 @@ public final class ModGuide {
             return this;
         }
 
-        private List<GuideBlock.TableRow> rowList() {
+        private EntryBuilder tableOf(final String caption, final List<String> heads, final int count) {
+            this.tables++;
+            final String key = this.key("table" + this.tables, caption);
+            final List<GuideBlock.TableRow> list = new ArrayList<>();
+            this.rows = list;
+            this.columns = count;
+            return this.add(() -> new GuideBlock.Table(key, heads, list));
+        }
+
+        /** The last table's rows, for a row of that many cells, which must be one for each of its columns. */
+        private List<GuideBlock.TableRow> rowList(final int cells) {
             if (this.rows == null) {
                 throw new IllegalStateException("a table's rows follow its table");
+            }
+            if (cells != this.columns) {
+                throw new IllegalArgumentException("table " + this.tables + " of " + ModGuide.this.id(this.path)
+                        + " has " + this.columns + " columns; a row of " + cells + " cells does not fit it");
             }
             return this.rows;
         }

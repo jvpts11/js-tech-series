@@ -50,7 +50,7 @@
   ],
   "icon": "minecraft:map",
   "id": "jstests:shared_page",
-  "order": 4,
+  "order": 5,
   "section": "jstests:notes",
   "title": "jstests.guide.shared_page.title"
 }

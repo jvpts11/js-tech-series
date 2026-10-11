@@ -20,7 +20,8 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * How each size of a manual's text is drawn in a style: the font, bold or not, and the scale. Running text is the
  * style's body font at full size; headings are bold; big titles and the index's letters twice the size, a chapter's
- * number four times; heads, feet and captions three quarters; tables in the style's table font, which lines figures up.
+ * number four times; heads, feet, captions and the words of tables three quarters; code and figures in the style's code
+ * font at its own size, which lines figures up.
  */
 public final class GuideFonts {
 
@@ -36,7 +37,7 @@ public final class GuideFonts {
 
     /** The text as it is drawn at that size in that style, before any scale. */
     public static MutableComponent styled(final String text, final TextSize size, final GuideStyle style) {
-        final String fontId = size == TextSize.TABLE ? style.tableFont() : style.bodyFont();
+        final String fontId = size == TextSize.CODE ? style.codeFont() : style.bodyFont();
         Style look = Style.EMPTY;
         // A font id typed wrongly in a resource pack keeps the game font instead of crashing the manual.
         final ResourceLocation font = fontId.isEmpty() ? null : ResourceLocation.tryParse(fontId);

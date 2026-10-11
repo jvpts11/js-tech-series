@@ -25,25 +25,31 @@
       "type": "table",
       "caption": "jstests.guide.press.table1",
       "rows": [
-        {
-          "label": "jstests.guide.press.table1_1",
-          "value": {
+        [
+          {
+            "words": "jstests.guide.press.table1_1"
+          },
+          {
             "amount": 4,
             "unit": "FE/t"
           }
-        },
-        {
-          "label": "jstests.guide.press.table1_2",
-          "value": {
+        ],
+        [
+          {
+            "words": "jstests.guide.press.table1_2"
+          },
+          {
             "words": "jstests.guide.press.value1_2"
           }
-        },
-        {
-          "label": "jstests.guide.press.table1_3",
-          "value": {
+        ],
+        [
+          {
+            "words": "jstests.guide.press.table1_3"
+          },
+          {
             "literal": "TP-1"
           }
-        }
+        ]
       ]
     },
     {

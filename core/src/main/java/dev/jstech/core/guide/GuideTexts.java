@@ -19,6 +19,8 @@ public final class GuideTexts {
     public static final TextKey INDEX = TextKey.of("jscore.guide.index", "Index");
     public static final TextKey FIGURE = TextKey.of("jscore.guide.figure", "Figure %s.");
     public static final TextKey TABLE = TextKey.of("jscore.guide.table", "Table %s.");
+    /** The caption of a table again over the part of it that runs on to the next page. */
+    public static final TextKey TABLE_CONTINUED = TextKey.of("jscore.guide.table_continued", "%s (continued)");
     public static final TextKey PROPERTY = TextKey.of("jscore.guide.property", "Property");
     public static final TextKey VALUE = TextKey.of("jscore.guide.value", "Value");
     public static final TextKey WARNING = TextKey.of("jscore.guide.warning", "Warning");

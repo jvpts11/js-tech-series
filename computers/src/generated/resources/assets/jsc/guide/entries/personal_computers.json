@@ -12,48 +12,62 @@
       "type": "table",
       "caption": "jsc.guide.personal_computers.table1",
       "rows": [
-        {
-          "label": "jsc.guide.personal_computers.table1_1",
-          "value": {
+        [
+          {
+            "words": "jsc.guide.personal_computers.table1_1"
+          },
+          {
             "literal": "1"
           }
-        },
-        {
-          "label": "jsc.guide.personal_computers.table1_2",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.personal_computers.table1_2"
+          },
+          {
             "literal": "1"
           }
-        },
-        {
-          "label": "jsc.guide.personal_computers.table1_3",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.personal_computers.table1_3"
+          },
+          {
             "literal": "4"
           }
-        },
-        {
-          "label": "jsc.guide.personal_computers.table1_4",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.personal_computers.table1_4"
+          },
+          {
             "literal": "4"
           }
-        },
-        {
-          "label": "jsc.guide.personal_computers.table1_5",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.personal_computers.table1_5"
+          },
+          {
             "literal": "2"
           }
-        },
-        {
-          "label": "jsc.guide.personal_computers.table1_6",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.personal_computers.table1_6"
+          },
+          {
             "literal": "1"
           }
-        },
-        {
-          "label": "jsc.guide.personal_computers.table1_7",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.personal_computers.table1_7"
+          },
+          {
             "literal": "18"
           }
-        }
+        ]
       ]
     },
     {

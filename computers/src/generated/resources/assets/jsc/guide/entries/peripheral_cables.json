@@ -8,36 +8,46 @@
       "type": "table",
       "caption": "jsc.guide.peripheral_cables.table1",
       "rows": [
-        {
-          "label": "jsc.guide.peripheral_cables.table1_1",
-          "value": {
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table1_1"
+          },
+          {
             "literal": "8"
           }
-        },
-        {
-          "label": "jsc.guide.peripheral_cables.table1_2",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table1_2"
+          },
+          {
             "literal": "12"
           }
-        },
-        {
-          "label": "jsc.guide.peripheral_cables.table1_3",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table1_3"
+          },
+          {
             "literal": "14"
           }
-        },
-        {
-          "label": "jsc.guide.peripheral_cables.table1_4",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table1_4"
+          },
+          {
             "literal": "16"
           }
-        },
-        {
-          "label": "jsc.guide.peripheral_cables.table1_5",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table1_5"
+          },
+          {
             "literal": "20"
           }
-        }
+        ]
       ]
     },
     {

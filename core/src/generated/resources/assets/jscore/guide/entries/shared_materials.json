@@ -25,24 +25,30 @@
       "type": "table",
       "caption": "jscore.guide.shared_materials.table1",
       "rows": [
-        {
-          "label": "jscore.guide.shared_materials.table1_1",
-          "value": {
+        [
+          {
+            "words": "jscore.guide.shared_materials.table1_1"
+          },
+          {
             "words": "jscore.guide.shared_materials.value1_1"
           }
-        },
-        {
-          "label": "jscore.guide.shared_materials.table1_2",
-          "value": {
+        ],
+        [
+          {
+            "words": "jscore.guide.shared_materials.table1_2"
+          },
+          {
             "words": "jscore.guide.shared_materials.value1_2"
           }
-        },
-        {
-          "label": "jscore.guide.shared_materials.table1_3",
-          "value": {
+        ],
+        [
+          {
+            "words": "jscore.guide.shared_materials.table1_3"
+          },
+          {
             "words": "jscore.guide.shared_materials.value1_3"
           }
-        }
+        ]
       ]
     },
     {

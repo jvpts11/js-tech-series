@@ -12,42 +12,54 @@
       "type": "table",
       "caption": "jsc.guide.mainframes.table1",
       "rows": [
-        {
-          "label": "jsc.guide.mainframes.table1_1",
-          "value": {
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_1"
+          },
+          {
             "literal": "1 MTX"
           }
-        },
-        {
-          "label": "jsc.guide.mainframes.table1_2",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_2"
+          },
+          {
             "literal": "4"
           }
-        },
-        {
-          "label": "jsc.guide.mainframes.table1_3",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_3"
+          },
+          {
             "literal": "8"
           }
-        },
-        {
-          "label": "jsc.guide.mainframes.table1_4",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_4"
+          },
+          {
             "literal": "6"
           }
-        },
-        {
-          "label": "jsc.guide.mainframes.table1_5",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_5"
+          },
+          {
             "literal": "4"
           }
-        },
-        {
-          "label": "jsc.guide.mainframes.table1_6",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_6"
+          },
+          {
             "literal": "27"
           }
-        }
+        ]
       ]
     },
     {

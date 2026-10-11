@@ -50,7 +50,7 @@
   ],
   "icon": "minecraft:compass",
   "id": "jstests:other_book",
-  "order": 3,
+  "order": 4,
   "section": "jstests:ideas",
   "title": "jstests.guide.other_book.title"
 }

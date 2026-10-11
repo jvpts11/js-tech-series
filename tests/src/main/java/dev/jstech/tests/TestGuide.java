@@ -10,6 +10,7 @@ package dev.jstech.tests;
 import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.guide.CoreGuide;
+import dev.jstech.core.guide.GuideCell;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.GuidePages;
 import dev.jstech.core.guide.ManualItem;
@@ -19,9 +20,9 @@ import net.minecraft.world.item.Items;
 
 /**
  * Chapters, manuals and the item that opens one, to prove the Core's manuals: every kind of block an entry is made
- * of, a special block another mod draws, an entry an item's page opens to, links between entries, a second book that
- * binds a chapter written for it alone before the mod's main one, a link from one book into the other, and a stack
- * whose page its mod chooses.
+ * of, a special block another mod draws, an entry an item's page opens to, links between entries, tables that run on
+ * and that stack, a second book that binds a chapter written for it alone before the mod's main one, a link from one
+ * book into the other, and a stack whose page its mod chooses.
  */
 public final class TestGuide {
 
@@ -35,6 +36,7 @@ public final class TestGuide {
     public static final String LONG = "jstests:long";
     public static final String OTHER_BOOK = "jstests:other_book";
     public static final String SHARED_PAGE = "jstests:shared_page";
+    public static final String TABLES = "jstests:tables";
     /** The name a sheet of paper takes to be the page of the shared entry. */
     public static final String SHARED_PAPER = "Shared Notes";
     /** The kind of special block the test mod draws. */
@@ -98,6 +100,35 @@ public final class TestGuide {
                 .howToGetIt("Read it.")
                 .howToUseIt("Turn the page.")
                 .whatCanGoWrong("It ends on its first page.", "The layout lost a page.")
+                .register();
+        GUIDE.page("tables", IDEAS).titled("Tables").icon(() -> Items.WRITABLE_BOOK)
+                .whatItIs("An entry of tables: one of commands long enough to run on to the next page, and one too"
+                        + " wide for its columns to stand side by side.")
+                .table("Commands for files", "Command", "What it does")
+                .row(GuideCell.code("dir"), GuideCell.words("Lists what is in the folder you are in."))
+                .row(GuideCell.code("cd"), GuideCell.words("Shows the folder you are in, or moves to another."))
+                .row(GuideCell.code("type"), GuideCell.words("Prints a text file."))
+                .row(GuideCell.code("write"), GuideCell.words("Writes a line into a file."))
+                .row(GuideCell.code("del"), GuideCell.words("Deletes a file."))
+                .row(GuideCell.code("mkdir"), GuideCell.words("Makes a folder."))
+                .row(GuideCell.code("rmdir"), GuideCell.words("Removes an empty folder."))
+                .row(GuideCell.code("copy"), GuideCell.words("Copies a file."))
+                .row(GuideCell.code("move"), GuideCell.words("Moves a file to another folder."))
+                .row(GuideCell.code("ren"), GuideCell.words("Gives a file another name."))
+                .row(GuideCell.code("format"), GuideCell.words("Erases a whole drive. It asks first."))
+                .row(GuideCell.code("tree"), GuideCell.words("Draws the folders under this one."))
+                .table("Compile errors", "Code", "Message", "Means", "Fix")
+                .row(GuideCell.code("S1001"), GuideCell.words("unterminated string"),
+                        GuideCell.words("A string was opened with a quote and the line ended before it was closed."),
+                        GuideCell.words("Close the string with a quote on the same line."))
+                .row(GuideCell.code("S3001"), GuideCell.words("unknown name 'Consol'"),
+                        GuideCell.words("Nothing your program can see has that name: it is misspelled, or its"
+                                + " namespace has no using line."),
+                        GuideCell.words("Check the spelling, or add the using line."))
+                .whatItIsFor("Proving the layout of tables.")
+                .howToGetIt("Open the test manual.")
+                .howToUseIt("Read the tables.")
+                .whatCanGoWrong("A word is cut in two.", "A column was left narrower than its longest word.")
                 .register();
         GUIDE.page("other_book", IDEAS).titled("A Link to Another Book").icon(() -> Items.COMPASS)
                 .whatItIs("An entry whose words lead to [a page of another book](jstests:shared_page), which this"

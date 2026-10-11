@@ -91,15 +91,17 @@ the painter draws.
 ## The Core's fonts
 
 `CoreFonts` carries Misc Fixed, the X Window System's fixed font, from Markus Kuhn's ucs-fonts as the X.Org
-Foundation ships it, in the public domain, in three sizes of one design:
+Foundation ships it, in the public domain, in four sizes of one design:
 
 | Font | Cell | Above the baseline | Characters |
 | --- | --- | --- | --- |
+| `FIXED_5X8` | 5 x 8 | 7 | over 1,400 |
 | `FIXED_6X10` | 6 x 10 | 8 | nearly 1,600: Latin, Greek, Cyrillic, Hebrew, runes, Braille, symbols, boxes and blocks |
 | `FIXED_9X15` | 9 x 15 | 12 | nearly 4,800 |
 | `FIXED_10X20` | 10 x 20 | 16 | over 5,200 |
 
-Any mod can draw its terminal-like views in them, and the manuals draw their tables in the 6x10. A bitmap font drawn
+Any mod can draw its terminal-like views in them, and the manuals write their code and figures in the 5x8, whose line
+is no taller than a line of their small text. A bitmap font drawn
 at a scale where one of its pixels is not a whole number of the screen's comes out smeared, so a view in one does
 best to draw it at a whole number of screen pixels to each of the font's.
 

@@ -12,36 +12,46 @@
       "type": "table",
       "caption": "jsc.guide.iql.table1",
       "rows": [
-        {
-          "label": "jsc.guide.iql.table1_1",
-          "value": {
+        [
+          {
+            "words": "jsc.guide.iql.table1_1"
+          },
+          {
             "literal": "SELECT 64 iron_ingot"
           }
-        },
-        {
-          "label": "jsc.guide.iql.table1_2",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.iql.table1_2"
+          },
+          {
             "literal": "CRAFT 64 torch"
           }
-        },
-        {
-          "label": "jsc.guide.iql.table1_3",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.iql.table1_3"
+          },
+          {
             "literal": "QUERY items WHERE qty > 100"
           }
-        },
-        {
-          "label": "jsc.guide.iql.table1_4",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.iql.table1_4"
+          },
+          {
             "literal": "QUERY items ORDER BY name LIMIT 2"
           }
-        },
-        {
-          "label": "jsc.guide.iql.table1_5",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.iql.table1_5"
+          },
+          {
             "literal": "QUERY disks"
           }
-        }
+        ]
       ]
     },
     {

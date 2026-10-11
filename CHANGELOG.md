@@ -165,6 +165,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   books, a tab for each. A chapter written for one book only stays out of the Technical Reference, whose tabs are one
   a mod. A link to a page another book holds names that book, "(in The Handbook)", and a click opens it there; and the
   manual key over a stack whose page its mod chose, such as an installation disc, opens that page.
+- Tables in the manuals with columns of their own, such as a command and what it does. Their words are written
+  small, and their commands, codes and figures in Misc Fixed 5x8, a fourth size of the terminal font the Core now
+  carries. A word is never cut in two: every column is at least as wide as its longest word. A table whose columns
+  cannot stand side by side, such as a list of error codes with what each means and how to fix it, lists each row
+  under the one before. A table that fits on a page is never parted, moving to the next page whole; a longer one
+  carries its caption, marked "(continued)", and its head on to each page, and leaves at least three rows on either
+  side of where it parts.
 - The manuals inside the computers, beside the manual pages of each machine's commands, in each system's own help.
   Every desktop has Help: Frames 95's Help Topics with its Contents, Index and Find and a topic window of its own,
   XP's Help and Support Center, 7's Help and Support, Get Help on 10 and 11, KDE's Help Center, the Help of GNOME and

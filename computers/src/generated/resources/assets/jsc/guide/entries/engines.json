@@ -8,24 +8,30 @@
       "type": "table",
       "caption": "jsc.guide.engines.table1",
       "rows": [
-        {
-          "label": "jsc.guide.engines.table1_1",
-          "value": {
+        [
+          {
+            "words": "jsc.guide.engines.table1_1"
+          },
+          {
             "words": "jsc.guide.engines.value1_1"
           }
-        },
-        {
-          "label": "jsc.guide.engines.table1_2",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.engines.table1_2"
+          },
+          {
             "words": "jsc.guide.engines.value1_2"
           }
-        },
-        {
-          "label": "jsc.guide.engines.table1_3",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.engines.table1_3"
+          },
+          {
             "words": "jsc.guide.engines.value1_3"
           }
-        }
+        ]
       ]
     },
     {

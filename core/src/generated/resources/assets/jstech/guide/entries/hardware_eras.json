@@ -25,36 +25,46 @@
       "type": "table",
       "caption": "jstech.guide.hardware_eras.table1",
       "rows": [
-        {
-          "label": "jstech.guide.hardware_eras.table1_1",
-          "value": {
+        [
+          {
+            "words": "jstech.guide.hardware_eras.table1_1"
+          },
+          {
             "words": "jstech.guide.hardware_eras.value1_1"
           }
-        },
-        {
-          "label": "jstech.guide.hardware_eras.table1_2",
-          "value": {
+        ],
+        [
+          {
+            "words": "jstech.guide.hardware_eras.table1_2"
+          },
+          {
             "words": "jstech.guide.hardware_eras.value1_2"
           }
-        },
-        {
-          "label": "jstech.guide.hardware_eras.table1_3",
-          "value": {
+        ],
+        [
+          {
+            "words": "jstech.guide.hardware_eras.table1_3"
+          },
+          {
             "words": "jstech.guide.hardware_eras.value1_3"
           }
-        },
-        {
-          "label": "jstech.guide.hardware_eras.table1_4",
-          "value": {
+        ],
+        [
+          {
+            "words": "jstech.guide.hardware_eras.table1_4"
+          },
+          {
             "words": "jstech.guide.hardware_eras.value1_4"
           }
-        },
-        {
-          "label": "jstech.guide.hardware_eras.table1_5",
-          "value": {
+        ],
+        [
+          {
+            "words": "jstech.guide.hardware_eras.table1_5"
+          },
+          {
             "words": "jstech.guide.hardware_eras.value1_5"
           }
-        }
+        ]
       ]
     },
     {

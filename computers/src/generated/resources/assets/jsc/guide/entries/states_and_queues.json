@@ -8,54 +8,70 @@
       "type": "table",
       "caption": "jsc.guide.states_and_queues.table1",
       "rows": [
-        {
-          "label": "jsc.guide.states_and_queues.table1_1",
-          "value": {
+        [
+          {
+            "words": "jsc.guide.states_and_queues.table1_1"
+          },
+          {
             "words": "jsc.guide.states_and_queues.value1_1"
           }
-        },
-        {
-          "label": "jsc.guide.states_and_queues.table1_2",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.states_and_queues.table1_2"
+          },
+          {
             "words": "jsc.guide.states_and_queues.value1_2"
           }
-        },
-        {
-          "label": "jsc.guide.states_and_queues.table1_3",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.states_and_queues.table1_3"
+          },
+          {
             "words": "jsc.guide.states_and_queues.value1_3"
           }
-        },
-        {
-          "label": "jsc.guide.states_and_queues.table1_4",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.states_and_queues.table1_4"
+          },
+          {
             "words": "jsc.guide.states_and_queues.value1_4"
           }
-        },
-        {
-          "label": "jsc.guide.states_and_queues.table1_5",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.states_and_queues.table1_5"
+          },
+          {
             "words": "jsc.guide.states_and_queues.value1_5"
           }
-        },
-        {
-          "label": "jsc.guide.states_and_queues.table1_6",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.states_and_queues.table1_6"
+          },
+          {
             "words": "jsc.guide.states_and_queues.value1_6"
           }
-        },
-        {
-          "label": "jsc.guide.states_and_queues.table1_7",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.states_and_queues.table1_7"
+          },
+          {
             "words": "jsc.guide.states_and_queues.value1_7"
           }
-        },
-        {
-          "label": "jsc.guide.states_and_queues.table1_8",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.states_and_queues.table1_8"
+          },
+          {
             "words": "jsc.guide.states_and_queues.value1_8"
           }
-        }
+        ]
       ]
     },
     {

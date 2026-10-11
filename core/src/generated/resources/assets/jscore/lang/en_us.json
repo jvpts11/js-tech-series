@@ -244,6 +244,7 @@
   "jscore.guide.sheet_of": "%s of %s",
   "jscore.guide.sheets": "Sheets",
   "jscore.guide.table": "Table %s.",
+  "jscore.guide.table_continued": "%s (continued)",
   "jscore.guide.this_manual.fix1": "No manual has an entry for it yet.",
   "jscore.guide.this_manual.fix2": "Its mod is not installed: the binder holds the mods you have.",
   "jscore.guide.this_manual.for": "Finding out what a thing is and how to use it, without leaving the game.",

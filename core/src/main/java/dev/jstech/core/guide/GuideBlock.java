@@ -92,23 +92,60 @@ public sealed interface GuideBlock {
     }
 
     /**
-     * A numbered table of properties and their values ("Table 3-7. ..."), drawn in the style's table font so the
-     * figures line up.
+     * A numbered table ("Table 3-7. ..."): a head over its columns, then a row for each thing it lists. A table of a
+     * thing's properties has two columns, what each property is and its value, headed "Property" and "Value" when it
+     * names no heads; a table of commands, codes or models names its own, such as "Command" and "What it does".
+     *
+     * <p>Words are written small and wrap between words only; a column of nothing but data (amounts and literals) is
+     * written in the style's code font, so its figures line up. When the columns cannot stand side by side on the
+     * page, each row is laid out under the one before it instead, its further columns under their heads.
+     *
+     * @param captionKey the caption's sentence
+     * @param headKeys   the heads of the columns, left to right, or empty for a table of properties
+     * @param rows       the rows, each with a cell for every column
      */
-    record Table(String captionKey, List<TableRow> rows) implements GuideBlock {
+    record Table(String captionKey, List<String> headKeys, List<TableRow> rows) implements GuideBlock {
+
+        /** How many columns a table of properties has: what each property is, and its value. */
+        public static final int PROPERTY_COLUMNS = 2;
 
         public Table {
             Objects.requireNonNull(captionKey, "captionKey");
+            headKeys = List.copyOf(headKeys);
             rows = List.copyOf(rows);
+            final int columns = headKeys.isEmpty() ? PROPERTY_COLUMNS : headKeys.size();
+            for (final TableRow row : rows) {
+                if (row.cells().size() != columns) {
+                    throw new IllegalArgumentException("every row of a table of " + columns + " columns has "
+                            + columns + " cells; one has " + row.cells().size());
+                }
+            }
+        }
+
+        /** A table of properties and their values. */
+        public Table(final String captionKey, final List<TableRow> rows) {
+            this(captionKey, List.of(), rows);
+        }
+
+        /** How many columns it has. */
+        public int columns() {
+            return this.headKeys.isEmpty() ? PROPERTY_COLUMNS : this.headKeys.size();
         }
     }
 
-    /** One row of a table: what it is, and its value. */
-    record TableRow(String labelKey, GuideValue value) {
+    /** One row of a table: a cell for every column, left to right. */
+    record TableRow(List<GuideValue> cells) {
 
         public TableRow {
-            Objects.requireNonNull(labelKey, "labelKey");
-            Objects.requireNonNull(value, "value");
+            cells = List.copyOf(cells);
+            if (cells.isEmpty()) {
+                throw new IllegalArgumentException("a table's row has a cell at least");
+            }
+        }
+
+        /** A row of a table of properties: what the property is, and its value. */
+        public TableRow(final String labelKey, final GuideValue value) {
+            this(List.of(new GuideValue.Words(labelKey), value));
         }
     }
 
@@ -316,8 +353,13 @@ public sealed interface GuideBlock {
         }
     }
 
-    /** The value in a table row: a sentence, an amount with its unit, or text that is data. */
+    /** A cell of a table: a sentence, an amount with its unit, or text that is data. */
     sealed interface GuideValue {
+
+        /** Whether it is data, an amount or a literal, which is written in the code font; words are not. */
+        default boolean data() {
+            return !(this instanceof Words);
+        }
 
         /** A sentence to translate, such as "PC, Server, Mainframe". */
         record Words(String key) implements GuideValue {

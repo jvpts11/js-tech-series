@@ -24,14 +24,15 @@ import java.util.Objects;
  * @param pages         the pages' shape
  * @param decor         what is drawn on and around the pages
  * @param bodyFont      the font its running text is written in, or empty for the game's own
- * @param tableFont     the font its tables are written in, or empty for the game's own
+ * @param codeFont      the font its code and figures are written in, at the font's own size: a command or a code in
+ *                      a table, a drawing's number in a drawing list; or empty for the game's own
  * @param folios        how its pages are numbered
  * @param drawingPrefix the letters a drawing's number starts with ({@code JI} for JI-102), for drawing numbers
  * @param cover         how its cover looks
  * @param holdBar       the little bar that fills while the manual key is held over an item to open its page here
  */
 public record GuideStyle(String palette, Map<String, String> colours, Pages pages, Decor decor, String bodyFont,
-                         String tableFont, Folios folios, String drawingPrefix, Cover cover, HoldBar holdBar) {
+                         String codeFont, Folios folios, String drawingPrefix, Cover cover, HoldBar holdBar) {
 
     /**
      * The colour roles a style fills, each named as a palette's record names its components and as style files name
@@ -70,7 +71,7 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
         Objects.requireNonNull(pages, "pages");
         Objects.requireNonNull(decor, "decor");
         bodyFont = bodyFont == null ? "" : bodyFont;
-        tableFont = tableFont == null ? "" : tableFont;
+        codeFont = codeFont == null ? "" : codeFont;
         Objects.requireNonNull(folios, "folios");
         drawingPrefix = drawingPrefix == null ? "" : drawingPrefix;
         Objects.requireNonNull(cover, "cover");
@@ -79,7 +80,7 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
 
     /** The same style with another bar filling while the manual key is held over an item. */
     public GuideStyle withHoldBar(final HoldBar bar) {
-        return new GuideStyle(this.palette, this.colours, this.pages, this.decor, this.bodyFont, this.tableFont,
+        return new GuideStyle(this.palette, this.colours, this.pages, this.decor, this.bodyFont, this.codeFont,
                 this.folios, this.drawingPrefix, this.cover, bar);
     }
 

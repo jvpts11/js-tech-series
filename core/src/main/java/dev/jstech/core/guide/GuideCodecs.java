@@ -29,7 +29,8 @@ import net.minecraft.util.ExtraCodecs;
  * {"type": "text", "text": "jsc.guide.graphics_cards.what"}
  * {"type": "figure", "item": "jsc:gtx_780_ti", "caption": "jsc.guide.graphics_cards.figure1"}
  * {"type": "picture", "drawing": "jsc:firmware", "data": {"look": "uefi"}, "height": 92, "caption": "..."}
- * {"type": "table", "caption": "...", "rows": [{"label": "...", "amount": 3072, "unit": "MB"}]}
+ * {"type": "table", "caption": "...", "rows": [[{"words": "..."}, {"amount": 3072, "unit": "MB"}]]}
+ * {"type": "table", "caption": "...", "heads": ["...", "..."], "rows": [[{"literal": "dir"}, {"words": "..."}]]}
  * {"type": "recipes", "recipe_type": "jsindustrial:compressing"}
  * }</pre>
  */
@@ -43,10 +44,9 @@ public final class GuideCodecs {
                     Codec.STRING.optionalFieldOf("literal").forGetter(RawValue::literal)
             ).apply(instance, RawValue::new)).comapFlatMap(GuideCodecs::value, GuideCodecs::raw);
 
-    public static final Codec<GuideBlock.TableRow> TABLE_ROW = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.STRING.fieldOf("label").forGetter(GuideBlock.TableRow::labelKey),
-            VALUE.fieldOf("value").forGetter(GuideBlock.TableRow::value)
-    ).apply(instance, GuideBlock.TableRow::new));
+    /** A row of a table: its cells, left to right, as a list. */
+    public static final Codec<GuideBlock.TableRow> TABLE_ROW = VALUE.listOf().xmap(GuideBlock.TableRow::new,
+            GuideBlock.TableRow::cells);
 
     public static final Codec<GuideBlock.Problem> PROBLEM = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("problem").forGetter(GuideBlock.Problem::problemKey),
@@ -130,7 +130,7 @@ public final class GuideCodecs {
             PAGES.fieldOf("pages").forGetter(GuideStyle::pages),
             DECOR.optionalFieldOf("decor", GuideStyle.Decor.binder(false)).forGetter(GuideStyle::decor),
             Codec.STRING.optionalFieldOf("body_font", "").forGetter(GuideStyle::bodyFont),
-            Codec.STRING.optionalFieldOf("table_font", "").forGetter(GuideStyle::tableFont),
+            Codec.STRING.optionalFieldOf("code_font", "").forGetter(GuideStyle::codeFont),
             StableCodecs.byName(GuideStyle.Folios.class).optionalFieldOf("folios", GuideStyle.Folios.CHAPTER_PAGE)
                     .forGetter(GuideStyle::folios),
             Codec.STRING.optionalFieldOf("drawing_prefix", "").forGetter(GuideStyle::drawingPrefix),
@@ -166,6 +166,7 @@ public final class GuideCodecs {
     ).apply(instance, GuideBlock.Figure::new));
     private static final MapCodec<GuideBlock.Table> TABLE = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Table::captionKey),
+            Codec.STRING.listOf().optionalFieldOf("heads", List.of()).forGetter(GuideBlock.Table::headKeys),
             TABLE_ROW.listOf().fieldOf("rows").forGetter(GuideBlock.Table::rows)
     ).apply(instance, GuideBlock.Table::new));
     private static final MapCodec<GuideBlock.Recipes> RECIPES = RecordCodecBuilder.mapCodec(instance ->

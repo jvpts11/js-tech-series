@@ -26,8 +26,11 @@ public enum TextSize {
     SMALL(8),
     /** Small text in bold: the "Figure 3-9." before a caption. */
     SMALL_BOLD(8),
-    /** The table font, which lines figures up. */
-    TABLE(11),
+    /**
+     * Code and figures: a command, a code, a model number, a drawing's number. Written in the style's code font at
+     * that font's own size, one cell a character, so figures line up; a line of it is as tall as a line of small text.
+     */
+    CODE(8),
     /** A big letter heading a letter of the index. */
     LETTER(20),
     /** A chapter's number on its opening page, four times the size of running text. */

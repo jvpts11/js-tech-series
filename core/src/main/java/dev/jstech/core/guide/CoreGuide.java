@@ -15,7 +15,8 @@ import java.util.Map;
 
 /**
  * What the Core brings to the manuals: the binder style, two cream pages side by side in navy vinyl covers with three
- * rings through them, its tables in the terminal font and its pages numbered by chapter, as technical manuals were;
+ * rings through them, its code and figures in the small terminal font and its pages numbered by chapter, as technical
+ * manuals were;
  * and the series' own manual, the Technical Reference, which holds every chapter of every mod there is, handed to
  * each player once as they first join a world and kept in the Core's creative tab.
  */
@@ -70,13 +71,13 @@ public final class CoreGuide {
     }
 
     /**
-     * A binder style in a palette of the {@code GuidePalettes.Binder} kind: two pages, three rings, tables in the
-     * terminal font, pages numbered by chapter. A mod's own binder names its palette and whether a band of colour
-     * crosses its cover; its words then stand on the cover itself rather than on a label.
+     * A binder style in a palette of the {@code GuidePalettes.Binder} kind: two pages, three rings, code and figures in
+     * the small terminal font, pages numbered by chapter. A mod's own binder names its palette and whether a band of
+     * colour crosses its cover; its words then stand on the cover itself rather than on a label.
      */
     public static GuideStyle binder(final String palette, final boolean band) {
         return new GuideStyle(palette, Map.of(), new GuideStyle.Pages(true, PAGE_WIDTH, PAGE_HEIGHT, MARGIN, 1),
-                GuideStyle.Decor.binder(true), "", CoreFonts.FIXED_6X10.id().toString(),
+                GuideStyle.Decor.binder(true), "", CoreFonts.FIXED_5X8.id().toString(),
                 GuideStyle.Folios.CHAPTER_PAGE, "", new GuideStyle.Cover(GuideStyle.CoverKind.BINDER, !band, band),
                 GuideStyle.HoldBar.PLAIN);
     }
@@ -88,7 +89,7 @@ public final class CoreGuide {
      */
     public static GuideStyle drawings(final String palette, final String prefix) {
         return new GuideStyle(palette, Map.of(), new GuideStyle.Pages(false, SHEET_WIDTH, PAGE_HEIGHT,
-                SHEET_MARGIN, 2), GuideStyle.Decor.drawing(), "", CoreFonts.FIXED_6X10.id().toString(),
+                SHEET_MARGIN, 2), GuideStyle.Decor.drawing(), "", CoreFonts.FIXED_5X8.id().toString(),
                 GuideStyle.Folios.DRAWING, prefix, new GuideStyle.Cover(GuideStyle.CoverKind.FOLDER, true, true),
                 GuideStyle.HoldBar.PLAIN);
     }

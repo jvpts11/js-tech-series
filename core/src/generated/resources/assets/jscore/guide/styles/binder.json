@@ -1,4 +1,5 @@
 {
+  "code_font": "jscore:fixed_5x8",
   "decor": {
     "rings": true
   },
@@ -6,6 +7,5 @@
     "height": 201,
     "width": 166
   },
-  "palette": "jscore:guide/binder",
-  "table_font": "jscore:fixed_6x10"
+  "palette": "jscore:guide/binder"
 }

@@ -12,36 +12,46 @@
       "type": "table",
       "caption": "jsc.guide.case_front.table1",
       "rows": [
-        {
-          "label": "jsc.guide.case_front.table1_1",
-          "value": {
+        [
+          {
+            "words": "jsc.guide.case_front.table1_1"
+          },
+          {
             "words": "jsc.guide.case_front.value1_1"
           }
-        },
-        {
-          "label": "jsc.guide.case_front.table1_2",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.case_front.table1_2"
+          },
+          {
             "words": "jsc.guide.case_front.value1_2"
           }
-        },
-        {
-          "label": "jsc.guide.case_front.table1_3",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.case_front.table1_3"
+          },
+          {
             "words": "jsc.guide.case_front.value1_3"
           }
-        },
-        {
-          "label": "jsc.guide.case_front.table1_4",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.case_front.table1_4"
+          },
+          {
             "words": "jsc.guide.case_front.value1_4"
           }
-        },
-        {
-          "label": "jsc.guide.case_front.table1_5",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.case_front.table1_5"
+          },
+          {
             "words": "jsc.guide.case_front.value1_5"
           }
-        }
+        ]
       ]
     },
     {

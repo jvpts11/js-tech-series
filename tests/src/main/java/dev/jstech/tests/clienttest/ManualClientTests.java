@@ -14,8 +14,11 @@ import dev.jstech.core.client.guide.ManualScreen;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideBook;
+import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuidePiece;
+import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
+import dev.jstech.core.guide.TextSize;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.text.GameText;
 import dev.jstech.industrial.guide.IndustrialGuide;
@@ -46,7 +49,7 @@ import net.neoforged.neoforge.common.NeoForge;
 /**
  * The Core's manuals as a player reads them: the test manual opened at its cover and turned to its contents, opened
  * at an entry, a link and a tab followed, its index searched as the player types, a long entry run on to the pages
- * after its first, the manual opened again where it was closed, an item's page opened by the manual key held over
+ * after its first, a table run on and a table stacked, the manual opened again where it was closed, an item's page opened by the manual key held over
  * it while a bar in the manual's look fills, and the manual item opening its manual.
  */
 public final class ManualClientTests {
@@ -130,6 +133,25 @@ public final class ManualClientTests {
                 }, "the long entry runs on to its next page")
                 .then(0, () -> manual().turn(1))
                 .thenScreenshot(2, "manual_long")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 300)
+    public static void manual_laysATableThatRunsOnAndOneThatStacks(final ClientTestContext ctx) {
+        ctx.then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.TABLES))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> tableText("dir").size() == TextSize.CODE,
+                        "a command is written in the code font")
+                .thenAssert(0, () -> tablePieces().stream().anyMatch(text -> text.text().contains(
+                        GameText.resolve(GuideTexts.TABLE_CONTINUED.with("")).strip())),
+                        "the table of commands runs on under its caption, continued")
+                .thenAssert(0, () -> tableText("S1001").colour().equals(GuideStyle.HEADING),
+                        "the table of errors is stacked, each row opening with its code")
+                .thenAssert(0, ManualClientTests::nothingBelowTheFoot, "and no table runs past a page's foot")
+                .thenScreenshot(2, "manual_tables")
+                .then(0, () -> manual().turn(1))
+                .thenScreenshot(2, "manual_tables_on")
                 .then(0, ManualClientTests::close)
                 .thenAwaitNoScreen(OPEN);
     }
@@ -323,6 +345,26 @@ public final class ManualClientTests {
 
     private static void close() {
         Minecraft.getInstance().setScreen(null);
+    }
+
+    /* The text on the pages of the tables' entry, from its first page to the end of its chapter. */
+    private static List<GuidePiece.Text> tablePieces() {
+        final GuideBook book = manual().book();
+        return book.pages().subList(book.pageOf(TestGuide.TABLES).orElseThrow(), book.indexAt()).stream()
+                .flatMap(page -> page.pieces().stream()).filter(piece -> piece instanceof GuidePiece.Text)
+                .map(piece -> (GuidePiece.Text) piece).toList();
+    }
+
+    private static GuidePiece.Text tableText(final String words) {
+        return tablePieces().stream().filter(text -> text.text().equals(words)).findFirst().orElseThrow();
+    }
+
+    /* Whether every piece of the tables' pages stands above the foot of the binder's page. */
+    private static boolean nothingBelowTheFoot() {
+        final GuideBook book = manual().book();
+        final int foot = CoreGuide.PAGE_HEIGHT - GuideLayout.FOOTER_ROOM;
+        return book.pages().subList(book.pageOf(TestGuide.TABLES).orElseThrow(), book.indexAt()).stream()
+                .flatMap(page -> page.pieces().stream()).allMatch(piece -> piece.y() <= foot);
     }
 
     /* The words of every piece of an entry's first page that leads to a target, joined as they read. */

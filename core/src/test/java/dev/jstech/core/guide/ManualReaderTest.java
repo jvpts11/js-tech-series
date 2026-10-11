@@ -60,7 +60,7 @@ class ManualReaderTest {
 
         assertEquals(new ManualReader.Piece.Picture("minecraft:dirt", "jscore.guide.figure[1-2] second.figure"),
                 second.pieces().get(0));
-        assertEquals(new ManualReader.Piece.Table("jscore.guide.table[1-1] table.caption", List.of(
+        assertEquals(new ManualReader.Piece.Table("jscore.guide.table[1-1] table.caption", List.of(), List.of(
                 new ManualReader.Row("row0", "0 FE"), new ManualReader.Row("row1", "1000 FE"))),
                 second.pieces().get(1));
         assertEquals(new ManualReader.Piece.Picture("minecraft:sand", "jscore.guide.figure[2-1] only.figure"),
@@ -155,6 +155,21 @@ class ManualReaderTest {
 
         assertEquals(Optional.of("gamma:graphics_cards"), cards.find("graphics-cards"));
         assertEquals(Optional.of("gamma:graphics_cards"), cards.find("Graphics Cards"));
+    }
+
+    @Test
+    void article_readsATableWithItsHeadsAndEveryCell() {
+        final GuideEntry commands = entry("alpha:commands", new GuideBlock.Table("commands.caption",
+                List.of("head.command", "head.does"), List.of(new GuideBlock.TableRow(List.of(
+                        new GuideBlock.GuideValue.Literal("dir"), new GuideBlock.GuideValue.Words("lists.folder"))))));
+        final ManualReader reader = new ManualReader(MANUAL, new GuideContents(List.of(chapter("alpha", commands))),
+                new FixedText());
+
+        final ManualReader.Piece.Table table = (ManualReader.Piece.Table) reader.article("alpha:commands")
+                .orElseThrow().pieces().getFirst();
+        assertEquals(List.of("head.command", "head.does"), table.heads());
+        assertEquals(List.of(new ManualReader.Row(List.of("dir", "lists.folder"))), table.rows());
+        assertEquals(List.of("alpha:commands"), reader.search("lists.folder"));
     }
 
     @Test

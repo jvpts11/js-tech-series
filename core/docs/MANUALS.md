@@ -184,7 +184,8 @@ A picture is numbered with the figures ("Figure 3-2.") and captioned like them, 
 | --- | --- |
 | `paragraph(english)`, `subheading(english)` | Running text, and a heading of the entry's own. |
 | `figure(item, caption)` | The item drawn large in a frame, numbered "Figure 3-9." |
-| `table(caption)`, then `amount(label, value, unit)`, `property(label, words)`, `fixed(label, data)` | A numbered table. An amount is read from your code and written in the reader's way ("12,000 FE"); words are translated; fixed values (a model number) are not. |
+| `table(caption)`, then `amount(label, value, unit)`, `property(label, words)`, `fixed(label, data)` | A numbered table of properties, headed "Property" and "Value". An amount is read from your code and written in the reader's way ("12,000 FE"); words are translated; fixed values (a model number) are not. |
+| `table(caption, heads...)`, then `row(cells...)` | A numbered table with heads of its own ("Command", "What it does"), a cell a column in each row: `GuideCell.words(english)`, `GuideCell.words(sharedKey)`, `GuideCell.code(text)` or `GuideCell.amount(value, unit)`. See [Tables](#tables). |
 | `recipes(type)`, `recipes(type, making)` | Every recipe of a type the world holds, or those making one item, with the time and energy over the arrow. |
 | `steps(english...)` | Numbered steps of the entry's own. |
 | `warning(english)` | A warning in a box. |
@@ -210,6 +211,33 @@ later is the page of the entry with nothing more to write:
 A block is drawn in its views and plans from the faces of its model: the top, the side facing north, and the side
 facing east. A style that traces blocks draws those faces as line work, an outline and every edge where one shade
 meets another; any other draws them as they look.
+
+### Tables
+
+*Added 2026-10-11.*
+
+```java
+.table("Commands for files", "Command", "What it does")
+.row(GuideCell.code("dir"), GuideCell.words("Lists what is in the folder you are in."))
+.row(GuideCell.code("del"), GuideCell.words("Deletes a file."))
+```
+
+A table is laid out to fit the page, never the other way round:
+
+- Words are written small and a column of nothing but data (code and amounts) in the style's code font, one cell a
+  character, so its figures line up. A cell wraps between words only: every column is at least as wide as its longest
+  word, and the room left over is shared out by how much each column holds.
+- When the columns cannot stand side by side (their longest words are wider together than the page, or a column of
+  words would be left narrower than about nine letters), each row is laid out under the one before it instead: its
+  first cell in the heading's colour with its second beside it, then each further cell set in beside its column's
+  head. A table of error codes with what each says, means and how to fix it reads this way.
+- A table that fits on a page is never parted: when the room left on this page is too little, all of it moves to the
+  next. A table taller than a page runs on, its caption said again with "(continued)" and its head over each part,
+  and keeps at least three rows on either side of where it parts; a row taller than a page is cut between two of its
+  lines rather than run past the page's foot.
+
+Keep a table to what a reader looks up. Two or three columns read best; long explanations belong in the text, or in a
+table that will stack.
 
 ## Writing a manual
 
@@ -258,7 +286,8 @@ GuidePages.byStack(MyContent.INSTALL_DISC.get(), stack -> "mymod:install_" + MyD
 *Added 2026-10-05.*
 
 The Core brings one style, `jscore:binder`: two cream pages side by side in navy vinyl covers with three rings
-through them, the chapter tabs at the right edge, tables in the terminal font, pages numbered by chapter. A style is a
+through them, the chapter tabs at the right edge, code and figures in the small terminal font, pages numbered by
+chapter. A style is a
 file, `assets/<namespace>/guide/styles/<path>.json`, so a resource pack can replace it and a mod can bring its own.
 Two helpers make the usual ones in code:
 
@@ -277,7 +306,7 @@ Two helpers make the usual ones in code:
   "decor": { "grid": true, "frame": true, "title_block": true, "upper_headings": true, "traced": true,
              "plain_numbers": true, "small_text": true },
   "cover": { "kind": "folder", "label": true, "band": true },
-  "table_font": "jscore:fixed_6x10",
+  "code_font": "jscore:fixed_5x8",
   "folios": "drawing",
   "drawing_prefix": "JI"
 }
@@ -293,6 +322,9 @@ Two helpers make the usual ones in code:
   `plain_numbers` for steps without a full stop; `small_text` for notes lettered small.
 - `cover`: a `binder` with its spine, rivets and tabs, or a `folder` with the edges of its sheets showing; on a
   `label` or not; with a `band` or not.
+- `body_font` and `code_font`: the fonts the running text, and the code and figures, are written in; empty for the
+  game's own. The code font is drawn at its own size, so it should be a small one with lines no taller than eight
+  pixels, as `jscore:fixed_5x8` is.
 - `folios` is `chapter_page` (3-14), `sequential` (1, 2, 3) or `drawing` (JI-102, with `drawing_prefix`). A set of
   drawings opens with its drawing list in place of contents, the manual's `about` lines as the notes under it, and
   has no index pages: its search still finds every entry by name.

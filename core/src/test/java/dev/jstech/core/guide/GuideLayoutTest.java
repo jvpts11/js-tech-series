@@ -28,6 +28,9 @@ class GuideLayoutTest {
             GuideStyle.HoldBar.HAZARD);
     private static final GuideManual MANUAL = new GuideManual("test:manual", "manual.title", List.of(), "", "",
             "test:style", List.of(GuideManual.EVERY_CHAPTER), List.of("about.one"), 0, "");
+    /** Short heads for a table of properties, so its columns stand side by side at six pixels a letter. */
+    private static final Map<String, String> HEADS = Map.of(GuideTexts.PROPERTY.key(), "Part",
+            GuideTexts.VALUE.key(), "Value");
 
     @Test
     void lay_numbersChaptersSectionsAndEntries() {
@@ -122,7 +125,9 @@ class GuideLayoutTest {
         final List<String> labels = new ArrayList<>();
         for (final GuideBook.Page page : book.pages()) {
             for (final GuidePiece piece : page.pieces()) {
-                if (piece instanceof GuidePiece.Text text && text.size() == TextSize.SMALL_BOLD) {
+                if (piece instanceof GuidePiece.Text text && text.size() == TextSize.SMALL_BOLD
+                        && (text.text().startsWith("jscore.guide.figure[")
+                        || text.text().startsWith("jscore.guide.table["))) {
                     labels.add(text.text());
                 }
             }
@@ -360,6 +365,114 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_wrapsATableCellBetweenWordsOnly() {
+        final String sentence = "Shows the folder you are in, or moves to another folder you name after it.";
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t", commands(
+                List.of("cd", sentence)))))));
+
+        final List<String> lines = texts(book, "alpha:t").stream().filter(text -> text.size() == TextSize.SMALL
+                && !text.text().startsWith("table")).map(GuidePiece.Text::text).toList();
+        final List<String> words = List.of(sentence.split(" "));
+        for (final String line : lines) {
+            for (final String word : line.split(" ")) {
+                assertTrue(words.contains(word), () -> "'" + word + "' is not a whole word of the cell");
+            }
+        }
+        assertTrue(lines.size() > 1, "the cell wraps");
+        assertEquals(sentence, String.join(" ", lines));
+    }
+
+    @Test
+    void lay_writesAColumnOfDataInTheCodeFontOnTheWordsBaseline() {
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t", commands(
+                List.of("dir", "Lists files.")))))));
+
+        final List<GuidePiece.Text> texts = texts(book, "alpha:t");
+        final GuidePiece.Text command = texts.stream().filter(text -> text.text().equals("dir")).findFirst()
+                .orElseThrow();
+        final GuidePiece.Text words = texts.stream().filter(text -> text.text().equals("Lists files.")).findFirst()
+                .orElseThrow();
+        assertEquals(TextSize.CODE, command.size());
+        assertEquals(TextSize.SMALL, words.size());
+        assertEquals(words.y() - GuideTable.CODE_RISE, command.y(), "code stands higher, on the words' baseline");
+        assertTrue(command.x() < words.x(), "the columns stand side by side");
+    }
+
+    @Test
+    void lay_stacksATableWhoseColumnsCannotStandSideBySide() {
+        final GuideBlock.Table errors = new GuideBlock.Table("errors.caption",
+                List.of("Code", "Message", "Means", "Fix"), List.of(new GuideBlock.TableRow(List.of(
+                        new GuideBlock.GuideValue.Literal("S1001"),
+                        new GuideBlock.GuideValue.Words("unterminated string"),
+                        new GuideBlock.GuideValue.Words("A string was opened with a quote and the line ended."),
+                        new GuideBlock.GuideValue.Words("Close the string with a quote on the same line.")))));
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t", errors)))));
+
+        final List<GuidePiece.Text> texts = texts(book, "alpha:t");
+        assertFalse(book.pages().get(book.pageOf("alpha:t").orElseThrow()).pieces().stream()
+                .anyMatch(piece -> piece instanceof GuidePiece.Box), "a stacked table has no head band");
+        final GuidePiece.Text code = texts.stream().filter(text -> text.text().equals("S1001")).findFirst()
+                .orElseThrow();
+        assertEquals(GuideStyle.HEADING, code.colour(), "each row opens with its first cell, in the heading's colour");
+        final GuidePiece.Text means = texts.stream().filter(text -> text.text().equals("Means")).findFirst()
+                .orElseThrow();
+        assertEquals(TextSize.SMALL_BOLD, means.size());
+        assertEquals(GuideStyle.FAINT, means.colour());
+        assertTrue(texts.stream().anyMatch(text -> text.y() == means.y() && text.x() > means.x()
+                && text.text().startsWith("A string")), "the cell stands beside its column's head");
+    }
+
+    @Test
+    void lay_movesATableThatFitsOnAPageOnWhole() {
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t", table(10))))),
+                new FixedText(HEADS));
+
+        final int first = book.pageOf("alpha:t").orElseThrow();
+        assertEquals(0, rules(book.pages().get(first)), "the room under the title is too little for the table");
+        assertEquals(10, rules(book.pages().get(first + 1)), "so all of it stands on the next page");
+    }
+
+    @Test
+    void lay_leavesAtLeastThreeRowsOnEachSideOfWhereATableParts() {
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t", table(11))))),
+                new FixedText(HEADS));
+
+        final int first = book.pageOf("alpha:t").orElseThrow();
+        assertEquals(8, rules(book.pages().get(first)), "nine rows fit, but the ninth goes on so three go on");
+        final GuideBook.Page next = book.pages().get(first + 1);
+        assertEquals(3, rules(next));
+        assertTrue(next.pieces().stream().anyMatch(piece -> piece instanceof GuidePiece.Box),
+                "the head is said again over the part that runs on");
+        assertTrue(next.pieces().stream().anyMatch(piece -> piece instanceof GuidePiece.Text text
+                && text.text().startsWith("jscore.guide.table_con")), "and the caption, continued");
+    }
+
+    @Test
+    void lay_cutsATableRowTallerThanAPageBetweenItsLines() {
+        final String words = "word ".repeat(600).strip();
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t", commands(
+                List.of("x", words)))))));
+
+        final int bottom = STYLE.pageHeight() - GuideLayout.FOOTER_ROOM;
+        final List<GuidePiece.Text> lines = new ArrayList<>();
+        int pages = 0;
+        for (final GuideBook.Page page : book.pages()) {
+            boolean holds = false;
+            for (final GuidePiece piece : page.pieces()) {
+                assertTrue(piece.y() <= bottom, () -> page.folio() + " has " + piece + " below " + bottom);
+                if (piece instanceof GuidePiece.Text text && text.text().startsWith("word")) {
+                    lines.add(text);
+                    holds = true;
+                }
+            }
+            pages += holds ? 1 : 0;
+        }
+        assertTrue(pages > 1, "the row runs on over pages");
+        assertEquals(words, String.join(" ", lines.stream().map(GuidePiece.Text::text).toList()),
+                "every word is still there, in order");
+    }
+
+    @Test
     void roman_writesSmallRomanNumerals() {
         assertEquals("i", GuideLayout.roman(1));
         assertEquals("iv", GuideLayout.roman(4));
@@ -433,6 +546,29 @@ class GuideLayoutTest {
             list.add(new GuideBlock.TableRow("row" + i, new GuideBlock.GuideValue.Amount(1000L * i, "FE")));
         }
         return new GuideBlock.Table("table.caption", list);
+    }
+
+    /** A table of commands, each row a command and what it does. */
+    @SafeVarargs
+    private static GuideBlock.Table commands(final List<String>... rows) {
+        final List<GuideBlock.TableRow> list = new ArrayList<>();
+        for (final List<String> row : rows) {
+            list.add(new GuideBlock.TableRow(List.of(new GuideBlock.GuideValue.Literal(row.get(0)),
+                    new GuideBlock.GuideValue.Words(row.get(1)))));
+        }
+        return new GuideBlock.Table("table.caption", List.of("Command", "What it does"), list);
+    }
+
+    /** The text on the pages of an entry, from its first page to the end of the manual's chapters. */
+    private static List<GuidePiece.Text> texts(final GuideBook book, final String entry) {
+        return book.pages().subList(book.pageOf(entry).orElseThrow(), book.indexAt()).stream()
+                .flatMap(page -> page.pieces().stream()).filter(piece -> piece instanceof GuidePiece.Text)
+                .map(piece -> (GuidePiece.Text) piece).toList();
+    }
+
+    /** How many rows of tables end on a page: a rule under each. */
+    private static long rules(final GuideBook.Page page) {
+        return page.pieces().stream().filter(piece -> piece instanceof GuidePiece.Rule).count();
     }
 
     /**

@@ -12,36 +12,46 @@
       "type": "table",
       "caption": "jsc.guide.crafting_computers.table1",
       "rows": [
-        {
-          "label": "jsc.guide.crafting_computers.table1_1",
-          "value": {
+        [
+          {
+            "words": "jsc.guide.crafting_computers.table1_1"
+          },
+          {
             "literal": "2"
           }
-        },
-        {
-          "label": "jsc.guide.crafting_computers.table1_2",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_computers.table1_2"
+          },
+          {
             "literal": "4"
           }
-        },
-        {
-          "label": "jsc.guide.crafting_computers.table1_3",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_computers.table1_3"
+          },
+          {
             "literal": "5"
           }
-        },
-        {
-          "label": "jsc.guide.crafting_computers.table1_4",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_computers.table1_4"
+          },
+          {
             "literal": "6"
           }
-        },
-        {
-          "label": "jsc.guide.crafting_computers.table1_5",
-          "value": {
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_computers.table1_5"
+          },
+          {
             "literal": "8"
           }
-        }
+        ]
       ]
     },
     {

@@ -1,4 +1,5 @@
 {
+  "code_font": "jscore:fixed_5x8",
   "cover": {
     "band": true,
     "kind": "folder"
@@ -22,6 +23,5 @@
     "spread": false,
     "width": 340
   },
-  "palette": "jsindustrial:guide/drawings",
-  "table_font": "jscore:fixed_6x10"
+  "palette": "jsindustrial:guide/drawings"
 }

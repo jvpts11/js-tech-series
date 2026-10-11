@@ -268,12 +268,20 @@ public final class ManualReader {
                 }
                 case GuideBlock.Table table -> {
                     tables++;
+                    final List<String> heads = new ArrayList<>();
+                    for (final String head : table.headKeys()) {
+                        heads.add(this.text.text(head));
+                    }
                     final List<Row> rows = new ArrayList<>();
                     for (final GuideBlock.TableRow row : table.rows()) {
-                        rows.add(new Row(this.text.text(row.labelKey()), this.text.valueText(row.value())));
+                        final List<String> cells = new ArrayList<>();
+                        for (final GuideBlock.GuideValue cell : row.cells()) {
+                            cells.add(this.text.valueText(cell));
+                        }
+                        rows.add(new Row(cells));
                     }
                     pieces.add(new Piece.Table(this.text.text(GuideTexts.TABLE.key(), chapterNo + "-" + tables)
-                            + " " + this.text.text(table.captionKey()), rows));
+                            + " " + this.text.text(table.captionKey()), heads, rows));
                 }
                 case GuideBlock.Recipes recipes -> pieces.add(new Piece.Recipes(recipes.type(), recipes.output()));
                 case GuideBlock.Steps steps -> {
@@ -450,18 +458,24 @@ public final class ManualReader {
             }
         }
 
-        /** A numbered table of properties and their values, its caption with its number. */
-        record Table(String caption, List<Row> rows) implements Piece {
+        /** A numbered table, its caption with its number, the heads of its columns, and its rows. */
+        record Table(String caption, List<String> heads, List<Row> rows) implements Piece {
 
             public Table {
+                heads = List.copyOf(heads);
                 rows = List.copyOf(rows);
             }
 
             @Override
             public String words() {
                 final StringBuilder out = new StringBuilder(this.caption);
+                for (final String head : this.heads) {
+                    out.append(' ').append(head);
+                }
                 for (final Row row : this.rows) {
-                    out.append(' ').append(row.label()).append(' ').append(row.value());
+                    for (final String cell : row.cells()) {
+                        out.append(' ').append(cell);
+                    }
                 }
                 return out.toString();
             }
@@ -528,8 +542,27 @@ public final class ManualReader {
         }
     }
 
-    /** A row of a table. */
-    public record Row(String label, String value) {
+    /** A row of a table: its cells, left to right, in the reader's language. */
+    public record Row(List<String> cells) {
+
+        public Row {
+            cells = List.copyOf(cells);
+        }
+
+        /** A row of a table of properties: what the property is, and its value. */
+        public Row(final String label, final String value) {
+            this(List.of(label, value));
+        }
+
+        /** Its first cell: what it names. */
+        public String label() {
+            return this.cells.getFirst();
+        }
+
+        /** The cells after its first, as one piece of text. */
+        public String value() {
+            return String.join("  ", this.cells.subList(1, this.cells.size()));
+        }
     }
 
     /** An item an entry shows, {@code namespace:path}, and its name in the reader's language. */

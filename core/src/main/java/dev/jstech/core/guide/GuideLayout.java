@@ -31,9 +31,10 @@ import java.util.Map;
  * blank before it when it would not, as printed manuals do.
  *
  * <p>Every entry starts on a page of its own, so the page an item opens to is its own. A page may run in columns, the
- * text going on in the next column when one is full. A paragraph, a table, a list of steps or recipes runs on where it
- * does not fit; a figure, a warning, the views of a block and a special block move on whole. A heading is never left
- * alone at the foot of a column.
+ * text going on in the next column when one is full. A paragraph, a list of steps or recipes runs on where it does not
+ * fit; a figure, a warning, the views of a block and a special block move on whole; a table moves on whole unless it is
+ * taller than a page, and then runs on with its caption and head said again. A heading is never left alone at the foot
+ * of a column.
  *
  * <p>Nothing here knows the game: text is measured and translated through {@link IGuideText}, so the layout is the same
  * piece of logic in the game and in a test.
@@ -117,8 +118,8 @@ public final class GuideLayout {
     private static final int SMALL_FIX_INDENT = 4;
     private static final int SECTION_INDENT = 10;
     private static final int BOX_PAD = 4;
-    private static final int TABLE_PAD = 3;
-    private static final int TABLE_LABEL_SHARE = 45;
+    /** The fewest rows a part of a parted table keeps, at the foot of one page and at the top of the next. */
+    private static final int MIN_PART_ROWS = 3;
     private static final int TITLE_GAP = 2;
     private static final int LEGEND_GAP = 8;
     /** The chapter's opening page: the room beside its number, under it, and the height of a line of its sections. */
@@ -480,7 +481,7 @@ public final class GuideLayout {
     private void figure(final GuideBlock.Figure figure) {
         this.figures++;
         final String label = this.text.text(GuideTexts.FIGURE.key(), this.chapterNumber + "-" + this.figures);
-        final List<String> caption = this.captionLines(label, figure.captionKey());
+        final List<String> caption = this.captionLines(label, this.text.text(figure.captionKey()));
         this.ensure(FIGURE_HEIGHT + CAPTION_GAP + this.captionHeight(label, caption));
         this.place(new GuidePiece.Box(this.x(), this.y, this.width, FIGURE_HEIGHT, GuideStyle.SHADE,
                 GuideStyle.RULE));
@@ -495,7 +496,7 @@ public final class GuideLayout {
     private void picture(final GuideBlock.Picture picture) {
         this.figures++;
         final String label = this.text.text(GuideTexts.FIGURE.key(), this.chapterNumber + "-" + this.figures);
-        final List<String> caption = this.captionLines(label, picture.captionKey());
+        final List<String> caption = this.captionLines(label, this.text.text(picture.captionKey()));
         final int askedWidth = picture.width() == 0 ? this.width : Math.min(this.width, picture.width());
         final int askedHeight = picture.width() == 0 || picture.width() <= this.width ? picture.height()
                 : picture.height() * this.width / picture.width();
@@ -512,50 +513,93 @@ public final class GuideLayout {
         this.y += BLOCK_GAP;
     }
 
-    private void table(final GuideBlock.Table table) {
+    /**
+     * A table, shaped to the column ({@link GuideTable}). One that fits on a page is never parted: it moves on whole
+     * when the room left here is too little. One taller than a page runs on, its caption said again with "(continued)"
+     * and its head again over each part, and leaves at least three rows on either side of a part's end; a row taller
+     * than a page is cut between two of its lines rather than run past the page's foot.
+     */
+    private void table(final GuideBlock.Table block) {
         this.tables++;
         final String label = this.text.text(GuideTexts.TABLE.key(), this.chapterNumber + "-" + this.tables);
-        final List<String> caption = this.captionLines(label, table.captionKey());
-        final int row = TextSize.TABLE.lineHeight();
-        this.ensure(this.captionHeight(label, caption) + CAPTION_GAP + 2 * row);
+        final String title = this.text.text(block.captionKey());
+        final List<String> caption = this.captionLines(label, title);
+        final List<String> continued = this.captionLines(label,
+                this.text.text(GuideTexts.TABLE_CONTINUED.key(), title));
+        final GuideTable table = GuideTable.shape(block, this.width, this.text);
+        final int lead = this.captionHeight(label, caption) + CAPTION_GAP + table.headHeight();
+        final int whole = lead + table.height();
+        if (whole <= this.bottom() - this.top) {
+            this.ensure(whole);
+        } else if (this.y > this.top
+                && whole(table, 0, this.bottom() - this.y - lead) < Math.min(MIN_PART_ROWS, table.rows())) {
+            // A table that must part starts on the next page rather than leave a row or two at this one's foot.
+            this.nextColumn();
+        }
         this.caption(label, caption);
         this.y += CAPTION_GAP;
-        final int valueX = this.x() + this.width * TABLE_LABEL_SHARE / 100;
-        final int valueRoom = this.x() + this.width - valueX - TABLE_PAD;
-        this.place(new GuidePiece.Box(this.x(), this.y, this.width, row + 1, GuideStyle.SHADE, GuideStyle.SHADE));
-        this.place(new GuidePiece.Text(this.x() + TABLE_PAD, this.y + 2, this.text.text(GuideTexts.PROPERTY.key()),
-                TextSize.TABLE, GuideStyle.INK, ""));
-        this.place(new GuidePiece.Text(valueX, this.y + 2, this.text.text(GuideTexts.VALUE.key()), TextSize.TABLE,
-                GuideStyle.INK, ""));
-        this.y += row + 1;
-        this.place(new GuidePiece.Rule(this.x(), this.y, this.width, GuideStyle.RULE));
-        for (final GuideBlock.TableRow cells : table.rows()) {
-            final int rowX = this.x();
-            final int rowValueX = rowX + this.width * TABLE_LABEL_SHARE / 100;
-            final List<String> labels = wrap(this.text.text(cells.labelKey()), rowValueX - rowX - 2 * TABLE_PAD,
-                    TextSize.TABLE, this.text);
-            final List<String> values = wrap(this.text.valueText(cells.value()), valueRoom, TextSize.TABLE, this.text);
-            final int lines = Math.max(labels.size(), values.size());
-            if (this.y + lines * row + 2 > this.bottom()) {
+        this.placeAll(table.head(this.x(), this.y));
+        this.y += table.headHeight();
+        int row = 0;
+        int line = 0;
+        while (row < table.rows()) {
+            final int[] end = partEnd(table, row, line, this.bottom() - this.y);
+            while (row < end[0] || (row == end[0] && line < end[1])) {
+                final int to = row < end[0] ? table.lines(row) : end[1];
+                this.placeAll(table.slice(this.x(), this.y, row, line, to));
+                this.y += table.height(row, line, to);
+                if (to == table.lines(row)) {
+                    row++;
+                    line = 0;
+                } else {
+                    line = to;
+                }
+            }
+            if (row < table.rows()) {
                 this.nextColumn();
-                this.place(new GuidePiece.Rule(this.x(), this.y, this.width, GuideStyle.RULE));
+                this.caption(label, continued);
+                this.y += CAPTION_GAP;
+                this.placeAll(table.head(this.x(), this.y));
+                this.y += table.headHeight();
             }
-            final int at = this.x();
-            final int valueAt = at + this.width * TABLE_LABEL_SHARE / 100;
-            for (int i = 0; i < lines; i++) {
-                if (i < labels.size()) {
-                    this.place(new GuidePiece.Text(at + TABLE_PAD, this.y + 2 + i * row, labels.get(i),
-                            TextSize.TABLE, GuideStyle.INK, ""));
-                }
-                if (i < values.size()) {
-                    this.place(new GuidePiece.Text(valueAt, this.y + 2 + i * row, values.get(i), TextSize.TABLE,
-                            GuideStyle.INK, ""));
-                }
-            }
-            this.y += lines * row + 2;
-            this.place(new GuidePiece.Rule(at, this.y, this.width, GuideStyle.RULE));
         }
         this.y += BLOCK_GAP;
+    }
+
+    /**
+     * Where the part of a table starting at line {@code line} of row {@code row} ends, in {@code room}: the row, and
+     * the line of it, it stops before. A row whose rest does not fit even alone is cut after the lines that do, one at
+     * least; a part that would leave fewer than three rows for the next ends earlier, so three go on, when it keeps
+     * three of its own.
+     */
+    private static int[] partEnd(final GuideTable table, final int row, final int line, final int room) {
+        int end = row;
+        int used = 0;
+        int from = line;
+        while (end < table.rows() && used + table.height(end, from, table.lines(end)) <= room) {
+            used += table.height(end, from, table.lines(end));
+            end++;
+            from = 0;
+        }
+        if (end == row) {
+            return new int[] {row, line + Math.max(1, table.fitting(row, line, room))};
+        }
+        final int left = table.rows() - end;
+        if (left > 0 && left < MIN_PART_ROWS && table.rows() - MIN_PART_ROWS - row >= MIN_PART_ROWS) {
+            end = table.rows() - MIN_PART_ROWS;
+        }
+        return new int[] {end, 0};
+    }
+
+    /** How many whole rows of a table, from {@code row} on, fit in {@code room}. */
+    private static int whole(final GuideTable table, final int row, final int room) {
+        int end = row;
+        int used = 0;
+        while (end < table.rows() && used + table.height(end, 0, table.lines(end)) <= room) {
+            used += table.height(end, 0, table.lines(end));
+            end++;
+        }
+        return end - row;
     }
 
     private void recipes(final GuideBlock.Recipes recipes) {
@@ -755,9 +799,9 @@ public final class GuideLayout {
      * A caption's lines beside its label, or under it when the label takes more than half the line, which a long
      * translation of "Figure" can.
      */
-    private List<String> captionLines(final String label, final String captionKey) {
+    private List<String> captionLines(final String label, final String caption) {
         final int labelRoom = this.labelRoom(label);
-        return wrap(this.text.text(captionKey), this.width - labelRoom, TextSize.SMALL, this.text);
+        return wrap(caption, this.width - labelRoom, TextSize.SMALL, this.text);
     }
 
     /** How far the caption stands from the label's start: past the label, or nothing when it goes under it. */
@@ -982,6 +1026,10 @@ public final class GuideLayout {
         this.pieces.add(piece);
     }
 
+    private void placeAll(final List<GuidePiece> placed) {
+        this.pieces.addAll(placed);
+    }
+
     private int x() {
         return columnX(this.style, this.column);
     }
@@ -1143,10 +1191,10 @@ public final class GuideLayout {
             lineY += 3;
             final Integer at = this.bodyTargets.get(row.target());
             final int count = at == null || at >= sheets.length ? 1 : sheets[at];
-            page.add(new GuidePiece.Text(x, lineY, row.number(), TextSize.TABLE, GuideStyle.INK, row.target()));
+            page.add(new GuidePiece.Text(x, lineY, row.number(), TextSize.CODE, GuideStyle.INK, row.target()));
             page.add(new GuidePiece.Text(titleX, lineY + 1, this.fit(row.title(), sheetsX - titleX - 6,
                     TextSize.BODY), TextSize.BODY, GuideStyle.INK, row.target()));
-            page.add(new GuidePiece.Text(sheetsX + 8, lineY, String.valueOf(count), TextSize.TABLE, GuideStyle.INK,
+            page.add(new GuidePiece.Text(sheetsX + 8, lineY, String.valueOf(count), TextSize.CODE, GuideStyle.INK,
                     ""));
             lineY += LIST_ROW - 3;
             page.add(new GuidePiece.Dots(x, lineY - 1, this.fullWidth, GuideStyle.FAINT));

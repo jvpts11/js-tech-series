@@ -89,8 +89,8 @@ What a technology mod needs, whichever mod it is.
 - [Fonts](docs/FONTS.md): a mod declares a font with its licence and credit, the data generation turns its
   free source (a BDF bitmap font) into the font the game draws from, and a grid painter puts text on a
   monospace grid in it, drawing the box lines and blocks itself so frames and bars join. The Core carries Misc
-  Fixed, the fixed font of the old Unix terminals, in three sizes (6x10, 9x15, 10x20), for any mod's terminal-like
-  views.
+  Fixed, the fixed font of the old Unix terminals, in four sizes (5x8, 6x10, 9x15, 10x20), for any mod's
+  terminal-like views and the manuals' code and figures.
 - [Motion](docs/MOTION.md): curves written as CSS writes them, a profile of motions for each look a mod
   declares (growing, sliding, going down to a place and back, an outline travelling, a colour giving way), kept as
   a file a resource pack replaces, and one clock every motion is read against, smooth between ticks and still for a
