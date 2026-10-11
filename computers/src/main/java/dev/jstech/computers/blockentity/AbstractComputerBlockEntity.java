@@ -809,6 +809,15 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return hardware.boardDiskSlots();
     }
 
+    /**
+     * How many 5.25-inch bays this computer's case has on its front, where an internal drive or the hot-swap bay goes:
+     * its era's case's, and none on a machine that has no such case.
+     */
+    public int caseBays() {
+        return getBlockState().getBlock() instanceof IEraChassisBlock chassis
+                ? hardware.caseBays(chassis.chassisEra()) : 0;
+    }
+
     /** The hardware era of the installed motherboard, or {@code null} when no board is present. */
     @Nullable
     public HardwareEra installedEra() {

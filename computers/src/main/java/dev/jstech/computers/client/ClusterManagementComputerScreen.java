@@ -60,7 +60,7 @@ public class ClusterManagementComputerScreen extends AbstractAssemblyScreen<Clus
                 ClusterManagementComputerLayout.VLINE_H);
 
         // A cell behind every active hardware slot, reading the menu's own slot positions.
-        for (int i = 0; i < ClusterManagementComputerBlockEntity.HARDWARE_SLOTS; i++) {
+        for (int i = 0; i < menu.hardwareSlots(); i++) {
             final var slot = menu.getSlot(i);
             if (slot.isActive()) {
                 JsTechTheme.slot(g, x + slot.x, y + slot.y);

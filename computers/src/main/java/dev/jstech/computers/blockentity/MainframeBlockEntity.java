@@ -142,7 +142,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     private static final ComputerHardwareLayout LAYOUT = new ComputerHardwareLayout(
             MOTHERBOARD_SLOT, CPU_SLOTS_START, CPU_SLOTS, RAM_SLOTS_START, RAM_SLOTS,
-            GPU_SLOTS_START, GPU_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, TOTAL_SLOTS);
+            GPU_SLOTS_START, GPU_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, TOTAL_SLOTS, 0, TOTAL_SLOTS);
 
     public static final int STORAGE_SLOTS = 27;
 

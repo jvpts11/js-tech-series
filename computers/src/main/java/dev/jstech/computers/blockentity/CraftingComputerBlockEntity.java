@@ -88,14 +88,18 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
     public static final int PSU_SLOT = 10;
     public static final int DISK_SLOTS_START = 11;
     public static final int DISK_SLOTS = 2;
-    public static final int HARDWARE_SLOTS = 13;
+    /** The 5.25-inch bays, as many as the most any era's case has; the case says how many it really has. */
+    public static final int BAY_SLOTS_START = 13;
+    public static final int BAY_SLOTS = 2;
+    public static final int HARDWARE_SLOTS = 15;
 
     /** How long, in ticks, the crafting network this computer reads stays as it was last read. */
     public static final int FLOOR_FRESH_TICKS = 20;
 
     private static final ComputerHardwareLayout LAYOUT = new ComputerHardwareLayout(
             MOTHERBOARD_SLOT, CPU_SLOT, 1, RAM_SLOTS_START, RAM_SLOTS,
-            PCIE_SLOTS_START, PCIE_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, HARDWARE_SLOTS);
+            PCIE_SLOTS_START, PCIE_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, BAY_SLOTS_START, BAY_SLOTS,
+            HARDWARE_SLOTS);
 
     public CraftingComputerBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.CRAFTING_COMPUTER_BE.get(), pos, state, LAYOUT);

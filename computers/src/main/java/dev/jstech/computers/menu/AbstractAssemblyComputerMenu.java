@@ -38,6 +38,8 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
 
     private final AbstractSmallComputerBlockEntity computer;
     private final IAssemblyComputer assembly;
+    /* How many of the menu's first slots are the machine's parts; the player's inventory follows them. */
+    private final int hardwareSlots;
 
     public static final int BUTTON_POWER = 0;
     public static final int BUTTON_AUTOSTART = 1;
@@ -65,6 +67,7 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
         addBoardSlots(hardwareSlots, hw, layout, pcieKey + "_", map.pcieStart(), map.pcieCount(), be::boardPcieSlots);
         addBoardSlots(hardwareSlots, hw, layout, "disk_", map.diskStart(), map.diskCount(), be::boardDiskSlots);
         final SlotGroup hardware = slots(hardwareSlots.toArray(Slot[]::new));
+        this.hardwareSlots = hardwareSlots.size();
 
         final PlayerSlots player = playerInventory(inventory, layout.playerInventoryAt());
         shiftClick(hardware, player.all());
@@ -75,6 +78,11 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
         button(BUTTON_POWER, p -> be.togglePower());
         button(BUTTON_AUTOSTART, p -> be.toggleAutoStart());
         button(BUTTON_SIDE_PANEL, p -> be.toggleSidePanel());
+    }
+
+    /** How many of the menu's first slots are the machine's parts, before the player's inventory. */
+    public int hardwareSlots() {
+        return hardwareSlots;
     }
 
     /** Where the block entity this menu assembles stands. */

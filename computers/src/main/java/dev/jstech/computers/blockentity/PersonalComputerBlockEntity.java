@@ -65,13 +65,17 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
     public static final int PSU_SLOT = 10;
     public static final int DISK_SLOTS_START = 11;
     public static final int DISK_SLOTS = 2;
-    public static final int HARDWARE_SLOTS = 13;
+    /** The 5.25-inch bays, as many as the most any era's case has; the case says how many it really has. */
+    public static final int BAY_SLOTS_START = 13;
+    public static final int BAY_SLOTS = 2;
+    public static final int HARDWARE_SLOTS = 15;
 
     public static final int STORAGE_SLOTS = 18;
 
     private static final ComputerHardwareLayout LAYOUT = new ComputerHardwareLayout(
             MOTHERBOARD_SLOT, CPU_SLOT, 1, RAM_SLOTS_START, RAM_SLOTS,
-            GPU_SLOTS_START, GPU_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, HARDWARE_SLOTS);
+            GPU_SLOTS_START, GPU_SLOTS, PSU_SLOT, DISK_SLOTS_START, DISK_SLOTS, BAY_SLOTS_START, BAY_SLOTS,
+            HARDWARE_SLOTS);
 
     /*
      * Bumped on any change to the disk contents (insert/extract/disk swap) AND on a privacy-slider

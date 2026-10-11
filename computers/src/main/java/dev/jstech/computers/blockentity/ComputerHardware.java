@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.hardware.CaseBays;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
@@ -109,8 +110,20 @@ final class ComputerHardware {
 
     void load(final CompoundTag tag, final HolderLookup.Provider registries, final String key) {
         if (tag.contains(key)) {
-            this.handler.deserializeNBT(registries, tag.getCompound(key));
+            /*
+             * The handler takes its size from what was saved, and a machine saved before its layout grew (the bays
+             * came after the disks) would come back short of the new slots. Each part keeps its own slot number, so
+             * reading the old parts into a handler of today's size puts every one back where it was.
+             */
+            final CompoundTag saved = tag.getCompound(key).copy();
+            saved.putInt("Size", this.layout.totalSlots());
+            this.handler.deserializeNBT(registries, saved);
         }
+    }
+
+    /** How many of the layout's 5.25-inch bays the case really has, by the era of the case. */
+    int caseBays(final HardwareEra caseEra) {
+        return Math.min(this.layout.bayCount(), CaseBays.of(caseEra));
     }
 
     /** What the whole machine can hold, in mB-equivalent, or nothing when the parts do not make a computer. */

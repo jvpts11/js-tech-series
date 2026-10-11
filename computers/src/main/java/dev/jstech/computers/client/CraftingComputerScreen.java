@@ -63,7 +63,7 @@ public class CraftingComputerScreen extends AbstractAssemblyScreen<CraftingCompu
                 CraftingComputerLayout.VLINE_H);
 
         // A cell behind every active hardware slot, reading the menu's own slot positions.
-        for (int i = 0; i < CraftingComputerBlockEntity.HARDWARE_SLOTS; i++) {
+        for (int i = 0; i < menu.hardwareSlots(); i++) {
             final var slot = menu.getSlot(i);
             if (slot.isActive()) {
                 JsTechTheme.slot(g, x + slot.x, y + slot.y);
