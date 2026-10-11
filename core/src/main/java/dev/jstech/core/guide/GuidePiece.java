@@ -63,6 +63,10 @@ public sealed interface GuidePiece {
     record Rule(int x, int y, int width, String colour) implements GuidePiece {
     }
 
+    /** A key of the keyboard in the middle of a sentence, drawn as a key with its name on it: [Ctrl]. */
+    record Key(int x, int y, String name) implements GuidePiece {
+    }
+
     /** A dotted line across the page, as a drawing list rules its rows. */
     record Dots(int x, int y, int width, String colour) implements GuidePiece {
     }

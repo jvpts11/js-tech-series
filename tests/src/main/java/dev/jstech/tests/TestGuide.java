@@ -147,6 +147,7 @@ public final class TestGuide {
                 .register();
         GUIDE.page("code", IDEAS).titled("Code").icon(() -> Items.COMMAND_BLOCK)
                 .whatItIs("An entry of listings: a program, a query, and a line too long for its page.")
+                .paragraph("Keys are drawn as keys: [[Ctrl]]+[[S]], and [[Page Down]] turns this manual's page.")
                 .listing(HELLO, "using System.IO.*;", "", "namespace Hello;", "", "class Program {",
                         "  static void Main() {", "    Console.PrintLine(\"Hello, world! This line is long enough to go"
                                 + " on under itself.\");", "  }", "}")

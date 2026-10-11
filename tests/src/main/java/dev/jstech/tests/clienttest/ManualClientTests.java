@@ -142,6 +142,9 @@ public final class ManualClientTests {
                 .thenAssert(SETTLE, () -> codePiece("using").colour().equals(GuideStyle.CODE_KEYWORD)
                         && codePiece("QUERY").colour().equals(GuideStyle.CODE_KEYWORD),
                         "Sigma# is coloured as the game's editors colour it, and so is the network's query language")
+                .thenAssert(0, () -> manual().book().pages().get(manual().book().pageOf(TestGuide.CODE).orElseThrow())
+                        .pieces().stream().anyMatch(piece -> piece instanceof GuidePiece.Key key
+                                && key.name().equals("Page Down")), "a key in a sentence is drawn as a key")
                 .thenAssert(0, () -> {
                     final GuidePiece.Listing hello = listingPiece(TestGuide.HELLO);
                     final int rows = (hello.height() - GuideLayout.LISTING_HEAD - 2 * GuideLayout.CODE_PAD)

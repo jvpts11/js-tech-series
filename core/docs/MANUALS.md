@@ -155,6 +155,10 @@ reads as its words and that book, "the shell (in The Handbook)", and a click ope
 target and translates the words. Read as text, in a help program, a link is written as its words
 and number, and the entry lists every page it led to under "See also" at its end.
 
+*Added 2026-10-11.* A key of the keyboard is written between double brackets and drawn as a key, its name never
+broken: `"To save, press [[Ctrl]]+[[S]]."` Read as text it is the key's name in single brackets, "[Ctrl]+[S]". A
+translation may rename a key as a keyboard of its language names it.
+
 ### The plate under the title
 
 *Added 2026-10-06.*

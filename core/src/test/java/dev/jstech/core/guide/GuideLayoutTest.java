@@ -511,6 +511,19 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_drawsAKeyInASentenceAsOnePieceNeverBroken() {
+        final FixedText text = new FixedText(Map.of("first.text", "to scroll, press [[Page Up]] or [[Page Down]] now"));
+        final GuideBook book = lay(contents(), text);
+
+        final List<GuidePiece.Key> keys = book.pages().get(book.pageOf("alpha:first").orElseThrow()).pieces()
+                .stream().filter(piece -> piece instanceof GuidePiece.Key).map(piece -> (GuidePiece.Key) piece)
+                .toList();
+        assertEquals(List.of("Page Up", "Page Down"), keys.stream().map(GuidePiece.Key::name).toList());
+        assertFalse(book.pages().stream().flatMap(page -> page.pieces().stream()).anyMatch(piece ->
+                piece instanceof GuidePiece.Text words && words.text().contains("[[")), "no bracket is left showing");
+    }
+
+    @Test
     void roman_writesSmallRomanNumerals() {
         assertEquals("i", GuideLayout.roman(1));
         assertEquals("iv", GuideLayout.roman(4));

@@ -9,6 +9,10 @@
       "text": "jstests.guide.code.what"
     },
     {
+      "type": "text",
+      "text": "jstests.guide.code.text1"
+    },
+    {
       "type": "listing",
       "language": "sgs",
       "lines": [

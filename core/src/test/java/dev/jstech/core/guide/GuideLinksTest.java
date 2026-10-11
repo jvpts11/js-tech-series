@@ -32,6 +32,15 @@ class GuideLinksTest {
     }
 
     @Test
+    void runs_makeEachKeyARunOfItsOwnAndPlainWritesItInBrackets() {
+        assertEquals(List.of(new GuideLinks.Run("press ", ""), new GuideLinks.Run("Ctrl", "", true),
+                        new GuideLinks.Run("+", ""), new GuideLinks.Run("Page Up", "", true),
+                        new GuideLinks.Run(" or see ", ""), new GuideLinks.Run("the press (1.2.3)", "mod:press")),
+                GuideLinks.runs("press [[Ctrl]]+[[Page Up]] or see [the press](mod:press)", NUMBERS));
+        assertEquals("press [Ctrl]+[S]", GuideLinks.plain("press [[Ctrl]]+[[S]]", NUMBERS));
+    }
+
+    @Test
     void runs_leadToAChapterByItsNamespace() {
         assertEquals(List.of(new GuideLinks.Run("the mod (1)", "mod")), GuideLinks.runs("[the mod](mod)", NUMBERS));
     }

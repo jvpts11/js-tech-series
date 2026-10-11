@@ -185,6 +185,9 @@ public final class ManualScreen extends Screen {
     private static final String TERMINAL_PROMPT = "prompt";
     private static final String TERMINAL_TYPED = "typed";
     private static final double STRIP_LIGHT = 0.18;
+    /** A key in a sentence: how tall it stands, and how far its face goes from the paper towards white. */
+    private static final int KEY_HEIGHT = 9;
+    private static final double KEY_LIGHT = 0.5;
     /** The mouse's side buttons, back and forward, as the game numbers them. */
     private static final int MOUSE_BACK = GLFW.GLFW_MOUSE_BUTTON_4;
     private static final int MOUSE_FORWARD = GLFW.GLFW_MOUSE_BUTTON_5;
@@ -1158,6 +1161,7 @@ public final class ManualScreen extends Screen {
             case GuidePiece.Recipes rows -> this.drawRecipes(g, x, y, rows, chapter, mx, my);
             case GuidePiece.Listing listing -> this.drawListing(g, x, y, listing, chapter, mx, my);
             case GuidePiece.Session session -> this.drawSession(g, x, y, session);
+            case GuidePiece.Key key -> this.drawKey(g, x, y, key.name(), chapter);
             case GuidePiece.Custom custom -> {
                 final IGuideBlockRenderer renderer = rendererOf(custom.type());
                 if (renderer != null) {
@@ -1253,6 +1257,21 @@ public final class ManualScreen extends Screen {
             }
             rowY += GuideLayout.CODE_PITCH;
         }
+    }
+
+    /**
+     * A key of the keyboard in a sentence: a pale keycap lit along its top and left, its edge shaded and a darker
+     * line along its foot where it stands up from the board, its name on it in small letters.
+     */
+    private void drawKey(final GuiGraphics g, final int x, final int y, final String name, final String chapter) {
+        final int width = GuideFonts.width(this.font, name, TextSize.SMALL, this.style) + GuideLayout.KEY_ROOM;
+        final int face = ManualButtonLook.lighten(this.colour(GuideStyle.PAPER, chapter), KEY_LIGHT);
+        ManualControls.bevel(g, x, y - 1, width, KEY_HEIGHT, face, ManualButtonLook.lighten(face, KEY_LIGHT),
+                this.colour(GuideStyle.RULE, chapter));
+        g.fill(x, y + KEY_HEIGHT - 2, x + width, y + KEY_HEIGHT - 1, this.colour(GuideStyle.FAINT, chapter));
+        // The name in whichever of the page's ink and the label's reads on the key, as a drawing's pale ink would not.
+        GuideFonts.draw(g, this.font, name, TextSize.SMALL, this.style, x + 2, y + 1, ManualButtonLook.markFor(face,
+                this.colour(GuideStyle.INK, chapter), this.colour(GuideStyle.LABEL_INK, chapter)));
     }
 
     /** The paper, the strip and the frame of a listing, and the rule beside its numbers. */

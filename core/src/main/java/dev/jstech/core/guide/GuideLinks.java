@@ -23,10 +23,15 @@ import java.util.regex.Pattern;
  * own manual and "3.4.1" in one holding every chapter. A target that manual does not hold but another book does reads
  * as its words and that book, "Sigma (in The Book of Sigma)", and leads to it; one no book holds reads as its words
  * alone and leads nowhere. A translation keeps the brackets and the target and translates the words.
+ *
+ * <p>A key of the keyboard is written between double brackets, {@code press [[Ctrl]]+[[S]]}, and is drawn as a key;
+ * read as plain text it is the key's name in single brackets, "[Ctrl]+[S]". A translation may rename a key, as a
+ * keyboard of its language does.
  */
 public final class GuideLinks {
 
     private static final Pattern LINK = Pattern.compile("\\[([^\\]]*)]\\(([a-z0-9_.-]+(?::[a-z0-9_./-]+)?)\\)");
+    private static final Pattern KEY = Pattern.compile("\\[\\[([^\\[\\]]+)]]");
 
     private GuideLinks() {
     }
@@ -54,7 +59,7 @@ public final class GuideLinks {
         int at = 0;
         while (matcher.find()) {
             if (matcher.start() > at) {
-                runs.add(new Run(sentence.substring(at, matcher.start()), ""));
+                keyed(runs, sentence.substring(at, matcher.start()));
             }
             final String words = matcher.group(1).strip();
             final String target = matcher.group(2);
@@ -70,7 +75,7 @@ public final class GuideLinks {
             at = matcher.end();
         }
         if (at < sentence.length()) {
-            runs.add(new Run(sentence.substring(at), ""));
+            keyed(runs, sentence.substring(at));
         }
         return runs;
     }
@@ -80,12 +85,15 @@ public final class GuideLinks {
         return plain(sentence, numbers, target -> null);
     }
 
-    /** The sentence as plain words, each link written as its words and number, or the book that holds it. */
+    /**
+     * The sentence as plain words, each link written as its words and number, or the book that holds it, and each key
+     * as its name in brackets.
+     */
     public static String plain(final String sentence, final Function<String, String> numbers,
                                final Function<String, String> elsewhere) {
         final StringBuilder out = new StringBuilder();
         for (final Run run : runs(sentence, numbers, elsewhere)) {
-            out.append(run.text());
+            out.append(run.key() ? "[" + run.text() + "]" : run.text());
         }
         return out.toString();
     }
@@ -100,12 +108,34 @@ public final class GuideLinks {
         return targets;
     }
 
+    /** Plain words with the keys written in them, as runs: the words, and each key a run of its own. */
+    private static void keyed(final List<Run> runs, final String words) {
+        final Matcher matcher = KEY.matcher(words);
+        int at = 0;
+        while (matcher.find()) {
+            if (matcher.start() > at) {
+                runs.add(new Run(words.substring(at, matcher.start()), ""));
+            }
+            runs.add(new Run(matcher.group(1).strip(), "", true));
+            at = matcher.end();
+        }
+        if (at < words.length()) {
+            runs.add(new Run(words.substring(at), ""));
+        }
+    }
+
     /**
      * A run of a sentence.
      *
-     * @param text   its words, as they are drawn
+     * @param text   its words, as they are drawn; for a key, the key's name
      * @param target where it leads, or empty for plain words
+     * @param key    whether it is a key of the keyboard, drawn as a key and never broken
      */
-    public record Run(String text, String target) {
+    public record Run(String text, String target, boolean key) {
+
+        /** Words, or a link's words. */
+        public Run(final String text, final String target) {
+            this(text, target, false);
+        }
     }
 }

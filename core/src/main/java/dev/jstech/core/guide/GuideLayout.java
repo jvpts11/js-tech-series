@@ -116,6 +116,8 @@ public final class GuideLayout {
     /** A session at a terminal: the strip with its name, and the room between its frame and its text. */
     public static final int SESSION_HEAD = 9;
     public static final int SESSION_PAD = 3;
+    /** How much wider a key is drawn than its name: the room either side of it and its edges. */
+    public static final int KEY_ROOM = 5;
 
     private static final int PARAGRAPH_GAP = 4;
     private static final int BLOCK_GAP = 6;
@@ -990,6 +992,11 @@ public final class GuideLayout {
         final List<List<Run>> words = new ArrayList<>();
         List<Run> word = new ArrayList<>();
         for (final Run run : GuideLinks.runs(sentence, this::numberOf, this::elsewhere)) {
+            if (run.key()) {
+                // A key is drawn as one key, its name never broken even where it has a space, as Page Up does.
+                word.add(run);
+                continue;
+            }
             int at = 0;
             final String runText = run.text();
             while (at < runText.length()) {
@@ -1023,7 +1030,7 @@ public final class GuideLayout {
                 tried.add(new Run(" ", between));
             }
             tried.addAll(next);
-            if (line.isEmpty() || this.text.width(plain(tried), size) <= room) {
+            if (line.isEmpty() || this.runsWidth(tried, size) <= room) {
                 line = tried;
                 continue;
             }
@@ -1049,15 +1056,42 @@ public final class GuideLayout {
         }
     }
 
-    /** One line of runs at the cursor's height, plain words in {@code colour} and links in the link's. */
+    /**
+     * One line of runs at the cursor's height, plain words in {@code colour}, links in the link's, and keys drawn as
+     * keys.
+     */
     private void placeRun(final List<Run> line, final int indent, final TextSize size, final String colour) {
-        final StringBuilder before = new StringBuilder();
+        final List<Run> before = new ArrayList<>();
         for (final Run run : line) {
-            final int at = this.x() + indent + this.text.width(before.toString(), size);
-            this.place(new GuidePiece.Text(at, this.y, run.text(), size,
-                    run.target().isEmpty() ? colour : GuideStyle.LINK, run.target()));
-            before.append(run.text());
+            final int at = this.x() + indent + this.runsWidth(before, size);
+            if (run.key()) {
+                this.place(new GuidePiece.Key(at, this.y, run.text()));
+            } else {
+                this.place(new GuidePiece.Text(at, this.y, run.text(), size,
+                        run.target().isEmpty() ? colour : GuideStyle.LINK, run.target()));
+            }
+            before.add(run);
         }
+    }
+
+    /** How wide runs are drawn side by side: words at their size, a key at the width of the key it is drawn as. */
+    private int runsWidth(final List<Run> runs, final TextSize size) {
+        int width = 0;
+        final StringBuilder words = new StringBuilder();
+        for (final Run run : runs) {
+            if (run.key()) {
+                width += this.text.width(words.toString(), size) + this.keyWidth(run.text());
+                words.setLength(0);
+            } else {
+                words.append(run.text());
+            }
+        }
+        return width + this.text.width(words.toString(), size);
+    }
+
+    /** How wide a key is drawn: its name in small letters, the key round it, and a pixel after it. */
+    private int keyWidth(final String name) {
+        return this.text.width(name, TextSize.SMALL) + KEY_ROOM + 1;
     }
 
     /** The number a link's target has in this manual: an entry's or a section's, or a chapter's; null when not held. */
@@ -1072,11 +1106,12 @@ public final class GuideLayout {
         return book.isEmpty() ? null : this.text.text(GuideTexts.IN_BOOK.key(), book);
     }
 
-    /** Runs side by side that lead to the same place made one, so a link is one piece to point at. */
+    /** Runs side by side that lead to the same place made one, so a link is one piece to point at; a key stays one. */
     private static List<Run> join(final List<Run> runs) {
         final List<Run> joined = new ArrayList<>();
         for (final Run run : runs) {
-            if (!joined.isEmpty() && joined.getLast().target().equals(run.target())) {
+            if (!joined.isEmpty() && !run.key() && !joined.getLast().key()
+                    && joined.getLast().target().equals(run.target())) {
                 final Run last = joined.removeLast();
                 joined.add(new Run(last.text() + run.text(), run.target()));
             } else {
@@ -1084,14 +1119,6 @@ public final class GuideLayout {
             }
         }
         return joined;
-    }
-
-    private static String plain(final List<Run> runs) {
-        final StringBuilder out = new StringBuilder();
-        for (final Run run : runs) {
-            out.append(run.text());
-        }
-        return out.toString();
     }
 
     /** Moves on to the next column when what comes next is taller than the room left in this one. */

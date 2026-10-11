@@ -25,6 +25,7 @@
   "jstests.guide.code.for": "Proving the layout of listings, their colours and their Copy button.",
   "jstests.guide.code.get": "Open the test manual.",
   "jstests.guide.code.problem1": "A listing is one colour.",
+  "jstests.guide.code.text1": "Keys are drawn as keys: [[Ctrl]]+[[S]], and [[Page Down]] turns this manual's page.",
   "jstests.guide.code.title": "Code",
   "jstests.guide.code.use1": "Read the listings.",
   "jstests.guide.code.use2": "Copy one.",
