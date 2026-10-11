@@ -186,6 +186,7 @@ A picture is numbered with the figures ("Figure 3-2.") and captioned like them, 
 | `figure(item, caption)` | The item drawn large in a frame, numbered "Figure 3-9." |
 | `table(caption)`, then `amount(label, value, unit)`, `property(label, words)`, `fixed(label, data)` | A numbered table of properties, headed "Property" and "Value". An amount is read from your code and written in the reader's way ("12,000 FE"); words are translated; fixed values (a model number) are not. |
 | `table(caption, heads...)`, then `row(cells...)` | A numbered table with heads of its own ("Command", "What it does"), a cell a column in each row: `GuideCell.words(english)`, `GuideCell.words(sharedKey)`, `GuideCell.code(text)` or `GuideCell.amount(value, unit)`. See [Tables](#tables). |
+| `tableFrom(source, caption, heads...)` | A numbered table whose rows your mod gives as the manual is laid out. See [Figures read from your mod](#figures-read-from-your-mod). |
 | `recipes(type)`, `recipes(type, making)` | Every recipe of a type the world holds, or those making one item, with the time and energy over the arrow. |
 | `steps(english...)` | Numbered steps of the entry's own. |
 | `warning(english)` | A warning in a box. |
@@ -238,6 +239,30 @@ A table is laid out to fit the page, never the other way round:
 
 Keep a table to what a reader looks up. Two or three columns read best; long explanations belong in the text, or in a
 table that will stack.
+
+### Figures read from your mod
+
+*Added 2026-10-11.*
+
+A number written into a sentence by hand goes out of date the day the code changes. Say instead where the manual reads
+it, with `GuideFacts`, while the game loads, and name it in the sentence by its id between double braces:
+
+```java
+GuideFacts.value("mymod:memory_slots", () -> new GuideBlock.GuideValue.Amount(PcSpec.MEMORY_SLOTS, ""));
+GuideFacts.rows("mymod:cable_reach", () -> CableTier.all().stream().map(tier -> new GuideBlock.TableRow(List.of(
+        new GuideBlock.GuideValue.Words(tier.nameKey()), new GuideBlock.GuideValue.Amount(tier.reach(), "m"))))
+        .toList());
+
+.paragraph("It takes up to " + GuideFacts.token("mymod:memory_slots") + " memory modules.")
+.tableFrom("mymod:cable_reach", "How far each cable reaches", "Cable", "Reach")
+```
+
+The value is written the reader's way as the page is laid out ("12,000 FE"), and a translation keeps the braces where
+its own language puts the figure. A table read from a source holds no rows in its file: its mod gives them each time a
+manual is laid out, so a part another mod adds to the family, or a setting the player changed, is in the next book
+opened. A row of the wrong number of cells is left out, with a line in the log; a name no mod registered is printed
+as written, braces and all, so it is seen and fixed. The answers are asked for in the player's game: register from the
+client's setup anything only the client knows.
 
 ## Writing a manual
 

@@ -266,8 +266,10 @@ public final class ManualReader {
                     pieces.add(new Piece.Picture("", this.text.text(GuideTexts.FIGURE.key(),
                             chapterNo + "-" + figures) + " " + this.text.text(picture.captionKey())));
                 }
-                case GuideBlock.Table table -> {
+                case GuideBlock.Table declared -> {
                     tables++;
+                    final GuideBlock.Table table = declared.source().isEmpty() ? declared
+                            : declared.withRows(this.text.rows(declared.source(), declared.columns()));
                     final List<String> heads = new ArrayList<>();
                     for (final String head : table.headKeys()) {
                         heads.add(this.text.text(head));

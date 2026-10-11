@@ -172,6 +172,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   under the one before. A table that fits on a page is never parted, moving to the next page whole; a longer one
   carries its caption, marked "(continued)", and its head on to each page, and leaves at least three rows on either
   side of where it parts.
+- A mod can have its manuals read their figures from the mod itself as the book is opened, rather than print numbers
+  written by hand: a figure in a sentence, written the reader's way, and the rows of a whole table, such as every
+  part of a family. A part another mod adds, or a setting changed, is in the next book opened.
 - The manuals inside the computers, beside the manual pages of each machine's commands, in each system's own help.
   Every desktop has Help: Frames 95's Help Topics with its Contents, Index and Find and a topic window of its own,
   XP's Help and Support Center, 7's Help and Support, Get Help on 10 and 11, KDE's Help Center, the Help of GNOME and

@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.core.client.GameLocale;
 import dev.jstech.core.client.guide.ClientGuideText;
 import dev.jstech.core.client.guide.GuideLibrary;
+import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.IGuideText;
 import dev.jstech.core.guide.ManualReader;
@@ -83,20 +84,20 @@ public final class HelpBooks {
     public record Found(ManualReader reader, String id) {
     }
 
-    /** The manuals' words in the player's language, and their numbers written the player's way. */
+    /** The manuals' words in the player's language with the values they name, and numbers written the player's way. */
     private static final class Words implements IGuideText {
 
         @Override
         public String text(final String key, final Object... args) {
             final String pattern = Language.getInstance().getOrDefault(key, key);
             if (args.length == 0) {
-                return pattern;
+                return GuideFacts.fill(pattern, this);
             }
             final List<String> written = new ArrayList<>();
             for (final Object arg : args) {
                 written.add(String.valueOf(arg));
             }
-            return TextFormat.apply(pattern, written);
+            return GuideFacts.fill(TextFormat.apply(pattern, written), this);
         }
 
         @Override

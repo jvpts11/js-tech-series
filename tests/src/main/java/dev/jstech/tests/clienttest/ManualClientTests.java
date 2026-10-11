@@ -149,9 +149,17 @@ public final class ManualClientTests {
                 .thenAssert(0, () -> tableText("S1001").colour().equals(GuideStyle.HEADING),
                         "the table of errors is stacked, each row opening with its code")
                 .thenAssert(0, ManualClientTests::nothingBelowTheFoot, "and no table runs past a page's foot")
+                .thenAssert(0, () -> String.join(" ", tablePieces().stream().map(GuidePiece.Text::text).toList())
+                        .contains("spends " + TestPress.ENERGY_PER_TICK + " FE/t while")
+                        && tablePieces().stream().noneMatch(text -> text.text().contains("{{")),
+                        "a sentence reads the press's figure from the test mod as the page is laid out")
+                .thenAssert(0, () -> tableText(TestGuide.MANUAL_ITEM.get().getDescription().getString())
+                        .size() == TextSize.SMALL, "and a table reads every item of the test mod from the game")
                 .thenScreenshot(2, "manual_tables")
                 .then(0, () -> manual().turn(1))
                 .thenScreenshot(2, "manual_tables_on")
+                .then(0, () -> manual().turn(1))
+                .thenScreenshot(2, "manual_tables_read")
                 .then(0, ManualClientTests::close)
                 .thenAwaitNoScreen(OPEN);
     }

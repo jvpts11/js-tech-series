@@ -155,6 +155,19 @@
       ]
     },
     {
+      "type": "text",
+      "text": "jstests.guide.tables.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jstests.guide.tables.table3",
+      "heads": [
+        "jstests.guide.tables.table3_head1",
+        "jstests.guide.tables.table3_head2"
+      ],
+      "source": "jstests:items"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.what_it_is_for"
     },

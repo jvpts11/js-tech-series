@@ -473,6 +473,22 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_readsATablesRowsFromItsSourceAsItIsLaidOut() {
+        final GuideBlock.Table read = new GuideBlock.Table("table.caption", List.of("Era", "Reach"), List.of(),
+                "alpha:reach");
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t", read)))),
+                new FixedText(Map.of(), Map.of(), Map.of("alpha:reach", List.of(
+                        new GuideBlock.TableRow(List.of(new GuideBlock.GuideValue.Words("Vintage"),
+                                new GuideBlock.GuideValue.Amount(16, "m"))),
+                        new GuideBlock.TableRow(List.of(new GuideBlock.GuideValue.Words("Legacy"),
+                                new GuideBlock.GuideValue.Amount(32, "m")))))));
+
+        final List<String> words = texts(book, "alpha:t").stream().map(GuidePiece.Text::text).toList();
+        assertTrue(words.containsAll(List.of("Vintage", "16 m", "Legacy", "32 m")), () -> "" + words);
+        assertEquals(2, rules(book.pages().get(book.pageOf("alpha:t").orElseThrow())));
+    }
+
+    @Test
     void roman_writesSmallRomanNumerals() {
         assertEquals("i", GuideLayout.roman(1));
         assertEquals("iv", GuideLayout.roman(4));
@@ -573,17 +589,28 @@ class GuideLayoutTest {
 
     /**
      * Words that are their own keys, with any arguments after them in brackets, six pixels to a character at every
-     * size, no recipes but those of one kind, and the books holding the targets this manual does not.
+     * size, no recipes but those of one kind, the books holding the targets this manual does not, and the rows of the
+     * tables read from a source.
      */
-    private record FixedText(Map<String, String> words, Map<String, String> books) implements IGuideText {
+    private record FixedText(Map<String, String> words, Map<String, String> books,
+                             Map<String, List<GuideBlock.TableRow>> sources) implements IGuideText {
 
         FixedText(final Map<String, String> words) {
-            this(words, Map.of());
+            this(words, Map.of(), Map.of());
+        }
+
+        FixedText(final Map<String, String> words, final Map<String, String> books) {
+            this(words, books, Map.of());
         }
 
         @Override
         public String elsewhere(final String target) {
             return this.books.getOrDefault(target, "");
+        }
+
+        @Override
+        public List<GuideBlock.TableRow> rows(final String source, final int columns) {
+            return this.sources.getOrDefault(source, List.of());
         }
 
         @Override

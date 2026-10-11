@@ -100,11 +100,16 @@ public sealed interface GuideBlock {
      * written in the style's code font, so its figures line up. When the columns cannot stand side by side on the
      * page, each row is laid out under the one before it instead, its further columns under their heads.
      *
+     * <p>A table may hold no rows of its own and name a source instead, whose rows its mod gives as the manual is laid
+     * out ({@link GuideFacts}), so a table of every part of a family or every era's figures is never out of date.
+     *
      * @param captionKey the caption's sentence
      * @param headKeys   the heads of the columns, left to right, or empty for a table of properties
      * @param rows       the rows, each with a cell for every column
+     * @param source     the source its rows are read from as the manual is laid out, or empty for the rows given
      */
-    record Table(String captionKey, List<String> headKeys, List<TableRow> rows) implements GuideBlock {
+    record Table(String captionKey, List<String> headKeys, List<TableRow> rows, String source)
+            implements GuideBlock {
 
         /** How many columns a table of properties has: what each property is, and its value. */
         public static final int PROPERTY_COLUMNS = 2;
@@ -113,6 +118,7 @@ public sealed interface GuideBlock {
             Objects.requireNonNull(captionKey, "captionKey");
             headKeys = List.copyOf(headKeys);
             rows = List.copyOf(rows);
+            source = source == null ? "" : source;
             final int columns = headKeys.isEmpty() ? PROPERTY_COLUMNS : headKeys.size();
             for (final TableRow row : rows) {
                 if (row.cells().size() != columns) {
@@ -120,11 +126,24 @@ public sealed interface GuideBlock {
                             + columns + " cells; one has " + row.cells().size());
                 }
             }
+            if (!source.isEmpty() && !rows.isEmpty()) {
+                throw new IllegalArgumentException("a table read from " + source + " holds no rows of its own");
+            }
         }
 
         /** A table of properties and their values. */
         public Table(final String captionKey, final List<TableRow> rows) {
-            this(captionKey, List.of(), rows);
+            this(captionKey, List.of(), rows, "");
+        }
+
+        /** A table with heads of its own and the rows given. */
+        public Table(final String captionKey, final List<String> headKeys, final List<TableRow> rows) {
+            this(captionKey, headKeys, rows, "");
+        }
+
+        /** The same table holding those rows, read from its source. */
+        public Table withRows(final List<TableRow> read) {
+            return new Table(this.captionKey, this.headKeys, read, "");
         }
 
         /** How many columns it has. */

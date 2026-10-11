@@ -31,6 +31,7 @@ import net.minecraft.util.ExtraCodecs;
  * {"type": "picture", "drawing": "jsc:firmware", "data": {"look": "uefi"}, "height": 92, "caption": "..."}
  * {"type": "table", "caption": "...", "rows": [[{"words": "..."}, {"amount": 3072, "unit": "MB"}]]}
  * {"type": "table", "caption": "...", "heads": ["...", "..."], "rows": [[{"literal": "dir"}, {"words": "..."}]]}
+ * {"type": "table", "caption": "...", "heads": ["...", "..."], "source": "jsc:cable_reach"}
  * {"type": "recipes", "recipe_type": "jsindustrial:compressing"}
  * }</pre>
  */
@@ -167,7 +168,8 @@ public final class GuideCodecs {
     private static final MapCodec<GuideBlock.Table> TABLE = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.STRING.fieldOf("caption").forGetter(GuideBlock.Table::captionKey),
             Codec.STRING.listOf().optionalFieldOf("heads", List.of()).forGetter(GuideBlock.Table::headKeys),
-            TABLE_ROW.listOf().fieldOf("rows").forGetter(GuideBlock.Table::rows)
+            TABLE_ROW.listOf().optionalFieldOf("rows", List.of()).forGetter(GuideBlock.Table::rows),
+            Codec.STRING.optionalFieldOf("source", "").forGetter(GuideBlock.Table::source)
     ).apply(instance, GuideBlock.Table::new));
     private static final MapCodec<GuideBlock.Recipes> RECIPES = RecordCodecBuilder.mapCodec(instance ->
             instance.group(

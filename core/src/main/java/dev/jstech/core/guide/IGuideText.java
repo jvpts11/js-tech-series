@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.guide;
 
+import java.util.List;
+
 /**
  * What the layout of a manual asks of whoever shows it: the words of a key in the reader's language, how wide a
  * piece of text is drawn, and what only the running game knows.
@@ -16,7 +18,10 @@ package dev.jstech.core.guide;
  */
 public interface IGuideText {
 
-    /** The sentence of a key in the reader's language, its arguments put in; the key itself when it has none. */
+    /**
+     * The sentence of a key in the reader's language, its arguments put in; the key itself when it has none. Whoever
+     * shows a manual to a player also writes in the values the sentence names, with {@link GuideFacts#fill}.
+     */
     String text(String key, Object... args);
 
     /** How many pixels wide that text is drawn at that size. */
@@ -35,6 +40,11 @@ public interface IGuideText {
             case GuideBlock.GuideValue.Amount amount -> amount(amount.value(), amount.unit());
             case GuideBlock.GuideValue.Literal literal -> literal.text();
         };
+    }
+
+    /** The rows of a table read from its source as the manual is laid out, each with {@code columns} cells. */
+    default List<GuideBlock.TableRow> rows(final String source, final int columns) {
+        return GuideFacts.rowsOf(source, columns);
     }
 
     /**

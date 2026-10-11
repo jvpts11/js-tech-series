@@ -15,6 +15,7 @@ import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.GuideCodecs;
 import dev.jstech.core.guide.GuideEntry;
+import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.GuideSection;
 import dev.jstech.core.guide.GuideStyle;
@@ -29,6 +30,7 @@ import java.util.List;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -36,8 +38,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * What a mod declares for the manuals, as the data generation writes it: every entry, section, chapter, manual and
  * style of the test mod read back from its file the same, a chapter written for one book bound by it alone, items
- * named by their registered ids, every English sentence under a key of the mod's own, and the five parts of an entry
- * in their order.
+ * named by their registered ids, every English sentence under a key of the mod's own, the five parts of an entry in
+ * their order, and the figures and rows a manual reads from its mod as it runs.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -125,6 +127,33 @@ public final class GuideGameTests {
         helper.assertTrue(TestGuide.MANUAL_ITEM.get().manual().equals(TestGuide.MANUAL)
                 && guide.declaredManuals().getFirst().style().equals(CoreGuide.BINDER),
                 "the manual item opens the test manual, drawn in the binder style");
+        helper.succeed();
+    }
+
+    /*
+     * A table read from its mod holds no rows in its file and answers from the game as it runs: a row for every item
+     * the test mod registered, in the order of their ids, each naming its item; a value answers the press's own figure.
+     */
+    @GameTest(template = ARENA)
+    public static void facts_answerFromTheGameAsItRuns(final GameTestHelper helper) {
+        final GuideBlock.Table items = entry(TestGuide.TABLES).blocks().stream()
+                .filter(part -> part instanceof GuideBlock.Table table && table.source().equals(TestGuide.ITEMS))
+                .map(part -> (GuideBlock.Table) part).findFirst().orElseThrow();
+        helper.assertTrue(items.rows().isEmpty(), "the table's file holds no rows of its own");
+        final List<Item> registered = BuiltInRegistries.ITEM.keySet().stream()
+                .filter(id -> id.getNamespace().equals(JsTests.MODID)).sorted().map(BuiltInRegistries.ITEM::get)
+                .toList();
+        final List<GuideBlock.TableRow> rows = GuideFacts.rowsOf(TestGuide.ITEMS, items.columns());
+        helper.assertTrue(!registered.isEmpty() && rows.size() == registered.size(),
+                "a row for each of the test mod's " + registered.size() + " items: " + rows.size());
+        for (int i = 0; i < rows.size(); i++) {
+            final GuideBlock.GuideValue name = rows.get(i).cells().getFirst();
+            helper.assertTrue(name.equals(new GuideBlock.GuideValue.Words(registered.get(i).getDescriptionId())),
+                    "row " + i + " names " + registered.get(i) + ": " + name);
+        }
+        helper.assertTrue(GuideFacts.valueFor(TestGuide.PRESS_ENERGY).orElseThrow()
+                        .equals(new GuideBlock.GuideValue.Amount(TestPress.ENERGY_PER_TICK, "FE/t")),
+                "the press's figure is the press's own");
         helper.succeed();
     }
 

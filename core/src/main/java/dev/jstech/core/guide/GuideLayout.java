@@ -519,8 +519,10 @@ public final class GuideLayout {
      * and its head again over each part, and leaves at least three rows on either side of a part's end; a row taller
      * than a page is cut between two of its lines rather than run past the page's foot.
      */
-    private void table(final GuideBlock.Table block) {
+    private void table(final GuideBlock.Table declared) {
         this.tables++;
+        final GuideBlock.Table block = declared.source().isEmpty() ? declared
+                : declared.withRows(this.text.rows(declared.source(), declared.columns()));
         final String label = this.text.text(GuideTexts.TABLE.key(), this.chapterNumber + "-" + this.tables);
         final String title = this.text.text(block.captionKey());
         final List<String> caption = this.captionLines(label, title);

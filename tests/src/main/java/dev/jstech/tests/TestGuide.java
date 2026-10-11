@@ -10,12 +10,17 @@ package dev.jstech.tests;
 import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.guide.CoreGuide;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
 import dev.jstech.core.guide.GuideChapter;
+import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.guide.GuidePages;
 import dev.jstech.core.guide.ManualItem;
 import dev.jstech.core.guide.ModGuide;
+import java.util.List;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 /**
@@ -41,6 +46,9 @@ public final class TestGuide {
     public static final String SHARED_PAPER = "Shared Notes";
     /** The kind of special block the test mod draws. */
     public static final String SWATCH_KIND = "jstests:swatch";
+    /** What the test manual reads from the test mod as it is laid out: the press's energy, and every item. */
+    public static final String PRESS_ENERGY = "jstests:press_energy";
+    public static final String ITEMS = "jstests:items";
 
     private static final ModGuide GUIDE = TestSounds.CONTENT.guide();
 
@@ -125,6 +133,9 @@ public final class TestGuide {
                         GuideCell.words("Nothing your program can see has that name: it is misspelled, or its"
                                 + " namespace has no using line."),
                         GuideCell.words("Check the spelling, or add the using line."))
+                .paragraph("The test press spends " + GuideFacts.token(PRESS_ENERGY) + " while it works, a figure"
+                        + " read from the test mod as this page is laid out, as the table under it is.")
+                .tableFrom(ITEMS, "Every item of the test mod", "Item", "Stack")
                 .whatItIsFor("Proving the layout of tables.")
                 .howToGetIt("Open the test manual.")
                 .howToUseIt("Read the tables.")
@@ -167,5 +178,16 @@ public final class TestGuide {
         // Loading the class declares the rest; a sheet of paper named for it is the shared page's.
         GuidePages.byStack(Items.PAPER, stack -> stack.has(DataComponents.CUSTOM_NAME)
                 && SHARED_PAPER.equals(stack.getHoverName().getString()) ? SHARED_PAGE : "");
+        GuideFacts.value(PRESS_ENERGY, () -> new GuideBlock.GuideValue.Amount(TestPress.ENERGY_PER_TICK, "FE/t"));
+        GuideFacts.rows(ITEMS, TestGuide::itemRows);
+    }
+
+    /** Every item of the test mod, in the order of their ids: its name, and how many make a stack. */
+    public static List<GuideBlock.TableRow> itemRows() {
+        return BuiltInRegistries.ITEM.keySet().stream().filter(id -> id.getNamespace().equals(JsTests.MODID))
+                .sorted().map(BuiltInRegistries.ITEM::get)
+                .map(item -> new GuideBlock.TableRow(List.of(new GuideBlock.GuideValue.Words(item.getDescriptionId()),
+                        new GuideBlock.GuideValue.Amount(new ItemStack(item).getMaxStackSize(), ""))))
+                .toList();
     }
 }

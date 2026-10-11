@@ -8,6 +8,7 @@
 package dev.jstech.core.client.guide;
 
 import dev.jstech.core.client.GameLocale;
+import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.guide.GuideIds;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.IGuideText;
@@ -22,8 +23,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * The manual's layout answered from the player's game: words in the loaded language, widths from the game's fonts in
- * the style's, recipes from the world the player is in, numbers written the player's way.
+ * The manual's layout answered from the player's game: words in the loaded language with the values they name written
+ * in, widths from the game's fonts in the style's, recipes from the world the player is in, numbers written the
+ * player's way.
  */
 public final class ClientGuideText implements IGuideText {
 
@@ -41,13 +43,13 @@ public final class ClientGuideText implements IGuideText {
     public String text(final String key, final Object... args) {
         final String pattern = Language.getInstance().getOrDefault(key, key);
         if (args.length == 0) {
-            return pattern;
+            return GuideFacts.fill(pattern, this);
         }
         final List<String> written = new ArrayList<>();
         for (final Object arg : args) {
             written.add(String.valueOf(arg));
         }
-        return TextFormat.apply(pattern, written);
+        return GuideFacts.fill(TextFormat.apply(pattern, written), this);
     }
 
     @Override

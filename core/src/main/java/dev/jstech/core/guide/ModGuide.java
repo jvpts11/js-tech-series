@@ -465,7 +465,7 @@ public final class ModGuide {
          * {@link #property}, {@link #amount} and {@link #fixed}.
          */
         public EntryBuilder table(final String caption) {
-            return this.tableOf(caption, List.of(), GuideBlock.Table.PROPERTY_COLUMNS);
+            return this.tableOf(caption, List.of(), GuideBlock.Table.PROPERTY_COLUMNS, "");
         }
 
         /**
@@ -476,11 +476,19 @@ public final class ModGuide {
             if (heads.length == 0) {
                 return this.table(caption);
             }
-            final List<String> keys = new ArrayList<>();
-            for (int i = 0; i < heads.length; i++) {
-                keys.add(this.key("table" + (this.tables + 1) + "_head" + (i + 1), heads[i]));
-            }
-            return this.tableOf(caption, keys, heads.length);
+            return this.tableOf(caption, this.headKeys(heads), heads.length, "");
+        }
+
+        /**
+         * A table whose rows its mod gives as the manual is laid out, from the source registered with
+         * {@link GuideFacts#rows}, so they always say what the mod holds; with no heads, a table of properties.
+         */
+        public EntryBuilder tableFrom(final String source, final String caption, final String... heads) {
+            final int columns = heads.length == 0 ? GuideBlock.Table.PROPERTY_COLUMNS : heads.length;
+            this.tableOf(caption, this.headKeys(heads), columns, Objects.requireNonNull(source, "source"));
+            // Its rows are its source's, so none follow it here.
+            this.rows = null;
+            return this;
         }
 
         /** A row of the last table, a cell for each of its columns, left to right. */
@@ -732,19 +740,29 @@ public final class ModGuide {
             return this;
         }
 
-        private EntryBuilder tableOf(final String caption, final List<String> heads, final int count) {
+        private EntryBuilder tableOf(final String caption, final List<String> heads, final int count,
+                                     final String source) {
             this.tables++;
             final String key = this.key("table" + this.tables, caption);
             final List<GuideBlock.TableRow> list = new ArrayList<>();
             this.rows = list;
             this.columns = count;
-            return this.add(() -> new GuideBlock.Table(key, heads, list));
+            return this.add(() -> new GuideBlock.Table(key, heads, list, source));
+        }
+
+        /** The keys of the next table's heads, their English given. */
+        private List<String> headKeys(final String... heads) {
+            final List<String> keys = new ArrayList<>();
+            for (int i = 0; i < heads.length; i++) {
+                keys.add(this.key("table" + (this.tables + 1) + "_head" + (i + 1), heads[i]));
+            }
+            return keys;
         }
 
         /** The last table's rows, for a row of that many cells, which must be one for each of its columns. */
         private List<GuideBlock.TableRow> rowList(final int cells) {
             if (this.rows == null) {
-                throw new IllegalStateException("a table's rows follow its table");
+                throw new IllegalStateException("rows follow a table that holds its own, not one read from a source");
             }
             if (cells != this.columns) {
                 throw new IllegalArgumentException("table " + this.tables + " of " + ModGuide.this.id(this.path)
