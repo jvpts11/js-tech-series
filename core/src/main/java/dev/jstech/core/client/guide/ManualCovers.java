@@ -17,7 +17,6 @@ import dev.jstech.core.guide.TextSize;
 import dev.jstech.core.gui.ManualButtonLook;
 import dev.jstech.core.gui.layout.ManualScreenLayout;
 import java.util.List;
-import java.util.Random;
 import java.util.function.ToIntFunction;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -30,16 +29,13 @@ import net.minecraft.resources.ResourceLocation;
  */
 final class ManualCovers {
 
-    /** A cloth's weave: how far apart its darker rows are, and how much darker. */
-    private static final int WEAVE = 2;
-    private static final double WEAVE_SHADE = 0.1;
-    /** Kraft paper's flecks: how many to a square of a hundred pixels, how dark, and what they are scattered by. */
-    private static final int FLECKS_PER_HUNDRED = 3;
-    private static final double[] FLECK_SHADES = {0.1, 0.18, 0.25};
-    private static final long FLECK_SEED = 3L;
-    /** A wire coil down the spine: how far apart its loops are, from the spine's ends, and how long each is. */
+    /** How many of kraft card's flecks to a thousand pixels of a cover. */
+    private static final int COVER_FLECKS = 23;
+    /** A wire coil down the spine: how far apart its loops are, and how far from the spine's ends they start. */
     private static final int COIL_PITCH = 6;
     private static final int COIL_FROM = 6;
+    /** How tall a hole punched for a coil's loop is. */
+    private static final int HOLE_HEIGHT = 3;
 
     private ManualCovers() {
     }
@@ -75,33 +71,25 @@ final class ManualCovers {
             }
             case SMALL, CENTRED_SMALL -> words(g, font, style, x, y, part, TextSize.SMALL, tint, line(manual, part,
                     text), text);
+            case SMALL_BOLD -> words(g, font, style, x, y, part, TextSize.SMALL_BOLD, tint, line(manual, part, text),
+                    text);
             case WORDS -> words(g, font, style, x, y, part, TextSize.BODY, tint, line(manual, part, text), text);
             case BOLD, CENTRED -> words(g, font, style, x, y, part, TextSize.BOLD, tint, line(manual, part, text),
                     text);
             case CODE -> scaled(g, font, style, line(manual, part, text), TextSize.CODE, x, y, part.scale(), tint);
             case STAMP -> stamp(g, font, style, x, y, part, tint, line(manual, part, text));
-            case CLOTH -> {
-                final int weave = ManualButtonLook.darken(tint, WEAVE_SHADE);
-                for (int row = y + 1; row < y + part.height() - 1; row += WEAVE) {
-                    g.fill(x, row, x + part.width(), row + 1, weave);
-                }
-            }
-            case KRAFT -> {
-                // Scattered the same way every time the book is shown, so the cover does not shimmer.
-                final Random flecks = new Random(FLECK_SEED);
-                final int count = part.width() * part.height() * FLECKS_PER_HUNDRED / 100;
-                for (int i = 0; i < count; i++) {
-                    final int fx = x + flecks.nextInt(Math.max(1, part.width()));
-                    final int fy = y + flecks.nextInt(Math.max(1, part.height()));
-                    g.fill(fx, fy, fx + 1, fy + 1, ManualButtonLook.darken(tint,
-                            FLECK_SHADES[flecks.nextInt(FLECK_SHADES.length)]));
-                }
-            }
+            case CLOTH -> ManualMake.cloth(g, x, y, part.width(), part.height(), tint);
+            case KRAFT -> ManualMake.kraft(g, x, y, part.width(), part.height(), tint, COVER_FLECKS);
             case WIRE -> {
                 for (int loop = y + COIL_FROM; loop < y + part.height() - COIL_FROM; loop += COIL_PITCH) {
                     g.fill(x, loop, x + part.width(), loop + 2, tint);
                     g.fill(x, loop, x + part.width(), loop + 1, ManualButtonLook.lit(tint));
                     g.fill(x, loop + 2, x + part.width(), loop + 3, ManualButtonLook.shaded(tint));
+                }
+            }
+            case HOLES -> {
+                for (int loop = y + COIL_FROM; loop < y + part.height() - COIL_FROM; loop += COIL_PITCH) {
+                    g.fill(x, loop, x + part.width(), loop + HOLE_HEIGHT, tint);
                 }
             }
         }
@@ -144,7 +132,6 @@ final class ManualCovers {
         g.pose().translate(x + part.width() / 2.0F, y + part.height() / 2.0F, 0.0F);
         g.pose().mulPose(Axis.ZP.rotationDegrees(part.turn()));
         Draw.outline(g, -part.width() / 2, -part.height() / 2, part.width(), part.height(), tint);
-        Draw.outline(g, -part.width() / 2 + 1, -part.height() / 2 + 1, part.width() - 2, part.height() - 2, tint);
         g.pose().popPose();
         final int width = GuideFonts.width(font, words, TextSize.BOLD, style);
         GuideFonts.draw(g, font, words, TextSize.BOLD, style, x + (part.width() - width) / 2,

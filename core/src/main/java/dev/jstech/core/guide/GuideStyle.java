@@ -31,7 +31,8 @@ import java.util.Objects;
  * @param drawingPrefix the letters a drawing's number starts with ({@code JI} for JI-102), for drawing numbers
  * @param cover         how its cover looks
  * @param holdBar       the little bar that fills while the manual key is held over an item to open its page here
- * @param make          how the book is made: its binding, its paper, the marks of its chapters and its ribbon
+ * @param make          how the book is made: its binding, its boards, its paper, the marks of its chapters and its
+ *                      ribbon
  */
 public record GuideStyle(String palette, Map<String, String> colours, Pages pages, Decor decor, String bodyFont,
                          String codeFont, Folios folios, String drawingPrefix, Cover cover, HoldBar holdBar,
@@ -194,21 +195,29 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
      * How a book is made, past its pages.
      *
      * @param binding how its leaves are held together
+     * @param board   what its boards are covered in, seen round the pages of the open book
      * @param paper   the paper its pages are
      * @param marks   how its chapters are marked at the edge
+     * @param colours the colours of its thumb index or its flags, one chapter after another and round again, each a
+     *                role of the style's palette or a colour written {@code #AARRGGBB}; none for each chapter's own
+     *                colour. A chapter bound in several books takes each book's colours.
      * @param ribbon  whether a ribbon bookmark keeps the page the reader stopped at
      */
-    public record Make(Binding binding, Paper paper, Marks marks, boolean ribbon) {
+    public record Make(Binding binding, Board board, Paper paper, Marks marks, List<String> colours,
+                       boolean ribbon) {
 
         public Make {
             Objects.requireNonNull(binding, "binding");
+            Objects.requireNonNull(board, "board");
             Objects.requireNonNull(paper, "paper");
             Objects.requireNonNull(marks, "marks");
+            colours = List.copyOf(colours);
         }
 
         /** How a style with that decor is made: a ring binder's with plastic tabs, or glued with them. */
         public static Make of(final Decor decor) {
-            return new Make(decor.rings() ? Binding.RINGS : Binding.GLUED, Paper.PLAIN, Marks.TABS, false);
+            return new Make(decor.rings() ? Binding.RINGS : Binding.GLUED, Board.PLAIN, Paper.PLAIN, Marks.TABS,
+                    List.of(), false);
         }
     }
 
@@ -226,6 +235,27 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
         private final String serializedName;
 
         Binding(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return this.serializedName;
+        }
+    }
+
+    /** What a book's boards are covered in. */
+    public enum Board implements IStableName {
+        /** Vinyl, paper or plain board, in its colour alone. */
+        PLAIN("plain"),
+        /** A hardback's cloth, its fine weave showing. */
+        CLOTH("cloth"),
+        /** A notebook's kraft card, flecked. */
+        KRAFT("kraft");
+
+        private final String serializedName;
+
+        Board(final String serializedName) {
             this.serializedName = serializedName;
         }
 
@@ -341,9 +371,15 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
             return new CoverPart(PartKind.FRAME, x, y, width, height, colour, 0, "", 1, 0);
         }
 
-        /** An image the mod ships, drawn at that size. */
+        /** An image the mod ships, drawn as a square of that size. */
         public static CoverPart image(final int x, final int y, final int size, final String texture) {
-            return new CoverPart(PartKind.IMAGE, x, y, size, size, "", 0, texture, 1, 0);
+            return image(x, y, size, size, texture);
+        }
+
+        /** An image the mod ships, drawn at that width and height. */
+        public static CoverPart image(final int x, final int y, final int width, final int height,
+                                      final String texture) {
+            return new CoverPart(PartKind.IMAGE, x, y, width, height, "", 0, texture, 1, 0);
         }
 
         /** One of the manual's cover lines, from 1, lettered at that scale in a colour, wrapping in that width. */
@@ -358,7 +394,10 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
             return new CoverPart(PartKind.STAMP, x, y, width, height, colour, line, "", 1, turn);
         }
 
-        /** A grain over a rectangle: a cloth's weave, kraft paper's flecks, or a wire coil down a spine. */
+        /**
+         * A grain over a rectangle: a cloth's weave, kraft paper's flecks, a wire coil down a spine or the holes
+         * punched for it.
+         */
         public static CoverPart grain(final PartKind kind, final int x, final int y, final int width,
                                       final int height, final String colour) {
             return new CoverPart(kind, x, y, width, height, colour, 0, "", 1, 0);
@@ -377,6 +416,8 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
         IMAGE("image"),
         /** Words, small. */
         SMALL("small"),
+        /** Words, small and in bold, as a publisher's name stands at the foot of a cover. */
+        SMALL_BOLD("small_bold"),
         /** Words. */
         WORDS("words"),
         /** Words in bold. */
@@ -394,7 +435,9 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
         /** Kraft paper's flecks, scattered the same way each time. */
         KRAFT("kraft"),
         /** A wire coil down the spine. */
-        WIRE("wire");
+        WIRE("wire"),
+        /** The holes punched down the board for a wire coil, one to each of its loops. */
+        HOLES("holes");
 
         private final String serializedName;
 

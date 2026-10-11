@@ -11,6 +11,7 @@ import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.font.CoreFonts;
 import dev.jstech.core.registry.CoreItems;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -80,6 +81,18 @@ public final class CoreGuide {
                 GuideStyle.Decor.binder(true), "", CoreFonts.FIXED_5X8.id().toString(),
                 GuideStyle.Folios.CHAPTER_PAGE, "", new GuideStyle.Cover(GuideStyle.CoverKind.BINDER, !band, band),
                 GuideStyle.HoldBar.PLAIN);
+    }
+
+    /**
+     * A bound book in a palette of the {@code GuidePalettes.Binder} kind, its pages laid out as a binder's are, made as
+     * {@code make} says (its binding, its boards, its paper and how its chapters are marked), and its cover drawn from
+     * {@code parts}.
+     */
+    public static GuideStyle book(final String palette, final GuideStyle.Make make,
+                                  final List<GuideStyle.CoverPart> parts) {
+        return new GuideStyle(palette, Map.of(), new GuideStyle.Pages(true, PAGE_WIDTH, PAGE_HEIGHT, MARGIN, 1),
+                GuideStyle.Decor.binder(false), "", CoreFonts.FIXED_5X8.id().toString(),
+                GuideStyle.Folios.CHAPTER_PAGE, "", GuideStyle.Cover.book(parts), GuideStyle.HoldBar.PLAIN, make);
     }
 
     /**

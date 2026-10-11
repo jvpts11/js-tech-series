@@ -11,6 +11,7 @@ import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.TextSize;
 import dev.jstech.core.gui.ManualButtonLook;
 import dev.jstech.core.gui.layout.ManualScreenLayout;
+import java.util.Random;
 import java.util.function.ToIntFunction;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -41,10 +42,55 @@ final class ManualMake {
     private static final int RIBBON_LENGTH = 150;
     /** How far a ribbon's tail hangs out under a book open elsewhere. */
     private static final int RIBBON_TAIL = 6;
-    /** How far every other block of a thumb index goes from the heading's colour towards white. */
-    private static final double THUMB_LIGHT = 0.25;
+    /** How far in from the board's edge its covering shows, inside the bevel. */
+    private static final int BOARD_INSET = 2;
+    /** A cloth's weave: how far apart its darker rows are, and how much darker. */
+    private static final int WEAVE = 2;
+    private static final double WEAVE_SHADE = 0.1;
+    /** Kraft card's flecks: how dark, and what they are scattered by. */
+    private static final double[] FLECK_SHADES = {0.1, 0.18, 0.25};
+    private static final long FLECK_SEED = 3L;
+    /** How many flecks to a thousand pixels round the open pages, few, so the margins stay quiet beside the text. */
+    private static final int BOARD_FLECKS = 7;
 
     private ManualMake() {
+    }
+
+    /** The covering of the open book's boards round its pages: a cloth's weave or kraft card's flecks, or nothing. */
+    static void board(final GuiGraphics g, final ManualScreenLayout.Geometry geometry, final GuideStyle style,
+                      final ToIntFunction<String> colour) {
+        final int width = geometry.coverRight() - 2 * BOARD_INSET;
+        final int tint = colour.applyAsInt(GuideStyle.COVER);
+        switch (style.make().board()) {
+            case CLOTH -> cloth(g, BOARD_INSET, BOARD_INSET - 1, width, geometry.height() - BOARD_INSET, tint);
+            case KRAFT -> kraft(g, BOARD_INSET, BOARD_INSET, width, geometry.height() - 2 * BOARD_INSET, tint,
+                    BOARD_FLECKS);
+            case PLAIN -> {
+            }
+        }
+    }
+
+    /** A cloth's weave over a rectangle: a row a little darker than the cloth every other row. */
+    static void cloth(final GuiGraphics g, final int x, final int y, final int width, final int height,
+                      final int tint) {
+        final int weave = ManualButtonLook.darken(tint, WEAVE_SHADE);
+        for (int row = y + 1; row < y + height - 1; row += WEAVE) {
+            g.fill(x, row, x + width, row + 1, weave);
+        }
+    }
+
+    /** Kraft card's flecks over a rectangle, so many to a thousand pixels, each a shade darker than the card. */
+    static void kraft(final GuiGraphics g, final int x, final int y, final int width, final int height,
+                      final int tint, final int perThousand) {
+        // Scattered the same way every time the book is shown, so the card does not shimmer.
+        final Random flecks = new Random(FLECK_SEED);
+        final int count = width * height * perThousand / 1000;
+        for (int i = 0; i < count; i++) {
+            final int fx = x + flecks.nextInt(Math.max(1, width));
+            final int fy = y + flecks.nextInt(Math.max(1, height));
+            g.fill(fx, fy, fx + 1, fy + 1, ManualButtonLook.darken(tint,
+                    FLECK_SHADES[flecks.nextInt(FLECK_SHADES.length)]));
+        }
     }
 
     /** The paper of a page: plain, or graph paper squared in the grid's colour, a line down its outer margin. */
@@ -104,25 +150,18 @@ final class ManualMake {
     }
 
     /**
-     * A chapter's mark at the edge: a block of a thumb index printed on the page, in the heading's colour or a shade
-     * lighter every other chapter, or a paper flag of the chapter's own colour stuck on the edge. Its number is
-     * written in whichever of the paper and the ink reads better on it.
+     * A chapter's mark at the edge in its colour: a block of a thumb index printed on the page, or a paper flag stuck
+     * on the edge. Its number is written in whichever of the paper and the ink reads better on it.
      */
     static void mark(final GuiGraphics g, final Font font, final GuideStyle style, final ManualScreenLayout.Rect rect,
-                     final int number, final boolean open, final boolean pointed, final int chapterColour,
+                     final int number, final boolean open, final boolean pointed, final int markColour,
                      final ToIntFunction<String> colour) {
         final int ink = colour.applyAsInt(GuideStyle.INK);
-        final int fill;
+        final int fill = pointed && !open ? ManualButtonLook.lit(markColour) : markColour;
+        g.fill(rect.x(), rect.y(), rect.x() + rect.width(), rect.y() + rect.height(), fill);
         if (style.make().marks() == GuideStyle.Marks.FLAGS) {
-            fill = pointed && !open ? ManualButtonLook.lit(chapterColour) : chapterColour;
-            g.fill(rect.x(), rect.y(), rect.x() + rect.width(), rect.y() + rect.height(), fill);
             g.fill(rect.x(), rect.y() + rect.height() - 1, rect.x() + rect.width(), rect.y() + rect.height(),
                     ManualButtonLook.shaded(fill));
-        } else {
-            final int heading = colour.applyAsInt(GuideStyle.HEADING);
-            final int printed = number % 2 == 0 ? ManualButtonLook.lighten(heading, THUMB_LIGHT) : heading;
-            fill = pointed && !open ? ManualButtonLook.lit(printed) : printed;
-            g.fill(rect.x(), rect.y(), rect.x() + rect.width(), rect.y() + rect.height(), fill);
         }
         final String written = String.valueOf(number);
         final TextSize size = open ? TextSize.SMALL_BOLD : TextSize.SMALL;

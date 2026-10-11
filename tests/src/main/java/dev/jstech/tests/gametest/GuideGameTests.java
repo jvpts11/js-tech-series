@@ -225,6 +225,19 @@ public final class GuideGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = ARENA)
+    public static void chapter_refusesAnIdASectionAlreadyHas(final GameTestHelper helper) {
+        final ModGuide guide = new ModGuide("jstests");
+        guide.section("disks").titled("Disks").register();
+        try {
+            guide.chapter("disks").titled("The disks").register();
+            helper.fail("a chapter took the id of a section, and a link to it could not tell the two apart");
+        } catch (final IllegalStateException refused) {
+            helper.assertTrue(refused.getMessage().contains("jstests:disks"), "it names the id: " + refused);
+        }
+        helper.succeed();
+    }
+
     /** Fails the test unless the game reads a scene block's state as a block it has, and its data as a tag. */
     private static void readable(final GameTestHelper helper, final String entry, final GuideBlock.SceneBlock placed) {
         try {

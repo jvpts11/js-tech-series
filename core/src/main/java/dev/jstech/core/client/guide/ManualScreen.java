@@ -836,6 +836,17 @@ public final class ManualScreen extends Screen {
         return own == null ? this.colours.getOrDefault(GuideStyle.TAB, GuidePalettes.BINDER.get().tab()) : own;
     }
 
+    /** The colour of the {@code index}th chapter's mark: the book's own colours in turn, or the chapter's. */
+    private int markColour(final int index, final String chapter) {
+        final List<String> colours = this.style.make().colours();
+        if (colours.isEmpty()) {
+            return this.tabColours.get(chapter);
+        }
+        final String written = colours.get(index % colours.size());
+        final Integer parsed = PaletteLookup.parse(written);
+        return parsed != null ? parsed : this.colour(written);
+    }
+
     /** A role's colour, a chapter's tab standing for the tab role on that chapter's pages. */
     private int colour(final String role, final String chapter) {
         if (GuideStyle.TAB.equals(role) && this.tabColours.containsKey(chapter)) {
@@ -1018,6 +1029,7 @@ public final class ManualScreen extends Screen {
         final int fill = this.colour(GuideStyle.COVER);
         ManualControls.bevel(g, 0, 0, this.geometry.coverRight(), this.geometry.height(), fill,
                 this.colour(GuideStyle.COVER_EDGE), ManualButtonLook.shaded(fill));
+        ManualMake.board(g, this.geometry, this.style, this::colour);
         // Paper flags are stuck under the pages' edge, so they are drawn first and the pages over them.
         final boolean flags = this.style.make().marks() == GuideStyle.Marks.FLAGS;
         if (flags) {
@@ -1065,7 +1077,7 @@ public final class ManualScreen extends Screen {
                 ManualControls.tab(g, this.font, this.style, tab, i + 1, on, pointed, this.tabColours.get(chapter),
                         this.colour(GuideStyle.TAB_INK));
             } else {
-                ManualMake.mark(g, this.font, this.style, tab, i + 1, on, pointed, this.tabColours.get(chapter),
+                ManualMake.mark(g, this.font, this.style, tab, i + 1, on, pointed, this.markColour(i, chapter),
                         this::colour);
             }
             if (pointed) {

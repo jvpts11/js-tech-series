@@ -201,11 +201,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   balloons point at their parts, a legend under the scene says what each is, and pointing at a number outlines its
   part and names it. A multiblock can be shown layer by layer to see inside it.
 - Manuals bound as the books of their time were, not only in binders: a paperback's glued spine, a hardback sewn in
-  sections, or a wire coil through holes down the middle; plain or squared paper with a red margin line; chapters
-  found by a thumb index printed down the pages' edge or by coloured paper flags stuck under it, besides a binder's
-  tabs; and a bookmark ribbon that lies across the pages the reader left open and hangs out under the book. A book's
-  cover is drawn from the parts its style lists: panels, frames, pictures, its title and lines in any size, a rubber
-  stamp, cloth, kraft paper and a wire coil.
+  sections, or a wire coil through holes down the middle; boards covered in cloth or flecked kraft card round the
+  open pages; plain or squared paper with a red margin line; chapters found by a thumb index printed down the pages'
+  edge or by coloured paper flags stuck under it, besides a binder's tabs, in each book's own colours; and a bookmark
+  ribbon that lies across the pages the reader left open and hangs out under the book. A book's cover is drawn from
+  the parts its style lists: panels, frames, pictures, its title and lines in any size, a rubber stamp, cloth, kraft
+  card, a wire coil and the holes punched for it.
 - The computers' help programs read the manuals' new parts: a table of several columns as columns of text, set out
   row by row on a screen too narrow for it; listings and sessions as their lines; keys by their names; scenes as their
   captions and the list of their balloons. A command whose page a manual prints shows that page at `man`, at `HELP`

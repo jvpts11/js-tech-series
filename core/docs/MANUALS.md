@@ -468,6 +468,9 @@ Two helpers make the usual ones in code:
   frame with its zones numbered along the top and lettered down the side, the title block in the corner (the set, the
   drawing's title, its number, which sheet of how many, its revision), headings in capitals, notes lettered small,
   blocks traced as line work, and each entry a drawing numbered after `prefix` (J's Industrial's Plant Drawings).
+- `CoreGuide.book(palette, make, parts)`: a bound book with a binder's pages, made as `make` says and with its cover
+  drawn from `parts` (see [How a book is made](#how-a-book-is-made) and [A book's cover](#a-books-cover); J's
+  Computers' books of the systems and the languages).
 
 ```json
 {
@@ -517,23 +520,28 @@ and a style that leaves it out is made the way its `decor` says: rings when `rin
 it is off, so every style written before it keeps its looks.
 
 ```json
-"make": { "binding": "wire", "paper": "graph", "marks": "flags", "ribbon": false }
+"make": { "binding": "wire", "board": "kraft", "paper": "graph", "marks": "flags",
+          "colours": ["#FFF6E27A", "#FFF2A6C0", "#FF9FDCAE"], "ribbon": false }
 ```
 
 - `binding`: `rings` (a binder's three rings through the pages), `glued` (a paperback's spine, the pages darkening a
   little into it), `sewn` (a hardback sewn in sections, the pages curving deeper into the gutter) or `wire` (a coil
   down the middle, each loop through its own hole, as a notebook is bound).
+- `board`: what the boards are covered in, seen round the pages of the open book in the palette's `cover` colour:
+  `plain`, `cloth` (a hardback's fine weave) or `kraft` (a notebook's flecked card).
 - `paper`: `plain`, or `graph` (squared paper in the palette's `grid` colour, with a red margin line, the role
   `margin`, down the outer side of each page).
 - `marks`: how the reader finds a chapter. `tabs` stand out past the cover, as a binder's do; `thumb` prints a
-  block for each chapter down the right page's edge, the open one widest, in the chapter's colour, as a reference
-  book's thumb index; `flags` are paper flags stuck under the pages' edge, each in its chapter's colour, the open
-  one reaching furthest onto the page.
+  block for each chapter down the right page's edge, the open one widest, as a reference book's thumb index; `flags`
+  are paper flags stuck under the pages' edge, the open one reaching furthest onto the page.
+- `colours`: the colours of the thumb index's blocks or of the flags, one chapter after another and round again,
+  each a role of the palette or a colour written `#AARRGGBB`. Without them each mark takes its chapter's colour; with
+  them a chapter bound in several books takes each book's colours.
 - `ribbon`: a bookmark ribbon sewn into the spine, in the palette's `ribbon` colour. It lies across the spread the
   reader left the book open at, and hangs out under the book everywhere else.
 
-In code: `CoreGuide.binder(...).withMake(new GuideStyle.Make(GuideStyle.Binding.SEWN, GuideStyle.Paper.PLAIN,
-GuideStyle.Marks.THUMB, true))`.
+In code: `CoreGuide.binder(...).withMake(new GuideStyle.Make(GuideStyle.Binding.SEWN, GuideStyle.Board.CLOTH,
+GuideStyle.Paper.PLAIN, GuideStyle.Marks.THUMB, List.of(GuideStyle.HEADING, "#FFB23A2A"), true))`.
 
 ### A book's cover
 
@@ -555,12 +563,13 @@ wide and as tall as its pages. Its `colour` is a role of the style's palette, or
 
 - `fill`, `frame` and `plate`: a rectangle filled, outlined, or raised with a lit and a shaded edge.
 - `image`: a texture, `<namespace>:<path>` under `textures/`, stretched over the part.
-- `words`, `bold`, `small`, `centred`, `centred_small` and `code`: one of the manual's `cover` lines, `line` from 1,
-  in the reader's language, wrapped in the part's `width` at its `scale`; the centred ones stand on the part's
-  middle, and `code` is written in the style's code font.
-- `stamp`: a rubber stamp's double frame, turned `turn` degrees, with its line in bold inside it.
-- `cloth`, `kraft` and `wire`: a material over the part. A cloth's weave, kraft paper's flecks (scattered the same
-  way each time, so the cover does not shimmer), or a wire coil's loops down a spine.
+- `words`, `bold`, `small`, `small_bold`, `centred`, `centred_small` and `code`: one of the manual's `cover` lines,
+  `line` from 1, in the reader's language, wrapped in the part's `width` at its `scale`; the centred ones stand on
+  the part's middle, and `code` is written in the style's code font.
+- `stamp`: a rubber stamp's frame, turned `turn` degrees, with its line in bold inside it.
+- `cloth`, `kraft`, `wire` and `holes`: a material over the part. A cloth's weave, kraft card's flecks (scattered
+  the same way each time, so the cover does not shimmer), a wire coil's loops down a spine, or the holes punched in
+  the board for them, one to each loop.
 
 ## A special block
 

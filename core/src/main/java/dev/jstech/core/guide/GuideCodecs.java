@@ -148,10 +148,13 @@ public final class GuideCodecs {
 
     public static final Codec<GuideStyle.Make> MAKE = RecordCodecBuilder.create(instance -> instance.group(
             StableCodecs.byName(GuideStyle.Binding.class).fieldOf("binding").forGetter(GuideStyle.Make::binding),
+            StableCodecs.byName(GuideStyle.Board.class).optionalFieldOf("board", GuideStyle.Board.PLAIN)
+                    .forGetter(GuideStyle.Make::board),
             StableCodecs.byName(GuideStyle.Paper.class).optionalFieldOf("paper", GuideStyle.Paper.PLAIN)
                     .forGetter(GuideStyle.Make::paper),
             StableCodecs.byName(GuideStyle.Marks.class).optionalFieldOf("marks", GuideStyle.Marks.TABS)
                     .forGetter(GuideStyle.Make::marks),
+            Codec.STRING.listOf().optionalFieldOf("colours", List.of()).forGetter(GuideStyle.Make::colours),
             Codec.BOOL.optionalFieldOf("ribbon", false).forGetter(GuideStyle.Make::ribbon)
     ).apply(instance, GuideStyle.Make::new));
 

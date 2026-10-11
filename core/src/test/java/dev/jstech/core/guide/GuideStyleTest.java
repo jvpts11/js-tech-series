@@ -24,8 +24,8 @@ class GuideStyleTest {
 
     @Test
     void make_isARingBindersWithTabsWhenAStyleSaysNothingOfIt() {
-        assertEquals(new GuideStyle.Make(GuideStyle.Binding.RINGS, GuideStyle.Paper.PLAIN, GuideStyle.Marks.TABS,
-                false), BINDER.make());
+        assertEquals(new GuideStyle.Make(GuideStyle.Binding.RINGS, GuideStyle.Board.PLAIN, GuideStyle.Paper.PLAIN,
+                GuideStyle.Marks.TABS, List.of(), false), BINDER.make());
         assertTrue(BINDER.rings());
         assertEquals(GuideStyle.Binding.GLUED, GuideStyle.Make.of(GuideStyle.Decor.binder(false)).binding());
     }
@@ -33,9 +33,11 @@ class GuideStyleTest {
     @Test
     void withMake_bindsTheSameStyleAnotherWayAndKeepsTheRest() {
         final GuideStyle notebook = BINDER.withMake(new GuideStyle.Make(GuideStyle.Binding.WIRE,
-                GuideStyle.Paper.GRAPH, GuideStyle.Marks.FLAGS, false));
+                GuideStyle.Board.KRAFT, GuideStyle.Paper.GRAPH, GuideStyle.Marks.FLAGS,
+                List.of("#FFF6E27A", GuideStyle.HEADING), false));
 
         assertFalse(notebook.rings(), "a coil has no rings");
+        assertEquals(List.of("#FFF6E27A", GuideStyle.HEADING), notebook.make().colours());
         assertEquals(BINDER.pages(), notebook.pages());
         assertEquals(BINDER.cover(), notebook.cover());
         assertEquals(GuideStyle.HoldBar.BLOCKS, notebook.withHoldBar(GuideStyle.HoldBar.BLOCKS).holdBar());

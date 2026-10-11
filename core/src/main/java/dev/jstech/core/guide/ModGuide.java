@@ -147,12 +147,12 @@ public final class ModGuide {
         return GuideIds.of(this.namespace, path);
     }
 
-    /** Takes an id for a section or an entry, refusing one already taken by either. */
+    /** Takes an id for a chapter, a section or an entry, refusing one already taken by any of them. */
     private String claim(final String path) {
         final String id = this.id(path);
         if (!this.ids.add(id)) {
-            throw new IllegalStateException("the id " + id + " names two sections or entries; a link could not"
-                    + " tell them apart");
+            throw new IllegalStateException("the id " + id + " names two chapters, sections or entries; a link"
+                    + " could not tell them apart");
         }
         return id;
     }
@@ -245,10 +245,12 @@ public final class ModGuide {
         }
 
         public GuideChapter register() {
-            final String id = this.path == null ? ModGuide.this.namespace : ModGuide.this.id(this.path);
             if (this.title == null) {
-                throw new IllegalStateException("the chapter " + id + " needs a title");
+                throw new IllegalStateException("the chapter " + (this.path == null ? ModGuide.this.namespace
+                        : ModGuide.this.id(this.path)) + " needs a title");
             }
+            // A link names a chapter as it names a section or an entry, so their ids are taken from one stock.
+            final String id = this.path == null ? ModGuide.this.namespace : ModGuide.this.claim(this.path);
             // The main chapter keeps the keys it always had; another chapter's keys carry its path.
             final String what = this.path == null ? "chapter" : "chapter." + this.path;
             final GuideChapter made = new GuideChapter(id, this.order, ModGuide.this.key(what, this.title), this.tab,
@@ -258,8 +260,8 @@ public final class ModGuide {
                     throw new IllegalStateException(ModGuide.this.namespace + " declares its main chapter twice");
                 }
                 ModGuide.this.chapter = made;
-            } else if (ModGuide.this.otherChapters.putIfAbsent(id, made) != null) {
-                throw new IllegalStateException("the chapter " + id + " is declared twice");
+            } else {
+                ModGuide.this.otherChapters.put(id, made);
             }
             return made;
         }
