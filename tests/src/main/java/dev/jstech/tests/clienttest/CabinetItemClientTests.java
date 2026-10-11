@@ -48,6 +48,10 @@ public final class CabinetItemClientTests {
     private static final BlockPos COMPUTER = new BlockPos(4, 3, 3);
     private static final BlockPos COMPUTER_FRAME_WALL = new BlockPos(6, 3, 3);
     private static final BlockPos COMPUTER_VIEW = new BlockPos(5, 2, 6);
+    /** A computer with its bays filled, facing south toward the player at the eye, its item hanging beside it. */
+    private static final BlockPos BAYS_COMPUTER = new BlockPos(4, 3, 14);
+    private static final BlockPos BAYS_FRAME_WALL = new BlockPos(6, 3, 14);
+    private static final BlockPos BAYS_VIEW = new BlockPos(5, 2, 17);
 
     private CabinetItemClientTests() {
     }
@@ -105,6 +109,30 @@ public final class CabinetItemClientTests {
                 .thenTeleport(SETTLE, COMPUTER_VIEW, Direction.NORTH)
                 .thenScreenshot(RUNNING, "beside-the-open-computer")
                 .thenServer(0, level -> unhang(ctx, level, COMPUTER_FRAME_WALL));
+    }
+
+    /**
+     * A Legacy computer's item beside the same computer with a CD drive and the hot-swap bay in its bays, the drive's
+     * tray out: the item shows each bay's cover, as the case comes.
+     */
+    @ClientTest(timeoutTicks = 600)
+    public static void computerItem_showsItsBaysCovered(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    world.setBlock(BAYS_COMPUTER, ComputingModule.LEGACY_PERSONAL_COMPUTER.get().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+                    final AbstractSmallComputerBlockEntity computer =
+                            world.blockEntity(BAYS_COMPUTER, AbstractSmallComputerBlockEntity.class);
+                    final ComputerHardwareLayout layout = computer.hardwareLayout();
+                    computer.getHardware().setStackInSlot(layout.bayStart(), part("internal_cd_drive"));
+                    computer.getHardware().setStackInSlot(layout.bayStart() + 1, part("hot_swap_drive_bay"));
+                    computer.front().tray(0).press(world.level(), computer.getBlockPos());
+                    world.setBlock(BAYS_FRAME_WALL, Blocks.STONE);
+                })
+                .thenServer(SETTLE, level -> hang(ctx, level, BAYS_FRAME_WALL,
+                        ComputingModule.LEGACY_PERSONAL_COMPUTER.get()))
+                .thenTeleport(SETTLE, BAYS_VIEW, Direction.NORTH)
+                .thenScreenshot(RUNNING, "beside-the-computer-with-its-bays-filled")
+                .thenServer(0, level -> unhang(ctx, level, BAYS_FRAME_WALL));
     }
 
     private static ItemStack part(final String id) {

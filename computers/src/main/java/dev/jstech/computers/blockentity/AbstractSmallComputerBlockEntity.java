@@ -8,7 +8,9 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.block.IEraChassisBlock;
+import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.hardware.CasePorts;
+import dev.jstech.computers.os.media.DiscTray;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.ValueField;
@@ -18,6 +20,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -27,6 +30,7 @@ import software.bernie.geckolib.animatable.GeoBlockEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
@@ -134,12 +138,49 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
         for (int bay = 0; bay < CaseFront.BAYS; bay++) {
             final int which = bay;
             controllers.add(front.tray(bay).controller(this, "tray_" + bay, () -> front.trayClips(which)));
+            controllers.add(new AnimationController<>(this, "caddy_" + bay, 0, state -> caddy(state, which)));
         }
     }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return geckoCache;
+    }
+
+    /*
+     * Every bay of the front counts once one of them is a hot-swap bay, a hot-swap bay or not, so a bay's disk slot
+     * keeps its number; a case with none adds no slot at all.
+     */
+    @Override
+    protected int frontDiskSlots() {
+        for (int bay = 0; bay < CaseFront.BAYS; bay++) {
+            if (front.kind(bay) == BayDriveSpec.Kind.HOT_SWAP) {
+                return CaseFront.BAYS;
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    protected ItemStack frontDisk(final int bay) {
+        return front.hotSwapDisk(bay);
+    }
+
+    @Override
+    protected void putFrontDisk(final int bay, final ItemStack disk) {
+        front.putHotSwapDisk(bay, disk);
+    }
+
+    @Override
+    protected void beforeClientUpdate() {
+        super.beforeClientUpdate();
+        front.beforeClientUpdate();
+    }
+
+    @Override
+    protected void afterClientUpdate() {
+        super.afterClientUpdate();
+        front.afterClientUpdate();
     }
 
     @Override
@@ -153,5 +194,17 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
         installed.set(List.copyOf(parts));
         // A part taken out of a bay, or swapped for another, lets fall what it held.
         front.partsChanged(before, installed.get());
+    }
+
+    /*
+     * The hot-swap bay's caddy: riding in as its disk goes in, riding out as the disk comes out, and at rest in the bay
+     * otherwise, where the model draws it.
+     */
+    private PlayState caddy(final AnimationState<AbstractSmallComputerBlockEntity> state, final int bay) {
+        final DiscTray.Clips clips = front.caddyClips(bay);
+        if (clips == null || !front.caddyMoving(bay, getLevel())) {
+            return PlayState.STOP;
+        }
+        return state.setAndContinue(front.caddyWentIn(bay) ? clips.closing() : clips.opening());
     }
 }

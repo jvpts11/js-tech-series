@@ -9,9 +9,13 @@ package dev.jstech.tests.gametest;
 
 import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.block.AbstractSmallComputerBlock;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
+import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.hardware.CaseFrontLayout;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.menu.PersonalComputerMenu;
 import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.core.content.BlockEntry;
@@ -30,6 +34,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.BlockHitResult;
@@ -42,8 +47,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A click on the front of a small computer's case, in every case of every age and on every machine: the power button
- * switches the machine on and off, whatever the hand holds, and a click anywhere else on the case opens its assembly
- * screen, as it always did.
+ * switches the machine on and off, whatever the hand holds; the eject button of a drive in a bay opens and closes its
+ * tray, a disc goes on the open tray and comes off it; a stick plugs into a port and comes out; a disk slides into the
+ * hot-swap bay and comes out; and a click anywhere else on the case opens its assembly screen, as it always did.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -121,6 +127,168 @@ public final class CaseFrontClickGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = ARENA)
+    public static void ejectButtons_openAndCloseTheTrayOfTheDriveInEachBay(final GameTestHelper helper) {
+        final FakePlayer player = player(helper);
+        final AbstractSmallComputerBlock<?> block = ComputingModule.LEGACY_PERSONAL_COMPUTER.get();
+        final AbstractSmallComputerBlockEntity computer = place(helper, block, Direction.NORTH);
+        install(computer, 0, HardwareItems.INTERNAL_CD_DRIVE.get());
+        install(computer, 1, HardwareItems.INTERNAL_BLU_RAY_DRIVE.get());
+        for (int bay = 0; bay < 2; bay++) {
+            final EjectButton button = block.frontLayout().ejectButton(bay, computer.front().kind(bay));
+            clickFront(helper, player, (button.left() + button.right()) / 2.0, (button.top() + button.bottom()) / 2.0);
+            helper.assertTrue(computer.front().tray(bay).isOpen(), "the eject button opens the tray of bay " + bay);
+            clickFront(helper, player, (button.left() + button.right()) / 2.0, (button.top() + button.bottom()) / 2.0);
+            helper.assertFalse(computer.front().tray(bay).isOpen(), "and closes it again");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void bayDrive_takesADiscOnlyOnItsOpenTrayAndGivesItBack(final GameTestHelper helper) {
+        final FakePlayer player = player(helper);
+        final AbstractSmallComputerBlock<?> block = ComputingModule.LEGACY_PERSONAL_COMPUTER.get();
+        final AbstractSmallComputerBlockEntity computer = place(helper, block, Direction.EAST);
+        install(computer, 0, HardwareItems.INTERNAL_CD_DRIVE.get());
+        final CaseFrontLayout.Area bay = block.frontLayout().bays().get(0);
+        try {
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ComputingModule.CD_ROM.get()));
+            clickFront(helper, player, middleX(bay), middleY(bay));
+            helper.assertTrue(computer.front().held(0).isEmpty() && !player.getMainHandItem().isEmpty(),
+                    "a closed tray takes no disc");
+            computer.front().tray(0).press(helper.getLevel(), computer.getBlockPos());
+            clickFront(helper, player, middleX(bay), middleY(bay));
+            helper.assertTrue(computer.front().held(0).is(ComputingModule.CD_ROM.get())
+                    && player.getMainHandItem().isEmpty(), "an open one does, out of the hand");
+            player.setShiftKeyDown(true);
+            clickFront(helper, player, middleX(bay), middleY(bay));
+            helper.assertTrue(computer.front().held(0).isEmpty()
+                            && player.getInventory().contains(new ItemStack(ComputingModule.CD_ROM.get())),
+                    "and a sneak-click lifts it back off");
+        } finally {
+            player.setShiftKeyDown(false);
+            player.getInventory().clearContent();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void bayDrive_refusesADiscItCannotRead(final GameTestHelper helper) {
+        final FakePlayer player = player(helper);
+        final AbstractSmallComputerBlock<?> block = ComputingModule.LEGACY_PERSONAL_COMPUTER.get();
+        final AbstractSmallComputerBlockEntity computer = place(helper, block, Direction.SOUTH);
+        install(computer, 0, HardwareItems.INTERNAL_CD_DRIVE.get());
+        computer.front().tray(0).press(helper.getLevel(), computer.getBlockPos());
+        final CaseFrontLayout.Area bay = block.frontLayout().bays().get(0);
+        try {
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ComputingModule.BD_ROM.get()));
+            clickFront(helper, player, middleX(bay), middleY(bay));
+            helper.assertTrue(computer.front().held(0).isEmpty() && player.getMainHandItem().is(
+                    ComputingModule.BD_ROM.get()), "a CD drive leaves a Blu-ray disc in the hand");
+        } finally {
+            player.getInventory().clearContent();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void port_takesAStickAndGivesItBackOnASneakClick(final GameTestHelper helper) {
+        final FakePlayer player = player(helper);
+        final AbstractSmallComputerBlock<?> block = ComputingModule.TRANSITION_PERSONAL_COMPUTER.get();
+        final AbstractSmallComputerBlockEntity computer = place(helper, block, Direction.WEST);
+        final CaseFrontLayout.Area port = block.frontLayout().ports().get(1);
+        try {
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ComputingModule.USB_FLASH_DRIVE.get()));
+            clickFront(helper, player, middleX(port), middleY(port));
+            helper.assertTrue(computer.front().stick(1).is(ComputingModule.USB_FLASH_DRIVE.get())
+                    && player.getMainHandItem().isEmpty(), "a stick plugs into the port it is clicked on");
+            player.setShiftKeyDown(true);
+            clickFront(helper, player, middleX(port), middleY(port));
+            helper.assertTrue(computer.front().stick(1).isEmpty()
+                            && player.getInventory().contains(new ItemStack(ComputingModule.USB_FLASH_DRIVE.get())),
+                    "and a sneak-click pulls it out");
+        } finally {
+            player.setShiftKeyDown(false);
+            player.getInventory().clearContent();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void hotSwapBay_takesADiskTheMachineTakesWithItOnOrOff(final GameTestHelper helper) {
+        final FakePlayer player = player(helper);
+        final AbstractSmallComputerBlock<?> block = ComputingModule.VINTAGE_PERSONAL_COMPUTER.get();
+        final AbstractSmallComputerBlockEntity computer = place(helper, block, Direction.NORTH);
+        install(computer, 0, HardwareItems.HOT_SWAP_DRIVE_BAY.get());
+        final CaseFrontLayout.Area bay = block.frontLayout().bays().get(0);
+        try {
+            player.setItemInHand(InteractionHand.MAIN_HAND,
+                    new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1)));
+            clickFront(helper, player, middleX(bay), middleY(bay));
+            helper.assertTrue(computer.front().held(0).isEmpty(), "a Vintage computer's bay takes no NVMe drive");
+            computer.togglePower();
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HardwareItems.DISK_TRENCH_20M.get()));
+            clickFront(helper, player, middleX(bay), middleY(bay));
+            helper.assertTrue(computer.front().held(0).is(HardwareItems.DISK_TRENCH_20M.get()),
+                    "a disk of its era slides in with the machine on");
+            computer.togglePower();
+            player.setShiftKeyDown(true);
+            clickFront(helper, player, middleX(bay), middleY(bay));
+            helper.assertTrue(computer.front().held(0).isEmpty()
+                            && player.getInventory().contains(new ItemStack(HardwareItems.DISK_TRENCH_20M.get())),
+                    "and comes out with it off");
+        } finally {
+            player.setShiftKeyDown(false);
+            player.getInventory().clearContent();
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Every part of every front answers its click: the eject button of a drive in each bay, each port, and the
+     * hot-swap bay, in every case of every age and on every machine, whichever way it faces.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void everyPartOfEveryFront_answersItsClick(final GameTestHelper helper) {
+        final FakePlayer player = player(helper);
+        try {
+            for (int i = 0; i < CASES.size(); i++) {
+                final AbstractSmallComputerBlock<?> block = CASES.get(i).get();
+                final AbstractSmallComputerBlockEntity computer = place(helper, block,
+                        Direction.from2DDataValue(i % 4));
+                final String name = CASES.get(i).getId().getPath();
+                final CaseFront front = computer.front();
+                for (int bay = 0; bay < front.bays(); bay++) {
+                    install(computer, bay, HardwareItems.INTERNAL_CD_DRIVE.get());
+                    final EjectButton button = block.frontLayout().ejectButton(bay, front.kind(bay));
+                    clickFront(helper, player, (button.left() + button.right()) / 2.0,
+                            (button.top() + button.bottom()) / 2.0);
+                    helper.assertTrue(front.tray(bay).isOpen(), "the eject button of bay " + bay + " of " + name);
+                }
+                for (int port = 0; port < front.ports(); port++) {
+                    final CaseFrontLayout.Area area = block.frontLayout().ports().get(port);
+                    player.setItemInHand(InteractionHand.MAIN_HAND,
+                            new ItemStack(ComputingModule.USB_FLASH_DRIVE.get()));
+                    clickFront(helper, player, middleX(area), middleY(area));
+                    helper.assertTrue(front.stick(port).is(ComputingModule.USB_FLASH_DRIVE.get()),
+                            "port " + port + " of " + name);
+                }
+                if (front.bays() > 0) {
+                    install(computer, 0, HardwareItems.HOT_SWAP_DRIVE_BAY.get());
+                    final CaseFrontLayout.Area bay = block.frontLayout().bays().get(0);
+                    player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HardwareItems.DISK_TRENCH_20M.get()));
+                    clickFront(helper, player, middleX(bay), middleY(bay));
+                    helper.assertTrue(front.held(0).is(HardwareItems.DISK_TRENCH_20M.get()),
+                            "the hot-swap bay of " + name);
+                }
+                player.getInventory().clearContent();
+            }
+        } finally {
+            player.getInventory().clearContent();
+        }
+        helper.succeed();
+    }
+
     /* The shared fake player, empty-handed and standing. */
     private static FakePlayer player(final GameTestHelper helper) {
         final FakePlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
@@ -149,6 +317,11 @@ public final class CaseFrontClickGameTests {
         final double hz = right.getAxis() == Direction.Axis.Z ? fromLow : front.getStepZ() > 0 ? 1.0 : 0.0;
         final Vec3 hit = new Vec3(at.getX() + hx, at.getY() + 1.0 - y / EjectButton.FRONT, at.getZ() + hz);
         helper.useBlock(WHERE, player, new BlockHitResult(hit, front, at, false));
+    }
+
+    /* Puts that part in that bay of the machine, as the assembly screen does. */
+    private static void install(final AbstractSmallComputerBlockEntity computer, final int bay, final Item part) {
+        computer.getHardware().setStackInSlot(computer.hardwareLayout().bayStart() + bay, new ItemStack(part));
     }
 
     private static double middleX(final CaseFrontLayout.Area area) {

@@ -180,10 +180,11 @@ public final class ThisPcPayloads {
         }
         final long stored = kind == MediaKind.DATA ? drive.data().total() : 0L;
         final int blocksAway = drive.pos().distManhattan(host);
+        // The volume whole: a drive on the computer's own front is told apart from the others by its slot.
         return new ThisPcPayload.WireMedia(drive.volume().readerPos(), drive.type().serializedName(),
                 m.isEmpty() ? Text.EMPTY : GameText.of(m.getHoverName()), kind != null ? kind.serializedName() : "",
                 pl != null ? pl.getPath() : "", installable, payloadName, payloadYear, packageId, needs,
-                stored, blocksAway);
+                stored, blocksAway, drive.volume().bay(), 0L, 0L);
     }
 
     /** The machine card for This PC: what this computer is, in one block of text the client draws. */
@@ -302,7 +303,7 @@ public final class ThisPcPayloads {
                     case CD_DRIVE -> ThisPcPayload.CD_DRIVE;
                     case DVD_DRIVE -> ThisPcPayload.DVD_DRIVE;
                     case BLU_RAY_DRIVE -> ThisPcPayload.BLU_RAY_DRIVE;
-                    case DOCK_STATION -> ThisPcPayload.DOCK_STATION;
+                    case DOCK_STATION, USB_PORT -> ThisPcPayload.DOCK_STATION;
                 }).text();
             } else if (be instanceof MonitorBlockEntity) {
                 label = ThisPcPayload.MONITOR.text();
@@ -339,8 +340,9 @@ public final class ThisPcPayloads {
         if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
             return;
         }
+        // Only one of the machine's own drives answers, whatever volume the screen named.
         final IMediaDrive drive = MachineMedia.of(computer, level)
-                .find(new MediaVolume(payload.readerPos(), Math.max(MediaVolume.MEDIUM, payload.bay())));
+                .find(new MediaVolume(payload.readerPos(), payload.bay()));
         if (drive != null) {
             drive.eject(level, player);
         }
@@ -356,8 +358,7 @@ public final class ThisPcPayloads {
             return;
         }
         // The drive must be one of this computer's, holding a program's installer.
-        final IMediaDrive drive = MachineMedia.of(computer, level)
-                .find(new MediaVolume(payload.readerPos(), MediaVolume.MEDIUM));
+        final IMediaDrive drive = MachineMedia.of(computer, level).find(payload.volume());
         if (drive == null || !drive.installs(MediaKind.PROGRAM_INSTALL)) {
             return;
         }

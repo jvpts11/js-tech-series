@@ -20,6 +20,7 @@ import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.media.LiveMedium;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.storage.StorageKey;
@@ -203,13 +204,13 @@ final class OsSession {
      */
     ItemStack systemDisk() {
         final int from = this.bootOnce >= 0 ? this.bootOnce : this.bootDisk;
-        return OsDisks.systemDisk(this.machine.layout().diskCount(), this::diskInSlot, from);
+        return OsDisks.systemDisk(diskCount(), this::diskInSlot, from);
     }
 
     /** The slot the machine boots from, or -1 when nothing in it carries a system. */
     private int systemDiskSlot() {
         final int from = this.bootOnce >= 0 ? this.bootOnce : this.bootDisk;
-        return OsDisks.systemDiskSlot(this.machine.layout().diskCount(), this::diskInSlot, from);
+        return OsDisks.systemDiskSlot(diskCount(), this::diskInSlot, from);
     }
 
     /** What the system this machine boots remembers about being greeted. */
@@ -274,7 +275,7 @@ final class OsSession {
      * callers filter as needed (the "This PC" disk listing reads it).
      */
     List<ItemStack> diskStacks() {
-        final int count = this.machine.layout().diskCount();
+        final int count = diskCount();
         final List<ItemStack> out = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             out.add(diskInSlot(i));
@@ -282,12 +283,17 @@ final class OsSession {
         return out;
     }
 
-    /** The disk stack in that 0-based disk slot, or EMPTY when the slot is out of range. */
+    /**
+     * The disk stack in that 0-based disk slot, or EMPTY when the slot is out of range: the layout's disk slots, and
+     * after them the bays of the case's front a disk slides into.
+     */
     ItemStack diskInSlot(final int slot) {
-        if (slot < 0 || slot >= this.machine.layout().diskCount()) {
+        final int inside = this.machine.layout().diskCount();
+        if (slot < 0 || slot >= diskCount()) {
             return ItemStack.EMPTY;
         }
-        return this.machine.getHardware().getStackInSlot(this.machine.layout().diskStart() + slot);
+        return slot < inside ? this.machine.getHardware().getStackInSlot(this.machine.layout().diskStart() + slot)
+                : this.machine.frontDisk(slot - inside);
     }
 
     /**
@@ -318,6 +324,10 @@ final class OsSession {
      * subtracted from the usable capacity, so the system competes for space with stored data.
      */
     long reservedByOs() {
+        // A system on a disk in a bay of the front takes its room from that disk, which stores no items here.
+        if (systemDiskSlot() >= this.machine.layout().diskCount()) {
+            return 0L;
+        }
         // One lookup of the system disk serves both the system and the era the system sits on.
         final ItemStack disk = systemDisk();
         /*
@@ -353,7 +363,7 @@ final class OsSession {
 
     /** Whether that system could go on that disk, asked before a copy starts rather than after it ends. */
     boolean canTakeOs(final ResourceLocation osId, final int preferredSlot) {
-        return OsDisks.roomFor(this.machine.layout().diskCount(), this::diskInSlot, osId, preferredSlot);
+        return OsDisks.roomFor(diskCount(), this::diskInSlot, osId, preferredSlot);
     }
 
     /**
@@ -367,7 +377,7 @@ final class OsSession {
          * invalidation); the block update then pushes the new disk state to watching clients.
          */
         final boolean installed = OsDisks.installOs(
-                this.machine.layout().diskCount(), this::diskInSlot, this::putDisk, osId, preferredSlot);
+                diskCount(), this::diskInSlot, this::putDisk, osId, preferredSlot);
         if (installed) {
             /*
              * A network system arrives with its interface on, which is the one install that also puts a
@@ -448,7 +458,7 @@ final class OsSession {
         final ComputerConsoleState runningConsole = runningDisk ? this.machine.console() : null;
         // Write back through the handler so onContentsChanged fires (setChanged + build invalidation).
         final OsDisks.FormatResult result = OsDisks.formatDisk(
-                this.machine.layout().diskCount(), this::diskInSlot, this::putDisk, slot);
+                diskCount(), this::diskInSlot, this::putDisk, slot);
         if (!result.formatted()) {
             return false;
         }
@@ -470,12 +480,12 @@ final class OsSession {
      * system lands beside the first for dual boot, else the first disk; -1 when no disk is installed.
      */
     int defaultInstallSlot() {
-        return OsDisks.defaultInstallSlot(this.machine.layout().diskCount(), this::diskInSlot);
+        return OsDisks.defaultInstallSlot(diskCount(), this::diskInSlot);
     }
 
     /** Takes the system off the boot disk. Nothing at all when no bootable disk is installed. */
     void uninstallOs() {
-        for (int i = 0; i < this.machine.layout().diskCount(); i++) {
+        for (int i = 0; i < diskCount(); i++) {
             final ItemStack stack = diskInSlot(i);
             if (!(stack.getItem() instanceof DiskItem) || OsDisks.systemOn(stack) == null) {
                 continue;
@@ -518,6 +528,9 @@ final class OsSession {
             copying.putString("Os", this.installing.osId());
             copying.putInt("Slot", this.installing.targetSlot());
             copying.putLong("Reader", this.installing.readerPos());
+            if (this.installing.readerBay() != MediaVolume.MEDIUM) {
+                copying.putInt("ReaderBay", this.installing.readerBay());
+            }
             copying.putInt("Total", this.installing.ticksTotal());
             copying.putInt("Left", this.installing.ticksLeft());
             tag.put("Installing", copying);
@@ -553,8 +566,10 @@ final class OsSession {
                 ? tag.getInt("PendingInstall") : IOsHost.NO_PENDING_INSTALL;
         if (tag.contains("Installing")) {
             final CompoundTag copying = tag.getCompound("Installing");
+            // A copy saved before a drive could stand on the computer's own front read a reader's medium.
             this.installing = new OsInstallJob(copying.getString("Os"), copying.getInt("Slot"),
-                    copying.getLong("Reader"), copying.getInt("Total"), copying.getInt("Left"));
+                    copying.getLong("Reader"), copying.contains("ReaderBay") ? copying.getInt("ReaderBay")
+                    : MediaVolume.MEDIUM, copying.getInt("Total"), copying.getInt("Left"));
         } else {
             this.installing = null;
         }
@@ -564,7 +579,17 @@ final class OsSession {
 
     /** Puts a disk stack back in its slot through the handler, so the machine hears the change. */
     private void putDisk(final ItemStack stack, final int slot) {
-        this.machine.getHardware().setStackInSlot(this.machine.layout().diskStart() + slot, stack);
+        final int inside = this.machine.layout().diskCount();
+        if (slot < inside) {
+            this.machine.getHardware().setStackInSlot(this.machine.layout().diskStart() + slot, stack);
+        } else {
+            this.machine.putFrontDisk(slot - inside, stack);
+        }
+    }
+
+    /* The disk slots the system sees: the layout's, then the bays of the case's front a disk slides into. */
+    private int diskCount() {
+        return this.machine.layout().diskCount() + this.machine.frontDiskSlots();
     }
 
     /** The disks changed under the players watching this block, who are drawing what is in them. */

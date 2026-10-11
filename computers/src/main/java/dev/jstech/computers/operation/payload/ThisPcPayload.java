@@ -230,7 +230,7 @@ public record ThisPcPayload(BlockPos host, WireMachine machine, List<WireDisk> d
     /**
      * One drive linked to the computer, with whatever medium is in it.
      *
-     * @param readerPos   the drive block's packed position
+     * @param readerPos   the drive block's packed position, or the computer's own for a drive on its front
      * @param drive       the drive type's serialized name (e.g. cd_drive)
      * @param mediaName   the medium's name, or empty for an empty drive
      * @param kind        the media kind's serialized name (os_install / program_install / data, empty when none)
@@ -242,7 +242,8 @@ public record ThisPcPayload(BlockPos host, WireMachine machine, List<WireDisk> d
      * @param needs       its requirements, one line each
      * @param stored      what a data medium holds, in item-equivalents
      * @param blocksAway  how far the drive is from the computer, in blocks
-     * @param bay         the Dock Station tray a docked disk is in, or -1 for a drive's own medium
+     * @param bay         the Dock Station tray a docked disk is in, -1 for a drive's own medium, or below that a slot
+     *                    on the computer's front, as {@link MediaVolume#bay()} counts them
      * @param capItems    a docked disk's capacity, in item-equivalents; 0 for a medium
      * @param usedItems   what a docked disk holds, in item-equivalents; 0 for a medium
      */

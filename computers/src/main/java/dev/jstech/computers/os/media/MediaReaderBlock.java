@@ -72,13 +72,13 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector, ITr
     private static final Device<MediaReaderBlockEntity> DEVICE =
             Device.of(() -> ComputingModule.MEDIA_READER_BE.get()).ticks(MediaReaderBlockEntity::serverTick);
 
-    /** What a click with a disc is told when the drive will not take it. */
-    private static final TextKey ALREADY_HOLDS = TextKey.of("jsc.media.media_reader_block.already_holds",
+    /** What a click with a disc is told when the drive will not take it, a drive in a case's bay as much as this. */
+    public static final TextKey ALREADY_HOLDS = TextKey.of("jsc.media.media_reader_block.already_holds",
             "The drive already holds a disc - sneak-click to eject it.");
-    private static final TextKey CANNOT_READ = TextKey.of("jsc.media.media_reader_block.cannot_read",
+    public static final TextKey CANNOT_READ = TextKey.of("jsc.media.media_reader_block.cannot_read",
             "This %s cannot read that disc.");
     /** What a press of the eject button is told while the computer reads the disc. */
-    private static final TextKey READING_WAIT = TextKey.of("jsc.media.media_reader_block.reading_wait",
+    public static final TextKey READING_WAIT = TextKey.of("jsc.media.media_reader_block.reading_wait",
             "The drive is reading - wait for it to finish.");
 
     public MediaReaderBlock(final MediaDriveType driveType, final Properties properties) {

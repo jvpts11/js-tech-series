@@ -622,12 +622,6 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         return volume == null ? "" : volume.key();
     }
 
-    /** The reader position of a removable volume's path, or {@code -1} for any other path. */
-    private static long mediaReaderPos(final String path) {
-        final MediaVolume volume = MediaVolume.parse(path);
-        return volume == null ? -1L : volume.readerPos();
-    }
-
     /** Whether the volume being browsed refuses writes: an installer's projection, or a pressed disc. */
     private boolean readOnlyVolume() {
         if (!onMedia()) {
@@ -2289,11 +2283,14 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         }
     }
 
-    /** Runs the setup program on an installer medium: the same install This PC's button does. */
+    /**
+     * Runs the setup program on an installer medium: the same install This PC's button does. The volume is named
+     * whole, as a drive on the computer's own front stands at the computer, and a packed position may be negative.
+     */
     private void runSetup(final String path) {
-        final long reader = mediaReaderPos(path);
-        if (reader >= 0) {
-            PacketDistributor.sendToServer(new InstallFromMediaPayload(host, reader));
+        final MediaVolume volume = MediaVolume.parse(path);
+        if (volume != null) {
+            PacketDistributor.sendToServer(new InstallFromMediaPayload(host, volume.readerPos(), volume.bay()));
             ActiveDesktop.refreshActive();
         }
     }

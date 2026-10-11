@@ -34,8 +34,9 @@ import software.bernie.geckolib.renderer.GeoBlockRenderer;
 /**
  * Draws a small computer as its case: the tower of its age, or the one of three cases a later machine comes in, its
  * front toward whoever placed it and its left side on or off as the player left it. The power lamp is lit while the
- * machine runs and the disk lamp blinks while it works its disk; the case's fans turn with the machine, by its
- * animation, and so do the fans of the parts in it, turned here.
+ * machine runs and the disk lamp blinks while it works its disk; each bay shows the part in it, or its cover, and a
+ * drive's lamp blinks while the machine reads its disc, the hot-swap bay's while it works its disk; the case's fans
+ * turn with the machine, by its animation, and so do the fans of the parts in it, turned here.
  *
  * <p>Inside it, each part the player installed is drawn by a model of its own, chosen by the item: the board on the
  * tray, and on the board's seats the processor, the memory, the cards and an M.2 drive; on the case's seats the supply
@@ -69,7 +70,11 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
     private static final float UNITS = 16f;
     /** What a bay's model can show, as its bones name it: drive_<bay>_<part>. */
     private static final String[] BAY_PARTS = {"cd", "dvd", "bd", "hotswap", "hotswap_empty"};
-    private static final String[][] DRIVE_BONES = driveBones();
+    private static final String[][] DRIVE_BONES = bones("drive_", BAY_PARTS);
+    /** The parts with an activity lamp, a bone of its own under the part's: lamp_<bay>_<part>. */
+    private static final String HOT_SWAP = "hotswap";
+    private static final String[] LAMP_PARTS = {"cd", "dvd", "bd", HOT_SWAP};
+    private static final String[][] LAMP_BONES = bones("lamp_", LAMP_PARTS);
 
     /**
      * Where each part's model and texture are, by the item that names it. The model itself is asked of GeckoLib's
@@ -95,10 +100,19 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
         DeviceLamps.show(model, ComputingLooks.COMPUTER_SIDE_PANEL, !computer.sidePanelOff());
         // A bay's model carries every part it takes, each hidden but the one installed; an empty bay shows its cover.
         final CaseFront front = computer.front();
+        final boolean blink = DeviceLamps.blinkLit(computer.getLevel());
         for (int bay = 0; bay < CaseFront.BAYS; bay++) {
             final String shown = front.shown(bay);
             for (int part = 0; part < BAY_PARTS.length; part++) {
                 DeviceLamps.show(model, DRIVE_BONES[bay][part], BAY_PARTS[part].equals(shown));
+            }
+            /*
+             * Its lamp, after the part, which showing lights everything under it: a drive's blinks while the machine
+             * reads its disc, the hot-swap bay's while the machine works its disk.
+             */
+            final boolean working = HOT_SWAP.equals(shown) ? running && computer.visualDiskBusy() : front.reading(bay);
+            for (int part = 0; part < LAMP_PARTS.length; part++) {
+                DeviceLamps.show(model, LAMP_BONES[bay][part], LAMP_PARTS[part].equals(shown) && working && blink);
             }
         }
     }
@@ -118,12 +132,12 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
                 .parts();
     }
 
-    /* The bones of each part in each bay, named once rather than every frame. */
-    private static String[][] driveBones() {
-        final String[][] out = new String[CaseFront.BAYS][BAY_PARTS.length];
+    /* The bones of each part in each bay, named once rather than every frame: <prefix><bay>_<part>. */
+    private static String[][] bones(final String prefix, final String[] parts) {
+        final String[][] out = new String[CaseFront.BAYS][parts.length];
         for (int bay = 0; bay < CaseFront.BAYS; bay++) {
-            for (int part = 0; part < BAY_PARTS.length; part++) {
-                out[bay][part] = "drive_" + bay + "_" + BAY_PARTS[part];
+            for (int part = 0; part < parts.length; part++) {
+                out[bay][part] = prefix + bay + "_" + parts[part];
             }
         }
         return out;

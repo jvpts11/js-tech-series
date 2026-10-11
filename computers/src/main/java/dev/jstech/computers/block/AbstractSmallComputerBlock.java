@@ -44,8 +44,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * What the three small computers (Personal, Crafting and Cluster Management) share as blocks: a case that faces the
- * player, the power button on its front, the side panel that comes off when sneaking, the hardware menu a click
- * anywhere else on the case opens, and handing the hardware back when the block goes. Each one brings its block entity, its menu and its ports; a rule about how any of them is clicked,
+ * player, the power button and the other {@link CaseFrontClicks parts of its front} a click works, the side panel
+ * that comes off when sneaking, the hardware menu a click anywhere else on the case opens, and handing the hardware
+ * back when the block goes. Each one brings its block entity, its menu and its ports; a rule about how any of them is clicked,
  * broken or ticked is written once, here.
  *
  * @param <E> the block entity the block holds
@@ -148,7 +149,8 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
                                               final BlockPos pos, final Player player, final InteractionHand hand,
                                               final BlockHitResult hit) {
         final E computer = computerAt(level, pos);
-        final double[] at = DeviceFront.point(state.getValue(FACING), pos, hit, player.getEyePosition(), 0);
+        final Direction facing = state.getValue(FACING);
+        final double[] at = DeviceFront.point(facing, pos, hit, player.getEyePosition(), 0);
         if (computer == null || at == null) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
@@ -158,6 +160,11 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
                 computer.togglePower();
                 computer.showPowerPressed();
             }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+        }
+        final double[] ahead = DeviceFront.point(facing, pos, hit, player.getEyePosition(),
+                -CaseFrontClicks.TRAY_REACH);
+        if (CaseFrontClicks.click(computer, front, at, ahead, held, player)) {
             return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;

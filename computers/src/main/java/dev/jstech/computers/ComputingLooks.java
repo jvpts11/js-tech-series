@@ -81,6 +81,11 @@ public final class ComputingLooks {
     public static final String COMPUTER_DISK_LAMP = "led_disk";
     /** A small computer's left side, the panel that comes off. */
     public static final String COMPUTER_SIDE_PANEL = "side_panel";
+    /**
+     * What every part a small computer's bay can hold is named from: {@code drive_<bay>_<part>}, with its tray, its
+     * disc and its lamp under it. The case as it comes holds none, and shows each bay's cover.
+     */
+    public static final String COMPUTER_BAY_PARTS = "drive_";
 
     /** The case a block that is not a small computer's falls back to, so a stray state still draws something. */
     private static final String FALLBACK_CASE = "computer_standard_neutral_personal_computer";

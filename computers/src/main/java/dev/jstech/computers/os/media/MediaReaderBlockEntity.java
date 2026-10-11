@@ -341,7 +341,7 @@ public class MediaReaderBlockEntity extends SyncedBlockEntity implements IPeriph
             return false;
         }
         final OsInstallJob job = host.installing();
-        if (job != null && job.hasReader() && job.readerPos() == worldPosition.asLong()) {
+        if (job != null && job.reads(new MediaVolume(worldPosition.asLong(), MediaVolume.MEDIUM))) {
             return true;
         }
         final ComputerConsoleState console = host.console();

@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.os.media;
 
+import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
+import dev.jstech.computers.blockentity.CaseFront;
+import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.os.IOsHost;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,10 +19,11 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Every drive a machine reads removable media in, in the one order the machine letters and lists them: the readers
- * linked to it by cable in the order of their positions, each Dock Station's docked disks right after its own port,
- * top tray first. A reader is a drive whether or not anything is in it; a dock's tray is one only while it holds a
- * disk.
+ * Every drive a machine reads removable media in, in the one order the machine letters and lists them: the drives on
+ * its own front first, each bay's optical drive and then each port holding a stick, and then the readers linked to it
+ * by cable in the order of their positions, each Dock Station's docked disks right after its own port, top tray first.
+ * A reader or a bay's drive is a drive whether or not anything is in it; a dock's tray or a port is one only while it
+ * holds something.
  *
  * <p>This is the one place that looks for a machine's media. The drive letters, This PC, the explorers, the firmware,
  * the installers, the Crafting Manager, the Pattern Studio and the live media all ask it, so they agree on what a
@@ -41,6 +45,9 @@ public final class MachineMedia {
         final List<Long> endpoints = new ArrayList<>(machine.enabledEndpoints());
         Collections.sort(endpoints);
         final List<IMediaDrive> drives = new ArrayList<>();
+        if (machine instanceof AbstractSmallComputerBlockEntity computer) {
+            front(computer, drives);
+        }
         boolean complete = true;
         for (final long endpoint : endpoints) {
             final BlockPos pos = BlockPos.of(endpoint);
@@ -96,5 +103,24 @@ public final class MachineMedia {
             }
         }
         return null;
+    }
+
+    /*
+     * The drives on the computer's own front, before any on a cable, as a machine finds what is built into it first:
+     * the optical drive in each bay, empty or not, top bay first, then each port while a stick is in it.
+     */
+    private static void front(final AbstractSmallComputerBlockEntity computer, final List<IMediaDrive> drives) {
+        final CaseFront front = computer.front();
+        for (int bay = 0; bay < front.bays(); bay++) {
+            final BayDriveSpec.Kind kind = front.kind(bay);
+            if (kind != null && kind.reads() != null) {
+                drives.add(new IMediaDrive.OnFront(computer, bay));
+            }
+        }
+        for (int port = 0; port < front.ports(); port++) {
+            if (!front.stick(port).isEmpty()) {
+                drives.add(new IMediaDrive.OnFront(computer, CaseFront.portSlot(port)));
+            }
+        }
     }
 }

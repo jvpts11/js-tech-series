@@ -343,8 +343,8 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
                         ? new FirmwareActionPayload(computerPos, monitorPos,
                                 FirmwareActionPayload.ACTION_BOOT_ONCE, chosen.slot(), -1,
                                 chosen.entry().osId())
-                        : FirmwareActionPayload.of(computerPos, monitorPos,
-                                FirmwareActionPayload.ACTION_BOOT_MEDIA, chosen.entry().ref(), -1));
+                        : FirmwareActionPayload.onMedium(computerPos, monitorPos,
+                                FirmwareActionPayload.ACTION_BOOT_MEDIA, chosen.entry(), -1));
             }
             default -> bootMenu = false;
         }

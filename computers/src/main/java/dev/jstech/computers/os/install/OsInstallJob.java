@@ -8,6 +8,7 @@
 package dev.jstech.computers.os.install;
 
 import dev.jstech.computers.os.media.MediaFormat;
+import dev.jstech.computers.os.media.MediaVolume;
 
 /**
  * A system being put on a disk: which one, where it is going, what it is being read from and how much of it is
@@ -34,10 +35,13 @@ public final class OsInstallJob {
     private final String osId;
     private final int targetSlot;
     private final long readerPos;
+    private final int readerBay;
     private final int ticksTotal;
     private int ticksLeft;
 
     /**
+     * A copy read from the medium of the reader at {@code readerPos}, or from no drive.
+     *
      * @param osId       the system being installed, as the registry names it
      * @param targetSlot the disk slot it is going on, or -1 for the machine's default disk
      * @param readerPos  the drive the medium sits in, so the machine can tell when it is taken out
@@ -46,9 +50,21 @@ public final class OsInstallJob {
      */
     public OsInstallJob(final String osId, final int targetSlot, final long readerPos, final int ticksTotal,
                         final int ticksLeft) {
+        this(osId, targetSlot, readerPos, MediaVolume.MEDIUM, ticksTotal, ticksLeft);
+    }
+
+    /**
+     * A copy read from the volume {@code readerPos} and {@code readerBay} name: a reader's medium, a dock's tray, or a
+     * drive or port on the computer's own front.
+     *
+     * @param readerBay which of the reader's volumes, as {@link MediaVolume#bay()} counts them
+     */
+    public OsInstallJob(final String osId, final int targetSlot, final long readerPos, final int readerBay,
+                        final int ticksTotal, final int ticksLeft) {
         this.osId = osId;
         this.targetSlot = targetSlot;
         this.readerPos = readerPos;
+        this.readerBay = readerBay;
         this.ticksTotal = Math.max(1, ticksTotal);
         this.ticksLeft = Math.max(0, Math.min(ticksLeft, this.ticksTotal));
     }
@@ -66,8 +82,15 @@ public final class OsInstallJob {
      */
     public static OsInstallJob beginning(final String osId, final int targetSlot, final long readerPos,
                                          final int footprintMb, final MediaFormat format, final int eraFactor) {
+        return beginning(osId, targetSlot, new MediaVolume(readerPos, MediaVolume.MEDIUM), footprintMb, format,
+                eraFactor);
+    }
+
+    /** The same, read from the medium on {@code from}. */
+    public static OsInstallJob beginning(final String osId, final int targetSlot, final MediaVolume from,
+                                         final int footprintMb, final MediaFormat format, final int eraFactor) {
         final int ticks = SetupTiming.ticks(footprintMb, format, false, eraFactor);
-        return new OsInstallJob(osId, targetSlot, readerPos, ticks, ticks);
+        return new OsInstallJob(osId, targetSlot, from.readerPos(), from.bay(), ticks, ticks);
     }
 
     /** The system being installed, as the registry names it. */
@@ -85,9 +108,24 @@ public final class OsInstallJob {
         return this.readerPos;
     }
 
+    /** Which of the reader's volumes the medium is on, as {@link MediaVolume#bay()} counts them. */
+    public int readerBay() {
+        return this.readerBay;
+    }
+
     /** Whether this copy is being read from a drive, and so can lose what it is reading. */
     public boolean hasReader() {
         return this.readerPos != NO_READER;
+    }
+
+    /** The volume the medium is on, for a copy {@link #hasReader() read from a drive}. */
+    public MediaVolume volume() {
+        return new MediaVolume(this.readerPos, this.readerBay);
+    }
+
+    /** Whether this copy reads the medium on {@code volume}. */
+    public boolean reads(final MediaVolume volume) {
+        return hasReader() && this.readerPos == volume.readerPos() && this.readerBay == volume.bay();
     }
 
     public int ticksTotal() {

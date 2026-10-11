@@ -147,8 +147,8 @@ public final class InstallerPayloads {
         if (newTotal == job.ticksTotal() && flow.targetSlot() == job.targetSlot()) {
             return;
         }
-        machine.setInstalling(new OsInstallJob(job.osId(), flow.targetSlot(), job.readerPos(), newTotal,
-                Math.max(0, newTotal - done)));
+        machine.setInstalling(new OsInstallJob(job.osId(), flow.targetSlot(), job.readerPos(), job.readerBay(),
+                newTotal, Math.max(0, newTotal - done)));
     }
 
     /** Leaving with nothing written, which the pages before the work allow and the work itself does not. */

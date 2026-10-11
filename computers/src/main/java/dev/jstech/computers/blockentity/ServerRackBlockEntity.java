@@ -44,6 +44,7 @@ import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.media.LiveMedium;
 import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
@@ -516,6 +517,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                     final CompoundTag copying = saved.getCompound("Installing");
                     state.installing = new OsInstallJob(
                             copying.getString("Os"), copying.getInt("Slot"), copying.getLong("Reader"),
+                            copying.contains("ReaderBay") ? copying.getInt("ReaderBay") : MediaVolume.MEDIUM,
                             copying.getInt("Total"), copying.getInt("Left"));
                 }
                 state.installerMemo = saved.contains("Installer") ? saved.getCompound("Installer") : null;
@@ -655,6 +657,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             copying.putString("Os", state.installing.osId());
             copying.putInt("Slot", state.installing.targetSlot());
             copying.putLong("Reader", state.installing.readerPos());
+            if (state.installing.readerBay() != MediaVolume.MEDIUM) {
+                copying.putInt("ReaderBay", state.installing.readerBay());
+            }
             copying.putInt("Total", state.installing.ticksTotal());
             copying.putInt("Left", state.installing.ticksLeft());
             tag.put("Installing", copying);

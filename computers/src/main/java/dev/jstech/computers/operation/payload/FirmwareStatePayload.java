@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
@@ -123,8 +124,9 @@ public record FirmwareStatePayload(
      * <p>A self-test prints these in columns, a boot menu names the device beside what is on it, and a setup
      * page lists them a third way, so they arrive apart and each screen puts them together as its own age did.
      *
-     * @param kind        {@link #KIND_DISK} (an installed disk) or {@link #KIND_MEDIA} (a linked drive's medium)
-     * @param ref         the disk slot index, or the media reader's packed block position
+     * @param kind        {@link #KIND_DISK} (an installed disk) or {@link #KIND_MEDIA} (a drive's medium)
+     * @param ref         the disk slot index, or the media reader's packed block position, the computer's own for a
+     *                    drive on its front
      * @param osId        the OS on it ({@code ""} when the disk has no system / the medium is not an installer)
      * @param label       what the device holds: the system's name, an installer's name, or "no system"/"empty"
      * @param device      the hardware itself by model, which is data, or the kind of drive for a reader, which is
@@ -134,9 +136,17 @@ public record FirmwareStatePayload(
      * @param bootable    whether this entry can be booted (a disk with an OS; an OS-installer medium whose OS
      *                    passes the hardware era gate)
      * @param installMode the id of the OS's install mode for a medium (guided / live manual / source), else -1
+     * @param bay         for a medium, which of the reader's volumes it is on, as {@link MediaVolume#bay()} counts
+     *                    them; {@link MediaVolume#MEDIUM} for a disk
      */
     public record Entry(int kind, long ref, String osId, Text label, Text device, String size, Text note,
-                        boolean bootable, int installMode) {
+                        boolean bootable, int installMode, int bay) {
+
+        /** An entry for a disk, or for the medium of a reader on a cable. */
+        public Entry(final int kind, final long ref, final String osId, final Text label, final Text device,
+                     final String size, final Text note, final boolean bootable, final int installMode) {
+            this(kind, ref, osId, label, device, size, note, bootable, installMode, MediaVolume.MEDIUM);
+        }
     }
 
     public static final CustomPacketPayload.Type<FirmwareStatePayload> TYPE =
@@ -175,6 +185,7 @@ public record FirmwareStatePayload(
             TextCodecs.STREAM_CODEC.encode(buf, e.note());
             buf.writeBoolean(e.bootable());
             buf.writeVarInt(e.installMode());
+            buf.writeInt(e.bay());
         }
         final RaidInfo raid = p.raid == null ? RaidInfo.ABSENT : p.raid;
         buf.writeBoolean(raid.present());
@@ -201,7 +212,7 @@ public record FirmwareStatePayload(
         for (int i = 0; i < count; i++) {
             entries.add(new Entry(buf.readVarInt(), buf.readVarLong(), buf.readUtf(64),
                     TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf), buf.readUtf(16),
-                    TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(), buf.readVarInt()));
+                    TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(), buf.readVarInt(), buf.readInt()));
         }
         RaidInfo raid = RaidInfo.ABSENT;
         if (buf.readBoolean()) {

@@ -189,7 +189,7 @@ public final class ThisPcApp implements IDesktopApp {
             this.letterIndex = letterIndex;
             this.open = media.loaded() ? () -> DesktopScreen.requestOpenFiles(key) : null;
             if (media.installable()) {
-                install = add(new Button(GameText.resolve(ThisPcTexts.INSTALL), () -> install(media.readerPos()))
+                install = add(new Button(GameText.resolve(ThisPcTexts.INSTALL), () -> install(media))
                         .setPrimary(true));
                 buttons.add(install);
             }
@@ -1007,7 +1007,7 @@ public final class ThisPcApp implements IDesktopApp {
             return;
         }
         final MediaDriveType drive = MediaDriveType.find(m.drive());
-        if (drive == MediaDriveType.DOCK_STATION) {
+        if (drive == MediaDriveType.DOCK_STATION || drive == MediaDriveType.USB_PORT) {
             g.fill(x + 1, y + 1, x + 13, y + 9, c.dockBody());
             g.fill(x + 9, y + 3, x + 12, y + 7, c.dockLight());
             Draw.outline(g, x + 1, y + 1, 12, 8, c.dockEdge());
@@ -1089,9 +1089,10 @@ public final class ThisPcApp implements IDesktopApp {
         if (mediaIndex < 0 || mediaIndex >= data.media().size()) {
             return new int[] {0, 0};
         }
-        final long pos = data.media().get(mediaIndex).readerPos();
+        // By the volume, not the block: the drives on a computer's own front all stand at the computer.
+        final String key = data.media().get(mediaIndex).volumeKey();
         for (final DriveRow row : rows) {
-            if (row.media != null && row.media.readerPos() == pos && row.install != null) {
+            if (row.media != null && row.media.volumeKey().equals(key) && row.install != null) {
                 final int[] c = row.install.center();
                 return new int[] {c[0] - lastX, c[1] - lastY};
             }
@@ -1133,8 +1134,8 @@ public final class ThisPcApp implements IDesktopApp {
         return about == AboutKind.NONE && page.mouseScrolled(lastMouseX, lastMouseY, delta);
     }
 
-    private void install(final long readerPos) {
-        PacketDistributor.sendToServer(new InstallFromMediaPayload(host, readerPos));
+    private void install(final WireMedia media) {
+        PacketDistributor.sendToServer(new InstallFromMediaPayload(host, media.readerPos(), media.bay()));
         request();
         /*
          * The install lands server-side before this refresh is processed, so the desktop's
@@ -1227,7 +1228,7 @@ public final class ThisPcApp implements IDesktopApp {
             case CD_DRIVE -> ThisPcTexts.CD;
             case DVD_DRIVE -> ThisPcTexts.DVD;
             case BLU_RAY_DRIVE -> ThisPcTexts.BLU_RAY;
-            case DOCK_STATION -> ThisPcTexts.USB;
+            case DOCK_STATION, USB_PORT -> ThisPcTexts.USB;
         });
     }
 

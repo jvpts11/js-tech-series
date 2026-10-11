@@ -50,5 +50,29 @@ class MediaVolumeTest {
     void docked_onlyForATray() {
         assertTrue(new MediaVolume(1L, 0).docked());
         assertFalse(new MediaVolume(1L, MediaVolume.MEDIUM).docked());
+        assertFalse(MediaVolume.front(1L, 0).docked());
+    }
+
+    @Test
+    void front_isASlotOfTheComputersOwnFrontAndReadsBack() {
+        final MediaVolume port = MediaVolume.front(-42L, 3);
+        assertTrue(port.onFront());
+        assertEquals(3, port.frontSlot());
+        assertEquals("media:-42.f3", port.key());
+        assertEquals(port, MediaVolume.parse("media:-42.f3/photos/one.png"));
+        assertEquals(MediaVolume.front(7L, 0), MediaVolume.parse(MediaVolume.front(7L, 0).key()));
+    }
+
+    @Test
+    void onFront_neverForAReadersMediumOrATray() {
+        assertFalse(new MediaVolume(1L, MediaVolume.MEDIUM).onFront());
+        assertFalse(new MediaVolume(1L, 2).onFront());
+    }
+
+    @Test
+    void parse_refusesAFrontSlotThatDoesNotRead() {
+        assertNull(MediaVolume.parse("media:42.f"));
+        assertNull(MediaVolume.parse("media:42.f-1"));
+        assertNull(MediaVolume.parse("media:42.-2"));
     }
 }

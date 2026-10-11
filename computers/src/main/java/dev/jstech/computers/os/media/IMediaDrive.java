@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.os.media;
 
+import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
+import dev.jstech.computers.blockentity.CaseFront;
+import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.storage.ServerStorageContents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -17,9 +20,10 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * One drive a machine reads removable media in, as {@link MachineMedia} finds them: a reader on a cable, or a disk in
- * a Dock Station's tray. Whatever asks for a machine's media sees every kind of drive the same way: where it is, what
- * it holds, how a change to that is kept and how it gives its medium back.
+ * One drive a machine reads removable media in, as {@link MachineMedia} finds them: a reader on a cable, a disk in a
+ * Dock Station's tray, or a drive or a port on the computer's own front. Whatever asks for a machine's media sees
+ * every kind of drive the same way: where it is, what it holds, how a change to that is kept and how it gives its
+ * medium back.
  */
 public sealed interface IMediaDrive {
 
@@ -148,6 +152,44 @@ public sealed interface IMediaDrive {
         @Override
         public void eject(final ServerLevel level, final ServerPlayer player) {
             give(level, player, pos(), dock.ejectDisk(bay));
+        }
+    }
+
+    /**
+     * A drive on a computer's own front: an internal optical drive in one of its bays, which reads the disc on its
+     * tray with the tray in, or a USB flash drive in one of its ports.
+     *
+     * @param computer the computer
+     * @param slot     the slot on its front: a bay's, then a port's
+     */
+    record OnFront(AbstractSmallComputerBlockEntity computer, int slot) implements IMediaDrive {
+
+        @Override
+        public MediaVolume volume() {
+            return computer.front().volume(slot);
+        }
+
+        @Override
+        public ItemStack medium() {
+            final CaseFront front = computer.front();
+            return slot < CaseFront.BAYS ? front.readable(slot) : front.stick(slot - CaseFront.BAYS);
+        }
+
+        @Override
+        public MediaDriveType type() {
+            final BayDriveSpec.Kind kind = slot < CaseFront.BAYS ? computer.front().kind(slot) : null;
+            return kind != null && kind.reads() != null ? kind.reads() : MediaDriveType.USB_PORT;
+        }
+
+        @Override
+        public void commit() {
+            computer.setChanged();
+            computer.fields().syncToClients();
+        }
+
+        @Override
+        public void eject(final ServerLevel level, final ServerPlayer player) {
+            computer.front().eject(slot, level, player);
         }
     }
 

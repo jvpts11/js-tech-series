@@ -57,6 +57,14 @@ public interface IComputerTerminalHost {
 
     int diskSlots();
 
+    /**
+     * The disk slots the board wires, which the installed disks are counted against: the system may see more, a
+     * disk slid into a bay of the case's front among them.
+     */
+    default int wiredDiskSlots() {
+        return diskSlots();
+    }
+
     long localStorageUsed();
 
     long localStorageCapacity();

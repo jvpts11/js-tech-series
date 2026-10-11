@@ -12,6 +12,10 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
+import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.core.content.BlockEntry;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -25,6 +29,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import software.bernie.geckolib.cache.GeckoLibCache;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
 
 /**
  * The small computers' cases in every age: the Personal Computer, the Crafting Computer and the Cluster Management
@@ -68,6 +74,9 @@ public final class ComputerCaseClientTests {
     /** The fronts with their bays filled stand in a row of their own, seen a little from above. */
     private static final int FRONT_ROW_Z = 36;
     private static final float FRONT_PITCH = 18F;
+    /** The machine whose drive reads and whose hot-swap bay takes a disk, on its own; its drive's lamp bone. */
+    private static final BlockPos BAYS_AT = new BlockPos(2, 2, 44);
+    private static final String BAY_LAMP = "lamp_0_cd";
     /** A front of each age with what its bays and ports hold. */
     private static final List<Front> FRONTS = List.of(
             new Front("vintage-hot-swap-with-a-disk", ComputingModule.VINTAGE_PERSONAL_COMPUTER,
@@ -332,6 +341,56 @@ public final class ComputerCaseClientTests {
     }
 
     /**
+     * A Legacy machine switched on with a CD drive and the hot-swap bay: the drive's lamp blinks while the machine
+     * reads the installer on its disc, caught lit and dark; the hot-swap bay's caddy rides in as a disk goes in and
+     * out as it comes out, caught on its way and at rest.
+     */
+    @ClientTest(timeoutTicks = 900)
+    public static void bays_blinkWhileReadingAndTheCaddyRides(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+            world.setBlock(BAYS_AT, ComputingModule.LEGACY_PERSONAL_COMPUTER.get().defaultBlockState()
+                    .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+            final AbstractSmallComputerBlockEntity computer =
+                    world.blockEntity(BAYS_AT, AbstractSmallComputerBlockEntity.class);
+            final ComputerHardwareLayout layout = computer.hardwareLayout();
+            build("legacy-939").install(computer);
+            computer.getHardware().setStackInSlot(layout.diskStart(), Build.stack("disk_vaultis_link_ide_40g"));
+            computer.getHardware().setStackInSlot(layout.bayStart(), Build.stack("internal_cd_drive"));
+            computer.getHardware().setStackInSlot(layout.bayStart() + 1, Build.stack("hot_swap_drive_bay"));
+            final ItemStack disc = new ItemStack(ComputingModule.CD_ROM.get());
+            MediaItem.setKind(disc, MediaKind.OS_INSTALL);
+            MediaItem.setPayload(disc, ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp"));
+            // Put in as a drive comes with its disc already drawn in, so no tray rides as the camera arrives.
+            computer.front().insert(0, disc);
+            computer.togglePower();
+            final MediaVolume volume = computer.front().volume(0);
+            if (FirmwarePayloads.beginInstall(world.level(), computer, volume.readerPos(), volume.bay(), -1) != null) {
+                throw new ClientTestFailure("the install from the bay's disc did not start");
+            }
+        })
+                .thenWaitUntil(() -> runs(ctx, BAYS_AT) && clientFront(ctx).reading(0), RUNS_WITHIN,
+                        "the machine to run and read the bay's disc, as the player sees it")
+                .thenTeleport(SETTLE, BAYS_AT.south(2), Direction.NORTH)
+                .then(0, () -> ctx.player().setXRot(FRONT_PITCH))
+                .thenWaitUntil(() -> bayLamp(ctx, false), BLINK_GAP * 4, "the drive's lamp to be lit")
+                .thenScreenshot(0, "reading-lamp-lit")
+                .thenWaitUntil(() -> bayLamp(ctx, true), BLINK_GAP * 4, "and then dark, blinking")
+                .thenScreenshot(0, "reading-lamp-dark")
+                .thenBuild(0, world -> world.blockEntity(BAYS_AT, AbstractSmallComputerBlockEntity.class).front()
+                        .insert(1, Build.stack("disk_vaultis_link_ide_20g")))
+                .thenWaitUntil(() -> clientFront(ctx).caddyMoving(1, ctx.mc().level), SETTLE * 4,
+                        "the caddy to ride in, as the player sees it")
+                .thenScreenshot(2, "caddy-riding-in")
+                .thenScreenshot(SETTLE * 3, "caddy-in")
+                .thenBuild(0, world -> world.blockEntity(BAYS_AT, AbstractSmallComputerBlockEntity.class).front()
+                        .take(1))
+                .thenWaitUntil(() -> clientFront(ctx).caddyMoving(1, ctx.mc().level), SETTLE * 4,
+                        "the caddy to ride out")
+                .thenScreenshot(2, "caddy-riding-out")
+                .thenScreenshot(SETTLE * 3, "caddy-gone");
+    }
+
+    /**
      * The assembly screens of the Transition and Advanced machines, each in the skin of its age: the case says the
      * age, whatever board is in it.
      */
@@ -360,6 +419,22 @@ public final class ComputerCaseClientTests {
     private static boolean runs(final ClientTestContext ctx, final BlockPos relative) {
         return ctx.mc().level != null && ctx.mc().level.getBlockEntity(ctx.abs(relative))
                 instanceof AbstractSmallComputerBlockEntity computer && computer.visualRunning();
+    }
+
+    /** The front of the machine with the bays, as the player's game knows it. */
+    private static CaseFront clientFront(final ClientTestContext ctx) {
+        if (ctx.mc().level != null && ctx.mc().level.getBlockEntity(ctx.abs(BAYS_AT))
+                instanceof AbstractSmallComputerBlockEntity computer) {
+            return computer.front();
+        }
+        throw new ClientTestFailure("no machine with bays in the player's game");
+    }
+
+    /** Whether the lamp of the CD drive in the first bay was last drawn hidden (or, given false, lit). */
+    private static boolean bayLamp(final ClientTestContext ctx, final boolean hidden) {
+        final BakedGeoModel model = GeckoLibCache.getBakedModels().get(
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "geo/computer_legacy_personal_computer.geo.json"));
+        return model != null && model.getBone(BAY_LAMP).map(bone -> bone.isHidden() == hidden).orElse(false);
     }
 
     /** An age's cases, row by row from the floor up. */

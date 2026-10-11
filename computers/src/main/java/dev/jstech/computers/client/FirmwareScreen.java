@@ -360,12 +360,13 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
          * (Arch, Gentoo) really does just boot, and its system is put on the disk by hand afterwards.
          */
         if (e.kind() == FirmwareStatePayload.KIND_MEDIA && e.installMode() == InstallMode.GUIDED.id()) {
-            openInstaller(e.ref());
+            openInstaller(e);
             return;
         }
-        final int action = e.kind() == FirmwareStatePayload.KIND_DISK
-                ? FirmwareActionPayload.ACTION_BOOT_DISK : FirmwareActionPayload.ACTION_BOOT_MEDIA;
-        send(FirmwareActionPayload.of(computerPos, monitorPos, action, e.ref(), -1));
+        send(e.kind() == FirmwareStatePayload.KIND_DISK
+                ? FirmwareActionPayload.of(computerPos, monitorPos, FirmwareActionPayload.ACTION_BOOT_DISK, e.ref(), -1)
+                : FirmwareActionPayload.onMedium(computerPos, monitorPos, FirmwareActionPayload.ACTION_BOOT_MEDIA, e,
+                        -1));
         /*
          * And nothing else: the machine puts the next screen up, and this one goes when that one arrives.
          * Closing here as well sent the server a close right behind the request, and the server handles them
@@ -402,7 +403,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 activateSelected();
                 return;
             }
-            openInstaller(e.ref());
+            openInstaller(e);
             return;
         }
         // The primary action with a disk or nothing selected: install from whatever linked medium fits.
@@ -410,7 +411,9 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             notice(NO_INSTALLABLE.text());
             return;
         }
-        openInstaller(-1L);
+        // A reference of -1 asks for any installer medium the machine has.
+        final int target = state == null ? -1 : state.installTargetSlot();
+        send(FirmwareActionPayload.of(computerPos, monitorPos, FirmwareActionPayload.ACTION_INSTALL, -1L, target));
     }
 
     private void notice(final Text text) {
@@ -468,10 +471,10 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
      * every install wore the same box whatever system it was, and the installers each system was drawn for
      * were never reached from this button.
      */
-    private void openInstaller(final long readerRef) {
+    private void openInstaller(final FirmwareStatePayload.Entry medium) {
         final int target = state == null ? -1 : state.installTargetSlot();
-        send(FirmwareActionPayload.of(computerPos, monitorPos,
-                FirmwareActionPayload.ACTION_INSTALL, readerRef, target));
+        send(FirmwareActionPayload.onMedium(computerPos, monitorPos, FirmwareActionPayload.ACTION_INSTALL, medium,
+                target));
     }
 
     /** Screen centre of the primary install action drawn on the last frame (client tests click it). */

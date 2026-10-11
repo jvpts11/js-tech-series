@@ -16,14 +16,15 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Client to server: eject the medium in the drive at {@code readerPos}, or the disk in one tray of a Dock Station
- * there, which must be linked to the computer at {@code hostPos}. What comes out goes to the player's inventory, or
- * onto the drive when the inventory is full, the same as sneak-clicking the drive in the world. An optical drive
- * instead opens its tray, as its eject button does, and the disc waits on it for the player's hand.
+ * Client to server: eject the medium in the drive at {@code readerPos}, the disk in one tray of a Dock Station there,
+ * or what a drive or a port on the front of the computer at {@code hostPos} holds; a drive elsewhere must be linked to
+ * that computer. What comes out goes to the player's inventory, or onto the drive when the inventory is full, the same
+ * as sneak-clicking the drive in the world. An optical drive instead opens its tray, as its eject button does, and the
+ * disc waits on it for the player's hand.
  *
  * @param hostPos   the computer
- * @param readerPos the drive's packed position
- * @param bay       the dock's tray, or {@link MediaVolume#MEDIUM} for the drive's own medium
+ * @param readerPos the drive's packed position, or the computer's own for a drive on its front
+ * @param bay       which of its volumes, as {@link MediaVolume#bay()} counts them
  */
 public record EjectMediaPayload(BlockPos hostPos, long readerPos, int bay) implements CustomPacketPayload {
 
@@ -42,7 +43,7 @@ public record EjectMediaPayload(BlockPos hostPos, long readerPos, int bay) imple
         this(hostPos, readerPos, MediaVolume.MEDIUM);
     }
 
-    /** Ejects what a volume's key names: a drive's medium or a docked disk. */
+    /** Ejects what a volume's key names: a drive's medium, a docked disk, or a slot on the computer's front. */
     public static EjectMediaPayload of(final BlockPos hostPos, final MediaVolume volume) {
         return new EjectMediaPayload(hostPos, volume.readerPos(), volume.bay());
     }

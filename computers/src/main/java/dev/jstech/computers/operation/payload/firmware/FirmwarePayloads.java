@@ -217,23 +217,27 @@ public final class FirmwarePayloads {
                     spec == null ? "" : DiskSpec.sizeLabel(spec.capacityMb()),
                     Text.EMPTY, os != null, -1));
         }
-        // The drives a machine can start a system from: its readers, a dock's docked disks being no installers.
+        /*
+         * The drives a machine can start a system from: its readers and the drives and ports on its own front, a
+         * dock's docked disks being no installers. Each is named by its reader and the volume of it the medium is on.
+         */
         for (final IMediaDrive reader : MachineMedia.of(computer, level).drives()) {
             if (reader.volume().docked()) {
                 continue;
             }
             final long endpoint = reader.volume().readerPos();
+            final int bay = reader.volume().bay();
             final Text drive = reader.type().driveName();
             final ItemStack media = reader.medium();
             if (media.isEmpty()) {
                 entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint, "",
-                        EMPTY_DRIVE.text(), drive, "", Text.EMPTY, false, -1));
+                        EMPTY_DRIVE.text(), drive, "", Text.EMPTY, false, -1, bay));
                 continue;
             }
             final OsDef os = reader.installs(MediaKind.OS_INSTALL) ? OsRegistry.getOs(reader.payload()) : null;
             if (os == null) {
                 entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint, "",
-                        GameText.of(media.getHoverName()), drive, "", Text.EMPTY, false, -1));
+                        GameText.of(media.getHoverName()), drive, "", Text.EMPTY, false, -1, bay));
                 continue;
             }
             final boolean eraOk = OsGating.canInstall(os.minEra(), era);
@@ -241,7 +245,7 @@ public final class FirmwarePayloads {
                     os.id().toString(),
                     (os.installMode() == InstallMode.GUIDED ? INSTALLER : LIVE).with(os.displayName()),
                     drive, "", eraOk ? Text.EMPTY : ERA_OR_NEWER.with(os.minEra().text()), eraOk,
-                    os.installMode().id()));
+                    os.installMode().id(), bay));
         }
         return new FirmwareStatePayload(pos, era.id(), machineOf(level, computer, pos), computer.bootDiskSlot(),
                 computer.defaultInstallSlot(), entries, raidInfoOf(level, computer));
@@ -429,7 +433,7 @@ public final class FirmwarePayloads {
                  * the machine the self-test hands over to.
                  */
                 computer.setNeedsPost(true);
-                final Text failure = beginInstall(level, computer, payload.ref(), payload.target());
+                final Text failure = beginInstall(level, computer, payload.ref(), payload.bay(), payload.target());
                 if (failure != null) {
                     // Refused before a minute of copying: say so instead of restarting into nothing.
                     final HardwareEra era = computer.displayEra();
@@ -448,7 +452,7 @@ public final class FirmwarePayloads {
             case FirmwareActionPayload.ACTION_BOOT_MEDIA -> {
                 // The reader comes from the player's screen, so it is only one of the machine's own drives.
                 final IMediaDrive reader = MachineMedia.of(computer, level)
-                        .find(new MediaVolume(payload.ref(), MediaVolume.MEDIUM));
+                        .find(new MediaVolume(payload.ref(), payload.bay()));
                 if (reader != null && reader.installs(MediaKind.OS_INSTALL)) {
                     final OsDef os = OsRegistry.getOs(reader.payload());
                     /*
@@ -477,7 +481,7 @@ public final class FirmwarePayloads {
                         return;
                     } else {
                         final int target = payload.target() >= 0 ? payload.target() : computer.defaultInstallSlot();
-                        if (installOsFromReader(level, computer, payload.ref(), target)) {
+                        if (beginInstall(level, computer, payload.ref(), payload.bay(), target) == null) {
                             /*
                              * A machine that keeps its installations is only copying now, and the installer lets
                              * the player pick another disk or quit, so the boot disk is set when the install
@@ -523,17 +527,29 @@ public final class FirmwarePayloads {
     @Nullable
     public static Text beginInstall(final ServerLevel level, final IOsHost computer,
                                     final long readerPos, final int targetSlot) {
+        return beginInstall(level, computer, readerPos, MediaVolume.MEDIUM, targetSlot);
+    }
+
+    /**
+     * The same, from the medium on the volume {@code readerPos} and {@code bay} name: a reader's own medium, or a
+     * drive or a port on the computer's own front, which all stand at the computer and are told apart by the bay.
+     */
+    @Nullable
+    public static Text beginInstall(final ServerLevel level, final IOsHost computer,
+                                    final long readerPos, final int bay, final int targetSlot) {
         final HardwareEra hostEra = computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
         Text failure = null;
         for (final IMediaDrive reader : MachineMedia.of(computer, level).drives()) {
-            final long endpoint = reader.volume().readerPos();
+            final MediaVolume volume = reader.volume();
             /*
              * -1 is the word for "any drive with an installer in it"; anything else names one drive by its packed
              * position. Asking whether that position is positive is not the same question: a drive west or north
              * of the world's origin packs into a negative long, so on those bases naming a drive was read as
              * naming none of them, and the machine installed from whichever it found first.
              */
-            if (readerPos != ANY_READER && endpoint != readerPos || !reader.installs(MediaKind.OS_INSTALL)) {
+            final boolean named = readerPos == ANY_READER
+                    || volume.readerPos() == readerPos && volume.bay() == bay;
+            if (!named || !reader.installs(MediaKind.OS_INSTALL)) {
                 continue;
             }
             final OsDef def = OsRegistry.getOs(reader.payload());
@@ -590,7 +606,7 @@ public final class FirmwarePayloads {
             flow.select(targetSlot);
             machine.setInstaller(flow);
             machine.setInstalling(new OsInstallJob(def.id().toString(),
-                    flow.targetSlot(), endpoint, flow.ticksTotal(), flow.ticksTotal()));
+                    flow.targetSlot(), volume.readerPos(), volume.bay(), flow.ticksTotal(), flow.ticksTotal()));
             return null;
         }
         return failure != null ? failure : NO_MEDIUM.text();

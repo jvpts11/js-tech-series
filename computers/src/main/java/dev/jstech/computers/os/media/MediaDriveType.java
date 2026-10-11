@@ -19,9 +19,10 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * The kinds of media-reader peripheral block. A drive has no tier of its own; its capability is
- * defined by which {@link MediaFormat media formats} it can read. Each drive is a distinct block
- * (its own texture) attached to a computer via the COMPUTING peripheral cable.
+ * The kinds of drive a computer reads removable media in. A drive has no tier of its own; its capability is
+ * defined by which {@link MediaFormat media formats} it can read. Each drive but the case's port is a distinct
+ * block (its own texture) attached to a computer via the COMPUTING peripheral cable; an internal optical drive in a
+ * case's bay reads as the drive of its kind does.
  *
  * <p>Pure enum (no Minecraft imports) so the compatibility rules are unit-testable.
  */
@@ -41,7 +42,10 @@ public enum MediaDriveType implements IStableName {
     DOCK_STATION("dock_station", EnumSet.of(MediaFormat.USB)),
 
     /** Reads Blu-ray discs and, as the DVD drive reads CDs, the older optical discs: DVDs and CDs. */
-    BLU_RAY_DRIVE("blu_ray_drive", EnumSet.of(MediaFormat.BLU_RAY, MediaFormat.DVD, MediaFormat.CD));
+    BLU_RAY_DRIVE("blu_ray_drive", EnumSet.of(MediaFormat.BLU_RAY, MediaFormat.DVD, MediaFormat.CD)),
+
+    /** A USB port on the front of a computer's case, which a USB flash drive plugs into: no block of its own. */
+    USB_PORT("usb_port", EnumSet.of(MediaFormat.USB));
 
     private static final StableNames<MediaDriveType> NAMES = StableNames.of(MediaDriveType.class);
 
@@ -51,6 +55,7 @@ public enum MediaDriveType implements IStableName {
     private static final TextKey DOCK_NAME = TextKey.of("jsc.media.media_drive_type.dock_station", "Dock Station");
     private static final TextKey BLU_RAY_NAME = TextKey.of("jsc.media.media_drive_type.blu_ray_drive",
             "Blu-ray drive");
+    private static final TextKey USB_PORT_NAME = TextKey.of("jsc.media.media_drive_type.usb_port", "USB port");
 
     /** The same drives named for the middle of a sentence, so they read in lower case where a name would not. */
     private static final TextKey FLOPPY_IN_SENTENCE = TextKey.of("jsc.media.media_reader_block.floppy_drive",
@@ -61,6 +66,8 @@ public enum MediaDriveType implements IStableName {
             "Blu-ray drive");
     private static final TextKey DOCK_IN_SENTENCE = TextKey.of("jsc.media.media_reader_block.dock_station",
             "dock station");
+    private static final TextKey USB_PORT_IN_SENTENCE = TextKey.of("jsc.media.media_reader_block.usb_port",
+            "USB port");
 
     private static final EjectButton CD_BUTTON = new EjectButton(44, 20, 52, 23, 0);
     private static final EjectButton DVD_BUTTON = new EjectButton(53, 19, 59, 22, 0);
@@ -92,6 +99,7 @@ public enum MediaDriveType implements IStableName {
             case DVD_DRIVE -> DVD_NAME.text();
             case DOCK_STATION -> DOCK_NAME.text();
             case BLU_RAY_DRIVE -> BLU_RAY_NAME.text();
+            case USB_PORT -> USB_PORT_NAME.text();
         };
     }
 
@@ -103,6 +111,7 @@ public enum MediaDriveType implements IStableName {
             case DVD_DRIVE -> DVD_IN_SENTENCE.text();
             case DOCK_STATION -> DOCK_IN_SENTENCE.text();
             case BLU_RAY_DRIVE -> BLU_RAY_IN_SENTENCE.text();
+            case USB_PORT -> USB_PORT_IN_SENTENCE.text();
         };
     }
 
@@ -110,12 +119,13 @@ public enum MediaDriveType implements IStableName {
      * The era the drive is of, which decides the port on its back (save the Dock's, see {@link #portEra()}) and so the
      * peripheral cables it takes: the floppy
      * drive the Vintage's parallel port, the CD drive the Legacy's USB, the DVD drive and the Dock the Standard's
-     * USB 3, the Blu-ray drive the Advanced's USB-C.
+     * USB 3, the Blu-ray drive the Advanced's USB-C. A case's front port came with the Transition's case.
      */
     public HardwareEra era() {
         return switch (this) {
             case FLOPPY_DRIVE -> HardwareEra.VINTAGE;
             case CD_DRIVE -> HardwareEra.LEGACY;
+            case USB_PORT -> HardwareEra.TRANSITION;
             case DVD_DRIVE, DOCK_STATION -> HardwareEra.STANDARD;
             case BLU_RAY_DRIVE -> HardwareEra.ADVANCED;
         };
@@ -137,7 +147,8 @@ public enum MediaDriveType implements IStableName {
 
     /**
      * The button that opens and closes the drive's disc tray, where its model draws it beside the tray; null for the
-     * floppy drive and the Dock, which have none. The Blu-ray drive's front is set a pixel back in its case.
+     * floppy drive, the Dock and a case's port, which have none. The Blu-ray drive's front is set a pixel back in its
+     * case.
      */
     @Nullable
     public EjectButton ejectButton() {
@@ -145,7 +156,7 @@ public enum MediaDriveType implements IStableName {
             case CD_DRIVE -> CD_BUTTON;
             case DVD_DRIVE -> DVD_BUTTON;
             case BLU_RAY_DRIVE -> BLU_RAY_BUTTON;
-            case FLOPPY_DRIVE, DOCK_STATION -> null;
+            case FLOPPY_DRIVE, DOCK_STATION, USB_PORT -> null;
         };
     }
 

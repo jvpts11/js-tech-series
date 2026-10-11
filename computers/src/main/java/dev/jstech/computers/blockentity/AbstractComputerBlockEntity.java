@@ -220,6 +220,23 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     protected void partsChanged() {
     }
 
+    /**
+     * How many bays of the case's front a disk can slide into, which the system counts as disk slots after the
+     * layout's own: none unless the machine's case has a hot-swap bay to offer.
+     */
+    protected int frontDiskSlots() {
+        return 0;
+    }
+
+    /** The disk in front bay {@code bay}, or nothing when it holds none or is no hot-swap bay. */
+    protected ItemStack frontDisk(final int bay) {
+        return ItemStack.EMPTY;
+    }
+
+    /** Puts back the disk in front bay {@code bay} as the system changed it, writing a system or a file onto it. */
+    protected void putFrontDisk(final int bay, final ItemStack disk) {
+    }
+
     // Hardware assembly
 
     protected abstract Set<FormFactor> acceptedFormFactors();
@@ -905,7 +922,17 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return boardPcieSlots();
     }
 
+    /**
+     * The disk slots the system sees: those the board wires, and after every disk slot of the layout the bays of the
+     * case's front a disk slides into, so a disk in one keeps its number whatever board goes in.
+     */
     public int diskSlots() {
+        final int front = frontDiskSlots();
+        return front == 0 ? boardDiskSlots() : layout().diskCount() + front;
+    }
+
+    /** The disk slots the board wires, which a terminal counts the machine's installed disks against. */
+    public int wiredDiskSlots() {
         return boardDiskSlots();
     }
 

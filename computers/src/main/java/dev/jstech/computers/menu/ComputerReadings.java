@@ -85,7 +85,7 @@ final class ComputerReadings {
         this.installedGpus = value.apply(() -> hostInt(IComputerTerminalHost::installedGpus));
         this.gpuSlots = value.apply(() -> hostInt(IComputerTerminalHost::gpuSlots));
         this.installedDisks = value.apply(() -> hostInt(IComputerTerminalHost::installedDisks));
-        this.diskSlots = value.apply(() -> hostInt(IComputerTerminalHost::diskSlots));
+        this.diskSlots = value.apply(() -> hostInt(IComputerTerminalHost::wiredDiskSlots));
         this.storageUsed = value.apply(() -> hostClamped(IComputerTerminalHost::localStorageUsed));
         this.storageCapacity = value.apply(() -> hostClamped(IComputerTerminalHost::localStorageCapacity));
         this.mainframeHost = flag.apply(() -> hostFlag(IComputerTerminalHost::isMainframeHost));

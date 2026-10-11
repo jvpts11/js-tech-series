@@ -575,8 +575,12 @@ public final class PatternStudioPayloads {
             if (m.isEmpty() || !(m.getItem() instanceof FormattedMediaItem fmt)) {
                 continue;
             }
-            // "CD Drive: Blank CD-RW": the reader, then the medium's own label or name.
-            final Text drive = GameText.of(level.getBlockState(media.pos()).getBlock().getName());
+            /*
+             * "CD Drive: Blank CD-RW": the reader, then the medium's own label or name. A drive on the computer's own
+             * front stands in the computer's block, so it goes by the kind of drive it is.
+             */
+            final Text drive = media.volume().onFront() ? media.type().driveName()
+                    : GameText.of(level.getBlockState(media.pos()).getBlock().getName());
             drives.add(new PatternStudioStatePayload.Drive(media.volume().key(),
                     DRIVE_MEDIUM.with(drive, VolumeLabel.text(m)),
                     fmt.writable(), CraftManagerPayloads.craftFileListFromMedia(m)));

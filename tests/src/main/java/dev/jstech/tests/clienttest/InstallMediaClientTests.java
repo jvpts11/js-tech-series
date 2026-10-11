@@ -19,6 +19,7 @@ import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.MediaVolume;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -139,7 +140,7 @@ public final class InstallMediaClientTests {
                         "the program is not there before setup")
                 // What the disc's setup.exe and This PC's Install button both send.
                 .then(SETTLE, () -> PacketDistributor.sendToServer(new InstallFromMediaPayload(
-                        ctx.abs(COMPUTER), ctx.abs(DRIVE).asLong())))
+                        ctx.abs(COMPUTER), ctx.abs(DRIVE).asLong(), MediaVolume.MEDIUM)))
                 .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor(WindowKeys.SETUP) != null,
                         SCREEN_WAIT, "the Setup window to open")
                 .thenScreenshot(2, "setup-copying")

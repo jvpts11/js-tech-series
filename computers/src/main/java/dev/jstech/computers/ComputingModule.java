@@ -194,9 +194,9 @@ public final class ComputingModule {
     private static final int LONG_DISTANCE_PIXELS = 6;
     /** What a personal-use card draws, in watts. */
     private static final int WORKSHOP_CARD_WATTS = 15;
-    /** A small computer's lamps, dark on its item. */
-    private static final List<String> COMPUTER_LAMPS =
-            List.of(ComputingLooks.COMPUTER_POWER_LAMP, ComputingLooks.COMPUTER_DISK_LAMP);
+    /** A small computer's lamps, dark on its item, and the parts of its bays, which the case as it comes has none of. */
+    private static final List<String> COMPUTER_LAMPS = List.of(ComputingLooks.COMPUTER_POWER_LAMP,
+            ComputingLooks.COMPUTER_DISK_LAMP, ComputingLooks.COMPUTER_BAY_PARTS);
 
     /*
      * Cables. Each data line has a cable of its own in each era, laid in the Core's cable block in the lane of its

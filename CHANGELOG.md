@@ -103,7 +103,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   its caddy; a disc lies on a drive's tray and a USB flash drive plugs into a port, each drawn as the item it is. What
   the bays and ports hold falls out when the case is broken, or when the part holding it is taken out of its bay. A
   click on the power button on the front switches the machine on and off, whatever the hand holds, as the button on
-  its assembly screen does; a click anywhere else on the case still opens that screen.
+  its assembly screen does; a click anywhere else on the case still opens that screen. A drive in a bay works as an
+  external drive does: its eject button opens and closes its tray, which stays in while the machine reads the disc,
+  a disc goes on the open tray with a click and comes off it with a sneak-click, and its lamp blinks while it reads.
+  A USB flash drive plugs into a front port with a click and comes out with a sneak-click. A disk slides into the
+  hot-swap bay with a click and comes out with a sneak-click, with the machine on or off, its caddy riding in and out
+  and its lamp blinking as the machine works its disk; the disk is one of the machine's own, with a letter, taking a
+  system and booting it, and taken out with the machine running it takes its system with it, as on the assembly
+  screen. To the system each drive and port on the front is a drive like the external ones: a letter, This PC (whose
+  Eject opens a drive's tray), the explorers, installing systems and programs, the firmware and its boot menu, the
+  Crafting Manager, the Pattern Studio and live media.
 - Manuals, in J's Core, for every mod to write in: a mod declares its chapter once, as entries of ready blocks
   (paragraphs, figures, numbered tables whose amounts are read from the code, the recipes the world holds, steps,
   warnings, problems with their fixes, words explained, links), and they show in its own manual and in any manual
@@ -1808,6 +1817,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 
 ### Fixed
 - The Mainframe's queues tooltip names the card behind each queue; it named the item in another slot.
+- The setup on an installer medium, opened from the explorer, runs for a drive west or north of the world's origin;
+  it did nothing there.
 - The desktops' pointers, Frames 7's Start orb and the other pictures with soft edges (the systems' marks and logos,
   the panels' icons) have their edges blended into what is under them: a pointer's soft shadow came out as a hard
   black outline, and a pixel almost wholly clear in its full colour, the blue specks round the orb. A pointer's tip

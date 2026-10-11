@@ -21,7 +21,6 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
-import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -193,8 +192,7 @@ public final class OsInstallRunner {
         if (!job.hasReader()) {
             return false;
         }
-        final IMediaDrive drive = MachineMedia.of(machine, level)
-                .find(new MediaVolume(job.readerPos(), MediaVolume.MEDIUM));
+        final IMediaDrive drive = MachineMedia.of(machine, level).find(job.volume());
         return drive == null || !drive.installs(MediaKind.OS_INSTALL)
                 || !drive.payload().toString().equals(job.osId());
     }
