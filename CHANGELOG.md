@@ -112,7 +112,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   system and booting it, and taken out with the machine running it takes its system with it, as on the assembly
   screen. To the system each drive and port on the front is a drive like the external ones: a letter, This PC (whose
   Eject opens a drive's tray), the explorers, installing systems and programs, the firmware and its boot menu, the
-  Crafting Manager, the Pattern Studio and live media.
+  Crafting Manager, the Pattern Studio and live media. The power button, each drive's eject button, each port and
+  the hot-swap bay are outlined on their own while looked at, exactly where a click works them.
+- A Mainframe has a power button on the sill in the middle of its cabinet, in every era: a click switches the machine
+  on and off, whatever the hand holds, as the button on its assembly screen does, and it is outlined on its own while
+  looked at; a click anywhere else on the cabinet still opens that screen.
 - Manuals, in J's Core, for every mod to write in: a mod declares its chapter once, as entries of ready blocks
   (paragraphs, figures, numbered tables whose amounts are read from the code, the recipes the world holds, steps,
   warnings, problems with their fixes, words explained, links), and they show in its own manual and in any manual

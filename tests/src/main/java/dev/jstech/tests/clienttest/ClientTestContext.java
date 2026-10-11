@@ -27,7 +27,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
@@ -461,19 +460,25 @@ public final class ClientTestContext {
      */
     public void rightClickFront(final BlockPos relative, final double x, final double y, final int depth) {
         final BlockPos at = abs(relative);
-        final BlockState state = Objects.requireNonNull(mc.level, "no level").getBlockState(at);
-        final Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
+        final Direction facing = facingOf(at);
         final Vec3 out = Vec3.atLowerCornerOf(facing.getNormal());
-        final Vec3 right = Vec3.atLowerCornerOf(facing.getCounterClockWise().getNormal());
         final Vec3 faceCentre = Vec3.atCenterOf(at).add(out.scale(0.5));
-        final double front = EjectButton.FRONT;
-        final Vec3 target = faceCentre.add(right.scale(x / front - 0.5)).add(0, 0.5 - y / front, 0)
-                .subtract(out.scale(depth / front));
+        final Vec3 target = frontPoint(at, x, y).subtract(out.scale(depth / (double) EjectButton.FRONT));
         final Vec3 eye = player().getEyePosition();
         final Vec3 look = target.subtract(eye);
         final Vec3 hit = eye.add(look.scale(out.dot(faceCentre.subtract(eye)) / out.dot(look)));
         Objects.requireNonNull(mc.gameMode, "no game mode")
                 .useItemOn(player(), InteractionHand.MAIN_HAND, new BlockHitResult(hit, facing, at, false));
+    }
+
+    /**
+     * Client-side: turns the player's head to the point {@code x}, {@code y} sixty-fourths from the top left of the
+     * front of the device at {@code relative}, as seen, so the crosshair rests on what is drawn there.
+     */
+    public void lookAtFront(final BlockPos relative, final double x, final double y) {
+        final Vec3 look = frontPoint(abs(relative), x, y).subtract(player().getEyePosition());
+        player().setYRot((float) Math.toDegrees(Math.atan2(-look.x, look.z)));
+        player().setXRot((float) -Math.toDegrees(Math.atan2(look.y, Math.sqrt(look.x * look.x + look.z * look.z))));
     }
 
     /**
@@ -716,5 +721,20 @@ public final class ClientTestContext {
 
     public void fail(final String message) {
         throw new ClientTestFailure(message);
+    }
+
+    /* Which way the device at that absolute position faces: the face it turns to whoever placed it. */
+    private Direction facingOf(final BlockPos at) {
+        return Objects.requireNonNull(mc.level, "no level").getBlockState(at)
+                .getValue(HorizontalDirectionalBlock.FACING);
+    }
+
+    /* The point x, y sixty-fourths from the top left of the front of the device at that absolute position, as seen. */
+    private Vec3 frontPoint(final BlockPos at, final double x, final double y) {
+        final Direction facing = facingOf(at);
+        final Vec3 out = Vec3.atLowerCornerOf(facing.getNormal());
+        final Vec3 right = Vec3.atLowerCornerOf(facing.getCounterClockWise().getNormal());
+        final double front = EjectButton.FRONT;
+        return Vec3.atCenterOf(at).add(out.scale(0.5)).add(right.scale(x / front - 0.5)).add(0, 0.5 - y / front, 0);
     }
 }

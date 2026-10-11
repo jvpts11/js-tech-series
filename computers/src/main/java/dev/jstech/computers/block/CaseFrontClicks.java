@@ -11,6 +11,7 @@ import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.hardware.CaseFrontLayout;
+import dev.jstech.computers.hardware.FrontArea;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.media.DiscTray;
 import dev.jstech.computers.os.media.EjectButton;
@@ -85,7 +86,7 @@ final class CaseFrontClicks {
             }
         }
         for (int bay = 0; bay < bays; bay++) {
-            final CaseFrontLayout.Area area = layout.bays().get(bay);
+            final FrontArea area = layout.bays().get(bay);
             final boolean onTray = front.tray(bay).isOpen() && ahead != null && area.contains(ahead[0], ahead[1]);
             if ((area.contains(at[0], at[1]) || onTray) && bay(computer, bay, held, player)) {
                 return true;

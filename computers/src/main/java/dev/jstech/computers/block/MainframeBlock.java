@@ -11,6 +11,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.hardware.FrontArea;
 import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.multiblock.IMultiblockGeometry;
@@ -29,7 +30,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -64,6 +67,11 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
             propertiesCodec(),
             StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(MainframeBlock::era)
     ).apply(i, MainframeBlock::new));
+    /**
+     * The power button on the sill, at the cabinet's middle, which is the middle of this block's front: where the
+     * cabinet's model draws it, every era alike, its face on the face of the block.
+     */
+    public static final FrontArea POWER_BUTTON = new FrontArea(28, 42, 36, 50);
 
     public MainframeBlock(final Properties properties, final HardwareEra era) {
         super(properties);
@@ -183,11 +191,28 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
     }
 
     @Override
+    protected ItemInteractionResult useItemOn(final ItemStack held, final BlockState state, final Level level,
+                                              final BlockPos pos, final Player player, final InteractionHand hand,
+                                              final BlockHitResult hit) {
+        // The power button on the sill answers whatever the hand holds, as the one on the assembly screen does.
+        final double[] at = DeviceFront.point(state.getValue(FACING), pos, hit, player.getEyePosition(), 0);
+        if (at == null || !POWER_BUTTON.contains(at[0], at[1])
+                || !(level.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        if (!level.isClientSide()) {
+            mainframe.togglePower();
+            mainframe.showPowerPressed();
+        }
+        return ItemInteractionResult.sidedSuccess(level.isClientSide());
+    }
+
+    @Override
     protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
                                                final Player player, final BlockHitResult hit) {
         /*
-         * The Mainframe block is hardware only: clicking it always opens the hardware-assembly GUI
-         * (the same one its parts open). All software (firmware, OS) is used on a linked monitor.
+         * The Mainframe block is hardware only: clicking it opens the hardware-assembly GUI (the same one its parts
+         * open), anywhere but on its power button. All software (firmware, OS) is used on a linked monitor.
          */
         if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe) {

@@ -13,8 +13,8 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.block.AbstractSmallComputerBlock;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.CaseFront;
-import dev.jstech.computers.hardware.CaseFrontLayout;
 import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.FrontArea;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.menu.PersonalComputerMenu;
 import dev.jstech.computers.os.media.EjectButton;
@@ -87,7 +87,7 @@ public final class CaseFrontClickGameTests {
         for (int i = 0; i < CASES.size(); i++) {
             final AbstractSmallComputerBlock<?> block = CASES.get(i).get();
             final AbstractSmallComputerBlockEntity computer = place(helper, block, Direction.from2DDataValue(i % 4));
-            final CaseFrontLayout.Area power = block.frontLayout().power();
+            final FrontArea power = block.frontLayout().power();
             final String name = CASES.get(i).getId().getPath();
             clickFront(helper, player, middleX(power), middleY(power));
             helper.assertTrue(computer.isManualOn(), "its power button switches the " + name + " on");
@@ -102,7 +102,7 @@ public final class CaseFrontClickGameTests {
         final FakePlayer player = player(helper);
         final AbstractSmallComputerBlock<?> block = ComputingModule.LEGACY_PERSONAL_COMPUTER.get();
         final AbstractSmallComputerBlockEntity computer = place(helper, block, Direction.SOUTH);
-        final CaseFrontLayout.Area power = block.frontLayout().power();
+        final FrontArea power = block.frontLayout().power();
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ComputingModule.CD_ROM.get()));
         try {
             clickFront(helper, player, middleX(power), middleY(power));
@@ -150,7 +150,7 @@ public final class CaseFrontClickGameTests {
         final AbstractSmallComputerBlock<?> block = ComputingModule.LEGACY_PERSONAL_COMPUTER.get();
         final AbstractSmallComputerBlockEntity computer = place(helper, block, Direction.EAST);
         install(computer, 0, HardwareItems.INTERNAL_CD_DRIVE.get());
-        final CaseFrontLayout.Area bay = block.frontLayout().bays().get(0);
+        final FrontArea bay = block.frontLayout().bays().get(0);
         try {
             player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ComputingModule.CD_ROM.get()));
             clickFront(helper, player, middleX(bay), middleY(bay));
@@ -179,7 +179,7 @@ public final class CaseFrontClickGameTests {
         final AbstractSmallComputerBlockEntity computer = place(helper, block, Direction.SOUTH);
         install(computer, 0, HardwareItems.INTERNAL_CD_DRIVE.get());
         computer.front().tray(0).press(helper.getLevel(), computer.getBlockPos());
-        final CaseFrontLayout.Area bay = block.frontLayout().bays().get(0);
+        final FrontArea bay = block.frontLayout().bays().get(0);
         try {
             player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ComputingModule.BD_ROM.get()));
             clickFront(helper, player, middleX(bay), middleY(bay));
@@ -196,7 +196,7 @@ public final class CaseFrontClickGameTests {
         final FakePlayer player = player(helper);
         final AbstractSmallComputerBlock<?> block = ComputingModule.TRANSITION_PERSONAL_COMPUTER.get();
         final AbstractSmallComputerBlockEntity computer = place(helper, block, Direction.WEST);
-        final CaseFrontLayout.Area port = block.frontLayout().ports().get(1);
+        final FrontArea port = block.frontLayout().ports().get(1);
         try {
             player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ComputingModule.USB_FLASH_DRIVE.get()));
             clickFront(helper, player, middleX(port), middleY(port));
@@ -220,7 +220,7 @@ public final class CaseFrontClickGameTests {
         final AbstractSmallComputerBlock<?> block = ComputingModule.VINTAGE_PERSONAL_COMPUTER.get();
         final AbstractSmallComputerBlockEntity computer = place(helper, block, Direction.NORTH);
         install(computer, 0, HardwareItems.HOT_SWAP_DRIVE_BAY.get());
-        final CaseFrontLayout.Area bay = block.frontLayout().bays().get(0);
+        final FrontArea bay = block.frontLayout().bays().get(0);
         try {
             player.setItemInHand(InteractionHand.MAIN_HAND,
                     new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1)));
@@ -266,7 +266,7 @@ public final class CaseFrontClickGameTests {
                     helper.assertTrue(front.tray(bay).isOpen(), "the eject button of bay " + bay + " of " + name);
                 }
                 for (int port = 0; port < front.ports(); port++) {
-                    final CaseFrontLayout.Area area = block.frontLayout().ports().get(port);
+                    final FrontArea area = block.frontLayout().ports().get(port);
                     player.setItemInHand(InteractionHand.MAIN_HAND,
                             new ItemStack(ComputingModule.USB_FLASH_DRIVE.get()));
                     clickFront(helper, player, middleX(area), middleY(area));
@@ -275,7 +275,7 @@ public final class CaseFrontClickGameTests {
                 }
                 if (front.bays() > 0) {
                     install(computer, 0, HardwareItems.HOT_SWAP_DRIVE_BAY.get());
-                    final CaseFrontLayout.Area bay = block.frontLayout().bays().get(0);
+                    final FrontArea bay = block.frontLayout().bays().get(0);
                     player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HardwareItems.DISK_TRENCH_20M.get()));
                     clickFront(helper, player, middleX(bay), middleY(bay));
                     helper.assertTrue(front.held(0).is(HardwareItems.DISK_TRENCH_20M.get()),
@@ -324,11 +324,11 @@ public final class CaseFrontClickGameTests {
         computer.getHardware().setStackInSlot(computer.hardwareLayout().bayStart() + bay, new ItemStack(part));
     }
 
-    private static double middleX(final CaseFrontLayout.Area area) {
+    private static double middleX(final FrontArea area) {
         return (area.left() + area.right()) / 2.0;
     }
 
-    private static double middleY(final CaseFrontLayout.Area area) {
+    private static double middleY(final FrontArea area) {
         return (area.top() + area.bottom()) / 2.0;
     }
 

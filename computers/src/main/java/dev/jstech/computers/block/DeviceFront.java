@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.block;
 
+import dev.jstech.computers.hardware.FrontArea;
 import dev.jstech.computers.os.media.EjectButton;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -67,19 +68,30 @@ public final class DeviceFront {
      * deep, measured as {@link #point} measures the front, so an outline drawn round it stands where a click presses.
      */
     public static AABB box(final EjectButton button, final Direction front) {
+        // The face of the button, and a sixty-fourth behind it.
+        return box(new FrontArea(button.left(), button.top(), button.right(), button.bottom()), button.depth(),
+                button.depth() + 1, front);
+    }
+
+    /**
+     * The box a part of the front of a device facing {@code front} fills in its block, from {@code near} to
+     * {@code far} sixty-fourths behind the block's face (less than nothing for a part standing out of it), measured
+     * as {@link #point} measures the front, so an outline drawn round it stands where a click works it.
+     */
+    public static AABB box(final FrontArea part, final int near, final int far, final Direction front) {
         final double unit = EjectButton.FRONT;
-        final double left = button.left() / unit;
-        final double right = button.right() / unit;
-        final double top = 1.0 - button.top() / unit;
-        final double bottom = 1.0 - button.bottom() / unit;
+        final double left = part.left() / unit;
+        final double right = part.right() / unit;
+        final double top = 1.0 - part.top() / unit;
+        final double bottom = 1.0 - part.bottom() / unit;
         final Direction toRight = front.getCounterClockWise();
         final boolean rightIsPositive = toRight.getAxisDirection() == Direction.AxisDirection.POSITIVE;
         final double acrossFrom = rightIsPositive ? left : 1.0 - right;
         final double acrossTo = rightIsPositive ? right : 1.0 - left;
-        // The face of the button, and a sixty-fourth behind it, counted in from the face of the block.
+        // Counted in from the face of the block, toward its back.
         final boolean frontIsPositive = front.getAxisDirection() == Direction.AxisDirection.POSITIVE;
-        final double faceAt = button.depth() / unit;
-        final double backAt = (button.depth() + 1) / unit;
+        final double faceAt = near / unit;
+        final double backAt = far / unit;
         final double depthFrom = frontIsPositive ? 1.0 - backAt : faceAt;
         final double depthTo = frontIsPositive ? 1.0 - faceAt : backAt;
         return toRight.getAxis() == Direction.Axis.X

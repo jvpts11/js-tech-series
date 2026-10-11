@@ -164,6 +164,10 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     private static final RawAnimation WORK =
             RawAnimation.begin().thenLoop("animation.mainframe.work");
+    /** The controller the power button's press plays on, and the press. */
+    private static final String POWER = "power";
+    private static final String PRESS = "press_power";
+    private static final RawAnimation PRESS_POWER = RawAnimation.begin().thenPlay("animation.mainframe.press_power");
 
     private final AnimatableInstanceCache geckoCache =
             GeckoLibUtil.createInstanceCache(this);
@@ -184,6 +188,14 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         controllers.add(new AnimationController<>(this, "work", 0,
                 state -> visualRunning() ? state.setAndContinue(WORK)
                         : PlayState.STOP));
+        // The power button on the sill goes in when pressed, a clip the server sets off for whoever sees it.
+        controllers.add(new AnimationController<>(this, POWER, 0, state -> PlayState.STOP)
+                .triggerableAnim(PRESS, PRESS_POWER));
+    }
+
+    /** The power button pressed on the sill: the button goes in for whoever sees the cabinet. */
+    public void showPowerPressed() {
+        triggerAnim(POWER, PRESS);
     }
 
     @Override

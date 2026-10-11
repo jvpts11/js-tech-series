@@ -9,10 +9,14 @@ package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
+import dev.jstech.computers.hardware.BayDriveSpec;
+import dev.jstech.computers.hardware.CaseFrontLayout;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
+import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaVolume;
@@ -77,6 +81,9 @@ public final class ComputerCaseClientTests {
     /** The machine whose drive reads and whose hot-swap bay takes a disk, on its own; its drive's lamp bone. */
     private static final BlockPos BAYS_AT = new BlockPos(2, 2, 44);
     private static final String BAY_LAMP = "lamp_0_cd";
+    /** The case and the Mainframe whose fronts are looked at, part by part, at the eye. */
+    private static final BlockPos OUTLINED = new BlockPos(2, 3, 52);
+    private static final BlockPos OUTLINED_MAINFRAME = new BlockPos(9, 2, 52);
     /** A front of each age with what its bays and ports hold. */
     private static final List<Front> FRONTS = List.of(
             new Front("vintage-hot-swap-with-a-disk", ComputingModule.VINTAGE_PERSONAL_COMPUTER,
@@ -388,6 +395,43 @@ public final class ComputerCaseClientTests {
                         "the caddy to ride out")
                 .thenScreenshot(2, "caddy-riding-out")
                 .thenScreenshot(SETTLE * 3, "caddy-gone");
+    }
+
+    /**
+     * The parts of a front outlined on their own while the crosshair rests on them: a Transition case's power button,
+     * the eject button of the DVD drive in its first bay, a USB port and the hot-swap bay in its second bay; and a
+     * Mainframe's power button on its sill.
+     */
+    @ClientTest(timeoutTicks = 900)
+    public static void frontParts_areOutlinedWhenLookedAt(final ClientTestContext ctx) {
+        final CaseFrontLayout layout = ComputingModule.TRANSITION_PERSONAL_COMPUTER.get().frontLayout();
+        final EjectButton eject = layout.ejectButton(0, BayDriveSpec.Kind.DVD);
+        ctx.thenBuild(0, world -> {
+            world.setBlock(OUTLINED, ComputingModule.TRANSITION_PERSONAL_COMPUTER.get().defaultBlockState()
+                    .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+            final AbstractSmallComputerBlockEntity computer =
+                    world.blockEntity(OUTLINED, AbstractSmallComputerBlockEntity.class);
+            final ComputerHardwareLayout hardware = computer.hardwareLayout();
+            computer.getHardware().setStackInSlot(hardware.bayStart(), Build.stack("internal_dvd_drive"));
+            computer.getHardware().setStackInSlot(hardware.bayStart() + 1, Build.stack("hot_swap_drive_bay"));
+            world.setBlock(OUTLINED_MAINFRAME, ComputingModule.MAINFRAME.get().defaultBlockState()
+                    .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+        })
+                .thenTeleport(SETTLE, OUTLINED.south(2), Direction.NORTH)
+                .then(SETTLE, () -> ctx.lookAtFront(OUTLINED, layout.power().middleX(), layout.power().middleY()))
+                .thenScreenshot(SETTLE, "power-button")
+                .then(0, () -> ctx.lookAtFront(OUTLINED, (eject.left() + eject.right()) / 2.0,
+                        (eject.top() + eject.bottom()) / 2.0))
+                .thenScreenshot(SETTLE, "eject-button")
+                .then(0, () -> ctx.lookAtFront(OUTLINED, layout.ports().get(0).middleX(),
+                        layout.ports().get(0).middleY()))
+                .thenScreenshot(SETTLE, "usb-port")
+                .then(0, () -> ctx.lookAtFront(OUTLINED, layout.bays().get(1).middleX(), layout.bays().get(1).middleY()))
+                .thenScreenshot(SETTLE, "hot-swap-bay")
+                .thenTeleport(SETTLE, OUTLINED_MAINFRAME.south(3), Direction.NORTH)
+                .then(SETTLE, () -> ctx.lookAtFront(OUTLINED_MAINFRAME, MainframeBlock.POWER_BUTTON.middleX(),
+                        MainframeBlock.POWER_BUTTON.middleY()))
+                .thenScreenshot(SETTLE, "mainframe-power-button");
     }
 
     /**

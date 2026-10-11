@@ -40,9 +40,9 @@ class CaseFrontLayoutTest {
     void parts_lieOnTheFrontAndApart() {
         for (final HardwareEra era : CASE_ERAS) {
             for (final CaseStyle style : CaseStyle.values()) {
-                final List<CaseFrontLayout.Area> parts = parts(CaseFrontLayout.of(era, style));
+                final List<FrontArea> parts = parts(CaseFrontLayout.of(era, style));
                 for (int i = 0; i < parts.size(); i++) {
-                    final CaseFrontLayout.Area part = parts.get(i);
+                    final FrontArea part = parts.get(i);
                     assertTrue(part.left() >= 0 && part.top() >= 0 && part.right() <= 64 && part.bottom() <= 64
                             && part.left() < part.right() && part.top() < part.bottom(), era + " " + style + " " + part);
                     for (int j = i + 1; j < parts.size(); j++) {
@@ -57,7 +57,7 @@ class CaseFrontLayoutTest {
     void ejectButton_liesInItsBayForEveryDrive() {
         final CaseFrontLayout legacy = CaseFrontLayout.of(HardwareEra.LEGACY, CaseStyle.SOLE);
         for (int bay = 0; bay < legacy.bays().size(); bay++) {
-            final CaseFrontLayout.Area at = legacy.bays().get(bay);
+            final FrontArea at = legacy.bays().get(bay);
             for (final BayDriveSpec.Kind kind : List.of(BayDriveSpec.Kind.CD, BayDriveSpec.Kind.DVD,
                     BayDriveSpec.Kind.BLU_RAY)) {
                 final EjectButton button = legacy.ejectButton(bay, kind);
@@ -87,13 +87,13 @@ class CaseFrontLayoutTest {
 
     @Test
     void texels_countsFromATexelInFromTheBlocksSide() {
-        assertEquals(new CaseFrontLayout.Area(2, 0, 4, 2), CaseFrontLayout.Area.texels(0, 0, 1, 1));
-        assertEquals(new CaseFrontLayout.Area(48, 18, 56, 30), CaseFrontLayout.Area.texels(23, 9, 4, 6));
+        assertEquals(new FrontArea(2, 0, 4, 2), CaseFrontLayout.texels(0, 0, 1, 1));
+        assertEquals(new FrontArea(48, 18, 56, 30), CaseFrontLayout.texels(23, 9, 4, 6));
     }
 
     @Test
     void contains_takesThePartAndHalfAPixelRoundIt() {
-        final CaseFrontLayout.Area power = CaseFrontLayout.of(HardwareEra.STANDARD, CaseStyle.NEUTRAL).power();
+        final FrontArea power = CaseFrontLayout.of(HardwareEra.STANDARD, CaseStyle.NEUTRAL).power();
         assertTrue(power.contains(52, 22));
         assertTrue(power.contains(46, 16));
         assertTrue(power.contains(58, 28));
@@ -101,15 +101,22 @@ class CaseFrontLayoutTest {
         assertFalse(power.contains(52, 28.1));
     }
 
-    private static List<CaseFrontLayout.Area> parts(final CaseFrontLayout front) {
-        final List<CaseFrontLayout.Area> parts = new ArrayList<>();
+    @Test
+    void middle_isHalfwayAcrossAndDown() {
+        final FrontArea area = new FrontArea(10, 4, 54, 14);
+        assertEquals(32.0, area.middleX());
+        assertEquals(9.0, area.middleY());
+    }
+
+    private static List<FrontArea> parts(final CaseFrontLayout front) {
+        final List<FrontArea> parts = new ArrayList<>();
         parts.add(front.power());
         parts.addAll(front.bays());
         parts.addAll(front.ports());
         return parts;
     }
 
-    private static boolean overlap(final CaseFrontLayout.Area a, final CaseFrontLayout.Area b) {
+    private static boolean overlap(final FrontArea a, final FrontArea b) {
         return a.left() < b.right() && b.left() < a.right() && a.top() < b.bottom() && b.top() < a.bottom();
     }
 }
