@@ -64,13 +64,16 @@ public final class NetworkInteractorClientTests {
     private static final int CELL_HALF = 9;
 
     /*
-     * The horizontal grip, the window's corner and, maximized, the vertical grip, each dragged slowly the way a hand
-     * drags them, a step a tick, with the player's own items in the band: at every step the items sit on the cells the
-     * program draws, never where they were.
+     * The horizontal grip, the window's corner out, the vertical grip, the corner back in over the widened grid and,
+     * maximized, the vertical grip again, each dragged slowly the way a hand drags them, a step a tick, with the
+     * player's own items in the band: at every step the items sit on the cells the program draws, never where they
+     * were. Drawing the right edge back in folds the grid's extra columns away and slides the band with them, the
+     * case where the items once stood for a frame where their cells had been.
      */
     @ClientTest(timeoutTicks = 2400)
     public static void grips_draggedSlowlyKeepTheItemsOnTheirCells(final ClientTestContext ctx) {
         final int[] from = new int[2];
+        final int[] widened = new int[2];
         ctx.thenBuild(0, world -> {
                     final CraftingComputerBlockEntity cc = world.placeRunningCraftingComputer(CRAFTING_COMPUTER);
                     TestWorldBuilder.installDesktop(cc, FRAMES_XP, Programs.CRAFTING_MANAGER);
@@ -88,12 +91,21 @@ public final class NetworkInteractorClientTests {
                 .then(4, () -> pressAt(ctx, from, point(ctx, interactor(ctx).horizontalGripCenter())));
         dragSlowly(ctx, from, 0, 6, "the horizontal grip");
         ctx.thenScreenshot(1, "grip-folded")
-                .then(1, () -> {
-                    final DesktopWindow window = ctx.screen(DesktopScreen.class).windowFor(NETWORK_LAUNCHER);
-                    pressAt(ctx, from, new int[] {window.x() + window.width() - 1, window.y() + window.height() - 1});
-                });
-        dragSlowly(ctx, from, 5, 5, "the window's corner");
+                .then(1, () -> pressAt(ctx, from, corner(ctx)));
+        dragSlowly(ctx, from, 12, 5, "the window's corner out");
         ctx.thenScreenshot(1, "window-resized")
+                .then(4, () -> pressAt(ctx, from, point(ctx, interactor(ctx).verticalGripCenter())));
+        dragSlowly(ctx, from, 6, 0, "the vertical grip");
+        ctx.thenScreenshot(1, "grid-widened-in-window")
+                .then(1, () -> {
+                    System.arraycopy(hotbarCell(ctx), 0, widened, 0, 2);
+                    pressAt(ctx, from, corner(ctx));
+                });
+        dragSlowly(ctx, from, -12, 0, "the window's corner back in");
+        ctx.thenScreenshot(1, "window-narrowed")
+                .then(1, () -> ctx.assertTrue(hotbarCell(ctx)[0] < widened[0], "drawing the right edge back in"
+                        + " folds the grid's extra columns away and slides the band left; the first hotbar cell was at"
+                        + " x " + widened[0] + " and is at x " + hotbarCell(ctx)[0]))
                 .then(1, () -> ctx.screen(DesktopScreen.class).windowFor(NETWORK_LAUNCHER).toggleMaximize())
                 .then(4, () -> pressAt(ctx, from, point(ctx, interactor(ctx).verticalGripCenter())));
         dragSlowly(ctx, from, 6, 0, "the vertical grip");
@@ -657,31 +669,65 @@ public final class NetworkInteractorClientTests {
     }
 
     /*
-     * The held button moved six steps of (dx, dy) from where it was pressed, a step a tick, the items checked against
-     * their cells after each, then let go.
+     * The held button moved six steps of (dx, dy) from where it was pressed, a step a tick, then let go. Right after
+     * each step, before any frame is drawn, the slots are laid again the way the top of the next frame lays them, and
+     * where the first hotbar slot stood then is held against the cell the program drew in the frames that followed:
+     * slots laid by a size the program kept from the frame before the step would, for that frame, put the items where
+     * their cells had been.
      */
     private static void dragSlowly(final ClientTestContext ctx, final int[] from, final int dx, final int dy,
                                    final String what) {
+        final int[] laid = new int[2];
         for (int step = 1; step <= 6; step++) {
             final int s = step;
-            ctx.then(1, () -> drag(ctx, new int[] {from[0] + dx * s, from[1] + dy * s}))
-                    .then(1, () -> ctx.assertTrue(onTheirCells(ctx), "dragging " + what + ", the items sit on their"
-                            + " cells; the first hotbar cell is at " + hotbarCell(ctx) + ", " + bandSnapshot(ctx)));
+            ctx.then(1, () -> {
+                        drag(ctx, new int[] {from[0] + dx * s, from[1] + dy * s});
+                        layBeforeAFrame(ctx, laid);
+                    })
+                    .then(1, () -> ctx.assertTrue(laid[0] == hotbarCell(ctx)[0] && laid[1] == hotbarCell(ctx)[1],
+                            "dragging " + what + ", the slots laid before the next frame stand on the cells that frame"
+                                    + " draws; the first hotbar slot was laid at " + laid[0] + "," + laid[1]
+                                    + " and its cell is at " + hotbarCell(ctx)[0] + "," + hotbarCell(ctx)[1]))
+                    .then(0, () -> ctx.assertTrue(onTheirCells(ctx), "dragging " + what + ", the items sit on their"
+                            + " cells; " + bandSnapshot(ctx)));
         }
         ctx.then(1, () -> release(ctx, new int[] {from[0] + dx * 6, from[1] + dy * 6}))
                 .then(1, () -> ctx.assertTrue(onTheirCells(ctx), "let go of " + what + ", the items sit on their"
                         + " cells; " + bandSnapshot(ctx)));
     }
 
+    /*
+     * Lays the slots again at once, with no frame drawn since the last input, and keeps where the first hotbar slot
+     * stood. A screen tick lays them through the same code the top of every frame runs.
+     */
+    private static void layBeforeAFrame(final ClientTestContext ctx, final int[] laid) {
+        ctx.screen(DesktopScreen.class).tick();
+        final Slot slot = firstHotbarSlot(ctx);
+        laid[0] = slot == null ? Integer.MIN_VALUE : slot.x;
+        laid[1] = slot == null ? Integer.MIN_VALUE : slot.y;
+    }
+
     /* Whether the first hotbar slot stands on the band's first hotbar cell as the program draws it. */
     private static boolean onTheirCells(final ClientTestContext ctx) {
         final int[] cell = hotbarCell(ctx);
+        final Slot slot = firstHotbarSlot(ctx);
+        return slot != null && slot.x == cell[0] && slot.y == cell[1];
+    }
+
+    /* The live slot of the player's first hotbar cell, or null when the band is off. */
+    private static Slot firstHotbarSlot(final ClientTestContext ctx) {
         for (final Slot slot : ctx.screen(DesktopScreen.class).getMenu().slots) {
             if (slot.isActive() && slot.container == ctx.player().getInventory() && slot.getContainerSlot() == 0) {
-                return slot.x == cell[0] && slot.y == cell[1];
+                return slot;
             }
         }
-        return false;
+        return null;
+    }
+
+    /* The desktop point of the Network Interactor window's bottom-right corner, where it is resized from. */
+    private static int[] corner(final ClientTestContext ctx) {
+        final DesktopWindow window = ctx.screen(DesktopScreen.class).windowFor(NETWORK_LAUNCHER);
+        return new int[] {window.x() + window.width() - 1, window.y() + window.height() - 1};
     }
 
     /* The desktop point of the top-left of the band's first hotbar cell, as the program draws it. */

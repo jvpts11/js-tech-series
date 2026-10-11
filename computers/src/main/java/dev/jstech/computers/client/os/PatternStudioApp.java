@@ -469,18 +469,18 @@ public final class PatternStudioApp implements IInventoryBandApp {
     }
 
     @Override
-    public int invCellContentX(final int col) {
+    public int invCellContentX(final int col, final int contentWidth, final int contentHeight) {
         return PAD + BAND_PAD + col * CELL;
     }
 
     @Override
-    public int invCellContentY(final int row, final int contentHeight) {
+    public int invCellContentY(final int row, final int contentWidth, final int contentHeight) {
         // A hidden band parks its slots far below the window, where the desktop draws and clicks nothing.
         return bandVisible(contentHeight) ? bandTop(contentHeight) + BAND_PAD + rowYOffset(row) : contentHeight + 10_000;
     }
 
     @Override
-    public int invBandBottom(final int contentHeight) {
+    public int invBandBottom(final int contentWidth, final int contentHeight) {
         return bandTop(contentHeight) + BAND_PAD + rowYOffset(INV_ROWS - 1) + CELL;
     }
 
@@ -1362,8 +1362,8 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
     /** The centre of inventory band slot {@code index} (rows 0-2 main inventory, row 3 hotbar). */
     public int[] inventoryBandSlotCenter(final int index) {
-        return new int[] {invCellContentX(index % INV_COLS) + CELL / 2,
-                invCellContentY(index / INV_COLS, lastH) + CELL / 2};
+        return new int[] {invCellContentX(index % INV_COLS, lastW, lastH) + CELL / 2,
+                invCellContentY(index / INV_COLS, lastW, lastH) + CELL / 2};
     }
 
     /** Whether the inventory band was drawn on the last frame (a window tall enough to hold it). */

@@ -323,17 +323,17 @@ public final class WorkshopApp implements IInventoryBandApp {
     }
 
     @Override
-    public int invCellContentX(final int col) {
+    public int invCellContentX(final int col, final int contentWidth, final int contentHeight) {
         return PAD + WorkshopLayout.BAND_PAD + col * CELL;
     }
 
     @Override
-    public int invCellContentY(final int row, final int contentHeight) {
+    public int invCellContentY(final int row, final int contentWidth, final int contentHeight) {
         return WorkshopLayout.bandTop(contentHeight) + WorkshopLayout.BAND_PAD + WorkshopLayout.rowYOffset(row);
     }
 
     @Override
-    public int invBandBottom(final int contentHeight) {
+    public int invBandBottom(final int contentWidth, final int contentHeight) {
         return WorkshopLayout.bandTop(contentHeight) + WorkshopLayout.BAND_PAD
                 + WorkshopLayout.rowYOffset(WorkshopLayout.INV_ROWS - 1) + CELL;
     }

@@ -59,19 +59,22 @@ final class InventoryBand {
         /*
          * The window-local corner of the first cell: past the border and the title bar to the program's content,
          * then the program's own offset to its inventory zone. That zone is a fixed, framed band pinned just above
-         * the footer, measured on the window's live content height rather than a height the program kept, so the
-         * cells line up with their backgrounds from the very first frame.
+         * the footer, measured on the window's live content size, the one the window hands the program to draw this
+         * frame, rather than a size the program kept: a kept width lags a window being resized by a frame, and for
+         * that frame the items stood where their cells had been.
          */
-        final int contentHeight = w.height() - DesktopWindow.TITLE_H - 8;
-        final int contentTop = w.y() + DesktopWindow.TITLE_H + 4;
-        final int originX = w.x() + 4 + app.invCellContentX(0);
-        final int originY = contentTop + app.invCellContentY(0, contentHeight);
+        final int inset = DesktopWindow.CONTENT_INSET;
+        final int contentWidth = w.width() - 2 * inset;
+        final int contentHeight = w.height() - DesktopWindow.TITLE_H - 2 * inset;
+        final int contentTop = w.y() + DesktopWindow.TITLE_H + inset;
+        final int originX = w.x() + inset + app.invCellContentX(0, contentWidth, contentHeight);
+        final int originY = contentTop + app.invCellContentY(0, contentWidth, contentHeight);
         /*
          * The band spans the rows the program shows: it never scrolls and is never clipped, but it can fold its top
          * rows away, and a slot above its top goes inert.
          */
-        final int bandTop = contentTop + app.invBandTop(contentHeight);
-        final int bandBottom = contentTop + app.invBandBottom(contentHeight);
+        final int bandTop = contentTop + app.invBandTop(contentWidth, contentHeight);
+        final int bandBottom = contentTop + app.invBandBottom(contentWidth, contentHeight);
         menu.layoutInventory(originX, originY, bandTop, bandBottom);
     }
 

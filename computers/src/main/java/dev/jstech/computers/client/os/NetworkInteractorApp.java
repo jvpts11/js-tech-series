@@ -665,8 +665,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         return NetworkInteractorLayout.resolve(contentW, contentH, extraCols, invRows);
     }
 
-    private NetworkInteractorLayout.Zones zones(final int contentHeight) {
-        return NetworkInteractorLayout.resolve(contentW, contentHeight, extraCols, invRows);
+    private NetworkInteractorLayout.Zones zones(final int contentWidth, final int contentHeight) {
+        return NetworkInteractorLayout.resolve(contentWidth, contentHeight, extraCols, invRows);
     }
 
     /*
@@ -674,36 +674,40 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
      * screen reads these to place the menu's 36 inventory slots over this window each frame.
      */
 
-    /** The content-local x of a slot cell's top-left, where the vanilla item is drawn. */
+    /**
+     * The content-local x of a slot cell's top-left, where the vanilla item is drawn, for the given content size. The
+     * band sits under the grid, which a window resized wider widens, so the place comes from the live width, never
+     * from the one the last frame drew at, or the items trail their cells by a frame while the window is resized.
+     */
     @Override
-    public int invCellContentX(final int col) {
-        return zones().invX() + col * CELL;
+    public int invCellContentX(final int col, final int contentWidth, final int contentHeight) {
+        return zones(contentWidth, contentHeight).invX() + col * CELL;
     }
 
     /**
-     * The content-local y of a slot cell's top-left for the given content height. The inventory band is a
-     * panel pinned just above the footer, so the row position is derived from the live height, never from a
+     * The content-local y of a slot cell's top-left for the given content size. The inventory band is a
+     * panel pinned just above the footer, so the row position is derived from the live size, never from a
      * cached field, so the item lines up with its slot background from the very first frame. A row the band
      * has folded away lands above the band, where the desktop makes its slots inert.
      */
     @Override
-    public int invCellContentY(final int row, final int contentHeight) {
-        return NetworkInteractorLayout.slotRowY(zones(contentHeight), row);
+    public int invCellContentY(final int row, final int contentWidth, final int contentHeight) {
+        return NetworkInteractorLayout.slotRowY(zones(contentWidth, contentHeight), row);
     }
 
     /** The content-local y where the band's shown slots begin: rows placed above it are folded away. */
     @Override
-    public int invBandTop(final int contentHeight) {
-        return zones(contentHeight).invY();
+    public int invBandTop(final int contentWidth, final int contentHeight) {
+        return zones(contentWidth, contentHeight).invY();
     }
 
     /**
-     * The content-local y just past the bottom row of inventory slots, for the given content height, the
+     * The content-local y just past the bottom row of inventory slots, for the given content size, the
      * desktop screen uses it as the band's lower visibility bound so the shown slots are all counted visible.
      */
     @Override
-    public int invBandBottom(final int contentHeight) {
-        return NetworkInteractorLayout.slotRowY(zones(contentHeight), INV_ROWS - 1) + CELL;
+    public int invBandBottom(final int contentWidth, final int contentHeight) {
+        return NetworkInteractorLayout.slotRowY(zones(contentWidth, contentHeight), INV_ROWS - 1) + CELL;
     }
 
     /** Whether a content-local point falls within an inventory slot cell (the framed, always-visible band). */

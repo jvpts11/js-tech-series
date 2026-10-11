@@ -1852,6 +1852,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the line that says to hold the key; it was drawn under the slot, outside the tooltip.
 - A supercomputer node's assembly screen is titled Supercomputer Node, its name field asking for a node's name; it
   said Server.
+- The player's items in the Network Interactor, the Workshop and the Pattern Studio stay on their cells while the
+  window is resized; drawing the right edge in over a widened grid left them for a frame where their cells had been.
 - The Mainframe's queues tooltip names the card behind each queue; it named the item in another slot.
 - The setup on an installer medium, opened from the explorer, runs for a drive west or north of the world's origin;
   it did nothing there.
