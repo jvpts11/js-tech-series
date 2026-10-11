@@ -30,8 +30,8 @@ import net.minecraft.world.level.block.Blocks;
  * Chapters, manuals and the item that opens one, to prove the Core's manuals: every kind of block an entry is made
  * of, a special block another mod draws, an entry an item's page opens to, links between entries, tables that run on
  * and that stack, a scene the reader turns, a command's page read from the command, a second book that binds a chapter
- * written for it alone before the mod's main one, a link from one book into the other, and a stack whose page its mod
- * chooses.
+ * written for it alone before the mod's main one, a link from one book into the other, a stack whose page its mod
+ * chooses, and a book in the look of each of J's Computers' books.
  */
 public final class TestGuide {
 
@@ -59,6 +59,12 @@ public final class TestGuide {
     /** What the test manual reads from the test mod as it is laid out: the press's energy, and every item. */
     public static final String PRESS_ENERGY = "jstests:press_energy";
     public static final String ITEMS = "jstests:items";
+    /**
+     * The styles of J's Computers' books, each drawing a test book that holds the test chapters, so their pages, the
+     * marks of their chapters and their ribbon can be seen with chapters in them.
+     */
+    public static final List<String> BOOK_STYLES = List.of("frames_resource_kit", "linux_desk_reference",
+            "linux_by_hand", "daemon_handbook", "learning_iql", "book_of_sigma");
 
     private static final ModGuide GUIDE = TestSounds.CONTENT.guide();
 
@@ -219,9 +225,20 @@ public final class TestGuide {
                 .edition("First Test Edition").style(CoreGuide.BINDER).chapters(SHARED.id(), "jstests")
                 .about("This book binds the shared chapter before the test mod's main one.").priority(-2)
                 .register();
+        for (final String style : BOOK_STYLES) {
+            GUIDE.manual("styled_" + style).titled("Styled Test Book").style("jsc:" + style)
+                    .chapters("jstests", SHARED.id())
+                    .about("This book holds the test chapters in the look of one of J's Computers' books.")
+                    .priority(-3).register();
+        }
     }
 
     private TestGuide() {
+    }
+
+    /** The test book drawn in that style of J's Computers' books. */
+    public static String styledBook(final String style) {
+        return "jstests:styled_" + style;
     }
 
     /**

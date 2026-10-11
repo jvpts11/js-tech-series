@@ -82,7 +82,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:iql",
-  "order": 34,
+  "order": 35,
   "section": "jsc:operations",
   "title": "jsc.guide.iql.title"
 }

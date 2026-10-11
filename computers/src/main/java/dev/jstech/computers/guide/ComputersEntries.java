@@ -719,6 +719,22 @@ final class ComputersEntries {
                         "On Linux the manuals are read with info. Elsewhere, check the topic's name: man"
                                 + " graphics-cards, not man graphics.")
                 .register();
+        guide.page("other_books", section).titled("The other books").icon(ComputersBooks.FRAMES_RESOURCE_KIT)
+                .covers(ComputersBooks.FRAMES_RESOURCE_KIT).covers(ComputersBooks.LINUX_DESK_REFERENCE)
+                .covers(ComputersBooks.LINUX_BY_HAND).covers(ComputersBooks.DAEMON_HANDBOOK)
+                .covers(ComputersBooks.LEARNING_IQL).covers(ComputersBooks.BOOK_OF_SIGMA)
+                .paragraph("This guide explains J's Computers as a whole. Six more books go deeper into what runs on"
+                        + " the computers, each written for one family of systems or one language, and each dressed"
+                        + " as the manuals of its time were.")
+                .paragraph("The Frames Resource Kit covers MC-DOS and every Frames, from 95 to 11. The Linux Desk"
+                        + " Reference covers Fedora, Debian and Ubuntu, and Linux by Hand the two you install by"
+                        + " hand, Gentoo and Arch. The Daemon Handbook covers FreeBSD and UNIX System V. Learning IQL"
+                        + " teaches the language you ask the network questions in, and The Book of Sigma the"
+                        + " languages the computers are programmed in, Sigma and Sigma#.")
+                .paragraph("On a computer, the help of each system opens first on the book written for it"
+                        + " ([](jsc:help_on_a_computer)).")
+                .paragraph("The books are in the creative tab J's Computers, among the programs, beside this guide.")
+                .register();
     }
 
     private static void network(final ModGuide guide) {

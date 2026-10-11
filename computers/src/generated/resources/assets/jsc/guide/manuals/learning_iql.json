@@ -1,0 +1,26 @@
+{
+  "about": [
+    "jsc.guide.manual.learning_iql.about1",
+    "jsc.guide.manual.learning_iql.about2"
+  ],
+  "chapters": [
+    "jsc:iql_getting_started",
+    "jsc:iql_language",
+    "jsc:iql_engines",
+    "jsc:iql_tools",
+    "jsc:iql_recipes"
+  ],
+  "cover": [
+    "jsc.guide.manual.learning_iql.cover1",
+    "jsc.guide.manual.learning_iql.cover2",
+    "jsc.guide.manual.learning_iql.cover3",
+    "jsc.guide.manual.learning_iql.cover4",
+    "jsc.guide.manual.learning_iql.cover5",
+    "jsc.guide.manual.learning_iql.cover6",
+    "jsc.guide.manual.learning_iql.cover7"
+  ],
+  "id": "jsc:learning_iql",
+  "priority": 50,
+  "style": "jsc:learning_iql",
+  "title": "jsc.guide.manual.learning_iql.title"
+}

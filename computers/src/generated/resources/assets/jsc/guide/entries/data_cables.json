@@ -104,7 +104,7 @@
     "jsc:hpc_cable",
     "jsc:osfp_cable"
   ],
-  "order": 26,
+  "order": 27,
   "section": "jsc:network",
   "title": "jsc.guide.data_cables.title"
 }

@@ -1,0 +1,27 @@
+{
+  "about": [
+    "jsc.guide.manual.book_of_sigma.about1",
+    "jsc.guide.manual.book_of_sigma.about2"
+  ],
+  "chapters": [
+    "jsc:sigma_getting_started",
+    "jsc:sigma_language",
+    "jsc:sigma_library",
+    "jsc:sigma_running",
+    "jsc:sigma_errors",
+    "jsc:sigma_sharing",
+    "jsc:sigma_examples"
+  ],
+  "cover": [
+    "jsc.guide.manual.book_of_sigma.cover1",
+    "jsc.guide.manual.book_of_sigma.cover2",
+    "jsc.guide.manual.book_of_sigma.cover3",
+    "jsc.guide.manual.book_of_sigma.cover4",
+    "jsc.guide.manual.book_of_sigma.cover5",
+    "jsc.guide.manual.book_of_sigma.cover6"
+  ],
+  "id": "jsc:book_of_sigma",
+  "priority": 50,
+  "style": "jsc:book_of_sigma",
+  "title": "jsc.guide.manual.book_of_sigma.title"
+}

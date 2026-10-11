@@ -35,7 +35,7 @@
   "items": [
     "jsc:server_router"
   ],
-  "order": 30,
+  "order": 31,
   "section": "jsc:network",
   "title": "jsc.guide.server_router.title"
 }

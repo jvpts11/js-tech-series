@@ -11,8 +11,10 @@ import com.google.gson.JsonElement;
 import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import dev.jstech.computers.guide.ComputersBooks;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.core.client.guide.GuideLibrary;
+import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideBlock;
@@ -32,12 +34,14 @@ import dev.jstech.core.guide.GuideSection;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.guide.IGuideText;
+import dev.jstech.core.guide.ManualItem;
 import dev.jstech.core.guide.ModGuide;
 import dev.jstech.core.guide.TextSize;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.text.TextFormat;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.tests.JsTests;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,6 +55,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.locale.Language;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -107,6 +112,43 @@ public final class SeriesManualsGameTests {
         player.getInventory().clearContent();
         GuideGifts.welcome(player);
         helper.assertTrue(count(player) == 0, "a player who put theirs away is not handed another");
+        helper.succeed();
+    }
+
+    /*
+     * Each book of the systems and the languages is an item that opens it, bound as a book rather than a binder, its
+     * chapters marked on its pages and its cover drawn from its parts: every line the cover prints is one of the
+     * manual's cover lines, and every picture on it a texture the mod ships.
+     */
+    @GameTest(template = ARENA)
+    public static void computersBooks_areBoundEachItsOwnWayWithItsCoverAndItsItem(final GameTestHelper helper) {
+        final GuideLibrary library = library();
+        final List<ItemEntry<ManualItem>> books = List.of(ComputersBooks.FRAMES_RESOURCE_KIT,
+                ComputersBooks.LINUX_DESK_REFERENCE, ComputersBooks.LINUX_BY_HAND, ComputersBooks.DAEMON_HANDBOOK,
+                ComputersBooks.LEARNING_IQL, ComputersBooks.BOOK_OF_SIGMA);
+        final Set<String> looks = new HashSet<>();
+        for (final ItemEntry<ManualItem> book : books) {
+            final String id = book.get().manual();
+            final GuideManual manual = library.manual(id).orElse(null);
+            helper.assertTrue(manual != null, book.getId() + " opens a manual there is: " + id);
+            final GuideStyle style = library.style(manual.style()).orElse(null);
+            helper.assertTrue(style != null && style.cover().kind() == GuideStyle.CoverKind.BOOK
+                    && !style.cover().parts().isEmpty(), id + " has a book's cover, drawn from its parts");
+            helper.assertTrue(!style.rings() && style.make().marks() != GuideStyle.Marks.TABS,
+                    id + " is bound as a book, its chapters marked on its pages");
+            helper.assertTrue(!manual.chapters().isEmpty() && manual.chapters().stream()
+                    .allMatch(chapter -> library.chapter(chapter).isPresent()), id + " names its declared chapters");
+            for (final GuideStyle.CoverPart part : style.cover().parts()) {
+                helper.assertTrue(part.words() <= manual.coverKeys().size(),
+                        id + "'s cover prints line " + part.words() + " of " + manual.coverKeys().size());
+                if (!part.image().isEmpty()) {
+                    helper.assertTrue(ships(ResourceLocation.parse(part.image())),
+                            id + "'s cover shows " + part.image() + ", a texture the mod does not ship");
+                }
+            }
+            looks.add(manual.style());
+        }
+        helper.assertTrue(looks.size() == books.size(), "each book is dressed its own way: " + looks);
         helper.succeed();
     }
 
@@ -291,6 +333,13 @@ public final class SeriesManualsGameTests {
         }
         helper.assertTrue(entries > FEWEST_ENTRIES, "the series' chapters hold their entries; found " + entries);
         helper.succeed();
+    }
+
+    /** Whether the mod of a texture's namespace ships it, as {@code textures/<path>.png}. */
+    private static boolean ships(final ResourceLocation texture) {
+        final String file = "assets/" + texture.getNamespace() + "/textures/" + texture.getPath() + ".png";
+        return Files.exists(ModList.get().getModFileById(texture.getNamespace()).getFile()
+                .findResource(file.split("/")));
     }
 
     /** What every mod writes in the manuals, the test mod's among them. */

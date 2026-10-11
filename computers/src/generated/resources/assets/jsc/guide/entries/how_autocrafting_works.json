@@ -40,7 +40,7 @@
   "items": [
     "jsc:crafting_cable"
   ],
-  "order": 39,
+  "order": 40,
   "section": "jsc:autocrafting",
   "title": "jsc.guide.how_autocrafting_works.title"
 }

@@ -24,7 +24,7 @@
   ],
   "icon": "minecraft:water_bucket",
   "id": "jsc:fluids",
-  "order": 38,
+  "order": 39,
   "section": "jsc:storage",
   "title": "jsc.guide.fluids.title"
 }

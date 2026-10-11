@@ -34,7 +34,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:first_network",
-  "order": 25,
+  "order": 26,
   "section": "jsc:network",
   "shows": [
     "jsc:mainframe",

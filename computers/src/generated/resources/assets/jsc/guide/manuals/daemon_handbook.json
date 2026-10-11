@@ -1,0 +1,25 @@
+{
+  "about": [
+    "jsc.guide.manual.daemon_handbook.about1",
+    "jsc.guide.manual.daemon_handbook.about2",
+    "jsc.guide.manual.daemon_handbook.about3"
+  ],
+  "chapters": [
+    "jsc:freebsd",
+    "jsc:system_v",
+    "jsc:shell",
+    "jsc:unix_desktops",
+    "jsc:terminal_editors",
+    "jsc:finding_help"
+  ],
+  "cover": [
+    "jsc.guide.manual.daemon_handbook.cover1",
+    "jsc.guide.manual.daemon_handbook.cover2",
+    "jsc.guide.manual.daemon_handbook.cover3",
+    "jsc.guide.manual.daemon_handbook.cover4"
+  ],
+  "id": "jsc:daemon_handbook",
+  "priority": 50,
+  "style": "jsc:daemon_handbook",
+  "title": "jsc.guide.manual.daemon_handbook.title"
+}

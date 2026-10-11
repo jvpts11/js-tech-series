@@ -31,7 +31,7 @@
     "jsc:standard_redstone_interface",
     "jsc:advanced_redstone_interface"
   ],
-  "order": 49,
+  "order": 50,
   "section": "jsc:peripherals",
   "title": "jsc.guide.redstone_interfaces.title"
 }

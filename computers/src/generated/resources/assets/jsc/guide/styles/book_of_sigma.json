@@ -1,0 +1,128 @@
+{
+  "code_font": "jscore:fixed_5x8",
+  "cover": {
+    "kind": "book",
+    "label": false,
+    "parts": [
+      {
+        "colour": "#FFFBFBF8",
+        "height": 218,
+        "kind": "fill",
+        "width": 180
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "height": 1,
+        "kind": "fill",
+        "width": 180
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "height": 218,
+        "kind": "fill",
+        "width": 1
+      },
+      {
+        "colour": "#FFD3D3CC",
+        "height": 1,
+        "kind": "fill",
+        "width": 180,
+        "y": 217
+      },
+      {
+        "colour": "#FFD3D3CC",
+        "height": 218,
+        "kind": "fill",
+        "width": 1,
+        "x": 179
+      },
+      {
+        "colour": "faint",
+        "kind": "small_bold",
+        "line": 1,
+        "width": 156,
+        "x": 20,
+        "y": 22
+      },
+      {
+        "height": 58,
+        "image": "jsc:gui/guide/sigma",
+        "kind": "image",
+        "width": 46,
+        "x": 20,
+        "y": 40
+      },
+      {
+        "colour": "ink",
+        "kind": "bold",
+        "line": 2,
+        "scale": 2.0,
+        "width": 100,
+        "x": 76,
+        "y": 82
+      },
+      {
+        "colour": "rule",
+        "height": 1,
+        "kind": "fill",
+        "width": 140,
+        "x": 20,
+        "y": 112
+      },
+      {
+        "colour": "faint",
+        "kind": "small",
+        "line": 3,
+        "width": 156,
+        "x": 20,
+        "y": 118
+      },
+      {
+        "colour": "faint",
+        "kind": "small",
+        "line": 4,
+        "width": 156,
+        "x": 20,
+        "y": 126
+      },
+      {
+        "colour": "faint",
+        "kind": "small",
+        "line": 5,
+        "width": 156,
+        "x": 20,
+        "y": 170
+      },
+      {
+        "height": 12,
+        "image": "jsc:gui/program/sgsc/frames_xp",
+        "kind": "image",
+        "width": 12,
+        "x": 20,
+        "y": 186
+      },
+      {
+        "colour": "ink",
+        "kind": "small_bold",
+        "line": 6,
+        "width": 140,
+        "x": 36,
+        "y": 189
+      }
+    ]
+  },
+  "hold_bar": "blocks",
+  "make": {
+    "binding": "glued",
+    "colours": [
+      "heading",
+      "band"
+    ],
+    "marks": "thumb"
+  },
+  "pages": {
+    "height": 201,
+    "width": 166
+  },
+  "palette": "jsc:guide/book_of_sigma"
+}

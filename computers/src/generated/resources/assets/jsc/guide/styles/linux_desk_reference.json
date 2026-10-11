@@ -1,0 +1,160 @@
+{
+  "code_font": "jscore:fixed_5x8",
+  "cover": {
+    "kind": "book",
+    "label": false,
+    "parts": [
+      {
+        "colour": "#FF2B2F36",
+        "height": 218,
+        "kind": "fill",
+        "width": 180
+      },
+      {
+        "colour": "#FF55595E",
+        "height": 1,
+        "kind": "fill",
+        "width": 180
+      },
+      {
+        "colour": "#FF55595E",
+        "height": 218,
+        "kind": "fill",
+        "width": 1
+      },
+      {
+        "colour": "#FF16181C",
+        "height": 1,
+        "kind": "fill",
+        "width": 180,
+        "y": 217
+      },
+      {
+        "colour": "#FF16181C",
+        "height": 218,
+        "kind": "fill",
+        "width": 1,
+        "x": 179
+      },
+      {
+        "colour": "#FF9AA0AA",
+        "height": 218,
+        "kind": "wire",
+        "width": 8,
+        "x": -3
+      },
+      {
+        "colour": "#FF121418",
+        "height": 218,
+        "kind": "holes",
+        "width": 2,
+        "x": 6
+      },
+      {
+        "colour": "#FF101317",
+        "height": 70,
+        "kind": "fill",
+        "width": 132,
+        "x": 28,
+        "y": 30
+      },
+      {
+        "colour": "#FF3D434D",
+        "height": 1,
+        "kind": "fill",
+        "width": 132,
+        "x": 28,
+        "y": 30
+      },
+      {
+        "colour": "#FF3D434D",
+        "height": 70,
+        "kind": "fill",
+        "width": 1,
+        "x": 28,
+        "y": 30
+      },
+      {
+        "colour": "#FF000000",
+        "height": 1,
+        "kind": "fill",
+        "width": 132,
+        "x": 28,
+        "y": 99
+      },
+      {
+        "colour": "#FF000000",
+        "height": 70,
+        "kind": "fill",
+        "width": 1,
+        "x": 159,
+        "y": 30
+      },
+      {
+        "colour": "#FF5FE07A",
+        "kind": "code",
+        "line": 1,
+        "scale": 4.0,
+        "width": 110,
+        "x": 42,
+        "y": 46
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "kind": "bold",
+        "line": 2,
+        "scale": 1.5,
+        "width": 148,
+        "x": 28,
+        "y": 116
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "kind": "bold",
+        "line": 3,
+        "scale": 1.5,
+        "width": 148,
+        "x": 28,
+        "y": 134
+      },
+      {
+        "colour": "#FF5A616B",
+        "height": 1,
+        "kind": "fill",
+        "width": 132,
+        "x": 28,
+        "y": 156
+      },
+      {
+        "colour": "#FFCDD6E2",
+        "kind": "small",
+        "line": 4,
+        "width": 148,
+        "x": 28,
+        "y": 162
+      },
+      {
+        "colour": "#FF8A929C",
+        "kind": "small",
+        "line": 5,
+        "width": 148,
+        "x": 28,
+        "y": 196
+      }
+    ]
+  },
+  "hold_bar": "blocks",
+  "make": {
+    "binding": "wire",
+    "colours": [
+      "heading",
+      "band"
+    ],
+    "marks": "thumb"
+  },
+  "pages": {
+    "height": 201,
+    "width": 166
+  },
+  "palette": "jsc:guide/linux_desk_reference"
+}

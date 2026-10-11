@@ -207,6 +207,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   ribbon that lies across the pages the reader left open and hangs out under the book. A book's cover is drawn from
   the parts its style lists: panels, frames, pictures, its title and lines in any size, a rubber stamp, cloth, kraft
   card, a wire coil and the holes punched for it.
+- Six books beside the Guide to Operations, each an item among the programs of the J's Computers tab, and each
+  dressed as the manuals of its systems' time were: the Frames Resource Kit, for MC-DOS and every Frames, a white
+  paperback with Midsoft's blue spine and band; the Linux Desk Reference, for Fedora, Debian and Ubuntu, graphite on a
+  wire coil with a green prompt; Linux by Hand, for installing Gentoo and Arch Linux by hand, a kraft lab notebook of
+  squared paper with paper flags, a pasted label and an INSTALL LOG stamp; the Daemon Handbook, for FreeBSD and UNIX
+  System V, a red cloth hardback in gold with a ribbon; Learning IQL, purple, with a table of results on its cover;
+  and the Book of Sigma, white with a large blue Sigma. The three books of the UNIX-like systems share their chapters
+  on the shell, the desktops, the editors at the terminal and finding help. The Guide to Operations has a page on
+  them.
 - The computers' help programs read the manuals' new parts: a table of several columns as columns of text, set out
   row by row on a screen too narrow for it; listings and sessions as their lines; keys by their names; scenes as their
   captions and the list of their balloons. A command whose page a manual prints shows that page at `man`, at `HELP`

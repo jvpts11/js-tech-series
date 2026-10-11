@@ -50,7 +50,7 @@
     "jsc:standard_repeater",
     "jsc:advanced_repeater"
   ],
-  "order": 27,
+  "order": 28,
   "section": "jsc:network",
   "title": "jsc.guide.routers.title"
 }

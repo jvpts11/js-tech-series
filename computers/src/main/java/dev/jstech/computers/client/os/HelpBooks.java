@@ -13,6 +13,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.core.client.GameLocale;
 import dev.jstech.core.client.guide.ClientGuideText;
 import dev.jstech.core.client.guide.GuideLibrary;
+import dev.jstech.core.guide.GuideContents;
 import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.IGuideText;
@@ -44,14 +45,18 @@ public final class HelpBooks {
     private HelpBooks() {
     }
 
-    /** Every manual, read as text, the one of the highest priority first. */
+    /** Every manual with something written in it, read as text, the one of the highest priority first. */
     public static synchronized List<ManualReader> all() {
         final GuideLibrary library = GuideLibrary.loaded();
         final String language = Minecraft.getInstance().getLanguageManager().getSelected();
         if (library != readFrom || !language.equals(readIn)) {
             final List<ManualReader> read = new ArrayList<>();
             for (final GuideManual manual : library.manuals()) {
-                read.add(new ManualReader(manual, library.contentsOf(manual), new Words()));
+                final GuideContents contents = library.contentsOf(manual);
+                // A book none of whose entries is written yet has nothing to read; it joins the shelf with its first.
+                if (!contents.chapters().isEmpty()) {
+                    read.add(new ManualReader(manual, contents, new Words()));
+                }
             }
             readers = List.copyOf(read);
             readFrom = library;

@@ -1,0 +1,191 @@
+{
+  "code_font": "jscore:fixed_5x8",
+  "cover": {
+    "kind": "book",
+    "label": false,
+    "parts": [
+      {
+        "colour": "#FFB48A5A",
+        "height": 218,
+        "kind": "fill",
+        "width": 180
+      },
+      {
+        "colour": "#FFC9A272",
+        "height": 1,
+        "kind": "fill",
+        "width": 180
+      },
+      {
+        "colour": "#FFC9A272",
+        "height": 218,
+        "kind": "fill",
+        "width": 1
+      },
+      {
+        "colour": "#FF7D5A34",
+        "height": 1,
+        "kind": "fill",
+        "width": 180,
+        "y": 217
+      },
+      {
+        "colour": "#FF7D5A34",
+        "height": 218,
+        "kind": "fill",
+        "width": 1,
+        "x": 179
+      },
+      {
+        "colour": "#FFB48A5A",
+        "height": 216,
+        "kind": "kraft",
+        "width": 178,
+        "x": 1,
+        "y": 1
+      },
+      {
+        "colour": "#FF2A2A2A",
+        "height": 218,
+        "kind": "wire",
+        "width": 10,
+        "x": -5
+      },
+      {
+        "colour": "#FFFBF8EE",
+        "height": 84,
+        "kind": "fill",
+        "width": 124,
+        "x": 32,
+        "y": 40
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "height": 1,
+        "kind": "fill",
+        "width": 124,
+        "x": 32,
+        "y": 40
+      },
+      {
+        "colour": "#FFFFFFFF",
+        "height": 84,
+        "kind": "fill",
+        "width": 1,
+        "x": 32,
+        "y": 40
+      },
+      {
+        "colour": "#FFCFC7B2",
+        "height": 1,
+        "kind": "fill",
+        "width": 124,
+        "x": 32,
+        "y": 123
+      },
+      {
+        "colour": "#FFCFC7B2",
+        "height": 84,
+        "kind": "fill",
+        "width": 1,
+        "x": 155,
+        "y": 40
+      },
+      {
+        "colour": "#FFC94A4A",
+        "height": 6,
+        "kind": "fill",
+        "width": 124,
+        "x": 32,
+        "y": 40
+      },
+      {
+        "colour": "ink",
+        "kind": "bold",
+        "line": 1,
+        "scale": 1.5,
+        "width": 112,
+        "x": 40,
+        "y": 54
+      },
+      {
+        "colour": "ink",
+        "kind": "bold",
+        "line": 2,
+        "scale": 1.5,
+        "width": 112,
+        "x": 40,
+        "y": 70
+      },
+      {
+        "colour": "faint",
+        "kind": "small",
+        "line": 3,
+        "width": 112,
+        "x": 40,
+        "y": 90
+      },
+      {
+        "colour": "faint",
+        "kind": "small",
+        "line": 4,
+        "width": 112,
+        "x": 40,
+        "y": 99
+      },
+      {
+        "colour": "#FFB8C6D8",
+        "height": 1,
+        "kind": "fill",
+        "width": 108,
+        "x": 40,
+        "y": 106
+      },
+      {
+        "colour": "faint",
+        "kind": "small",
+        "line": 5,
+        "width": 112,
+        "x": 40,
+        "y": 109
+      },
+      {
+        "colour": "#FFB8C6D8",
+        "height": 1,
+        "kind": "fill",
+        "width": 108,
+        "x": 40,
+        "y": 116
+      },
+      {
+        "colour": "#FFB3261E",
+        "height": 20,
+        "kind": "stamp",
+        "line": 6,
+        "turn": -5,
+        "width": 92,
+        "x": 79,
+        "y": 146
+      }
+    ]
+  },
+  "hold_bar": "blocks",
+  "make": {
+    "binding": "wire",
+    "board": "kraft",
+    "colours": [
+      "#FFF6E27A",
+      "#FFF2A6C0",
+      "#FF9FDCAE",
+      "#FF9CC8F0",
+      "#FFF6C27A"
+    ],
+    "marks": "flags",
+    "paper": "graph"
+  },
+  "pages": {
+    "height": 201,
+    "width": 166
+  },
+  "palette": "jsc:guide/linux_by_hand"
+}

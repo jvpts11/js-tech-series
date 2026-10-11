@@ -1,0 +1,33 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.other_books.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.other_books.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.other_books.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.other_books.text4"
+    }
+  ],
+  "icon": "jsc:frames_resource_kit",
+  "id": "jsc:other_books",
+  "items": [
+    "jsc:frames_resource_kit",
+    "jsc:linux_desk_reference",
+    "jsc:linux_by_hand",
+    "jsc:daemon_handbook",
+    "jsc:learning_iql",
+    "jsc:book_of_sigma"
+  ],
+  "order": 24,
+  "section": "jsc:systems",
+  "title": "jsc.guide.other_books.title"
+}

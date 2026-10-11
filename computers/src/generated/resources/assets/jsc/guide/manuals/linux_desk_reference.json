@@ -1,0 +1,25 @@
+{
+  "about": [
+    "jsc.guide.manual.linux_desk_reference.about1",
+    "jsc.guide.manual.linux_desk_reference.about2",
+    "jsc.guide.manual.linux_desk_reference.about3"
+  ],
+  "chapters": [
+    "jsc:fedora_debian_ubuntu",
+    "jsc:shell",
+    "jsc:unix_desktops",
+    "jsc:terminal_editors",
+    "jsc:finding_help"
+  ],
+  "cover": [
+    "jsc.guide.manual.linux_desk_reference.cover1",
+    "jsc.guide.manual.linux_desk_reference.cover2",
+    "jsc.guide.manual.linux_desk_reference.cover3",
+    "jsc.guide.manual.linux_desk_reference.cover4",
+    "jsc.guide.manual.linux_desk_reference.cover5"
+  ],
+  "id": "jsc:linux_desk_reference",
+  "priority": 50,
+  "style": "jsc:linux_desk_reference",
+  "title": "jsc.guide.manual.linux_desk_reference.title"
+}

@@ -35,7 +35,7 @@
     "jsc:hbw_interface",
     "jsc:advanced_hbw_interface"
   ],
-  "order": 28,
+  "order": 29,
   "section": "jsc:network",
   "title": "jsc.guide.hbw_interface.title"
 }

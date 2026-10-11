@@ -49,7 +49,7 @@
     "jsc:external_storage_bus",
     "jsc:advanced_external_storage_bus"
   ],
-  "order": 37,
+  "order": 38,
   "section": "jsc:storage",
   "title": "jsc.guide.buses.title"
 }

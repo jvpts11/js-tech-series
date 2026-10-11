@@ -94,7 +94,7 @@
     "jsc:standard_hub",
     "jsc:advanced_hub"
   ],
-  "order": 46,
+  "order": 47,
   "section": "jsc:peripherals",
   "title": "jsc.guide.peripheral_cables.title"
 }

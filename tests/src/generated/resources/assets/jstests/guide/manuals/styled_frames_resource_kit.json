@@ -1,0 +1,13 @@
+{
+  "about": [
+    "jstests.guide.manual.styled_frames_resource_kit.about1"
+  ],
+  "chapters": [
+    "jstests",
+    "jstests:shared"
+  ],
+  "id": "jstests:styled_frames_resource_kit",
+  "priority": -3,
+  "style": "jsc:frames_resource_kit",
+  "title": "jstests.guide.manual.styled_frames_resource_kit.title"
+}

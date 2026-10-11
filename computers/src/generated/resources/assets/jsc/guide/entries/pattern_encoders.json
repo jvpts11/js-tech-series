@@ -47,7 +47,7 @@
     "jsc:legacy_pattern_encoder",
     "jsc:vintage_pattern_encoder"
   ],
-  "order": 42,
+  "order": 43,
   "section": "jsc:autocrafting",
   "title": "jsc.guide.pattern_encoders.title"
 }

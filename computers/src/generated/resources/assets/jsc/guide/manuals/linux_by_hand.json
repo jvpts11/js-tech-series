@@ -1,0 +1,30 @@
+{
+  "about": [
+    "jsc.guide.manual.linux_by_hand.about1",
+    "jsc.guide.manual.linux_by_hand.about2",
+    "jsc.guide.manual.linux_by_hand.about3"
+  ],
+  "chapters": [
+    "jsc:before_you_begin",
+    "jsc:preparing_disks",
+    "jsc:arch",
+    "jsc:gentoo",
+    "jsc:when_reboot_refuses",
+    "jsc:shell",
+    "jsc:unix_desktops",
+    "jsc:terminal_editors",
+    "jsc:finding_help"
+  ],
+  "cover": [
+    "jsc.guide.manual.linux_by_hand.cover1",
+    "jsc.guide.manual.linux_by_hand.cover2",
+    "jsc.guide.manual.linux_by_hand.cover3",
+    "jsc.guide.manual.linux_by_hand.cover4",
+    "jsc.guide.manual.linux_by_hand.cover5",
+    "jsc.guide.manual.linux_by_hand.cover6"
+  ],
+  "id": "jsc:linux_by_hand",
+  "priority": 50,
+  "style": "jsc:linux_by_hand",
+  "title": "jsc.guide.manual.linux_by_hand.title"
+}

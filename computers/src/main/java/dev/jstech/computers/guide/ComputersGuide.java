@@ -77,6 +77,7 @@ public final class ComputersGuide {
                         + " and let the network keep your items, move them and craft for you.")
                 .register();
         ComputersEntries.declare(guide);
+        ComputersBooks.declare(guide);
         // Sigma and Sigma# colour themselves as languages the game compiles; the network's queries are coloured here.
         GuideHighlighters.register(IQL, lines -> GuideCode.runs(lines, IqlColouring.spans(lines).stream()
                 .map(span -> new GuideCode.Span(span.line(), span.column(), span.length(), inkOf(span.ink())))

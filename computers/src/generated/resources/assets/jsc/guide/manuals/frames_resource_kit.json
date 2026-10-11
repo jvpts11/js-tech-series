@@ -1,0 +1,28 @@
+{
+  "about": [
+    "jsc.guide.manual.frames_resource_kit.about1",
+    "jsc.guide.manual.frames_resource_kit.about2",
+    "jsc.guide.manual.frames_resource_kit.about3"
+  ],
+  "chapters": [
+    "jsc:midsoft_systems",
+    "jsc:mc_dos",
+    "jsc:frames_desktop",
+    "jsc:frames_programs",
+    "jsc:frames_editions",
+    "jsc:command_prompt"
+  ],
+  "cover": [
+    "jsc.guide.manual.frames_resource_kit.cover1",
+    "jsc.guide.manual.frames_resource_kit.cover2",
+    "jsc.guide.manual.frames_resource_kit.cover3",
+    "jsc.guide.manual.frames_resource_kit.cover4",
+    "jsc.guide.manual.frames_resource_kit.cover5",
+    "jsc.guide.manual.frames_resource_kit.cover6",
+    "jsc.guide.manual.frames_resource_kit.cover7"
+  ],
+  "id": "jsc:frames_resource_kit",
+  "priority": 50,
+  "style": "jsc:frames_resource_kit",
+  "title": "jsc.guide.manual.frames_resource_kit.title"
+}

@@ -27,7 +27,7 @@
   "items": [
     "jsc:network_gateway"
   ],
-  "order": 29,
+  "order": 30,
   "section": "jsc:network",
   "title": "jsc.guide.network_gateway.title"
 }

@@ -1,0 +1,13 @@
+{
+  "about": [
+    "jstests.guide.manual.styled_learning_iql.about1"
+  ],
+  "chapters": [
+    "jstests",
+    "jstests:shared"
+  ],
+  "id": "jstests:styled_learning_iql",
+  "priority": -3,
+  "style": "jsc:learning_iql",
+  "title": "jstests.guide.manual.styled_learning_iql.title"
+}

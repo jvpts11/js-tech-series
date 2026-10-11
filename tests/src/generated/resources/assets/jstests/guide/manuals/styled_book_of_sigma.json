@@ -1,0 +1,13 @@
+{
+  "about": [
+    "jstests.guide.manual.styled_book_of_sigma.about1"
+  ],
+  "chapters": [
+    "jstests",
+    "jstests:shared"
+  ],
+  "id": "jstests:styled_book_of_sigma",
+  "priority": -3,
+  "style": "jsc:book_of_sigma",
+  "title": "jstests.guide.manual.styled_book_of_sigma.title"
+}
