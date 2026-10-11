@@ -16,10 +16,12 @@ import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
+import dev.jstech.core.content.IStandingParts;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
@@ -33,6 +35,7 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -54,7 +57,7 @@ import org.jetbrains.annotations.Nullable;
  * to the computer, which then finds installation media in it without the reader having to stand beside it.
  */
 @TextHolder
-public class MediaReaderBlock extends DeviceBlock implements IFaceConnector, ITrayBlock {
+public class MediaReaderBlock extends DeviceBlock implements IFaceConnector, ITrayBlock, IStandingParts {
 
     private final MediaDriveType driveType;
     private final FacePorts ports;
@@ -111,6 +114,20 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector, ITr
     }
 
     @Override
+    @Nullable
+    public StandingTray standingTray() {
+        return driveType.standingTray();
+    }
+
+    /* Its tray, once open, stands out of the block, and is looked at and clicked as the drive's own. */
+    @Override
+    public List<AABB> standingParts(final BlockState state, final BlockGetter level, final BlockPos pos) {
+        final StandingTray tray = standingTray();
+        return tray != null && level.getBlockEntity(pos) instanceof MediaReaderBlockEntity reader
+                && reader.tray().isOpen() ? List.of(tray.box(state.getValue(FACING))) : List.of();
+    }
+
+    @Override
     protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
         return CODEC;
     }
@@ -134,6 +151,15 @@ public class MediaReaderBlock extends DeviceBlock implements IFaceConnector, ITr
         // The eject button answers whatever the hand holds, as a real one does.
         final EjectButton button = ejectButton();
         if (button != null && DeviceFront.presses(button, state, pos, hit, player.getEyePosition())) {
+            pressEjectButton(reader, player);
+            return ItemInteractionResult.SUCCESS;
+        }
+        /*
+         * The open tray pushed with an empty hand slides back in, as a real one does: the tray stands in front of its
+         * button, so from above the tray is what a look at the button finds.
+         */
+        if (heldStack.isEmpty() && !player.isShiftKeyDown()
+                && DeviceFront.partAt(standingParts(state, level, pos), pos, hit.getLocation()) >= 0) {
             pressEjectButton(reader, player);
             return ItemInteractionResult.SUCCESS;
         }

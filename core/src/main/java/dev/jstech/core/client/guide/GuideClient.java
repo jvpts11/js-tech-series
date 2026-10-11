@@ -8,6 +8,7 @@
 package dev.jstech.core.client.guide;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.datafixers.util.Either;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.guide.GuideHooks;
@@ -17,6 +18,7 @@ import dev.jstech.core.guide.GuideTexts;
 import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.input.KeyHold;
 import dev.jstech.core.text.GameText;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
@@ -25,8 +27,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -34,15 +39,17 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /**
  * The manuals on a player's game: read from the resource packs whenever they are, opened by a manual item's use, and
  * opened at an item's page by the manual key, held a moment over the item under the pointer in any inventory, or
- * over the item in the main hand. While the key is held a small bar fills, under the slot or under the crosshair, in
- * the look of the manual it opens. An item with a page says so at the foot of its tooltip.
+ * over the item in the main hand. An item with a page says so at the foot of its tooltip, and while the key is held a
+ * small bar fills, in the look of the manual it opens: in the tooltip, under that line, or under the crosshair.
  */
 @EventBusSubscriber(modid = JsCore.MODID, value = Dist.CLIENT)
 public final class GuideClient {
@@ -50,11 +57,8 @@ public final class GuideClient {
     /** How long the key is held over an item before its page opens, so a stray press opens nothing. */
     public static final long HOLD_MILLIS = 400L;
 
-    /** Where the bar stands: below a slot, and below the crosshair. */
-    private static final int BELOW_SLOT = 17;
+    /** Where the bar stands out of every screen: below the crosshair. */
     private static final int BELOW_CROSSHAIR = 9;
-    /** Over the items and the tooltip of the inventory it is drawn on. */
-    private static final float OVER_TOOLTIP = 500.0F;
 
     private static final KeyHold HOLD = new KeyHold(HOLD_MILLIS);
 
@@ -112,16 +116,35 @@ public final class GuideClient {
     }
 
     @SubscribeEvent
+    public static void onRegisterTooltips(final RegisterClientTooltipComponentFactoriesEvent event) {
+        event.register(HoldBarTooltip.class, bar -> bar);
+    }
+
+    @SubscribeEvent
     public static void onTooltip(final ItemTooltipEvent event) {
         if (withPage(event.getItemStack()).isEmpty()) {
             return;
         }
-        final KeyMapping key = KeyActionsClient.mapping(CoreKeys.OPEN_IN_MANUAL);
-        if (key.isUnbound()) {
+        holdLine().ifPresent(event.getToolTip()::add);
+    }
+
+    /* While the key is held over the item, its bar fills in the tooltip, right under the line that says to hold it. */
+    @SubscribeEvent
+    public static void onTooltipGathered(final RenderTooltipEvent.GatherComponents event) {
+        final String item = withPage(event.getItemStack());
+        final Optional<Component> line = holdLine();
+        if (item.isEmpty() || !item.equals(HOLD.over()) || line.isEmpty()) {
             return;
         }
-        event.getToolTip().add(GameText.component(GuideTexts.HOLD_TO_OPEN.with(GameText.of(
-                key.getTranslatedKeyMessage()))).withStyle(ChatFormatting.DARK_GRAY));
+        final String said = line.get().getString();
+        final List<Either<FormattedText, TooltipComponent>> elements = event.getTooltipElements();
+        int under = elements.size();
+        for (int i = 0; i < elements.size(); i++) {
+            if (elements.get(i).left().map(text -> text.getString().equals(said)).orElse(false)) {
+                under = i + 1;
+            }
+        }
+        elements.add(under, Either.right(new HoldBarTooltip(barKind())));
     }
 
     /* Out of every screen, the key is held over the item in the main hand. */
@@ -144,10 +167,14 @@ public final class GuideClient {
             return;
         }
         final GuiGraphics g = event.getGuiGraphics();
-        drawBar(g, (g.guiWidth() - GuideHoldBar.WIDTH) / 2, g.guiHeight() / 2 + BELOW_CROSSHAIR, g.guiWidth());
+        GuideHoldBar.draw(g, (g.guiWidth() - GuideHoldBar.WIDTH) / 2, g.guiHeight() / 2 + BELOW_CROSSHAIR,
+                holdProgress(), barKind());
     }
 
-    /* In an inventory, the key is held over the item under the pointer; any other screen only lets it go. */
+    /*
+     * In an inventory, the key is held over the item under the pointer; any other screen only lets it go. The bar
+     * itself is a line of that item's tooltip.
+     */
     @SubscribeEvent
     public static void onScreenDrawn(final ScreenEvent.Render.Post event) {
         final long now = Util.getMillis();
@@ -159,26 +186,25 @@ public final class GuideClient {
         final ItemStack under = slot == null ? ItemStack.EMPTY : slot.getItem();
         if (HOLD.follow(withPage(under), keyHeld(), now)) {
             openPageOf(under);
-            return;
         }
-        if (slot == null || HOLD.over().isEmpty()) {
-            return;
-        }
-        final GuiGraphics g = event.getGuiGraphics();
-        g.pose().pushPose();
-        g.pose().translate(0.0F, 0.0F, OVER_TOOLTIP);
-        drawBar(g, screen.getGuiLeft() + slot.x + 8 - GuideHoldBar.WIDTH / 2,
-                screen.getGuiTop() + slot.y + BELOW_SLOT, screen.width);
-        g.pose().popPose();
     }
 
-    /* The bar of the manual the held item opens in, kept inside the screen's width. */
-    private static void drawBar(final GuiGraphics g, final int x, final int y, final int screenWidth) {
+    /* The tooltip line that says which key to hold, or none while the key is unbound. */
+    private static Optional<Component> holdLine() {
+        final KeyMapping key = KeyActionsClient.mapping(CoreKeys.OPEN_IN_MANUAL);
+        if (key.isUnbound()) {
+            return Optional.empty();
+        }
+        return Optional.of(GameText.component(GuideTexts.HOLD_TO_OPEN.with(GameText.of(
+                key.getTranslatedKeyMessage()))).withStyle(ChatFormatting.DARK_GRAY));
+    }
+
+    /* The look of the bar of the manual the held item opens in. */
+    private static GuideStyle.HoldBar barKind() {
         final GuideLibrary library = GuideLibrary.loaded();
-        final Optional<GuideStyle> style = library.pageOf(HOLD.over()).flatMap(library::manualFor)
-                .flatMap(manual -> library.style(manual.style()));
-        final int left = Math.max(0, Math.min(screenWidth - GuideHoldBar.WIDTH, x));
-        GuideHoldBar.draw(g, left, y, holdProgress(), style.map(GuideStyle::holdBar).orElse(GuideStyle.HoldBar.PLAIN));
+        return library.pageOf(HOLD.over()).flatMap(library::manualFor)
+                .flatMap(manual -> library.style(manual.style()))
+                .map(GuideStyle::holdBar).orElse(GuideStyle.HoldBar.PLAIN);
     }
 
     /* The id of the stack's item when it has a page, or empty. */

@@ -11,21 +11,25 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.hardware.FrontArea;
 import dev.jstech.computers.menu.PatternEncoderMenu;
 import dev.jstech.computers.os.media.DiscTray;
 import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.ITrayBlock;
 import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.StandingTray;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
+import dev.jstech.core.content.IStandingParts;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
@@ -38,6 +42,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -54,7 +59,8 @@ import org.jetbrains.annotations.Nullable;
  * port whatever the tray is doing.
  */
 @TextHolder
-public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock, ITrayBlock {
+public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock, ITrayBlock,
+        IStandingParts {
 
     private final HardwareEra era;
     private final FacePorts ports;
@@ -93,6 +99,9 @@ public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, 
      */
     private static final EjectButton LEGACY_BUTTON = new EjectButton(46, 24, 54, 27, 4);
     private static final EjectButton LATER_BUTTON = new EjectButton(48, 23, 56, 25, 4);
+    /* Each era's tray as its model slides it out, seven model pixels, with the disc lying on it. */
+    private static final StandingTray LEGACY_TRAY = new StandingTray(new FrontArea(10, 12, 52, 20), 24);
+    private static final StandingTray LATER_TRAY = new StandingTray(new FrontArea(8, 12, 46, 20), 24);
 
     public PatternEncoderBlock(final Properties properties, final HardwareEra era) {
         super(properties, DEVICE);
@@ -125,6 +134,24 @@ public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, 
             case LEGACY -> LEGACY_BUTTON;
             case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> LATER_BUTTON;
         };
+    }
+
+    @Override
+    @Nullable
+    public StandingTray standingTray() {
+        return switch (era) {
+            case VINTAGE -> null;
+            case LEGACY -> LEGACY_TRAY;
+            case TRANSITION, STANDARD, ADVANCED, EXA, SINGULARITY -> LATER_TRAY;
+        };
+    }
+
+    /* Its tray, once open, stands out of the block, and is looked at and clicked as the encoder's own. */
+    @Override
+    public List<AABB> standingParts(final BlockState state, final BlockGetter level, final BlockPos pos) {
+        final StandingTray tray = standingTray();
+        return tray != null && level.getBlockEntity(pos) instanceof PatternEncoderBlockEntity encoder
+                && encoder.tray().isOpen() ? List.of(tray.box(state.getValue(FACING))) : List.of();
     }
 
     /**
@@ -174,6 +201,12 @@ public class PatternEncoderBlock extends DeviceBlock implements IFaceConnector, 
         // The eject button answers whatever the hand holds, as a real one does.
         final EjectButton button = ejectButton();
         if (button != null && DeviceFront.presses(button, state, pos, hit, player.getEyePosition())) {
+            pressEjectButton(encoder, player);
+            return ItemInteractionResult.SUCCESS;
+        }
+        // The open tray pushed with an empty hand slides back in, as a real one does, and opens no panel.
+        if (heldStack.isEmpty() && !player.isShiftKeyDown()
+                && DeviceFront.partAt(standingParts(state, level, pos), pos, hit.getLocation()) >= 0) {
             pressEjectButton(encoder, player);
             return ItemInteractionResult.SUCCESS;
         }

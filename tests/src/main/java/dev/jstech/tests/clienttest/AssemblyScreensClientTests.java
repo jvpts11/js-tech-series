@@ -23,6 +23,7 @@ import dev.jstech.computers.gui.layout.ServerRackLayout;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.content.BlockEntry;
@@ -176,6 +177,17 @@ public final class AssemblyScreensClientTests {
                 .thenScreenshot(SETTLE, "server")
                 .thenAssert(0, () -> ctx.openScreen(ServerAssemblyScreen.class) != null,
                         "the server's screen must open and stay")
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(SCREEN_WAIT);
+        // A supercomputer's node is built on the same screen, under its own name.
+        ctx.thenGive(0, new ItemStack(ComputingModule.SUPERCOMPUTER_NODE.get()))
+                .then(SETTLE, () -> ctx.selectHotbar(0))
+                .then(2, () -> Objects.requireNonNull(ctx.mc().gameMode, "no game mode")
+                        .useItem(ctx.player(), InteractionHand.MAIN_HAND))
+                .thenAwaitScreen(ServerAssemblyScreen.class, SCREEN_WAIT)
+                .thenAssert(SETTLE, () -> ctx.screen(ServerAssemblyScreen.class).getMenu().chassis()
+                        == RackChassis.SUPERCOMPUTER_NODE, "the screen is the node's")
+                .thenScreenshot(0, "supercomputer-node")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
     }

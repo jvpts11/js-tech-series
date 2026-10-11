@@ -27,7 +27,8 @@ public final class MediaDriveRenderer extends GeoBlockRenderer<MediaReaderBlockE
 
     public MediaDriveRenderer(final BlockEntityRendererProvider.Context context) {
         super(new LookGeoModel<>(ComputingLooks.MEDIA_DRIVE));
-        addRenderLayer(new BayMediumLayer<>(this, MediaReaderBlockEntity::drawnMedium));
+        // No drive has a USB port, so how one would lie never comes up.
+        addRenderLayer(new BayMediumLayer<>(this, MediaReaderBlockEntity::drawnMedium, drive -> false));
     }
 
     @Override

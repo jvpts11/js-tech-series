@@ -20,9 +20,10 @@ import software.bernie.geckolib.animation.RawAnimation;
  * animations share, the clip a medium plays going in or coming out, and, on the client, the medium drawn in it.
  *
  * <p>The medium drawn is the one in the bay, or, for a moment after one was taken out, that one. The slot is empty
- * as soon as the medium is taken, while its way out, the floppy popping from its slot or the stick sliding from its
- * port, is still playing; the eject clip hides it at the moment it leaves the player's reach. A disc has no way out of
- * its own: it lies on the {@link DiscTray tray} the player opened, and is gone from it the moment it is taken.
+ * as soon as the medium is taken, while its way out, the floppy popping from its slot, is still playing; the eject clip
+ * hides it at the moment it leaves the player's reach. A disc has no way out of its own: it lies on the
+ * {@link DiscTray tray} the player opened, and is gone from it the moment it is taken. Nor has a stick, which the hand
+ * plugs into its port and pulls out of it, as on every other device with a port.
  */
 public final class MediaBay {
 
@@ -44,7 +45,7 @@ public final class MediaBay {
     /** How long a medium taken out is still drawn when its format is not known: the longest eject clip, and more. */
     public static final int LEAVING_TICKS = 40;
 
-    private static final String[] CLIPS = {"insert_floppy", "eject_floppy", "insert_usb", "eject_usb"};
+    private static final String[] CLIPS = {"insert_floppy", "eject_floppy"};
 
     /**
      * The controller of a device's bay, with a one-shot clip for every way a medium goes in and comes out by itself,
@@ -60,22 +61,18 @@ public final class MediaBay {
     }
 
     /**
-     * The clip a medium of that format plays going in or coming out: through the slot, into the port. Null for a disc,
-     * which the player lays on the open tray and lifts off it, and which does not move by itself.
+     * The clip a medium of that format plays going in or coming out through the slot. Null for a disc, which the
+     * player lays on the open tray and lifts off it, and for a stick, which the hand plugs in and pulls out: neither
+     * moves by itself.
      */
     @Nullable
     public static String clip(final MediaFormat format, final boolean in) {
-        final String way = switch (format) {
-            case FLOPPY -> "floppy";
-            case USB -> "usb";
-            case CD, DVD, BLU_RAY -> null;
-        };
-        return way == null ? null : (in ? "insert_" : "eject_") + way;
+        return format == MediaFormat.FLOPPY ? (in ? "insert_floppy" : "eject_floppy") : null;
     }
 
     /**
      * The medium to draw: the one in the bay, or, while its eject clip plays, the one taken out. Not a tick longer:
-     * once the clip ends the model is back at rest, and a stick still drawn then stood in its port again for a moment.
+     * once the clip ends the model is back at rest, and a floppy still drawn then stood in its slot again for a moment.
      */
     public ItemStack drawn(final ItemStack held, @Nullable final Level level) {
         if (!held.isEmpty() || level == null || level.getGameTime() - leftAt >= leavingFor) {
@@ -94,12 +91,14 @@ public final class MediaBay {
         }
     }
 
-    /** How long a medium of that format takes to come out: its eject clip, in ticks; none for a disc lifted off. */
+    /**
+     * How long a medium of that format takes to come out: its eject clip, in ticks; none for a disc lifted off or a
+     * stick pulled out.
+     */
     public static int ejectTicks(final MediaFormat format) {
         return switch (format) {
             case FLOPPY -> 20;
-            case CD, DVD, BLU_RAY -> 0;
-            case USB -> 12;
+            case CD, DVD, BLU_RAY, USB -> 0;
         };
     }
 }

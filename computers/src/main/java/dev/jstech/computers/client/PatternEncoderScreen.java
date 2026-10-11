@@ -82,6 +82,8 @@ public class PatternEncoderScreen extends AbstractComputerScreen<PatternEncoderM
         cancelBtn = addRenderableWidget(new EraButton(leftPos + PatternEncoderLayout.CANCEL_X,
                 topPos + PatternEncoderLayout.BTN_Y, PatternEncoderLayout.CANCEL_W, PatternEncoderLayout.BTN_H,
                 GameText.component(CANCEL_QUEUE), b -> sendButton(PatternEncoderMenu.BUTTON_CANCEL)));
+        // A button is born active, and the first tick is too late: one frame was enough to click a dead Cancel.
+        refreshButtons();
     }
 
     @Nullable
@@ -99,6 +101,11 @@ public class PatternEncoderScreen extends AbstractComputerScreen<PatternEncoderM
     @Override
     protected void containerTick() {
         super.containerTick();
+        refreshButtons();
+    }
+
+    /* Each button live only while it has something to do. */
+    private void refreshButtons() {
         final PatternEncoderBlockEntity be = encoder();
         // On an encoder with a tray Eject is its button, which opens an empty tray as well as a full one.
         final boolean ejectable = !menu.mediaStack().isEmpty() || (be != null && be.hasTray());

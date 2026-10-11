@@ -23,6 +23,7 @@ final class AssemblyTexts {
     static final TextKey NAME_THIS_COMPUTER = TextKey.of("jsc.assembly.name_this_computer", "Name this computer...");
     static final TextKey NAME_THIS_PC = TextKey.of("jsc.assembly.name_this_pc", "Name this PC...");
     static final TextKey NAME_THIS_SERVER = TextKey.of("jsc.assembly.name_this_server", "Name this server...");
+    static final TextKey NAME_THIS_NODE = TextKey.of("jsc.assembly.name_this_node", "Name this node...");
 
     // Which computer the screen is.
     static final TextKey TITLE_PC = TextKey.of("jsc.assembly.title_pc", "PC");
@@ -30,6 +31,8 @@ final class AssemblyTexts {
     static final TextKey TITLE_CLUSTER_MANAGEMENT = TextKey.of("jsc.assembly.title_cluster_management", "CMC");
     static final TextKey TITLE_MAINFRAME = TextKey.of("jsc.assembly.title_mainframe", "MAINFRAME");
     static final TextKey TITLE_SERVER = TextKey.of("jsc.assembly.title_server", "SERVER");
+    static final TextKey TITLE_SUPERCOMPUTER_NODE = TextKey.of("jsc.assembly.title_supercomputer_node",
+            "SUPERCOMPUTER NODE");
 
     // The state pill.
     static final TextKey OFFLINE = TextKey.of("jsc.assembly.offline", "OFFLINE");

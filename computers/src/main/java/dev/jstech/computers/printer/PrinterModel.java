@@ -62,6 +62,10 @@ public enum PrinterModel implements IStableName {
     private static final TextKey A_LINE = TextKey.of("jsc.printer.pace.line", "a line at a time");
     private static final TextKey A_BAND = TextKey.of("jsc.printer.pace.band", "a band at a time");
     private static final TextKey A_PAGE = TextKey.of("jsc.printer.pace.page", "a page at a time");
+    private static final TextKey MONO = TextKey.of("jsc.printer.mono", "Mono");
+    private static final TextKey COLOR = TextKey.of("jsc.printer.color", "Color");
+    private static final TextKey PRINTS_MONO = TextKey.of("jsc.printer.prints_mono", "Prints in black and white");
+    private static final TextKey PRINTS_COLOR = TextKey.of("jsc.printer.prints_color", "Prints in color");
 
     PrinterModel(final String serializedName, final HardwareEra era, final Sheet sheet, final Ink ink,
                  final int pageTicks, final String queueName, final String icon) {
@@ -133,6 +137,21 @@ public enum PrinterModel implements IStableName {
             case PAKARD_LASERJOT_1102 -> LASERJOT;
             case EPSILON_ECOTONK_ET_2720 -> ECOTONK;
         };
+    }
+
+    /** Whether it prints in color: the inkjets and the ink tank do; the dot matrix and the laser print in black. */
+    public boolean color() {
+        return ink != Ink.DOT_MATRIX && ink != Ink.LASER;
+    }
+
+    /** Mono or Color, the one word a print dialog has room for beside the printer's name. */
+    public TextKey colorWord() {
+        return color() ? COLOR : MONO;
+    }
+
+    /** Whether it prints in black and white or in color, as its tooltip says. */
+    public TextKey printsIn() {
+        return color() ? PRINTS_COLOR : PRINTS_MONO;
     }
 
     /** How the page comes out, as the printer's window says under the page count. */

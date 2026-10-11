@@ -397,7 +397,10 @@ public final class PrintDialog implements IDesktopApp {
         print.setBounds(right - 44 - 4 - 44, y, 44, 11);
     }
 
-    /* One printer of the list: its name and the port it is on. */
+    /*
+     * One printer of the list: its name and whether it prints in color, which decides how a picture comes out. Its
+     * port is on the location line under the list.
+     */
     private void drawPrinter(final GuiGraphics g, final UiContext ctx, final PrintersPayload.Row row, final int index,
                              final int x, final int y, final int w, final int h, final boolean hovered,
                              final boolean selected) {
@@ -406,8 +409,9 @@ public final class PrintDialog implements IDesktopApp {
         } else if (hovered) {
             g.fill(x, y, x + w, y + h, skin.listHover());
         }
-        Texts.small(g, ctx.font(), GameText.resolve(name(row)) + "  (" + row.port() + ")", x + 3, y + 3,
-                skin.text());
+        final PrinterModel model = PrinterModel.find(row.model());
+        final String color = model == null ? "" : "  (" + GameText.resolve(model.colorWord()) + ")";
+        Texts.small(g, ctx.font(), GameText.resolve(name(row)) + color, x + 3, y + 3, skin.text());
     }
 
     /* The page being printed, small, as the flat desktops preview it: the lines of print as grey bars. */

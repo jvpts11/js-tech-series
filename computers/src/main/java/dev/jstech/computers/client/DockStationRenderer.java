@@ -35,8 +35,8 @@ public final class DockStationRenderer extends GeoBlockRenderer<DockStationBlock
     public DockStationRenderer(final BlockEntityRendererProvider.Context context) {
         super(new LookGeoModel<>(ComputingLooks.DOCK_STATION));
         addRenderLayer(new TrayDisks(this));
-        // The stick in the port is the stick's own item, as the Pattern Encoder draws it.
-        addRenderLayer(new BayMediumLayer<>(this, dock -> dock.mediaSlot().getStackInSlot(0)));
+        // The stick in the port is the stick's own item, as the Pattern Encoder draws it, lying as its port does.
+        addRenderLayer(new BayMediumLayer<>(this, dock -> dock.mediaSlot().getStackInSlot(0), dock -> true));
     }
 
     @Override

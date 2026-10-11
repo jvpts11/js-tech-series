@@ -13,6 +13,7 @@ import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.os.media.MediaBay;
 import dev.jstech.core.client.geo.LookGeoModel;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
@@ -28,7 +29,9 @@ public final class PatternEncoderRenderer extends GeoBlockRenderer<PatternEncode
 
     public PatternEncoderRenderer(final BlockEntityRendererProvider.Context context) {
         super(new LookGeoModel<>(ComputingLooks.PATTERN_ENCODER));
-        addRenderLayer(new BayMediumLayer<>(this, PatternEncoderBlockEntity::drawnMedium));
+        // The Standard's USB port stands upright; the Advanced's USB-C lies wide across.
+        addRenderLayer(new BayMediumLayer<>(this, PatternEncoderBlockEntity::drawnMedium,
+                encoder -> encoder.era() == HardwareEra.ADVANCED));
     }
 
     @Override

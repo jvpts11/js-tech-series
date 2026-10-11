@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os.media;
 
+import dev.jstech.computers.hardware.FrontArea;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
 import dev.jstech.core.text.Text;
@@ -72,6 +73,10 @@ public enum MediaDriveType implements IStableName {
     private static final EjectButton CD_BUTTON = new EjectButton(44, 20, 52, 23, 0);
     private static final EjectButton DVD_BUTTON = new EjectButton(53, 19, 59, 22, 0);
     private static final EjectButton BLU_RAY_BUTTON = new EjectButton(54, 20, 60, 23, 4);
+    /* Each drive's tray as its model slides it out, seven model pixels, with the disc lying on it. */
+    private static final StandingTray CD_TRAY = new StandingTray(new FrontArea(13, 8, 51, 16), 28);
+    private static final StandingTray DVD_TRAY = new StandingTray(new FrontArea(8, 8, 46, 16), 28);
+    private static final StandingTray BLU_RAY_TRAY = new StandingTray(new FrontArea(8, 12, 48, 18), 28);
 
     private final String serializedName;
     private final Set<MediaFormat> accepted;
@@ -156,6 +161,17 @@ public enum MediaDriveType implements IStableName {
             case CD_DRIVE -> CD_BUTTON;
             case DVD_DRIVE -> DVD_BUTTON;
             case BLU_RAY_DRIVE -> BLU_RAY_BUTTON;
+            case FLOPPY_DRIVE, DOCK_STATION, USB_PORT -> null;
+        };
+    }
+
+    /** Where the drive's tray stands once it is open; null for the drives with no tray. */
+    @Nullable
+    public StandingTray standingTray() {
+        return switch (this) {
+            case CD_DRIVE -> CD_TRAY;
+            case DVD_DRIVE -> DVD_TRAY;
+            case BLU_RAY_DRIVE -> BLU_RAY_TRAY;
             case FLOPPY_DRIVE, DOCK_STATION, USB_PORT -> null;
         };
     }

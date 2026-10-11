@@ -9,8 +9,12 @@ package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.client.PatternEncoderScreen;
 import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.computers.os.media.ITrayBlock;
+import java.util.List;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -20,20 +24,23 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.Objects;
 
 /**
  * The Pattern Encoders as a player sees them: each era's device with the very medium the player put in drawn in its
- * bay (a floppy in the slot, a disc on the tray, a stick in the port), and a floppy or a stick taken out still drawn on
- * its way out, then gone. A burner's eject button is outlined when looked at, and a click on it brings the tray out
- * with its disc and takes it back in. Each device is shot close up as its medium moves.
+ * bay (a floppy in the slot, a disc on the tray, a stick in the port, lying as its port does), a floppy taken out still
+ * drawn on its way out, then gone, and a stick gone the moment it is pulled out. A burner's eject button is outlined
+ * when looked at, and a click on it brings the tray out with its disc and takes it back in. Each device is shot close
+ * up as its medium moves.
  */
 public final class PatternEncoderClientTests {
 
     private static final int SETTLE = 4;
-    /** The stick half out of its port, before the hand takes it. */
-    private static final int USB_OUT = 6;
+    private static final int SCREEN_WAIT = 100;
+    /** Long enough for the client to hear the stick was pulled out. */
+    private static final int STICK_GONE = 3;
     /** Shots this far apart catch a lamp that blinks twice a second both lit and dark within four shots. */
     private static final int BLINK_STEP = 3;
 
@@ -104,7 +111,9 @@ public final class PatternEncoderClientTests {
                 .thenAssert(0, () -> drawn(ctx, STANDARD).is(ComputingModule.USB_FLASH_DRIVE.get()),
                         "the Standard encoder draws the stick in its port")
                 .thenServer(0, level -> insert(ctx, level, STANDARD, null))
-                .thenScreenshot(USB_OUT, "standard-usb-leaving");
+                .thenAssert(STICK_GONE, () -> drawn(ctx, STANDARD).isEmpty(),
+                        "a stick pulled out is gone at once: no clip carries it out")
+                .thenScreenshot(0, "standard-usb-out");
 
         // The Transition's LightScribe burner and the Advanced's Blu-ray writer, each with its disc on its tray.
         DeviceCloseUp.aimAtEjectButton(ctx, TRANSITION, button(ComputingModule.TRANSITION_PATTERN_ENCODER.get()));
@@ -160,6 +169,32 @@ public final class PatternEncoderClientTests {
                 .thenAssert(0, () -> clientEncoder(ctx, VINTAGE).busy(), "the pattern is still being written")
                 .thenServer(0, level -> level.getEntitiesOfClass(ItemFrame.class,
                         new AABB(ctx.abs(FRAME_WALL.south()))).forEach(ItemFrame::discard));
+    }
+
+    /*
+     * An idle encoder's screen has Cancel dead from its first frame. The button was born live and only learned better
+     * on the screen's first tick, which was long enough to click it.
+     */
+    @ClientTest(timeoutTicks = 600)
+    public static void screen_opensWithCancelDeadOnAnIdleEncoder(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> world.setBlock(STANDARD,
+                        DeviceCloseUp.facingPlayer(ComputingModule.PATTERN_ENCODER.get())))
+                .thenTeleport(SETTLE, PLAYER, Direction.NORTH)
+                // The top of the case, well clear of the eject button on its front.
+                .then(SETTLE, () -> ctx.rightClick(STANDARD, Direction.UP))
+                .thenAwaitScreen(PatternEncoderScreen.class, SCREEN_WAIT)
+                .then(SETTLE, () -> {
+                    final PatternEncoderScreen screen = ctx.screen(PatternEncoderScreen.class);
+                    // Laid out from scratch, as on opening, and read before a tick has passed.
+                    screen.resize(ctx.mc(), screen.width, screen.height);
+                    final String cancel = I18n.get("jsc.pattern_encoder.screen.cancel_queue");
+                    final List<Button> found = screen.children().stream().filter(Button.class::isInstance)
+                            .map(Button.class::cast).filter(b -> b.getMessage().getString().equals(cancel)).toList();
+                    ctx.assertTrue(found.size() == 1 && !found.getFirst().active,
+                            "Cancel is there and dead from the first frame");
+                })
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(SCREEN_WAIT);
     }
 
     private static EjectButton button(final Block encoder) {

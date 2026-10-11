@@ -18,4 +18,8 @@ public interface ITrayBlock {
     /** The eject button on its front, or null when it has no tray. */
     @Nullable
     EjectButton ejectButton();
+
+    /** Where its tray stands once it is open, or null when it has no tray. */
+    @Nullable
+    StandingTray standingTray();
 }

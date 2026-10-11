@@ -26,6 +26,7 @@ import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -58,6 +59,56 @@ public final class NetworkInteractorClientTests {
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp");
     private static final String NETWORK_LAUNCHER = "Network";
     private static final String IRON_ID = "item|minecraft:iron_ingot";
+    /** The band's first hotbar cell, after its three rows of the main inventory, and half a cell. */
+    private static final int HOTBAR_BAND_CELL = 27;
+    private static final int CELL_HALF = 9;
+
+    /*
+     * The horizontal grip, the window's corner and, maximized, the vertical grip, each dragged slowly the way a hand
+     * drags them, a step a tick, with the player's own items in the band: at every step the items sit on the cells the
+     * program draws, never where they were.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void grips_draggedSlowlyKeepTheItemsOnTheirCells(final ClientTestContext ctx) {
+        final int[] from = new int[2];
+        ctx.thenBuild(0, world -> {
+                    final CraftingComputerBlockEntity cc = world.placeRunningCraftingComputer(CRAFTING_COMPUTER);
+                    TestWorldBuilder.installDesktop(cc, FRAMES_XP, Programs.CRAFTING_MANAGER);
+                    cc.togglePower();
+                    cc.togglePower();
+                    world.placeMonitor(MONITOR, Direction.EAST);
+                })
+                .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
+                .thenGive(1, new ItemStack(Items.IRON_INGOT, 16), new ItemStack(Items.OAK_LOG, 8),
+                        new ItemStack(Items.REDSTONE, 32), new ItemStack(Items.DIAMOND, 3))
+                .thenRightClick(SETTLE, MONITOR)
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .then(2, () -> launch(ctx))
+                .thenWaitUntil(() -> interactor(ctx) != null, SCREEN_WAIT, "the Network Interactor window")
+                .then(4, () -> pressAt(ctx, from, point(ctx, interactor(ctx).horizontalGripCenter())));
+        dragSlowly(ctx, from, 0, 6, "the horizontal grip");
+        ctx.thenScreenshot(1, "grip-folded")
+                .then(1, () -> {
+                    final DesktopWindow window = ctx.screen(DesktopScreen.class).windowFor(NETWORK_LAUNCHER);
+                    pressAt(ctx, from, new int[] {window.x() + window.width() - 1, window.y() + window.height() - 1});
+                });
+        dragSlowly(ctx, from, 5, 5, "the window's corner");
+        ctx.thenScreenshot(1, "window-resized")
+                .then(1, () -> ctx.screen(DesktopScreen.class).windowFor(NETWORK_LAUNCHER).toggleMaximize())
+                .then(4, () -> pressAt(ctx, from, point(ctx, interactor(ctx).verticalGripCenter())));
+        dragSlowly(ctx, from, 6, 0, "the vertical grip");
+        ctx.thenScreenshot(1, "grid-widened")
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                // Escape drops a selection first, so a second one may be needed to leave the screen.
+                .then(2, () -> {
+                    if (ctx.mc().screen != null) {
+                        ctx.key(GLFW.GLFW_KEY_ESCAPE);
+                    }
+                })
+                .thenAwaitNoScreen(SCREEN_WAIT)
+                // The items go, so the tests after this one start with an empty inventory.
+                .thenServer(0, level -> ctx.serverPlayer().getInventory().clearContent());
+    }
 
     /**
      * The grid narrows by the mod that made the item and by its category, on top of the search; the
@@ -588,6 +639,82 @@ public final class NetworkInteractorClientTests {
     }
 
     /** Converts a Network Interactor content-local point into desktop coordinates. */
+    /* The game's screen coordinates of a point of the desktop. */
+    private static double[] onScreen(final ClientTestContext ctx, final int[] desktopPoint) {
+        final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
+        final double s = desktop.desktopScale();
+        return new double[] {desktop.desktopX() + desktopPoint[0] * s + 0.5,
+                desktop.desktopY() + desktopPoint[1] * s + 0.5};
+    }
+
+    /* The left button pressed at a desktop point and held, the point kept as where the drag starts from. */
+    private static void pressAt(final ClientTestContext ctx, final int[] from, final int[] desktopPoint) {
+        from[0] = desktopPoint[0];
+        from[1] = desktopPoint[1];
+        final double[] at = onScreen(ctx, desktopPoint);
+        ctx.pointAt(at[0], at[1]);
+        ctx.screen(DesktopScreen.class).mouseClicked(at[0], at[1], 0);
+    }
+
+    /*
+     * The held button moved six steps of (dx, dy) from where it was pressed, a step a tick, the items checked against
+     * their cells after each, then let go.
+     */
+    private static void dragSlowly(final ClientTestContext ctx, final int[] from, final int dx, final int dy,
+                                   final String what) {
+        for (int step = 1; step <= 6; step++) {
+            final int s = step;
+            ctx.then(1, () -> drag(ctx, new int[] {from[0] + dx * s, from[1] + dy * s}))
+                    .then(1, () -> ctx.assertTrue(onTheirCells(ctx), "dragging " + what + ", the items sit on their"
+                            + " cells; the first hotbar cell is at " + hotbarCell(ctx) + ", " + bandSnapshot(ctx)));
+        }
+        ctx.then(1, () -> release(ctx, new int[] {from[0] + dx * 6, from[1] + dy * 6}))
+                .then(1, () -> ctx.assertTrue(onTheirCells(ctx), "let go of " + what + ", the items sit on their"
+                        + " cells; " + bandSnapshot(ctx)));
+    }
+
+    /* Whether the first hotbar slot stands on the band's first hotbar cell as the program draws it. */
+    private static boolean onTheirCells(final ClientTestContext ctx) {
+        final int[] cell = hotbarCell(ctx);
+        for (final Slot slot : ctx.screen(DesktopScreen.class).getMenu().slots) {
+            if (slot.isActive() && slot.container == ctx.player().getInventory() && slot.getContainerSlot() == 0) {
+                return slot.x == cell[0] && slot.y == cell[1];
+            }
+        }
+        return false;
+    }
+
+    /* The desktop point of the top-left of the band's first hotbar cell, as the program draws it. */
+    private static int[] hotbarCell(final ClientTestContext ctx) {
+        final int[] centre = point(ctx, interactor(ctx).inventoryBandSlotCenter(HOTBAR_BAND_CELL));
+        return new int[] {centre[0] - CELL_HALF, centre[1] - CELL_HALF};
+    }
+
+    /* The held button moved there, as one frame of a hand's drag. */
+    private static void drag(final ClientTestContext ctx, final int[] desktopPoint) {
+        final double[] at = onScreen(ctx, desktopPoint);
+        ctx.pointAt(at[0], at[1]);
+        ctx.screen(DesktopScreen.class).mouseDragged(at[0], at[1], 0, 0, 0);
+    }
+
+    /* The held button let go there. */
+    private static void release(final ClientTestContext ctx, final int[] desktopPoint) {
+        final double[] at = onScreen(ctx, desktopPoint);
+        ctx.pointAt(at[0], at[1]);
+        ctx.screen(DesktopScreen.class).mouseReleased(at[0], at[1], 0);
+    }
+
+    /* Where each slot holding an item stands, and the rows the band shows. */
+    private static String bandSnapshot(final ClientTestContext ctx) {
+        final StringBuilder out = new StringBuilder("rows=" + interactor(ctx).inventoryRowsShown());
+        for (final Slot slot : ctx.screen(DesktopScreen.class).getMenu().slots) {
+            if (slot.isActive() && slot.hasItem()) {
+                out.append(' ').append(slot.getContainerSlot()).append('@').append(slot.x).append(',').append(slot.y);
+            }
+        }
+        return out.toString();
+    }
+
     private static int[] point(final ClientTestContext ctx, final int[] local) {
         final DesktopWindow window = ctx.screen(DesktopScreen.class).windowFor(NETWORK_LAUNCHER);
         if (window == null) {

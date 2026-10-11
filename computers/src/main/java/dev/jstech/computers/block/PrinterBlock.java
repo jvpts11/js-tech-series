@@ -18,13 +18,19 @@ import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -73,6 +79,14 @@ public class PrinterBlock extends DeviceBlock implements IFaceConnector, IEraCha
     @Override
     public HardwareEra chassisEra() {
         return era;
+    }
+
+    /* Its tooltip says whether it prints in color, which a player choosing one for a picture wants to know. */
+    @Override
+    public void appendHoverText(final ItemStack stack, final Item.TooltipContext context, final List<Component> lines,
+                                final TooltipFlag flag) {
+        super.appendHoverText(stack, context, lines, flag);
+        lines.add(GameText.component(model().printsIn()).withStyle(ChatFormatting.GRAY));
     }
 
     /** The device port of its era, in the middle of its back. */

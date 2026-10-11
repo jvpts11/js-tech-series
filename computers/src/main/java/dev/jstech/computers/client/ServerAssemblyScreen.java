@@ -14,6 +14,7 @@ import dev.jstech.computers.hardware.BuildValidation;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
 import dev.jstech.computers.operation.payload.RenameServerPayload;
+import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.format.Unit;
 import dev.jstech.core.format.UnitFormatter;
@@ -71,13 +72,15 @@ public class ServerAssemblyScreen extends AbstractMachineAssemblyScreen<ServerAs
 
     @Override
     protected String machineTitle() {
-        return GameText.resolve(AssemblyTexts.TITLE_SERVER);
+        // A supercomputer's node is built on the same screen as a server, but it is not one.
+        return GameText.resolve(node() ? AssemblyTexts.TITLE_SUPERCOMPUTER_NODE : AssemblyTexts.TITLE_SERVER);
     }
 
     @Override
     protected NameField nameField() {
         // Each keystroke names the Server in the hand.
-        return new NameField(GameText.component(AssemblyTexts.NAME_THIS_SERVER), menu.serverName(),
+        return new NameField(GameText.component(node() ? AssemblyTexts.NAME_THIS_NODE : AssemblyTexts.NAME_THIS_SERVER),
+                menu.serverName(),
                 RenameServerPayload.MAX_LEN,
                 s -> PacketDistributor.sendToServer(new RenameServerPayload(s)));
     }
@@ -162,5 +165,10 @@ public class ServerAssemblyScreen extends AbstractMachineAssemblyScreen<ServerAs
             lines.add(GameText.component(problem).withStyle(ChatFormatting.RED));
         }
         return lines;
+    }
+
+    /* Whether the server in the hand is a supercomputer's node. */
+    private boolean node() {
+        return menu.chassis().rackType() == RackChassis.RackType.SUPERCOMPUTER;
     }
 }

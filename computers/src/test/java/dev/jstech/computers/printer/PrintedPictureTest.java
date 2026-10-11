@@ -60,6 +60,16 @@ class PrintedPictureTest {
     }
 
     @Test
+    void print_halftonesAtARealPrintersResolution() {
+        final PixImage picture = filled(64, 48, DARK);
+        for (final PrinterModel.Ink ink : new PrinterModel.Ink[] {PrinterModel.Ink.DOT_MATRIX,
+                PrinterModel.Ink.INKJET_COARSE, PrinterModel.Ink.INKJET_FINE, PrinterModel.Ink.LASER}) {
+            assertTrue(PrintedPicture.print(picture, ink).width() >= 600,
+                    ink + " prints too coarse for its grain to blend from a step back");
+        }
+    }
+
+    @Test
     void print_laserIsGreyOnly() {
         final PixImage picture = filled(8, 8, DARK);
         final PrintedPicture.Raster toner = PrintedPicture.print(picture, PrinterModel.Ink.LASER);

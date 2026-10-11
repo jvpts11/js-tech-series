@@ -38,6 +38,8 @@ public final class PrintedPictureTextures {
     private static final int FRAME_MARGIN = 8;
     /** How long a picture is safe from being let go after it was last drawn, so a busy view never thrashes. */
     private static final long GRACE_MILLIS = 2000L;
+    /** How many of a fine print's pixels go into one of its texture's, each way. */
+    private static final int SHRINK = 2;
     private static final Map<String, Slot> KEPT = new LinkedHashMap<>(16, 0.75F, true);
     /** Pictures that did not decode, so a malformed one is read once and not again at every frame. */
     private static final Set<String> FAILED = new LinkedHashSet<>();
@@ -93,10 +95,21 @@ public final class PrintedPictureTextures {
             return null;
         }
         final PrintedPicture.Raster raster = PrintedPicture.print(picture, model.ink());
-        final NativeImage image = framed ? framedImage(raster, model, paper, bar) : inkImage(raster);
+        /*
+         * A printer's fine grain is seen as the eye sees paper, blended over a step back: the print is shrunk by half,
+         * each pixel the average of the four under it, and drawn smoothed. Drawn pixel for pixel it read as a lattice of
+         * little squares. The ink tank printer prints the picture as it is, so its pixels stay crisp.
+         */
+        final boolean smooth = model.ink() != PrinterModel.Ink.CLEAN;
+        final NativeImage image = framed ? framedImage(raster, model, paper, bar)
+                : inkImage(raster, smooth ? SHRINK : 1);
         final ResourceLocation id = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
                 "printed_picture/" + nextTexture++ + (framed ? "_f" : "_i"));
-        Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(image));
+        final DynamicTexture texture = new DynamicTexture(image);
+        if (!framed && smooth) {
+            texture.setFilter(true, false);
+        }
+        Minecraft.getInstance().getTextureManager().register(id, texture);
         final Entry entry = new Entry(id, image.getWidth(), image.getHeight());
         KEPT.put(key, new Slot(entry, now));
         trim(now);
@@ -120,11 +133,15 @@ public final class PrintedPictureTextures {
         }
     }
 
-    private static NativeImage inkImage(final PrintedPicture.Raster raster) {
-        final NativeImage image = new NativeImage(raster.width(), raster.height(), true);
-        for (int y = 0; y < raster.height(); y++) {
-            for (int x = 0; x < raster.width(); x++) {
-                image.setPixelRGBA(x, y, abgr(raster.get(x, y)));
+    /* The print's ink, each pixel the average of the square of {@code shrink} pixels of the print under it. */
+    private static NativeImage inkImage(final PrintedPicture.Raster raster, final int shrink) {
+        final int w = Math.max(1, (raster.width() + shrink - 1) / shrink);
+        final int h = Math.max(1, (raster.height() + shrink - 1) / shrink);
+        final NativeImage image = new NativeImage(w, h, true);
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                image.setPixelRGBA(x, y, abgr(shrink == 1 ? raster.get(x, y)
+                        : area(raster, x * shrink, y * shrink, (x + 1) * shrink, (y + 1) * shrink)));
             }
         }
         return image;
@@ -149,13 +166,45 @@ public final class PrintedPictureTextures {
         final int y0 = (FRAME_SIDE - h) / 2;
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                final int ink = raster.get((int) (x / scale), (int) (y / scale));
+                final int ink = area(raster, x / scale, y / scale, (x + 1) / scale, (y + 1) / scale);
                 if ((ink >>> 24) != 0) {
                     image.setPixelRGBA(x0 + x, y0 + y, abgr(over(ink, image.getPixelRGBA(x0 + x, y0 + y))));
                 }
             }
         }
         return image;
+    }
+
+    /*
+     * The ink over a rectangle of the raster, averaged by how much each pixel covers, so a fine print shrunk onto a
+     * framed sheet keeps its tones rather than catching every few dots and missing the rest.
+     */
+    private static int area(final PrintedPicture.Raster raster, final float left, final float top, final float right,
+                            final float bottom) {
+        final int x0 = (int) left;
+        final int y0 = (int) top;
+        final int x1 = Math.max(x0 + 1, (int) Math.ceil(right));
+        final int y1 = Math.max(y0 + 1, (int) Math.ceil(bottom));
+        long alpha = 0;
+        long red = 0;
+        long green = 0;
+        long blue = 0;
+        int n = 0;
+        for (int y = y0; y < y1; y++) {
+            for (int x = x0; x < x1; x++) {
+                final int p = raster.get(x, y);
+                final int a = p >>> 24;
+                alpha += a;
+                red += (long) ((p >> 16) & 0xFF) * a;
+                green += (long) ((p >> 8) & 0xFF) * a;
+                blue += (long) (p & 0xFF) * a;
+                n++;
+            }
+        }
+        if (alpha == 0) {
+            return 0;
+        }
+        return (int) (alpha / n) << 24 | (int) (red / alpha) << 16 | (int) (green / alpha) << 8 | (int) (blue / alpha);
     }
 
     /* An ink pixel laid over the paper's, by the ink's opacity; the paper pixel is in the image's own order. */

@@ -9,53 +9,59 @@ package dev.jstech.computers.printer;
 
 import dev.jstech.computers.os.fs.PixImage;
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
- * A picture as a printer puts it on paper, each its own way: the dot matrix in black dots, one pass of its head every
- * eight rows leaving a faint shift; the old inkjet in cyan, magenta, yellow and black dots, coarse, its head's passes
- * showing as paler bands; the newer inkjet the same, finer; the laser in a grey halftone of round toner dots; the ink
- * tank printer as the picture is. The picture is fitted to the sheet keeping its shape, and a pixel left clear in the
- * picture is paper: it is left transparent, so the sheet it is drawn on shows through.
+ * A picture as a printer puts it on paper, each its own way and at a resolution a real one prints at, so its
+ * technique shows as a grain when looked at closely and the picture reads whole from a step back: the dot matrix in the
+ * round dots of its ribbon, every other pass of its head a pixel over; the old inkjet in cyan, magenta, yellow and
+ * black dots, grainy, its head's passes showing as paler rows; the newer inkjet the same with dots too fine to see;
+ * the laser in a fine halftone of round toner dots on a screen turned forty-five degrees; the ink tank printer as the
+ * picture is. The picture is fitted to the sheet keeping its shape, and a pixel left clear in the picture is paper:
+ * it is left transparent, so the sheet it is drawn on shows through.
  *
  * <p>Pure: the reading screen and the framed sheet make their textures from it, and a test can check every printer's
  * hand without the game. The result depends on nothing but the picture and the printer, so the same sheet always
- * looks the same.
+ * looks the same. Every printer but the ink tank one is meant to be drawn smoothed, as the eye sees paper.
  */
 public final class PrintedPicture {
 
-    /** How many dots across the widest side of a dot matrix picture. */
-    private static final int DOT_GRID = 96;
-    /** How many pixels a dot matrix dot spans. */
-    private static final int DOT_SIZE = 4;
-    /** The rows one pass of a nine-pin head prints. */
+    /** How many dots across the widest side of a dot matrix picture, and how many pixels apart they stand. */
+    private static final int DOT_GRID = 168;
+    private static final int DOT_PITCH = 5;
+    /** A ribbon dot's radius in pixels, and how much of the paper under it it covers. */
+    private static final float DOT_RADIUS = 2.7F;
+    private static final float RIBBON_COVER = 0.86F;
+    /** The rows one pass of a nine-pin head prints; every other pass lands a pixel over. */
     private static final int HEAD_ROWS = 8;
-    /** How many ink dots across the widest side of the old inkjet's picture. */
-    private static final int COARSE_GRID = 96;
-    /** The rows one pass of the old inkjet's head prints, each pass's first row paler. */
+    /** The old inkjet: dots across the widest side, pixels apart, their radius, and the rows one head pass prints. */
+    private static final int COARSE_GRID = 432;
+    private static final int COARSE_PITCH = 2;
+    private static final float COARSE_RADIUS = 1.25F;
     private static final int COARSE_BAND = 24;
-    /** How many ink dots across the widest side of the newer inkjet's picture. */
-    private static final int FINE_GRID = 192;
-    /** How many halftone cells across the widest side of a laser picture. */
-    private static final int LASER_GRID = 72;
-    /** How many pixels a halftone cell spans. */
+    /** How much paler the first row of each of the old inkjet's passes prints. */
+    private static final float BAND_FADE = 0.15F;
+    /** The newer inkjet: a dot a pixel, too fine for the eye to tell apart. */
+    private static final int FINE_GRID = 648;
+    /** The laser: halftone cells across the widest side, and pixels a cell. */
+    private static final int LASER_GRID = 200;
     private static final int LASER_CELL = 4;
+    /** How sharp a toner dot's edge is, and how much paper its densest toner still lets through. */
+    private static final float LASER_EDGE = 6F;
+    private static final float TONER_COVER = 0.95F;
     /** How many pixels across the widest side of a clean print. */
     private static final int CLEAN_SIZE = 192;
-    /** The ordered dither the inkjets lay their inks down with. */
-    private static final int[][] BAYER = {{0, 8, 2, 10}, {12, 4, 14, 6}, {3, 11, 1, 9}, {15, 7, 13, 5}};
     /** A pixel fully covered. */
     private static final int OPAQUE = 0xFF << 24;
-    /** A ribbon's dot, which lets a little paper through. */
-    private static final int RIBBON = 0xE1 << 24;
-    /** The inkjets' black and the laser's toner, each a little warmer or cooler than a pure black. */
-    private static final int BLACK_INK = argb(30, 30, 34);
-    private static final int TONER = argb(28, 28, 30);
+    /** The ribbon's black and the laser's toner, each a little cooler than a pure black. */
+    private static final int RIBBON = argb(34, 34, 40) & 0xFFFFFF;
+    private static final int TONER = argb(40, 40, 42) & 0xFFFFFF;
     /*
-     * The pixels of a laser cell in the order its dot grows into them, from the middle out: a cell n of sixteen dark
-     * fills its first n, so the dots stay round and every tone from white to black has a size of its own.
+     * What share of red, green and blue light each ink lets back from the paper: black, cyan, magenta and yellow, laid
+     * in that order. Inks over one another multiply, as they do on paper.
      */
-    private static final int[] DOT_ORDER = dotOrder();
+    private static final float[][] INKS = {{0.10F, 0.10F, 0.12F}, {0F, 1F, 1F}, {1F, 0F, 1F}, {1F, 1F, 0F}};
+    /** The screen's turn, forty-five degrees: a cell's diagonal. */
+    private static final double SCREEN = LASER_CELL * Math.sqrt(2.0);
 
     private PrintedPicture() {
     }
@@ -64,129 +70,153 @@ public final class PrintedPicture {
     public static Raster print(final PixImage picture, final PrinterModel.Ink ink) {
         return switch (ink) {
             case DOT_MATRIX -> dotMatrix(picture);
-            case INKJET_COARSE -> inkjet(picture, COARSE_GRID, true);
-            case INKJET_FINE -> inkjet(picture, FINE_GRID, false);
+            case INKJET_COARSE -> inkjet(picture, COARSE_GRID, COARSE_PITCH, COARSE_RADIUS, true);
+            case INKJET_FINE -> inkjet(picture, FINE_GRID, 1, 0F, false);
             case LASER -> laser(picture);
             case CLEAN -> clean(picture);
         };
     }
 
     /*
-     * One bit a dot, error-diffused so greys come out as more or fewer dots; each dot a small round blot, a pass of
-     * the head every eight rows shifted by a pixel the way a worn ribbon and a loose head print.
+     * One bit a dot, error-diffused so greys come out as more or fewer dots; each dot a round blot of the ribbon,
+     * soft at its edge, every other pass of the head shifted by a pixel the way a loose head prints.
      */
     private static Raster dotMatrix(final PixImage picture) {
         final int[] size = fit(picture, DOT_GRID);
-        final float[] grey = new float[size[0] * size[1]];
-        for (int y = 0; y < size[1]; y++) {
-            for (int x = 0; x < size[0]; x++) {
-                final int rgb = sample(picture, x, y, size[0], size[1]);
-                grey[y * size[0] + x] = (float) Math.pow(luma(rgb) / 255.0, 0.8);
+        final int gw = size[0];
+        final int gh = size[1];
+        final float[] grey = new float[gw * gh];
+        for (int y = 0; y < gh; y++) {
+            for (int x = 0; x < gw; x++) {
+                grey[y * gw + x] = (float) Math.pow(luma(sample(picture, x, y, gw, gh)) / 255.0, 0.8);
             }
         }
-        final Raster out = new Raster(size[0] * DOT_SIZE + 1, size[1] * DOT_SIZE);
-        for (int y = 0; y < size[1]; y++) {
+        final boolean[] dots = dither(grey, gw, gh);
+        final int w = gw * DOT_PITCH + DOT_PITCH;
+        final int h = gh * DOT_PITCH;
+        final float[] cover = new float[w * h];
+        for (int y = 0; y < gh; y++) {
             final int shift = (y / HEAD_ROWS) % 2;
-            for (int x = 0; x < size[0]; x++) {
-                final int at = y * size[0] + x;
-                final boolean dot = grey[at] < 0.5F;
-                final float error = grey[at] - (dot ? 0F : 1F);
-                diffuse(grey, size[0], size[1], x, y, error);
-                if (dot) {
-                    blot(out, x * DOT_SIZE + shift, y * DOT_SIZE, (x * 31 + y * 17) % 5);
+            for (int x = 0; x < gw; x++) {
+                if (dots[y * gw + x]) {
+                    stamp(cover, w, h, x * DOT_PITCH + DOT_PITCH / 2F + shift, y * DOT_PITCH + DOT_PITCH / 2F,
+                            DOT_RADIUS, RIBBON_COVER);
                 }
             }
         }
-        return out;
+        return toned(cover, w, h, RIBBON);
     }
 
     /*
-     * Cyan, magenta and yellow laid against the ordered dither, black where all three would be heavy; the old head's
-     * passes leave the first row of each band paler.
+     * Black, cyan, magenta and yellow, each error-diffused on its own so every tone is a mix of dots, the inks
+     * multiplying where they overlap; the old head's dots spread a little round each, and the first row of each of its
+     * passes prints paler.
      */
-    private static Raster inkjet(final PixImage picture, final int grid, final boolean bands) {
+    private static Raster inkjet(final PixImage picture, final int grid, final int pitch, final float radius,
+                                 final boolean bands) {
         final int[] size = fit(picture, grid);
-        final Raster out = new Raster(size[0], size[1]);
-        for (int y = 0; y < size[1]; y++) {
-            for (int x = 0; x < size[0]; x++) {
-                final int rgb = sample(picture, x, y, size[0], size[1]);
-                final float t = (BAYER[y % 4][x % 4] + 0.5F) / 16F;
+        final int gw = size[0];
+        final int gh = size[1];
+        final float[][] amounts = new float[INKS.length][gw * gh];
+        for (int y = 0; y < gh; y++) {
+            for (int x = 0; x < gw; x++) {
+                final int rgb = sample(picture, x, y, gw, gh);
                 final float c = 1F - ((rgb >> 16) & 0xFF) / 255F;
                 final float m = 1F - ((rgb >> 8) & 0xFF) / 255F;
                 final float yel = 1F - (rgb & 0xFF) / 255F;
                 final float k = Math.min(c, Math.min(m, yel));
-                int ink;
-                if (k > t * 0.9F + 0.35F) {
-                    ink = BLACK_INK;
-                } else {
-                    float r = 255F;
-                    float g = 255F;
-                    float b = 255F;
-                    if (c > t) {
-                        r *= 0.05F;
-                        g *= 0.68F;
-                        b *= 0.93F;
+                final float rest = k < 1F ? 1F - k : 1F;
+                final int at = y * gw + x;
+                amounts[0][at] = k;
+                amounts[1][at] = (c - k) / rest;
+                amounts[2][at] = (m - k) / rest;
+                amounts[3][at] = (yel - k) / rest;
+            }
+        }
+        final int w = gw * pitch;
+        final int h = gh * pitch;
+        final float[] red = filled(w * h);
+        final float[] green = filled(w * h);
+        final float[] blue = filled(w * h);
+        final float[] inked = new float[w * h];
+        for (int layer = 0; layer < INKS.length; layer++) {
+            final float[] paper = new float[gw * gh];
+            for (int i = 0; i < paper.length; i++) {
+                paper[i] = 1F - amounts[layer][i];
+            }
+            final boolean[] dots = dither(paper, gw, gh);
+            final float[] cover = new float[w * h];
+            for (int y = 0; y < gh; y++) {
+                for (int x = 0; x < gw; x++) {
+                    if (!dots[y * gw + x]) {
+                        continue;
                     }
-                    if (m > t) {
-                        r *= 0.92F;
-                        g *= 0.12F;
-                        b *= 0.55F;
+                    if (pitch == 1) {
+                        cover[y * w + x] = 1F;
+                    } else {
+                        stamp(cover, w, h, x * pitch + pitch / 2F, y * pitch + pitch / 2F, radius, 1F);
                     }
-                    if (yel > t) {
-                        r *= 0.99F;
-                        g *= 0.92F;
-                        b *= 0.08F;
-                    }
-                    ink = c > t || m > t || yel > t ? argb((int) r, (int) g, (int) b) : 0;
                 }
-                if (bands && ink != 0 && y % COARSE_BAND == 0) {
-                    ink = lighter(ink, 40);
+            }
+            final float[] ink = INKS[layer];
+            for (int i = 0; i < cover.length; i++) {
+                final float a = cover[i];
+                if (a > 0F) {
+                    red[i] *= 1F - a + ink[0] * a;
+                    green[i] *= 1F - a + ink[1] * a;
+                    blue[i] *= 1F - a + ink[2] * a;
+                    inked[i] = Math.max(inked[i], a);
                 }
-                out.set(x, y, ink);
+            }
+        }
+        final Raster out = new Raster(w, h);
+        for (int y = 0; y < h; y++) {
+            final boolean faded = bands && y % (pitch * COARSE_BAND) < pitch;
+            for (int x = 0; x < w; x++) {
+                final int i = y * w + x;
+                if (inked[i] <= 0F) {
+                    continue;
+                }
+                final float lift = faded ? BAND_FADE : 0F;
+                out.set(x, y, argb(Math.round((red[i] * (1F - lift) + lift) * 255F),
+                        Math.round((green[i] * (1F - lift) + lift) * 255F),
+                        Math.round((blue[i] * (1F - lift) + lift) * 255F)));
             }
         }
         return out;
     }
 
     /*
-     * Toner in round dots on a grid, each as big as its cell is dark: a cell grows its dot one pixel at a time from
-     * the middle, so a mono printer prints the picture in greys. The size is spread over neighbouring cells by the
-     * ordered pattern, so the tones between two sizes come out too. A dot was once drawn by its radius, which in a
-     * cell four pixels across takes only three sizes: every middle tone printed as the same dot.
+     * Toner in round dots on a screen turned forty-five degrees, each dot as big as its place is dark: a cell's
+     * darkness sets how much of the spot that peaks at the cell's middle the toner fills, so every grey has a dot size of
+     * its own and the edge of a dot is soft. White prints nothing at all.
      */
     private static Raster laser(final PixImage picture) {
         final int[] size = fit(picture, LASER_GRID);
-        final Raster out = new Raster(size[0] * LASER_CELL, size[1] * LASER_CELL);
-        final int cells = LASER_CELL * LASER_CELL;
-        for (int y = 0; y < size[1]; y++) {
-            for (int x = 0; x < size[0]; x++) {
-                final float dark = 1F - luma(sample(picture, x, y, size[0], size[1])) / 255F;
-                final float spread = (BAYER[y % 4][x % 4] + 0.5F) / cells;
-                final int fill = Math.max(0, Math.min(cells, (int) Math.floor(dark * cells + spread)));
-                for (int i = 0; i < fill; i++) {
-                    final int at = DOT_ORDER[i];
-                    out.set(x * LASER_CELL + at % LASER_CELL, y * LASER_CELL + at / LASER_CELL, TONER);
-                }
+        final int gw = size[0];
+        final int gh = size[1];
+        final float[] dark = new float[gw * gh];
+        for (int y = 0; y < gh; y++) {
+            for (int x = 0; x < gw; x++) {
+                dark[y * gw + x] = 1F - luma(sample(picture, x, y, gw, gh)) / 255F;
             }
         }
-        return out;
-    }
-
-    /* The cell's pixels, nearest the middle first and, between two as near, in reading order. */
-    private static int[] dotOrder() {
-        final int cells = LASER_CELL * LASER_CELL;
-        final float centre = (LASER_CELL - 1) / 2F;
-        final Integer[] order = new Integer[cells];
-        for (int i = 0; i < cells; i++) {
-            order[i] = i;
+        final int w = gw * LASER_CELL;
+        final int h = gh * LASER_CELL;
+        final float[] cover = new float[w * h];
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                final float d = dark[(y / LASER_CELL) * gw + x / LASER_CELL];
+                if (d <= 0F) {
+                    continue;
+                }
+                final double u = (x + y) / SCREEN * 2.0 * Math.PI;
+                final double v = (x - y) / SCREEN * 2.0 * Math.PI;
+                final float spot = (float) ((Math.cos(u) + Math.cos(v)) / 4.0 + 0.5);
+                cover[y * w + x] = clamp01((d - (1F - spot)) * LASER_EDGE + 0.5F) * TONER_COVER;
+            }
         }
-        Arrays.sort(order, Comparator.comparingDouble(
-                (Integer i) -> Math.hypot(i % LASER_CELL - centre, i / LASER_CELL - centre)).thenComparingInt(i -> i));
-        final int[] out = new int[cells];
-        for (int i = 0; i < cells; i++) {
-            out[i] = order[i];
-        }
-        return out;
+        return toned(cover, w, h, TONER);
     }
 
     /* The picture as it is, each of its pixels a square of the print. */
@@ -200,6 +230,57 @@ public final class PrintedPicture {
             }
         }
         return out;
+    }
+
+    /* One colour laid by how much of each pixel it covers, the paper showing through the rest. */
+    private static Raster toned(final float[] cover, final int w, final int h, final int rgb) {
+        final Raster out = new Raster(w, h);
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                final int alpha = Math.round(cover[y * w + x] * 255F);
+                if (alpha > 0) {
+                    out.set(x, y, alpha << 24 | rgb);
+                }
+            }
+        }
+        return out;
+    }
+
+    /*
+     * A round dot of the given radius centred at (cx, cy), soft over its last pixel, laid into the cover: where dots
+     * overlap the paper left under one is covered by the next by the same share.
+     */
+    private static void stamp(final float[] cover, final int w, final int h, final float cx, final float cy,
+                              final float radius, final float density) {
+        final int x0 = Math.max(0, (int) Math.floor(cx - radius - 1F));
+        final int x1 = Math.min(w - 1, (int) Math.ceil(cx + radius + 1F));
+        final int y0 = Math.max(0, (int) Math.floor(cy - radius - 1F));
+        final int y1 = Math.min(h - 1, (int) Math.ceil(cy + radius + 1F));
+        for (int y = y0; y <= y1; y++) {
+            for (int x = x0; x <= x1; x++) {
+                final float d = (float) Math.hypot(x + 0.5F - cx, y + 0.5F - cy);
+                final float blot = clamp01(radius + 0.5F - d) * density;
+                if (blot > 0F) {
+                    final int at = y * w + x;
+                    cover[at] = 1F - (1F - cover[at]) * (1F - blot);
+                }
+            }
+        }
+    }
+
+    /* Floyd and Steinberg's error diffusion of a field of paper, 1 bare and 0 covered: where a dot goes. */
+    private static boolean[] dither(final float[] paper, final int w, final int h) {
+        final float[] field = paper.clone();
+        final boolean[] dots = new boolean[w * h];
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                final int at = y * w + x;
+                final boolean dot = field[at] < 0.5F;
+                dots[at] = dot;
+                diffuse(field, w, h, x, y, field[at] - (dot ? 0F : 1F));
+            }
+        }
+        return dots;
     }
 
     /* The grid a picture is fitted to: its widest side {@code most} across, the other kept in proportion. */
@@ -242,33 +323,29 @@ public final class PrintedPicture {
     }
 
     /* Floyd and Steinberg's spread of a dot's rounding to the dots after it. */
-    private static void diffuse(final float[] grey, final int w, final int h, final int x, final int y,
+    private static void diffuse(final float[] field, final int w, final int h, final int x, final int y,
                                 final float error) {
-        spread(grey, w, h, x + 1, y, error * 7F / 16F);
-        spread(grey, w, h, x - 1, y + 1, error * 3F / 16F);
-        spread(grey, w, h, x, y + 1, error * 5F / 16F);
-        spread(grey, w, h, x + 1, y + 1, error / 16F);
+        spread(field, w, h, x + 1, y, error * 7F / 16F);
+        spread(field, w, h, x - 1, y + 1, error * 3F / 16F);
+        spread(field, w, h, x, y + 1, error * 5F / 16F);
+        spread(field, w, h, x + 1, y + 1, error / 16F);
     }
 
-    private static void spread(final float[] grey, final int w, final int h, final int x, final int y,
+    private static void spread(final float[] field, final int w, final int h, final int x, final int y,
                                final float amount) {
         if (x >= 0 && x < w && y < h) {
-            grey[y * w + x] += amount;
+            field[y * w + x] += amount;
         }
     }
 
-    /* A dot of the ribbon: a rounded blot three pixels across, its shade varying a little with the ribbon's wear. */
-    private static void blot(final Raster out, final int x, final int y, final int wear) {
-        final int shade = 30 + wear * 5;
-        final int colour = RIBBON | shade << 16 | shade << 8 | (shade + 6);
-        for (int dy = 0; dy < 3; dy++) {
-            for (int dx = 0; dx < 3; dx++) {
-                if ((dx == 0 || dx == 2) && (dy == 0 || dy == 2)) {
-                    continue;
-                }
-                out.set(x + dx, y + dy, colour);
-            }
-        }
+    private static float[] filled(final int n) {
+        final float[] out = new float[n];
+        Arrays.fill(out, 1F);
+        return out;
+    }
+
+    private static float clamp01(final float v) {
+        return Math.max(0F, Math.min(1F, v));
     }
 
     private static int luma(final int rgb) {
@@ -277,10 +354,6 @@ public final class PrintedPicture {
 
     private static int argb(final int r, final int g, final int b) {
         return OPAQUE | clamp(r) << 16 | clamp(g) << 8 | clamp(b);
-    }
-
-    private static int lighter(final int argb, final int lift) {
-        return argb((argb >> 16 & 0xFF) + lift, (argb >> 8 & 0xFF) + lift, (argb & 0xFF) + lift);
     }
 
     private static int clamp(final int v) {

@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.block.PrinterBlock;
 import dev.jstech.computers.blockentity.PrinterBlockEntity;
 import dev.jstech.computers.client.PrinterScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
@@ -22,15 +23,19 @@ import dev.jstech.computers.printer.PrintedDocument;
 import dev.jstech.computers.printer.PrinterModel;
 import dev.jstech.computers.printer.Printers;
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.core.text.GameText;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -147,6 +152,35 @@ public final class PrinterClientTests {
                 .thenScreenshot(SETTLE, "picture-sheet")
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
+    }
+
+    /*
+     * The same picture on each printer's paper, each in its own hand: dots of ribbon, of ink, of toner, or the picture
+     * as it is. Each printer's tooltip says whether it prints in color.
+     */
+    @ClientTest(timeoutTicks = 1500)
+    public static void printedPictures_showEachPrintersHandAndItsColor(final ClientTestContext ctx) {
+        for (final PrinterModel model : PrinterModel.values()) {
+            final ItemStack sheet = sheet(picture().printedBy(model));
+            ctx.thenServer(SETTLE, level -> ctx.hold(sheet.copy()))
+                    .then(SETTLE, () -> use(ctx))
+                    .thenAwaitScreen(PrintedPaperScreen.class, SCREEN_WAIT)
+                    .thenScreenshot(SETTLE, "picture-" + model.serializedName())
+                    .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                    .thenAwaitNoScreen(SCREEN_WAIT);
+        }
+        ctx.thenAssert(0, () -> {
+            for (final Block printer : PRINTERS) {
+                final PrinterModel model = ((PrinterBlock) printer).model();
+                final String says = GameText.resolve(model.printsIn());
+                final List<Component> lines = new ItemStack(printer).getTooltipLines(
+                        Item.TooltipContext.of(ctx.mc().level), ctx.player(), TooltipFlag.Default.NORMAL);
+                if (lines.stream().noneMatch(line -> line.getString().equals(says))) {
+                    return false;
+                }
+            }
+            return true;
+        }, "every printer's tooltip says whether it prints in color");
     }
 
     @ClientTest(timeoutTicks = 600)

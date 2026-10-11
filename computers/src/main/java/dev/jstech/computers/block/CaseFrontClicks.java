@@ -32,7 +32,8 @@ import org.jetbrains.annotations.Nullable;
  * A click on the parts of a small computer's front, past its power button: the eject button of the drive in each bay,
  * which opens and closes its tray as an external drive's does; the disc laid on an open tray with a click and lifted
  * off it with a sneak-click; a USB flash drive plugged into a port with a click and pulled out with a sneak-click; and
- * a disk slid into the hot-swap bay with a click and taken out with a sneak-click, with the machine on or off.
+ * a disk slid into the hot-swap bay with a click and taken out with a click of an empty hand, with the machine on or
+ * off.
  *
  * <p>Each answers only where it would do something, so a click anywhere else on the case is still the case's own: its
  * assembly screen, or with a sneak its side panel. What is refused says why, as the external drives do.
@@ -49,7 +50,7 @@ final class CaseFrontClicks {
     private static final TextKey PORT_TAKEN = TextKey.of("jsc.case_front.port_taken",
             "The port already holds a stick - sneak-click to pull it out.");
     private static final TextKey BAY_TAKEN = TextKey.of("jsc.case_front.bay_taken",
-            "The bay already holds a disk - sneak-click to take it out.");
+            "The bay already holds a disk - click it with an empty hand to take it out.");
     private static final TextKey DISK_REFUSED = TextKey.of("jsc.case_front.disk_refused",
             "This computer does not take that disk.");
 
@@ -93,6 +94,28 @@ final class CaseFrontClicks {
             }
         }
         return false;
+    }
+
+    /**
+     * Works a part standing out of the front, which a look landed on out of the block: a stick in a port is worked as
+     * its port, an open tray as the drive in its bay, and an open tray pushed with an empty hand slides back in, as a
+     * real one does. The part takes the click whatever came of it, so a click on it never opens the case behind.
+     */
+    static void clickStanding(final AbstractSmallComputerBlockEntity computer, final StandingPart part,
+                              final ItemStack held, final Player player) {
+        if (part.stick()) {
+            port(computer, part.index(), held, player);
+            return;
+        }
+        final BayDriveSpec.Kind kind = computer.front().kind(part.index());
+        if (kind == null || kind == BayDriveSpec.Kind.HOT_SWAP) {
+            return;
+        }
+        if (held.isEmpty() && !player.isShiftKeyDown()) {
+            pressEject(computer, part.index(), player);
+        } else {
+            drive(computer, part.index(), kind, held, player);
+        }
     }
 
     /* The eject button of the drive in a bay: its tray rides out or back in, unless the computer is reading its disc. */
@@ -143,19 +166,21 @@ final class CaseFrontClicks {
                 : drive(computer, bay, kind, held, player);
     }
 
-    /* The hot-swap bay: a disk the computer takes slides in, a sneak-click takes the one in it out. */
+    /*
+     * The hot-swap bay: a click with a disk the computer takes slides it in, and a click with an empty hand, sneaking
+     * or not, takes the one in it out. An empty hand on an empty bay does nothing: the bay is not the case's door.
+     */
     private static boolean hotSwap(final AbstractSmallComputerBlockEntity computer, final int bay,
                                    final ItemStack held, final Player player) {
         final CaseFront front = computer.front();
-        if (player.isShiftKeyDown()) {
-            if (front.held(bay).isEmpty()) {
-                return false;
+        if (held.isEmpty()) {
+            if (!front.held(bay).isEmpty()) {
+                // What the system wrote is on the disk before it leaves, as when it comes out on the assembly screen.
+                if (isServer(computer)) {
+                    computer.setChanged();
+                }
+                takeOut(computer, bay, player);
             }
-            // What the system wrote is on the disk before it leaves, as when it is taken out on the assembly screen.
-            if (isServer(computer)) {
-                computer.setChanged();
-            }
-            takeOut(computer, bay, player);
             return true;
         }
         if (!(held.getItem() instanceof DiskItem)) {
@@ -231,6 +256,15 @@ final class CaseFrontClicks {
         if (!player.level().isClientSide()) {
             player.displayClientMessage(GameText.component(text), true);
         }
+    }
+
+    /**
+     * A part standing out of a case's front: a stick in a port, or a drive's open tray.
+     *
+     * @param stick whether it is a stick in a port, rather than a tray
+     * @param index the port the stick is in, or the bay the tray slides out of
+     */
+    record StandingPart(boolean stick, int index) {
     }
 
     private static boolean isServer(final AbstractSmallComputerBlockEntity computer) {

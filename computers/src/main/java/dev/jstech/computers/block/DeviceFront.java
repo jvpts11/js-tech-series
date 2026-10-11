@@ -9,6 +9,7 @@ package dev.jstech.computers.block;
 
 import dev.jstech.computers.hardware.FrontArea;
 import dev.jstech.computers.os.media.EjectButton;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -23,6 +24,9 @@ import org.jetbrains.annotations.Nullable;
  * device's model is drawn, so a part of the front, such as the eject button, is pressed on its own.
  */
 public final class DeviceFront {
+
+    /** How far past a block's own space a point still counts as on it, for the rounding of a look's landing point. */
+    private static final double HAIR = 1.0E-4;
 
     private DeviceFront() {
     }
@@ -43,7 +47,8 @@ public final class DeviceFront {
     @Nullable
     public static double[] point(final Direction front, final BlockPos pos, final BlockHitResult hit, final Vec3 eye,
                                  final int depth) {
-        if (hit.getDirection() != front) {
+        // A look that landed out of the block landed on a part standing out of it, which no point of the face is.
+        if (hit.getDirection() != front || outside(pos, hit.getLocation())) {
             return null;
         }
         final Vec3 onFace = hit.getLocation();
@@ -61,6 +66,34 @@ public final class DeviceFront {
             default -> 1.0 - lz;
         };
         return new double[] {across * EjectButton.FRONT, (1.0 - (at.y - pos.getY())) * EjectButton.FRONT};
+    }
+
+    /**
+     * Whether a point lies out of the block at {@code pos}, by more than a hair: where a look lands on a part standing
+     * out of the block rather than on the block.
+     */
+    public static boolean outside(final BlockPos pos, final Vec3 location) {
+        final double x = location.x - pos.getX();
+        final double y = location.y - pos.getY();
+        final double z = location.z - pos.getZ();
+        return x < -HAIR || y < -HAIR || z < -HAIR || x > 1.0 + HAIR || y > 1.0 + HAIR || z > 1.0 + HAIR;
+    }
+
+    /**
+     * The one of {@code parts}, boxes in the block at {@code pos}, that a look landing at {@code location} out of the
+     * block landed on: its index, or -1 when the look landed on the block itself or on none of them.
+     */
+    public static int partAt(final List<AABB> parts, final BlockPos pos, final Vec3 location) {
+        if (!outside(pos, location)) {
+            return -1;
+        }
+        final Vec3 local = location.subtract(pos.getX(), pos.getY(), pos.getZ());
+        for (int i = 0; i < parts.size(); i++) {
+            if (parts.get(i).inflate(HAIR).contains(local)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**

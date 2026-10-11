@@ -30,6 +30,16 @@ public record CaseFrontLayout(FrontArea power, List<FrontArea> bays, List<FrontA
 
     /** Sixty-fourths to a texel of the case's front. */
     public static final int UNIT = 2;
+    /** How far a stick in a port stands out of the front, in sixty-fourths: its body, past its plug. */
+    public static final int STICK_OUT = 18;
+    /** How far an open tray stands out of its bay, in sixty-fourths: all of it but the end still in the drive. */
+    public static final int TRAY_OUT = 31;
+    /* How far in from each end of its bezel a tray runs, and where it lies down the bezel, the disc on it taken in. */
+    private static final int TRAY_INSET = 4;
+    private static final int TRAY_TOP = 3;
+    private static final int TRAY_BOTTOM = 8;
+    /* How far a stick's body reaches past each edge of its socket. */
+    private static final int STICK_MARGIN = 1;
     /* How tall a 5.25-inch bay is, in texels. */
     private static final int BAY_HEIGHT = 5;
     /* How big a USB-A socket is, in texels. */
@@ -96,6 +106,20 @@ public record CaseFrontLayout(FrontArea power, List<FrontArea> bays, List<FrontA
         }
         final int top = at.top() + UNIT * button[2];
         return new EjectButton(at.right() - UNIT * button[0], top, at.right() - UNIT * button[1], top + UNIT, 0);
+    }
+
+    /** Where a stick in port {@code port} stands out of the front: round its socket, its body a little wider. */
+    public FrontArea stick(final int port) {
+        final FrontArea socket = ports.get(port);
+        return new FrontArea(socket.left() - STICK_MARGIN, socket.top() - STICK_MARGIN,
+                socket.right() + STICK_MARGIN, socket.bottom() + STICK_MARGIN);
+    }
+
+    /** Where the open tray of the drive in bay {@code bay} stands out of the front, the disc lying on it taken in. */
+    public FrontArea tray(final int bay) {
+        final FrontArea bezel = bays.get(bay);
+        return new FrontArea(bezel.left() + TRAY_INSET, bezel.top() + TRAY_TOP, bezel.right() - TRAY_INSET,
+                bezel.top() + TRAY_BOTTOM);
     }
 
     /* A front from its power button, the span its bays fill across and the row of each, and each port's socket. */

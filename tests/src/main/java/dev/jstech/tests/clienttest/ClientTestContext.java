@@ -476,7 +476,18 @@ public final class ClientTestContext {
      * front of the device at {@code relative}, as seen, so the crosshair rests on what is drawn there.
      */
     public void lookAtFront(final BlockPos relative, final double x, final double y) {
-        final Vec3 look = frontPoint(abs(relative), x, y).subtract(player().getEyePosition());
+        lookAtFront(relative, x, y, 0);
+    }
+
+    /**
+     * Client-side: turns the player to look at the point ({@code x}, {@code y}) of a block's front, {@code out}
+     * sixty-fourths out in front of its face, where a part standing out of the block stands.
+     */
+    public void lookAtFront(final BlockPos relative, final double x, final double y, final double out) {
+        final BlockPos at = abs(relative);
+        final Vec3 normal = Vec3.atLowerCornerOf(facingOf(at).getNormal());
+        final Vec3 look = frontPoint(at, x, y).add(normal.scale(out / EjectButton.FRONT))
+                .subtract(player().getEyePosition());
         player().setYRot((float) Math.toDegrees(Math.atan2(-look.x, look.z)));
         player().setXRot((float) -Math.toDegrees(Math.atan2(look.y, Math.sqrt(look.x * look.x + look.z * look.z))));
     }

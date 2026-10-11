@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.clienttest;
 
+import com.mojang.datafixers.util.Either;
 import dev.jstech.computers.guide.ComputersGuide;
 import dev.jstech.core.client.guide.GuideClient;
 import dev.jstech.core.client.guide.ManualScreen;
@@ -18,16 +19,25 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.industrial.guide.IndustrialGuide;
 import dev.jstech.tests.TestGuide;
 import dev.jstech.tests.TestPress;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.neoforged.neoforge.client.event.RenderTooltipEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * The Core's manuals as a player reads them: the test manual opened at its cover and turned to its contents, opened
@@ -172,6 +182,39 @@ public final class ManualClientTests {
                 .thenGive(0);
     }
 
+    /*
+     * In an inventory the bar fills inside the item's tooltip, right under the line that says to hold the key; it
+     * was once drawn under the slot, outside the tooltip.
+     */
+    @ClientTest(timeoutTicks = 300)
+    public static void manualKey_heldOverAnItemInAnInventoryFillsTheBarInItsTooltip(final ClientTestContext ctx) {
+        final ItemStack upgrade = new ItemStack(TestPress.UPGRADE.get());
+        ctx.thenGive(0, upgrade)
+                .thenWaitUntil(() -> ctx.player().getInventory().getItem(0).is(TestPress.UPGRADE.get()), OPEN,
+                        "the upgrade to reach the player's hotbar")
+                // The test player is in creative, where the inventory opens as the creative one.
+                .then(0, () -> ctx.mc().setScreen(new InventoryScreen(ctx.player())))
+                .thenAwaitScreen(AbstractContainerScreen.class, OPEN)
+                .then(SETTLE, () -> {
+                    final AbstractContainerScreen<?> screen = ctx.screen(AbstractContainerScreen.class);
+                    final Slot slot = screen.getMenu().slots.stream()
+                            .filter(s -> s.container == ctx.player().getInventory() && s.getContainerSlot() == 0)
+                            .findFirst().orElseThrow(() -> new ClientTestFailure("no slot for the first hotbar slot"));
+                    ctx.pointAt(screen.getGuiLeft() + slot.x + 8.5, screen.getGuiTop() + slot.y + 8.5);
+                })
+                .then(2, () -> manualKey().setDown(true))
+                .thenWaitUntil(() -> GuideClient.holdProgress() > HALF_HELD, OPEN,
+                        "the bar fills while the key is held over the slot")
+                .thenAssert(0, () -> barUnderHoldLine(upgrade), "and it is a line of the tooltip, under the key's")
+                .thenScreenshot(0, "manual_hold_bar_tooltip")
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> shows(TestGuide.PRESS), "and the item's page opens when it is full")
+                .then(0, () -> manualKey().setDown(false))
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN)
+                .thenGive(0);
+    }
+
     @ClientTest(timeoutTicks = 300)
     public static void manualKey_fillsTheBarOfTheManualItOpens(final ClientTestContext ctx) {
         ctx.thenGive(0, new ItemStack(ComputersGuide.MANUAL.get()), new ItemStack(IndustrialGuide.MANUAL.get()))
@@ -227,5 +270,23 @@ public final class ManualClientTests {
     /* The manual key's binding, held down and let go as the player's finger would. */
     private static KeyMapping manualKey() {
         return KeyActionsClient.mapping(CoreKeys.OPEN_IN_MANUAL);
+    }
+
+    /* Whether the stack's tooltip, gathered as the game gathers it to draw, has a picture line right under the key's. */
+    private static boolean barUnderHoldLine(final ItemStack stack) {
+        final Minecraft minecraft = Minecraft.getInstance();
+        final List<Either<FormattedText, TooltipComponent>> elements = new ArrayList<>();
+        for (final Component line : Screen.getTooltipFromItem(minecraft, stack)) {
+            elements.add(Either.left(line));
+        }
+        NeoForge.EVENT_BUS.post(new RenderTooltipEvent.GatherComponents(stack,
+                minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight(), elements, -1));
+        final String hold = GameText.resolve(GuideTexts.HOLD_TO_OPEN.with("M"));
+        for (int i = 0; i + 1 < elements.size(); i++) {
+            if (elements.get(i).left().map(text -> text.getString().equals(hold)).orElse(false)) {
+                return elements.get(i + 1).right().isPresent();
+            }
+        }
+        return false;
     }
 }

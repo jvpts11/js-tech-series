@@ -84,7 +84,8 @@ public class ServerAssemblyMenu extends CoreMenu {
                 ? board.spec() : null;
     }
 
-    private RackChassis chassis() {
+    /** The chassis of the server in the hand, which its screen is titled by. */
+    public RackChassis chassis() {
         final var chassis = ServerItem.chassisOf(owner.getItemInHand(hand));
         return chassis != null ? chassis : RackChassis.SERVER;
     }

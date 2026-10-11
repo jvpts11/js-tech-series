@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.block.DeviceFront;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.CaseFront;
@@ -22,22 +23,26 @@ import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import software.bernie.geckolib.cache.GeckoLibCache;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
@@ -93,6 +98,12 @@ public final class ComputerCaseClientTests {
     /** The machine whose hot-swap bay is worked by hand, on its own, and the items it keeps on the bay's disk. */
     private static final BlockPos HOT_SWAP_AT = new BlockPos(2, 2, 60);
     private static final int KEPT = 32;
+    /** The case with an internal CD drive and the CD drive of its own whose trays are opened empty, side by side. */
+    private static final BlockPos TRAY_CASE = new BlockPos(2, 2, 68);
+    private static final BlockPos TRAY_DRIVE = new BlockPos(5, 2, 68);
+    /** The case and the drive whose standing parts are aimed at, at the eye, on a row of their own. */
+    private static final BlockPos STANDING_CASE = new BlockPos(2, 3, 76);
+    private static final BlockPos STANDING_DRIVE = new BlockPos(8, 3, 76);
     /** A front of each age with what its bays and ports hold. */
     private static final List<Front> FRONTS = List.of(
             new Front("vintage-hot-swap-with-a-disk", ComputingModule.VINTAGE_PERSONAL_COMPUTER,
@@ -444,9 +455,10 @@ public final class ComputerCaseClientTests {
     }
 
     /**
-     * The hot-swap bay worked by hand, as a player does it, with the machine running: a click with a disk puts it in
-     * and it joins the build; the machine keeps its items on it, its only disk; and a sneak-click with an empty hand
-     * gives it back with the items on it, and the machine has none left.
+     * The hot-swap bay worked by hand, as a player does it, with the machine running. Empty, it shows its empty sleeve
+     * and the board at its back, and an empty hand on it opens nothing. A click with a disk puts it in and it joins
+     * the build; the machine keeps its items on it, its only disk; and a click with an empty hand gives it back with
+     * the items on it, and the machine has none left.
      */
     @ClientTest(timeoutTicks = 900)
     public static void hotSwapDisk_byHandKeepsTheMachinesItemsAndLeavesWithThem(final ClientTestContext ctx) {
@@ -462,8 +474,13 @@ public final class ComputerCaseClientTests {
             computer.getHardware().setStackInSlot(layout.diskStart(), ItemStack.EMPTY);
             computer.getHardware().setStackInSlot(layout.bayStart(), Build.stack("hot_swap_drive_bay"));
             computer.togglePower();
-        })
-                .thenTeleport(SETTLE, HOT_SWAP_AT.south(2), Direction.NORTH)
+        });
+        DeviceCloseUp.closeUp(ctx, HOT_SWAP_AT)
+                .thenScreenshot(SETTLE, "hot-swap-empty")
+                .thenGive(0)
+                .then(1, () -> ctx.selectHotbar(0))
+                .then(2, () -> ctx.rightClickFront(HOT_SWAP_AT, bay.middleX(), bay.middleY(), 0))
+                .thenAssert(SETTLE, () -> ctx.mc().screen == null, "an empty hand on the empty bay opens nothing")
                 .thenGive(0, Build.stack("disk_vaultis_link_ide_20g"))
                 .then(0, () -> ctx.selectHotbar(0))
                 .thenWaitUntil(() -> ctx.player().getMainHandItem().getItem() instanceof DiskItem, SETTLE * 4,
@@ -480,11 +497,11 @@ public final class ComputerCaseClientTests {
                         hotSwapMachine(ctx, level).localStore().insert(cobblestone, KEPT) == KEPT,
                         "the machine keeps the items on the bay's disk, its only disk"))
                 .thenScreenshot(SETTLE * 3, "hot-swap-disk-in")
-                .then(0, () -> ctx.sneak(true))
+                // The hand that put it in is empty now, and a plain click with it takes the disk back out.
+                .thenAssert(0, () -> ctx.player().getMainHandItem().isEmpty(), "the disk left the hand for the bay")
                 .then(2, () -> ctx.rightClickFront(HOT_SWAP_AT, bay.middleX(), bay.middleY(), 0))
-                .then(1, () -> ctx.sneak(false))
                 .thenWaitUntilServer(level -> hotSwapMachine(ctx, level).front().held(0).isEmpty(), SETTLE * 4,
-                        "a sneak-click to take the disk out",
+                        "a click with an empty hand to take the disk out",
                         level -> "held=" + hotSwapMachine(ctx, level).front().held(0))
                 .thenServer(0, level -> {
                     final PersonalComputerBlockEntity computer = hotSwapMachine(ctx, level);
@@ -496,7 +513,130 @@ public final class ComputerCaseClientTests {
                     ctx.assertTrue(computer.currentBuild() != null && computer.currentBuild().frontDisks().isEmpty(),
                             "and the disk has left the build");
                 })
-                .thenScreenshot(SETTLE * 3, "hot-swap-disk-out");
+                .thenScreenshot(SETTLE * 4, "hot-swap-disk-out")
+                // The disk goes, so the tests after this one start with an empty inventory.
+                .thenServer(0, level -> ctx.serverPlayer().getInventory().clearContent());
+    }
+
+    /**
+     * The parts that stand out of a front are aimed at, outlined and worked as the player sees them: a stick in a
+     * Transition case's port, the open tray of the DVD drive in its bay, and the open tray of a CD drive of its own.
+     * The crosshair lands on each, out of its block, and a sneak-click takes the stick and the disc, a click with a disc
+     * lays it on the tray.
+     */
+    @ClientTest(timeoutTicks = 900)
+    public static void standingParts_areAimedOutlinedAndWorked(final ClientTestContext ctx) {
+        final CaseFrontLayout layout = ComputingModule.TRANSITION_PERSONAL_COMPUTER.get().frontLayout();
+        final FrontArea stick = layout.stick(0);
+        final FrontArea tray = layout.tray(0);
+        ctx.thenBuild(0, world -> {
+            world.setBlock(STANDING_CASE, ComputingModule.TRANSITION_PERSONAL_COMPUTER.get().defaultBlockState()
+                    .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+            final AbstractSmallComputerBlockEntity computer =
+                    world.blockEntity(STANDING_CASE, AbstractSmallComputerBlockEntity.class);
+            computer.getHardware().setStackInSlot(computer.hardwareLayout().bayStart(),
+                    Build.stack("internal_dvd_drive"));
+            computer.front().insert(CaseFront.portSlot(0), new ItemStack(ComputingModule.USB_FLASH_DRIVE.get()));
+            world.setBlock(STANDING_DRIVE, DeviceCloseUp.facingPlayer(ComputingModule.CD_DRIVE.get()));
+        })
+                .thenServer(SETTLE, level -> {
+                    ((AbstractSmallComputerBlockEntity) level.getBlockEntity(ctx.abs(STANDING_CASE))).front().tray(0)
+                            .press(level, ctx.abs(STANDING_CASE));
+                    ((MediaReaderBlockEntity) level.getBlockEntity(ctx.abs(STANDING_DRIVE))).tray()
+                            .press(level, ctx.abs(STANDING_DRIVE));
+                })
+                .thenGive(0)
+                .then(1, () -> ctx.selectHotbar(0))
+                .thenTeleport(DeviceCloseUp.TRAY_OUT, STANDING_CASE.south(2), Direction.NORTH)
+                // The stick in the port, half its length out of the face.
+                .then(SETTLE, () -> ctx.lookAtFront(STANDING_CASE, stick.middleX(), stick.middleY(),
+                        CaseFrontLayout.STICK_OUT / 2.0))
+                .thenWaitUntil(() -> aimedOutOf(ctx, STANDING_CASE), SETTLE * 4,
+                        "the crosshair to land on the stick, out of the case")
+                .thenScreenshot(SETTLE, "stick-aimed")
+                // Crouching lowers the eye, so the stick is aimed at again from there.
+                .then(0, () -> ctx.sneak(true))
+                .then(SETTLE, () -> ctx.lookAtFront(STANDING_CASE, stick.middleX(), stick.middleY(),
+                        CaseFrontLayout.STICK_OUT / 2.0))
+                .thenWaitUntil(() -> aimedOutOf(ctx, STANDING_CASE), SETTLE * 4,
+                        "the crosshair to stay on the stick from a crouch")
+                .then(1, () -> clickCrosshair(ctx))
+                .then(1, () -> ctx.sneak(false))
+                .thenWaitUntilServer(level -> ((AbstractSmallComputerBlockEntity) level.getBlockEntity(
+                                ctx.abs(STANDING_CASE))).front().stick(0).isEmpty(), SETTLE * 4,
+                        "a sneak-click on the stick to pull it out", level -> "still in")
+                // The DVD drive's open tray, half its length out of the bay.
+                .then(SETTLE, () -> ctx.lookAtFront(STANDING_CASE, tray.middleX(), tray.middleY(),
+                        CaseFrontLayout.TRAY_OUT / 2.0))
+                .thenWaitUntil(() -> aimedOutOf(ctx, STANDING_CASE), SETTLE * 4,
+                        "the crosshair to land on the open tray, out of the case")
+                .thenScreenshot(SETTLE, "tray-aimed")
+                .thenGive(0, new ItemStack(ComputingModule.DVD_RW.get()))
+                .then(2, () -> clickCrosshair(ctx))
+                .thenWaitUntilServer(level -> ((AbstractSmallComputerBlockEntity) level.getBlockEntity(
+                                ctx.abs(STANDING_CASE))).front().held(0).is(ComputingModule.DVD_RW.get()),
+                        SETTLE * 4, "a click on the tray with a disc to lay it there", level -> "not on it")
+                .thenScreenshot(SETTLE, "tray-with-disc")
+                .thenGive(0)
+                .then(0, () -> ctx.sneak(true))
+                .then(SETTLE, () -> ctx.lookAtFront(STANDING_CASE, tray.middleX(), tray.middleY(),
+                        CaseFrontLayout.TRAY_OUT / 2.0))
+                .thenWaitUntil(() -> aimedOutOf(ctx, STANDING_CASE), SETTLE * 4,
+                        "the crosshair to stay on the tray from a crouch")
+                .then(1, () -> clickCrosshair(ctx))
+                .then(1, () -> ctx.sneak(false))
+                .thenWaitUntilServer(level -> ((AbstractSmallComputerBlockEntity) level.getBlockEntity(
+                                ctx.abs(STANDING_CASE))).front().held(0).isEmpty(), SETTLE * 4,
+                        "a sneak-click on the tray to lift the disc off", level -> "still on it")
+                // Pushed with an empty hand, the open tray slides back in.
+                .thenGive(0)
+                .then(SETTLE, () -> ctx.lookAtFront(STANDING_CASE, tray.middleX(), tray.middleY(),
+                        CaseFrontLayout.TRAY_OUT / 2.0))
+                .thenWaitUntil(() -> aimedOutOf(ctx, STANDING_CASE), SETTLE * 4,
+                        "the crosshair back on the tray, standing")
+                .then(1, () -> clickCrosshair(ctx))
+                .thenWaitUntilServer(level -> !((AbstractSmallComputerBlockEntity) level.getBlockEntity(
+                                ctx.abs(STANDING_CASE))).front().tray(0).isOpen(), SETTLE * 4,
+                        "the tray pushed with an empty hand to slide back in", level -> "still out")
+                // A drive of its own: its open tray is aimed at the same way, and pushed in the same way.
+                .thenTeleport(SETTLE, STANDING_DRIVE.south(2), Direction.NORTH)
+                .then(SETTLE, () -> ctx.lookAtFront(STANDING_DRIVE, 32, 12, 14))
+                .thenWaitUntil(() -> aimedOutOf(ctx, STANDING_DRIVE), SETTLE * 4,
+                        "the crosshair to land on the CD drive's open tray")
+                .thenScreenshot(SETTLE, "drive-tray-aimed")
+                .then(1, () -> clickCrosshair(ctx))
+                .thenWaitUntilServer(level -> !((MediaReaderBlockEntity) level.getBlockEntity(
+                                ctx.abs(STANDING_DRIVE))).tray().isOpen(), SETTLE * 4,
+                        "the CD drive's tray pushed in", level -> "still out")
+                .thenServer(0, level -> ctx.serverPlayer().getInventory().clearContent());
+    }
+
+    /**
+     * A disc tray opened with no disc on it, in a computer's bay and on a drive of its own: moulded, with the well a
+     * disc lies in, the slot to the back and the spindle's hub, rather than a flat slab.
+     */
+    @ClientTest(timeoutTicks = 600)
+    public static void trays_openEmptyShowTheirWellAndHub(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    world.setBlock(TRAY_CASE, ComputingModule.LEGACY_PERSONAL_COMPUTER.get().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+                    final AbstractSmallComputerBlockEntity computer =
+                            world.blockEntity(TRAY_CASE, AbstractSmallComputerBlockEntity.class);
+                    computer.getHardware().setStackInSlot(computer.hardwareLayout().bayStart(),
+                            Build.stack("internal_cd_drive"));
+                    world.setBlock(TRAY_DRIVE, DeviceCloseUp.facingPlayer(ComputingModule.CD_DRIVE.get()));
+                })
+                .thenServer(SETTLE, level -> {
+                    final AbstractSmallComputerBlockEntity computer = (AbstractSmallComputerBlockEntity)
+                            level.getBlockEntity(ctx.abs(TRAY_CASE));
+                    computer.front().tray(0).press(level, ctx.abs(TRAY_CASE));
+                    ((MediaReaderBlockEntity) level.getBlockEntity(ctx.abs(TRAY_DRIVE))).tray()
+                            .press(level, ctx.abs(TRAY_DRIVE));
+                });
+        DeviceCloseUp.closeUp(ctx, TRAY_CASE)
+                .thenScreenshot(DeviceCloseUp.TRAY_OUT, "internal-tray-out-empty");
+        DeviceCloseUp.closeUp(ctx, TRAY_DRIVE)
+                .thenScreenshot(SETTLE, "drive-tray-out-empty");
     }
 
     /**
@@ -528,6 +668,20 @@ public final class ComputerCaseClientTests {
     private static boolean runs(final ClientTestContext ctx, final BlockPos relative) {
         return ctx.mc().level != null && ctx.mc().level.getBlockEntity(ctx.abs(relative))
                 instanceof AbstractSmallComputerBlockEntity computer && computer.visualRunning();
+    }
+
+    /* Whether the crosshair is on that block, at a point out of its cube: on a part standing out of it. */
+    private static boolean aimedOutOf(final ClientTestContext ctx, final BlockPos relative) {
+        return ctx.mc().hitResult instanceof BlockHitResult hit && hit.getBlockPos().equals(ctx.abs(relative))
+                && DeviceFront.outside(hit.getBlockPos(), hit.getLocation());
+    }
+
+    /* A right click on whatever the crosshair is on, the path the player's own click takes. */
+    private static void clickCrosshair(final ClientTestContext ctx) {
+        if (ctx.mc().hitResult instanceof BlockHitResult hit) {
+            Objects.requireNonNull(ctx.mc().gameMode, "no game mode")
+                    .useItemOn(ctx.player(), InteractionHand.MAIN_HAND, hit);
+        }
     }
 
     /** The machine whose hot-swap bay is worked by hand, as the server knows it. */

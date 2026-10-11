@@ -49,7 +49,8 @@ import org.jetbrains.annotations.Nullable;
  * A click on the front of a small computer's case, in every case of every age and on every machine: the power button
  * switches the machine on and off, whatever the hand holds; the eject button of a drive in a bay opens and closes its
  * tray, a disc goes on the open tray and comes off it; a stick plugs into a port and comes out; a disk slides into the
- * hot-swap bay and comes out; and a click anywhere else on the case opens its assembly screen, as it always did.
+ * hot-swap bay and comes out at a click of the empty hand; and a click anywhere else on the case opens its assembly
+ * screen, as it always did.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -232,11 +233,11 @@ public final class CaseFrontClickGameTests {
             helper.assertTrue(computer.front().held(0).is(HardwareItems.DISK_TRENCH_20M.get()),
                     "a disk of its era slides in with the machine on");
             computer.togglePower();
-            player.setShiftKeyDown(true);
+            helper.assertTrue(player.getMainHandItem().isEmpty(), "the disk left the hand for the bay");
             clickFront(helper, player, middleX(bay), middleY(bay));
             helper.assertTrue(computer.front().held(0).isEmpty()
                             && player.getInventory().contains(new ItemStack(HardwareItems.DISK_TRENCH_20M.get())),
-                    "and comes out with it off");
+                    "and comes out with it off, at a click of the empty hand");
         } finally {
             player.setShiftKeyDown(false);
             player.getInventory().clearContent();

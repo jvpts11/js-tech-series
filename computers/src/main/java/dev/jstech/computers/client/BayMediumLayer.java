@@ -22,12 +22,14 @@ import software.bernie.geckolib.renderer.GeoRenderer;
 import software.bernie.geckolib.renderer.layer.BlockAndItemGeoLayer;
 
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Draws the medium in a device's bay as the very item the player put in, at the bone the model marks its place
  * with, so it moves with the clip that takes it in or out. A disk or a disc lies flat at half its size, the end that
  * goes in first pointing into the machine; a USB stick is its own model at half size, turned so its plug goes into
- * the port, with the joint of plug and body on the port's face.
+ * the port, with the joint of plug and body on the port's face, and turned the way its port is: standing up in an
+ * upright port, lying down in one that is wide across.
  *
  * @param <T> the device
  */
@@ -35,15 +37,19 @@ public final class BayMediumLayer<T extends BlockEntity & GeoAnimatable> extends
 
     /** The medium a device draws in its bay. */
     private final Function<T, ItemStack> medium;
+    /** Whether the device's USB port is wide across rather than upright. */
+    private final Predicate<T> portLies;
 
     /** Where the stick's plug meets its body, along the model's length, from the model's middle. */
     private static final float USB_JOINT = 3F / 16F;
     /** How far the stick's middle stands above the middle of its model. */
     private static final float USB_RISE = 0.5F / 16F;
 
-    public BayMediumLayer(final GeoRenderer<T> renderer, final Function<T, ItemStack> medium) {
+    public BayMediumLayer(final GeoRenderer<T> renderer, final Function<T, ItemStack> medium,
+                          final Predicate<T> portLies) {
         super(renderer);
         this.medium = medium;
+        this.portLies = portLies;
     }
 
     @Override
@@ -68,7 +74,14 @@ public final class BayMediumLayer<T extends BlockEntity & GeoAnimatable> extends
         poseStack.pushPose();
         poseStack.scale(0.5F, 0.5F, 0.5F);
         if (MediaBay.USB_BONE.equals(bone.getName())) {
+            /*
+             * The model's plug runs along its +x, wide in y and thin in z: turned so the plug goes in, it stands up, and
+             * a quarter turn about its own length lays it down for a port that is wide across.
+             */
             poseStack.mulPose(Axis.YP.rotationDegrees(-90));
+            if (portLies.test(device)) {
+                poseStack.mulPose(Axis.XP.rotationDegrees(90));
+            }
             poseStack.translate(-USB_JOINT, -USB_RISE, 0);
         } else {
             poseStack.mulPose(Axis.YP.rotationDegrees(180));

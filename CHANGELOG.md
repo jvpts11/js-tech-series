@@ -106,9 +106,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   its assembly screen does; a click anywhere else on the case still opens that screen. A drive in a bay works as an
   external drive does: its eject button opens and closes its tray, which stays in while the machine reads the disc,
   a disc goes on the open tray with a click and comes off it with a sneak-click, and its lamp blinks while it reads.
-  A USB flash drive plugs into a front port with a click and comes out with a sneak-click. A disk slides into the
-  hot-swap bay with a click and comes out with a sneak-click, with the machine on or off, its caddy riding in and out
-  and its lamp blinking while the machine runs its system from that disk and works it; the disk is one of the
+  A USB flash drive plugs into a front port with a click and comes out with a sneak-click, lying as the port does. A
+  disk slides into the hot-swap bay with a click and comes out at a click of the empty hand, with the machine on or
+  off, its caddy riding in and out and its lamp blinking while the machine runs its system from that disk and works
+  it; an empty hot-swap bay shows its opening and the board at its back, and an empty hand on it opens nothing. A
+  stick standing in a port and a drive's open tray are aimed at as the parts they are, out of the case, outlined on
+  their own, and worked there: a sneak-click on the stick pulls it out, and the tray takes a disc and gives it back
+  as from the front, and slides back in when pushed with an empty hand. The disk is one of the
   machine's own, with a letter, taking a system and booting it, keeping the machine's items (with its own share
   offered to the network on a Personal Computer's Storage heading), and counting in its capacity and its power draw
   as the disks inside do, though it takes none of the board's disk slots; taken out, it
@@ -1439,6 +1443,20 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   biggest disk, so the most room is left once the system is on it.
 
 ### Changed
+- A printed picture shows each printer's own hand at the resolution a real one prints at, drawn smoothed as paper is
+  seen, rather than as a lattice of little squares: the Epsilon FX-80 in the round dots of its ribbon, the Pakard
+  DeskJot 940 in grainy dots of four inks with paler rows from its head's passes, the FotoSmart C4280 in dots of ink
+  too fine to see, and the LaserJot 1102 in a fine halftone of toner. The EcoTonk ET-2720 prints the picture as it is.
+- The print dialog says beside each printer's name whether it prints in color, Mono or Color, a printer's tooltip
+  says it too, and the Guide to Operations' page on printers says which do, with what to do when a picture in color
+  comes out in black and white.
+- Every disc tray, on a drive of its own, in a case's bay or on a Pattern Encoder, is moulded: the well a disc lies
+  in, the smaller well inside it, the slot to the back the laser reads through and the spindle's hub, where it was a
+  plain slab. A Pattern Encoder's and a drive's open tray is aimed at and outlined on its own, out of the block, and
+  pushed with an empty hand it slides back in, as a real one does: from above, the tray stands in front of its
+  button.
+- A Pattern Encoder plays no clip taking a stick in or out: a stick goes into its port and comes out of it at once,
+  as on every other device with a port.
 - A monitor's power button switches the monitor alone: the computer behind it runs on, and is switched on and off at
   its own case or on its assembly screen. Switched off, the face goes dark and its lamp goes out, every screen open on
   it closes, and a click on its glass opens nothing and says "The monitor is off". Switched on with no picture, a
@@ -1825,6 +1843,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- A USB stick in the Dock Station's port and in the Advanced Pattern Encoder's lies across as the port does; it
+  stood upright in it.
+- A Pattern Encoder's stick taken out no longer shows a tiny stick in its port at the end of its way out.
+- A Pattern Encoder's Cancel queue and Eject buttons could be clicked on the first frame of its screen, before the
+  screen knew whether they had anything to do.
+- The bar that fills while the manual key is held over an item in an inventory is drawn in the item's tooltip, under
+  the line that says to hold the key; it was drawn under the slot, outside the tooltip.
+- A supercomputer node's assembly screen is titled Supercomputer Node, its name field asking for a node's name; it
+  said Server.
 - The Mainframe's queues tooltip names the card behind each queue; it named the item in another slot.
 - The setup on an installer medium, opened from the explorer, runs for a drive west or north of the world's origin;
   it did nothing there.

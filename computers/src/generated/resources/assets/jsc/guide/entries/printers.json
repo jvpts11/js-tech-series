@@ -9,6 +9,10 @@
       "text": "jsc.guide.printers.text2"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.printers.text3"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -18,6 +22,10 @@
         {
           "fix": "jsc.guide.printers.fix1",
           "problem": "jsc.guide.printers.problem1"
+        },
+        {
+          "fix": "jsc.guide.printers.fix2",
+          "problem": "jsc.guide.printers.problem2"
         }
       ]
     }

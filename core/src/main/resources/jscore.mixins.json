@@ -4,7 +4,8 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [],
   "client": [
-    "AdvancementWidgetMixin"
+    "AdvancementWidgetMixin",
+    "GameRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

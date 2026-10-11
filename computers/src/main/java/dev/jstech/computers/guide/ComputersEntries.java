@@ -500,11 +500,14 @@ final class ComputersEntries {
                         + " computer, as people did.")
                 .paragraph("An internal drive works like the drive of its kind standing outside ([](jsc:drives)):"
                         + " press the eject button on its front and the tray comes out, click with a disc to lay it"
-                        + " on the tray, press the button again to take it in, and sneak-click to lift the disc off"
-                        + " the open tray. The tray stays in while the computer reads the disc, and the drive's lamp"
+                        + " on the tray, press the button again or push the tray with an empty hand to take it in,"
+                        + " and sneak-click to lift the disc off the open tray; the open tray is outlined on its own"
+                        + " while looked at. The tray stays in while the computer reads the disc, and the drive's lamp"
                         + " blinks meanwhile. Take the drive out of its bay and the disc falls out with it.")
                 .paragraph("The Hot-Swap Drive Bay takes a disk from the front: click with the disk to slide it in"
-                        + " and sneak-click to take it out, with the computer on or off. It takes the disks the"
+                        + " and click with an empty hand to take it out, with the computer on or off. Empty, the bay"
+                        + " shows its opening and the board at its back, so a look tells whether a disk is in. It"
+                        + " takes the disks the"
                         + " computer takes in its own disk slots, of the computer's era or older, so no NVMe drive in"
                         + " a Vintage computer ([](jsc:disks)). The disk in it is one of the computer's own: it has a"
                         + " letter, a system goes on it and the computer boots from it, it keeps the computer's items,"
@@ -1095,7 +1098,8 @@ final class ComputersEntries {
                                 + " crafting table pattern into the card, a machine pattern into the interface of its"
                                 + " machine.")
                 .paragraph("From the Legacy on, the encoder burns discs, which lie on a tray. Press the eject button"
-                        + " beside the tray to bring it out, put the disc on it, and press the button again: nothing"
+                        + " beside the tray to bring it out, put the disc on it, and press the button again, or push"
+                        + " the tray with an empty hand: nothing"
                         + " is burned while the tray is out, and the tray stays shut while a pattern is written."
                         + " The Eject of the encoder's panel is the same button. A USB stick goes into its port"
                         + " whatever the tray is doing.")
@@ -1153,8 +1157,9 @@ final class ComputersEntries {
                 .paragraph("Each medium goes in its own kind of drive, and a drive is joined to the computer like any"
                         + " other device ([](jsc:peripheral_cables)).")
                 .paragraph("The CD, DVD and Blu-ray Drives have a tray, as real ones do. Press the eject button"
-                        + " beside it to bring it out, put the disc on it, and press the button again to take it in;"
-                        + " sneak-click to lift a disc off the open tray. A computer sees the drive empty while the"
+                        + " beside it to bring it out, put the disc on it, and press the button again, or push the"
+                        + " tray with an empty hand, to take it in; sneak-click to lift a disc off the open tray. A"
+                        + " computer sees the drive empty while the"
                         + " tray is out, and the tray stays shut while the computer reads the disc.")
                 .paragraph("The same drives also come as parts that go in the bays of a computer's case, and a USB"
                         + " stick plugs straight into the front ports of the later cases ([](jsc:case_front)).")
@@ -1196,8 +1201,16 @@ final class ComputersEntries {
                         + " it with paper to fill its tray, and print from a program: pages of text, or a picture,"
                         + " which shows on the sheet in an item frame.")
                 .paragraph("Take the sheets from the printer's window.")
+                .paragraph("Each prints a picture its own way, as the real one did: the Epsilon FX-80 (Vintage) in the"
+                        + " dots of its ribbon, the Pakard DeskJot 940 (Legacy) and FotoSmart C4280 (Transition) in"
+                        + " fine dots of ink, the Pakard LaserJot 1102 (Standard) in toner, and the Epsilon EcoTonk"
+                        + " ET-2720 (Advanced) just as the picture is. The FX-80 and the LaserJot print in black and"
+                        + " white; the others in color. The printer's tooltip says which, and so does the print"
+                        + " dialog, beside the printer's name.")
                 .ifSomethingGoesWrong("Nothing comes out.",
-                        "Its tray is empty. Use it with paper.")
+                        "Its tray is empty. Use it with paper.",
+                        "A picture in color came out in black and white.",
+                        "The printer prints in black and white: print it on a printer in color.")
                 .register();
         guide.page("speakers", section).titled("Speakers").icon(ComputingModule.SPEAKER)
                 .coversAll(blocksOf(SpeakerBlock.class, SubwooferBlock.class))
