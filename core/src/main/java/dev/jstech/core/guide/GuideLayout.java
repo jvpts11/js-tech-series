@@ -65,6 +65,8 @@ public final class GuideLayout {
     private String currentEntry = "";
     /** How many scenes the entry being laid has shown so far, which tells each from the others. */
     private int entryScenes;
+    /** The words the tables laid so far had to cut, too wide for any room they had. */
+    private final List<String> cut = new ArrayList<>();
     private List<GuidePiece> pieces = new ArrayList<>();
     private int y;
     private int column;
@@ -322,7 +324,7 @@ public final class GuideLayout {
         if (!this.drawings) {
             this.layIndex(pages, index);
         }
-        return new GuideBook(pages, targets, this.numbers, index, 0, indexAt);
+        return new GuideBook(pages, targets, this.numbers, index, 0, indexAt, this.cut);
     }
 
     /** Numbers every section and entry first, so a link may lead to one printed after it. */
@@ -637,6 +639,7 @@ public final class GuideLayout {
         final List<String> continued = captioned ? this.captionLines(label,
                 this.text.text(GuideTexts.TABLE_CONTINUED.key(), title)) : List.of();
         final GuideTable table = GuideTable.shape(block, this.width, this.text);
+        this.cut.addAll(table.cut());
         final int lead = (captioned ? this.captionHeight(label, caption) + CAPTION_GAP : 0) + table.headHeight();
         final int whole = lead + table.height();
         if (whole <= this.bottom() - this.top) {

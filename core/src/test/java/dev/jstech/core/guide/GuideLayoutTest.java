@@ -672,6 +672,18 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_notesAWordATableHadToCutAndNoneWhenEveryWordFits() {
+        final GuideBlock.Table wide = new GuideBlock.Table("table.caption", List.of("one", "two", "three"), List.of(
+                new GuideBlock.TableRow(List.of(new GuideBlock.GuideValue.Literal("short"),
+                        new GuideBlock.GuideValue.Words("Pneumonoultramicroscopicsilicovolcanoconiosis"),
+                        new GuideBlock.GuideValue.Words("words")))));
+
+        assertEquals(List.of("Pneumonoultramicroscopicsilicovolcanoconiosis"),
+                lay(new GuideContents(List.of(chapter("mod", entry("mod:wide", wide))))).cut());
+        assertEquals(List.of(), lay(contents()).cut(), "a book whose words all fit cuts none");
+    }
+
+    @Test
     void roman_writesSmallRomanNumerals() {
         assertEquals("i", GuideLayout.roman(1));
         assertEquals("iv", GuideLayout.roman(4));

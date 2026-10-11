@@ -257,6 +257,10 @@ A table is laid out to fit the page, never the other way round:
 Keep a table to what a reader looks up. Two or three columns read best; long explanations belong in the text, or in a
 table that will stack.
 
+A word wider than any room a table has for it (a stacked row's first cell, or a cell beside its head) is cut where
+the room ends, and the laid-out book lists it in `GuideBook.cut()`. The test mod lays every book of every mod and
+keeps that list empty, with nothing drawn under a page's foot and no page left empty between two that are not.
+
 ### Listings of code
 
 *Added 2026-10-11.*

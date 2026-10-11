@@ -31,6 +31,8 @@ final class GuideTable {
     private final int headHeight;
     private final List<Cell> head;
     private final List<Row> rows;
+    /** The words wider than any room the table had for them, which had to be cut: none, in a table that reads well. */
+    private final List<String> cut;
 
     /** The room between a column's edge and its words, on either side. */
     static final int PAD = 2;
@@ -54,12 +56,13 @@ final class GuideTable {
     static final int MIN_PROSE = 40;
 
     private GuideTable(final int width, final boolean stacked, final int headHeight, final List<Cell> head,
-                       final List<Row> rows) {
+                       final List<Row> rows, final List<String> cut) {
         this.width = width;
         this.stacked = stacked;
         this.headHeight = headHeight;
         this.head = List.copyOf(head);
         this.rows = List.copyOf(rows);
+        this.cut = List.copyOf(cut);
     }
 
     /** The table shaped to {@code width}, its words translated and measured through {@code text}. */
@@ -96,6 +99,11 @@ final class GuideTable {
     /** Whether its rows are stacked rather than its columns side by side. */
     boolean stacked() {
         return this.stacked;
+    }
+
+    /** The words it had to cut, too wide for the room it had for them. */
+    List<String> cut() {
+        return this.cut;
     }
 
     /** How tall its head is; a stacked table has none, each row saying its heads. */
@@ -263,7 +271,8 @@ final class GuideTable {
             }
             rows.add(new Row(lines, ROW_BOTTOM, 1));
         }
-        return new GuideTable(width, false, ROW_TOP + headLines * LINE, head, rows);
+        // Every column is as wide as its longest word, so side by side no word is ever cut.
+        return new GuideTable(width, false, ROW_TOP + headLines * LINE, head, rows, List.of());
     }
 
     /**
@@ -283,8 +292,16 @@ final class GuideTable {
         final int indent = Math.min(width / 2, PAD + widest + INDENT_GAP);
         final int headRoom = indent - PAD - INDENT_GAP;
         final int cellRoom = width - indent;
+        final List<String> cut = new ArrayList<>();
+        for (int column = 2; column < heads.size(); column++) {
+            cut.addAll(tooWide(heads.get(column), headRoom, TextSize.SMALL_BOLD, text));
+        }
         final List<Row> rows = new ArrayList<>();
         for (final List<String> row : cells) {
+            cut.addAll(tooWide(row.getFirst(), headRoom, sizes[0], text));
+            for (int column = 1; column < heads.size(); column++) {
+                cut.addAll(tooWide(row.get(column), cellRoom, sizes[column], text));
+            }
             final List<Line> lines = new ArrayList<>();
             final List<String> keys = GuideLayout.wrap(row.getFirst(), headRoom, sizes[0], text);
             final List<String> firsts = heads.size() > 1
@@ -318,7 +335,19 @@ final class GuideTable {
             }
             rows.add(new Row(lines, STACK_BOTTOM, 2));
         }
-        return new GuideTable(width, true, 0, List.of(), rows);
+        return new GuideTable(width, true, 0, List.of(), rows, cut);
+    }
+
+    /** The words wider than the room, which wrapping them there cuts. */
+    private static List<String> tooWide(final String words, final int room, final TextSize size,
+                                        final IGuideText text) {
+        final List<String> wide = new ArrayList<>();
+        for (final String word : words.split(" ")) {
+            if (!word.isEmpty() && text.width(word, size) > room) {
+                wide.add(word);
+            }
+        }
+        return wide;
     }
 
     /** How far a line of text at that size is raised above a line of small words, so the two share a baseline. */

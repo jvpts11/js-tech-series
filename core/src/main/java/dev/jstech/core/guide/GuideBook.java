@@ -21,15 +21,17 @@ import java.util.OptionalInt;
  * @param index    every line of the index, alphabetical: the entries and the words they explain
  * @param contents the first page of the contents
  * @param indexAt  the first page of the index
+ * @param cut      the words a table had to cut, too wide for any room it had for them: none, in a book that reads well
  */
 public record GuideBook(List<Page> pages, Map<String, Integer> targets, Map<String, String> numbers,
-                        List<IndexLine> index, int contents, int indexAt) {
+                        List<IndexLine> index, int contents, int indexAt, List<String> cut) {
 
     public GuideBook {
         pages = List.copyOf(pages);
         targets = Map.copyOf(targets);
         numbers = Map.copyOf(numbers);
         index = List.copyOf(index);
+        cut = List.copyOf(cut);
     }
 
     /** The page an entry, a section or a chapter starts on, when the manual holds it. */

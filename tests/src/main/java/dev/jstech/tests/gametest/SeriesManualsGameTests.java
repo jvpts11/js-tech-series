@@ -12,19 +12,32 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.computers.registry.ComputingContent;
+import dev.jstech.core.client.guide.GuideLibrary;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideBlock;
+import dev.jstech.core.guide.GuideBook;
+import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.GuideCodecs;
 import dev.jstech.core.guide.GuideEntry;
+import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.guide.GuideGifts;
+import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuideLinks;
+import dev.jstech.core.guide.GuideManual;
+import dev.jstech.core.guide.GuidePiece;
+import dev.jstech.core.guide.GuideSection;
+import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.GuideTexts;
+import dev.jstech.core.guide.IGuideText;
 import dev.jstech.core.guide.ModGuide;
+import dev.jstech.core.guide.TextSize;
 import dev.jstech.core.registry.CoreItems;
+import dev.jstech.core.text.TextFormat;
 import dev.jstech.industrial.IndustrialModule;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +46,7 @@ import java.util.UUID;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.locale.Language;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.util.FakePlayer;
@@ -59,6 +73,15 @@ public final class SeriesManualsGameTests {
             GuideTexts.HOW_TO_GET_IT.key(), GuideTexts.HOW_TO_USE_IT.key(), GuideTexts.WHAT_CAN_GO_WRONG.key());
     /** The chapters written as a guide in running text rather than in the five parts. */
     private static final Set<String> PROSE = Set.of("jsc");
+    /** How many faults a failure names. */
+    private static final int FAULTS_NAMED = 12;
+    /** An item drawn at its own size, before the scale it is drawn at. */
+    private static final int ITEM = 16;
+    /** The width of a cell of the code font, and the scales small, big and huge text are drawn at. */
+    private static final int CODE_CELL = 5;
+    private static final double SMALL_SCALE = 0.75;
+    private static final double BIG_SCALE = 2.0;
+    private static final double HUGE_SCALE = 4.0;
 
     private SeriesManualsGameTests() {
     }
@@ -120,17 +143,23 @@ public final class SeriesManualsGameTests {
         helper.succeed();
     }
 
+    /*
+     * Every link of every book leads to a page some book holds, from one book into another too: the links in its
+     * sentences, and the entries its "See" lines name. The chapters of every mod count, so a link into another mod's
+     * book is followed there.
+     */
     @GameTest(template = ARENA)
     public static void seriesLinks_leadToPagesThatExist(final GameTestHelper helper) {
         final Set<String> pages = new HashSet<>();
-        for (final ModGuide guide : guides()) {
+        for (final ModGuide guide : allGuides()) {
             pages.add(guide.namespace());
+            guide.declaredOtherChapters().forEach(chapter -> pages.add(chapter.id()));
             guide.declaredSections().forEach(section -> pages.add(section.id()));
             guide.declaredEntries().forEach(entry -> pages.add(entry.id()));
         }
         final List<String> broken = new ArrayList<>();
         int links = 0;
-        for (final ModGuide guide : guides()) {
+        for (final ModGuide guide : allGuides()) {
             for (final Map.Entry<String, String> sentence : guide.translations().entrySet()) {
                 for (final String target : GuideLinks.targets(sentence.getValue())) {
                     links++;
@@ -139,10 +168,63 @@ public final class SeriesManualsGameTests {
                     }
                 }
             }
+            for (final GuideEntry entry : guide.declaredEntries()) {
+                for (final GuideBlock block : entry.blocks()) {
+                    if (block instanceof GuideBlock.SeeAlso see) {
+                        for (final String target : see.entries()) {
+                            links++;
+                            if (!pages.contains(target)) {
+                                broken.add(entry.id() + " sees " + target);
+                            }
+                        }
+                    }
+                }
+            }
         }
         helper.assertTrue(links > 0, "the series' sentences lead to other pages");
-        helper.assertTrue(broken.isEmpty(), "every link in a sentence leads to a page the series declares; not "
-                + broken);
+        helper.assertTrue(broken.isEmpty(), "every link leads to a page some book holds; not " + broken);
+        helper.succeed();
+    }
+
+    /*
+     * Every book of every mod, laid out as a player's game lays it (its words measured as the game's font measures
+     * them, near enough): no table cuts a word, nothing is drawn under a page's foot, and no page is left empty between
+     * two that are not.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void everyBook_laysOutWithNoWordCutNothingUnderItsFootAndNoEmptyPage(final GameTestHelper helper) {
+        final GuideLibrary library = library();
+        final IGuideText text = new MeasuredText();
+        final List<String> wrong = new ArrayList<>();
+        int books = 0;
+        for (final GuideManual manual : library.manuals()) {
+            final GuideStyle style = library.style(manual.style()).orElse(null);
+            if (style == null) {
+                wrong.add(manual.id() + " names no style the game has: " + manual.style());
+                continue;
+            }
+            books++;
+            final GuideBook book = GuideLayout.lay(manual, style, library.contentsOf(manual), text);
+            if (!book.cut().isEmpty()) {
+                wrong.add(manual.id() + " cuts " + book.cut());
+            }
+            for (int index = 0; index < book.pages().size(); index++) {
+                final GuideBook.Page page = book.pages().get(index);
+                if (page.pieces().isEmpty() && index + 1 < book.pages().size()) {
+                    wrong.add(manual.id() + " leaves page " + page.folio() + " empty");
+                }
+                for (final GuidePiece piece : page.pieces()) {
+                    final int column = piece.x() >= GuideLayout.columnX(style, 1) && style.pages().columns() > 1
+                            ? 1 : 0;
+                    if (bottomOf(piece, style) > GuideLayout.bottom(style, column)) {
+                        wrong.add(manual.id() + " draws under the foot of page " + page.folio() + ": " + piece);
+                    }
+                }
+            }
+        }
+        helper.assertTrue(books > 1, "the books are laid out: " + books);
+        helper.assertTrue(wrong.isEmpty(), wrong.size() + " faults: "
+                + String.join("; ", wrong.subList(0, Math.min(FAULTS_NAMED, wrong.size()))));
         helper.succeed();
     }
 
@@ -161,6 +243,59 @@ public final class SeriesManualsGameTests {
         }
         helper.assertTrue(entries > FEWEST_ENTRIES, "the series' chapters hold their entries; found " + entries);
         helper.succeed();
+    }
+
+    /** What every mod writes in the manuals, the test mod's among them. */
+    private static List<ModGuide> allGuides() {
+        final List<ModGuide> guides = new ArrayList<>();
+        for (final ModContent content : ModContent.all()) {
+            guides.addAll(content.declaredGuides());
+        }
+        return guides;
+    }
+
+    /** Every book every mod declares, gathered as the game gathers them from their files. */
+    private static GuideLibrary library() {
+        final Map<String, GuideChapter> chapters = new HashMap<>();
+        final Map<String, GuideSection> sections = new HashMap<>();
+        final Map<String, GuideEntry> entries = new HashMap<>();
+        final Map<String, GuideManual> manuals = new HashMap<>();
+        final Map<String, GuideStyle> styles = new HashMap<>();
+        for (final ModGuide guide : allGuides()) {
+            final GuideChapter main = guide.declaredChapter();
+            if (main != null) {
+                chapters.put(main.id(), main);
+            }
+            guide.declaredOtherChapters().forEach(chapter -> chapters.put(chapter.id(), chapter));
+            guide.declaredSections().forEach(section -> sections.put(section.id(), section));
+            guide.declaredEntries().forEach(entry -> entries.put(entry.id(), entry));
+            guide.declaredManuals().forEach(manual -> manuals.put(manual.id(), manual));
+            guide.declaredStyles().forEach((path, style) -> styles.put(guide.namespace() + ":" + path, style));
+        }
+        return new GuideLibrary(chapters, sections, entries, manuals, styles);
+    }
+
+    /** How far down the page a piece reaches. */
+    private static int bottomOf(final GuidePiece piece, final GuideStyle style) {
+        return switch (piece) {
+            case GuidePiece.Text text -> text.y() + text.size().lineHeight();
+            case GuidePiece.Leader leader -> leader.y() + leader.size().lineHeight();
+            case GuidePiece.Rule rule -> rule.y() + 1;
+            case GuidePiece.Dots dots -> dots.y() + 1;
+            case GuidePiece.Key key -> key.y() + TextSize.BODY.lineHeight();
+            case GuidePiece.Box box -> box.y() + box.height();
+            case GuidePiece.Item item -> item.y() + ITEM * item.scale();
+            case GuidePiece.Recipes rows -> rows.y() + rows.count() * GuideLayout.recipeRow(style);
+            case GuidePiece.Custom custom -> custom.y() + custom.height();
+            case GuidePiece.Listing listing -> listing.y() + listing.height();
+            case GuidePiece.Session session -> session.y() + session.height();
+            case GuidePiece.Plate plate -> plate.y() + GuideLayout.PLATE_HEIGHT;
+            case GuidePiece.Picture picture -> picture.y() + picture.height();
+            case GuidePiece.Views views -> views.y() + GuideLayout.VIEWS_HEIGHT;
+            case GuidePiece.Plan plan -> plan.y() + GuideLayout.PLAN_HEIGHT;
+            case GuidePiece.Scene scene -> scene.y() + scene.height();
+            case GuidePiece.SceneKey key -> key.y() + key.height();
+        };
     }
 
     /** What the series writes in the manuals: the Core's and the series' own, the Computers' and the Industrial's. */
@@ -187,5 +322,69 @@ public final class SeriesManualsGameTests {
     private static <T> boolean roundTrips(final Codec<T> codec, final T value) {
         final JsonElement written = codec.encodeStart(JsonOps.INSTANCE, value).getOrThrow();
         return value.equals(codec.parse(JsonOps.INSTANCE, written).getOrThrow());
+    }
+
+    /**
+     * The manuals' words in the language the server has loaded, which is English, measured near enough as the game's
+     * font measures them: each letter its own width, small text three quarters of that, big text twice, bold a pixel a
+     * letter wider, and code a cell of five pixels a character.
+     */
+    private record MeasuredText() implements IGuideText {
+
+        @Override
+        public String text(final String key, final Object... args) {
+            final String pattern = Language.getInstance().getOrDefault(key, key);
+            if (args.length == 0) {
+                return GuideFacts.fill(pattern, this);
+            }
+            final List<String> written = new ArrayList<>();
+            for (final Object arg : args) {
+                written.add(String.valueOf(arg));
+            }
+            return GuideFacts.fill(TextFormat.apply(pattern, written), this);
+        }
+
+        @Override
+        public int width(final String text, final TextSize size) {
+            if (size == TextSize.CODE) {
+                return CODE_CELL * text.length();
+            }
+            int width = 0;
+            for (int i = 0; i < text.length(); i++) {
+                width += advance(text.charAt(i));
+            }
+            final boolean bold = size == TextSize.BOLD || size == TextSize.SMALL_BOLD || size == TextSize.HEADING;
+            if (bold) {
+                width += text.length();
+            }
+            return (int) Math.ceil(width * switch (size) {
+                case SMALL, SMALL_BOLD -> SMALL_SCALE;
+                case TITLE, LETTER -> BIG_SCALE;
+                case CHAPTER -> HUGE_SCALE;
+                default -> 1.0;
+            });
+        }
+
+        @Override
+        public int recipeCount(final String type, final String output) {
+            return 0;
+        }
+
+        @Override
+        public String amount(final long value, final String unit) {
+            return unit.isEmpty() ? String.valueOf(value) : value + " " + unit;
+        }
+
+        /** How far the game's font moves on for a letter, its gap after it included. */
+        private static int advance(final char letter) {
+            return switch (letter) {
+                case '!', ',', '.', ':', ';', '|', 'i' -> 2;
+                case '\'', '`', 'l' -> 3;
+                case ' ', 'I', 't', '[', ']' -> 4;
+                case '"', '(', ')', '*', '<', '>', '{', '}', 'f', 'k' -> 5;
+                case '@', '~' -> 7;
+                default -> 6;
+            };
+        }
     }
 }
