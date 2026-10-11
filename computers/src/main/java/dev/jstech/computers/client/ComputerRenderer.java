@@ -108,9 +108,9 @@ public final class ComputerRenderer<T extends AbstractSmallComputerBlockEntity> 
             }
             /*
              * Its lamp, after the part, which showing lights everything under it: a drive's blinks while the machine
-             * reads its disc, the hot-swap bay's while the machine works its disk.
+             * reads its disc, the hot-swap bay's while the machine works the disk in it.
              */
-            final boolean working = HOT_SWAP.equals(shown) ? running && computer.visualDiskBusy() : front.reading(bay);
+            final boolean working = HOT_SWAP.equals(shown) ? front.diskWorked(bay) : front.reading(bay);
             for (int part = 0; part < LAMP_PARTS.length; part++) {
                 DeviceLamps.show(model, LAMP_BONES[bay][part], LAMP_PARTS[part].equals(shown) && working && blink);
             }

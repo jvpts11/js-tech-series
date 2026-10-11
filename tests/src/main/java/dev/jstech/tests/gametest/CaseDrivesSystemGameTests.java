@@ -13,6 +13,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.PatternStudioPayloads;
@@ -35,12 +36,14 @@ import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
@@ -248,6 +251,48 @@ public final class CaseDrivesSystemGameTests {
         helper.assertTrue(FRAMES_XP.equals(OsDisks.systemOn(out)), "the disk leaves with its system on it");
         helper.assertFalse(pc.hasOs(), "and the machine has none left, as when the disk comes out on its screen");
         helper.assertFalse(pc.validateOsSession(), "so a session on it ends");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void hotSwapLamp_blinksForTheDiskTheSystemRunsFromAndNoOther(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = legacy(helper, HardwareItems.HOT_SWAP_DRIVE_BAY.get());
+        final CaseFront front = pc.front();
+        front.insert(0, new ItemStack(HardwareItems.DISK_LINK_IDE_40G.get()));
+        pc.installOs(FRAMES_XP, PersonalComputerBlockEntity.DISK_SLOTS);
+        pc.diskWorked(helper.getLevel());
+        helper.assertTrue(front.diskWorked(0), "the bay's lamp blinks while the machine works the disk it runs from");
+        helper.assertFalse(front.reading(0), "which is no drive reading a disc");
+        // The system on a disk of the case's own, the bay's disk holding data only.
+        pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
+                new ItemStack(HardwareItems.DISK_LINK_IDE_40G.get()));
+        front.take(0);
+        front.insert(0, new ItemStack(HardwareItems.DISK_LINK_IDE_20G.get()));
+        pc.installOs(FRAMES_XP, 0);
+        pc.diskWorked(helper.getLevel());
+        helper.assertTrue(pc.systemDisk() != front.held(0), "the machine runs from its own disk");
+        helper.assertFalse(front.diskWorked(0), "and the bay's lamp stays dark for a disk it does not work");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void diskSlots_agreeWithTheDisksTheSystemReadsOnEveryBoard(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = place(helper, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
+        int boards = 0;
+        for (final Item item : BuiltInRegistries.ITEM) {
+            if (!(item instanceof MotherboardItem)) {
+                continue;
+            }
+            boards++;
+            pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(item));
+            for (final Item bay : new Item[] {Items.AIR, HardwareItems.HOT_SWAP_DRIVE_BAY.get()}) {
+                pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.BAY_SLOTS_START, new ItemStack(bay));
+                helper.assertValueEqual(pc.diskSlots(), pc.diskStacks().size(),
+                        "the disk slots the system loops over and the ones it boots from, with "
+                                + BuiltInRegistries.ITEM.getKey(item) + " and " + BuiltInRegistries.ITEM.getKey(bay));
+            }
+        }
+        helper.assertTrue(boards > 0, "the game has boards to try");
         helper.succeed();
     }
 

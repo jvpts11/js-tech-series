@@ -113,7 +113,17 @@ public final class CaseFront {
      * from it: its tray stays in until the work is done, and its busy lamp blinks. Both sides answer alike.
      */
     public boolean reading(final int bay) {
-        return bay >= 0 && bay < BAYS && (reading.getAsInt() & (1 << bay)) != 0;
+        final BayDriveSpec.Kind kind = kind(bay);
+        return kind != null && kind.reads() != null && busy(bay);
+    }
+
+    /**
+     * Whether the computer is working the disk in the hot-swap bay {@code bay}, the disk its system runs from, as the
+     * bay's lamp shows by blinking. A disk only holding data is not told apart from the computer's others, so its lamp
+     * stays dark. Both sides answer alike.
+     */
+    public boolean diskWorked(final int bay) {
+        return kind(bay) == BayDriveSpec.Kind.HOT_SWAP && busy(bay);
     }
 
     /** The slot of port {@code port}, after the bays'. */
@@ -391,15 +401,29 @@ public final class CaseFront {
         return !hotSwapDisk(bay).isEmpty();
     }
 
-    /* Which bays' drives the computer is reading now, one bit a bay. */
+    /* Whether the part in the bay is at work now, as the bits worked out on the server say. */
+    private boolean busy(final int bay) {
+        return bay >= 0 && bay < BAYS && (reading.getAsInt() & (1 << bay)) != 0;
+    }
+
+    /* Which bays' parts are at work now, one bit a bay: a drive reading its disc, a hot-swap bay's disk worked. */
     private int readingNow() {
         int bits = 0;
         for (int bay = 0; bay < BAYS; bay++) {
-            if (readsFrom(bay)) {
+            if (readsFrom(bay) || hotSwapWorked(bay)) {
                 bits |= 1 << bay;
             }
         }
         return bits;
+    }
+
+    /*
+     * Whether the computer is working the disk in this hot-swap bay: its disk lamp is lit, and its system runs from this
+     * very disk, which is the disk it works.
+     */
+    private boolean hotSwapWorked(final int bay) {
+        final ItemStack disk = hotSwapDisk(bay);
+        return !disk.isEmpty() && computer.diskBusy() && computer.systemDisk() == disk;
     }
 
     /*

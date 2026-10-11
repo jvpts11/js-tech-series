@@ -108,7 +108,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   a disc goes on the open tray with a click and comes off it with a sneak-click, and its lamp blinks while it reads.
   A USB flash drive plugs into a front port with a click and comes out with a sneak-click. A disk slides into the
   hot-swap bay with a click and comes out with a sneak-click, with the machine on or off, its caddy riding in and out
-  and its lamp blinking as the machine works its disk; the disk is one of the machine's own, with a letter, taking a
+  and its lamp blinking while the machine runs its system from that disk and works it; the disk is one of the
+  machine's own, with a letter, taking a
   system and booting it, and taken out with the machine running it takes its system with it, as on the assembly
   screen. To the system each drive and port on the front is a drive like the external ones: a letter, This PC (whose
   Eject opens a drive's tray), the explorers, installing systems and programs, the firmware and its boot menu, the
