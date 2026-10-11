@@ -1,0 +1,136 @@
+{
+  "blocks": [
+    {
+      "type": "define",
+      "definition": "jsc.guide.iql_procedures.definition1",
+      "term": "jsc.guide.iql_procedures.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_procedures.text1"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "CREATE PROCEDURE restock AS { SELECT 64 iron_ingot; SELECT 64 gold_ingot }"
+      ],
+      "name": "restock.iql"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.iql_procedures.step1",
+        "jsc.guide.iql_procedures.step2",
+        "jsc.guide.iql_procedures.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_procedures.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_procedures.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_procedures.table1",
+      "heads": [
+        "jsc.guide.iql_procedures.table1_head1",
+        "jsc.guide.iql_procedures.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "procedure <name> ran <n> statements"
+          },
+          {
+            "words": "jsc.guide.iql_procedures.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "procedure <name> stopped at statement <n>: <error>"
+          },
+          {
+            "words": "jsc.guide.iql_procedures.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "no procedure named <name>"
+          },
+          {
+            "words": "jsc.guide.iql_procedures.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "procedure <name> dropped"
+          },
+          {
+            "words": "jsc.guide.iql_procedures.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_procedures.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.iql_procedures.fix1",
+          "problem": "jsc.guide.iql_procedures.problem1"
+        },
+        {
+          "fix": "jsc.guide.iql_procedures.fix2",
+          "problem": "jsc.guide.iql_procedures.problem2"
+        },
+        {
+          "fix": "jsc.guide.iql_procedures.fix3",
+          "problem": "jsc.guide.iql_procedures.problem3"
+        },
+        {
+          "fix": "jsc.guide.iql_procedures.fix4",
+          "problem": "jsc.guide.iql_procedures.problem4"
+        },
+        {
+          "fix": "jsc.guide.iql_procedures.fix5",
+          "problem": "jsc.guide.iql_procedures.problem5"
+        },
+        {
+          "fix": "jsc.guide.iql_procedures.fix6",
+          "problem": "jsc.guide.iql_procedures.problem6"
+        },
+        {
+          "fix": "jsc.guide.iql_procedures.fix7",
+          "problem": "jsc.guide.iql_procedures.problem7"
+        },
+        {
+          "fix": "jsc.guide.iql_procedures.fix8",
+          "problem": "jsc.guide.iql_procedures.problem8"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:iql_views",
+        "jsc:iql_jobs",
+        "jsc:midsoft_iql_server"
+      ]
+    }
+  ],
+  "id": "jsc:iql_procedures",
+  "order": 302,
+  "section": "jsc:iql_saved_objects",
+  "title": "jsc.guide.iql_procedures.title"
+}

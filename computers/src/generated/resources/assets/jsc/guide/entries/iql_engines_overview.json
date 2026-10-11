@@ -1,0 +1,118 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_engines_overview.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.iql_engines_overview.definition1",
+      "term": "jsc.guide.iql_engines_overview.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.iql_engines_overview.definition2",
+      "term": "jsc.guide.iql_engines_overview.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_engines_overview.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.iql_engines_overview.definition3",
+      "term": "jsc.guide.iql_engines_overview.term3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_engines_overview.table1",
+      "heads": [
+        "jsc.guide.iql_engines_overview.table1_head1",
+        "jsc.guide.iql_engines_overview.table1_head2",
+        "jsc.guide.iql_engines_overview.table1_head3",
+        "jsc.guide.iql_engines_overview.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.iql_engines_overview.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.iql_engines_overview.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.iql_engines_overview.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.iql_engines_overview.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_engines_overview.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.iql_engines_overview.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.iql_engines_overview.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.iql_engines_overview.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_engines_overview.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.iql_engines_overview.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.iql_engines_overview.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.iql_engines_overview.table1_3_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_engines_overview.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_engines_overview.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_engines_overview.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.iql_engines_overview.fix1",
+          "problem": "jsc.guide.iql_engines_overview.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:engines",
+        "jsc:engine_services"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:iql_engines_overview",
+  "order": 306,
+  "section": "jsc:engine_choice",
+  "title": "jsc.guide.iql_engines_overview.title"
+}

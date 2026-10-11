@@ -1,0 +1,83 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.maintenance_analyze_vacuum_reindex.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.maintenance_analyze_vacuum_reindex.definition1",
+      "term": "jsc.guide.maintenance_analyze_vacuum_reindex.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.maintenance_analyze_vacuum_reindex.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.maintenance_analyze_vacuum_reindex.table1",
+      "heads": [
+        "jsc.guide.maintenance_analyze_vacuum_reindex.table1_head1",
+        "jsc.guide.maintenance_analyze_vacuum_reindex.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "ANALYZE"
+          },
+          {
+            "words": "jsc.guide.maintenance_analyze_vacuum_reindex.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "VACUUM"
+          },
+          {
+            "words": "jsc.guide.maintenance_analyze_vacuum_reindex.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "REINDEX"
+          },
+          {
+            "words": "jsc.guide.maintenance_analyze_vacuum_reindex.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.maintenance_analyze_vacuum_reindex.fix1",
+          "problem": "jsc.guide.maintenance_analyze_vacuum_reindex.problem1"
+        },
+        {
+          "fix": "jsc.guide.maintenance_analyze_vacuum_reindex.fix2",
+          "problem": "jsc.guide.maintenance_analyze_vacuum_reindex.problem2"
+        },
+        {
+          "fix": "jsc.guide.maintenance_analyze_vacuum_reindex.fix3",
+          "problem": "jsc.guide.maintenance_analyze_vacuum_reindex.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:mainframes",
+        "jsc:iql_limits"
+      ]
+    }
+  ],
+  "id": "jsc:maintenance_analyze_vacuum_reindex",
+  "order": 296,
+  "section": "jsc:iql_verbs",
+  "title": "jsc.guide.maintenance_analyze_vacuum_reindex.title"
+}

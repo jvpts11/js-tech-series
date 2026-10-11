@@ -1,0 +1,221 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.external_storage_bus.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.external_storage_bus.definition1",
+      "term": "jsc.guide.external_storage_bus.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.external_storage_bus.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.external_storage_bus.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.external_storage_bus.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.external_storage_bus.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.external_storage_bus.table1",
+      "heads": [
+        "jsc.guide.external_storage_bus.table1_head1",
+        "jsc.guide.external_storage_bus.table1_head2",
+        "jsc.guide.external_storage_bus.table1_head3",
+        "jsc.guide.external_storage_bus.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.external_storage_bus.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.external_storage_bus.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.external_storage_bus.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table1_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.external_storage_bus.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table1_4_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.external_storage_bus.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.external_storage_bus.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.external_storage_bus.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.external_storage_bus.table2",
+      "heads": [
+        "jsc.guide.external_storage_bus.table2_head1",
+        "jsc.guide.external_storage_bus.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.external_storage_bus.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.external_storage_bus.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.external_storage_bus.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.external_storage_bus.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.external_storage_bus.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.external_storage_bus.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.external_storage_bus.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.external_storage_bus.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.external_storage_bus.text10"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.external_storage_bus.text11"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.external_storage_bus.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.external_storage_bus.text12"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.external_storage_bus.fix1",
+          "problem": "jsc.guide.external_storage_bus.problem1"
+        },
+        {
+          "fix": "jsc.guide.external_storage_bus.fix2",
+          "problem": "jsc.guide.external_storage_bus.problem2"
+        },
+        {
+          "fix": "jsc.guide.external_storage_bus.fix3",
+          "problem": "jsc.guide.external_storage_bus.problem3"
+        },
+        {
+          "fix": "jsc.guide.external_storage_bus.fix4",
+          "problem": "jsc.guide.external_storage_bus.problem4"
+        },
+        {
+          "fix": "jsc.guide.external_storage_bus.fix5",
+          "problem": "jsc.guide.external_storage_bus.problem5"
+        },
+        {
+          "fix": "jsc.guide.external_storage_bus.fix6",
+          "problem": "jsc.guide.external_storage_bus.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:buses",
+        "jsc:storage_priority",
+        "jsc:storage_trouble"
+      ]
+    }
+  ],
+  "icon": "jsc:external_storage_bus",
+  "id": "jsc:external_storage_bus",
+  "order": 82,
+  "section": "jsc:storage",
+  "title": "jsc.guide.external_storage_bus.title"
+}

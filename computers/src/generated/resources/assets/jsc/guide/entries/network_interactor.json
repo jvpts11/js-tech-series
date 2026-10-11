@@ -1,0 +1,437 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_interactor.definition1",
+      "term": "jsc.guide.network_interactor.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_interactor.definition2",
+      "term": "jsc.guide.network_interactor.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_interactor.definition3",
+      "term": "jsc.guide.network_interactor.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_interactor.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_interactor.table1",
+      "heads": [
+        "jsc.guide.network_interactor.table1_head1",
+        "jsc.guide.network_interactor.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.network_interactor.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_interactor.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_interactor.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_interactor.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_interactor.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_interactor.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table1_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_interactor.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_interactor.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_interactor.table2",
+      "heads": [
+        "jsc.guide.network_interactor.table2_head1",
+        "jsc.guide.network_interactor.table2_head2",
+        "jsc.guide.network_interactor.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.network_interactor.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_interactor.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_interactor.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_interactor.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_interactor.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_interactor.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_6_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_interactor.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_interactor.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text10"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_interactor.table3",
+      "heads": [
+        "jsc.guide.network_interactor.table3_head1",
+        "jsc.guide.network_interactor.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Arrow keys"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Shift"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "C"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "F"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+A"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table3_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "/"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table3_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_interactor.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text11"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text12"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text13"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_interactor.heading6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text14"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_interactor.heading7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text15"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_interactor.table4",
+      "heads": [
+        "jsc.guide.network_interactor.table4_head1",
+        "jsc.guide.network_interactor.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "done"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "part"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "fail"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table4_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "run"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table4_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "wait"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table4_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "lock"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table4_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "pend"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table4_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "drop"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table4_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text16"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.network_interactor.fix1",
+          "problem": "jsc.guide.network_interactor.problem1"
+        },
+        {
+          "fix": "jsc.guide.network_interactor.fix2",
+          "problem": "jsc.guide.network_interactor.problem2"
+        },
+        {
+          "fix": "jsc.guide.network_interactor.fix3",
+          "problem": "jsc.guide.network_interactor.problem3"
+        },
+        {
+          "fix": "jsc.guide.network_interactor.fix4",
+          "problem": "jsc.guide.network_interactor.problem4"
+        },
+        {
+          "fix": "jsc.guide.network_interactor.fix5",
+          "problem": "jsc.guide.network_interactor.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:mc_net",
+        "jsc:what_a_network_is",
+        "jsc:states_and_queues",
+        "jsc:crafting_computers"
+      ]
+    }
+  ],
+  "icon": "jsc:personal_computer",
+  "id": "jsc:network_interactor",
+  "order": 55,
+  "section": "jsc:network_tools",
+  "title": "jsc.guide.network_interactor.title"
+}

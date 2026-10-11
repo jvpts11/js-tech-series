@@ -1,0 +1,87 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.units_and_ticks.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.units_and_ticks.table1",
+      "heads": [
+        "jsc.guide.units_and_ticks.table1_head1",
+        "jsc.guide.units_and_ticks.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "item"
+          },
+          {
+            "words": "jsc.guide.units_and_ticks.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "MB, GB, TB"
+          },
+          {
+            "words": "jsc.guide.units_and_ticks.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "it/t"
+          },
+          {
+            "words": "jsc.guide.units_and_ticks.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "W"
+          },
+          {
+            "words": "jsc.guide.units_and_ticks.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "s"
+          },
+          {
+            "words": "jsc.guide.units_and_ticks.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.units_and_ticks.definition1",
+      "term": "jsc.guide.units_and_ticks.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.units_and_ticks.definition2",
+      "term": "jsc.guide.units_and_ticks.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.units_and_ticks.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.units_and_ticks.text3"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:items_as_data",
+        "jsc:boot_menu"
+      ]
+    }
+  ],
+  "id": "jsc:units_and_ticks",
+  "order": 12,
+  "section": "jsc:how_things_are_counted",
+  "title": "jsc.guide.units_and_ticks.title"
+}

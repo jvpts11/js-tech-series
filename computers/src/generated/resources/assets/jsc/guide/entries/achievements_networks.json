@@ -1,0 +1,230 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements_networks.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.achievements_networks.table1",
+      "heads": [
+        "jsc.guide.achievements_networks.table1_head1",
+        "jsc.guide.achievements_networks.table1_head2",
+        "jsc.guide.achievements_networks.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_7_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_8_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_9_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_9_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_10_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_10_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_11_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_11_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_12_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_12_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_12_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_13_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_13_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_13_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_14_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_14_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_14_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_networks.table1_15_1"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_15_2"
+          },
+          {
+            "words": "jsc.guide.achievements_networks.table1_15_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements_networks.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements_networks.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements_networks.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.achievements_networks.fix1",
+          "problem": "jsc.guide.achievements_networks.problem1"
+        },
+        {
+          "fix": "jsc.guide.achievements_networks.fix2",
+          "problem": "jsc.guide.achievements_networks.problem2"
+        },
+        {
+          "fix": "jsc.guide.achievements_networks.fix3",
+          "problem": "jsc.guide.achievements_networks.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:what_a_network_is",
+        "jsc:what_operations_are",
+        "jsc:how_autocrafting_works"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:achievements_networks",
+  "order": 132,
+  "section": "jsc:the_achievements",
+  "title": "jsc.guide.achievements_networks.title"
+}

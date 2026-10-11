@@ -13,6 +13,17 @@
       "text": "jsc.guide.first_computer.heading1"
     },
     {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.first_computer.step1",
+        "jsc.guide.first_computer.step2",
+        "jsc.guide.first_computer.step3",
+        "jsc.guide.first_computer.step4",
+        "jsc.guide.first_computer.step5",
+        "jsc.guide.first_computer.step6"
+      ]
+    },
+    {
       "type": "text",
       "text": "jsc.guide.first_computer.text3"
     },
@@ -29,6 +40,10 @@
       "text": "jsc.guide.first_computer.text6"
     },
     {
+      "type": "heading",
+      "text": "jsc.guide.first_computer.heading2"
+    },
+    {
       "type": "text",
       "text": "jsc.guide.first_computer.text7"
     },
@@ -37,16 +52,13 @@
       "text": "jsc.guide.first_computer.text8"
     },
     {
-      "type": "heading",
-      "text": "jsc.guide.first_computer.heading2"
+      "type": "define",
+      "definition": "jsc.guide.first_computer.definition1",
+      "term": "jsc.guide.first_computer.term1"
     },
     {
       "type": "text",
       "text": "jsc.guide.first_computer.text9"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.first_computer.text10"
     },
     {
       "type": "heading",
@@ -54,7 +66,19 @@
     },
     {
       "type": "text",
+      "text": "jsc.guide.first_computer.text10"
+    },
+    {
+      "type": "text",
       "text": "jsc.guide.first_computer.text11"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.first_computer.step7",
+        "jsc.guide.first_computer.step8",
+        "jsc.guide.first_computer.step9"
+      ]
     },
     {
       "type": "heading",
@@ -78,13 +102,32 @@
         {
           "fix": "jsc.guide.first_computer.fix4",
           "problem": "jsc.guide.first_computer.problem4"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix5",
+          "problem": "jsc.guide.first_computer.problem5"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix6",
+          "problem": "jsc.guide.first_computer.problem6"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix7",
+          "problem": "jsc.guide.first_computer.problem7"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:turning_on",
+        "jsc:installing"
       ]
     }
   ],
   "icon": "jsc:personal_computer",
   "id": "jsc:first_computer",
-  "order": 1,
+  "order": 2,
   "section": "jsc:getting_started",
   "shows": [
     "jsc:personal_computer",

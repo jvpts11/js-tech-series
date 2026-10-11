@@ -1,0 +1,116 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.whatis_and_apropos.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.whatis_and_apropos.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.whatis_and_apropos.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.whatis_and_apropos.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.whatis_and_apropos.step1",
+        "jsc.guide.whatis_and_apropos.step2",
+        "jsc.guide.whatis_and_apropos.step3"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.whatis_and_apropos.table1",
+      "heads": [
+        "jsc.guide.whatis_and_apropos.table1_head1",
+        "jsc.guide.whatis_and_apropos.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.whatis_and_apropos.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.whatis_and_apropos.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "(1)"
+          },
+          {
+            "words": "jsc.guide.whatis_and_apropos.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.whatis_and_apropos.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.whatis_and_apropos.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.whatis_and_apropos.text4"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/whatis"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/apropos"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.whatis_and_apropos.definition1",
+      "term": "jsc.guide.whatis_and_apropos.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.whatis_and_apropos.fix1",
+          "problem": "jsc.guide.whatis_and_apropos.problem1"
+        },
+        {
+          "fix": "jsc.guide.whatis_and_apropos.fix2",
+          "problem": "jsc.guide.whatis_and_apropos.problem2"
+        },
+        {
+          "fix": "jsc.guide.whatis_and_apropos.fix3",
+          "problem": "jsc.guide.whatis_and_apropos.problem3"
+        },
+        {
+          "fix": "jsc.guide.whatis_and_apropos.fix4",
+          "problem": "jsc.guide.whatis_and_apropos.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:man_pages",
+        "jsc:help_command"
+      ]
+    }
+  ],
+  "icon": "jsc:guide_to_operations",
+  "id": "jsc:whatis_and_apropos",
+  "order": 224,
+  "section": "jsc:help_at_the_prompt",
+  "title": "jsc.guide.whatis_and_apropos.title"
+}

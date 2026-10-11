@@ -14,17 +14,150 @@
       "term": "jsc.guide.motherboards.term1"
     },
     {
-      "type": "define",
-      "definition": "jsc.guide.motherboards.definition2",
-      "term": "jsc.guide.motherboards.term2"
+      "type": "table",
+      "caption": "jsc.guide.motherboards.table1",
+      "heads": [
+        "jsc.guide.motherboards.table1_head1",
+        "jsc.guide.motherboards.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "<form factor> form factor"
+          },
+          {
+            "words": "jsc.guide.motherboards.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "<n>x <socket>  |  <n> RAM (<kinds>)  |  <n>x <bus>"
+          },
+          {
+            "words": "jsc.guide.motherboards.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "On-board audio"
+          },
+          {
+            "words": "jsc.guide.motherboards.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Seats parts of its own era only"
+          },
+          {
+            "words": "jsc.guide.motherboards.table1_4_2"
+          }
+        ]
+      ]
     },
     {
       "type": "text",
       "text": "jsc.guide.motherboards.text3"
     },
     {
+      "type": "table",
+      "caption": "jsc.guide.motherboards.table2",
+      "heads": [
+        "jsc.guide.motherboards.table2_head1",
+        "jsc.guide.motherboards.table2_head2",
+        "jsc.guide.motherboards.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.motherboards.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_7_2"
+          },
+          {
+            "words": "jsc.guide.motherboards.table2_7_3"
+          }
+        ]
+      ]
+    },
+    {
       "type": "text",
       "text": "jsc.guide.motherboards.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.motherboards.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.motherboards.text6"
     },
     {
       "type": "heading",
@@ -41,6 +174,14 @@
           "fix": "jsc.guide.motherboards.fix2",
           "problem": "jsc.guide.motherboards.problem2"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:eras",
+        "jsc:processors",
+        "jsc:memory"
       ]
     }
   ],
@@ -99,7 +240,7 @@
     "jsc:motherboard_mtx_a_3647",
     "jsc:motherboard_mtx_a_4189"
   ],
-  "order": 5,
+  "order": 16,
   "section": "jsc:hardware",
   "title": "jsc.guide.motherboards.title"
 }

@@ -1,0 +1,138 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_chroot.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_chroot.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.arch_chroot.definition1",
+      "term": "jsc.guide.arch_chroot.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_chroot.text3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.arch_chroot.step1",
+        "jsc.guide.arch_chroot.step2",
+        "jsc.guide.arch_chroot.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_chroot.text4"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "root@archiso ~ # ",
+          "text": "arch-chroot /mnt/x",
+          "typed": true
+        },
+        {
+          "text": "chroot: cannot change root directory to '/mnt/x': No such file or directory"
+        }
+      ],
+      "look": "jsc:guide/terminal/zsh",
+      "title": "Arch Linux"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_chroot.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.arch_chroot.table1",
+      "heads": [
+        "jsc.guide.arch_chroot.table1_head1",
+        "jsc.guide.arch_chroot.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "pacman"
+          },
+          {
+            "words": "jsc.guide.arch_chroot.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "mkinitcpio"
+          },
+          {
+            "words": "jsc.guide.arch_chroot.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "grub-install"
+          },
+          {
+            "words": "jsc.guide.arch_chroot.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "grub-mkconfig"
+          },
+          {
+            "words": "jsc.guide.arch_chroot.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "hostname"
+          },
+          {
+            "words": "jsc.guide.arch_chroot.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.arch_chroot.fix1",
+          "problem": "jsc.guide.arch_chroot.problem1"
+        },
+        {
+          "fix": "jsc.guide.arch_chroot.fix2",
+          "problem": "jsc.guide.arch_chroot.problem2"
+        },
+        {
+          "fix": "jsc.guide.arch_chroot.fix3",
+          "problem": "jsc.guide.arch_chroot.problem3"
+        },
+        {
+          "fix": "jsc.guide.arch_chroot.fix4",
+          "problem": "jsc.guide.arch_chroot.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:arch_clock_and_name"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:arch_chroot",
+  "order": 249,
+  "section": "jsc:arch_system",
+  "title": "jsc.guide.arch_chroot.title"
+}

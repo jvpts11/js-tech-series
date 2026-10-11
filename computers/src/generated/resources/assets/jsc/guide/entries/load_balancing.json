@@ -1,0 +1,93 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.load_balancing.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.load_balancing.definition1",
+      "term": "jsc.guide.load_balancing.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.load_balancing.table1",
+      "heads": [
+        "jsc.guide.load_balancing.table1_head1",
+        "jsc.guide.load_balancing.table1_head2",
+        "jsc.guide.load_balancing.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.load_balancing.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.load_balancing.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.load_balancing.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.load_balancing.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.load_balancing.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.load_balancing.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.load_balancing.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.load_balancing.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.load_balancing.table1_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.load_balancing.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.load_balancing.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.load_balancing.fix1",
+          "problem": "jsc.guide.load_balancing.problem1"
+        },
+        {
+          "fix": "jsc.guide.load_balancing.fix2",
+          "problem": "jsc.guide.load_balancing.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:server_router",
+        "jsc:programs"
+      ]
+    }
+  ],
+  "id": "jsc:load_balancing",
+  "order": 39,
+  "section": "jsc:clusters",
+  "title": "jsc.guide.load_balancing.title"
+}

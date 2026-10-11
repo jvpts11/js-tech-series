@@ -1,0 +1,206 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.filesystems_and_mkfs.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.filesystems_and_mkfs.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.filesystems_and_mkfs.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.filesystems_and_mkfs.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.filesystems_and_mkfs.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.filesystems_and_mkfs.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.filesystems_and_mkfs.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.filesystems_and_mkfs.table1",
+      "heads": [
+        "jsc.guide.filesystems_and_mkfs.table1_head1",
+        "jsc.guide.filesystems_and_mkfs.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "mke2fs 1.47.1 (20-May-2024)"
+          },
+          {
+            "words": "jsc.guide.filesystems_and_mkfs.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Creating filesystem with N 4k blocks and M inodes"
+          },
+          {
+            "words": "jsc.guide.filesystems_and_mkfs.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Filesystem UUID: followed by an identifier"
+          },
+          {
+            "words": "jsc.guide.filesystems_and_mkfs.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Superblock backups stored on blocks:"
+          },
+          {
+            "words": "jsc.guide.filesystems_and_mkfs.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Allocating group tables:"
+          },
+          {
+            "words": "jsc.guide.filesystems_and_mkfs.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Writing inode tables:"
+          },
+          {
+            "words": "jsc.guide.filesystems_and_mkfs.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Creating journal (N blocks):"
+          },
+          {
+            "words": "jsc.guide.filesystems_and_mkfs.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Writing superblocks and filesystem accounting information:"
+          },
+          {
+            "words": "jsc.guide.filesystems_and_mkfs.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.filesystems_and_mkfs.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.filesystems_and_mkfs.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.filesystems_and_mkfs.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.filesystems_and_mkfs.text9"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.filesystems_and_mkfs.definition1",
+      "term": "jsc.guide.filesystems_and_mkfs.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.filesystems_and_mkfs.definition2",
+      "term": "jsc.guide.filesystems_and_mkfs.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.filesystems_and_mkfs.definition3",
+      "term": "jsc.guide.filesystems_and_mkfs.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.filesystems_and_mkfs.definition4",
+      "term": "jsc.guide.filesystems_and_mkfs.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.filesystems_and_mkfs.definition5",
+      "term": "jsc.guide.filesystems_and_mkfs.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.filesystems_and_mkfs.definition6",
+      "term": "jsc.guide.filesystems_and_mkfs.term6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.filesystems_and_mkfs.definition7",
+      "term": "jsc.guide.filesystems_and_mkfs.term7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.filesystems_and_mkfs.fix1",
+          "problem": "jsc.guide.filesystems_and_mkfs.problem1"
+        },
+        {
+          "fix": "jsc.guide.filesystems_and_mkfs.fix2",
+          "problem": "jsc.guide.filesystems_and_mkfs.problem2"
+        },
+        {
+          "fix": "jsc.guide.filesystems_and_mkfs.fix3",
+          "problem": "jsc.guide.filesystems_and_mkfs.problem3"
+        },
+        {
+          "fix": "jsc.guide.filesystems_and_mkfs.fix4",
+          "problem": "jsc.guide.filesystems_and_mkfs.problem4"
+        },
+        {
+          "fix": "jsc.guide.filesystems_and_mkfs.fix5",
+          "problem": "jsc.guide.filesystems_and_mkfs.problem5"
+        },
+        {
+          "fix": "jsc.guide.filesystems_and_mkfs.fix6",
+          "problem": "jsc.guide.filesystems_and_mkfs.problem6"
+        },
+        {
+          "fix": "jsc.guide.filesystems_and_mkfs.fix7",
+          "problem": "jsc.guide.filesystems_and_mkfs.problem7"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:firmware",
+        "jsc:disks",
+        "jsc:units_and_ticks"
+      ]
+    }
+  ],
+  "id": "jsc:filesystems_and_mkfs",
+  "order": 244,
+  "section": "jsc:disk_tools",
+  "title": "jsc.guide.filesystems_and_mkfs.title"
+}

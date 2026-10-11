@@ -1,0 +1,330 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_keys.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_keys.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.studio_keys.table1",
+      "heads": [
+        "jsc.guide.studio_keys.table1_head1",
+        "jsc.guide.studio_keys.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Ctrl+N"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+O"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+F4"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+S"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+Shift+S"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+Z"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+Y"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+X"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+C"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+V"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+A"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+F"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+H"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+G"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+K"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+Shift+U"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_16_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+U"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_17_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+J"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_18_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+Space"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table1_19_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.studio_keys.table2",
+      "heads": [
+        "jsc.guide.studio_keys.table2_head1",
+        "jsc.guide.studio_keys.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "F5"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+E"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+Break"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+F5"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+L"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+D"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+T"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+R"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+Shift+F"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+Shift+M"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table2_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.studio_keys.table3",
+      "heads": [
+        "jsc.guide.studio_keys.table3_head1",
+        "jsc.guide.studio_keys.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "F8"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "F7"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "F4"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+Tab"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+Shift+Tab"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "F1"
+          },
+          {
+            "words": "jsc.guide.studio_keys.table3_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_keys.text3"
+    }
+  ],
+  "id": "jsc:studio_keys",
+  "order": 315,
+  "section": "jsc:isms_studio",
+  "title": "jsc.guide.studio_keys.title"
+}

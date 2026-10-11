@@ -68,6 +68,10 @@
       "text": "jsc.guide.installing.text5"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.installing.text6"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -81,7 +85,35 @@
         {
           "fix": "jsc.guide.installing.fix2",
           "problem": "jsc.guide.installing.problem2"
+        },
+        {
+          "fix": "jsc.guide.installing.fix3",
+          "problem": "jsc.guide.installing.problem3"
+        },
+        {
+          "fix": "jsc.guide.installing.fix4",
+          "problem": "jsc.guide.installing.problem4"
+        },
+        {
+          "fix": "jsc.guide.installing.fix5",
+          "problem": "jsc.guide.installing.problem5"
+        },
+        {
+          "fix": "jsc.guide.installing.fix6",
+          "problem": "jsc.guide.installing.problem6"
+        },
+        {
+          "fix": "jsc.guide.installing.fix7",
+          "problem": "jsc.guide.installing.problem7"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:the_systems",
+        "jsc:drives",
+        "jsc:firmware"
       ]
     }
   ],
@@ -97,7 +129,7 @@
     "jsc:bd_re",
     "jsc:usb_flash_drive"
   ],
-  "order": 3,
-  "section": "jsc:getting_started",
+  "order": 10,
+  "section": "jsc:systems_and_eras",
   "title": "jsc.guide.installing.title"
 }

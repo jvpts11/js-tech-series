@@ -1,0 +1,97 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_style_manager.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_style_manager.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_style_manager.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.cde_style_manager.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_style_manager.text4"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.cde_style_manager.step1",
+        "jsc.guide.cde_style_manager.step2",
+        "jsc.guide.cde_style_manager.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_style_manager.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.cde_style_manager.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_style_manager.text6"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.cde_style_manager.step4",
+        "jsc.guide.cde_style_manager.step5",
+        "jsc.guide.cde_style_manager.step6"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_style_manager.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.cde_style_manager.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_style_manager.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_style_manager.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cde_style_manager.fix1",
+          "problem": "jsc.guide.cde_style_manager.problem1"
+        },
+        {
+          "fix": "jsc.guide.cde_style_manager.fix2",
+          "problem": "jsc.guide.cde_style_manager.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:cde",
+        "jsc:cde_front_panel"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:cde_style_manager",
+  "order": 212,
+  "section": "jsc:cde_desktop",
+  "title": "jsc.guide.cde_style_manager.title"
+}

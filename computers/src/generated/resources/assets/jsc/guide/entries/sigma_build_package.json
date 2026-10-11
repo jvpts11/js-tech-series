@@ -1,0 +1,72 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_build_package.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_build_package.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_build_package.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_build_package.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.sigma_build_package.step1",
+        "jsc.guide.sigma_build_package.step2",
+        "jsc.guide.sigma_build_package.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_build_package.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_build_package.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_build_package.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_build_package.fix1",
+          "problem": "jsc.guide.sigma_build_package.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_build_package.fix2",
+          "problem": "jsc.guide.sigma_build_package.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_build_package.fix3",
+          "problem": "jsc.guide.sigma_build_package.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_publish_mirror",
+        "jsc:sigma_sharing_errors"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_build_package",
+  "order": 388,
+  "section": "jsc:sharing_packages",
+  "title": "jsc.guide.sigma_build_package.title"
+}

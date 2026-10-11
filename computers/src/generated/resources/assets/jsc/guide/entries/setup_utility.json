@@ -1,0 +1,196 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.setup_utility.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.setup_utility.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.setup_utility.table1",
+      "heads": [
+        "jsc.guide.setup_utility.table1_head1",
+        "jsc.guide.setup_utility.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Boot"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Boot Order"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Hardware"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Storage"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.setup_utility.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.setup_utility.table2",
+      "heads": [
+        "jsc.guide.setup_utility.table2_head1",
+        "jsc.guide.setup_utility.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Tab"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Up and Down"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "F"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "1 to 9"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Escape"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.setup_utility.warning1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.setup_utility.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.setup_utility.table3",
+      "heads": [
+        "jsc.guide.setup_utility.table3_head1",
+        "jsc.guide.setup_utility.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "NONE (independent)"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "RAID 0"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "RAID 1"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "RAID 5"
+          },
+          {
+            "words": "jsc.guide.setup_utility.table3_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.setup_utility.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.setup_utility.fix1",
+          "problem": "jsc.guide.setup_utility.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:firmware",
+        "jsc:boot_menu",
+        "jsc:installing"
+      ]
+    }
+  ],
+  "icon": "jsc:motherboard_atx_standard_lga1150",
+  "id": "jsc:setup_utility",
+  "order": 5,
+  "section": "jsc:starting_a_computer",
+  "title": "jsc.guide.setup_utility.title"
+}

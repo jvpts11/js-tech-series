@@ -1,0 +1,325 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.query_and_select.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.query_and_select.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.query_and_select.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.query_and_select.table1",
+      "heads": [
+        "jsc.guide.query_and_select.table1_head1",
+        "jsc.guide.query_and_select.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "items, or *"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "servers"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "operations"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "computers"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "recipes"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "disks"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.query_and_select.text3"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "QUERY items WHERE qty > 100 ORDER BY qty DESC LIMIT 5"
+      ],
+      "name": "stock.iql"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.query_and_select.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.query_and_select.text4"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.query_and_select.step1",
+        "jsc.guide.query_and_select.step2",
+        "jsc.guide.query_and_select.step3"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.query_and_select.table2",
+      "heads": [
+        "jsc.guide.query_and_select.table2_head1",
+        "jsc.guide.query_and_select.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "SELECT queued: <quantity> <item> -> local storage"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "SELECT queued: <quantity> <item> from <server> -> local storage"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "nothing to select"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "no server named '<server>'"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.query_and_select.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.query_and_select.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.query_and_select.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.query_and_select.table3",
+      "heads": [
+        "jsc.guide.query_and_select.table3_head1",
+        "jsc.guide.query_and_select.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "=  or  =="
+          },
+          {
+            "words": "jsc.guide.query_and_select.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "!="
+          },
+          {
+            "words": "jsc.guide.query_and_select.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "<  >  <=  >="
+          },
+          {
+            "words": "jsc.guide.query_and_select.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "contains"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "has"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "like"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table3_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.query_and_select.text7"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "QUERY items WHERE name contains \"rare\" AND NOT damaged = true"
+      ],
+      "name": "rare.iql"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.query_and_select.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.query_and_select.text8"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.query_and_select.table4",
+      "heads": [
+        "jsc.guide.query_and_select.table4_head1",
+        "jsc.guide.query_and_select.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "qty, count, amount, quantity"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "name, item"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "server"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table4_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.query_and_select.table4_4_1"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table4_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.query_and_select.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.query_and_select.text10"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.query_and_select.fix1",
+          "problem": "jsc.guide.query_and_select.problem1"
+        },
+        {
+          "fix": "jsc.guide.query_and_select.fix2",
+          "problem": "jsc.guide.query_and_select.problem2"
+        },
+        {
+          "fix": "jsc.guide.query_and_select.fix3",
+          "problem": "jsc.guide.query_and_select.problem3"
+        },
+        {
+          "fix": "jsc.guide.query_and_select.fix4",
+          "problem": "jsc.guide.query_and_select.problem4"
+        },
+        {
+          "fix": "jsc.guide.query_and_select.fix5",
+          "problem": "jsc.guide.query_and_select.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:iql_names_quotes_columns",
+        "jsc:iql_count",
+        "jsc:iql_limits"
+      ]
+    }
+  ],
+  "id": "jsc:query_and_select",
+  "order": 290,
+  "section": "jsc:iql_verbs",
+  "title": "jsc.guide.query_and_select.title"
+}

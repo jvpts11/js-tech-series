@@ -1,0 +1,355 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements_systems.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements_systems.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements_systems.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.achievements_systems.table1",
+      "heads": [
+        "jsc.guide.achievements_systems.table1_head1",
+        "jsc.guide.achievements_systems.table1_head2",
+        "jsc.guide.achievements_systems.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_7_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_8_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_9_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_9_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_10_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_10_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_11_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_11_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_12_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_12_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_12_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_13_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_13_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_13_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_14_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_14_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_14_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_15_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_15_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_15_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_16_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_16_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_16_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_17_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_17_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_17_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_18_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_18_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_18_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_19_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_19_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_19_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_20_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_20_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_20_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_21_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_21_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_21_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_22_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_22_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_22_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_23_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_23_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_23_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_24_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_24_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_24_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_25_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_25_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_25_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_26_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_26_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_26_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_systems.table1_27_1"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_27_2"
+          },
+          {
+            "words": "jsc.guide.achievements_systems.table1_27_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.achievements_systems.fix1",
+          "problem": "jsc.guide.achievements_systems.problem1"
+        },
+        {
+          "fix": "jsc.guide.achievements_systems.fix2",
+          "problem": "jsc.guide.achievements_systems.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installing",
+        "jsc:the_systems",
+        "jsc:firmware",
+        "jsc:help_on_a_computer"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:achievements_systems",
+  "order": 131,
+  "section": "jsc:the_achievements",
+  "title": "jsc.guide.achievements_systems.title"
+}

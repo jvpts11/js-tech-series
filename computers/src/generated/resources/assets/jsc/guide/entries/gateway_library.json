@@ -1,0 +1,206 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.gateway_library.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.gateway_library.table1",
+      "heads": [
+        "jsc.guide.gateway_library.table1_head1",
+        "jsc.guide.gateway_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Gateway.Online"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Current"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Names()"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Select(name)"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Computers()"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Peripherals()"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Call(peripheral, method, args)"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.TurnOn(id)"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Shutdown(id)"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Reboot(id)"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Send(id, text)"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.OnMessage(handler)"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table1_12_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.gateway_library.table2",
+      "heads": [
+        "jsc.guide.gateway_library.table2_head1",
+        "jsc.guide.gateway_library.table2_head2",
+        "jsc.guide.gateway_library.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "CcComputer"
+          },
+          {
+            "literal": "CcComputer.Id, CcComputer.Name, CcComputer.Label, CcComputer.Online"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "CcPeripheral"
+          },
+          {
+            "literal": "CcPeripheral.Name, CcPeripheral.Type, CcPeripheral.Methods"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "GatewayMessage"
+          },
+          {
+            "literal": "GatewayMessage.From, GatewayMessage.Text, GatewayMessage.Tick"
+          },
+          {
+            "words": "jsc.guide.gateway_library.table2_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gateway_library.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gateway_library.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gateway_library.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.gateway_library.fix1",
+          "problem": "jsc.guide.gateway_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.gateway_library.fix2",
+          "problem": "jsc.guide.gateway_library.problem2"
+        },
+        {
+          "fix": "jsc.guide.gateway_library.fix3",
+          "problem": "jsc.guide.gateway_library.problem3"
+        },
+        {
+          "fix": "jsc.guide.gateway_library.fix4",
+          "problem": "jsc.guide.gateway_library.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:network_gateway",
+        "jsc:computercraft_peripheral"
+      ]
+    }
+  ],
+  "id": "jsc:gateway_library",
+  "order": 368,
+  "section": "jsc:library_machine",
+  "title": "jsc.guide.gateway_library.title"
+}

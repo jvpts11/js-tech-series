@@ -1,0 +1,285 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.machine_verbs.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.machine_verbs.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.machine_verbs.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.machine_verbs.definition1",
+      "term": "jsc.guide.machine_verbs.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.machine_verbs.table1",
+      "heads": [
+        "jsc.guide.machine_verbs.table1_head1",
+        "jsc.guide.machine_verbs.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "cpu"
+          },
+          {
+            "words": "jsc.guide.machine_verbs.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "ram"
+          },
+          {
+            "words": "jsc.guide.machine_verbs.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "network"
+          },
+          {
+            "words": "jsc.guide.machine_verbs.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/status"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.machine_verbs.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.machine_verbs.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.machine_verbs.table2",
+      "heads": [
+        "jsc.guide.machine_verbs.table2_head1",
+        "jsc.guide.machine_verbs.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "name"
+          },
+          {
+            "words": "jsc.guide.machine_verbs.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "theme"
+          },
+          {
+            "words": "jsc.guide.machine_verbs.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "netshare"
+          },
+          {
+            "words": "jsc.guide.machine_verbs.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "share FOLDER [read or write]"
+          },
+          {
+            "words": "jsc.guide.machine_verbs.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "unshare NAME"
+          },
+          {
+            "words": "jsc.guide.machine_verbs.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.machine_verbs.text4"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "C:\\> ",
+          "text": "config netshare 500",
+          "typed": true
+        },
+        {
+          "text": "netshare set"
+        }
+      ],
+      "look": "jsc:guide/terminal/dos",
+      "title": "MC-DOS"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/config"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.machine_verbs.heading3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.machine_verbs.definition2",
+      "term": "jsc.guide.machine_verbs.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.machine_verbs.text5"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/devices"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.machine_verbs.text6"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.machine_verbs.warning1"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/reboot"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.machine_verbs.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.machine_verbs.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.machine_verbs.definition3",
+      "term": "jsc.guide.machine_verbs.term3"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/date"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.machine_verbs.text8"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.machine_verbs.definition4",
+      "term": "jsc.guide.machine_verbs.term4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.machine_verbs.table3",
+      "heads": [
+        "jsc.guide.machine_verbs.table3_head1",
+        "jsc.guide.machine_verbs.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.machine_verbs.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.machine_verbs.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.machine_verbs.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.machine_verbs.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.machine_verbs.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.machine_verbs.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.machine_verbs.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.machine_verbs.table3_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/mem"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.machine_verbs.fix1",
+          "problem": "jsc.guide.machine_verbs.problem1"
+        },
+        {
+          "fix": "jsc.guide.machine_verbs.fix2",
+          "problem": "jsc.guide.machine_verbs.problem2"
+        },
+        {
+          "fix": "jsc.guide.machine_verbs.fix3",
+          "problem": "jsc.guide.machine_verbs.problem3"
+        },
+        {
+          "fix": "jsc.guide.machine_verbs.fix4",
+          "problem": "jsc.guide.machine_verbs.problem4"
+        },
+        {
+          "fix": "jsc.guide.machine_verbs.fix5",
+          "problem": "jsc.guide.machine_verbs.problem5"
+        },
+        {
+          "fix": "jsc.guide.machine_verbs.fix6",
+          "problem": "jsc.guide.machine_verbs.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:firmware",
+        "jsc:peripheral_cables"
+      ]
+    }
+  ],
+  "id": "jsc:machine_verbs",
+  "order": 184,
+  "section": "jsc:prompt_system",
+  "title": "jsc.guide.machine_verbs.title"
+}

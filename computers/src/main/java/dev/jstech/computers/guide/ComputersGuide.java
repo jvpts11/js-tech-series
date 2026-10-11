@@ -16,6 +16,7 @@ import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.guide.CoreGuide;
+import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.GuideCode;
 import dev.jstech.core.guide.GuideHighlighters;
 import dev.jstech.core.guide.GuideStyle;
@@ -46,6 +47,8 @@ public final class ComputersGuide {
     public static final String OPERATIONS_STYLE = "jsc:operations";
     /** What a listing of the network's query language names its language, as its files' extension does. */
     public static final String IQL = "iql";
+    /** The colour of the guide's chapter tabs: the mod's own cyan. */
+    private static final String TAB = "#FF39D6C4";
 
     public static final ItemEntry<ManualItem> MANUAL = ComputingContent.CONTENT.item("guide_to_operations",
             properties -> new ManualItem(properties, GUIDE_TO_OPERATIONS)).named("Guide to Operations")
@@ -60,8 +63,60 @@ public final class ComputersGuide {
         // Held over an item, the manual key lights blue blocks one after another, as Frames XP did while it loaded.
         guide.style("operations", CoreGuide.binder("jsc:guide/operations", true)
                 .withHoldBar(GuideStyle.HoldBar.BLOCKS));
+        final GuideChapter main = guide.chapter().titled("J's Computers").order(20).tab(TAB)
+                .about("Computers from the 1980s to today: build them part by part, join them in a network, and"
+                        + " let the network keep your items, move them and craft for you.")
+                .register();
+        final GuideChapter building = guide.chapter("building_computers").titled("Building computers").order(21)
+                .tab(TAB).about("The case and every part that goes in it: what each part does, what its numbers"
+                        + " mean, and how to choose parts that work together.")
+                .register();
+        final GuideChapter kinds = guide.chapter("computer_kinds").titled("The computers").order(22).tab(TAB)
+                .about("Every kind of computer, from the Personal Computer to the Mainframe, the racks of servers"
+                        + " and the clusters that join them.")
+                .register();
+        final GuideChapter peripherals = guide.chapter("peripheral_devices").titled("Peripherals").order(23)
+                .tab(TAB).about("The devices you join to a computer: monitors, drives, printers, speakers and the"
+                        + " Redstone Interfaces.")
+                .register();
+        final GuideChapter programs = guide.chapter("everyday_programs").titled("Programs on every system")
+                .order(24).tab(TAB).about("The programs every system offers, how you get more of them, and where"
+                        + " you find help on a computer.")
+                .register();
+        final GuideChapter network = guide.chapter("the_network").titled("The network").order(25).tab(TAB)
+                .about("How computers join into a network around a Mainframe, the cables and routers that carry it,"
+                        + " and the services that run on it.")
+                .register();
+        final GuideChapter storage = guide.chapter("keeping_items").titled("Storage").order(26).tab(TAB)
+                .about("Where the network keeps your items and fluids, and how it decides where each one goes.")
+                .register();
+        final GuideChapter moving = guide.chapter("moving_items").titled("Moving items").order(27).tab(TAB)
+                .about("The buses that bring items into the network and send them out, and every setting they"
+                        + " have.")
+                .register();
+        final GuideChapter operations = guide.chapter("the_operations").titled("Operations").order(28).tab(TAB)
+                .about("The jobs the network does for you, how it queues them, and the language you ask for them"
+                        + " in.")
+                .register();
+        final GuideChapter crafting = guide.chapter("crafting_for_you").titled("Autocrafting").order(29).tab(TAB)
+                .about("How the network crafts for you: patterns, crafting cards, the machines it drives and the"
+                        + " programs that plan the work.")
+                .register();
+        final GuideChapter automation = guide.chapter("automation").titled("Automation").order(30).tab(TAB)
+                .about("Jobs the network runs on its own, redstone, and the tools that run many machines at once.")
+                .register();
+        final GuideChapter otherMods = guide.chapter("other_mods").titled("Other mods").order(31).tab(TAB)
+                .about("How J's Computers works with other mods: ComputerCraft through the Gateway, recipe viewers,"
+                        + " Mekanism and Jade.")
+                .register();
+        final GuideChapter library = guide.chapter("achievements_and_library").titled("Achievements and the library")
+                .order(32).tab(TAB).about("The achievements you can earn, and the other books of the library.")
+                .register();
         guide.manual("guide_to_operations").titled("Guide to Operations").cover("J's Computers")
-                .edition("First Edition (September 2026)").style(OPERATIONS_STYLE).chapters("jsc").priority(50)
+                .edition("First Edition (September 2026)").style(OPERATIONS_STYLE)
+                .chapters(main, building, kinds, peripherals, programs, network, storage, moving, operations, crafting,
+                        automation, otherMods, library)
+                .priority(50)
                 .icon("jsc:gui/guide/cover_mark")
                 .about("This binder is the operator's guide to J's Computers: what a computer is here, how to build"
                                 + " one, and everything the network does for you.",
@@ -72,11 +127,20 @@ public final class ComputersGuide {
                                 + " title lead to their own pages. Hold the manual key over an item to open its"
                                 + " page.")
                 .register();
-        guide.chapter().titled("J's Computers").order(20).tab("#FF39D6C4")
-                .about("Computers from the early 1990s to today: build them part by part, join them in a network,"
-                        + " and let the network keep your items, move them and craft for you.")
-                .register();
-        ComputersEntries.declare(guide);
+        // The pages, chapter by chapter, in the order the guide prints them.
+        StartingPages.declare(guide, main);
+        BuildingPages.declare(guide, building);
+        ComputerKindsPages.declare(guide, kinds);
+        PeripheralPages.declare(guide, peripherals);
+        EverydayProgramsPages.declare(guide, programs);
+        NetworkPages.declare(guide, network);
+        StoragePages.declare(guide, storage);
+        MovingItemsPages.declare(guide, moving);
+        OperationsPages.declare(guide, operations);
+        AutocraftingPages.declare(guide, crafting);
+        AutomationPages.declare(guide, automation);
+        OtherModsPages.declare(guide, otherMods);
+        LibraryPages.declare(guide, library);
         ComputersBooks.declare(guide);
         // Sigma and Sigma# colour themselves as languages the game compiles; the network's queries are coloured here.
         GuideHighlighters.register(IQL, lines -> GuideCode.runs(lines, IqlColouring.spans(lines).stream()

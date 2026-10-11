@@ -1,0 +1,51 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_count.text1"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "COUNT items WHERE qty > 100"
+      ],
+      "name": "count.iql"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_count.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_count.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.iql_count.fix1",
+          "problem": "jsc.guide.iql_count.problem1"
+        },
+        {
+          "fix": "jsc.guide.iql_count.fix2",
+          "problem": "jsc.guide.iql_count.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:query_and_select"
+      ]
+    }
+  ],
+  "id": "jsc:iql_count",
+  "order": 291,
+  "section": "jsc:iql_verbs",
+  "title": "jsc.guide.iql_count.title"
+}

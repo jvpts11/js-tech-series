@@ -1,0 +1,251 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.buses_library.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.buses_library.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.buses_library.table1",
+      "heads": [
+        "jsc.guide.buses_library.table1_head1",
+        "jsc.guide.buses_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Bus.Named(name)"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.Name"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.On()"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.Off()"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.Continuous()"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.OnDemand()"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.ReadWrite()"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.ReadOnly()"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.WriteOnly()"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.Only(items)"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.AllBut(items)"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.Tag(tag)"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.Keep(number)"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.Max(number)"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.Priority(number)"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.Fuzzy(yes or no)"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_16_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.WhenStock(item, number)"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_17_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.WhenStockTag(tag, number)"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_18_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.Between(from, to)"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_19_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.After(bus)"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_20_2"
+          }
+        ],
+        [
+          {
+            "literal": "Bus.Item(name)"
+          },
+          {
+            "words": "jsc.guide.buses_library.table1_21_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.buses_library.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.buses_library.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.buses_library.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.buses_library.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.buses_library.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.buses_library.fix1",
+          "problem": "jsc.guide.buses_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.buses_library.fix2",
+          "problem": "jsc.guide.buses_library.problem2"
+        },
+        {
+          "fix": "jsc.guide.buses_library.fix3",
+          "problem": "jsc.guide.buses_library.problem3"
+        },
+        {
+          "fix": "jsc.guide.buses_library.fix4",
+          "problem": "jsc.guide.buses_library.problem4"
+        },
+        {
+          "fix": "jsc.guide.buses_library.fix5",
+          "problem": "jsc.guide.buses_library.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:buses",
+        "jsc:bus_conditions",
+        "jsc:bus_filters_and_tags"
+      ]
+    }
+  ],
+  "id": "jsc:buses_library",
+  "order": 364,
+  "section": "jsc:library_machine",
+  "title": "jsc.guide.buses_library.title"
+}

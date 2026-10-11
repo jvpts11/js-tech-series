@@ -1,0 +1,44 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.book_of_sigma.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.book_of_sigma.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.book_of_sigma.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.book_of_sigma.fix1",
+          "problem": "jsc.guide.book_of_sigma.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_two_languages",
+        "jsc:library"
+      ]
+    }
+  ],
+  "icon": "jsc:book_of_sigma",
+  "id": "jsc:book_of_sigma",
+  "items": [
+    "jsc:book_of_sigma"
+  ],
+  "order": 140,
+  "section": "jsc:the_library",
+  "title": "jsc.guide.book_of_sigma.title"
+}

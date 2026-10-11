@@ -9,8 +9,344 @@
       "text": "jsc.guide.printers.text2"
     },
     {
+      "type": "table",
+      "caption": "jsc.guide.printers.table1",
+      "heads": [
+        "jsc.guide.printers.table1_head1",
+        "jsc.guide.printers.table1_head2",
+        "jsc.guide.printers.table1_head3",
+        "jsc.guide.printers.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.printers.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.printers.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.printers.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.printers.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.printers.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.printers.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.printers.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.printers.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.printers.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.printers.table1_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.printers.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.printers.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.printers.table1_4_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.printers.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.printers.table1_5_3"
+          },
+          {
+            "words": "jsc.guide.printers.table1_5_4"
+          }
+        ]
+      ]
+    },
+    {
       "type": "text",
       "text": "jsc.guide.printers.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.printers.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.printers.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.printers.table2",
+      "heads": [
+        "jsc.guide.printers.table2_head1",
+        "jsc.guide.printers.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.printers.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.printers.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.printers.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.printers.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.printers.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.printers.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.printers.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.printers.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.printers.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.printers.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.printers.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.printers.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.printers.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.printers.heading4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.printers.table3",
+      "heads": [
+        "jsc.guide.printers.table3_head1",
+        "jsc.guide.printers.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.printers.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.printers.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.printers.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.printers.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.printers.table3_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.printers.table3_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table3_6_1"
+          },
+          {
+            "words": "jsc.guide.printers.table3_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.printers.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.printers.text10"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.printers.table4",
+      "heads": [
+        "jsc.guide.printers.table4_head1",
+        "jsc.guide.printers.table4_head2",
+        "jsc.guide.printers.table4_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "PRINT"
+          },
+          {
+            "words": "jsc.guide.printers.table4_1_2"
+          },
+          {
+            "words": "jsc.guide.printers.table4_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "lp"
+          },
+          {
+            "words": "jsc.guide.printers.table4_2_2"
+          },
+          {
+            "words": "jsc.guide.printers.table4_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "lpstat"
+          },
+          {
+            "words": "jsc.guide.printers.table4_3_2"
+          },
+          {
+            "words": "jsc.guide.printers.table4_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.printers.text11"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.printers.table5",
+      "heads": [
+        "jsc.guide.printers.table5_head1",
+        "jsc.guide.printers.table5_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.printers.table5_1_1"
+          },
+          {
+            "literal": "epsilon"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table5_2_1"
+          },
+          {
+            "literal": "deskjot"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table5_3_1"
+          },
+          {
+            "literal": "fotosmart"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table5_4_1"
+          },
+          {
+            "literal": "laserjot"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.printers.table5_5_1"
+          },
+          {
+            "literal": "ecotonk"
+          }
+        ]
+      ]
     },
     {
       "type": "heading",
@@ -26,7 +362,27 @@
         {
           "fix": "jsc.guide.printers.fix2",
           "problem": "jsc.guide.printers.problem2"
+        },
+        {
+          "fix": "jsc.guide.printers.fix3",
+          "problem": "jsc.guide.printers.problem3"
+        },
+        {
+          "fix": "jsc.guide.printers.fix4",
+          "problem": "jsc.guide.printers.problem4"
+        },
+        {
+          "fix": "jsc.guide.printers.fix5",
+          "problem": "jsc.guide.printers.problem5"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:peripheral_cables",
+        "jsc:dos_printing",
+        "jsc:printing"
       ]
     }
   ],
@@ -40,7 +396,7 @@
     "jsc:advanced_printer",
     "jsc:printed_paper"
   ],
-  "order": 48,
+  "order": 44,
   "section": "jsc:peripherals",
   "title": "jsc.guide.printers.title"
 }

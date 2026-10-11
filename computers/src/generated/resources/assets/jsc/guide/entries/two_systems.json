@@ -13,6 +13,29 @@
       "text": "jsc.guide.two_systems.text3"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.two_systems.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.two_systems.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.two_systems.definition1",
+      "term": "jsc.guide.two_systems.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.two_systems.definition2",
+      "term": "jsc.guide.two_systems.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.two_systems.definition3",
+      "term": "jsc.guide.two_systems.term3"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -22,13 +45,29 @@
         {
           "fix": "jsc.guide.two_systems.fix1",
           "problem": "jsc.guide.two_systems.problem1"
+        },
+        {
+          "fix": "jsc.guide.two_systems.fix2",
+          "problem": "jsc.guide.two_systems.problem2"
+        },
+        {
+          "fix": "jsc.guide.two_systems.fix3",
+          "problem": "jsc.guide.two_systems.problem3"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:midsoft_boot_manager",
+        "jsc:installing",
+        "jsc:firmware"
       ]
     }
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:two_systems",
-  "order": 22,
-  "section": "jsc:systems",
+  "order": 144,
+  "section": "jsc:midsoft_installs",
   "title": "jsc.guide.two_systems.title"
 }

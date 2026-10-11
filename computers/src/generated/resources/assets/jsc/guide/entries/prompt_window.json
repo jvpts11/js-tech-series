@@ -1,0 +1,175 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_window.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.prompt_window.definition1",
+      "term": "jsc.guide.prompt_window.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.prompt_window.definition2",
+      "term": "jsc.guide.prompt_window.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_window.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_window.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_window.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.prompt_window.definition3",
+      "term": "jsc.guide.prompt_window.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.prompt_window.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.prompt_window.table1",
+      "heads": [
+        "jsc.guide.prompt_window.table1_head1",
+        "jsc.guide.prompt_window.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.prompt_window.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Tab"
+          },
+          {
+            "words": "jsc.guide.prompt_window.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Up"
+          },
+          {
+            "words": "jsc.guide.prompt_window.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Down"
+          },
+          {
+            "words": "jsc.guide.prompt_window.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Esc"
+          },
+          {
+            "words": "jsc.guide.prompt_window.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+C"
+          },
+          {
+            "words": "jsc.guide.prompt_window.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+V"
+          },
+          {
+            "words": "jsc.guide.prompt_window.table1_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.prompt_window.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.prompt_window.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.prompt_window.definition4",
+      "term": "jsc.guide.prompt_window.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.prompt_window.definition5",
+      "term": "jsc.guide.prompt_window.term5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_window.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_window.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.prompt_window.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_window.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.prompt_window.fix1",
+          "problem": "jsc.guide.prompt_window.problem1"
+        },
+        {
+          "fix": "jsc.guide.prompt_window.fix2",
+          "problem": "jsc.guide.prompt_window.problem2"
+        },
+        {
+          "fix": "jsc.guide.prompt_window.fix3",
+          "problem": "jsc.guide.prompt_window.problem3"
+        },
+        {
+          "fix": "jsc.guide.prompt_window.fix4",
+          "problem": "jsc.guide.prompt_window.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:help_on_a_computer",
+        "jsc:the_systems"
+      ]
+    }
+  ],
+  "id": "jsc:prompt_window",
+  "order": 177,
+  "section": "jsc:prompt_basics",
+  "title": "jsc.guide.prompt_window.title"
+}

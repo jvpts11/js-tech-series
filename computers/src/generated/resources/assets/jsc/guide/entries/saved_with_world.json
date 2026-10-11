@@ -1,0 +1,143 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.saved_with_world.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.saved_with_world.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.saved_with_world.table1",
+      "heads": [
+        "jsc.guide.saved_with_world.table1_head1",
+        "jsc.guide.saved_with_world.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.saved_with_world.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.saved_with_world.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.saved_with_world.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.saved_with_world.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.saved_with_world.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.saved_with_world.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.saved_with_world.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.saved_with_world.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.saved_with_world.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.saved_with_world.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.saved_with_world.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.saved_with_world.table1_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.saved_with_world.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.saved_with_world.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.saved_with_world.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.saved_with_world.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.saved_with_world.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.saved_with_world.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.saved_with_world.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.saved_with_world.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.saved_with_world.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.saved_with_world.definition1",
+      "term": "jsc.guide.saved_with_world.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.saved_with_world.fix1",
+          "problem": "jsc.guide.saved_with_world.problem1"
+        },
+        {
+          "fix": "jsc.guide.saved_with_world.fix2",
+          "problem": "jsc.guide.saved_with_world.problem2"
+        },
+        {
+          "fix": "jsc.guide.saved_with_world.fix3",
+          "problem": "jsc.guide.saved_with_world.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_run",
+        "jsc:running_programs"
+      ]
+    }
+  ],
+  "id": "jsc:saved_with_world",
+  "order": 378,
+  "section": "jsc:saving",
+  "title": "jsc.guide.saved_with_world.title"
+}

@@ -1,0 +1,193 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_buses.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_buses.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_buses.heading1"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "using System.IO.*;",
+        "using System.Network.*;",
+        "namespace Corpus;",
+        "class BusCorpus {",
+        "    static void Main() {",
+        "        Bus ore = bus(\"Ore in\");",
+        "        if (ore != null) {",
+        "            ore.On().Continuous().Only(\"iron_ore, coal\").Keep(16).Max(64).Priority(5);",
+        "            ore.AllBut(\"dirt\").Tag(\"c:ores\").Fuzzy(true).WhenStock(\"iron_ore\", 512).WhenStockTag(\"c:ores\", 4096);",
+        "            ore.Between(18, 6).After(Bus.Named(\"Coal in\")).OnDemand().Off();",
+        "            BusItem iron = ore.Item(\"iron_ore\").Keep(16).Max(64);",
+        "            Console.PrintLine(ore.Name + iron.Bus + iron.Item);",
+        "        }",
+        "        Bus wall = Bus.Named(\"Chest wall\");",
+        "        if (wall != null) {",
+        "            wall.ReadWrite().ReadOnly().WriteOnly();",
+        "        }",
+        "    }",
+        "}"
+      ],
+      "name": "Buses.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_buses.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_buses.table1",
+      "heads": [
+        "jsc.guide.sigma_example_buses.table1_head1",
+        "jsc.guide.sigma_example_buses.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "bus(\"Ore in\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_buses.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "if (ore != null)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_buses.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "On(), Continuous(), Only(...)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_buses.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Keep(16), Max(64), Priority(5)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_buses.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "AllBut(...), Tag(...), Fuzzy(true)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_buses.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "WhenStock(\"iron_ore\", 512)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_buses.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "WhenStockTag(\"c:ores\", 4096)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_buses.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Between(18, 6)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_buses.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "After(Bus.Named(\"Coal in\"))"
+          },
+          {
+            "words": "jsc.guide.sigma_example_buses.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "OnDemand(), Off()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_buses.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "ore.Item(\"iron_ore\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_buses.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "Console.PrintLine(...)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_buses.table1_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "wall.ReadWrite(), ReadOnly(), WriteOnly()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_buses.table1_13_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_example_buses.fix1",
+          "problem": "jsc.guide.sigma_example_buses.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_buses.fix2",
+          "problem": "jsc.guide.sigma_example_buses.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_buses.fix3",
+          "problem": "jsc.guide.sigma_example_buses.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:buses",
+        "jsc:sigma_library"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_example_buses",
+  "order": 397,
+  "section": "jsc:examples_network",
+  "title": "jsc.guide.sigma_example_buses.title"
+}

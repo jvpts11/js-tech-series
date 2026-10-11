@@ -1,0 +1,580 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_comments_names_literals.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_comments_names_literals.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_comments_names_literals.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_comments_names_literals.table1",
+      "heads": [
+        "jsc.guide.sigma_comments_names_literals.table1_head1",
+        "jsc.guide.sigma_comments_names_literals.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table1_1_1"
+          },
+          {
+            "literal": "int long float double bool char string object void var"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table1_2_1"
+          },
+          {
+            "literal": "namespace using class interface enum struct record delegate event"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table1_3_1"
+          },
+          {
+            "literal": "new dispose this base static virtual override abstract public private protected readonly"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table1_4_1"
+          },
+          {
+            "literal": "if else while for foreach do switch case default break continue return lock in out"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table1_5_1"
+          },
+          {
+            "literal": "true false null is as"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_comments_names_literals.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_comments_names_literals.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_comments_names_literals.table2",
+      "heads": [
+        "jsc.guide.sigma_comments_names_literals.table2_head1",
+        "jsc.guide.sigma_comments_names_literals.table2_head2",
+        "jsc.guide.sigma_comments_names_literals.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "42"
+          },
+          {
+            "literal": "int"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "42L"
+          },
+          {
+            "literal": "long"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "0.5"
+          },
+          {
+            "literal": "double"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table2_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "3.14f"
+          },
+          {
+            "literal": "float"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table2_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "2d"
+          },
+          {
+            "literal": "double"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table2_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "true, false"
+          },
+          {
+            "literal": "bool"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table2_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "'A'"
+          },
+          {
+            "literal": "char"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table2_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "\"text\""
+          },
+          {
+            "literal": "string"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table2_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "null"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table2_9_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table2_9_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_comments_names_literals.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_comments_names_literals.table3",
+      "heads": [
+        "jsc.guide.sigma_comments_names_literals.table3_head1",
+        "jsc.guide.sigma_comments_names_literals.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "n"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "t"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "r"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "0"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "\\"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "\""
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table3_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "'"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table3_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_comments_names_literals.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_comments_names_literals.table4",
+      "heads": [
+        "jsc.guide.sigma_comments_names_literals.table4_head1",
+        "jsc.guide.sigma_comments_names_literals.table4_head2",
+        "jsc.guide.sigma_comments_names_literals.table4_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_1_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_2_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_3_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_4_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_5_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_6_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_7_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_7_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_8_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_8_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_8_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_9_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_9_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_9_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_10_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_10_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_10_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_11_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_11_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_11_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_12_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_12_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_12_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_13_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_13_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_13_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_14_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_14_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_14_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_15_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_15_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_15_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_16_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_16_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_16_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_comments_names_literals.table5",
+      "heads": [
+        "jsc.guide.sigma_comments_names_literals.table5_head1",
+        "jsc.guide.sigma_comments_names_literals.table5_head2",
+        "jsc.guide.sigma_comments_names_literals.table5_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "S1001"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table5_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table5_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "S1002"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table5_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table5_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "S1003"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table5_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table5_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "S1004"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table5_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table5_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "S1005"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table5_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table5_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "S1006"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table5_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table5_6_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_comments_names_literals.definition1",
+      "term": "jsc.guide.sigma_comments_names_literals.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_comments_names_literals.definition2",
+      "term": "jsc.guide.sigma_comments_names_literals.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_comments_names_literals.definition3",
+      "term": "jsc.guide.sigma_comments_names_literals.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_comments_names_literals.definition4",
+      "term": "jsc.guide.sigma_comments_names_literals.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_comments_names_literals.definition5",
+      "term": "jsc.guide.sigma_comments_names_literals.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_comments_names_literals.definition6",
+      "term": "jsc.guide.sigma_comments_names_literals.term6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_comments_names_literals.fix1",
+          "problem": "jsc.guide.sigma_comments_names_literals.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_comments_names_literals.fix2",
+          "problem": "jsc.guide.sigma_comments_names_literals.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_examples",
+        "jsc:sigma_syntax_errors"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_comments_names_literals",
+  "order": 335,
+  "section": "jsc:sigma_basics",
+  "title": "jsc.guide.sigma_comments_names_literals.title"
+}

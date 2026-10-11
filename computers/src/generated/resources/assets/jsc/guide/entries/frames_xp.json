@@ -1,0 +1,140 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_xp.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_xp.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_xp.definition1",
+      "term": "jsc.guide.frames_xp.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_xp.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_xp.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_xp.table1_1"
+          },
+          {
+            "words": "jsc.guide.frames_xp.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_xp.table1_2"
+          },
+          {
+            "words": "jsc.guide.frames_xp.value1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_xp.table1_3"
+          },
+          {
+            "amount": 1536,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_xp.table1_4"
+          },
+          {
+            "amount": 64,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_xp.table1_5"
+          },
+          {
+            "words": "jsc.guide.frames_xp.value1_5"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_xp.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.frames_xp.step1",
+        "jsc.guide.frames_xp.step2",
+        "jsc.guide.frames_xp.step3",
+        "jsc.guide.frames_xp.step4",
+        "jsc.guide.frames_xp.step5",
+        "jsc.guide.frames_xp.step6"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_xp.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_xp.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_xp.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_xp.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_xp.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_xp.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_xp.text10"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.frames_xp.fix1",
+          "problem": "jsc.guide.frames_xp.problem1"
+        },
+        {
+          "fix": "jsc.guide.frames_xp.fix2",
+          "problem": "jsc.guide.frames_xp.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:frames_95",
+        "jsc:frames_7"
+      ]
+    }
+  ],
+  "id": "jsc:frames_xp",
+  "order": 173,
+  "section": "jsc:editions",
+  "title": "jsc.guide.frames_xp.title"
+}

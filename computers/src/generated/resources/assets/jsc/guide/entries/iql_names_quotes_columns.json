@@ -1,0 +1,319 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_names_quotes_columns.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_names_quotes_columns.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_names_quotes_columns.table1",
+      "heads": [
+        "jsc.guide.iql_names_quotes_columns.table1_head1",
+        "jsc.guide.iql_names_quotes_columns.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_names_quotes_columns.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.iql_names_quotes_columns.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_names_quotes_columns.table2",
+      "heads": [
+        "jsc.guide.iql_names_quotes_columns.table2_head1",
+        "jsc.guide.iql_names_quotes_columns.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table2_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_names_quotes_columns.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.iql_names_quotes_columns.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_names_quotes_columns.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_names_quotes_columns.table3",
+      "heads": [
+        "jsc.guide.iql_names_quotes_columns.table3_head1",
+        "jsc.guide.iql_names_quotes_columns.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "items"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "servers"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "disks"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "operations"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "recipes"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "computers"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table3_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_names_quotes_columns.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_names_quotes_columns.table4",
+      "heads": [
+        "jsc.guide.iql_names_quotes_columns.table4_head1",
+        "jsc.guide.iql_names_quotes_columns.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "item"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "name"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "qty"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table4_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "server"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table4_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "damaged"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table4_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "durability"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table4_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "tag"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table4_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "enchant"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table4_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_names_quotes_columns.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.iql_names_quotes_columns.definition1",
+      "term": "jsc.guide.iql_names_quotes_columns.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.iql_names_quotes_columns.definition2",
+      "term": "jsc.guide.iql_names_quotes_columns.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.iql_names_quotes_columns.definition3",
+      "term": "jsc.guide.iql_names_quotes_columns.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.iql_names_quotes_columns.fix1",
+          "problem": "jsc.guide.iql_names_quotes_columns.problem1"
+        },
+        {
+          "fix": "jsc.guide.iql_names_quotes_columns.fix2",
+          "problem": "jsc.guide.iql_names_quotes_columns.problem2"
+        },
+        {
+          "fix": "jsc.guide.iql_names_quotes_columns.fix3",
+          "problem": "jsc.guide.iql_names_quotes_columns.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:query_and_select",
+        "jsc:clauses_priority_if_with"
+      ]
+    }
+  ],
+  "id": "jsc:iql_names_quotes_columns",
+  "order": 289,
+  "section": "jsc:iql_verbs",
+  "title": "jsc.guide.iql_names_quotes_columns.title"
+}

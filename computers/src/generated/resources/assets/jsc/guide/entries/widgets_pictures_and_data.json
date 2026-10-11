@@ -1,0 +1,176 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.widgets_pictures_and_data.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.widgets_pictures_and_data.definition1",
+      "term": "jsc.guide.widgets_pictures_and_data.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.widgets_pictures_and_data.definition2",
+      "term": "jsc.guide.widgets_pictures_and_data.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.widgets_pictures_and_data.table1",
+      "heads": [
+        "jsc.guide.widgets_pictures_and_data.table1_head1",
+        "jsc.guide.widgets_pictures_and_data.table1_head2",
+        "jsc.guide.widgets_pictures_and_data.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Canvas"
+          },
+          {
+            "literal": "Canvas.new(), Canvas.new(width, height)"
+          },
+          {
+            "literal": "Canvas.Clear(colour), Canvas.FillRect, Canvas.DrawLine, Canvas.DrawText, Canvas.SetPixel, Canvas.ClickX, Canvas.ClickY, Canvas.OnClick"
+          }
+        ],
+        [
+          {
+            "literal": "Image"
+          },
+          {
+            "literal": "Image.new(), Image.new(path)"
+          },
+          {
+            "literal": "Image.Path"
+          }
+        ],
+        [
+          {
+            "literal": "Chart"
+          },
+          {
+            "literal": "Chart.new(), Chart.new(least, most)"
+          },
+          {
+            "literal": "Chart.Text, Chart.Least, Chart.Most, Chart.Add(number), Chart.Clear, Chart.Count"
+          }
+        ],
+        [
+          {
+            "literal": "LogView"
+          },
+          {
+            "literal": "LogView.new()"
+          },
+          {
+            "literal": "LogView.Add(text), LogView.Clear, LogView.Count"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.widgets_pictures_and_data.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.widgets_pictures_and_data.table2",
+      "heads": [
+        "jsc.guide.widgets_pictures_and_data.table2_head1",
+        "jsc.guide.widgets_pictures_and_data.table2_head2",
+        "jsc.guide.widgets_pictures_and_data.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "ItemSlot"
+          },
+          {
+            "literal": "ItemSlot.new(), ItemSlot.new(item, amount)"
+          },
+          {
+            "literal": "ItemSlot.Item, ItemSlot.Amount, ItemSlot.OnClick"
+          }
+        ],
+        [
+          {
+            "literal": "ItemPicker"
+          },
+          {
+            "literal": "ItemPicker.new()"
+          },
+          {
+            "literal": "ItemPicker.Add(item), ItemPicker.Clear, ItemPicker.Count, ItemPicker.Selected, ItemPicker.Picked, ItemPicker.OnSelect"
+          }
+        ],
+        [
+          {
+            "literal": "OperationView"
+          },
+          {
+            "literal": "OperationView.new()"
+          },
+          {
+            "literal": "OperationView.Show(OperationInfo), OperationView.Text, OperationView.State, OperationView.Done, OperationView.Total, OperationView.Computer"
+          }
+        ],
+        [
+          {
+            "literal": "GenericComponent"
+          },
+          {
+            "literal": "GenericComponent.new(kind)"
+          },
+          {
+            "literal": "GenericComponent.Kind, GenericComponent.Data, GenericComponent.OnAction"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.widgets_pictures_and_data.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.widgets_pictures_and_data.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.widgets_pictures_and_data.fix1",
+          "problem": "jsc.guide.widgets_pictures_and_data.problem1"
+        },
+        {
+          "fix": "jsc.guide.widgets_pictures_and_data.fix2",
+          "problem": "jsc.guide.widgets_pictures_and_data.problem2"
+        },
+        {
+          "fix": "jsc.guide.widgets_pictures_and_data.fix3",
+          "problem": "jsc.guide.widgets_pictures_and_data.problem3"
+        },
+        {
+          "fix": "jsc.guide.widgets_pictures_and_data.fix4",
+          "problem": "jsc.guide.widgets_pictures_and_data.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:monitors",
+        "jsc:operations_catalogue"
+      ]
+    }
+  ],
+  "id": "jsc:widgets_pictures_and_data",
+  "order": 372,
+  "section": "jsc:library_windows",
+  "title": "jsc.guide.widgets_pictures_and_data.title"
+}

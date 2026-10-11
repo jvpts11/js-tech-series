@@ -1,0 +1,198 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.interactor_screen.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.interactor_screen.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.interactor_screen.table1",
+      "heads": [
+        "jsc.guide.interactor_screen.table1_head1",
+        "jsc.guide.interactor_screen.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "F1"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "F2"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "F3"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "F4"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "F5"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "F6"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "F7"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "F8"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "F9"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "F10"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table1_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.interactor_screen.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.interactor_screen.table2",
+      "heads": [
+        "jsc.guide.interactor_screen.table2_head1",
+        "jsc.guide.interactor_screen.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "interac"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "interac list stone --sort count"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "interac get 42 cobblestone"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "interac put hand"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "interac where diamond"
+          },
+          {
+            "words": "jsc.guide.interactor_screen.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.interactor_screen.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.interactor_screen.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.interactor_screen.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.interactor_screen.fix1",
+          "problem": "jsc.guide.interactor_screen.problem1"
+        },
+        {
+          "fix": "jsc.guide.interactor_screen.fix2",
+          "problem": "jsc.guide.interactor_screen.problem2"
+        },
+        {
+          "fix": "jsc.guide.interactor_screen.fix3",
+          "problem": "jsc.guide.interactor_screen.problem3"
+        },
+        {
+          "fix": "jsc.guide.interactor_screen.fix4",
+          "problem": "jsc.guide.interactor_screen.problem4"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:interactor_screen",
+  "order": 77,
+  "section": "jsc:mc_net_terminal",
+  "title": "jsc.guide.interactor_screen.title"
+}

@@ -1,0 +1,120 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.processes_and_jobs.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.processes_and_jobs.definition1",
+      "term": "jsc.guide.processes_and_jobs.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.processes_and_jobs.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.processes_and_jobs.text3"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/ps"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/kill"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/jobs"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.processes_and_jobs.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.processes_and_jobs.definition2",
+      "term": "jsc.guide.processes_and_jobs.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.processes_and_jobs.table1",
+      "heads": [
+        "jsc.guide.processes_and_jobs.table1_head1",
+        "jsc.guide.processes_and_jobs.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "-l"
+          },
+          {
+            "words": "jsc.guide.processes_and_jobs.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "-r <id>"
+          },
+          {
+            "words": "jsc.guide.processes_and_jobs.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "06:00"
+          },
+          {
+            "words": "jsc.guide.processes_and_jobs.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "M, T, W, Th, F, Sa, Su"
+          },
+          {
+            "words": "jsc.guide.processes_and_jobs.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/crontab"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.processes_and_jobs.fix1",
+          "problem": "jsc.guide.processes_and_jobs.problem1"
+        },
+        {
+          "fix": "jsc.guide.processes_and_jobs.fix2",
+          "problem": "jsc.guide.processes_and_jobs.problem2"
+        },
+        {
+          "fix": "jsc.guide.processes_and_jobs.fix3",
+          "problem": "jsc.guide.processes_and_jobs.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:pipes_and_variables",
+        "jsc:system_commands"
+      ]
+    }
+  ],
+  "id": "jsc:processes_and_jobs",
+  "order": 197,
+  "section": "jsc:shell_commands",
+  "title": "jsc.guide.processes_and_jobs.title"
+}

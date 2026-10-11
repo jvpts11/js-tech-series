@@ -1,0 +1,923 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_errors.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.iql_errors.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_errors.table1",
+      "heads": [
+        "jsc.guide.iql_errors.table1_head1",
+        "jsc.guide.iql_errors.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "empty statement"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "unknown verb: <word>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "unexpected token: <text>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "percentage quantities are not supported yet: <quantity>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "LIMIT takes a row count, not a percentage: <quantity>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "unknown priority level: <word> (expected LOW, MEDIUM_LOW, MEDIUM, MEDIUM_HIGH or HIGH)"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "DELETE exports out of the network and needs a TO destination"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "MOVE is internal and needs both FROM and TO"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "<VERB> has no TO destination"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "<VERB> is not valid on a read"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "UPDATE needs SET and what the card is to do, after the item"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "unknown action: <word> (expected SMELT, ENCHANT, REPAIR, COMBINE or NAME)"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "an offer is 1, 2 or 3, not <n>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "a name is at most 50 characters long"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "a condition nests at most 64 NOTs and brackets deep"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "a condition compares at most 256 things"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_16_2"
+          }
+        ],
+        [
+          {
+            "literal": "<ACTION> takes no WITH"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_17_2"
+          }
+        ],
+        [
+          {
+            "literal": "COMBINE needs WITH and the item it adds"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_18_2"
+          }
+        ],
+        [
+          {
+            "literal": "unknown operator: <text>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_19_2"
+          }
+        ],
+        [
+          {
+            "literal": "unknown duration unit '<unit>' in: <text>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table1_20_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_errors.table2",
+      "heads": [
+        "jsc.guide.iql_errors.table2_head1",
+        "jsc.guide.iql_errors.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "expected a verb"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected an item"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected an object to query"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected a quantity, got: -5"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected a location after FROM"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected a location after TO"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected BY"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected a sort field after ORDER BY"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected a level after PRIORITY (LOW, MEDIUM_LOW, MEDIUM, MEDIUM_HIGH, HIGH)"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected a row count after LIMIT"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected a field name"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected a comparison operator"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected a value"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected an action after SET (SMELT, ENCHANT, REPAIR, COMBINE, NAME)"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected an offer after OFFER (1, 2 or 3)"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected a name in quotes after NAME"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_16_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected the pattern's name"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_17_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected one of the pattern's inputs"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_18_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected the router's name"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_19_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected a list of items"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_20_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected a count"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table2_21_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.iql_errors.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_errors.table3",
+      "heads": [
+        "jsc.guide.iql_errors.table3_head1",
+        "jsc.guide.iql_errors.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Network Operations Service unavailable"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "the network has no running Mainframe"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "syntax: <reason>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "unknown item: <name>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "no server named '<server>'"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "no server or bus named '<name>'"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "no bus named '<bus>'"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "the bus '<bus>' touches no inventory"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "the network holds no <item>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "no pattern crafts <item>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "this computer has no <card name>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "only a Personal Computer's own cards change items for the network"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "somebody has to ask for it: the card is paid for with their experience"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "the <item> does not smelt"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "the <item> takes no enchantment"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "the <item> is not worn"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_16_2"
+          }
+        ],
+        [
+          {
+            "literal": "the network holds nothing that mends the <item>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_17_2"
+          }
+        ],
+        [
+          {
+            "literal": "maintenance runs on the Mainframe only"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_18_2"
+          }
+        ],
+        [
+          {
+            "literal": "the network's engine keeps no views, procedures or jobs"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_19_2"
+          }
+        ],
+        [
+          {
+            "literal": "jobs are kept by the Automation Engine; install it on the Mainframe first"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_20_2"
+          }
+        ],
+        [
+          {
+            "literal": "the destination server is unavailable"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_21_2"
+          }
+        ],
+        [
+          {
+            "literal": "could not start the MOVE"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_22_2"
+          }
+        ],
+        [
+          {
+            "literal": "could not start the UPDATE"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_23_2"
+          }
+        ],
+        [
+          {
+            "literal": "nothing to lock: the network holds no free <item>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_24_2"
+          }
+        ],
+        [
+          {
+            "literal": "<item> is already locked"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_25_2"
+          }
+        ],
+        [
+          {
+            "literal": "<item> is not locked"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table3_26_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.iql_errors.heading3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_errors.table4",
+      "heads": [
+        "jsc.guide.iql_errors.table4_head1",
+        "jsc.guide.iql_errors.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "SET BUS needs the bus's name, in quotes when it has spaces"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS needs a setting: ON, OFF, MODE, FILTER, MATCH, KEEP, MAX, PRIORITY, WHEN, AFTER BUS or ACCESS"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "a bus has no setting <word>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table4_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "not an hour of the day: <text>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table4_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET INTERFACE needs the interface's name, in quotes when it has spaces"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table4_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET ROUTER needs the router's name, in quotes when it has spaces"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table4_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET INTERFACE needs a setting: EXCLUSIVE, MAX JOBS or ROUTE"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table4_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "an interface has no setting <word>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table4_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "RENAME needs TO and the new name"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table4_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET REDSTONE needs the interface's name, in quotes when it has spaces"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table4_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET REDSTONE needs IN, or OUT and a strength from 0 to 15"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table4_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "not a redstone strength, which runs from 0 to 15: <text>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table4_12_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.iql_errors.heading4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_errors.table5",
+      "heads": [
+        "jsc.guide.iql_errors.table5_head1",
+        "jsc.guide.iql_errors.table5_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "CREATE <TYPE> needs a name and an AS body"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "expected AS after the <TYPE> name"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "CREATE <TYPE> needs a body after AS"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "CREATE JOB needs a trigger: EVERY <duration> or WHEN <condition>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "CREATE JOB needs a body before its trigger"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "CREATE JOB trigger needs a value"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "DROP <TYPE> needs a name"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "EXEC needs a procedure name"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "EXEC takes a single procedure name"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "empty duration"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "not a duration: <text>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "duration must be >= 0: <text>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "no view named <name>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "no procedure named <name>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "no job named <name>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "procedure <name> stopped at statement <n>: <error>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_16_2"
+          }
+        ],
+        [
+          {
+            "literal": "IQL recursion too deep (a procedure or view referencing itself?)"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_17_2"
+          }
+        ],
+        [
+          {
+            "literal": "IQL stopped after 4096 statements for one request (procedures running others too many times?)"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_18_2"
+          }
+        ],
+        [
+          {
+            "literal": "the IF did not hold, so the <VERB> was not run"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_19_2"
+          }
+        ],
+        [
+          {
+            "literal": "<file>: syntax error in '<statement>': <reason>"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_20_2"
+          }
+        ],
+        [
+          {
+            "literal": "<file>: only .iql files can be run (got .<ext>)"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_21_2"
+          }
+        ],
+        [
+          {
+            "literal": "<file>: nothing to run"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_22_2"
+          }
+        ],
+        [
+          {
+            "literal": "<file>: QUERY/COUNT are not supported by 'run', use 'operation' instead"
+          },
+          {
+            "words": "jsc.guide.iql_errors.table5_23_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_errors.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.iql_errors.fix1",
+          "problem": "jsc.guide.iql_errors.problem1"
+        },
+        {
+          "fix": "jsc.guide.iql_errors.fix2",
+          "problem": "jsc.guide.iql_errors.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:iql_limits",
+        "jsc:query_and_select",
+        "jsc:iql_engines_overview"
+      ]
+    }
+  ],
+  "id": "jsc:iql_errors",
+  "order": 305,
+  "section": "jsc:iql_limits_and_errors",
+  "title": "jsc.guide.iql_errors.title"
+}

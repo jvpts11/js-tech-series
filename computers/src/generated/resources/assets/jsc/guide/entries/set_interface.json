@@ -1,0 +1,221 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.set_interface.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.set_interface.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.set_interface.table1",
+      "heads": [
+        "jsc.guide.set_interface.table1_head1",
+        "jsc.guide.set_interface.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "SET INTERFACE 'x' EXCLUSIVE ON"
+          },
+          {
+            "words": "jsc.guide.set_interface.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET INTERFACE 'x' EXCLUSIVE OFF"
+          },
+          {
+            "words": "jsc.guide.set_interface.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET INTERFACE 'x' MAX JOBS 4"
+          },
+          {
+            "words": "jsc.guide.set_interface.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET INTERFACE 'x' MAX JOBS AUTO"
+          },
+          {
+            "words": "jsc.guide.set_interface.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET INTERFACE 'x' ROUTE 'pattern' INPUT item TO ROUTER 'router'"
+          },
+          {
+            "words": "jsc.guide.set_interface.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET INTERFACE 'x' ROUTE 'pattern' INPUT item AUTO"
+          },
+          {
+            "words": "jsc.guide.set_interface.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET ROUTER 'x' setting"
+          },
+          {
+            "words": "jsc.guide.set_interface.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "PAUSE INTERFACE 'x'"
+          },
+          {
+            "words": "jsc.guide.set_interface.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "RESUME INTERFACE 'x'"
+          },
+          {
+            "words": "jsc.guide.set_interface.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "RENAME INTERFACE 'x' TO 'new name'"
+          },
+          {
+            "words": "jsc.guide.set_interface.table1_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.set_interface.table2",
+      "heads": [
+        "jsc.guide.set_interface.table2_head1",
+        "jsc.guide.set_interface.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "<name> set"
+          },
+          {
+            "words": "jsc.guide.set_interface.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "<old> is now called <new>"
+          },
+          {
+            "words": "jsc.guide.set_interface.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "no Crafting Interface named <name> on this network"
+          },
+          {
+            "words": "jsc.guide.set_interface.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "no Crafting Input Router named <name> on this network"
+          },
+          {
+            "words": "jsc.guide.set_interface.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "the interface <name> holds no pattern called <pattern>"
+          },
+          {
+            "words": "jsc.guide.set_interface.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "<input> is not an input of <pattern>"
+          },
+          {
+            "words": "jsc.guide.set_interface.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "no router named <router> on the cable of the interface <name>"
+          },
+          {
+            "words": "jsc.guide.set_interface.table2_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.set_interface.fix1",
+          "problem": "jsc.guide.set_interface.problem1"
+        },
+        {
+          "fix": "jsc.guide.set_interface.fix2",
+          "problem": "jsc.guide.set_interface.problem2"
+        },
+        {
+          "fix": "jsc.guide.set_interface.fix3",
+          "problem": "jsc.guide.set_interface.problem3"
+        },
+        {
+          "fix": "jsc.guide.set_interface.fix4",
+          "problem": "jsc.guide.set_interface.problem4"
+        },
+        {
+          "fix": "jsc.guide.set_interface.fix5",
+          "problem": "jsc.guide.set_interface.problem5"
+        },
+        {
+          "fix": "jsc.guide.set_interface.fix6",
+          "problem": "jsc.guide.set_interface.problem6"
+        },
+        {
+          "fix": "jsc.guide.set_interface.fix7",
+          "problem": "jsc.guide.set_interface.problem7"
+        },
+        {
+          "fix": "jsc.guide.set_interface.fix8",
+          "problem": "jsc.guide.set_interface.problem8"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:crafting_interfaces",
+        "jsc:pattern_encoders",
+        "jsc:set_bus"
+      ]
+    }
+  ],
+  "id": "jsc:set_interface",
+  "order": 299,
+  "section": "jsc:iql_settings",
+  "title": "jsc.guide.set_interface.title"
+}

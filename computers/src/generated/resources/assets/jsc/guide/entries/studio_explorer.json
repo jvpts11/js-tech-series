@@ -1,0 +1,319 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_explorer.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_explorer.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.studio_explorer.table1",
+      "heads": [
+        "jsc.guide.studio_explorer.table1_head1",
+        "jsc.guide.studio_explorer.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table1_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_explorer.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.studio_explorer.table2",
+      "heads": [
+        "jsc.guide.studio_explorer.table2_head1",
+        "jsc.guide.studio_explorer.table2_head2",
+        "jsc.guide.studio_explorer.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table2_2_2"
+          },
+          {
+            "literal": "REINDEX;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table2_3_2"
+          },
+          {
+            "literal": "VACUUM;"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_explorer.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.studio_explorer.definition1",
+      "term": "jsc.guide.studio_explorer.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.studio_explorer.definition2",
+      "term": "jsc.guide.studio_explorer.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.studio_explorer.table3",
+      "heads": [
+        "jsc.guide.studio_explorer.table3_head1",
+        "jsc.guide.studio_explorer.table3_head2",
+        "jsc.guide.studio_explorer.table3_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_1_2"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_2_2"
+          },
+          {
+            "literal": "QUERY <table> LIMIT 100;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_3_2"
+          },
+          {
+            "literal": "QUERY <view>;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_4_2"
+          },
+          {
+            "literal": "EXEC <name>;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_5_2"
+          },
+          {
+            "literal": "QUERY items WHERE server = \"<name>\";"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table3_6_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_6_2"
+          },
+          {
+            "literal": "ANALYZE;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table3_7_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_7_2"
+          },
+          {
+            "literal": "REINDEX;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table3_8_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_8_2"
+          },
+          {
+            "literal": "VACUUM;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table3_9_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_9_2"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_9_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table3_10_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_10_2"
+          },
+          {
+            "literal": "QUERY operations LIMIT 100;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table3_11_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_11_2"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_11_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_explorer.table3_12_1"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_12_2"
+          },
+          {
+            "words": "jsc.guide.studio_explorer.table3_12_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_explorer.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_explorer.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.studio_explorer.fix1",
+          "problem": "jsc.guide.studio_explorer.problem1"
+        },
+        {
+          "fix": "jsc.guide.studio_explorer.fix2",
+          "problem": "jsc.guide.studio_explorer.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:maintenance_analyze_vacuum_reindex",
+        "jsc:iql_jobs"
+      ]
+    }
+  ],
+  "id": "jsc:studio_explorer",
+  "order": 316,
+  "section": "jsc:isms_studio",
+  "title": "jsc.guide.studio_explorer.title"
+}

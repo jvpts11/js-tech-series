@@ -5,8 +5,121 @@
       "text": "jsc.guide.redstone_interfaces.text1"
     },
     {
+      "type": "define",
+      "definition": "jsc.guide.redstone_interfaces.definition1",
+      "term": "jsc.guide.redstone_interfaces.term1"
+    },
+    {
       "type": "text",
       "text": "jsc.guide.redstone_interfaces.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_interfaces.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.redstone_interfaces.definition2",
+      "term": "jsc.guide.redstone_interfaces.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.redstone_interfaces.table1",
+      "heads": [
+        "jsc.guide.redstone_interfaces.table1_head1",
+        "jsc.guide.redstone_interfaces.table1_head2",
+        "jsc.guide.redstone_interfaces.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.redstone_interfaces.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.redstone_interfaces.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.redstone_interfaces.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.redstone_interfaces.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.redstone_interfaces.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.redstone_interfaces.table1_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_interfaces.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_interfaces.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_interfaces.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.redstone_interfaces.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.redstone_interfaces.table2",
+      "heads": [
+        "jsc.guide.redstone_interfaces.table2_head1",
+        "jsc.guide.redstone_interfaces.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.redstone_interfaces.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.redstone_interfaces.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.redstone_interfaces.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.redstone_interfaces.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.redstone_interfaces.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.redstone_interfaces.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.redstone_interfaces.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.redstone_interfaces.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.redstone_interfaces.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.redstone_interfaces.table2_5_2"
+          }
+        ]
+      ]
     },
     {
       "type": "heading",
@@ -18,7 +131,22 @@
         {
           "fix": "jsc.guide.redstone_interfaces.fix1",
           "problem": "jsc.guide.redstone_interfaces.problem1"
+        },
+        {
+          "fix": "jsc.guide.redstone_interfaces.fix2",
+          "problem": "jsc.guide.redstone_interfaces.problem2"
+        },
+        {
+          "fix": "jsc.guide.redstone_interfaces.fix3",
+          "problem": "jsc.guide.redstone_interfaces.problem3"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:redstone_programs",
+        "jsc:redstone_library"
       ]
     }
   ],
@@ -31,7 +159,7 @@
     "jsc:standard_redstone_interface",
     "jsc:advanced_redstone_interface"
   ],
-  "order": 50,
+  "order": 46,
   "section": "jsc:peripherals",
   "title": "jsc.guide.redstone_interfaces.title"
 }

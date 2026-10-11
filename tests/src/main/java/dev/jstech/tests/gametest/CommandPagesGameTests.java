@@ -20,6 +20,7 @@ import dev.jstech.computers.program.cli.LiveInstallCommands;
 import dev.jstech.computers.program.cli.man.CommandGuidePages;
 import dev.jstech.computers.program.cli.man.ManPage;
 import dev.jstech.computers.program.cli.man.ManualEntries;
+import dev.jstech.core.content.ModContent;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.GuideCommand;
@@ -30,6 +31,7 @@ import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.GuideSection;
 import dev.jstech.core.guide.IGuideText;
 import dev.jstech.core.guide.ManualReader;
+import dev.jstech.core.guide.ModGuide;
 import dev.jstech.core.guide.TextSize;
 import dev.jstech.core.text.ITextLanguage;
 import dev.jstech.core.text.Text;
@@ -143,12 +145,41 @@ public final class CommandPagesGameTests {
     public static void commandEntry_isTheCommandsPageOnEverySystemRunningIt(final GameTestHelper helper) {
         helper.assertTrue(CommandGuidePages.pagesOf(Platform.FRAMES, "dir").contains(
                 CommandGuidePages.id(Platform.MC_DOS, "dir")), "Frames' dir is MC-DOS's dir");
-        helper.assertTrue(ManualEntries.commandEntry(Platform.MC_DOS, "dir").equals(Optional.of(TestGuide.COMMAND)),
-                "MC-DOS finds the entry printing dir's page: " + ManualEntries.commandEntry(Platform.MC_DOS, "dir"));
-        helper.assertTrue(ManualEntries.commandEntry(Platform.FRAMES, "DIR").equals(Optional.of(TestGuide.COMMAND)),
+        final Optional<String> dir = ManualEntries.commandEntry(Platform.MC_DOS, "dir");
+        helper.assertTrue(dir.isPresent() && !dir.get().equals(TestGuide.COMMAND),
+                "MC-DOS finds the entry of its own book printing dir's page, before the test mod's: " + dir);
+        helper.assertTrue(ManualEntries.commandEntry(Platform.FRAMES, "DIR").equals(dir),
                 "and so does Frames, whatever the word's case");
         helper.assertTrue(ManualEntries.commandEntry(Platform.MC_DOS, "nonsense").isEmpty(),
                 "a word no command answers to finds no entry");
+        helper.succeed();
+    }
+
+    /*
+     * Every command page a book prints is one the game has. A page printed under a system the command never runs on
+     * has no page behind it, and the book would show a line saying so where the page should be.
+     */
+    @GameTest(template = ARENA)
+    public static void books_printOnlyCommandPagesThatExist(final GameTestHelper helper) {
+        final List<String> missing = new ArrayList<>();
+        int printed = 0;
+        for (final ModContent content : ModContent.all()) {
+            for (final ModGuide guide : content.declaredGuides()) {
+                for (final GuideEntry entry : guide.declaredEntries()) {
+                    for (final GuideBlock block : entry.blocks()) {
+                        if (block instanceof GuideBlock.Command command) {
+                            printed++;
+                            if (GuideFacts.commandOf(command.source()).isEmpty()) {
+                                missing.add(entry.id() + " prints " + command.source());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        helper.assertTrue(printed > 100, "the books print the commands' pages: " + printed + " found");
+        helper.assertTrue(missing.isEmpty(), missing.size() + " printed pages do not exist: "
+                + String.join("; ", missing.subList(0, Math.min(NAMED, missing.size()))));
         helper.succeed();
     }
 

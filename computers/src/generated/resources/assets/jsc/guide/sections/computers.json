@@ -1,7 +1,7 @@
 {
-  "chapter": "jsc",
+  "chapter": "jsc:computer_kinds",
   "icon": "jsc:mainframe",
   "id": "jsc:computers",
-  "order": 2,
+  "order": 6,
   "title": "jsc.guide.section.computers"
 }

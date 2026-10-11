@@ -14,12 +14,107 @@
       "term": "jsc.guide.how_autocrafting_works.term1"
     },
     {
+      "type": "define",
+      "definition": "jsc.guide.how_autocrafting_works.definition2",
+      "term": "jsc.guide.how_autocrafting_works.term2"
+    },
+    {
       "type": "text",
       "text": "jsc.guide.how_autocrafting_works.text3"
     },
     {
+      "type": "define",
+      "definition": "jsc.guide.how_autocrafting_works.definition3",
+      "term": "jsc.guide.how_autocrafting_works.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.how_autocrafting_works.definition4",
+      "term": "jsc.guide.how_autocrafting_works.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.how_autocrafting_works.definition5",
+      "term": "jsc.guide.how_autocrafting_works.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.how_autocrafting_works.definition6",
+      "term": "jsc.guide.how_autocrafting_works.term6"
+    },
+    {
       "type": "text",
       "text": "jsc.guide.how_autocrafting_works.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.how_autocrafting_works.table1",
+      "heads": [
+        "jsc.guide.how_autocrafting_works.table1_head1",
+        "jsc.guide.how_autocrafting_works.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.how_autocrafting_works.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.how_autocrafting_works.text5"
     },
     {
       "type": "heading",
@@ -33,6 +128,15 @@
           "problem": "jsc.guide.how_autocrafting_works.problem1"
         }
       ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:crafting_computers",
+        "jsc:crafting_interfaces",
+        "jsc:pattern_encoders",
+        "jsc:asking_for_a_craft"
+      ]
     }
   ],
   "icon": "jsc:crafting_cable",
@@ -40,7 +144,7 @@
   "items": [
     "jsc:crafting_cable"
   ],
-  "order": 40,
+  "order": 101,
   "section": "jsc:autocrafting",
   "title": "jsc.guide.how_autocrafting_works.title"
 }

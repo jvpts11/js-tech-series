@@ -1,0 +1,175 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.supercomputers.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.supercomputers.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.supercomputers.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.supercomputers.definition1",
+      "term": "jsc.guide.supercomputers.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.supercomputers.table1",
+      "heads": [
+        "jsc.guide.supercomputers.table1_head1",
+        "jsc.guide.supercomputers.table1_head2",
+        "jsc.guide.supercomputers.table1_head3",
+        "jsc.guide.supercomputers.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.supercomputers.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.supercomputers.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.supercomputers.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.supercomputers.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table1_4_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.supercomputers.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.supercomputers.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.supercomputers.table2",
+      "heads": [
+        "jsc.guide.supercomputers.table2_head1",
+        "jsc.guide.supercomputers.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.supercomputers.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.supercomputers.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.supercomputers.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.supercomputers.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.supercomputers.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.supercomputers.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.supercomputers.fix1",
+          "problem": "jsc.guide.supercomputers.problem1"
+        },
+        {
+          "fix": "jsc.guide.supercomputers.fix2",
+          "problem": "jsc.guide.supercomputers.problem2"
+        },
+        {
+          "fix": "jsc.guide.supercomputers.fix3",
+          "problem": "jsc.guide.supercomputers.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:server_racks",
+        "jsc:hbw_interface"
+      ]
+    }
+  ],
+  "id": "jsc:supercomputers",
+  "order": 35,
+  "section": "jsc:clusters",
+  "title": "jsc.guide.supercomputers.title"
+}

@@ -1,0 +1,116 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_library.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.redstone_library.definition1",
+      "term": "jsc.guide.redstone_library.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.redstone_library.definition2",
+      "term": "jsc.guide.redstone_library.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.redstone_library.table1",
+      "heads": [
+        "jsc.guide.redstone_library.table1_head1",
+        "jsc.guide.redstone_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Redstone.Named(name)"
+          },
+          {
+            "words": "jsc.guide.redstone_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Redstone.Name"
+          },
+          {
+            "words": "jsc.guide.redstone_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Redstone.In()"
+          },
+          {
+            "words": "jsc.guide.redstone_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Redstone.Out(strength)"
+          },
+          {
+            "words": "jsc.guide.redstone_library.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Redstone.Level()"
+          },
+          {
+            "words": "jsc.guide.redstone_library.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_library.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_library.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.redstone_library.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.redstone_library.fix1",
+          "problem": "jsc.guide.redstone_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.redstone_library.fix2",
+          "problem": "jsc.guide.redstone_library.problem2"
+        },
+        {
+          "fix": "jsc.guide.redstone_library.fix3",
+          "problem": "jsc.guide.redstone_library.problem3"
+        },
+        {
+          "fix": "jsc.guide.redstone_library.fix4",
+          "problem": "jsc.guide.redstone_library.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:redstone_interfaces",
+        "jsc:disable_device"
+      ]
+    }
+  ],
+  "id": "jsc:redstone_library",
+  "order": 366,
+  "section": "jsc:library_machine",
+  "title": "jsc.guide.redstone_library.title"
+}

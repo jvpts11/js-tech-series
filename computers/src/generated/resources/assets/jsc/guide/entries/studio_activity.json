@@ -1,0 +1,82 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_activity.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_activity.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.studio_activity.table1",
+      "heads": [
+        "jsc.guide.studio_activity.table1_head1",
+        "jsc.guide.studio_activity.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.studio_activity.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.studio_activity.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_activity.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.studio_activity.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_activity.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.studio_activity.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_activity.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_activity.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.studio_activity.fix1",
+          "problem": "jsc.guide.studio_activity.problem1"
+        },
+        {
+          "fix": "jsc.guide.studio_activity.fix2",
+          "problem": "jsc.guide.studio_activity.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:operations_catalogue",
+        "jsc:cancelling_and_the_log"
+      ]
+    }
+  ],
+  "id": "jsc:studio_activity",
+  "order": 318,
+  "section": "jsc:isms_studio",
+  "title": "jsc.guide.studio_activity.title"
+}

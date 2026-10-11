@@ -1,0 +1,188 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.system_monitor_and_task_manager.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.system_monitor_and_task_manager.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_monitor_and_task_manager.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_monitor_and_task_manager.table1",
+      "heads": [
+        "jsc.guide.system_monitor_and_task_manager.table1_head1",
+        "jsc.guide.system_monitor_and_task_manager.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.system_monitor_and_task_manager.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_monitor_and_task_manager.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_monitor_and_task_manager.table2",
+      "heads": [
+        "jsc.guide.system_monitor_and_task_manager.table2_head1",
+        "jsc.guide.system_monitor_and_task_manager.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_monitor_and_task_manager.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_monitor_and_task_manager.table3",
+      "heads": [
+        "jsc.guide.system_monitor_and_task_manager.table3_head1",
+        "jsc.guide.system_monitor_and_task_manager.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "End Task"
+          },
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "End Process"
+          },
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Switch To"
+          },
+          {
+            "words": "jsc.guide.system_monitor_and_task_manager.table3_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_monitor_and_task_manager.text5"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.system_monitor_and_task_manager.step1",
+        "jsc.guide.system_monitor_and_task_manager.step2",
+        "jsc.guide.system_monitor_and_task_manager.step3",
+        "jsc.guide.system_monitor_and_task_manager.step4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.system_monitor_and_task_manager.fix1",
+          "problem": "jsc.guide.system_monitor_and_task_manager.problem1"
+        },
+        {
+          "fix": "jsc.guide.system_monitor_and_task_manager.fix2",
+          "problem": "jsc.guide.system_monitor_and_task_manager.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:programs",
+        "jsc:help_on_a_computer"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:system_monitor_and_task_manager",
+  "order": 51,
+  "section": "jsc:desktop_apps",
+  "title": "jsc.guide.system_monitor_and_task_manager.title"
+}

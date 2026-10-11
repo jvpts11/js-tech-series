@@ -55,7 +55,7 @@ public final class IndustrialGuide {
                 .icon("jsindustrial:gui/guide/cover_mark")
                 .about("New to machines? Start with JI-001, then JI-101.")
                 .register();
-        guide.chapter().titled("J's Industrial").order(30).tab("#FFF0B23A")
+        guide.chapter().titled("J's Industrial").order(40).tab("#FFF0B23A")
                 .about("Machines that turn ores and metals into the parts everything else is made from, and the"
                         + " energy they run on.")
                 .register();

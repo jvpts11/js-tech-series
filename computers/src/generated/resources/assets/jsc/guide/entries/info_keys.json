@@ -1,0 +1,201 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.info_keys.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.info_keys.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.info_keys.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.info_keys.step1",
+        "jsc.guide.info_keys.step2",
+        "jsc.guide.info_keys.step3",
+        "jsc.guide.info_keys.step4"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.info_keys.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.info_keys.table1",
+      "heads": [
+        "jsc.guide.info_keys.table1_head1",
+        "jsc.guide.info_keys.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "q"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "n, p"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "u"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "t"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "d"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "l"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "h"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "m"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "s or /"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Space, Page Down"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Backspace, Page Up"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "Up, Down"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "Tab, Shift+Tab"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.info_keys.table1_14_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/info"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.info_keys.definition1",
+      "term": "jsc.guide.info_keys.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.info_keys.fix1",
+          "problem": "jsc.guide.info_keys.problem1"
+        },
+        {
+          "fix": "jsc.guide.info_keys.fix2",
+          "problem": "jsc.guide.info_keys.problem2"
+        },
+        {
+          "fix": "jsc.guide.info_keys.fix3",
+          "problem": "jsc.guide.info_keys.problem3"
+        },
+        {
+          "fix": "jsc.guide.info_keys.fix4",
+          "problem": "jsc.guide.info_keys.problem4"
+        },
+        {
+          "fix": "jsc.guide.info_keys.fix5",
+          "problem": "jsc.guide.info_keys.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:man_pages",
+        "jsc:help_command"
+      ]
+    }
+  ],
+  "icon": "jsc:guide_to_operations",
+  "id": "jsc:info_keys",
+  "order": 225,
+  "section": "jsc:help_at_the_prompt",
+  "title": "jsc.guide.info_keys.title"
+}

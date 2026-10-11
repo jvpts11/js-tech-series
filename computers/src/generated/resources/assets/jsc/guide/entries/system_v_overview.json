@@ -1,0 +1,279 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_overview.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_overview.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_v_overview.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.system_v_overview.table1_1"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_v_overview.table1_2"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.value1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_v_overview.table1_3"
+          },
+          {
+            "amount": 10,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_v_overview.table1_4"
+          },
+          {
+            "amount": 2,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_v_overview.table1_5"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.value1_5"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_v_overview.table1_6"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.value1_6"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_v_overview.table1_7"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.value1_7"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_v_overview.table1_8"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.value1_8"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.system_v_overview.table1_9"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.value1_9"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.system_v_overview.definition1",
+      "term": "jsc.guide.system_v_overview.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_overview.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_v_overview.table2",
+      "heads": [
+        "jsc.guide.system_v_overview.table2_head1",
+        "jsc.guide.system_v_overview.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "UNIX System V Release 3.2"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Copyright (c) 1984, 1986, 1987 Bellwether Labs"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "All Rights Reserved"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Total real memory     = <n>"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Available memory      = <n>"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "The system is coming up.  Please wait."
+          },
+          {
+            "words": "jsc.guide.system_v_overview.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "/dev/root: clean"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "The system is ready."
+          },
+          {
+            "words": "jsc.guide.system_v_overview.table2_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_overview.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_overview.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.system_v_overview.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_overview.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_overview.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.system_v_overview.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_v_overview.text8"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.system_v_overview.definition2",
+      "term": "jsc.guide.system_v_overview.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_v_overview.table3",
+      "heads": [
+        "jsc.guide.system_v_overview.table3_head1",
+        "jsc.guide.system_v_overview.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "ee"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "info"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "lspci, lsusb"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "pciconf, usbconfig"
+          },
+          {
+            "words": "jsc.guide.system_v_overview.table3_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.system_v_overview.fix1",
+          "problem": "jsc.guide.system_v_overview.problem1"
+        },
+        {
+          "fix": "jsc.guide.system_v_overview.fix2",
+          "problem": "jsc.guide.system_v_overview.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installing",
+        "jsc:the_systems",
+        "jsc:shell_prompt"
+      ]
+    }
+  ],
+  "id": "jsc:system_v_overview",
+  "order": 280,
+  "section": "jsc:system_v_start",
+  "title": "jsc.guide.system_v_overview.title"
+}

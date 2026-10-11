@@ -5,83 +5,52 @@
       "text": "jsc.guide.server_racks.text1"
     },
     {
-      "type": "text",
-      "text": "jsc.guide.server_racks.text2"
-    },
-    {
       "type": "define",
       "definition": "jsc.guide.server_racks.definition1",
       "term": "jsc.guide.server_racks.term1"
     },
     {
       "type": "text",
+      "text": "jsc.guide.server_racks.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.server_racks.definition2",
+      "term": "jsc.guide.server_racks.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.server_racks.definition3",
+      "term": "jsc.guide.server_racks.term3"
+    },
+    {
+      "type": "text",
       "text": "jsc.guide.server_racks.text3"
     },
     {
-      "type": "table",
-      "caption": "jsc.guide.server_racks.table1",
-      "rows": [
-        [
-          {
-            "words": "jsc.guide.server_racks.table1_1"
-          },
-          {
-            "words": "jsc.guide.server_racks.value1_1"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.server_racks.table1_2"
-          },
-          {
-            "words": "jsc.guide.server_racks.value1_2"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.server_racks.table1_3"
-          },
-          {
-            "words": "jsc.guide.server_racks.value1_3"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.server_racks.table1_4"
-          },
-          {
-            "words": "jsc.guide.server_racks.value1_4"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.server_racks.table1_5"
-          },
-          {
-            "words": "jsc.guide.server_racks.value1_5"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.server_racks.table1_6"
-          },
-          {
-            "words": "jsc.guide.server_racks.value1_6"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.server_racks.table1_7"
-          },
-          {
-            "words": "jsc.guide.server_racks.value1_7"
-          }
-        ]
-      ]
+      "type": "define",
+      "definition": "jsc.guide.server_racks.definition4",
+      "term": "jsc.guide.server_racks.term4"
     },
     {
       "type": "text",
       "text": "jsc.guide.server_racks.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_racks.text8"
     },
     {
       "type": "heading",
@@ -97,7 +66,18 @@
         {
           "fix": "jsc.guide.server_racks.fix2",
           "problem": "jsc.guide.server_racks.problem2"
+        },
+        {
+          "fix": "jsc.guide.server_racks.fix3",
+          "problem": "jsc.guide.server_racks.problem3"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:rack_drive_bays",
+        "jsc:data_cables"
       ]
     }
   ],
@@ -128,7 +108,7 @@
     "jsc:supercomputer_node",
     "jsc:advanced_supercomputer_node"
   ],
-  "order": 16,
-  "section": "jsc:computers",
+  "order": 27,
+  "section": "jsc:racks",
   "title": "jsc.guide.server_racks.title"
 }

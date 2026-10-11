@@ -1,0 +1,273 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.program_messages.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.program_messages.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.program_messages.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.program_messages.table1",
+      "heads": [
+        "jsc.guide.program_messages.table1_head1",
+        "jsc.guide.program_messages.table1_head2",
+        "jsc.guide.program_messages.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Process.Send(number, text)"
+          },
+          {
+            "words": "jsc.guide.program_messages.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.program_messages.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "Program.OnMessage(handler)"
+          },
+          {
+            "words": "jsc.guide.program_messages.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.program_messages.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.Send(number, text)"
+          },
+          {
+            "words": "jsc.guide.program_messages.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.program_messages.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "Gateway.OnMessage(handler)"
+          },
+          {
+            "words": "jsc.guide.program_messages.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.program_messages.table1_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.program_messages.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.program_messages.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.program_messages.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.program_messages.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.program_messages.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.program_messages.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.program_messages.table2",
+      "heads": [
+        "jsc.guide.program_messages.table2_head1",
+        "jsc.guide.program_messages.table2_head2",
+        "jsc.guide.program_messages.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "RemoteComputer.Start(path)"
+          },
+          {
+            "words": "jsc.guide.program_messages.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.program_messages.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Shell(line)"
+          },
+          {
+            "words": "jsc.guide.program_messages.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.program_messages.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Send(number, text)"
+          },
+          {
+            "words": "jsc.guide.program_messages.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.program_messages.table2_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Processes()"
+          },
+          {
+            "words": "jsc.guide.program_messages.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.program_messages.table2_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.program_messages.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.program_messages.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.program_messages.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.program_messages.text10"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.program_messages.table3",
+      "heads": [
+        "jsc.guide.program_messages.table3_head1",
+        "jsc.guide.program_messages.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "config share <folder> [read|write]"
+          },
+          {
+            "words": "jsc.guide.program_messages.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "config unshare <name>"
+          },
+          {
+            "words": "jsc.guide.program_messages.table3_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.program_messages.text11"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.program_messages.text12"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.program_messages.fix1",
+          "problem": "jsc.guide.program_messages.problem1"
+        },
+        {
+          "fix": "jsc.guide.program_messages.fix2",
+          "problem": "jsc.guide.program_messages.problem2"
+        },
+        {
+          "fix": "jsc.guide.program_messages.fix3",
+          "problem": "jsc.guide.program_messages.problem3"
+        },
+        {
+          "fix": "jsc.guide.program_messages.fix4",
+          "problem": "jsc.guide.program_messages.problem4"
+        },
+        {
+          "fix": "jsc.guide.program_messages.fix5",
+          "problem": "jsc.guide.program_messages.problem5"
+        },
+        {
+          "fix": "jsc.guide.program_messages.fix6",
+          "problem": "jsc.guide.program_messages.problem6"
+        },
+        {
+          "fix": "jsc.guide.program_messages.fix7",
+          "problem": "jsc.guide.program_messages.problem7"
+        },
+        {
+          "fix": "jsc.guide.program_messages.fix8",
+          "problem": "jsc.guide.program_messages.problem8"
+        },
+        {
+          "fix": "jsc.guide.program_messages.fix9",
+          "problem": "jsc.guide.program_messages.problem9"
+        },
+        {
+          "fix": "jsc.guide.program_messages.fix10",
+          "problem": "jsc.guide.program_messages.problem10"
+        },
+        {
+          "fix": "jsc.guide.program_messages.fix11",
+          "problem": "jsc.guide.program_messages.problem11"
+        },
+        {
+          "fix": "jsc.guide.program_messages.fix12",
+          "problem": "jsc.guide.program_messages.problem12"
+        },
+        {
+          "fix": "jsc.guide.program_messages.fix13",
+          "problem": "jsc.guide.program_messages.problem13"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:network_gateway",
+        "jsc:shared_folders",
+        "jsc:remote_access"
+      ]
+    }
+  ],
+  "id": "jsc:program_messages",
+  "order": 379,
+  "section": "jsc:messages_and_sharing",
+  "title": "jsc.guide.program_messages.title"
+}

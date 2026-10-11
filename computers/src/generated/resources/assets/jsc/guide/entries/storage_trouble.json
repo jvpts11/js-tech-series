@@ -1,0 +1,210 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.storage_trouble.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.storage_trouble.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.storage_trouble.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.storage_trouble.table1",
+      "heads": [
+        "jsc.guide.storage_trouble.table1_head1",
+        "jsc.guide.storage_trouble.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.storage_trouble.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.storage_trouble.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_trouble.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.storage_trouble.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_trouble.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.storage_trouble.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.storage_trouble.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.storage_trouble.table2",
+      "heads": [
+        "jsc.guide.storage_trouble.table2_head1",
+        "jsc.guide.storage_trouble.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.storage_trouble.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.storage_trouble.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_trouble.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.storage_trouble.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_trouble.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.storage_trouble.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_trouble.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.storage_trouble.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.storage_trouble.fix1",
+          "problem": "jsc.guide.storage_trouble.problem1"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.storage_trouble.heading3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.storage_trouble.table3",
+      "heads": [
+        "jsc.guide.storage_trouble.table3_head1",
+        "jsc.guide.storage_trouble.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.storage_trouble.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.storage_trouble.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_trouble.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.storage_trouble.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_trouble.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.storage_trouble.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_trouble.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.storage_trouble.table3_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_trouble.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.storage_trouble.table3_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.storage_trouble.warning1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.storage_trouble.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.storage_trouble.heading4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.storage_trouble.fix2",
+          "problem": "jsc.guide.storage_trouble.problem2"
+        },
+        {
+          "fix": "jsc.guide.storage_trouble.fix3",
+          "problem": "jsc.guide.storage_trouble.problem3"
+        },
+        {
+          "fix": "jsc.guide.storage_trouble.fix4",
+          "problem": "jsc.guide.storage_trouble.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:local_storage",
+        "jsc:external_storage_bus",
+        "jsc:raid_arrays",
+        "jsc:disks"
+      ]
+    }
+  ],
+  "icon": "jsc:raid_controller",
+  "id": "jsc:storage_trouble",
+  "order": 84,
+  "section": "jsc:storage",
+  "title": "jsc.guide.storage_trouble.title"
+}

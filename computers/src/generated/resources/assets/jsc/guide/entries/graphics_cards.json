@@ -22,6 +22,142 @@
       "text": "jsc.guide.graphics_cards.text4"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.graphics_cards.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.graphics_cards.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.graphics_cards.table1",
+      "heads": [
+        "jsc.guide.graphics_cards.table1_head1",
+        "jsc.guide.graphics_cards.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.graphics_cards.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.graphics_cards.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.graphics_cards.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.graphics_cards.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.graphics_cards.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.graphics_cards.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.graphics_cards.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.graphics_cards.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.graphics_cards.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.graphics_cards.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.graphics_cards.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.graphics_cards.text9"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.graphics_cards.table2",
+      "heads": [
+        "jsc.guide.graphics_cards.table2_head1",
+        "jsc.guide.graphics_cards.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.graphics_cards.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.graphics_cards.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.graphics_cards.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.graphics_cards.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.graphics_cards.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.graphics_cards.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.graphics_cards.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.graphics_cards.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.graphics_cards.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.graphics_cards.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.graphics_cards.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.graphics_cards.table2_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.graphics_cards.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.graphics_cards.table2_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.graphics_cards.text10"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -35,11 +171,27 @@
         {
           "fix": "jsc.guide.graphics_cards.fix2",
           "problem": "jsc.guide.graphics_cards.problem2"
+        },
+        {
+          "fix": "jsc.guide.graphics_cards.fix3",
+          "problem": "jsc.guide.graphics_cards.problem3"
+        },
+        {
+          "fix": "jsc.guide.graphics_cards.fix4",
+          "problem": "jsc.guide.graphics_cards.problem4"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:monitors",
+        "jsc:expansion_cards",
+        "jsc:states_and_queues"
       ]
     }
   ],
-  "icon": "jsc:gpu_vertex_8800_gt",
+  "icon": "jsc:gpu_vertex_gtx_970",
   "id": "jsc:graphics_cards",
   "items": [
     "jsc:gpu_radiance_hd_7970",
@@ -119,7 +271,7 @@
     "jsc:gpu_tessera_a100",
     "jsc:gpu_tessera_h100"
   ],
-  "order": 8,
+  "order": 19,
   "section": "jsc:hardware",
   "title": "jsc.guide.graphics_cards.title"
 }

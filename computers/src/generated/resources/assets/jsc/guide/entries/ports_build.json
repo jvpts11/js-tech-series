@@ -1,0 +1,253 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.ports_build.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.ports_build.definition1",
+      "term": "jsc.guide.ports_build.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.ports_build.definition2",
+      "term": "jsc.guide.ports_build.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ports_build.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.ports_build.step1",
+        "jsc.guide.ports_build.step2",
+        "jsc.guide.ports_build.step3"
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/freebsd/make"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.ports_build.table1",
+      "heads": [
+        "jsc.guide.ports_build.table1_head1",
+        "jsc.guide.ports_build.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "build"
+          },
+          {
+            "words": "jsc.guide.ports_build.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "install"
+          },
+          {
+            "words": "jsc.guide.ports_build.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "reinstall"
+          },
+          {
+            "words": "jsc.guide.ports_build.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "deinstall"
+          },
+          {
+            "words": "jsc.guide.ports_build.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "clean"
+          },
+          {
+            "words": "jsc.guide.ports_build.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ports_build.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.ports_build.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ports_build.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.ports_build.table2",
+      "heads": [
+        "jsc.guide.ports_build.table2_head1",
+        "jsc.guide.ports_build.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.ports_build.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.ports_build.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ports_build.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.ports_build.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ports_build.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.ports_build.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ports_build.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.ports_build.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.ports_build.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.ports_build.table3",
+      "heads": [
+        "jsc.guide.ports_build.table3_head1",
+        "jsc.guide.ports_build.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "make: no target to make."
+          },
+          {
+            "words": "jsc.guide.ports_build.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "make: don't know how to make <target>. Stop"
+          },
+          {
+            "words": "jsc.guide.ports_build.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "===>  <pkg> is already installed"
+          },
+          {
+            "words": "jsc.guide.ports_build.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "===>  <pkg> is marked as broken: <reason>."
+          },
+          {
+            "words": "jsc.guide.ports_build.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "===>  <pkg> cannot install: a Mainframe's services come prebuilt; use pkg install <name>."
+          },
+          {
+            "words": "jsc.guide.ports_build.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "===>  <pkg> cannot install: this computer cannot store installed programs."
+          },
+          {
+            "words": "jsc.guide.ports_build.table3_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "===>  <pkg> cannot install: this machine is short of the processor or the free disk space it needs."
+          },
+          {
+            "words": "jsc.guide.ports_build.table3_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "fetch: mirror://mainframe/distfiles/<distfile>: No address record"
+          },
+          {
+            "words": "jsc.guide.ports_build.table3_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.ports_build.fix1",
+          "problem": "jsc.guide.ports_build.problem1"
+        },
+        {
+          "fix": "jsc.guide.ports_build.fix2",
+          "problem": "jsc.guide.ports_build.problem2"
+        },
+        {
+          "fix": "jsc.guide.ports_build.fix3",
+          "problem": "jsc.guide.ports_build.problem3"
+        },
+        {
+          "fix": "jsc.guide.ports_build.fix4",
+          "problem": "jsc.guide.ports_build.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:ports_tree",
+        "jsc:pkg",
+        "jsc:processors"
+      ]
+    }
+  ],
+  "id": "jsc:ports_build",
+  "order": 276,
+  "section": "jsc:freebsd_software",
+  "title": "jsc.guide.ports_build.title"
+}

@@ -1,0 +1,35 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.other_mods_intro.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.other_mods_intro.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.other_mods_intro.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.other_mods_intro.definition1",
+      "term": "jsc.guide.other_mods_intro.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.other_mods_intro.definition2",
+      "term": "jsc.guide.other_mods_intro.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.other_mods_intro.definition3",
+      "term": "jsc.guide.other_mods_intro.term3"
+    }
+  ],
+  "id": "jsc:other_mods_intro",
+  "order": 119,
+  "section": "jsc:mod_integrations",
+  "title": "jsc.guide.other_mods_intro.title"
+}

@@ -1,0 +1,196 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.remote_computers.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.remote_computers.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.remote_computers.definition1",
+      "term": "jsc.guide.remote_computers.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.remote_computers.definition2",
+      "term": "jsc.guide.remote_computers.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.remote_computers.table1",
+      "heads": [
+        "jsc.guide.remote_computers.table1_head1",
+        "jsc.guide.remote_computers.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "RemoteComputer.Host"
+          },
+          {
+            "words": "jsc.guide.remote_computers.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Name"
+          },
+          {
+            "words": "jsc.guide.remote_computers.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Type"
+          },
+          {
+            "words": "jsc.guide.remote_computers.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Os"
+          },
+          {
+            "words": "jsc.guide.remote_computers.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Online"
+          },
+          {
+            "words": "jsc.guide.remote_computers.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.remote_computers.table2",
+      "heads": [
+        "jsc.guide.remote_computers.table2_head1",
+        "jsc.guide.remote_computers.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "RemoteComputer.Start(path)"
+          },
+          {
+            "words": "jsc.guide.remote_computers.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Shell(line)"
+          },
+          {
+            "words": "jsc.guide.remote_computers.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Send(id, text)"
+          },
+          {
+            "words": "jsc.guide.remote_computers.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "RemoteComputer.Processes()"
+          },
+          {
+            "words": "jsc.guide.remote_computers.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.remote_computers.table3",
+      "heads": [
+        "jsc.guide.remote_computers.table3_head1",
+        "jsc.guide.remote_computers.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.remote_computers.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.remote_computers.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.remote_computers.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.remote_computers.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.remote_computers.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.remote_computers.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.remote_computers.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.remote_computers.table3_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.remote_computers.fix1",
+          "problem": "jsc.guide.remote_computers.problem1"
+        },
+        {
+          "fix": "jsc.guide.remote_computers.fix2",
+          "problem": "jsc.guide.remote_computers.problem2"
+        },
+        {
+          "fix": "jsc.guide.remote_computers.fix3",
+          "problem": "jsc.guide.remote_computers.problem3"
+        },
+        {
+          "fix": "jsc.guide.remote_computers.fix4",
+          "problem": "jsc.guide.remote_computers.problem4"
+        },
+        {
+          "fix": "jsc.guide.remote_computers.fix5",
+          "problem": "jsc.guide.remote_computers.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:remote_access",
+        "jsc:what_a_network_is"
+      ]
+    }
+  ],
+  "id": "jsc:remote_computers",
+  "order": 362,
+  "section": "jsc:library_network",
+  "title": "jsc.guide.remote_computers.title"
+}

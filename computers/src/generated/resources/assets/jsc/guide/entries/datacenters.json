@@ -1,0 +1,62 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.datacenters.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.datacenters.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.datacenters.definition1",
+      "term": "jsc.guide.datacenters.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.datacenters.definition2",
+      "term": "jsc.guide.datacenters.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.datacenters.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.datacenters.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.datacenters.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.datacenters.fix1",
+          "problem": "jsc.guide.datacenters.problem1"
+        },
+        {
+          "fix": "jsc.guide.datacenters.fix2",
+          "problem": "jsc.guide.datacenters.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:server_router",
+        "jsc:load_balancing"
+      ]
+    }
+  ],
+  "id": "jsc:datacenters",
+  "order": 37,
+  "section": "jsc:clusters",
+  "title": "jsc.guide.datacenters.title"
+}

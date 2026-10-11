@@ -12,6 +12,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.computers.guide.ComputersBooks;
+import dev.jstech.computers.guide.ComputersGuide;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.core.client.guide.GuideLibrary;
 import dev.jstech.core.content.ItemEntry;
@@ -86,7 +87,9 @@ public final class SeriesManualsGameTests {
      * The books whose running text is held to the series' rules: each joins as its entries are written to them, the
      * Guide to Operations once it is written anew.
      */
-    private static final List<String> PROSE_RULED = List.of();
+    private static final List<String> PROSE_RULED = List.of(ComputersGuide.GUIDE_TO_OPERATIONS,
+            ComputersGuide.FRAMES_RESOURCE_KIT, ComputersGuide.LINUX_DESK_REFERENCE, ComputersGuide.LINUX_BY_HAND,
+            ComputersGuide.DAEMON_HANDBOOK, ComputersGuide.LEARNING_IQL, ComputersGuide.BOOK_OF_SIGMA);
     /** An item drawn at its own size, before the scale it is drawn at. */
     private static final int ITEM = 16;
     /** The width of a cell of the code font, and the scales small, big and huge text are drawn at. */
@@ -279,8 +282,8 @@ public final class SeriesManualsGameTests {
 
     /*
      * The books written to the series' rules of running text: every entry speaks to its reader, every number says what
-     * it measures, and every word is explained in the first entry that uses it. A book is held to them once its
-     * entries are written to them.
+     * it measures, and a word used before the entry explaining it leads there from its first use. A book is held to
+     * them once its entries are written to them.
      */
     @GameTest(template = ARENA)
     public static void seriesProse_speaksToTheReaderMeasuresItsNumbersAndExplainsFirst(final GameTestHelper helper) {

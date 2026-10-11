@@ -1,0 +1,178 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.network_verbs.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_verbs.definition1",
+      "term": "jsc.guide.network_verbs.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_verbs.table1",
+      "heads": [
+        "jsc.guide.network_verbs.table1_head1",
+        "jsc.guide.network_verbs.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "net (network)"
+          },
+          {
+            "words": "jsc.guide.network_verbs.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "iql (operation, op, sql)"
+          },
+          {
+            "words": "jsc.guide.network_verbs.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "interac"
+          },
+          {
+            "words": "jsc.guide.network_verbs.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "ssh"
+          },
+          {
+            "words": "jsc.guide.network_verbs.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_verbs.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_verbs.text2"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/net"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_verbs.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_verbs.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_verbs.text4"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/iql"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_verbs.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_verbs.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_verbs.table2",
+      "heads": [
+        "jsc.guide.network_verbs.table2_head1",
+        "jsc.guide.network_verbs.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "/LOCAL"
+          },
+          {
+            "words": "jsc.guide.network_verbs.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "/S:COUNT"
+          },
+          {
+            "words": "jsc.guide.network_verbs.table2_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_verbs.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_verbs.text7"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/interac"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_verbs.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_verbs.text8"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/ssh"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.network_verbs.fix1",
+          "problem": "jsc.guide.network_verbs.problem1"
+        },
+        {
+          "fix": "jsc.guide.network_verbs.fix2",
+          "problem": "jsc.guide.network_verbs.problem2"
+        },
+        {
+          "fix": "jsc.guide.network_verbs.fix3",
+          "problem": "jsc.guide.network_verbs.problem3"
+        },
+        {
+          "fix": "jsc.guide.network_verbs.fix4",
+          "problem": "jsc.guide.network_verbs.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:what_a_network_is",
+        "jsc:first_network",
+        "jsc:iql"
+      ]
+    }
+  ],
+  "id": "jsc:network_verbs",
+  "order": 188,
+  "section": "jsc:prompt_programs_and_network",
+  "title": "jsc.guide.network_verbs.title"
+}

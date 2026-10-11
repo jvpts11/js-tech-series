@@ -1,0 +1,213 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements_sigma.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements_sigma.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.achievements_sigma.table1",
+      "heads": [
+        "jsc.guide.achievements_sigma.table1_head1",
+        "jsc.guide.achievements_sigma.table1_head2",
+        "jsc.guide.achievements_sigma.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.achievements_sigma.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_sigma.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_sigma.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_sigma.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_sigma.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_sigma.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_sigma.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_7_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_sigma.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_8_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_sigma.table1_9_1"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_9_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_sigma.table1_10_1"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_10_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_sigma.table1_11_1"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_11_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_sigma.table1_12_1"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_12_2"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_12_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements_sigma.table1_13_1"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_13_2"
+          },
+          {
+            "words": "jsc.guide.achievements_sigma.table1_13_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements_sigma.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.achievements_sigma.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.achievements_sigma.fix1",
+          "problem": "jsc.guide.achievements_sigma.problem1"
+        },
+        {
+          "fix": "jsc.guide.achievements_sigma.fix2",
+          "problem": "jsc.guide.achievements_sigma.problem2"
+        },
+        {
+          "fix": "jsc.guide.achievements_sigma.fix3",
+          "problem": "jsc.guide.achievements_sigma.problem3"
+        },
+        {
+          "fix": "jsc.guide.achievements_sigma.fix4",
+          "problem": "jsc.guide.achievements_sigma.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_compile",
+        "jsc:sigma_run",
+        "jsc:sigma_limits",
+        "jsc:book_of_sigma"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:achievements_sigma",
+  "order": 133,
+  "section": "jsc:the_achievements",
+  "title": "jsc.guide.achievements_sigma.title"
+}

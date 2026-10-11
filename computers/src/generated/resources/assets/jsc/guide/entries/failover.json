@@ -1,0 +1,101 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.failover.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.failover.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.failover.text3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.failover.step1",
+        "jsc.guide.failover.step2",
+        "jsc.guide.failover.step3"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.failover.table1",
+      "heads": [
+        "jsc.guide.failover.table1_head1",
+        "jsc.guide.failover.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.failover.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.failover.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "STANDBY"
+          },
+          {
+            "words": "jsc.guide.failover.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.failover.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.failover.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.failover.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.failover.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.failover.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.failover.fix1",
+          "problem": "jsc.guide.failover.problem1"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.failover.fix2",
+          "problem": "jsc.guide.failover.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:failover",
+  "order": 69,
+  "section": "jsc:network_operation",
+  "title": "jsc.guide.failover.title"
+}

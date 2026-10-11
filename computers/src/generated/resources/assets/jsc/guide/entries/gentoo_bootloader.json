@@ -1,0 +1,103 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_bootloader.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_bootloader.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.gentoo_bootloader.step1",
+        "jsc.guide.gentoo_bootloader.step2",
+        "jsc.guide.gentoo_bootloader.step3"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.gentoo_bootloader.table1",
+      "heads": [
+        "jsc.guide.gentoo_bootloader.table1_head1",
+        "jsc.guide.gentoo_bootloader.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.gentoo_bootloader.table1_1_1"
+          },
+          {
+            "literal": "grub-install --efi-directory=/efi"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gentoo_bootloader.table1_2_1"
+          },
+          {
+            "literal": "grub-install /dev/sda"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_bootloader.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_bootloader.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.gentoo_bootloader.fix1",
+          "problem": "jsc.guide.gentoo_bootloader.problem1"
+        },
+        {
+          "fix": "jsc.guide.gentoo_bootloader.fix2",
+          "problem": "jsc.guide.gentoo_bootloader.problem2"
+        },
+        {
+          "fix": "jsc.guide.gentoo_bootloader.fix3",
+          "problem": "jsc.guide.gentoo_bootloader.problem3"
+        },
+        {
+          "fix": "jsc.guide.gentoo_bootloader.fix4",
+          "problem": "jsc.guide.gentoo_bootloader.problem4"
+        },
+        {
+          "fix": "jsc.guide.gentoo_bootloader.fix5",
+          "problem": "jsc.guide.gentoo_bootloader.problem5"
+        },
+        {
+          "fix": "jsc.guide.gentoo_bootloader.fix6",
+          "problem": "jsc.guide.gentoo_bootloader.problem6"
+        },
+        {
+          "fix": "jsc.guide.gentoo_bootloader.fix7",
+          "problem": "jsc.guide.gentoo_bootloader.problem7"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:arch_bootloader",
+        "jsc:arch_grub_config",
+        "jsc:gentoo_reboot"
+      ]
+    }
+  ],
+  "id": "jsc:gentoo_bootloader",
+  "order": 263,
+  "section": "jsc:gentoo_system",
+  "title": "jsc.guide.gentoo_bootloader.title"
+}

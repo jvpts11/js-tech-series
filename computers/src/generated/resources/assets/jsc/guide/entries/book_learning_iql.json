@@ -1,0 +1,44 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.book_learning_iql.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.book_learning_iql.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.book_learning_iql.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.book_learning_iql.fix1",
+          "problem": "jsc.guide.book_learning_iql.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:what_iql_is",
+        "jsc:library"
+      ]
+    }
+  ],
+  "icon": "jsc:learning_iql",
+  "id": "jsc:book_learning_iql",
+  "items": [
+    "jsc:learning_iql"
+  ],
+  "order": 139,
+  "section": "jsc:the_library",
+  "title": "jsc.guide.book_learning_iql.title"
+}

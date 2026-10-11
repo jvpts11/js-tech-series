@@ -1,0 +1,105 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.vi.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.vi.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.vi.definition1",
+      "term": "jsc.guide.vi.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.vi.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.vi.table1",
+      "heads": [
+        "jsc.guide.vi.table1_head1",
+        "jsc.guide.vi.table1_head2",
+        "jsc.guide.vi.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.vi.table1_1_1"
+          },
+          {
+            "literal": "hello.txt: unmodified: line 1"
+          },
+          {
+            "literal": "\"hello.txt\" 3 lines, 42 characters"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.vi.table1_2_1"
+          },
+          {
+            "literal": "hello.txt: new file: line 1"
+          },
+          {
+            "literal": "\"hello.txt\" [New file]"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.vi.table1_3_1"
+          },
+          {
+            "literal": "hello.txt: 3 lines, 42 characters"
+          },
+          {
+            "literal": "\"hello.txt\" 3 lines, 42 characters"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.vi.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.vi.text5"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/freebsd/vi"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.vi.fix1",
+          "problem": "jsc.guide.vi.problem1"
+        },
+        {
+          "fix": "jsc.guide.vi.fix2",
+          "problem": "jsc.guide.vi.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:vim",
+        "jsc:the_systems"
+      ]
+    }
+  ],
+  "id": "jsc:vi",
+  "order": 219,
+  "section": "jsc:the_editors",
+  "title": "jsc.guide.vi.title"
+}

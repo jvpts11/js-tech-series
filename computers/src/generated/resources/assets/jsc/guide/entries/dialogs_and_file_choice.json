@@ -1,0 +1,144 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.dialogs_and_file_choice.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dialogs_and_file_choice.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dialogs_and_file_choice.definition1",
+      "term": "jsc.guide.dialogs_and_file_choice.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dialogs_and_file_choice.definition2",
+      "term": "jsc.guide.dialogs_and_file_choice.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dialogs_and_file_choice.table1",
+      "heads": [
+        "jsc.guide.dialogs_and_file_choice.table1_head1",
+        "jsc.guide.dialogs_and_file_choice.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "OpenFileDialog.new(), OpenFileDialog.new(title)"
+          },
+          {
+            "words": "jsc.guide.dialogs_and_file_choice.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "SaveFileDialog.new(), SaveFileDialog.new(title)"
+          },
+          {
+            "words": "jsc.guide.dialogs_and_file_choice.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "OpenFileDialog.Title, SaveFileDialog.Title"
+          },
+          {
+            "words": "jsc.guide.dialogs_and_file_choice.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "OpenFileDialog.Path, SaveFileDialog.Path"
+          },
+          {
+            "words": "jsc.guide.dialogs_and_file_choice.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "OpenFileDialog.Filter, SaveFileDialog.Filter"
+          },
+          {
+            "words": "jsc.guide.dialogs_and_file_choice.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "OpenFileDialog.Show(owner), SaveFileDialog.Show(owner)"
+          },
+          {
+            "words": "jsc.guide.dialogs_and_file_choice.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "SaveFileDialog.Name"
+          },
+          {
+            "words": "jsc.guide.dialogs_and_file_choice.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "OpenFileDialog.OnChoose, SaveFileDialog.OnChoose"
+          },
+          {
+            "words": "jsc.guide.dialogs_and_file_choice.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "OpenFileDialog.OnCancel, SaveFileDialog.OnCancel"
+          },
+          {
+            "words": "jsc.guide.dialogs_and_file_choice.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "MessageBox.Show(title, text)"
+          },
+          {
+            "words": "jsc.guide.dialogs_and_file_choice.table1_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dialogs_and_file_choice.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.dialogs_and_file_choice.fix1",
+          "problem": "jsc.guide.dialogs_and_file_choice.problem1"
+        },
+        {
+          "fix": "jsc.guide.dialogs_and_file_choice.fix2",
+          "problem": "jsc.guide.dialogs_and_file_choice.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:monitors",
+        "jsc:windows_and_layout"
+      ]
+    }
+  ],
+  "id": "jsc:dialogs_and_file_choice",
+  "order": 373,
+  "section": "jsc:library_windows",
+  "title": "jsc.guide.dialogs_and_file_choice.title"
+}

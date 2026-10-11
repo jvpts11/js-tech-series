@@ -1,0 +1,7 @@
+{
+  "chapter": "jsc:unix_desktops",
+  "icon": "jsc:monitor",
+  "id": "jsc:cde_desktop",
+  "order": 49,
+  "title": "jsc.guide.section.cde_desktop"
+}

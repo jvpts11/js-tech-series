@@ -1,0 +1,162 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.gateway_command.text1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.gateway_command.step1",
+        "jsc.guide.gateway_command.step2"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.gateway_command.table1",
+      "heads": [
+        "jsc.guide.gateway_command.table1_head1",
+        "jsc.guide.gateway_command.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "gateway list"
+          },
+          {
+            "words": "jsc.guide.gateway_command.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> status"
+          },
+          {
+            "words": "jsc.guide.gateway_command.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> perms"
+          },
+          {
+            "words": "jsc.guide.gateway_command.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> computers"
+          },
+          {
+            "words": "jsc.guide.gateway_command.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> log"
+          },
+          {
+            "words": "jsc.guide.gateway_command.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> rename <new>"
+          },
+          {
+            "words": "jsc.guide.gateway_command.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> identify"
+          },
+          {
+            "words": "jsc.guide.gateway_command.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> clear"
+          },
+          {
+            "words": "jsc.guide.gateway_command.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> test"
+          },
+          {
+            "words": "jsc.guide.gateway_command.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> set read on|off"
+          },
+          {
+            "words": "jsc.guide.gateway_command.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> set operations on|off"
+          },
+          {
+            "words": "jsc.guide.gateway_command.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> set priority low|medium|high"
+          },
+          {
+            "words": "jsc.guide.gateway_command.table1_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "<name> set cap 4|8|16"
+          },
+          {
+            "words": "jsc.guide.gateway_command.table1_13_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gateway_command.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.gateway_command.fix1",
+          "problem": "jsc.guide.gateway_command.problem1"
+        },
+        {
+          "fix": "jsc.guide.gateway_command.fix2",
+          "problem": "jsc.guide.gateway_command.problem2"
+        },
+        {
+          "fix": "jsc.guide.gateway_command.fix3",
+          "problem": "jsc.guide.gateway_command.problem3"
+        },
+        {
+          "fix": "jsc.guide.gateway_command.fix4",
+          "problem": "jsc.guide.gateway_command.problem4"
+        }
+      ]
+    }
+  ],
+  "id": "jsc:gateway_command",
+  "order": 127,
+  "section": "jsc:gateway",
+  "title": "jsc.guide.gateway_command.title"
+}

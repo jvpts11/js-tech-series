@@ -1,0 +1,227 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_setup_95_xp.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_setup_95_xp.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_setup_95_xp.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.frames_setup_95_xp.step1",
+        "jsc.guide.frames_setup_95_xp.step2",
+        "jsc.guide.frames_setup_95_xp.step3",
+        "jsc.guide.frames_setup_95_xp.step4",
+        "jsc.guide.frames_setup_95_xp.step5",
+        "jsc.guide.frames_setup_95_xp.step6",
+        "jsc.guide.frames_setup_95_xp.step7",
+        "jsc.guide.frames_setup_95_xp.step8"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_setup_95_xp.table1",
+      "heads": [
+        "jsc.guide.frames_setup_95_xp.table1_head1",
+        "jsc.guide.frames_setup_95_xp.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_setup_95_xp.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_setup_95_xp.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_setup_95_xp.table2",
+      "heads": [
+        "jsc.guide.frames_setup_95_xp.table2_head1",
+        "jsc.guide.frames_setup_95_xp.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "ENTER"
+          },
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "E"
+          },
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "F3"
+          },
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_setup_95_xp.table3",
+      "heads": [
+        "jsc.guide.frames_setup_95_xp.table3_head1",
+        "jsc.guide.frames_setup_95_xp.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table3_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.frames_setup_95_xp.table3_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_setup_95_xp.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_setup_95_xp.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_setup_95_xp.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_setup_95_xp.definition1",
+      "term": "jsc.guide.frames_setup_95_xp.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.frames_setup_95_xp.fix1",
+          "problem": "jsc.guide.frames_setup_95_xp.problem1"
+        },
+        {
+          "fix": "jsc.guide.frames_setup_95_xp.fix2",
+          "problem": "jsc.guide.frames_setup_95_xp.problem2"
+        },
+        {
+          "fix": "jsc.guide.frames_setup_95_xp.fix3",
+          "problem": "jsc.guide.frames_setup_95_xp.problem3"
+        },
+        {
+          "fix": "jsc.guide.frames_setup_95_xp.fix4",
+          "problem": "jsc.guide.frames_setup_95_xp.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:frames_setup_7_10_11",
+        "jsc:frames_95",
+        "jsc:frames_xp",
+        "jsc:installing"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:frames_setup_95_xp",
+  "order": 142,
+  "section": "jsc:midsoft_installs",
+  "title": "jsc.guide.frames_setup_95_xp.title"
+}

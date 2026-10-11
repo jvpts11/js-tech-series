@@ -1,0 +1,113 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_craft.text1"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "CRAFT 64 torch"
+      ],
+      "name": "torches.iql"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_craft.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.iql_craft.step1",
+        "jsc.guide.iql_craft.step2"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_craft.table1",
+      "heads": [
+        "jsc.guide.iql_craft.table1_head1",
+        "jsc.guide.iql_craft.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "CRAFT queued: <quantity> <item>"
+          },
+          {
+            "words": "jsc.guide.iql_craft.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Network Operations Service unavailable"
+          },
+          {
+            "words": "jsc.guide.iql_craft.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "the network has no running Mainframe"
+          },
+          {
+            "words": "jsc.guide.iql_craft.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "no pattern crafts <item>"
+          },
+          {
+            "words": "jsc.guide.iql_craft.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "unknown item: <name>"
+          },
+          {
+            "words": "jsc.guide.iql_craft.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_craft.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.iql_craft.fix1",
+          "problem": "jsc.guide.iql_craft.problem1"
+        },
+        {
+          "fix": "jsc.guide.iql_craft.fix2",
+          "problem": "jsc.guide.iql_craft.problem2"
+        },
+        {
+          "fix": "jsc.guide.iql_craft.fix3",
+          "problem": "jsc.guide.iql_craft.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:asking_for_a_craft",
+        "jsc:crafting_interfaces"
+      ]
+    }
+  ],
+  "id": "jsc:iql_craft",
+  "order": 293,
+  "section": "jsc:iql_verbs",
+  "title": "jsc.guide.iql_craft.title"
+}

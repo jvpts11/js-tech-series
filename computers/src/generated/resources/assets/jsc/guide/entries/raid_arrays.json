@@ -1,0 +1,124 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.raid_arrays.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.raid_arrays.table1",
+      "heads": [
+        "jsc.guide.raid_arrays.table1_head1",
+        "jsc.guide.raid_arrays.table1_head2",
+        "jsc.guide.raid_arrays.table1_head3",
+        "jsc.guide.raid_arrays.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.raid_arrays.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.raid_arrays.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.raid_arrays.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.raid_arrays.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.raid_arrays.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.raid_arrays.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.raid_arrays.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.raid_arrays.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.raid_arrays.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.raid_arrays.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.raid_arrays.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.raid_arrays.table1_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.raid_arrays.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.raid_arrays.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.raid_arrays.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.raid_arrays.table1_4_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.raid_arrays.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.raid_arrays.step1",
+        "jsc.guide.raid_arrays.step2",
+        "jsc.guide.raid_arrays.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.raid_arrays.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.raid_arrays.fix1",
+          "problem": "jsc.guide.raid_arrays.problem1"
+        },
+        {
+          "fix": "jsc.guide.raid_arrays.fix2",
+          "problem": "jsc.guide.raid_arrays.problem2"
+        },
+        {
+          "fix": "jsc.guide.raid_arrays.fix3",
+          "problem": "jsc.guide.raid_arrays.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:rack_drive_bays",
+        "jsc:firmware"
+      ]
+    }
+  ],
+  "id": "jsc:raid_arrays",
+  "order": 30,
+  "section": "jsc:racks",
+  "title": "jsc.guide.raid_arrays.title"
+}

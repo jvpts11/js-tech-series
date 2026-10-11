@@ -50,7 +50,7 @@ public final class ComputersBooks {
     private ComputersBooks() {
     }
 
-    /** Declares the six books, their styles and their chapters. */
+    /** Declares the six books, their styles and their chapters, then the pages of each chapter in printed order. */
     static void declare(final ModGuide guide) {
         final List<GuideChapter> unix = unixChapters(guide);
         framesResourceKit(guide);
@@ -59,6 +59,43 @@ public final class ComputersBooks {
         daemonHandbook(guide, unix);
         learningIql(guide);
         bookOfSigma(guide);
+        MidsoftSystemsPages.declare(guide, chapter(guide, "midsoft_systems"));
+        McDosPages.declare(guide, chapter(guide, "mc_dos"));
+        FramesDesktopPages.declare(guide, chapter(guide, "frames_desktop"));
+        FramesProgramsPages.declare(guide, chapter(guide, "frames_programs"));
+        FramesEditionsPages.declare(guide, chapter(guide, "frames_editions"));
+        CommandPromptPages.declare(guide, chapter(guide, "command_prompt"));
+        ShellPages.declare(guide, chapter(guide, "shell"));
+        UnixDesktopsPages.declare(guide, chapter(guide, "unix_desktops"));
+        TerminalEditorsPages.declare(guide, chapter(guide, "terminal_editors"));
+        FindingHelpPages.declare(guide, chapter(guide, "finding_help"));
+        DistributionsPages.declare(guide, chapter(guide, "fedora_debian_ubuntu"));
+        BeforeYouBeginPages.declare(guide, chapter(guide, "before_you_begin"));
+        PreparingDisksPages.declare(guide, chapter(guide, "preparing_disks"));
+        ArchPages.declare(guide, chapter(guide, "arch"));
+        GentooPages.declare(guide, chapter(guide, "gentoo"));
+        RebootRefusesPages.declare(guide, chapter(guide, "when_reboot_refuses"));
+        FreeBsdPages.declare(guide, chapter(guide, "freebsd"));
+        SystemVPages.declare(guide, chapter(guide, "system_v"));
+        IqlStartPages.declare(guide, chapter(guide, "iql_getting_started"));
+        IqlLanguagePages.declare(guide, chapter(guide, "iql_language"));
+        IqlEnginesPages.declare(guide, chapter(guide, "iql_engines"));
+        IqlToolsPages.declare(guide, chapter(guide, "iql_tools"));
+        IqlRecipesPages.declare(guide, chapter(guide, "iql_recipes"));
+        SigmaStartPages.declare(guide, chapter(guide, "sigma_getting_started"));
+        SigmaLanguagePages.declare(guide, chapter(guide, "sigma_language"));
+        SigmaLibraryPages.declare(guide, chapter(guide, "sigma_library"));
+        SigmaRunningPages.declare(guide, chapter(guide, "sigma_running"));
+        SigmaErrorsPages.declare(guide, chapter(guide, "sigma_errors"));
+        SigmaSharingPages.declare(guide, chapter(guide, "sigma_sharing"));
+        SigmaExamplesPages.declare(guide, chapter(guide, "sigma_examples"));
+    }
+
+    /** One of the books' chapters, declared above, by its path. */
+    private static GuideChapter chapter(final ModGuide guide, final String path) {
+        final String id = guide.namespace() + ":" + path;
+        return guide.declaredOtherChapters().stream().filter(chapter -> chapter.id().equals(id)).findFirst()
+                .orElseThrow(() -> new IllegalStateException("no chapter " + id + " is declared"));
     }
 
     /** A book's item, which opens that manual, among the programs of J's Computers' own tab beside the Guide. */

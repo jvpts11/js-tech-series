@@ -1,0 +1,174 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.the_walkthrough.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.the_walkthrough.definition1",
+      "term": "jsc.guide.the_walkthrough.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.the_walkthrough.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.the_walkthrough.step1",
+        "jsc.guide.the_walkthrough.step2",
+        "jsc.guide.the_walkthrough.step3",
+        "jsc.guide.the_walkthrough.step4"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.the_walkthrough.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.the_walkthrough.table1",
+      "heads": [
+        "jsc.guide.the_walkthrough.table1_head1",
+        "jsc.guide.the_walkthrough.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "*"
+          },
+          {
+            "words": "jsc.guide.the_walkthrough.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "modern firmware only"
+          },
+          {
+            "words": "jsc.guide.the_walkthrough.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.the_walkthrough.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.the_walkthrough.heading1"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "root@archiso ~ # ",
+          "text": "help",
+          "typed": true
+        },
+        {
+          "text": "This is the Arch Linux installation medium."
+        },
+        {
+          "text": "Nothing here installs itself: the steps are typed by hand, in"
+        },
+        {
+          "text": "order, and every tool is the real one."
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "The whole walkthrough is in /root/install.txt"
+        },
+        {
+          "text": "    less /root/install.txt"
+        },
+        {
+          "text": "A tool that is running can be stopped with CTRL+C."
+        }
+      ],
+      "look": "jsc:guide/terminal/zsh",
+      "title": "Arch Linux"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.the_walkthrough.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.the_walkthrough.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.the_walkthrough.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.the_walkthrough.table2",
+      "heads": [
+        "jsc.guide.the_walkthrough.table2_head1",
+        "jsc.guide.the_walkthrough.table2_head2",
+        "jsc.guide.the_walkthrough.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.the_walkthrough.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.the_walkthrough.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.the_walkthrough.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.the_walkthrough.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.the_walkthrough.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.the_walkthrough.table2_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.the_walkthrough.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.the_walkthrough.fix1",
+          "problem": "jsc.guide.the_walkthrough.problem1"
+        },
+        {
+          "fix": "jsc.guide.the_walkthrough.fix2",
+          "problem": "jsc.guide.the_walkthrough.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installing",
+        "jsc:the_systems"
+      ]
+    }
+  ],
+  "id": "jsc:the_walkthrough",
+  "order": 240,
+  "section": "jsc:by_hand_basics",
+  "title": "jsc.guide.the_walkthrough.title"
+}

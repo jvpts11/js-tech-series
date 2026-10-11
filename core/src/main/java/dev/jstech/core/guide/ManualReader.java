@@ -10,6 +10,7 @@ package dev.jstech.core.guide;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -432,7 +433,9 @@ public final class ManualReader {
         for (final GuideBlock.TableRow row : table.rows()) {
             final List<String> cells = new ArrayList<>();
             for (final GuideBlock.GuideValue cell : row.cells()) {
-                cells.add(this.text.valueText(cell));
+                // A link in a cell is written as a link in a sentence is: its words and the number it leads to.
+                cells.add(cell instanceof GuideBlock.GuideValue.Words
+                        ? this.written(this.text.valueText(cell), new HashSet<>()) : this.text.valueText(cell));
             }
             rows.add(new Row(cells));
         }

@@ -1,0 +1,207 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_limits.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_limits.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_limits.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.iql_limits.table1",
+      "heads": [
+        "jsc.guide.iql_limits.table1_head1",
+        "jsc.guide.iql_limits.table1_head2",
+        "jsc.guide.iql_limits.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_7_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_8_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_9_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_9_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_10_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_10_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_11_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_11_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_12_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_12_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_12_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_13_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_13_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_13_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_14_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_14_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_14_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql_limits.table1_15_1"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_15_2"
+          },
+          {
+            "words": "jsc.guide.iql_limits.table1_15_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_limits.text4"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:iql_errors",
+        "jsc:query_and_select"
+      ]
+    }
+  ],
+  "id": "jsc:iql_limits",
+  "order": 304,
+  "section": "jsc:iql_limits_and_errors",
+  "title": "jsc.guide.iql_limits.title"
+}

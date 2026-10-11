@@ -1,0 +1,211 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_program_list.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_program_list.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_program_list.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_program_list.table1",
+      "heads": [
+        "jsc.guide.frames_program_list.table1_head1",
+        "jsc.guide.frames_program_list.table1_head2",
+        "jsc.guide.frames_program_list.table1_head3",
+        "jsc.guide.frames_program_list.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_program_list.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_program_list.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_program_list.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_program_list.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_4_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_program_list.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_5_3"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table1_5_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.frames_program_list.table2",
+      "heads": [
+        "jsc.guide.frames_program_list.table2_head1",
+        "jsc.guide.frames_program_list.table2_head2",
+        "jsc.guide.frames_program_list.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.frames_program_list.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_program_list.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table2_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_program_list.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table2_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_program_list.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table2_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.frames_program_list.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.frames_program_list.table2_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_program_list.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_program_list.definition1",
+      "term": "jsc.guide.frames_program_list.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_program_list.definition2",
+      "term": "jsc.guide.frames_program_list.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.frames_program_list.definition3",
+      "term": "jsc.guide.frames_program_list.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.frames_program_list.fix1",
+          "problem": "jsc.guide.frames_program_list.problem1"
+        },
+        {
+          "fix": "jsc.guide.frames_program_list.fix2",
+          "problem": "jsc.guide.frames_program_list.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:programs",
+        "jsc:this_pc"
+      ]
+    }
+  ],
+  "id": "jsc:frames_program_list",
+  "order": 162,
+  "section": "jsc:frames_everyday",
+  "title": "jsc.guide.frames_program_list.title"
+}

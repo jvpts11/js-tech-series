@@ -1,0 +1,125 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.disable_device.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.disable_device.definition1",
+      "term": "jsc.guide.disable_device.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.disable_device.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.disable_device.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.disable_device.step1",
+        "jsc.guide.disable_device.step2",
+        "jsc.guide.disable_device.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.disable_device.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.disable_device.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.disable_device.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.disable_device.table1",
+      "heads": [
+        "jsc.guide.disable_device.table1_head1",
+        "jsc.guide.disable_device.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.disable_device.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.disable_device.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.disable_device.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.disable_device.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.disable_device.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.disable_device.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.disable_device.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.disable_device.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.disable_device.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.disable_device.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.disable_device.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.disable_device.fix1",
+          "problem": "jsc.guide.disable_device.problem1"
+        },
+        {
+          "fix": "jsc.guide.disable_device.fix2",
+          "problem": "jsc.guide.disable_device.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:device_manager",
+        "jsc:dos_msd",
+        "jsc:cde_workstation_info",
+        "jsc:kde_plasma"
+      ]
+    }
+  ],
+  "id": "jsc:disable_device",
+  "order": 48,
+  "section": "jsc:peripherals",
+  "title": "jsc.guide.disable_device.title"
+}

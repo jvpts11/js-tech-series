@@ -1,0 +1,44 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.book_linux_by_hand.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.book_linux_by_hand.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.book_linux_by_hand.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.book_linux_by_hand.fix1",
+          "problem": "jsc.guide.book_linux_by_hand.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installing_by_hand",
+        "jsc:library"
+      ]
+    }
+  ],
+  "icon": "jsc:linux_by_hand",
+  "id": "jsc:book_linux_by_hand",
+  "items": [
+    "jsc:linux_by_hand"
+  ],
+  "order": 137,
+  "section": "jsc:the_library",
+  "title": "jsc.guide.book_linux_by_hand.title"
+}

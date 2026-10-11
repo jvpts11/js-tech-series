@@ -1,0 +1,189 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.editor.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.editor.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.editor.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.editor.table1",
+      "heads": [
+        "jsc.guide.editor.table1_head1",
+        "jsc.guide.editor.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Ctrl+S"
+          },
+          {
+            "words": "jsc.guide.editor.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+O"
+          },
+          {
+            "words": "jsc.guide.editor.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+P"
+          },
+          {
+            "words": "jsc.guide.editor.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+F"
+          },
+          {
+            "words": "jsc.guide.editor.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+G"
+          },
+          {
+            "words": "jsc.guide.editor.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+N"
+          },
+          {
+            "words": "jsc.guide.editor.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+W"
+          },
+          {
+            "words": "jsc.guide.editor.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+Tab"
+          },
+          {
+            "words": "jsc.guide.editor.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.editor.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Esc"
+          },
+          {
+            "words": "jsc.guide.editor.table1_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.editor.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.editor.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.editor.heading3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.editor.step1",
+        "jsc.guide.editor.step2",
+        "jsc.guide.editor.step3",
+        "jsc.guide.editor.step4"
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.editor.definition1",
+      "term": "jsc.guide.editor.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.editor.definition2",
+      "term": "jsc.guide.editor.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.editor.definition3",
+      "term": "jsc.guide.editor.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.editor.fix1",
+          "problem": "jsc.guide.editor.problem1"
+        },
+        {
+          "fix": "jsc.guide.editor.fix2",
+          "problem": "jsc.guide.editor.problem2"
+        },
+        {
+          "fix": "jsc.guide.editor.fix3",
+          "problem": "jsc.guide.editor.problem3"
+        },
+        {
+          "fix": "jsc.guide.editor.fix4",
+          "problem": "jsc.guide.editor.problem4"
+        },
+        {
+          "fix": "jsc.guide.editor.fix5",
+          "problem": "jsc.guide.editor.problem5"
+        },
+        {
+          "fix": "jsc.guide.editor.fix6",
+          "problem": "jsc.guide.editor.problem6"
+        },
+        {
+          "fix": "jsc.guide.editor.fix7",
+          "problem": "jsc.guide.editor.problem7"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:file_explorer"
+      ]
+    }
+  ],
+  "id": "jsc:editor",
+  "order": 165,
+  "section": "jsc:frames_everyday",
+  "title": "jsc.guide.editor.title"
+}

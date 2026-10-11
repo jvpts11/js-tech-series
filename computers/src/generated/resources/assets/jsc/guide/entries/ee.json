@@ -1,0 +1,471 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.ee.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ee.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.ee.definition1",
+      "term": "jsc.guide.ee.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.ee.table1",
+      "heads": [
+        "jsc.guide.ee.table1_head1",
+        "jsc.guide.ee.table1_head2",
+        "jsc.guide.ee.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "^["
+          },
+          {
+            "words": "jsc.guide.ee.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "^y"
+          },
+          {
+            "words": "jsc.guide.ee.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "^k"
+          },
+          {
+            "words": "jsc.guide.ee.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "^p"
+          },
+          {
+            "words": "jsc.guide.ee.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "^g"
+          },
+          {
+            "words": "jsc.guide.ee.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "^o"
+          },
+          {
+            "words": "jsc.guide.ee.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "^x"
+          },
+          {
+            "words": "jsc.guide.ee.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "^l"
+          },
+          {
+            "words": "jsc.guide.ee.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "^n"
+          },
+          {
+            "words": "jsc.guide.ee.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_9_3"
+          }
+        ],
+        [
+          {
+            "literal": "^v"
+          },
+          {
+            "words": "jsc.guide.ee.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_10_3"
+          }
+        ],
+        [
+          {
+            "literal": "^u"
+          },
+          {
+            "words": "jsc.guide.ee.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_11_3"
+          }
+        ],
+        [
+          {
+            "literal": "^a"
+          },
+          {
+            "words": "jsc.guide.ee.table1_12_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_12_3"
+          }
+        ],
+        [
+          {
+            "literal": "^w"
+          },
+          {
+            "words": "jsc.guide.ee.table1_13_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_13_3"
+          }
+        ],
+        [
+          {
+            "literal": "^b"
+          },
+          {
+            "words": "jsc.guide.ee.table1_14_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_14_3"
+          }
+        ],
+        [
+          {
+            "literal": "^z"
+          },
+          {
+            "words": "jsc.guide.ee.table1_15_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_15_3"
+          }
+        ],
+        [
+          {
+            "literal": "^t"
+          },
+          {
+            "words": "jsc.guide.ee.table1_16_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_16_3"
+          }
+        ],
+        [
+          {
+            "literal": "^e"
+          },
+          {
+            "words": "jsc.guide.ee.table1_17_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_17_3"
+          }
+        ],
+        [
+          {
+            "literal": "^r"
+          },
+          {
+            "words": "jsc.guide.ee.table1_18_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_18_3"
+          }
+        ],
+        [
+          {
+            "literal": "^f"
+          },
+          {
+            "words": "jsc.guide.ee.table1_19_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_19_3"
+          }
+        ],
+        [
+          {
+            "literal": "^c"
+          },
+          {
+            "words": "jsc.guide.ee.table1_20_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_20_3"
+          }
+        ],
+        [
+          {
+            "literal": "^d"
+          },
+          {
+            "words": "jsc.guide.ee.table1_21_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_21_3"
+          }
+        ],
+        [
+          {
+            "literal": "^j"
+          },
+          {
+            "words": "jsc.guide.ee.table1_22_2"
+          },
+          {
+            "words": "jsc.guide.ee.table1_22_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ee.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.ee.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ee.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.ee.table2",
+      "heads": [
+        "jsc.guide.ee.table2_head1",
+        "jsc.guide.ee.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.ee.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.ee.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ee.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.ee.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ee.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.ee.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ee.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.ee.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ee.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.ee.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ee.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.ee.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.ee.heading2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.ee.step1",
+        "jsc.guide.ee.step2",
+        "jsc.guide.ee.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ee.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.ee.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ee.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ee.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.ee.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ee.text8"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.ee.table3",
+      "heads": [
+        "jsc.guide.ee.table3_head1",
+        "jsc.guide.ee.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "write"
+          },
+          {
+            "words": "jsc.guide.ee.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "quit"
+          },
+          {
+            "words": "jsc.guide.ee.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "exit"
+          },
+          {
+            "words": "jsc.guide.ee.table3_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.ee.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ee.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ee.text10"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/freebsd/ee"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.ee.fix1",
+          "problem": "jsc.guide.ee.problem1"
+        },
+        {
+          "fix": "jsc.guide.ee.fix2",
+          "problem": "jsc.guide.ee.problem2"
+        },
+        {
+          "fix": "jsc.guide.ee.fix3",
+          "problem": "jsc.guide.ee.problem3"
+        },
+        {
+          "fix": "jsc.guide.ee.fix4",
+          "problem": "jsc.guide.ee.problem4"
+        },
+        {
+          "fix": "jsc.guide.ee.fix5",
+          "problem": "jsc.guide.ee.problem5"
+        },
+        {
+          "fix": "jsc.guide.ee.fix6",
+          "problem": "jsc.guide.ee.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:vi",
+        "jsc:vim",
+        "jsc:the_systems"
+      ]
+    }
+  ],
+  "id": "jsc:ee",
+  "order": 220,
+  "section": "jsc:the_editors",
+  "title": "jsc.guide.ee.title"
+}

@@ -5,8 +5,17 @@
       "text": "jsc.guide.mainframes.text1"
     },
     {
+      "type": "define",
+      "definition": "jsc.guide.mainframes.definition1",
+      "term": "jsc.guide.mainframes.term1"
+    },
+    {
       "type": "text",
       "text": "jsc.guide.mainframes.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text3"
     },
     {
       "type": "table",
@@ -25,7 +34,7 @@
             "words": "jsc.guide.mainframes.table1_2"
           },
           {
-            "literal": "4"
+            "literal": "up to 4"
           }
         ],
         [
@@ -33,7 +42,7 @@
             "words": "jsc.guide.mainframes.table1_3"
           },
           {
-            "literal": "8"
+            "literal": "up to 8"
           }
         ],
         [
@@ -41,7 +50,7 @@
             "words": "jsc.guide.mainframes.table1_4"
           },
           {
-            "literal": "6"
+            "literal": "up to 6"
           }
         ],
         [
@@ -49,7 +58,7 @@
             "words": "jsc.guide.mainframes.table1_5"
           },
           {
-            "literal": "4"
+            "literal": "up to 4"
           }
         ],
         [
@@ -57,27 +66,144 @@
             "words": "jsc.guide.mainframes.table1_6"
           },
           {
-            "literal": "27"
+            "literal": "1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table1_7"
+          },
+          {
+            "literal": "up to 27"
           }
         ]
       ]
     },
     {
       "type": "text",
-      "text": "jsc.guide.mainframes.text3"
+      "text": "jsc.guide.mainframes.text4"
     },
     {
       "type": "define",
-      "definition": "jsc.guide.mainframes.definition1",
-      "term": "jsc.guide.mainframes.term1"
+      "definition": "jsc.guide.mainframes.definition2",
+      "term": "jsc.guide.mainframes.term2"
     },
     {
-      "type": "text",
-      "text": "jsc.guide.mainframes.text4"
+      "type": "define",
+      "definition": "jsc.guide.mainframes.definition3",
+      "term": "jsc.guide.mainframes.term3"
     },
     {
       "type": "text",
       "text": "jsc.guide.mainframes.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mainframes.table2",
+      "heads": [
+        "jsc.guide.mainframes.table2_head1",
+        "jsc.guide.mainframes.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframes.table2_8_1"
+          },
+          {
+            "words": "jsc.guide.mainframes.table2_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text9"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mainframes.definition4",
+      "term": "jsc.guide.mainframes.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mainframes.definition5",
+      "term": "jsc.guide.mainframes.term5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text10"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text11"
     },
     {
       "type": "heading",
@@ -93,7 +219,22 @@
         {
           "fix": "jsc.guide.mainframes.fix2",
           "problem": "jsc.guide.mainframes.problem2"
+        },
+        {
+          "fix": "jsc.guide.mainframes.fix3",
+          "problem": "jsc.guide.mainframes.problem3"
+        },
+        {
+          "fix": "jsc.guide.mainframes.fix4",
+          "problem": "jsc.guide.mainframes.problem4"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:states_and_queues",
+        "jsc:failover"
       ]
     }
   ],
@@ -106,7 +247,7 @@
     "jsc:transition_mainframe",
     "jsc:advanced_mainframe"
   ],
-  "order": 15,
+  "order": 26,
   "section": "jsc:computers",
   "title": "jsc.guide.mainframes.title"
 }

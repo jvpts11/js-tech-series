@@ -1,0 +1,303 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.insert_delete_move_drop.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.insert_delete_move_drop.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.insert_delete_move_drop.table1",
+      "heads": [
+        "jsc.guide.insert_delete_move_drop.table1_head1",
+        "jsc.guide.insert_delete_move_drop.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "INSERT"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "DELETE"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "MOVE"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "DROP"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.insert_delete_move_drop.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.insert_delete_move_drop.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.insert_delete_move_drop.table2",
+      "heads": [
+        "jsc.guide.insert_delete_move_drop.table2_head1",
+        "jsc.guide.insert_delete_move_drop.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "INSERT queued: <quantity> <item> -> network"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "nothing to push"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "this computer holds no <item>"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "MOVE queued: import from <bus>"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "nothing to import from <bus>"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "the bus '<bus>' touches no inventory"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.insert_delete_move_drop.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.insert_delete_move_drop.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.insert_delete_move_drop.table3",
+      "heads": [
+        "jsc.guide.insert_delete_move_drop.table3_head1",
+        "jsc.guide.insert_delete_move_drop.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "DELETE queued: <quantity> <item>"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "nothing to delete"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "no bus named '<bus>'"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table3_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.insert_delete_move_drop.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.insert_delete_move_drop.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.insert_delete_move_drop.table4",
+      "heads": [
+        "jsc.guide.insert_delete_move_drop.table4_head1",
+        "jsc.guide.insert_delete_move_drop.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "MOVE queued: <quantity> <item> -> <bus>"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "nothing to move"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "nothing to move to <bus>"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table4_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "no server or bus named '<name>'"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table4_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "the destination server is unavailable"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table4_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "could not start the MOVE"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table4_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.insert_delete_move_drop.heading4"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.insert_delete_move_drop.warning1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.insert_delete_move_drop.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.insert_delete_move_drop.table5",
+      "heads": [
+        "jsc.guide.insert_delete_move_drop.table5_head1",
+        "jsc.guide.insert_delete_move_drop.table5_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "DROP queued: <quantity> <item>"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table5_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "nothing to drop"
+          },
+          {
+            "words": "jsc.guide.insert_delete_move_drop.table5_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.insert_delete_move_drop.fix1",
+          "problem": "jsc.guide.insert_delete_move_drop.problem1"
+        },
+        {
+          "fix": "jsc.guide.insert_delete_move_drop.fix2",
+          "problem": "jsc.guide.insert_delete_move_drop.problem2"
+        },
+        {
+          "fix": "jsc.guide.insert_delete_move_drop.fix3",
+          "problem": "jsc.guide.insert_delete_move_drop.problem3"
+        },
+        {
+          "fix": "jsc.guide.insert_delete_move_drop.fix4",
+          "problem": "jsc.guide.insert_delete_move_drop.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:buses",
+        "jsc:set_bus",
+        "jsc:query_and_select"
+      ]
+    }
+  ],
+  "id": "jsc:insert_delete_move_drop",
+  "order": 292,
+  "section": "jsc:iql_verbs",
+  "title": "jsc.guide.insert_delete_move_drop.title"
+}

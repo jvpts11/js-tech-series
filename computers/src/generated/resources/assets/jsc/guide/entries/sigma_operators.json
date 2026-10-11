@@ -1,0 +1,313 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_operators.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_operators.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_operators.table1",
+      "heads": [
+        "jsc.guide.sigma_operators.table1_head1",
+        "jsc.guide.sigma_operators.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_1_1"
+          },
+          {
+            "literal": "= += -= *= /= %= &= |= ^= <<= >>= (right to left)"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_2_1"
+          },
+          {
+            "literal": "?:"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_3_1"
+          },
+          {
+            "literal": "||"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_4_1"
+          },
+          {
+            "literal": "&&"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_5_1"
+          },
+          {
+            "literal": "|"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_6_1"
+          },
+          {
+            "literal": "^"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_7_1"
+          },
+          {
+            "literal": "&"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_8_1"
+          },
+          {
+            "literal": "== !="
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_9_1"
+          },
+          {
+            "literal": "< <= > >= is as"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_10_1"
+          },
+          {
+            "literal": "<< >>"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_11_1"
+          },
+          {
+            "literal": "+ -"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_12_1"
+          },
+          {
+            "literal": "* / %"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_13_1"
+          },
+          {
+            "literal": "! - + ~ ++ -- and casts"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table1_14_1"
+          },
+          {
+            "literal": ". () [] ++ --"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_operators.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_operators.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_operators.table2",
+      "heads": [
+        "jsc.guide.sigma_operators.table2_head1",
+        "jsc.guide.sigma_operators.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.sigma_operators.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.sigma_operators.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.sigma_operators.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.sigma_operators.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_operators.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.sigma_operators.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_operators.table3",
+      "heads": [
+        "jsc.guide.sigma_operators.table3_head1",
+        "jsc.guide.sigma_operators.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "&& || !"
+          },
+          {
+            "words": "jsc.guide.sigma_operators.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "& | ^"
+          },
+          {
+            "words": "jsc.guide.sigma_operators.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "<< >>"
+          },
+          {
+            "words": "jsc.guide.sigma_operators.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "~"
+          },
+          {
+            "words": "jsc.guide.sigma_operators.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "++ --"
+          },
+          {
+            "words": "jsc.guide.sigma_operators.table3_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_operators.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_operators.text6"
+    },
+    {
+      "type": "listing",
+      "language": "sg",
+      "lines": [
+        "int x = 3;",
+        "int y = x * 2 + 1;        // 7",
+        "bool ok = y > 5 && y != 9;",
+        "int shifted = 1 << 4;     // 16",
+        "string label = \"y = \" + y;"
+      ],
+      "name": "Operators.sg"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_operators.definition1",
+      "term": "jsc.guide.sigma_operators.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_operators.definition2",
+      "term": "jsc.guide.sigma_operators.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_operators.definition3",
+      "term": "jsc.guide.sigma_operators.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_operators.fix1",
+          "problem": "jsc.guide.sigma_operators.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_operators.fix2",
+          "problem": "jsc.guide.sigma_operators.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_operators.fix3",
+          "problem": "jsc.guide.sigma_operators.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_operators.fix4",
+          "problem": "jsc.guide.sigma_operators.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_control_flow",
+        "jsc:sigma_strings_chars"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_operators",
+  "order": 337,
+  "section": "jsc:sigma_basics",
+  "title": "jsc.guide.sigma_operators.title"
+}

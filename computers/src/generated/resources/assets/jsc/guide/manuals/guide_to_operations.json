@@ -5,7 +5,19 @@
     "jsc.guide.manual.guide_to_operations.about3"
   ],
   "chapters": [
-    "jsc"
+    "jsc",
+    "jsc:building_computers",
+    "jsc:computer_kinds",
+    "jsc:peripheral_devices",
+    "jsc:everyday_programs",
+    "jsc:the_network",
+    "jsc:keeping_items",
+    "jsc:moving_items",
+    "jsc:the_operations",
+    "jsc:crafting_for_you",
+    "jsc:automation",
+    "jsc:other_mods",
+    "jsc:achievements_and_library"
   ],
   "cover": [
     "jsc.guide.manual.guide_to_operations.cover1"

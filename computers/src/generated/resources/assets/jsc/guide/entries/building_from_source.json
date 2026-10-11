@@ -1,0 +1,208 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.building_from_source.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.building_from_source.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.building_from_source.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.building_from_source.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.building_from_source.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.building_from_source.table1",
+      "heads": [
+        "jsc.guide.building_from_source.table1_head1",
+        "jsc.guide.building_from_source.table1_head2",
+        "jsc.guide.building_from_source.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "dev-qt/qtbase"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "kde-frameworks/kconfig"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "kde-frameworks/kcoreaddons"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "kde-plasma/kwin"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "kde-plasma/plasma-workspace"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "kde-plasma/plasma-meta"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table1_6_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.building_from_source.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.building_from_source.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.building_from_source.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.building_from_source.table2",
+      "heads": [
+        "jsc.guide.building_from_source.table2_head1",
+        "jsc.guide.building_from_source.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "emerge <package>"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "emerge --ask <package>"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "emerge --search [term]"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "emerge --sync"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "emerge --update @world"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "emerge --unmerge <package>"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/emerge"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.building_from_source.fix1",
+          "problem": "jsc.guide.building_from_source.problem1"
+        },
+        {
+          "fix": "jsc.guide.building_from_source.fix2",
+          "problem": "jsc.guide.building_from_source.problem2"
+        },
+        {
+          "fix": "jsc.guide.building_from_source.fix3",
+          "problem": "jsc.guide.building_from_source.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:make_conf",
+        "jsc:package_tree_and_world",
+        "jsc:gentoo_reboot"
+      ]
+    }
+  ],
+  "id": "jsc:building_from_source",
+  "order": 265,
+  "section": "jsc:gentoo_system",
+  "title": "jsc.guide.building_from_source.title"
+}

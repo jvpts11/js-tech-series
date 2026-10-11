@@ -1,0 +1,287 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.clauses_priority_if_with.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.clauses_priority_if_with.table1",
+      "heads": [
+        "jsc.guide.clauses_priority_if_with.table1_head1",
+        "jsc.guide.clauses_priority_if_with.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "QUERY"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "SELECT"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "INSERT"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "DELETE"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "MOVE"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "DROP"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "CRAFT"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "COUNT"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "LOCK, UNLOCK"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "UPDATE"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "ANALYZE, VACUUM, REINDEX"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table1_11_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.clauses_priority_if_with.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.clauses_priority_if_with.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.clauses_priority_if_with.table2",
+      "heads": [
+        "jsc.guide.clauses_priority_if_with.table2_head1",
+        "jsc.guide.clauses_priority_if_with.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "LOW"
+          },
+          {
+            "literal": "LOW"
+          }
+        ],
+        [
+          {
+            "literal": "MEDIUM_LOW"
+          },
+          {
+            "literal": "MED-"
+          }
+        ],
+        [
+          {
+            "literal": "MEDIUM"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "MEDIUM_HIGH"
+          },
+          {
+            "literal": "MED+"
+          }
+        ],
+        [
+          {
+            "literal": "HIGH"
+          },
+          {
+            "literal": "HIGH"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.clauses_priority_if_with.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.clauses_priority_if_with.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.clauses_priority_if_with.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.clauses_priority_if_with.table3",
+      "heads": [
+        "jsc.guide.clauses_priority_if_with.table3_head1",
+        "jsc.guide.clauses_priority_if_with.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "qty, count, amount"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "item"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "name"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.clauses_priority_if_with.table3_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.clauses_priority_if_with.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.clauses_priority_if_with.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.clauses_priority_if_with.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.clauses_priority_if_with.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.clauses_priority_if_with.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.clauses_priority_if_with.fix1",
+          "problem": "jsc.guide.clauses_priority_if_with.problem1"
+        },
+        {
+          "fix": "jsc.guide.clauses_priority_if_with.fix2",
+          "problem": "jsc.guide.clauses_priority_if_with.problem2"
+        },
+        {
+          "fix": "jsc.guide.clauses_priority_if_with.fix3",
+          "problem": "jsc.guide.clauses_priority_if_with.problem3"
+        },
+        {
+          "fix": "jsc.guide.clauses_priority_if_with.fix4",
+          "problem": "jsc.guide.clauses_priority_if_with.problem4"
+        },
+        {
+          "fix": "jsc.guide.clauses_priority_if_with.fix5",
+          "problem": "jsc.guide.clauses_priority_if_with.problem5"
+        },
+        {
+          "fix": "jsc.guide.clauses_priority_if_with.fix6",
+          "problem": "jsc.guide.clauses_priority_if_with.problem6"
+        },
+        {
+          "fix": "jsc.guide.clauses_priority_if_with.fix7",
+          "problem": "jsc.guide.clauses_priority_if_with.problem7"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:priorities",
+        "jsc:update_cards",
+        "jsc:iql_count"
+      ]
+    }
+  ],
+  "id": "jsc:clauses_priority_if_with",
+  "order": 297,
+  "section": "jsc:iql_verbs",
+  "title": "jsc.guide.clauses_priority_if_with.title"
+}

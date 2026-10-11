@@ -11,69 +11,235 @@
     {
       "type": "table",
       "caption": "jsc.guide.the_systems.table1",
+      "heads": [
+        "jsc.guide.the_systems.table1_head1",
+        "jsc.guide.the_systems.table1_head2",
+        "jsc.guide.the_systems.table1_head3",
+        "jsc.guide.the_systems.table1_head4"
+      ],
       "rows": [
         [
           {
-            "words": "jsc.guide.the_systems.table1_1"
+            "words": "jsc.guide.the_systems.table1_1_1"
           },
           {
-            "words": "jsc.guide.the_systems.value1_1"
+            "words": "jsc.guide.the_systems.table1_1_2"
+          },
+          {
+            "amount": 4,
+            "unit": "MB"
+          },
+          {
+            "amount": 1,
+            "unit": "MB"
           }
         ],
         [
           {
-            "words": "jsc.guide.the_systems.table1_2"
+            "words": "jsc.guide.the_systems.table1_2_1"
           },
           {
-            "words": "jsc.guide.the_systems.value1_2"
+            "words": "jsc.guide.the_systems.table1_2_2"
+          },
+          {
+            "amount": 8,
+            "unit": "MB"
+          },
+          {
+            "amount": 2,
+            "unit": "MB"
           }
         ],
         [
           {
-            "words": "jsc.guide.the_systems.table1_3"
+            "words": "jsc.guide.the_systems.table1_3_1"
           },
           {
-            "words": "jsc.guide.the_systems.value1_3"
+            "words": "jsc.guide.the_systems.table1_3_2"
+          },
+          {
+            "amount": 10,
+            "unit": "MB"
+          },
+          {
+            "amount": 2,
+            "unit": "MB"
           }
         ],
         [
           {
-            "words": "jsc.guide.the_systems.table1_4"
+            "words": "jsc.guide.the_systems.table1_4_1"
           },
           {
-            "words": "jsc.guide.the_systems.value1_4"
+            "words": "jsc.guide.the_systems.table1_4_2"
+          },
+          {
+            "amount": 48,
+            "unit": "MB"
+          },
+          {
+            "amount": 16,
+            "unit": "MB"
           }
         ],
         [
           {
-            "words": "jsc.guide.the_systems.table1_5"
+            "words": "jsc.guide.the_systems.table1_5_1"
           },
           {
-            "words": "jsc.guide.the_systems.value1_5"
+            "words": "jsc.guide.the_systems.table1_5_2"
+          },
+          {
+            "amount": 1536,
+            "unit": "MB"
+          },
+          {
+            "amount": 64,
+            "unit": "MB"
           }
         ],
         [
           {
-            "words": "jsc.guide.the_systems.table1_6"
+            "words": "jsc.guide.the_systems.table1_6_1"
           },
           {
-            "words": "jsc.guide.the_systems.value1_6"
+            "words": "jsc.guide.the_systems.table1_6_2"
+          },
+          {
+            "amount": 16384,
+            "unit": "MB"
+          },
+          {
+            "amount": 384,
+            "unit": "MB"
           }
         ],
         [
           {
-            "words": "jsc.guide.the_systems.table1_7"
+            "words": "jsc.guide.the_systems.table1_7_1"
           },
           {
-            "words": "jsc.guide.the_systems.value1_7"
+            "words": "jsc.guide.the_systems.table1_7_2"
+          },
+          {
+            "amount": 16384,
+            "unit": "MB"
+          },
+          {
+            "amount": 512,
+            "unit": "MB"
           }
         ],
         [
           {
-            "words": "jsc.guide.the_systems.table1_8"
+            "words": "jsc.guide.the_systems.table1_8_1"
           },
           {
-            "words": "jsc.guide.the_systems.value1_8"
+            "words": "jsc.guide.the_systems.table1_8_2"
+          },
+          {
+            "amount": 20480,
+            "unit": "MB"
+          },
+          {
+            "amount": 768,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.the_systems.table1_9_1"
+          },
+          {
+            "words": "jsc.guide.the_systems.table1_9_2"
+          },
+          {
+            "amount": 8192,
+            "unit": "MB"
+          },
+          {
+            "amount": 48,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.the_systems.table1_10_1"
+          },
+          {
+            "words": "jsc.guide.the_systems.table1_10_2"
+          },
+          {
+            "amount": 4096,
+            "unit": "MB"
+          },
+          {
+            "amount": 24,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.the_systems.table1_11_1"
+          },
+          {
+            "words": "jsc.guide.the_systems.table1_11_2"
+          },
+          {
+            "amount": 8192,
+            "unit": "MB"
+          },
+          {
+            "amount": 48,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.the_systems.table1_12_1"
+          },
+          {
+            "words": "jsc.guide.the_systems.table1_12_2"
+          },
+          {
+            "amount": 2048,
+            "unit": "MB"
+          },
+          {
+            "amount": 12,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.the_systems.table1_13_1"
+          },
+          {
+            "words": "jsc.guide.the_systems.table1_13_2"
+          },
+          {
+            "amount": 4096,
+            "unit": "MB"
+          },
+          {
+            "amount": 12,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.the_systems.table1_14_1"
+          },
+          {
+            "words": "jsc.guide.the_systems.table1_14_2"
+          },
+          {
+            "amount": 2048,
+            "unit": "MB"
+          },
+          {
+            "amount": 16,
+            "unit": "MB"
           }
         ]
       ]
@@ -81,6 +247,68 @@
     {
       "type": "text",
       "text": "jsc.guide.the_systems.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.the_systems.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.the_systems.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.the_systems.table2",
+      "heads": [
+        "jsc.guide.the_systems.table2_head1",
+        "jsc.guide.the_systems.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.the_systems.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.the_systems.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.the_systems.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.the_systems.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.the_systems.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.the_systems.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.the_systems.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.the_systems.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.the_systems.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.the_systems.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.the_systems.text6"
     },
     {
       "type": "heading",
@@ -94,11 +322,18 @@
           "problem": "jsc.guide.the_systems.problem1"
         }
       ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installing",
+        "jsc:eras"
+      ]
     }
   ],
   "icon": "jsc:floppy_disk",
   "id": "jsc:the_systems",
-  "order": 19,
-  "section": "jsc:systems",
+  "order": 9,
+  "section": "jsc:systems_and_eras",
   "title": "jsc.guide.the_systems.title"
 }

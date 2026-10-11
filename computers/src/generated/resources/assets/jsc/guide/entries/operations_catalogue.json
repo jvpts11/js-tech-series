@@ -25,37 +25,234 @@
       "term": "jsc.guide.operations_catalogue.term4"
     },
     {
-      "type": "define",
-      "definition": "jsc.guide.operations_catalogue.definition5",
-      "term": "jsc.guide.operations_catalogue.term5"
+      "type": "table",
+      "caption": "jsc.guide.operations_catalogue.table1",
+      "heads": [
+        "jsc.guide.operations_catalogue.table1_head1",
+        "jsc.guide.operations_catalogue.table1_head2",
+        "jsc.guide.operations_catalogue.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "SELECT"
+          },
+          {
+            "words": "jsc.guide.operations_catalogue.table1_1_2"
+          },
+          {
+            "literal": "SELECT 64 iron_ingot"
+          }
+        ],
+        [
+          {
+            "literal": "INSERT"
+          },
+          {
+            "words": "jsc.guide.operations_catalogue.table1_2_2"
+          },
+          {
+            "literal": "INSERT 64 cobblestone"
+          }
+        ],
+        [
+          {
+            "literal": "MOVE"
+          },
+          {
+            "words": "jsc.guide.operations_catalogue.table1_3_2"
+          },
+          {
+            "literal": "MOVE 64 cobblestone FROM <server> TO <server>"
+          }
+        ],
+        [
+          {
+            "literal": "DELETE"
+          },
+          {
+            "words": "jsc.guide.operations_catalogue.table1_4_2"
+          },
+          {
+            "literal": "DELETE 64 cobblestone TO '<bus name>'"
+          }
+        ],
+        [
+          {
+            "literal": "DROP"
+          },
+          {
+            "words": "jsc.guide.operations_catalogue.table1_5_2"
+          },
+          {
+            "literal": "DROP 64 cobblestone"
+          }
+        ],
+        [
+          {
+            "literal": "CRAFT"
+          },
+          {
+            "words": "jsc.guide.operations_catalogue.table1_6_2"
+          },
+          {
+            "literal": "CRAFT 64 torch"
+          }
+        ],
+        [
+          {
+            "literal": "UPDATE"
+          },
+          {
+            "words": "jsc.guide.operations_catalogue.table1_7_2"
+          },
+          {
+            "literal": "UPDATE 1 iron_pickaxe SET REPAIR"
+          }
+        ],
+        [
+          {
+            "literal": "ANALYZE"
+          },
+          {
+            "words": "jsc.guide.operations_catalogue.table1_8_2"
+          },
+          {
+            "literal": "ANALYZE"
+          }
+        ],
+        [
+          {
+            "literal": "REINDEX"
+          },
+          {
+            "words": "jsc.guide.operations_catalogue.table1_9_2"
+          },
+          {
+            "literal": "REINDEX"
+          }
+        ],
+        [
+          {
+            "literal": "VACUUM"
+          },
+          {
+            "words": "jsc.guide.operations_catalogue.table1_10_2"
+          },
+          {
+            "literal": "VACUUM"
+          }
+        ],
+        [
+          {
+            "literal": "LOCK"
+          },
+          {
+            "words": "jsc.guide.operations_catalogue.table1_11_2"
+          },
+          {
+            "literal": "LOCK 64 iron_ingot"
+          }
+        ],
+        [
+          {
+            "literal": "UNLOCK"
+          },
+          {
+            "words": "jsc.guide.operations_catalogue.table1_12_2"
+          },
+          {
+            "literal": "UNLOCK iron_ingot"
+          }
+        ]
+      ]
     },
     {
-      "type": "define",
-      "definition": "jsc.guide.operations_catalogue.definition6",
-      "term": "jsc.guide.operations_catalogue.term6"
+      "type": "text",
+      "text": "jsc.guide.operations_catalogue.text2"
     },
     {
-      "type": "define",
-      "definition": "jsc.guide.operations_catalogue.definition7",
-      "term": "jsc.guide.operations_catalogue.term7"
+      "type": "text",
+      "text": "jsc.guide.operations_catalogue.text3"
     },
     {
-      "type": "define",
-      "definition": "jsc.guide.operations_catalogue.definition8",
-      "term": "jsc.guide.operations_catalogue.term8"
+      "type": "text",
+      "text": "jsc.guide.operations_catalogue.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.operations_catalogue.table2",
+      "heads": [
+        "jsc.guide.operations_catalogue.table2_head1",
+        "jsc.guide.operations_catalogue.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.operations_catalogue.table2_1_1"
+          },
+          {
+            "literal": "SMELT"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.operations_catalogue.table2_2_1"
+          },
+          {
+            "literal": "ENCHANT"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.operations_catalogue.table2_3_1"
+          },
+          {
+            "literal": "REPAIR, COMBINE, NAME"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.operations_catalogue.text5"
     },
     {
       "type": "warning",
       "text": "jsc.guide.operations_catalogue.warning1"
     },
     {
-      "type": "text",
-      "text": "jsc.guide.operations_catalogue.text2"
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.operations_catalogue.fix1",
+          "problem": "jsc.guide.operations_catalogue.problem1"
+        },
+        {
+          "fix": "jsc.guide.operations_catalogue.fix2",
+          "problem": "jsc.guide.operations_catalogue.problem2"
+        },
+        {
+          "fix": "jsc.guide.operations_catalogue.fix3",
+          "problem": "jsc.guide.operations_catalogue.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:operation_states",
+        "jsc:iql"
+      ]
     }
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:operations_catalogue",
-  "order": 33,
+  "order": 94,
   "section": "jsc:operations",
   "title": "jsc.guide.operations_catalogue.title"
 }

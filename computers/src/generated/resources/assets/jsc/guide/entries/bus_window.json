@@ -1,0 +1,154 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_window.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.bus_window.table1",
+      "heads": [
+        "jsc.guide.bus_window.table1_head1",
+        "jsc.guide.bus_window.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.bus_window.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.bus_window.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_window.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.bus_window.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_window.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.bus_window.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_window.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_window.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_window.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_window.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_window.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.bus_window.table2",
+      "heads": [
+        "jsc.guide.bus_window.table2_head1",
+        "jsc.guide.bus_window.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.bus_window.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.bus_window.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_window.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.bus_window.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_window.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.bus_window.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_window.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.bus_window.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_window.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_window.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.bus_window.definition1",
+      "term": "jsc.guide.bus_window.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_window.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.bus_window.fix1",
+          "problem": "jsc.guide.bus_window.problem1"
+        },
+        {
+          "fix": "jsc.guide.bus_window.fix2",
+          "problem": "jsc.guide.bus_window.problem2"
+        },
+        {
+          "fix": "jsc.guide.bus_window.fix3",
+          "problem": "jsc.guide.bus_window.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:bus_activity",
+        "jsc:programming_buses"
+      ]
+    }
+  ],
+  "icon": "jsc:import_bus",
+  "id": "jsc:bus_window",
+  "order": 90,
+  "section": "jsc:bus_windows",
+  "title": "jsc.guide.bus_window.title"
+}

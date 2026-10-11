@@ -1,0 +1,192 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.file_explorer.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.file_explorer.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.file_explorer.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.file_explorer.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.file_explorer.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.file_explorer.table1",
+      "heads": [
+        "jsc.guide.file_explorer.table1_head1",
+        "jsc.guide.file_explorer.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Backspace"
+          },
+          {
+            "words": "jsc.guide.file_explorer.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.file_explorer.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Up, Down"
+          },
+          {
+            "words": "jsc.guide.file_explorer.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Delete"
+          },
+          {
+            "words": "jsc.guide.file_explorer.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "F2"
+          },
+          {
+            "words": "jsc.guide.file_explorer.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+C"
+          },
+          {
+            "words": "jsc.guide.file_explorer.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+X"
+          },
+          {
+            "words": "jsc.guide.file_explorer.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+V"
+          },
+          {
+            "words": "jsc.guide.file_explorer.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Ctrl+A"
+          },
+          {
+            "words": "jsc.guide.file_explorer.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Esc"
+          },
+          {
+            "words": "jsc.guide.file_explorer.table1_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.file_explorer.heading3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.file_explorer.step1",
+        "jsc.guide.file_explorer.step2",
+        "jsc.guide.file_explorer.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.file_explorer.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.file_explorer.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.file_explorer.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.file_explorer.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.file_explorer.definition1",
+      "term": "jsc.guide.file_explorer.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.file_explorer.definition2",
+      "term": "jsc.guide.file_explorer.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.file_explorer.fix1",
+          "problem": "jsc.guide.file_explorer.problem1"
+        },
+        {
+          "fix": "jsc.guide.file_explorer.fix2",
+          "problem": "jsc.guide.file_explorer.problem2"
+        },
+        {
+          "fix": "jsc.guide.file_explorer.fix3",
+          "problem": "jsc.guide.file_explorer.problem3"
+        },
+        {
+          "fix": "jsc.guide.file_explorer.fix4",
+          "problem": "jsc.guide.file_explorer.problem4"
+        },
+        {
+          "fix": "jsc.guide.file_explorer.fix5",
+          "problem": "jsc.guide.file_explorer.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:drives",
+        "jsc:interactor_screen"
+      ]
+    }
+  ],
+  "id": "jsc:file_explorer",
+  "order": 164,
+  "section": "jsc:frames_everyday",
+  "title": "jsc.guide.file_explorer.title"
+}

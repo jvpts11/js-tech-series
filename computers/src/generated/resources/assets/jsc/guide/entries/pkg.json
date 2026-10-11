@@ -1,0 +1,261 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.pkg.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.pkg.definition1",
+      "term": "jsc.guide.pkg.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.pkg.definition2",
+      "term": "jsc.guide.pkg.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pkg.table1",
+      "heads": [
+        "jsc.guide.pkg.table1_head1",
+        "jsc.guide.pkg.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "pkg install <package>"
+          },
+          {
+            "words": "jsc.guide.pkg.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg delete <package>"
+          },
+          {
+            "words": "jsc.guide.pkg.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg search [term]"
+          },
+          {
+            "words": "jsc.guide.pkg.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg info"
+          },
+          {
+            "words": "jsc.guide.pkg.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg update"
+          },
+          {
+            "words": "jsc.guide.pkg.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg upgrade"
+          },
+          {
+            "words": "jsc.guide.pkg.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pkg.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pkg.text3"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/freebsd/pkg"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pkg.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.pkg.step1",
+        "jsc.guide.pkg.step2",
+        "jsc.guide.pkg.step3"
+      ]
+    },
+    {
+      "type": "listing",
+      "lines": [
+        "Updating Mirror repository catalogue...",
+        "Mirror repository is up to date.",
+        "The following 1 package(s) will be affected (of 0 checked):",
+        "New packages to be INSTALLED:",
+        "        <name>: <version>",
+        "Number of packages to be installed: 1",
+        "<n> MiB to be downloaded.",
+        "[1/1] Fetching <name>-<version>.pkg from mirror://mainframe"
+      ],
+      "name": "pkg install"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pkg.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pkg.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pkg.table2",
+      "heads": [
+        "jsc.guide.pkg.table2_head1",
+        "jsc.guide.pkg.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "pkg: could not resolve mirror://"
+          },
+          {
+            "words": "jsc.guide.pkg.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg: unable to locate package <name>"
+          },
+          {
+            "words": "jsc.guide.pkg.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg: unmet requirements (hardware or free disk space)"
+          },
+          {
+            "words": "jsc.guide.pkg.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg: <name> is not installed."
+          },
+          {
+            "words": "jsc.guide.pkg.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg: <name> comes with every system."
+          },
+          {
+            "words": "jsc.guide.pkg.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg: <name> is already installed."
+          },
+          {
+            "words": "jsc.guide.pkg.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg: <name> needs <era> hardware or later"
+          },
+          {
+            "words": "jsc.guide.pkg.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg: <name> only installs on the Mainframe"
+          },
+          {
+            "words": "jsc.guide.pkg.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg: this computer cannot store installed programs"
+          },
+          {
+            "words": "jsc.guide.pkg.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "no packages installed"
+          },
+          {
+            "words": "jsc.guide.pkg.table2_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "no packages match '<term>'"
+          },
+          {
+            "words": "jsc.guide.pkg.table2_11_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.pkg.fix1",
+          "problem": "jsc.guide.pkg.problem1"
+        },
+        {
+          "fix": "jsc.guide.pkg.fix2",
+          "problem": "jsc.guide.pkg.problem2"
+        },
+        {
+          "fix": "jsc.guide.pkg.fix3",
+          "problem": "jsc.guide.pkg.problem3"
+        },
+        {
+          "fix": "jsc.guide.pkg.fix4",
+          "problem": "jsc.guide.pkg.problem4"
+        },
+        {
+          "fix": "jsc.guide.pkg.fix5",
+          "problem": "jsc.guide.pkg.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:programs",
+        "jsc:software_commands",
+        "jsc:ports_tree"
+      ]
+    }
+  ],
+  "id": "jsc:pkg",
+  "order": 274,
+  "section": "jsc:freebsd_software",
+  "title": "jsc.guide.pkg.title"
+}

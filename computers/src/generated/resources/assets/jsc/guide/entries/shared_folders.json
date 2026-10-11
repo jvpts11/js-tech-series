@@ -1,0 +1,88 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.shared_folders.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shared_folders.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.shared_folders.table1",
+      "heads": [
+        "jsc.guide.shared_folders.table1_head1",
+        "jsc.guide.shared_folders.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "config share <folder> [read|write]"
+          },
+          {
+            "words": "jsc.guide.shared_folders.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "config unshare <name>"
+          },
+          {
+            "words": "jsc.guide.shared_folders.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "config"
+          },
+          {
+            "words": "jsc.guide.shared_folders.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "config netshare <0-1000>"
+          },
+          {
+            "words": "jsc.guide.shared_folders.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shared_folders.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.shared_folders.fix1",
+          "problem": "jsc.guide.shared_folders.problem1"
+        },
+        {
+          "fix": "jsc.guide.shared_folders.fix2",
+          "problem": "jsc.guide.shared_folders.problem2"
+        },
+        {
+          "fix": "jsc.guide.shared_folders.fix3",
+          "problem": "jsc.guide.shared_folders.problem3"
+        },
+        {
+          "fix": "jsc.guide.shared_folders.fix4",
+          "problem": "jsc.guide.shared_folders.problem4"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:server",
+  "id": "jsc:shared_folders",
+  "order": 75,
+  "section": "jsc:network_remote",
+  "title": "jsc.guide.shared_folders.title"
+}

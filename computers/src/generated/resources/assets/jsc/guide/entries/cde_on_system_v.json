@@ -1,0 +1,118 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_on_system_v.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_on_system_v.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cde_on_system_v.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cde_on_system_v.table1_1"
+          },
+          {
+            "words": "jsc.guide.cde_on_system_v.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_on_system_v.table1_2"
+          },
+          {
+            "amount": 32,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_on_system_v.table1_3"
+          },
+          {
+            "amount": 16,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_on_system_v.table1_4"
+          },
+          {
+            "words": "jsc.guide.cde_on_system_v.value1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_on_system_v.table1_5"
+          },
+          {
+            "words": "jsc.guide.cde_on_system_v.value1_5"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_on_system_v.table1_6"
+          },
+          {
+            "words": "jsc.guide.cde_on_system_v.value1_6"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.cde_on_system_v.step1",
+        "jsc.guide.cde_on_system_v.step2",
+        "jsc.guide.cde_on_system_v.step3",
+        "jsc.guide.cde_on_system_v.step4"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_on_system_v.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cde_on_system_v.fix1",
+          "problem": "jsc.guide.cde_on_system_v.problem1"
+        },
+        {
+          "fix": "jsc.guide.cde_on_system_v.fix2",
+          "problem": "jsc.guide.cde_on_system_v.problem2"
+        },
+        {
+          "fix": "jsc.guide.cde_on_system_v.fix3",
+          "problem": "jsc.guide.cde_on_system_v.problem3"
+        },
+        {
+          "fix": "jsc.guide.cde_on_system_v.fix4",
+          "problem": "jsc.guide.cde_on_system_v.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:cde",
+        "jsc:desktops",
+        "jsc:installpkg"
+      ]
+    }
+  ],
+  "id": "jsc:cde_on_system_v",
+  "order": 284,
+  "section": "jsc:system_v_desktop",
+  "title": "jsc.guide.cde_on_system_v.title"
+}

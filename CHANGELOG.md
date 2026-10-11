@@ -216,6 +216,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   and the Book of Sigma, white with a large blue Sigma. The three books of the UNIX-like systems share their chapters
   on the shell, the desktops, the editors at the terminal and finding help. The Guide to Operations has a page on
   them.
+- The Guide to Operations written anew in thirteen chapters, from starting a first computer to the achievements and
+  the other books, and the six books written whole: the Midsoft systems, MC-DOS, the Frames desktop, programs and
+  editions and the Command Prompt; the Linux distributions and their install; Arch Linux and Gentoo by hand, the disks
+  and what to do when the reboot refuses; FreeBSD and UNIX System V; IQL from a first query to its engines, tools and
+  recipes; and Sigma from a first program to its library, errors, packages and worked examples. Every command a system
+  runs has its page in that system's book, every program and system is named or explained, every verb and clause of
+  IQL is in Learning IQL, and every member of the Sigma library and every error of its compiler is in the Book of
+  Sigma. Every page speaks to its reader, says what its numbers count, and a word used before its own page leads
+  there. In English and Brazilian Portuguese.
 - The computers' help programs read the manuals' new parts: a table of several columns as columns of text, set out
   row by row on a screen too narrow for it; listings and sessions as their lines; keys by their names; scenes as their
   captions and the list of their balloons. A command whose page a manual prints shows that page at `man`, at `HELP`

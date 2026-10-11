@@ -1,0 +1,216 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_no_exceptions.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_no_exceptions.definition1",
+      "term": "jsc.guide.sigma_no_exceptions.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_no_exceptions.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_no_exceptions.definition2",
+      "term": "jsc.guide.sigma_no_exceptions.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_no_exceptions.table1",
+      "heads": [
+        "jsc.guide.sigma_no_exceptions.table1_head1",
+        "jsc.guide.sigma_no_exceptions.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Convert.TryInt(text, out int)"
+          },
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Convert.TryLong(text, out long)"
+          },
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Convert.TryDouble(text, out double)"
+          },
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Convert.TryBool(text, out bool)"
+          },
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "File.TryRead(path, out string)"
+          },
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Map.TryGet(key, out value)"
+          },
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_no_exceptions.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_no_exceptions.table2",
+      "heads": [
+        "jsc.guide.sigma_no_exceptions.table2_head1",
+        "jsc.guide.sigma_no_exceptions.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_no_exceptions.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_no_exceptions.definition3",
+      "term": "jsc.guide.sigma_no_exceptions.term3"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "using System.Utils.*;",
+        "using System.IO.*;",
+        "",
+        "namespace Parse;",
+        "",
+        "class Reader",
+        "{",
+        "    static void Main()",
+        "    {",
+        "        string text = \"42\";",
+        "        int n;",
+        "        if (Convert.TryInt(text, out n))",
+        "        {",
+        "            Console.PrintLine(\"\" + n);",
+        "        }",
+        "        else",
+        "        {",
+        "            Console.PrintLine(\"not a number\");",
+        "        }",
+        "    }",
+        "}"
+      ],
+      "name": "Reader.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_no_exceptions.fix1",
+          "problem": "jsc.guide.sigma_no_exceptions.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_no_exceptions.fix2",
+          "problem": "jsc.guide.sigma_no_exceptions.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_no_exceptions.fix3",
+          "problem": "jsc.guide.sigma_no_exceptions.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_no_exceptions.fix4",
+          "problem": "jsc.guide.sigma_no_exceptions.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_runtime_stops",
+        "jsc:sigma_dispose"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_no_exceptions",
+  "order": 348,
+  "section": "jsc:sigma_failures",
+  "title": "jsc.guide.sigma_no_exceptions.title"
+}

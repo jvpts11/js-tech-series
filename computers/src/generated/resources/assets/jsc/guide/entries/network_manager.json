@@ -1,0 +1,127 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.network_manager.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_manager.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_manager.table1",
+      "heads": [
+        "jsc.guide.network_manager.table1_head1",
+        "jsc.guide.network_manager.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.network_manager.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.network_manager.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_manager.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.network_manager.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_manager.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.network_manager.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_manager.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.network_manager.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_manager.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.network_manager.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_manager.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.network_manager.table1_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_manager.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.network_manager.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_manager.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_manager.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_manager.definition1",
+      "term": "jsc.guide.network_manager.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_manager.definition2",
+      "term": "jsc.guide.network_manager.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.network_manager.fix1",
+          "problem": "jsc.guide.network_manager.problem1"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.network_manager.fix2",
+          "problem": "jsc.guide.network_manager.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:network_manager",
+  "order": 70,
+  "section": "jsc:network_operation",
+  "title": "jsc.guide.network_manager.title"
+}

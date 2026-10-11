@@ -1,0 +1,153 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_pacman_in_system.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_pacman_in_system.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.arch_pacman_in_system.step1",
+        "jsc.guide.arch_pacman_in_system.step2",
+        "jsc.guide.arch_pacman_in_system.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_pacman_in_system.text3"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "[root@archiso /]# ",
+          "text": "pacman -S efibootmgr",
+          "typed": true
+        },
+        {
+          "text": ":: Proceed with installation? [Y/n]"
+        }
+      ],
+      "look": "jsc:guide/terminal/zsh",
+      "title": "Arch Linux"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_pacman_in_system.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.arch_pacman_in_system.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_pacman_in_system.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.arch_pacman_in_system.table1",
+      "heads": [
+        "jsc.guide.arch_pacman_in_system.table1_head1",
+        "jsc.guide.arch_pacman_in_system.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "pacman -S <package>"
+          },
+          {
+            "words": "jsc.guide.arch_pacman_in_system.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "pacman -Ss [term]"
+          },
+          {
+            "words": "jsc.guide.arch_pacman_in_system.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "pacman -Q"
+          },
+          {
+            "words": "jsc.guide.arch_pacman_in_system.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "pacman -Sy"
+          },
+          {
+            "words": "jsc.guide.arch_pacman_in_system.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "pacman -Syu"
+          },
+          {
+            "words": "jsc.guide.arch_pacman_in_system.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "pacman -R <package>"
+          },
+          {
+            "words": "jsc.guide.arch_pacman_in_system.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/pacman"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.arch_pacman_in_system.fix1",
+          "problem": "jsc.guide.arch_pacman_in_system.problem1"
+        },
+        {
+          "fix": "jsc.guide.arch_pacman_in_system.fix2",
+          "problem": "jsc.guide.arch_pacman_in_system.problem2"
+        },
+        {
+          "fix": "jsc.guide.arch_pacman_in_system.fix3",
+          "problem": "jsc.guide.arch_pacman_in_system.problem3"
+        },
+        {
+          "fix": "jsc.guide.arch_pacman_in_system.fix4",
+          "problem": "jsc.guide.arch_pacman_in_system.problem4"
+        },
+        {
+          "fix": "jsc.guide.arch_pacman_in_system.fix5",
+          "problem": "jsc.guide.arch_pacman_in_system.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:programs"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:arch_pacman_in_system",
+  "order": 255,
+  "section": "jsc:arch_finish",
+  "title": "jsc.guide.arch_pacman_in_system.title"
+}

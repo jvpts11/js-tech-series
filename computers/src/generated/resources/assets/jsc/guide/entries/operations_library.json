@@ -1,0 +1,300 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.operations_library.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.operations_library.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.operations_library.table1",
+      "heads": [
+        "jsc.guide.operations_library.table1_head1",
+        "jsc.guide.operations_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Operations.Pull(item, amount)"
+          },
+          {
+            "words": "jsc.guide.operations_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Operations.Push(item, amount)"
+          },
+          {
+            "words": "jsc.guide.operations_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Operations.Craft(item, amount)"
+          },
+          {
+            "words": "jsc.guide.operations_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Operations.Cancel(id)"
+          },
+          {
+            "words": "jsc.guide.operations_library.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Operations.Reprioritise(id, priority)"
+          },
+          {
+            "words": "jsc.guide.operations_library.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Operations.Update(item, action, amount)"
+          },
+          {
+            "words": "jsc.guide.operations_library.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Operations.Get(id)"
+          },
+          {
+            "words": "jsc.guide.operations_library.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Operations.List()"
+          },
+          {
+            "words": "jsc.guide.operations_library.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.operations_library.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.operations_library.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.operations_library.table2",
+      "heads": [
+        "jsc.guide.operations_library.table2_head1",
+        "jsc.guide.operations_library.table2_head2",
+        "jsc.guide.operations_library.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "AskResult"
+          },
+          {
+            "literal": "AskResult.Ok, AskResult.Message"
+          },
+          {
+            "words": "jsc.guide.operations_library.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "OperationInfo"
+          },
+          {
+            "literal": "OperationInfo.Id, OperationInfo.Type, OperationInfo.Item, OperationInfo.Moved, OperationInfo.Requested, OperationInfo.Status, OperationInfo.Priority"
+          },
+          {
+            "words": "jsc.guide.operations_library.table2_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.operations_library.table3",
+      "heads": [
+        "jsc.guide.operations_library.table3_head1",
+        "jsc.guide.operations_library.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.operations_library.table3_1_1"
+          },
+          {
+            "literal": "low"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.operations_library.table3_2_1"
+          },
+          {
+            "literal": "medium_low"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.operations_library.table3_3_1"
+          },
+          {
+            "literal": "medium, or normal"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.operations_library.table3_4_1"
+          },
+          {
+            "literal": "medium_high"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.operations_library.table3_5_1"
+          },
+          {
+            "literal": "high"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.operations_library.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.operations_library.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.operations_library.table4",
+      "heads": [
+        "jsc.guide.operations_library.table4_head1",
+        "jsc.guide.operations_library.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.operations_library.table4_1_1"
+          },
+          {
+            "words": "jsc.guide.operations_library.table4_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.operations_library.table4_2_1"
+          },
+          {
+            "words": "jsc.guide.operations_library.table4_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.operations_library.table4_3_1"
+          },
+          {
+            "words": "jsc.guide.operations_library.table4_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.operations_library.table4_4_1"
+          },
+          {
+            "words": "jsc.guide.operations_library.table4_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.operations_library.table4_5_1"
+          },
+          {
+            "words": "jsc.guide.operations_library.table4_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.operations_library.table4_6_1"
+          },
+          {
+            "words": "jsc.guide.operations_library.table4_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.operations_library.table4_7_1"
+          },
+          {
+            "words": "jsc.guide.operations_library.table4_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.operations_library.table4_8_1"
+          },
+          {
+            "words": "jsc.guide.operations_library.table4_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.operations_library.fix1",
+          "problem": "jsc.guide.operations_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.operations_library.fix2",
+          "problem": "jsc.guide.operations_library.problem2"
+        },
+        {
+          "fix": "jsc.guide.operations_library.fix3",
+          "problem": "jsc.guide.operations_library.problem3"
+        },
+        {
+          "fix": "jsc.guide.operations_library.fix4",
+          "problem": "jsc.guide.operations_library.problem4"
+        },
+        {
+          "fix": "jsc.guide.operations_library.fix5",
+          "problem": "jsc.guide.operations_library.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:what_operations_are",
+        "jsc:operations_catalogue",
+        "jsc:states_and_queues"
+      ]
+    }
+  ],
+  "id": "jsc:operations_library",
+  "order": 363,
+  "section": "jsc:library_network",
+  "title": "jsc.guide.operations_library.title"
+}

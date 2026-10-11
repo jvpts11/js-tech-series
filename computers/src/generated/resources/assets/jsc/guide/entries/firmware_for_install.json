@@ -1,0 +1,104 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.firmware_for_install.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.firmware_for_install.definition1",
+      "term": "jsc.guide.firmware_for_install.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.firmware_for_install.definition2",
+      "term": "jsc.guide.firmware_for_install.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.firmware_for_install.definition3",
+      "term": "jsc.guide.firmware_for_install.term3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.firmware_for_install.table1",
+      "heads": [
+        "jsc.guide.firmware_for_install.table1_head1",
+        "jsc.guide.firmware_for_install.table1_head2",
+        "jsc.guide.firmware_for_install.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.firmware_for_install.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.firmware_for_install.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.firmware_for_install.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.firmware_for_install.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.firmware_for_install.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.firmware_for_install.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.firmware_for_install.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.firmware_for_install.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.firmware_for_install.table1_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.firmware_for_install.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.firmware_for_install.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.firmware_for_install.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.firmware_for_install.fix1",
+          "problem": "jsc.guide.firmware_for_install.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:firmware",
+        "jsc:the_systems"
+      ]
+    }
+  ],
+  "icon": "jsc:motherboard_atx_standard_lga1150",
+  "id": "jsc:firmware_for_install",
+  "order": 239,
+  "section": "jsc:by_hand_basics",
+  "title": "jsc.guide.firmware_for_install.title"
+}

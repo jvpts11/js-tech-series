@@ -1,0 +1,314 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_list_map.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_list_map.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_list_map.table1",
+      "heads": [
+        "jsc.guide.sigma_list_map.table1_head1",
+        "jsc.guide.sigma_list_map.table1_head2",
+        "jsc.guide.sigma_list_map.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Count"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "Add(item)"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "Insert(index, item)"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "RemoveAt(index)"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "Remove(item)"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "Clear()"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "Contains(item)"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "IndexOf(item)"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "Get(index), Set(index, item)"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_9_3"
+          }
+        ],
+        [
+          {
+            "literal": "Sort()"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table1_10_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_list_map.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_list_map.definition1",
+      "term": "jsc.guide.sigma_list_map.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_list_map.definition2",
+      "term": "jsc.guide.sigma_list_map.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_list_map.table2",
+      "heads": [
+        "jsc.guide.sigma_list_map.table2_head1",
+        "jsc.guide.sigma_list_map.table2_head2",
+        "jsc.guide.sigma_list_map.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Count"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "Put(key, value)"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "Get(key)"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "ContainsKey(key)"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "TryGet(key, out value)"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "Remove(key)"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "Keys(), Values()"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_list_map.table2_7_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_list_map.text4"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "using System.Collections.*;",
+        "using System.IO.*;",
+        "",
+        "namespace Inventory;",
+        "",
+        "class Stock",
+        "{",
+        "    static void Main()",
+        "    {",
+        "        Map<string, int> count = new Map<string, int>();",
+        "        count.Put(\"apple\", 3);",
+        "        int got;",
+        "        if (count.TryGet(\"apple\", out got))",
+        "        {",
+        "            Console.PrintLine(\"\" + got);",
+        "        }",
+        "        List<string> names = count.Keys();",
+        "        foreach (string name in names)",
+        "        {",
+        "            Console.PrintLine(name);",
+        "        }",
+        "    }",
+        "}"
+      ],
+      "name": "Stock.sgs"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_list_map.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_list_map.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_list_map.fix1",
+          "problem": "jsc.guide.sigma_list_map.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_list_map.fix2",
+          "problem": "jsc.guide.sigma_list_map.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_list_map.fix3",
+          "problem": "jsc.guide.sigma_list_map.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_list_map.fix4",
+          "problem": "jsc.guide.sigma_list_map.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_control_flow",
+        "jsc:sigma_no_exceptions"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_list_map",
+  "order": 347,
+  "section": "jsc:sigma_data",
+  "title": "jsc.guide.sigma_list_map.title"
+}

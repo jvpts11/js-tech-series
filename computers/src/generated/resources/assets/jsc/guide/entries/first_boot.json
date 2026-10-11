@@ -1,0 +1,183 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.first_boot.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_boot.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.first_boot.definition1",
+      "term": "jsc.guide.first_boot.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.first_boot.table1",
+      "heads": [
+        "jsc.guide.first_boot.table1_head1",
+        "jsc.guide.first_boot.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Loading Linux 6.8-jsc ..."
+          },
+          {
+            "words": "jsc.guide.first_boot.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Linux version 6.8-jsc (x86_64)"
+          },
+          {
+            "words": "jsc.guide.first_boot.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "CPU: <processor model>"
+          },
+          {
+            "words": "jsc.guide.first_boot.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Memory: <MB> MB available"
+          },
+          {
+            "words": "jsc.guide.first_boot.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "sda: <disk name>"
+          },
+          {
+            "words": "jsc.guide.first_boot.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "[  OK  ] Started Journal Service."
+          },
+          {
+            "words": "jsc.guide.first_boot.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "[  OK  ] Reached target Local File Systems."
+          },
+          {
+            "words": "jsc.guide.first_boot.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "[  OK  ] Reached target Network is Online."
+          },
+          {
+            "words": "jsc.guide.first_boot.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "[  OK  ] Found package mirror on <Mainframe name>."
+          },
+          {
+            "words": "jsc.guide.first_boot.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Starting kde plasma Display Manager..."
+          },
+          {
+            "words": "jsc.guide.first_boot.table1_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_boot.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.first_boot.definition2",
+      "term": "jsc.guide.first_boot.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_boot.text4"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "text": "Ubuntu <hostname> tty1"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "<hostname> login: player"
+        },
+        {
+          "text": "Password:"
+        },
+        {
+          "text": "Welcome to Ubuntu (Linux 6.8-jsc x86_64)"
+        },
+        {
+          "text": ""
+        }
+      ],
+      "look": "jsc:guide/terminal/bash",
+      "title": "Ubuntu"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_boot.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.first_boot.definition3",
+      "term": "jsc.guide.first_boot.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.first_boot.fix1",
+          "problem": "jsc.guide.first_boot.problem1"
+        },
+        {
+          "fix": "jsc.guide.first_boot.fix2",
+          "problem": "jsc.guide.first_boot.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:apt",
+        "jsc:dnf",
+        "jsc:mirror_and_packages"
+      ]
+    }
+  ],
+  "id": "jsc:first_boot",
+  "order": 232,
+  "section": "jsc:installing_linux",
+  "title": "jsc.guide.first_boot.title"
+}

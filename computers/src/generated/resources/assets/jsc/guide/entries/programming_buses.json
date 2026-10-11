@@ -1,0 +1,392 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.programming_buses.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programming_buses.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programming_buses.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programming_buses.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.programming_buses.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.programming_buses.table1",
+      "heads": [
+        "jsc.guide.programming_buses.table1_head1",
+        "jsc.guide.programming_buses.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "SET BUS 'Ore in' ON"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' OFF"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' MODE ON DEMAND"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' FILTER ONLY iron_ore, coal"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' FILTER ALL BUT dirt"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' FILTER NONE"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' FILTER TAG c:ores, c:logs"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' MATCH FUZZY"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' KEEP 16 MAX 64"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' KEEP iron_ore 16 MAX iron_ore 64"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' PRIORITY 5"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' WHEN STOCK iron_ore < 512"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' WHEN STOCK TAG c:ores < 4096"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' WHEN TIME BETWEEN 18:00 AND 06:00"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Ore in' AFTER BUS 'Coal in'"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET BUS 'Chest wall' ACCESS READ ONLY"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table1_16_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.programming_buses.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.programming_buses.table2",
+      "heads": [
+        "jsc.guide.programming_buses.table2_head1",
+        "jsc.guide.programming_buses.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "bus(\"Ore in\").Only(\"iron_ore, coal\");"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "bus(\"Ore in\").AllBut(\"dirt\");"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "bus(\"Ore in\").Tag(\"c:ores\");"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "bus(\"Ore in\").Fuzzy(true);"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "bus(\"Ore in\").Keep(16).Max(64);"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "bus(\"Ore in\").Item(\"iron_ore\").Keep(16);"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "bus(\"Ore in\").Priority(5);"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "bus(\"Ore in\").WhenStock(\"iron_ore\", 512);"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "bus(\"Ore in\").Between(18, 6);"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "bus(\"Ore in\").After(bus(\"Coal in\"));"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table2_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "bus(\"Ore in\").OnDemand();"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table2_11_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programming_buses.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.programming_buses.heading3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.programming_buses.table3",
+      "heads": [
+        "jsc.guide.programming_buses.table3_head1",
+        "jsc.guide.programming_buses.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.programming_buses.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programming_buses.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programming_buses.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programming_buses.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table3_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programming_buses.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table3_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programming_buses.table3_6_1"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table3_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programming_buses.table3_7_1"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table3_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programming_buses.table3_8_1"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table3_8_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.programming_buses.table3_9_1"
+          },
+          {
+            "words": "jsc.guide.programming_buses.table3_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.programming_buses.fix1",
+          "problem": "jsc.guide.programming_buses.problem1"
+        },
+        {
+          "fix": "jsc.guide.programming_buses.fix2",
+          "problem": "jsc.guide.programming_buses.problem2"
+        },
+        {
+          "fix": "jsc.guide.programming_buses.fix3",
+          "problem": "jsc.guide.programming_buses.problem3"
+        },
+        {
+          "fix": "jsc.guide.programming_buses.fix4",
+          "problem": "jsc.guide.programming_buses.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:iql",
+        "jsc:what_iql_is",
+        "jsc:buses_library"
+      ]
+    }
+  ],
+  "icon": "jsc:export_bus",
+  "id": "jsc:programming_buses",
+  "order": 92,
+  "section": "jsc:bus_programming",
+  "title": "jsc.guide.programming_buses.title"
+}

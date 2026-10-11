@@ -1,0 +1,158 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_methods_out_ref.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_methods_out_ref.table1",
+      "heads": [
+        "jsc.guide.sigma_methods_out_ref.table1_head1",
+        "jsc.guide.sigma_methods_out_ref.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "static int Twice(int x)"
+          },
+          {
+            "words": "jsc.guide.sigma_methods_out_ref.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "void Show(string text)"
+          },
+          {
+            "words": "jsc.guide.sigma_methods_out_ref.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "bool Split(int total, out int half)"
+          },
+          {
+            "words": "jsc.guide.sigma_methods_out_ref.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_methods_out_ref.text2"
+    },
+    {
+      "type": "listing",
+      "language": "sg",
+      "lines": [
+        "class Maths",
+        "{",
+        "    static int Twice(int x) { return x * 2; }",
+        "",
+        "    static bool Split(int total, out int half)",
+        "    {",
+        "        if (total % 2 != 0)",
+        "        {",
+        "            half = 0;",
+        "            return false;",
+        "        }",
+        "        half = total / 2;",
+        "        return true;",
+        "    }",
+        "}"
+      ],
+      "name": "Maths.sg"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_methods_out_ref.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_methods_out_ref.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_methods_out_ref.text5"
+    },
+    {
+      "type": "listing",
+      "language": "sg",
+      "lines": [
+        "int half;",
+        "bool even = Maths.Split(10, out half);",
+        "printf(\"%d\", half);"
+      ],
+      "name": "Caller.sg"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_methods_out_ref.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_methods_out_ref.definition1",
+      "term": "jsc.guide.sigma_methods_out_ref.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_methods_out_ref.definition2",
+      "term": "jsc.guide.sigma_methods_out_ref.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_methods_out_ref.definition3",
+      "term": "jsc.guide.sigma_methods_out_ref.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_methods_out_ref.definition4",
+      "term": "jsc.guide.sigma_methods_out_ref.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_methods_out_ref.fix1",
+          "problem": "jsc.guide.sigma_methods_out_ref.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_methods_out_ref.fix2",
+          "problem": "jsc.guide.sigma_methods_out_ref.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_methods_out_ref.fix3",
+          "problem": "jsc.guide.sigma_methods_out_ref.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_methods_out_ref.fix4",
+          "problem": "jsc.guide.sigma_methods_out_ref.problem4"
+        },
+        {
+          "fix": "jsc.guide.sigma_methods_out_ref.fix5",
+          "problem": "jsc.guide.sigma_methods_out_ref.problem5"
+        },
+        {
+          "fix": "jsc.guide.sigma_methods_out_ref.fix6",
+          "problem": "jsc.guide.sigma_methods_out_ref.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_classes",
+        "jsc:sigma_delegates_events"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_methods_out_ref",
+  "order": 339,
+  "section": "jsc:sigma_functions",
+  "title": "jsc.guide.sigma_methods_out_ref.title"
+}

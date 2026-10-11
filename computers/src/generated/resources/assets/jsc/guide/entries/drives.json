@@ -5,16 +5,233 @@
       "text": "jsc.guide.drives.text1"
     },
     {
+      "type": "define",
+      "definition": "jsc.guide.drives.definition1",
+      "term": "jsc.guide.drives.term1"
+    },
+    {
       "type": "text",
       "text": "jsc.guide.drives.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.drives.definition2",
+      "term": "jsc.guide.drives.term2"
     },
     {
       "type": "text",
       "text": "jsc.guide.drives.text3"
     },
     {
+      "type": "table",
+      "caption": "jsc.guide.drives.table1",
+      "heads": [
+        "jsc.guide.drives.table1_head1",
+        "jsc.guide.drives.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.drives.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.drives.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.drives.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.drives.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.drives.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.drives.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.drives.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.drives.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.drives.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.drives.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.drives.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.drives.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
       "type": "text",
       "text": "jsc.guide.drives.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.drives.table2",
+      "heads": [
+        "jsc.guide.drives.table2_head1",
+        "jsc.guide.drives.table2_head2",
+        "jsc.guide.drives.table2_head3",
+        "jsc.guide.drives.table2_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.drives.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.drives.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.drives.table2_1_3"
+          },
+          {
+            "words": "jsc.guide.drives.table2_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.drives.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.drives.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.drives.table2_2_3"
+          },
+          {
+            "words": "jsc.guide.drives.table2_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.drives.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.drives.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.drives.table2_3_3"
+          },
+          {
+            "words": "jsc.guide.drives.table2_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.drives.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.drives.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.drives.table2_4_3"
+          },
+          {
+            "words": "jsc.guide.drives.table2_4_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.drives.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.drives.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.drives.table2_5_3"
+          },
+          {
+            "words": "jsc.guide.drives.table2_5_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.drives.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.drives.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.drives.table2_6_3"
+          },
+          {
+            "words": "jsc.guide.drives.table2_6_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.drives.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.drives.table2_7_2"
+          },
+          {
+            "words": "jsc.guide.drives.table2_7_3"
+          },
+          {
+            "words": "jsc.guide.drives.table2_7_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.drives.table2_8_1"
+          },
+          {
+            "words": "jsc.guide.drives.table2_8_2"
+          },
+          {
+            "words": "jsc.guide.drives.table2_8_3"
+          },
+          {
+            "words": "jsc.guide.drives.table2_8_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.drives.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.drives.definition3",
+      "term": "jsc.guide.drives.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.drives.text6"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.drives.step1",
+        "jsc.guide.drives.step2",
+        "jsc.guide.drives.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.drives.text7"
     },
     {
       "type": "heading",
@@ -30,7 +247,23 @@
         {
           "fix": "jsc.guide.drives.fix2",
           "problem": "jsc.guide.drives.problem2"
+        },
+        {
+          "fix": "jsc.guide.drives.fix3",
+          "problem": "jsc.guide.drives.problem3"
+        },
+        {
+          "fix": "jsc.guide.drives.fix4",
+          "problem": "jsc.guide.drives.problem4"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:dock_station",
+        "jsc:installing",
+        "jsc:case_front"
       ]
     }
   ],
@@ -43,7 +276,7 @@
     "jsc:blu_ray_drive",
     "jsc:dock_station"
   ],
-  "order": 46,
+  "order": 42,
   "section": "jsc:peripherals",
   "title": "jsc.guide.drives.title"
 }

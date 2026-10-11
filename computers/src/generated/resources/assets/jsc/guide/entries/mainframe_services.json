@@ -1,0 +1,101 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_services.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_services.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mainframe_services.table1",
+      "heads": [
+        "jsc.guide.mainframe_services.table1_head1",
+        "jsc.guide.mainframe_services.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.mainframe_services.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.mainframe_services.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframe_services.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.mainframe_services.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mainframe_services.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.mainframe_services.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_services.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_services.text4"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.mainframe_services.step1",
+        "jsc.guide.mainframe_services.step2",
+        "jsc.guide.mainframe_services.step3",
+        "jsc.guide.mainframe_services.step4",
+        "jsc.guide.mainframe_services.step5",
+        "jsc.guide.mainframe_services.step6",
+        "jsc.guide.mainframe_services.step7"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_services.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mainframe_services.fix1",
+          "problem": "jsc.guide.mainframe_services.problem1"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mainframe_services.fix2",
+          "problem": "jsc.guide.mainframe_services.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:mainframe_services",
+  "order": 73,
+  "section": "jsc:network_operation",
+  "title": "jsc.guide.mainframe_services.title"
+}

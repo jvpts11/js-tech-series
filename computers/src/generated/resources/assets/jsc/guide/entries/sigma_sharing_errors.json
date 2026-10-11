@@ -1,0 +1,130 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_sharing_errors.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_sharing_errors.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_sharing_errors.table1",
+      "heads": [
+        "jsc.guide.sigma_sharing_errors.table1_head1",
+        "jsc.guide.sigma_sharing_errors.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "usage: sgpack init [name] | build | publish [file] | unpublish <name>"
+          },
+          {
+            "words": "jsc.guide.sigma_sharing_errors.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "package.cpk is already here; edit it, or delete it to start over"
+          },
+          {
+            "words": "jsc.guide.sigma_sharing_errors.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "no package.cpk here; run 'sgpack init' first"
+          },
+          {
+            "words": "jsc.guide.sigma_sharing_errors.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "sgpack: <file> is named in the manifest but not here"
+          },
+          {
+            "words": "jsc.guide.sigma_sharing_errors.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "package.cpk: <problem>"
+          },
+          {
+            "words": "jsc.guide.sigma_sharing_errors.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "name the package to publish, or run this beside a package.cpk"
+          },
+          {
+            "words": "jsc.guide.sigma_sharing_errors.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "could not resolve mirror:// - connect this computer to a network whose Mainframe runs the Mirror service"
+          },
+          {
+            "words": "jsc.guide.sigma_sharing_errors.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "mypkg-1.0.0.cpk: this is not a package (build one with 'sgpack build')"
+          },
+          {
+            "words": "jsc.guide.sigma_sharing_errors.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "the Mirror is full (64 packages)"
+          },
+          {
+            "words": "jsc.guide.sigma_sharing_errors.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "usage: sgpack unpublish <name>"
+          },
+          {
+            "words": "jsc.guide.sigma_sharing_errors.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "the Mirror is not serving <name>"
+          },
+          {
+            "words": "jsc.guide.sigma_sharing_errors.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "could not resolve mirror://"
+          },
+          {
+            "words": "jsc.guide.sigma_sharing_errors.table1_12_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_package_manifest",
+        "jsc:sigma_build_package",
+        "jsc:sigma_publish_mirror"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_sharing_errors",
+  "order": 392,
+  "section": "jsc:sharing_packages",
+  "title": "jsc.guide.sigma_sharing_errors.title"
+}

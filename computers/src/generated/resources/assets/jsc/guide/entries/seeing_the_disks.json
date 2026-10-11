@@ -1,0 +1,192 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.seeing_the_disks.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.seeing_the_disks.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.seeing_the_disks.table1",
+      "heads": [
+        "jsc.guide.seeing_the_disks.table1_head1",
+        "jsc.guide.seeing_the_disks.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "NAME"
+          },
+          {
+            "words": "jsc.guide.seeing_the_disks.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "MAJ:MIN"
+          },
+          {
+            "words": "jsc.guide.seeing_the_disks.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "RM"
+          },
+          {
+            "words": "jsc.guide.seeing_the_disks.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "SIZE"
+          },
+          {
+            "words": "jsc.guide.seeing_the_disks.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "RO"
+          },
+          {
+            "words": "jsc.guide.seeing_the_disks.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "TYPE"
+          },
+          {
+            "words": "jsc.guide.seeing_the_disks.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "MOUNTPOINTS"
+          },
+          {
+            "words": "jsc.guide.seeing_the_disks.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.seeing_the_disks.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.seeing_the_disks.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.seeing_the_disks.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.seeing_the_disks.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.seeing_the_disks.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.seeing_the_disks.text6"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "root@archiso ~ # ",
+          "text": "lsblk",
+          "typed": true
+        },
+        {
+          "text": "NAME      MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS"
+        },
+        {
+          "text": "loop0     7:0      0  1126M  1 loop /run/archiso/airootfs"
+        },
+        {
+          "text": "sda       8:0      0     1G  0 disk"
+        },
+        {
+          "text": "|-sda1    8:1      0   512M  0 part /mnt/boot"
+        },
+        {
+          "text": "`-sda2    8:2      0   512M  0 part /mnt"
+        }
+      ],
+      "look": "jsc:guide/terminal/bash",
+      "title": "Arch"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.seeing_the_disks.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.seeing_the_disks.definition1",
+      "term": "jsc.guide.seeing_the_disks.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.seeing_the_disks.definition2",
+      "term": "jsc.guide.seeing_the_disks.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.seeing_the_disks.definition3",
+      "term": "jsc.guide.seeing_the_disks.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.seeing_the_disks.definition4",
+      "term": "jsc.guide.seeing_the_disks.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.seeing_the_disks.definition5",
+      "term": "jsc.guide.seeing_the_disks.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.seeing_the_disks.definition6",
+      "term": "jsc.guide.seeing_the_disks.term6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.seeing_the_disks.fix1",
+          "problem": "jsc.guide.seeing_the_disks.problem1"
+        },
+        {
+          "fix": "jsc.guide.seeing_the_disks.fix2",
+          "problem": "jsc.guide.seeing_the_disks.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:disks",
+        "jsc:case_front",
+        "jsc:server_racks"
+      ]
+    }
+  ],
+  "id": "jsc:seeing_the_disks",
+  "order": 242,
+  "section": "jsc:disk_tools",
+  "title": "jsc.guide.seeing_the_disks.title"
+}

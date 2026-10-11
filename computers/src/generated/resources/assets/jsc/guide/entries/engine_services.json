@@ -1,0 +1,421 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.engine_services.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.engine_services.table1",
+      "heads": [
+        "jsc.guide.engine_services.table1_head1",
+        "jsc.guide.engine_services.table1_head2",
+        "jsc.guide.engine_services.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.engine_services.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.engine_services.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.engine_services.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.engine_services.table1_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.engine_services.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.engine_services.heading3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.engine_services.step1",
+        "jsc.guide.engine_services.step2",
+        "jsc.guide.engine_services.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.engine_services.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text8"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.engine_services.definition1",
+      "term": "jsc.guide.engine_services.term1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.engine_services.step4",
+        "jsc.guide.engine_services.step5",
+        "jsc.guide.engine_services.step6"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text9"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.engine_services.table2",
+      "heads": [
+        "jsc.guide.engine_services.table2_head1",
+        "jsc.guide.engine_services.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.engine_services.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.engine_services.definition2",
+      "term": "jsc.guide.engine_services.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.engine_services.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text10"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.engine_services.definition3",
+      "term": "jsc.guide.engine_services.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.engine_services.definition4",
+      "term": "jsc.guide.engine_services.term4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.engine_services.table3",
+      "heads": [
+        "jsc.guide.engine_services.table3_head1",
+        "jsc.guide.engine_services.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.engine_services.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table3_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text11"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.engine_services.table4",
+      "heads": [
+        "jsc.guide.engine_services.table4_head1",
+        "jsc.guide.engine_services.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.engine_services.table4_1_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table4_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table4_2_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table4_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table4_3_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table4_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table4_4_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table4_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table4_5_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table4_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table4_6_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table4_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.engine_services.table4_7_1"
+          },
+          {
+            "words": "jsc.guide.engine_services.table4_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text12"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text13"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.engine_services.heading6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text14"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text15"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text16"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.engine_services.warning1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text17"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.engine_services.heading7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text18"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.engine_services.table5",
+      "heads": [
+        "jsc.guide.engine_services.table5_head1",
+        "jsc.guide.engine_services.table5_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "install"
+          },
+          {
+            "words": "jsc.guide.engine_services.table5_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "start"
+          },
+          {
+            "words": "jsc.guide.engine_services.table5_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "stop"
+          },
+          {
+            "words": "jsc.guide.engine_services.table5_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "status"
+          },
+          {
+            "words": "jsc.guide.engine_services.table5_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engine_services.text19"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.engine_services.fix1",
+          "problem": "jsc.guide.engine_services.problem1"
+        },
+        {
+          "fix": "jsc.guide.engine_services.fix2",
+          "problem": "jsc.guide.engine_services.problem2"
+        },
+        {
+          "fix": "jsc.guide.engine_services.fix3",
+          "problem": "jsc.guide.engine_services.problem3"
+        },
+        {
+          "fix": "jsc.guide.engine_services.fix4",
+          "problem": "jsc.guide.engine_services.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:engine_problems",
+        "jsc:midsoft_iql_server"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:engine_services",
+  "order": 307,
+  "section": "jsc:engine_choice",
+  "title": "jsc.guide.engine_services.title"
+}

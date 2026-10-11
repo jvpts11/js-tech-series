@@ -1,0 +1,156 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.editors_overview.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.editors_overview.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.editors_overview.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.editors_overview.definition1",
+      "term": "jsc.guide.editors_overview.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.editors_overview.text4"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.editors_overview.step1",
+        "jsc.guide.editors_overview.step2",
+        "jsc.guide.editors_overview.step3"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.editors_overview.table1",
+      "heads": [
+        "jsc.guide.editors_overview.table1_head1",
+        "jsc.guide.editors_overview.table1_head2",
+        "jsc.guide.editors_overview.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "vim"
+          },
+          {
+            "words": "jsc.guide.editors_overview.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.editors_overview.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "emacs"
+          },
+          {
+            "words": "jsc.guide.editors_overview.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.editors_overview.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "vi"
+          },
+          {
+            "words": "jsc.guide.editors_overview.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.editors_overview.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "ee"
+          },
+          {
+            "words": "jsc.guide.editors_overview.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.editors_overview.table1_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.editors_overview.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.editors_overview.table2",
+      "heads": [
+        "jsc.guide.editors_overview.table2_head1",
+        "jsc.guide.editors_overview.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "vim"
+          },
+          {
+            "amount": 8,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "literal": "emacs"
+          },
+          {
+            "amount": 24,
+            "unit": "MB"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.editors_overview.fix1",
+          "problem": "jsc.guide.editors_overview.problem1"
+        },
+        {
+          "fix": "jsc.guide.editors_overview.fix2",
+          "problem": "jsc.guide.editors_overview.problem2"
+        },
+        {
+          "fix": "jsc.guide.editors_overview.fix3",
+          "problem": "jsc.guide.editors_overview.problem3"
+        },
+        {
+          "fix": "jsc.guide.editors_overview.fix4",
+          "problem": "jsc.guide.editors_overview.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:programs",
+        "jsc:the_systems"
+      ]
+    }
+  ],
+  "id": "jsc:editors_overview",
+  "order": 216,
+  "section": "jsc:the_editors",
+  "title": "jsc.guide.editors_overview.title"
+}

@@ -141,6 +141,8 @@ public final class GuideLayout {
 
     /** How far below a legend line's top its small words start, level with the middle of its balloon. */
     private static final int KEY_TEXT_DROP = 3;
+    /** What a path or a piece of code may be broken after when it is too wide for its line. */
+    private static final String BREAKS_AFTER = "/\\.(,=:_-@|";
     private static final int PARAGRAPH_GAP = 4;
     private static final int BLOCK_GAP = 6;
     private static final int CAPTION_GAP = 3;
@@ -259,20 +261,48 @@ public final class GuideLayout {
             if (!line.isEmpty()) {
                 lines.add(line.toString());
             }
-            line = new StringBuilder(word);
-            while (text.width(line.toString(), size) > room && line.length() > 1) {
-                int cut = line.length() - 1;
-                while (cut > 1 && text.width(line.substring(0, cut), size) > room) {
-                    cut--;
-                }
-                lines.add(line.substring(0, cut));
-                line = new StringBuilder(line.substring(cut));
-            }
+            final List<String> pieces = pieces(word, room, size, text);
+            lines.addAll(pieces.subList(0, pieces.size() - 1));
+            line = new StringBuilder(pieces.getLast());
         }
         if (!line.isEmpty() || lines.isEmpty()) {
             lines.add(line.toString());
         }
         return lines;
+    }
+
+    /**
+     * A word too wide for the room in pieces that fit: broken where code and paths break, after a slash, a dot, a
+     * bracket, a comma, an equals sign, a colon, an underscore, a hyphen, an at sign or a bar, or between a small
+     * letter and a capital; cut between two letters only where it has none of those.
+     */
+    static List<String> pieces(final String word, final int room, final TextSize size, final IGuideText text) {
+        final List<String> pieces = new ArrayList<>();
+        String rest = word;
+        while (text.width(rest, size) > room && rest.length() > 1) {
+            int fits = rest.length() - 1;
+            while (fits > 1 && text.width(rest.substring(0, fits), size) > room) {
+                fits--;
+            }
+            int cut = fits;
+            for (int at = fits; at > 1; at--) {
+                if (breaksBefore(rest, at)) {
+                    cut = at;
+                    break;
+                }
+            }
+            pieces.add(rest.substring(0, cut));
+            rest = rest.substring(cut);
+        }
+        pieces.add(rest);
+        return pieces;
+    }
+
+    /** Whether a word may be broken between its characters at {@code at - 1} and {@code at} without a cut. */
+    static boolean breaksBefore(final String word, final int at) {
+        final char before = word.charAt(at - 1);
+        final char after = word.charAt(at);
+        return BREAKS_AFTER.indexOf(before) >= 0 || Character.isLowerCase(before) && Character.isUpperCase(after);
     }
 
     private GuideBook book(final GuideContents contents) {
@@ -640,7 +670,7 @@ public final class GuideLayout {
         final List<String> caption = captioned ? this.captionLines(label, title) : List.of();
         final List<String> continued = captioned ? this.captionLines(label,
                 this.text.text(GuideTexts.TABLE_CONTINUED.key(), title)) : List.of();
-        final GuideTable table = GuideTable.shape(block, this.width, this.text);
+        final GuideTable table = GuideTable.shape(block, this.width, this.text, this::numberOf, this::elsewhere);
         this.cut.addAll(table.cut());
         final int lead = (captioned ? this.captionHeight(label, caption) + CAPTION_GAP : 0) + table.headHeight();
         final int whole = lead + table.height();

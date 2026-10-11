@@ -5,62 +5,254 @@
       "text": "jsc.guide.peripheral_cables.text1"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.peripheral_cables.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.peripheral_cables.definition1",
+      "term": "jsc.guide.peripheral_cables.term1"
+    },
+    {
       "type": "table",
       "caption": "jsc.guide.peripheral_cables.table1",
+      "heads": [
+        "jsc.guide.peripheral_cables.table1_head1",
+        "jsc.guide.peripheral_cables.table1_head2",
+        "jsc.guide.peripheral_cables.table1_head3"
+      ],
       "rows": [
         [
           {
-            "words": "jsc.guide.peripheral_cables.table1_1"
+            "words": "jsc.guide.peripheral_cables.table1_1_1"
           },
           {
-            "literal": "8"
+            "words": "jsc.guide.peripheral_cables.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table1_1_3"
           }
         ],
         [
           {
-            "words": "jsc.guide.peripheral_cables.table1_2"
+            "words": "jsc.guide.peripheral_cables.table1_2_1"
           },
           {
-            "literal": "12"
+            "words": "jsc.guide.peripheral_cables.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table1_2_3"
           }
         ],
         [
           {
-            "words": "jsc.guide.peripheral_cables.table1_3"
+            "words": "jsc.guide.peripheral_cables.table1_3_1"
           },
           {
-            "literal": "14"
+            "words": "jsc.guide.peripheral_cables.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table1_3_3"
           }
         ],
         [
           {
-            "words": "jsc.guide.peripheral_cables.table1_4"
+            "words": "jsc.guide.peripheral_cables.table1_4_1"
           },
           {
-            "literal": "16"
+            "words": "jsc.guide.peripheral_cables.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table1_4_3"
           }
         ],
         [
           {
-            "words": "jsc.guide.peripheral_cables.table1_5"
+            "words": "jsc.guide.peripheral_cables.table1_5_1"
           },
           {
-            "literal": "20"
+            "words": "jsc.guide.peripheral_cables.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table1_5_3"
           }
         ]
       ]
     },
     {
       "type": "text",
-      "text": "jsc.guide.peripheral_cables.text2"
+      "text": "jsc.guide.peripheral_cables.text3"
     },
     {
-      "type": "text",
-      "text": "jsc.guide.peripheral_cables.text3"
+      "type": "table",
+      "caption": "jsc.guide.peripheral_cables.table2",
+      "heads": [
+        "jsc.guide.peripheral_cables.table2_head1",
+        "jsc.guide.peripheral_cables.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.peripheral_cables.table3",
+      "heads": [
+        "jsc.guide.peripheral_cables.table3_head1",
+        "jsc.guide.peripheral_cables.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table3_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table3_5_2"
+          }
+        ]
+      ]
     },
     {
       "type": "text",
       "text": "jsc.guide.peripheral_cables.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.peripheral_cables.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.peripheral_cables.definition2",
+      "term": "jsc.guide.peripheral_cables.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.peripheral_cables.table4",
+      "heads": [
+        "jsc.guide.peripheral_cables.table4_head1",
+        "jsc.guide.peripheral_cables.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table4_1_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table4_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table4_2_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table4_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table4_3_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table4_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table4_4_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table4_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.peripheral_cables.table4_5_1"
+          },
+          {
+            "words": "jsc.guide.peripheral_cables.table4_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.peripheral_cables.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.peripheral_cables.text7"
     },
     {
       "type": "heading",
@@ -78,6 +270,14 @@
           "problem": "jsc.guide.peripheral_cables.problem2"
         }
       ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:monitors",
+        "jsc:drives",
+        "jsc:device_manager"
+      ]
     }
   ],
   "icon": "jsc:peripheral_cable",
@@ -94,7 +294,7 @@
     "jsc:standard_hub",
     "jsc:advanced_hub"
   ],
-  "order": 47,
+  "order": 41,
   "section": "jsc:peripherals",
   "title": "jsc.guide.peripheral_cables.title"
 }

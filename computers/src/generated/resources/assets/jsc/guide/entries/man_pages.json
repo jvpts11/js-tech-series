@@ -1,0 +1,228 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.man_pages.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.man_pages.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.man_pages.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.man_pages.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.man_pages.step1",
+        "jsc.guide.man_pages.step2",
+        "jsc.guide.man_pages.step3"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.man_pages.table1",
+      "heads": [
+        "jsc.guide.man_pages.table1_head1",
+        "jsc.guide.man_pages.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Space"
+          },
+          {
+            "words": "jsc.guide.man_pages.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "b"
+          },
+          {
+            "words": "jsc.guide.man_pages.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "j or Down"
+          },
+          {
+            "words": "jsc.guide.man_pages.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "k or Up"
+          },
+          {
+            "words": "jsc.guide.man_pages.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Page Down, Page Up"
+          },
+          {
+            "words": "jsc.guide.man_pages.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "g or Home"
+          },
+          {
+            "words": "jsc.guide.man_pages.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "G or End"
+          },
+          {
+            "words": "jsc.guide.man_pages.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "/"
+          },
+          {
+            "words": "jsc.guide.man_pages.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "n"
+          },
+          {
+            "words": "jsc.guide.man_pages.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "q or Escape"
+          },
+          {
+            "words": "jsc.guide.man_pages.table1_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.man_pages.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.man_pages.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.man_pages.table2",
+      "heads": [
+        "jsc.guide.man_pages.table2_head1",
+        "jsc.guide.man_pages.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.man_pages.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.man_pages.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.man_pages.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.man_pages.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.man_pages.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.man_pages.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.man_pages.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.man_pages.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.man_pages.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.man_pages.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/man"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.man_pages.definition1",
+      "term": "jsc.guide.man_pages.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.man_pages.definition2",
+      "term": "jsc.guide.man_pages.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.man_pages.fix1",
+          "problem": "jsc.guide.man_pages.problem1"
+        },
+        {
+          "fix": "jsc.guide.man_pages.fix2",
+          "problem": "jsc.guide.man_pages.problem2"
+        },
+        {
+          "fix": "jsc.guide.man_pages.fix3",
+          "problem": "jsc.guide.man_pages.problem3"
+        },
+        {
+          "fix": "jsc.guide.man_pages.fix4",
+          "problem": "jsc.guide.man_pages.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:whatis_and_apropos",
+        "jsc:info_keys",
+        "jsc:graphics_cards"
+      ]
+    }
+  ],
+  "icon": "jsc:guide_to_operations",
+  "id": "jsc:man_pages",
+  "order": 223,
+  "section": "jsc:help_at_the_prompt",
+  "title": "jsc.guide.man_pages.title"
+}

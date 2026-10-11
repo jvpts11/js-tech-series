@@ -5,12 +5,127 @@
       "text": "jsc.guide.desktops.text1"
     },
     {
+      "type": "define",
+      "definition": "jsc.guide.desktops.definition1",
+      "term": "jsc.guide.desktops.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.desktops.definition2",
+      "term": "jsc.guide.desktops.term2"
+    },
+    {
       "type": "text",
       "text": "jsc.guide.desktops.text2"
     },
     {
+      "type": "table",
+      "caption": "jsc.guide.desktops.table1",
+      "heads": [
+        "jsc.guide.desktops.table1_head1",
+        "jsc.guide.desktops.table1_head2",
+        "jsc.guide.desktops.table1_head3",
+        "jsc.guide.desktops.table1_head4",
+        "jsc.guide.desktops.table1_head5"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.desktops.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.desktops.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.desktops.table1_1_3"
+          },
+          {
+            "amount": 256,
+            "unit": "MB"
+          },
+          {
+            "amount": 224,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.desktops.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.desktops.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.desktops.table1_2_3"
+          },
+          {
+            "amount": 192,
+            "unit": "MB"
+          },
+          {
+            "amount": 256,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.desktops.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.desktops.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.desktops.table1_3_3"
+          },
+          {
+            "amount": 160,
+            "unit": "MB"
+          },
+          {
+            "amount": 160,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.desktops.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.desktops.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.desktops.table1_4_3"
+          },
+          {
+            "amount": 32,
+            "unit": "MB"
+          },
+          {
+            "amount": 16,
+            "unit": "MB"
+          }
+        ]
+      ]
+    },
+    {
       "type": "text",
       "text": "jsc.guide.desktops.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.desktops.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.desktops.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.desktops.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.desktops.text7"
     },
     {
       "type": "heading",
@@ -22,13 +137,30 @@
         {
           "fix": "jsc.guide.desktops.fix1",
           "problem": "jsc.guide.desktops.problem1"
+        },
+        {
+          "fix": "jsc.guide.desktops.fix2",
+          "problem": "jsc.guide.desktops.problem2"
+        },
+        {
+          "fix": "jsc.guide.desktops.fix3",
+          "problem": "jsc.guide.desktops.problem3"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:install_a_desktop",
+        "jsc:desktop_program_names",
+        "jsc:the_systems",
+        "jsc:cde"
       ]
     }
   ],
   "icon": "jsc:monitor",
   "id": "jsc:desktops",
-  "order": 20,
-  "section": "jsc:systems",
+  "order": 204,
+  "section": "jsc:desktop_environments",
   "title": "jsc.guide.desktops.title"
 }

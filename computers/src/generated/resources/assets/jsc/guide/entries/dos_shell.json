@@ -1,0 +1,501 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_shell.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_shell.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.dos_shell.step1",
+        "jsc.guide.dos_shell.step2",
+        "jsc.guide.dos_shell.step3",
+        "jsc.guide.dos_shell.step4",
+        "jsc.guide.dos_shell.step5"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_shell.table1",
+      "heads": [
+        "jsc.guide.dos_shell.table1_head1",
+        "jsc.guide.dos_shell.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.dos_shell.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_shell.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_shell.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_shell.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_shell.table2",
+      "heads": [
+        "jsc.guide.dos_shell.table2_head1",
+        "jsc.guide.dos_shell.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.dos_shell.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_shell.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_shell.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_shell.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_shell.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_shell.table3",
+      "heads": [
+        "jsc.guide.dos_shell.table3_head1",
+        "jsc.guide.dos_shell.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Tab"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Arrows"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Page Up"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Page Down"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Home"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "End"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "F10"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+F"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+O"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+V"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+T"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+H"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "F3"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+F4"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "F5"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_16_2"
+          }
+        ],
+        [
+          {
+            "literal": "Shift+F5"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_17_2"
+          }
+        ],
+        [
+          {
+            "literal": "F7"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_18_2"
+          }
+        ],
+        [
+          {
+            "literal": "F8"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_19_2"
+          }
+        ],
+        [
+          {
+            "literal": "F9"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_20_2"
+          }
+        ],
+        [
+          {
+            "literal": "Shift+F9"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_21_2"
+          }
+        ],
+        [
+          {
+            "literal": "Del"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_22_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+Tab"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_23_2"
+          }
+        ],
+        [
+          {
+            "literal": "Escape"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_24_2"
+          }
+        ],
+        [
+          {
+            "literal": "+"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_25_2"
+          }
+        ],
+        [
+          {
+            "literal": "*"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_26_2"
+          }
+        ],
+        [
+          {
+            "literal": "-"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table3_27_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_shell.table4",
+      "heads": [
+        "jsc.guide.dos_shell.table4_head1",
+        "jsc.guide.dos_shell.table4_head2",
+        "jsc.guide.dos_shell.table4_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.dos_shell.table4_1_1"
+          },
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table4_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_shell.table4_2_1"
+          },
+          {
+            "literal": "F9"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table4_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_shell.table4_3_1"
+          },
+          {
+            "literal": "F7"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table4_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_shell.table4_4_1"
+          },
+          {
+            "literal": "F8"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table4_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_shell.table4_5_1"
+          },
+          {
+            "literal": "Del"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table4_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_shell.table4_6_1"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table4_6_2"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table4_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_shell.table4_7_1"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table4_7_2"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table4_7_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_shell.table4_8_1"
+          },
+          {
+            "literal": "F3"
+          },
+          {
+            "words": "jsc.guide.dos_shell.table4_8_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_shell.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_shell.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_shell.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_shell.text8"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_shell.definition1",
+      "term": "jsc.guide.dos_shell.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_shell.definition2",
+      "term": "jsc.guide.dos_shell.term2"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/dosshell"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.dos_shell.fix1",
+          "problem": "jsc.guide.dos_shell.problem1"
+        },
+        {
+          "fix": "jsc.guide.dos_shell.fix2",
+          "problem": "jsc.guide.dos_shell.problem2"
+        },
+        {
+          "fix": "jsc.guide.dos_shell.fix3",
+          "problem": "jsc.guide.dos_shell.problem3"
+        },
+        {
+          "fix": "jsc.guide.dos_shell.fix4",
+          "problem": "jsc.guide.dos_shell.problem4"
+        },
+        {
+          "fix": "jsc.guide.dos_shell.fix5",
+          "problem": "jsc.guide.dos_shell.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:dos_msd",
+        "jsc:dos_help"
+      ]
+    }
+  ],
+  "id": "jsc:dos_shell",
+  "order": 150,
+  "section": "jsc:dos_programs",
+  "title": "jsc.guide.dos_shell.title"
+}

@@ -1,7 +1,7 @@
 {
-  "chapter": "jsc",
+  "chapter": "jsc:the_operations",
   "icon": "jsc:mainframe",
   "id": "jsc:operations",
-  "order": 5,
+  "order": 24,
   "title": "jsc.guide.section.operations"
 }

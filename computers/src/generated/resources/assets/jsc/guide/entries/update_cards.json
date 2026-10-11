@@ -1,0 +1,213 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.update_cards.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.update_cards.text2"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "UPDATE diamond_sword SET NAME 'Old Faithful'"
+      ],
+      "name": "name.iql"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.update_cards.table1",
+      "heads": [
+        "jsc.guide.update_cards.table1_head1",
+        "jsc.guide.update_cards.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "SMELT"
+          },
+          {
+            "words": "jsc.guide.update_cards.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "ENCHANT"
+          },
+          {
+            "words": "jsc.guide.update_cards.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "REPAIR"
+          },
+          {
+            "words": "jsc.guide.update_cards.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "COMBINE"
+          },
+          {
+            "words": "jsc.guide.update_cards.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "NAME"
+          },
+          {
+            "words": "jsc.guide.update_cards.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.update_cards.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.update_cards.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.update_cards.text4"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "UPDATE diamond_sword SET ENCHANT OFFER 2"
+      ],
+      "name": "enchant.iql"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.update_cards.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.update_cards.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.update_cards.text6"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.update_cards.step1",
+        "jsc.guide.update_cards.step2",
+        "jsc.guide.update_cards.step3"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.update_cards.table2",
+      "heads": [
+        "jsc.guide.update_cards.table2_head1",
+        "jsc.guide.update_cards.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "UPDATE queued: <quantity> <item>, SET <ACTION>"
+          },
+          {
+            "words": "jsc.guide.update_cards.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "The offers for the <item>:"
+          },
+          {
+            "words": "jsc.guide.update_cards.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "the network holds no <item>"
+          },
+          {
+            "words": "jsc.guide.update_cards.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "could not start the UPDATE"
+          },
+          {
+            "words": "jsc.guide.update_cards.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.update_cards.fix1",
+          "problem": "jsc.guide.update_cards.problem1"
+        },
+        {
+          "fix": "jsc.guide.update_cards.fix2",
+          "problem": "jsc.guide.update_cards.problem2"
+        },
+        {
+          "fix": "jsc.guide.update_cards.fix3",
+          "problem": "jsc.guide.update_cards.problem3"
+        },
+        {
+          "fix": "jsc.guide.update_cards.fix4",
+          "problem": "jsc.guide.update_cards.problem4"
+        },
+        {
+          "fix": "jsc.guide.update_cards.fix5",
+          "problem": "jsc.guide.update_cards.problem5"
+        },
+        {
+          "fix": "jsc.guide.update_cards.fix6",
+          "problem": "jsc.guide.update_cards.problem6"
+        },
+        {
+          "fix": "jsc.guide.update_cards.fix7",
+          "problem": "jsc.guide.update_cards.problem7"
+        },
+        {
+          "fix": "jsc.guide.update_cards.fix8",
+          "problem": "jsc.guide.update_cards.problem8"
+        },
+        {
+          "fix": "jsc.guide.update_cards.fix9",
+          "problem": "jsc.guide.update_cards.problem9"
+        },
+        {
+          "fix": "jsc.guide.update_cards.fix10",
+          "problem": "jsc.guide.update_cards.problem10"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:workshop",
+        "jsc:clauses_priority_if_with",
+        "jsc:personal_computers"
+      ]
+    }
+  ],
+  "id": "jsc:update_cards",
+  "order": 294,
+  "section": "jsc:iql_verbs",
+  "title": "jsc.guide.update_cards.title"
+}

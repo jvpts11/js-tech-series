@@ -1,0 +1,51 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.mc_net.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mc_net.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mc_net.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mc_net.definition1",
+      "term": "jsc.guide.mc_net.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mc_net.definition2",
+      "term": "jsc.guide.mc_net.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mc_net.fix1",
+          "problem": "jsc.guide.mc_net.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:interactor_screen",
+        "jsc:mc_net_commands"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:mc_net",
+  "order": 76,
+  "section": "jsc:mc_net_terminal",
+  "title": "jsc.guide.mc_net.title"
+}

@@ -1,0 +1,91 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_editors.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.freebsd_editors.table1",
+      "heads": [
+        "jsc.guide.freebsd_editors.table1_head1",
+        "jsc.guide.freebsd_editors.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "ee <file>"
+          },
+          {
+            "words": "jsc.guide.freebsd_editors.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "vi <file>"
+          },
+          {
+            "words": "jsc.guide.freebsd_editors.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_editors.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.freebsd_editors.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_editors.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_editors.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.freebsd_editors.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.freebsd_editors.fix1",
+          "problem": "jsc.guide.freebsd_editors.problem1"
+        },
+        {
+          "fix": "jsc.guide.freebsd_editors.fix2",
+          "problem": "jsc.guide.freebsd_editors.problem2"
+        },
+        {
+          "fix": "jsc.guide.freebsd_editors.fix3",
+          "problem": "jsc.guide.freebsd_editors.problem3"
+        },
+        {
+          "fix": "jsc.guide.freebsd_editors.fix4",
+          "problem": "jsc.guide.freebsd_editors.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:ee",
+        "jsc:vi",
+        "jsc:editors_overview"
+      ]
+    }
+  ],
+  "id": "jsc:freebsd_editors",
+  "order": 277,
+  "section": "jsc:freebsd_tools",
+  "title": "jsc.guide.freebsd_editors.title"
+}

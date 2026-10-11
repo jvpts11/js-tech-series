@@ -59,8 +59,62 @@
       "text": "jsc.guide.iql.text3"
     },
     {
+      "type": "table",
+      "caption": "jsc.guide.iql.table2",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.iql.table2_1"
+          },
+          {
+            "literal": "VERB [quantity] item"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.iql.table2_2"
+          },
+          {
+            "literal": "[FROM place] [TO place] [WHERE condition] [IF condition] [ORDER BY field] [LIMIT n] [PRIORITY level]"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.iql.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.iql.step1",
+        "jsc.guide.iql.step2",
+        "jsc.guide.iql.step3"
+      ]
+    },
+    {
       "type": "text",
       "text": "jsc.guide.iql.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.text6"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.iql.warning1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql.text8"
     },
     {
       "type": "heading",
@@ -76,13 +130,36 @@
         {
           "fix": "jsc.guide.iql.fix2",
           "problem": "jsc.guide.iql.problem2"
+        },
+        {
+          "fix": "jsc.guide.iql.fix3",
+          "problem": "jsc.guide.iql.problem3"
+        },
+        {
+          "fix": "jsc.guide.iql.fix4",
+          "problem": "jsc.guide.iql.problem4"
+        },
+        {
+          "fix": "jsc.guide.iql.fix5",
+          "problem": "jsc.guide.iql.problem5"
+        },
+        {
+          "fix": "jsc.guide.iql.fix6",
+          "problem": "jsc.guide.iql.problem6"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:what_iql_is",
+        "jsc:iql_errors"
       ]
     }
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:iql",
-  "order": 35,
+  "order": 99,
   "section": "jsc:operations",
   "title": "jsc.guide.iql.title"
 }

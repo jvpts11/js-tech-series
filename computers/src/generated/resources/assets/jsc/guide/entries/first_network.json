@@ -19,6 +19,10 @@
       "text": "jsc.guide.first_network.text2"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.first_network.text3"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -34,8 +38,8 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:first_network",
-  "order": 26,
-  "section": "jsc:network",
+  "order": 64,
+  "section": "jsc:network_basics",
   "shows": [
     "jsc:mainframe",
     "jsc:server_rack",

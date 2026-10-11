@@ -9,8 +9,201 @@
       "text": "jsc.guide.power_supplies.text2"
     },
     {
+      "type": "define",
+      "definition": "jsc.guide.power_supplies.definition1",
+      "term": "jsc.guide.power_supplies.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.power_supplies.table1",
+      "heads": [
+        "jsc.guide.power_supplies.table1_head1",
+        "jsc.guide.power_supplies.table1_head2",
+        "jsc.guide.power_supplies.table1_head3",
+        "jsc.guide.power_supplies.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.power_supplies.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.power_supplies.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.power_supplies.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.power_supplies.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_4_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.power_supplies.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_5_3"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_5_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.power_supplies.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_6_3"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_6_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.power_supplies.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_7_3"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_7_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.power_supplies.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_8_3"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_8_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.power_supplies.table1_9_1"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_9_3"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_9_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.power_supplies.table1_10_1"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_10_3"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_10_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.power_supplies.table1_11_1"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_11_3"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_11_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.power_supplies.table1_12_1"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_12_2"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_12_3"
+          },
+          {
+            "words": "jsc.guide.power_supplies.table1_12_4"
+          }
+        ]
+      ]
+    },
+    {
       "type": "text",
       "text": "jsc.guide.power_supplies.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.power_supplies.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.power_supplies.text5"
     },
     {
       "type": "heading",
@@ -22,7 +215,19 @@
         {
           "fix": "jsc.guide.power_supplies.fix1",
           "problem": "jsc.guide.power_supplies.problem1"
+        },
+        {
+          "fix": "jsc.guide.power_supplies.fix2",
+          "problem": "jsc.guide.power_supplies.problem2"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:build_refusals",
+        "jsc:disks",
+        "jsc:processors"
       ]
     }
   ],
@@ -42,7 +247,7 @@
     "jsc:psu_2000p",
     "jsc:psu_3000p"
   ],
-  "order": 9,
+  "order": 21,
   "section": "jsc:hardware",
   "title": "jsc.guide.power_supplies.title"
 }

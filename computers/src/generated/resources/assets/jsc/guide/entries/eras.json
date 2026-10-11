@@ -5,52 +5,6 @@
       "text": "jsc.guide.eras.text1"
     },
     {
-      "type": "table",
-      "caption": "jsc.guide.eras.table1",
-      "rows": [
-        [
-          {
-            "words": "jsc.guide.eras.table1_1"
-          },
-          {
-            "words": "jsc.guide.eras.value1_1"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.eras.table1_2"
-          },
-          {
-            "words": "jsc.guide.eras.value1_2"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.eras.table1_3"
-          },
-          {
-            "words": "jsc.guide.eras.value1_3"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.eras.table1_4"
-          },
-          {
-            "words": "jsc.guide.eras.value1_4"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.eras.table1_5"
-          },
-          {
-            "words": "jsc.guide.eras.value1_5"
-          }
-        ]
-      ]
-    },
-    {
       "type": "text",
       "text": "jsc.guide.eras.text2"
     },
@@ -59,19 +13,216 @@
       "text": "jsc.guide.eras.text3"
     },
     {
+      "type": "table",
+      "caption": "jsc.guide.eras.table1",
+      "heads": [
+        "jsc.guide.eras.table1_head1",
+        "jsc.guide.eras.table1_head2",
+        "jsc.guide.eras.table1_head3",
+        "jsc.guide.eras.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.eras.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.eras.table1_1_2"
+          },
+          {
+            "literal": "IA-16"
+          },
+          {
+            "amount": 1,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.eras.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.eras.table1_2_2"
+          },
+          {
+            "literal": "x86"
+          },
+          {
+            "amount": 16,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.eras.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.eras.table1_3_2"
+          },
+          {
+            "literal": "x86-64"
+          },
+          {
+            "amount": 256,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.eras.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.eras.table1_4_2"
+          },
+          {
+            "literal": "x86-64"
+          },
+          {
+            "amount": 256,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.eras.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.eras.table1_5_2"
+          },
+          {
+            "literal": "x86-64"
+          },
+          {
+            "amount": 256,
+            "unit": "MB"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.eras.table2",
+      "heads": [
+        "jsc.guide.eras.table2_head1",
+        "jsc.guide.eras.table2_head2",
+        "jsc.guide.eras.table2_head3",
+        "jsc.guide.eras.table2_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.eras.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.eras.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.eras.table2_1_3"
+          },
+          {
+            "words": "jsc.guide.eras.table2_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.eras.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.eras.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.eras.table2_2_3"
+          },
+          {
+            "words": "jsc.guide.eras.table2_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.eras.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.eras.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.eras.table2_3_3"
+          },
+          {
+            "words": "jsc.guide.eras.table2_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.eras.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.eras.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.eras.table2_4_3"
+          },
+          {
+            "words": "jsc.guide.eras.table2_4_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.eras.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.eras.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.eras.table2_5_3"
+          },
+          {
+            "words": "jsc.guide.eras.table2_5_4"
+          }
+        ]
+      ]
+    },
+    {
       "type": "text",
       "text": "jsc.guide.eras.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.eras.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.eras.text6"
     },
     {
       "type": "define",
       "definition": "jsc.guide.eras.definition1",
       "term": "jsc.guide.eras.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.eras.fix1",
+          "problem": "jsc.guide.eras.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:items_as_data",
+        "jsc:motherboards"
+      ]
     }
   ],
   "icon": "jsc:vintage_personal_computer",
   "id": "jsc:eras",
-  "order": 4,
-  "section": "jsc:getting_started",
+  "order": 8,
+  "section": "jsc:systems_and_eras",
   "shows": [
     "jsc:vintage_personal_computer",
     "jsc:legacy_personal_computer",

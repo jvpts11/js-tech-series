@@ -1,0 +1,94 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_build_errors.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_build_errors.table1",
+      "heads": [
+        "jsc.guide.sigma_build_errors.table1_head1",
+        "jsc.guide.sigma_build_errors.table1_head2",
+        "jsc.guide.sigma_build_errors.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "S4011"
+          },
+          {
+            "words": "jsc.guide.sigma_build_errors.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_build_errors.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "S4011"
+          },
+          {
+            "words": "jsc.guide.sigma_build_errors.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_build_errors.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "S4011"
+          },
+          {
+            "words": "jsc.guide.sigma_build_errors.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_build_errors.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "S4012"
+          },
+          {
+            "words": "jsc.guide.sigma_build_errors.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_build_errors.table1_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_build_errors.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_build_errors.fix1",
+          "problem": "jsc.guide.sigma_build_errors.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_build_errors.fix2",
+          "problem": "jsc.guide.sigma_build_errors.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_compile_errors"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_build_errors",
+  "order": 384,
+  "section": "jsc:errors_compile",
+  "title": "jsc.guide.sigma_build_errors.title"
+}

@@ -9,6 +9,7 @@ package dev.jstech.core.guide;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * A table shaped to the width of a page's column, before it is placed: its columns side by side under a shaded head,
@@ -67,6 +68,15 @@ final class GuideTable {
 
     /** The table shaped to {@code width}, its words translated and measured through {@code text}. */
     static GuideTable shape(final GuideBlock.Table table, final int width, final IGuideText text) {
+        return shape(table, width, text, target -> null, target -> null);
+    }
+
+    /**
+     * The table shaped to {@code width}, a link in a cell written as a printed manual's table writes one: its words and
+     * the number of the page it leads to, or the book that holds it.
+     */
+    static GuideTable shape(final GuideBlock.Table table, final int width, final IGuideText text,
+                            final Function<String, String> numbers, final Function<String, String> elsewhere) {
         final List<String> heads = new ArrayList<>();
         if (table.headKeys().isEmpty()) {
             heads.add(text.text(GuideTexts.PROPERTY.key()));
@@ -80,7 +90,8 @@ final class GuideTable {
         for (final GuideBlock.TableRow row : table.rows()) {
             final List<String> written = new ArrayList<>();
             for (final GuideBlock.GuideValue cell : row.cells()) {
-                written.add(text.valueText(cell));
+                written.add(cell instanceof GuideBlock.GuideValue.Words
+                        ? GuideLinks.plain(text.valueText(cell), numbers, elsewhere) : text.valueText(cell));
             }
             cells.add(written);
         }
@@ -338,16 +349,33 @@ final class GuideTable {
         return new GuideTable(width, true, 0, List.of(), rows, cut);
     }
 
-    /** The words wider than the room, which wrapping them there cuts. */
+    /**
+     * The words wider than the room that wrapping them there cuts between two letters: a path or a piece of code
+     * broken where it breaks (after a slash, a dot, a bracket...) is not cut.
+     */
     private static List<String> tooWide(final String words, final int room, final TextSize size,
                                         final IGuideText text) {
         final List<String> wide = new ArrayList<>();
         for (final String word : words.split(" ")) {
-            if (!word.isEmpty() && text.width(word, size) > room) {
+            if (!word.isEmpty() && text.width(word, size) > room && cutBetweenLetters(word, room, size, text)) {
                 wide.add(word);
             }
         }
         return wide;
+    }
+
+    /** Whether breaking the word into lines of that room needs a cut where nothing breaks. */
+    private static boolean cutBetweenLetters(final String word, final int room, final TextSize size,
+                                             final IGuideText text) {
+        int at = 0;
+        final List<String> pieces = GuideLayout.pieces(word, room, size, text);
+        for (int i = 0; i < pieces.size() - 1; i++) {
+            at += pieces.get(i).length();
+            if (!GuideLayout.breaksBefore(word, at)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** How far a line of text at that size is raised above a line of small words, so the two share a baseline. */

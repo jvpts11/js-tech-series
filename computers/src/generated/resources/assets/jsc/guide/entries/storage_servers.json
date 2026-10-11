@@ -1,0 +1,114 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.storage_servers.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.storage_servers.definition1",
+      "term": "jsc.guide.storage_servers.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.storage_servers.definition2",
+      "term": "jsc.guide.storage_servers.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.storage_servers.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.storage_servers.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.storage_servers.table1_1"
+          },
+          {
+            "words": "jsc.guide.storage_servers.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_servers.table1_2"
+          },
+          {
+            "words": "jsc.guide.storage_servers.value1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_servers.table1_3"
+          },
+          {
+            "words": "jsc.guide.storage_servers.value1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_servers.table1_4"
+          },
+          {
+            "words": "jsc.guide.storage_servers.value1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_servers.table1_5"
+          },
+          {
+            "words": "jsc.guide.storage_servers.value1_5"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.storage_servers.table1_6"
+          },
+          {
+            "words": "jsc.guide.storage_servers.value1_6"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.storage_servers.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.storage_servers.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.storage_servers.fix1",
+          "problem": "jsc.guide.storage_servers.problem1"
+        },
+        {
+          "fix": "jsc.guide.storage_servers.fix2",
+          "problem": "jsc.guide.storage_servers.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:server_racks",
+        "jsc:raid_arrays",
+        "jsc:local_storage"
+      ]
+    }
+  ],
+  "icon": "jsc:storage_server",
+  "id": "jsc:storage_servers",
+  "order": 79,
+  "section": "jsc:storage",
+  "title": "jsc.guide.storage_servers.title"
+}

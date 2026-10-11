@@ -1,0 +1,82 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.what_the_hand_files_do.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_the_hand_files_do.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.what_the_hand_files_do.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.what_the_hand_files_do.table1",
+      "heads": [
+        "jsc.guide.what_the_hand_files_do.table1_head1",
+        "jsc.guide.what_the_hand_files_do.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.what_the_hand_files_do.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.what_the_hand_files_do.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.what_the_hand_files_do.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.what_the_hand_files_do.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "/etc/fstab"
+          },
+          {
+            "words": "jsc.guide.what_the_hand_files_do.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "/etc/portage/make.conf"
+          },
+          {
+            "words": "jsc.guide.what_the_hand_files_do.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.what_the_hand_files_do.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.what_the_hand_files_do.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "/boot/grub/grub.cfg"
+          },
+          {
+            "words": "jsc.guide.what_the_hand_files_do.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.what_the_hand_files_do.text3"
+    }
+  ],
+  "id": "jsc:what_the_hand_files_do",
+  "order": 268,
+  "section": "jsc:before_the_reboot",
+  "title": "jsc.guide.what_the_hand_files_do.title"
+}

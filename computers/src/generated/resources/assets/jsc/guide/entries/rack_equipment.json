@@ -5,6 +5,50 @@
       "text": "jsc.guide.rack_equipment.text1"
     },
     {
+      "type": "table",
+      "caption": "jsc.guide.rack_equipment.table1",
+      "heads": [
+        "jsc.guide.rack_equipment.table1_head1",
+        "jsc.guide.rack_equipment.table1_head2",
+        "jsc.guide.rack_equipment.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_3_3"
+          }
+        ]
+      ]
+    },
+    {
       "type": "text",
       "text": "jsc.guide.rack_equipment.text2"
     },
@@ -13,9 +57,8 @@
       "text": "jsc.guide.rack_equipment.text3"
     },
     {
-      "type": "define",
-      "definition": "jsc.guide.rack_equipment.definition1",
-      "term": "jsc.guide.rack_equipment.term1"
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text4"
     },
     {
       "type": "heading",
@@ -27,7 +70,18 @@
         {
           "fix": "jsc.guide.rack_equipment.fix1",
           "problem": "jsc.guide.rack_equipment.problem1"
+        },
+        {
+          "fix": "jsc.guide.rack_equipment.fix2",
+          "problem": "jsc.guide.rack_equipment.problem2"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:server_racks",
+        "jsc:rack_cooling_and_heat"
       ]
     }
   ],
@@ -40,7 +94,7 @@
     "jsc:rack_ups",
     "jsc:cooling_unit"
   ],
-  "order": 17,
-  "section": "jsc:computers",
+  "order": 31,
+  "section": "jsc:racks",
   "title": "jsc.guide.rack_equipment.title"
 }

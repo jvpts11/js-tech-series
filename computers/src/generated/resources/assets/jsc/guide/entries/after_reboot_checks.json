@@ -1,0 +1,157 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.after_reboot_checks.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.after_reboot_checks.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.after_reboot_checks.table1",
+      "heads": [
+        "jsc.guide.after_reboot_checks.table1_head1",
+        "jsc.guide.after_reboot_checks.table1_head2",
+        "jsc.guide.after_reboot_checks.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.after_reboot_checks.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.after_reboot_checks.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.after_reboot_checks.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.after_reboot_checks.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.after_reboot_checks.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.after_reboot_checks.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.after_reboot_checks.table1_3_1"
+          },
+          {
+            "literal": "kernel panic - not syncing: no init found"
+          },
+          {
+            "words": "jsc.guide.after_reboot_checks.table1_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.after_reboot_checks.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.after_reboot_checks.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.after_reboot_checks.table2",
+      "heads": [
+        "jsc.guide.after_reboot_checks.table2_head1",
+        "jsc.guide.after_reboot_checks.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.after_reboot_checks.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.after_reboot_checks.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.after_reboot_checks.table2_2_1"
+          },
+          {
+            "literal": "DISK BOOT FAILURE, INSERT SYSTEM DISK AND PRESS ENTER"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.after_reboot_checks.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.after_reboot_checks.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.after_reboot_checks.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.after_reboot_checks.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.after_reboot_checks.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.after_reboot_checks.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.after_reboot_checks.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.after_reboot_checks.definition1",
+      "term": "jsc.guide.after_reboot_checks.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.after_reboot_checks.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.after_reboot_checks.fix1",
+          "problem": "jsc.guide.after_reboot_checks.problem1"
+        },
+        {
+          "fix": "jsc.guide.after_reboot_checks.fix2",
+          "problem": "jsc.guide.after_reboot_checks.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:firmware",
+        "jsc:installing",
+        "jsc:two_systems",
+        "jsc:disks"
+      ]
+    }
+  ],
+  "id": "jsc:after_reboot_checks",
+  "order": 269,
+  "section": "jsc:after_the_reboot",
+  "title": "jsc.guide.after_reboot_checks.title"
+}

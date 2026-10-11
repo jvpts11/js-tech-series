@@ -1,0 +1,171 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_namespaces_using.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_namespaces_using.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_namespaces_using.table1",
+      "heads": [
+        "jsc.guide.sigma_namespaces_using.table1_head1",
+        "jsc.guide.sigma_namespaces_using.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Standard"
+          },
+          {
+            "words": "jsc.guide.sigma_namespaces_using.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "System"
+          },
+          {
+            "words": "jsc.guide.sigma_namespaces_using.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "System.IO"
+          },
+          {
+            "words": "jsc.guide.sigma_namespaces_using.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "System.Utils"
+          },
+          {
+            "words": "jsc.guide.sigma_namespaces_using.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "System.Collections"
+          },
+          {
+            "words": "jsc.guide.sigma_namespaces_using.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "System.Machine"
+          },
+          {
+            "words": "jsc.guide.sigma_namespaces_using.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_namespaces_using.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_namespaces_using.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_namespaces_using.table2",
+      "heads": [
+        "jsc.guide.sigma_namespaces_using.table2_head1",
+        "jsc.guide.sigma_namespaces_using.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_namespaces_using.table2_1_1"
+          },
+          {
+            "literal": "using System.IO.*; then namespace, then the class"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_namespaces_using.table2_2_1"
+          },
+          {
+            "literal": "using System.*; and using System.IO.*; then namespace, then the class"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_namespaces_using.table2_3_1"
+          },
+          {
+            "literal": "using Standard.*; then namespace"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_namespaces_using.table2_4_1"
+          },
+          {
+            "literal": "using Standard.*; then namespace"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.IO.*;",
+        "",
+        "namespace Garage.Tools;",
+        "",
+        "class Ping",
+        "{",
+        "    static void Main() { Console.PrintLine(\"up\"); }",
+        "}"
+      ],
+      "name": "Ping.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_namespaces_using.fix1",
+          "problem": "jsc.guide.sigma_namespaces_using.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_namespaces_using.fix2",
+          "problem": "jsc.guide.sigma_namespaces_using.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_namespaces_using.fix3",
+          "problem": "jsc.guide.sigma_namespaces_using.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_namespaces_using.fix4",
+          "problem": "jsc.guide.sigma_namespaces_using.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_entry_points",
+        "jsc:sigma_library"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_namespaces_using",
+  "order": 344,
+  "section": "jsc:sigma_organising",
+  "title": "jsc.guide.sigma_namespaces_using.title"
+}

@@ -1,0 +1,156 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.installing_linux_keys.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.installing_linux_keys.table1",
+      "heads": [
+        "jsc.guide.installing_linux_keys.table1_head1",
+        "jsc.guide.installing_linux_keys.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "UP and DOWN"
+          },
+          {
+            "words": "jsc.guide.installing_linux_keys.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "ENTER"
+          },
+          {
+            "words": "jsc.guide.installing_linux_keys.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "1 to 9"
+          },
+          {
+            "words": "jsc.guide.installing_linux_keys.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Letters"
+          },
+          {
+            "words": "jsc.guide.installing_linux_keys.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "BACKSPACE"
+          },
+          {
+            "words": "jsc.guide.installing_linux_keys.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "E"
+          },
+          {
+            "words": "jsc.guide.installing_linux_keys.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Y"
+          },
+          {
+            "words": "jsc.guide.installing_linux_keys.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "B"
+          },
+          {
+            "words": "jsc.guide.installing_linux_keys.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "F3"
+          },
+          {
+            "words": "jsc.guide.installing_linux_keys.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "ESC"
+          },
+          {
+            "words": "jsc.guide.installing_linux_keys.table1_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing_linux_keys.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing_linux_keys.text3"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.installing_linux_keys.warning1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.installing_linux_keys.definition1",
+      "term": "jsc.guide.installing_linux_keys.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing_linux_keys.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing_linux_keys.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing_linux_keys.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.installing_linux_keys.fix1",
+          "problem": "jsc.guide.installing_linux_keys.problem1"
+        },
+        {
+          "fix": "jsc.guide.installing_linux_keys.fix2",
+          "problem": "jsc.guide.installing_linux_keys.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:install_ubuntu",
+        "jsc:install_debian",
+        "jsc:install_fedora"
+      ]
+    }
+  ],
+  "id": "jsc:installing_linux_keys",
+  "order": 231,
+  "section": "jsc:installing_linux",
+  "title": "jsc.guide.installing_linux_keys.title"
+}

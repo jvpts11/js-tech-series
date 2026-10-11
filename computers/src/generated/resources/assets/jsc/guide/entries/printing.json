@@ -1,0 +1,62 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.printing.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.printing.definition1",
+      "term": "jsc.guide.printing.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.printing.definition2",
+      "term": "jsc.guide.printing.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.printing.text2"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/lp"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/lpstat"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.printing.fix1",
+          "problem": "jsc.guide.printing.problem1"
+        },
+        {
+          "fix": "jsc.guide.printing.fix2",
+          "problem": "jsc.guide.printing.problem2"
+        },
+        {
+          "fix": "jsc.guide.printing.fix3",
+          "problem": "jsc.guide.printing.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:shell_commands",
+        "jsc:pipes_and_variables"
+      ]
+    }
+  ],
+  "id": "jsc:printing",
+  "order": 199,
+  "section": "jsc:shell_commands",
+  "title": "jsc.guide.printing.title"
+}

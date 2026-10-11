@@ -14,6 +14,56 @@
       "term": "jsc.guide.items_as_data.term1"
     },
     {
+      "type": "table",
+      "caption": "jsc.guide.items_as_data.table1",
+      "heads": [
+        "jsc.guide.items_as_data.table1_head1",
+        "jsc.guide.items_as_data.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.items_as_data.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.items_as_data.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.items_as_data.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.items_as_data.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.items_as_data.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.items_as_data.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.items_as_data.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.items_as_data.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.items_as_data.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.items_as_data.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
       "type": "text",
       "text": "jsc.guide.items_as_data.text3"
     },
@@ -22,22 +72,21 @@
       "text": "jsc.guide.items_as_data.text4"
     },
     {
-      "type": "heading",
-      "text": "jscore.guide.if_something_goes_wrong"
+      "type": "text",
+      "text": "jsc.guide.items_as_data.text5"
     },
     {
-      "type": "problems",
-      "problems": [
-        {
-          "fix": "jsc.guide.items_as_data.fix1",
-          "problem": "jsc.guide.items_as_data.problem1"
-        }
+      "type": "see",
+      "entries": [
+        "jsc:disks",
+        "jsc:units_and_ticks",
+        "jsc:fluids"
       ]
     }
   ],
   "icon": "jsc:disk_vaultis_trench_20m",
   "id": "jsc:items_as_data",
-  "order": 37,
-  "section": "jsc:storage",
+  "order": 11,
+  "section": "jsc:how_things_are_counted",
   "title": "jsc.guide.items_as_data.title"
 }

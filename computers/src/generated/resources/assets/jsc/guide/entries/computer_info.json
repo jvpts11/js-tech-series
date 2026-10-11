@@ -1,0 +1,209 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.computer_info.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computer_info.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.computer_info.table1",
+      "heads": [
+        "jsc.guide.computer_info.table1_head1",
+        "jsc.guide.computer_info.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Computer.Name"
+          },
+          {
+            "words": "jsc.guide.computer_info.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.Cpu"
+          },
+          {
+            "words": "jsc.guide.computer_info.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.Os"
+          },
+          {
+            "words": "jsc.guide.computer_info.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.RamMb"
+          },
+          {
+            "words": "jsc.guide.computer_info.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.FreeRamMb"
+          },
+          {
+            "words": "jsc.guide.computer_info.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.Online"
+          },
+          {
+            "words": "jsc.guide.computer_info.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.Disks()"
+          },
+          {
+            "words": "jsc.guide.computer_info.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.Programs()"
+          },
+          {
+            "words": "jsc.guide.computer_info.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Computer.Processes()"
+          },
+          {
+            "words": "jsc.guide.computer_info.table1_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computer_info.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.computer_info.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computer_info.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.computer_info.table2",
+      "heads": [
+        "jsc.guide.computer_info.table2_head1",
+        "jsc.guide.computer_info.table2_head2",
+        "jsc.guide.computer_info.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "CpuInfo"
+          },
+          {
+            "literal": "CpuInfo.Mhz, CpuInfo.Cores, CpuInfo.Era, CpuInfo.Architecture"
+          },
+          {
+            "words": "jsc.guide.computer_info.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "DiskInfo"
+          },
+          {
+            "literal": "DiskInfo.Mount, DiskInfo.UsedMb, DiskInfo.CapacityMb"
+          },
+          {
+            "words": "jsc.guide.computer_info.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "OsInfo"
+          },
+          {
+            "literal": "OsInfo.Id, OsInfo.Name"
+          },
+          {
+            "words": "jsc.guide.computer_info.table2_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "ProcessInfo"
+          },
+          {
+            "literal": "ProcessInfo.Id, ProcessInfo.Name, ProcessInfo.State, ProcessInfo.HeldBytes"
+          },
+          {
+            "words": "jsc.guide.computer_info.table2_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computer_info.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.computer_info.definition1",
+      "term": "jsc.guide.computer_info.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.computer_info.definition2",
+      "term": "jsc.guide.computer_info.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.computer_info.definition3",
+      "term": "jsc.guide.computer_info.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.computer_info.fix1",
+          "problem": "jsc.guide.computer_info.problem1"
+        },
+        {
+          "fix": "jsc.guide.computer_info.fix2",
+          "problem": "jsc.guide.computer_info.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:the_systems",
+        "jsc:processors",
+        "jsc:eras"
+      ]
+    }
+  ],
+  "id": "jsc:computer_info",
+  "order": 356,
+  "section": "jsc:library_basics",
+  "title": "jsc.guide.computer_info.title"
+}

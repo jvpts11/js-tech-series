@@ -1,0 +1,448 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_widgets.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_widgets.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_widgets.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_widgets.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_widgets.heading1"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "using System.IO.*;",
+        "using System.UI.*;",
+        "using System.Operations.*;",
+        "namespace Corpus;",
+        "class WidgetsCorpus {",
+        "    static void Main() {",
+        "        Window window = new Window(\"Widgets\", 320, 200);",
+        "        Column column = new Column();",
+        "",
+        "        TextArea area = new TextArea();",
+        "        TextArea notes = new TextArea(\"notes\");",
+        "        notes.Text = \"more\";",
+        "        notes.OnChange += Heard;",
+        "",
+        "        NumberBox numbers = new NumberBox();",
+        "        NumberBox copies = new NumberBox(1, 9);",
+        "        copies.Value = 3;",
+        "        copies.Least = 1;",
+        "        copies.Most = 9;",
+        "        copies.Step = 1;",
+        "        copies.OnChange += Heard;",
+        "",
+        "        Slider slider = new Slider();",
+        "        Slider speed = new Slider(0, 100);",
+        "        speed.Value = 50;",
+        "        speed.Least = 0;",
+        "        speed.Most = 100;",
+        "        speed.Step = 5;",
+        "        speed.OnChange += Heard;",
+        "",
+        "        RadioGroup radios = new RadioGroup();",
+        "        radios.Add(\"Fast\");",
+        "        radios.Add(\"Slow\");",
+        "        radios.Selected = 1;",
+        "        radios.Across = true;",
+        "        radios.OnSelect += Heard;",
+        "",
+        "        ComboBox combo = new ComboBox();",
+        "        combo.Add(\"Legacy\");",
+        "        combo.Selected = 1;",
+        "        combo.OnSelect += Heard;",
+        "",
+        "        GroupBox group = new GroupBox();",
+        "        GroupBox backup = new GroupBox(\"Backup\");",
+        "        backup.Text = \"Backup\";",
+        "        backup.Content = notes;",
+        "        TabView tabs = new TabView();",
+        "        tabs.Add(\"Controls\", backup);",
+        "        tabs.Selected = 1;",
+        "        tabs.OnSelect += Heard;",
+        "",
+        "        ScrollView scroll = new ScrollView();",
+        "        scroll.Content = area;",
+        "",
+        "        Table table = new Table();",
+        "        table.AddColumn(\"Name\");",
+        "        List<string> cells = new List<string>();",
+        "        cells.Add(\"a\");",
+        "        table.AddRow(cells);",
+        "        table.AddRow(\"a\");",
+        "        table.AddRow(\"a\", \"b\");",
+        "        table.AddRow(\"a\", \"b\", \"c\");",
+        "        table.AddRow(\"a\", \"b\", \"c\", \"d\");",
+        "        table.Selected = 1;",
+        "        table.OnSelect += Heard;",
+        "        string cell = table.Cell(1, 1);",
+        "",
+        "        TreeView tree = new TreeView();",
+        "        int top = tree.Add(\"This PC\");",
+        "        int under = tree.Add(\"C:\", top);",
+        "        string node = tree.NodeText(under);",
+        "        tree.Selected = under;",
+        "        tree.OnSelect += Heard;",
+        "",
+        "        MenuBar bar = new MenuBar();",
+        "        bar.Add(\"File\", \"Open\");",
+        "        bar.OnPick += Heard;",
+        "        ContextMenu menu = new ContextMenu(table);",
+        "        menu.Add(\"Rename\");",
+        "        menu.OnPick += Heard;",
+        "",
+        "        StatusBar status = new StatusBar();",
+        "        StatusBar ready = new StatusBar(\"Ready\");",
+        "        ready.Text = \"Ready\";",
+        "        ready.Add(\"12:30\");",
+        "",
+        "        Image image = new Image();",
+        "        Image photo = new Image(\"/photo.pix\");",
+        "        photo.Path = \"/photo.pix\";",
+        "",
+        "        Chart chart = new Chart();",
+        "        Chart cpu = new Chart(0, 100);",
+        "        cpu.Text = \"CPU\";",
+        "        cpu.Least = 0;",
+        "        cpu.Most = 100;",
+        "        cpu.Add(61.0);",
+        "",
+        "        LogView log = new LogView();",
+        "        log.Add(\"10:14 INFO started\");",
+        "",
+        "        OpenFileDialog open = new OpenFileDialog();",
+        "        OpenFileDialog opener = new OpenFileDialog(\"Open\");",
+        "        opener.Title = \"Open\";",
+        "        opener.Path = \"/\";",
+        "        opener.Filter = \"*.txt\";",
+        "        opener.OnChoose += Heard;",
+        "        opener.OnCancel += Heard;",
+        "        SaveFileDialog save = new SaveFileDialog();",
+        "        SaveFileDialog saver = new SaveFileDialog(\"Save\");",
+        "        saver.Title = \"Save\";",
+        "        saver.Path = \"/\";",
+        "        saver.Filter = \"*.txt\";",
+        "        saver.Name = \"a.txt\";",
+        "        saver.OnChoose += Heard;",
+        "        saver.OnCancel += Heard;",
+        "",
+        "        ItemSlot slot = new ItemSlot();",
+        "        ItemSlot diamond = new ItemSlot(\"minecraft:diamond\");",
+        "        ItemSlot stack = new ItemSlot(\"minecraft:diamond\", 64);",
+        "        stack.Item = \"minecraft:diamond\";",
+        "        stack.Amount = 64;",
+        "        stack.OnClick += Heard;",
+        "",
+        "        ItemPicker picker = new ItemPicker();",
+        "        picker.Add(\"minecraft:diamond\");",
+        "        picker.Selected = 1;",
+        "        picker.OnSelect += Heard;",
+        "",
+        "        OperationView view = new OperationView();",
+        "        view.Text = \"SELECT 64 diamond\";",
+        "        view.State = \"PROCESSING\";",
+        "        view.Done = 3;",
+        "        view.Total = 5;",
+        "        view.Computer = \"Mainframe\";",
+        "        view.Show(Operations.Get(\"op\"));",
+        "",
+        "        GenericComponent dial = new GenericComponent(\"corpus:dial\");",
+        "        dial.Data = 5;",
+        "        dial.OnAction(Acted);",
+        "",
+        "        column.Add(bar);",
+        "        column.Add(tabs, 1);",
+        "        column.Add(scroll);",
+        "        column.Add(copies);",
+        "        column.Add(speed);",
+        "        column.Add(radios);",
+        "        column.Add(combo);",
+        "        column.Add(table);",
+        "        column.Add(tree);",
+        "        column.Add(photo);",
+        "        column.Add(cpu);",
+        "        column.Add(log);",
+        "        column.Add(stack);",
+        "        column.Add(picker);",
+        "        column.Add(view);",
+        "        column.Add(dial);",
+        "        column.Add(ready);",
+        "        window.Content = column;",
+        "        window.Show();",
+        "        opener.Show(window);",
+        "        saver.Show(window);",
+        "        Console.PrintLine(cell + node + radios.Count + combo.Count + tabs.Count + table.Count + tree.Count",
+        "            + cpu.Count + log.Count + picker.Count + picker.Picked + bar.Picked + bar.PickedMenu + menu.Picked",
+        "            + dial.Kind + dial.Data + view.Done + numbers.Value + slider.Value + group.Text + status.Text",
+        "            + image.Path + chart.Count + open.Path + save.Name + slot.Amount);",
+        "        radios.Clear();",
+        "        combo.Clear();",
+        "        tabs.Clear();",
+        "        table.Clear();",
+        "        tree.Clear();",
+        "        bar.Clear();",
+        "        menu.Clear();",
+        "        ready.Clear();",
+        "        cpu.Clear();",
+        "        log.Clear();",
+        "        picker.Clear();",
+        "    }",
+        "",
+        "    static void Heard() {",
+        "    }",
+        "",
+        "    static void Acted(ComponentAction action) {",
+        "        Console.PrintLine(action.Name + action.Value);",
+        "    }",
+        "}"
+      ],
+      "name": "Widgets.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_widgets.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_widgets.table1",
+      "heads": [
+        "jsc.guide.sigma_example_widgets.table1_head1",
+        "jsc.guide.sigma_example_widgets.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "TextArea"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "NumberBox, Slider"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "RadioGroup"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "ComboBox"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "GroupBox"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "TabView"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "ScrollView"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Table"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "TreeView"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "MenuBar"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "ContextMenu"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "StatusBar"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "Image"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "Chart"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "LogView"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "OpenFileDialog, SaveFileDialog"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_16_2"
+          }
+        ],
+        [
+          {
+            "literal": "ItemSlot"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_17_2"
+          }
+        ],
+        [
+          {
+            "literal": "ItemPicker"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_18_2"
+          }
+        ],
+        [
+          {
+            "literal": "OperationView"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_19_2"
+          }
+        ],
+        [
+          {
+            "literal": "GenericComponent"
+          },
+          {
+            "words": "jsc.guide.sigma_example_widgets.table1_20_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_widgets.definition1",
+      "term": "jsc.guide.sigma_example_widgets.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_widgets.definition2",
+      "term": "jsc.guide.sigma_example_widgets.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_widgets.definition3",
+      "term": "jsc.guide.sigma_example_widgets.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_example_widgets.fix1",
+          "problem": "jsc.guide.sigma_example_widgets.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_widgets.fix2",
+          "problem": "jsc.guide.sigma_example_widgets.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_widgets.fix3",
+          "problem": "jsc.guide.sigma_example_widgets.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_widgets.fix4",
+          "problem": "jsc.guide.sigma_example_widgets.problem4"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_widgets.fix5",
+          "problem": "jsc.guide.sigma_example_widgets.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_example_windows",
+        "jsc:operations",
+        "jsc:soundfoundry",
+        "jsc:sigma_library"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_example_widgets",
+  "order": 408,
+  "section": "jsc:examples_interface",
+  "title": "jsc.guide.sigma_example_widgets.title"
+}

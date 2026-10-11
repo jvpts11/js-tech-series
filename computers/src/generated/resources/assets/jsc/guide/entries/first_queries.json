@@ -1,0 +1,262 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.first_queries.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.first_queries.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.first_queries.step1",
+        "jsc.guide.first_queries.step2",
+        "jsc.guide.first_queries.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_queries.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.first_queries.definition1",
+      "term": "jsc.guide.first_queries.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_queries.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.first_queries.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.first_queries.table1",
+      "heads": [
+        "jsc.guide.first_queries.table1_head1",
+        "jsc.guide.first_queries.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "iql QUERY disks"
+          },
+          {
+            "words": "jsc.guide.first_queries.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "iql QUERY servers"
+          },
+          {
+            "words": "jsc.guide.first_queries.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "iql QUERY items WHERE qty > 100"
+          },
+          {
+            "words": "jsc.guide.first_queries.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "iql QUERY items ORDER BY qty DESC LIMIT 2"
+          },
+          {
+            "words": "jsc.guide.first_queries.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_queries.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.first_queries.definition2",
+      "term": "jsc.guide.first_queries.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_queries.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.first_queries.table2",
+      "heads": [
+        "jsc.guide.first_queries.table2_head1",
+        "jsc.guide.first_queries.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.first_queries.table2_1_1"
+          },
+          {
+            "literal": "disk, server, tier, size, used"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.first_queries.table2_2_1"
+          },
+          {
+            "literal": "name, used, free, era"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.first_queries.table2_3_1"
+          },
+          {
+            "literal": "item, qty, server, tag, enchant"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_queries.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.first_queries.heading3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.first_queries.step4",
+        "jsc.guide.first_queries.step5",
+        "jsc.guide.first_queries.step6",
+        "jsc.guide.first_queries.step7"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.first_queries.table3",
+      "heads": [
+        "jsc.guide.first_queries.table3_head1",
+        "jsc.guide.first_queries.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "iql SELECT 64 iron_ingot"
+          },
+          {
+            "literal": "SELECT queued: 64 Iron Ingot -> local storage"
+          }
+        ],
+        [
+          {
+            "literal": "iql CRAFT 64 torch"
+          },
+          {
+            "literal": "CRAFT queued: 64 Torch"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_queries.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_queries.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.first_queries.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.first_queries.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.first_queries.fix1",
+          "problem": "jsc.guide.first_queries.problem1"
+        },
+        {
+          "fix": "jsc.guide.first_queries.fix2",
+          "problem": "jsc.guide.first_queries.problem2"
+        },
+        {
+          "fix": "jsc.guide.first_queries.fix3",
+          "problem": "jsc.guide.first_queries.problem3"
+        },
+        {
+          "fix": "jsc.guide.first_queries.fix4",
+          "problem": "jsc.guide.first_queries.problem4"
+        },
+        {
+          "fix": "jsc.guide.first_queries.fix5",
+          "problem": "jsc.guide.first_queries.problem5"
+        },
+        {
+          "fix": "jsc.guide.first_queries.fix6",
+          "problem": "jsc.guide.first_queries.problem6"
+        },
+        {
+          "fix": "jsc.guide.first_queries.fix7",
+          "problem": "jsc.guide.first_queries.problem7"
+        },
+        {
+          "fix": "jsc.guide.first_queries.fix8",
+          "problem": "jsc.guide.first_queries.problem8"
+        },
+        {
+          "fix": "jsc.guide.first_queries.fix9",
+          "problem": "jsc.guide.first_queries.problem9"
+        },
+        {
+          "fix": "jsc.guide.first_queries.fix10",
+          "problem": "jsc.guide.first_queries.problem10"
+        },
+        {
+          "fix": "jsc.guide.first_queries.fix11",
+          "problem": "jsc.guide.first_queries.problem11"
+        },
+        {
+          "fix": "jsc.guide.first_queries.fix12",
+          "problem": "jsc.guide.first_queries.problem12"
+        },
+        {
+          "fix": "jsc.guide.first_queries.fix13",
+          "problem": "jsc.guide.first_queries.problem13"
+        },
+        {
+          "fix": "jsc.guide.first_queries.fix14",
+          "problem": "jsc.guide.first_queries.problem14"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:query_and_select",
+        "jsc:operations_catalogue",
+        "jsc:iql_errors"
+      ]
+    }
+  ],
+  "id": "jsc:first_queries",
+  "order": 288,
+  "section": "jsc:iql_start",
+  "title": "jsc.guide.first_queries.title"
+}

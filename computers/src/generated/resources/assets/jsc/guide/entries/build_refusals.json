@@ -1,0 +1,304 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.build_refusals.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.build_refusals.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.build_refusals.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.build_refusals.definition1",
+      "term": "jsc.guide.build_refusals.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.build_refusals.definition2",
+      "term": "jsc.guide.build_refusals.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.build_refusals.definition3",
+      "term": "jsc.guide.build_refusals.term3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.build_refusals.table1",
+      "heads": [
+        "jsc.guide.build_refusals.table1_head1",
+        "jsc.guide.build_refusals.table1_head2",
+        "jsc.guide.build_refusals.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "no CPU installed"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "no RAM installed"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "too many CPUs: <installed> installed, <sockets> sockets"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "CPU socket <a> does not fit board socket <b>"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "CPU instruction set <a> does not match the <b> of the other processors"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "too many PCI-e cards: <installed> installed, <slots> PCI-e slots"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "expansion card bus family <a> is not compatible with board bus <b>"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "a sound card of the <a> era does not sit on a board of the <b> era"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "one sound card per machine: <installed> installed"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_9_3"
+          }
+        ],
+        [
+          {
+            "literal": "too many RAM modules: <installed> installed, <slots> slots"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_10_3"
+          }
+        ],
+        [
+          {
+            "literal": "RAM generation <a> not accepted by board"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_11_3"
+          }
+        ],
+        [
+          {
+            "literal": "too many disks: <installed> installed, <slots> disk slots"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_12_2"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_12_3"
+          }
+        ],
+        [
+          {
+            "literal": "PSU insufficient: draw <a>W exceeds <b>W"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_13_2"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table1_13_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.build_refusals.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.build_refusals.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.build_refusals.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.build_refusals.table2",
+      "heads": [
+        "jsc.guide.build_refusals.table2_head1",
+        "jsc.guide.build_refusals.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.build_refusals.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.build_refusals.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.build_refusals.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.build_refusals.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.build_refusals.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.build_refusals.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table2_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.build_refusals.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table2_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.build_refusals.table2_8_1"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table2_8_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.build_refusals.table2_9_1"
+          },
+          {
+            "words": "jsc.guide.build_refusals.table2_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.build_refusals.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.build_refusals.fix1",
+          "problem": "jsc.guide.build_refusals.problem1"
+        },
+        {
+          "fix": "jsc.guide.build_refusals.fix2",
+          "problem": "jsc.guide.build_refusals.problem2"
+        }
+      ]
+    }
+  ],
+  "id": "jsc:build_refusals",
+  "order": 15,
+  "section": "jsc:assembly",
+  "title": "jsc.guide.build_refusals.title"
+}

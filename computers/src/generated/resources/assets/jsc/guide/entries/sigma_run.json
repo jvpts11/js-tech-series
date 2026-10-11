@@ -1,0 +1,262 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_run.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_run.table1",
+      "heads": [
+        "jsc.guide.sigma_run.table1_head1",
+        "jsc.guide.sigma_run.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "sigma run <file> [--heap <n>M] [arguments]"
+          },
+          {
+            "words": "jsc.guide.sigma_run.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "sigma stop <id>"
+          },
+          {
+            "words": "jsc.guide.sigma_run.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "sigma ps"
+          },
+          {
+            "words": "jsc.guide.sigma_run.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_run.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.sigma_run.step1",
+        "jsc.guide.sigma_run.step2",
+        "jsc.guide.sigma_run.step3",
+        "jsc.guide.sigma_run.step4"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_run.table2",
+      "heads": [
+        "jsc.guide.sigma_run.table2_head1",
+        "jsc.guide.sigma_run.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": ".asm"
+          },
+          {
+            "words": "jsc.guide.sigma_run.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": ".sgs or .sg"
+          },
+          {
+            "words": "jsc.guide.sigma_run.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_run.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.sigma_run.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_run.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_run.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_run.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_run.definition1",
+      "term": "jsc.guide.sigma_run.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_run.table3",
+      "heads": [
+        "jsc.guide.sigma_run.table3_head1",
+        "jsc.guide.sigma_run.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_run.table3_1_1"
+          },
+          {
+            "amount": 1,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_run.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.sigma_run.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_run.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.sigma_run.table3_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_run.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_run.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_run.table4",
+      "heads": [
+        "jsc.guide.sigma_run.table4_head1",
+        "jsc.guide.sigma_run.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_run.table4_1_1"
+          },
+          {
+            "words": "jsc.guide.sigma_run.table4_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_run.table4_2_1"
+          },
+          {
+            "words": "jsc.guide.sigma_run.table4_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_run.table4_3_1"
+          },
+          {
+            "words": "jsc.guide.sigma_run.table4_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_run.table4_4_1"
+          },
+          {
+            "words": "jsc.guide.sigma_run.table4_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_run.text7"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "player@pc:~$ ",
+          "text": "sigma ps",
+          "typed": true
+        },
+        {
+          "text": "no Σ# programs are running"
+        }
+      ],
+      "look": "jsc:guide/terminal/bash",
+      "title": "Ubuntu"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_run.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_run.text9"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/sigma"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_run.fix1",
+          "problem": "jsc.guide.sigma_run.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_run.fix2",
+          "problem": "jsc.guide.sigma_run.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_run.fix3",
+          "problem": "jsc.guide.sigma_run.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_run.fix4",
+          "problem": "jsc.guide.sigma_run.problem4"
+        },
+        {
+          "fix": "jsc.guide.sigma_run.fix5",
+          "problem": "jsc.guide.sigma_run.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_running",
+        "jsc:sigma_compile"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_run",
+  "order": 332,
+  "section": "jsc:sigma_start",
+  "title": "jsc.guide.sigma_run.title"
+}

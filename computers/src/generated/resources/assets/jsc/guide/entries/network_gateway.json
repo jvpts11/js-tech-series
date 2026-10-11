@@ -9,6 +9,86 @@
       "text": "jsc.guide.network_gateway.text2"
     },
     {
+      "type": "define",
+      "definition": "jsc.guide.network_gateway.definition1",
+      "term": "jsc.guide.network_gateway.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_gateway.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_gateway.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_gateway.table1",
+      "heads": [
+        "jsc.guide.network_gateway.table1_head1",
+        "jsc.guide.network_gateway.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.network_gateway.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.network_gateway.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_gateway.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.network_gateway.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_gateway.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_gateway.definition2",
+      "term": "jsc.guide.network_gateway.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_gateway.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_gateway.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_gateway.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_gateway.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_gateway.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_gateway.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_gateway.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_gateway.text10"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -18,7 +98,26 @@
         {
           "fix": "jsc.guide.network_gateway.fix1",
           "problem": "jsc.guide.network_gateway.problem1"
+        },
+        {
+          "fix": "jsc.guide.network_gateway.fix2",
+          "problem": "jsc.guide.network_gateway.problem2"
+        },
+        {
+          "fix": "jsc.guide.network_gateway.fix3",
+          "problem": "jsc.guide.network_gateway.problem3"
+        },
+        {
+          "fix": "jsc.guide.network_gateway.fix4",
+          "problem": "jsc.guide.network_gateway.problem4"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:peripheral_cables",
+        "jsc:mainframes"
       ]
     }
   ],
@@ -27,7 +126,7 @@
   "items": [
     "jsc:network_gateway"
   ],
-  "order": 30,
-  "section": "jsc:network",
+  "order": 123,
+  "section": "jsc:gateway",
   "title": "jsc.guide.network_gateway.title"
 }

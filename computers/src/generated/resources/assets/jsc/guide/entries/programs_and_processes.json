@@ -1,0 +1,331 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.programs_and_processes.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs_and_processes.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.programs_and_processes.table1",
+      "heads": [
+        "jsc.guide.programs_and_processes.table1_head1",
+        "jsc.guide.programs_and_processes.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Program.SetName(name)"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Name"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Args"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Exit(status)"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.DroppedEvents"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Start(path)"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Current"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.Shell(line)"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Program.OnMessage(handler)"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table1_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs_and_processes.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs_and_processes.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs_and_processes.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.programs_and_processes.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs_and_processes.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.programs_and_processes.table2",
+      "heads": [
+        "jsc.guide.programs_and_processes.table2_head1",
+        "jsc.guide.programs_and_processes.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Process.Id"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Name"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Host"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Running"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.ExitCode"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Wait()"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Wait(ticks)"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Kill()"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Output()"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process.Send(id, text)"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table2_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs_and_processes.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.programs_and_processes.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs_and_processes.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs_and_processes.text9"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.programs_and_processes.table3",
+      "heads": [
+        "jsc.guide.programs_and_processes.table3_head1",
+        "jsc.guide.programs_and_processes.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "running"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "parked"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "finished"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "halted"
+          },
+          {
+            "words": "jsc.guide.programs_and_processes.table3_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs_and_processes.text10"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.programs_and_processes.definition1",
+      "term": "jsc.guide.programs_and_processes.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.programs_and_processes.definition2",
+      "term": "jsc.guide.programs_and_processes.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.programs_and_processes.definition3",
+      "term": "jsc.guide.programs_and_processes.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.programs_and_processes.definition4",
+      "term": "jsc.guide.programs_and_processes.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.programs_and_processes.fix1",
+          "problem": "jsc.guide.programs_and_processes.problem1"
+        },
+        {
+          "fix": "jsc.guide.programs_and_processes.fix2",
+          "problem": "jsc.guide.programs_and_processes.problem2"
+        },
+        {
+          "fix": "jsc.guide.programs_and_processes.fix3",
+          "problem": "jsc.guide.programs_and_processes.problem3"
+        },
+        {
+          "fix": "jsc.guide.programs_and_processes.fix4",
+          "problem": "jsc.guide.programs_and_processes.problem4"
+        },
+        {
+          "fix": "jsc.guide.programs_and_processes.fix5",
+          "problem": "jsc.guide.programs_and_processes.problem5"
+        },
+        {
+          "fix": "jsc.guide.programs_and_processes.fix6",
+          "problem": "jsc.guide.programs_and_processes.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:running_programs",
+        "jsc:threads_and_locks",
+        "jsc:sigma_runtime_stops"
+      ]
+    }
+  ],
+  "id": "jsc:programs_and_processes",
+  "order": 357,
+  "section": "jsc:library_programs",
+  "title": "jsc.guide.programs_and_processes.title"
+}

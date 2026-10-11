@@ -1,0 +1,257 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.ports_tree.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.ports_tree.definition1",
+      "term": "jsc.guide.ports_tree.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.ports_tree.definition2",
+      "term": "jsc.guide.ports_tree.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.ports_tree.definition3",
+      "term": "jsc.guide.ports_tree.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ports_tree.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.ports_tree.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.ports_tree.table1",
+      "heads": [
+        "jsc.guide.ports_tree.table1_head1",
+        "jsc.guide.ports_tree.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "fetch"
+          },
+          {
+            "words": "jsc.guide.ports_tree.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "extract"
+          },
+          {
+            "words": "jsc.guide.ports_tree.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "update"
+          },
+          {
+            "words": "jsc.guide.ports_tree.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "auto"
+          },
+          {
+            "words": "jsc.guide.ports_tree.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/freebsd/portsnap"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.ports_tree.step1",
+        "jsc.guide.ports_tree.step2"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.ports_tree.text3"
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.ports_tree.warning1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.ports_tree.table2",
+      "heads": [
+        "jsc.guide.ports_tree.table2_head1",
+        "jsc.guide.ports_tree.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.ports_tree.table2_1_1"
+          },
+          {
+            "literal": "sysutils"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ports_tree.table2_2_1"
+          },
+          {
+            "literal": "editors"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ports_tree.table2_3_1"
+          },
+          {
+            "literal": "games"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ports_tree.table2_4_1"
+          },
+          {
+            "literal": "lang"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ports_tree.table2_5_1"
+          },
+          {
+            "literal": "devel"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ports_tree.table2_6_1"
+          },
+          {
+            "literal": "x11"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ports_tree.table2_7_1"
+          },
+          {
+            "literal": "x11"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.ports_tree.table2_8_1"
+          },
+          {
+            "literal": "x11"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.ports_tree.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.ports_tree.table3",
+      "heads": [
+        "jsc.guide.ports_tree.table3_head1",
+        "jsc.guide.ports_tree.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "portsnap: this computer has no system disk"
+          },
+          {
+            "words": "jsc.guide.ports_tree.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Looking up the Mirror for the ports tree... none found."
+          },
+          {
+            "words": "jsc.guide.ports_tree.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "No snapshot available.  Try running portsnap fetch"
+          },
+          {
+            "words": "jsc.guide.ports_tree.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "/usr/ports was not created by portsnap."
+          },
+          {
+            "words": "jsc.guide.ports_tree.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "portsnap: No space left on device"
+          },
+          {
+            "words": "jsc.guide.ports_tree.table3_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.ports_tree.fix1",
+          "problem": "jsc.guide.ports_tree.problem1"
+        },
+        {
+          "fix": "jsc.guide.ports_tree.fix2",
+          "problem": "jsc.guide.ports_tree.problem2"
+        },
+        {
+          "fix": "jsc.guide.ports_tree.fix3",
+          "problem": "jsc.guide.ports_tree.problem3"
+        },
+        {
+          "fix": "jsc.guide.ports_tree.fix4",
+          "problem": "jsc.guide.ports_tree.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:ports_build",
+        "jsc:pkg",
+        "jsc:disks"
+      ]
+    }
+  ],
+  "id": "jsc:ports_tree",
+  "order": 275,
+  "section": "jsc:freebsd_software",
+  "title": "jsc.guide.ports_tree.title"
+}

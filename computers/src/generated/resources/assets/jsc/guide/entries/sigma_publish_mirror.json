@@ -1,0 +1,119 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_publish_mirror.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_publish_mirror.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_publish_mirror.table1",
+      "heads": [
+        "jsc.guide.sigma_publish_mirror.table1_head1",
+        "jsc.guide.sigma_publish_mirror.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "init [name]"
+          },
+          {
+            "words": "jsc.guide.sigma_publish_mirror.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "build"
+          },
+          {
+            "words": "jsc.guide.sigma_publish_mirror.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "publish [file]"
+          },
+          {
+            "words": "jsc.guide.sigma_publish_mirror.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "unpublish <name>"
+          },
+          {
+            "words": "jsc.guide.sigma_publish_mirror.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_publish_mirror.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.sigma_publish_mirror.step1",
+        "jsc.guide.sigma_publish_mirror.step2",
+        "jsc.guide.sigma_publish_mirror.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_publish_mirror.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_publish_mirror.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_publish_mirror.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_publish_mirror.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_publish_mirror.fix1",
+          "problem": "jsc.guide.sigma_publish_mirror.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_publish_mirror.fix2",
+          "problem": "jsc.guide.sigma_publish_mirror.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_publish_mirror.fix3",
+          "problem": "jsc.guide.sigma_publish_mirror.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_publish_mirror.fix4",
+          "problem": "jsc.guide.sigma_publish_mirror.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_unpublish",
+        "jsc:sigma_sharing_errors",
+        "jsc:mainframe_services"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_publish_mirror",
+  "order": 389,
+  "section": "jsc:sharing_packages",
+  "title": "jsc.guide.sigma_publish_mirror.title"
+}

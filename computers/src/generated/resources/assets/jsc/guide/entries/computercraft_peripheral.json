@@ -1,0 +1,269 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.computercraft_peripheral.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computercraft_peripheral.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.computercraft_peripheral.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.computercraft_peripheral.table1",
+      "heads": [
+        "jsc.guide.computercraft_peripheral.table1_head1",
+        "jsc.guide.computercraft_peripheral.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "capacity()"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "used()"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "types()"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "total(name)"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "find(name)"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "servers()"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "computers()"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "operation(id)"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "operations()"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "watch(name)"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "unwatch(name)"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table1_11_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.computercraft_peripheral.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.computercraft_peripheral.table2",
+      "heads": [
+        "jsc.guide.computercraft_peripheral.table2_head1",
+        "jsc.guide.computercraft_peripheral.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "pull(name, quantity, priority)"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "push(name, quantity, priority)"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "craft(name, quantity, priority)"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "cancel(id)"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "run(computer, program, args...)"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computercraft_peripheral.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computercraft_peripheral.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.computercraft_peripheral.heading3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.computercraft_peripheral.table3",
+      "heads": [
+        "jsc.guide.computercraft_peripheral.table3_head1",
+        "jsc.guide.computercraft_peripheral.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "online()"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "name()"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "host()"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "send(text)"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "log(level, text)"
+          },
+          {
+            "words": "jsc.guide.computercraft_peripheral.table3_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computercraft_peripheral.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.computercraft_peripheral.fix1",
+          "problem": "jsc.guide.computercraft_peripheral.problem1"
+        },
+        {
+          "fix": "jsc.guide.computercraft_peripheral.fix2",
+          "problem": "jsc.guide.computercraft_peripheral.problem2"
+        },
+        {
+          "fix": "jsc.guide.computercraft_peripheral.fix3",
+          "problem": "jsc.guide.computercraft_peripheral.problem3"
+        },
+        {
+          "fix": "jsc.guide.computercraft_peripheral.fix4",
+          "problem": "jsc.guide.computercraft_peripheral.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:operations_catalogue"
+      ]
+    }
+  ],
+  "id": "jsc:computercraft_peripheral",
+  "order": 128,
+  "section": "jsc:gateway",
+  "title": "jsc.guide.computercraft_peripheral.title"
+}

@@ -1,0 +1,98 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_grub_config.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.arch_grub_config.definition1",
+      "term": "jsc.guide.arch_grub_config.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_grub_config.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.arch_grub_config.step1",
+        "jsc.guide.arch_grub_config.step2",
+        "jsc.guide.arch_grub_config.step3"
+      ]
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "[root@archiso /]# ",
+          "text": "grub-mkconfig -o /boot/grub/grub.cfg",
+          "typed": true
+        },
+        {
+          "text": "Generating grub configuration file ..."
+        },
+        {
+          "text": "Found linux image: /boot/vmlinuz-linux"
+        },
+        {
+          "text": "Found initrd image: /boot/initramfs-linux.img"
+        },
+        {
+          "text": "Warning: os-prober will not be executed to detect other bootable"
+        },
+        {
+          "text": "partitions. Systems on them will not be added to the GRUB boot"
+        },
+        {
+          "text": "configuration. Check GRUB_DISABLE_OS_PROBER documentation entry."
+        },
+        {
+          "text": "done"
+        }
+      ],
+      "look": "jsc:guide/terminal/zsh",
+      "title": "Arch Linux"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_grub_config.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_grub_config.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.arch_grub_config.fix1",
+          "problem": "jsc.guide.arch_grub_config.problem1"
+        },
+        {
+          "fix": "jsc.guide.arch_grub_config.fix2",
+          "problem": "jsc.guide.arch_grub_config.problem2"
+        },
+        {
+          "fix": "jsc.guide.arch_grub_config.fix3",
+          "problem": "jsc.guide.arch_grub_config.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:arch_reboot"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:arch_grub_config",
+  "order": 253,
+  "section": "jsc:arch_boot",
+  "title": "jsc.guide.arch_grub_config.title"
+}

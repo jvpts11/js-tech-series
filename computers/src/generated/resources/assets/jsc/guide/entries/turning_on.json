@@ -1,0 +1,189 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.turning_on.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.turning_on.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.turning_on.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.turning_on.step1",
+        "jsc.guide.turning_on.step2",
+        "jsc.guide.turning_on.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.turning_on.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.turning_on.table1",
+      "heads": [
+        "jsc.guide.turning_on.table1_head1",
+        "jsc.guide.turning_on.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "DEL"
+          },
+          {
+            "words": "jsc.guide.turning_on.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "F12"
+          },
+          {
+            "words": "jsc.guide.turning_on.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.turning_on.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.turning_on.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.turning_on.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.turning_on.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.turning_on.table2",
+      "heads": [
+        "jsc.guide.turning_on.table2_head1",
+        "jsc.guide.turning_on.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Processor :"
+          },
+          {
+            "words": "jsc.guide.turning_on.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Board     :"
+          },
+          {
+            "words": "jsc.guide.turning_on.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Memory    :"
+          },
+          {
+            "words": "jsc.guide.turning_on.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Video     :"
+          },
+          {
+            "words": "jsc.guide.turning_on.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Detecting drives"
+          },
+          {
+            "words": "jsc.guide.turning_on.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Booting from"
+          },
+          {
+            "words": "jsc.guide.turning_on.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.turning_on.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.turning_on.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.turning_on.definition1",
+      "term": "jsc.guide.turning_on.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.turning_on.definition2",
+      "term": "jsc.guide.turning_on.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.turning_on.definition3",
+      "term": "jsc.guide.turning_on.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.turning_on.fix1",
+          "problem": "jsc.guide.turning_on.problem1"
+        },
+        {
+          "fix": "jsc.guide.turning_on.fix2",
+          "problem": "jsc.guide.turning_on.problem2"
+        },
+        {
+          "fix": "jsc.guide.turning_on.fix3",
+          "problem": "jsc.guide.turning_on.problem3"
+        },
+        {
+          "fix": "jsc.guide.turning_on.fix4",
+          "problem": "jsc.guide.turning_on.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:firmware",
+        "jsc:setup_utility",
+        "jsc:boot_menu"
+      ]
+    }
+  ],
+  "icon": "jsc:personal_computer",
+  "id": "jsc:turning_on",
+  "order": 3,
+  "section": "jsc:starting_a_computer",
+  "title": "jsc.guide.turning_on.title"
+}

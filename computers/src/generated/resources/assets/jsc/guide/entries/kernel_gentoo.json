@@ -1,0 +1,113 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.kernel_gentoo.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.kernel_gentoo.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.kernel_gentoo.step1",
+        "jsc.guide.kernel_gentoo.step2",
+        "jsc.guide.kernel_gentoo.step3",
+        "jsc.guide.kernel_gentoo.step4"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.kernel_gentoo.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.kernel_gentoo.definition1",
+      "term": "jsc.guide.kernel_gentoo.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.kernel_gentoo.table1",
+      "heads": [
+        "jsc.guide.kernel_gentoo.table1_head1",
+        "jsc.guide.kernel_gentoo.table1_head2",
+        "jsc.guide.kernel_gentoo.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.kernel_gentoo.table1_1_1"
+          },
+          {
+            "literal": "genkernel all"
+          },
+          {
+            "words": "jsc.guide.kernel_gentoo.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.kernel_gentoo.table1_2_1"
+          },
+          {
+            "literal": "make -j4 && make modules_install && make install"
+          },
+          {
+            "words": "jsc.guide.kernel_gentoo.table1_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.kernel_gentoo.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.kernel_gentoo.definition2",
+      "term": "jsc.guide.kernel_gentoo.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.kernel_gentoo.fix1",
+          "problem": "jsc.guide.kernel_gentoo.problem1"
+        },
+        {
+          "fix": "jsc.guide.kernel_gentoo.fix2",
+          "problem": "jsc.guide.kernel_gentoo.problem2"
+        },
+        {
+          "fix": "jsc.guide.kernel_gentoo.fix3",
+          "problem": "jsc.guide.kernel_gentoo.problem3"
+        },
+        {
+          "fix": "jsc.guide.kernel_gentoo.fix4",
+          "problem": "jsc.guide.kernel_gentoo.problem4"
+        },
+        {
+          "fix": "jsc.guide.kernel_gentoo.fix5",
+          "problem": "jsc.guide.kernel_gentoo.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:fstab_by_hand",
+        "jsc:gentoo_bootloader",
+        "jsc:package_tree_and_world"
+      ]
+    }
+  ],
+  "id": "jsc:kernel_gentoo",
+  "order": 261,
+  "section": "jsc:gentoo_system",
+  "title": "jsc.guide.kernel_gentoo.title"
+}

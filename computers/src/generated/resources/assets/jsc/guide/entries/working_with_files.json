@@ -1,0 +1,272 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.working_with_files.definition1",
+      "term": "jsc.guide.working_with_files.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.working_with_files.definition2",
+      "term": "jsc.guide.working_with_files.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.working_with_files.table1",
+      "heads": [
+        "jsc.guide.working_with_files.table1_head1",
+        "jsc.guide.working_with_files.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "dir"
+          },
+          {
+            "words": "jsc.guide.working_with_files.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "cd (chdir)"
+          },
+          {
+            "words": "jsc.guide.working_with_files.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "type"
+          },
+          {
+            "words": "jsc.guide.working_with_files.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "write (save)"
+          },
+          {
+            "words": "jsc.guide.working_with_files.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "del (erase)"
+          },
+          {
+            "words": "jsc.guide.working_with_files.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "copy"
+          },
+          {
+            "words": "jsc.guide.working_with_files.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "move"
+          },
+          {
+            "words": "jsc.guide.working_with_files.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "ren (rename)"
+          },
+          {
+            "words": "jsc.guide.working_with_files.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "mkdir (md)"
+          },
+          {
+            "words": "jsc.guide.working_with_files.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "rmdir (rd)"
+          },
+          {
+            "words": "jsc.guide.working_with_files.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "tree"
+          },
+          {
+            "words": "jsc.guide.working_with_files.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "run"
+          },
+          {
+            "words": "jsc.guide.working_with_files.table1_12_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text3"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/dir"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text4"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/cd"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text5"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/type"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text6"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/write"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text7"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/del"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text8"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/copy"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text9"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/move"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text10"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/ren"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text11"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/mkdir"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text12"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/rmdir"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text13"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/tree"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.working_with_files.text14"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/run"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.working_with_files.fix1",
+          "problem": "jsc.guide.working_with_files.problem1"
+        },
+        {
+          "fix": "jsc.guide.working_with_files.fix2",
+          "problem": "jsc.guide.working_with_files.problem2"
+        },
+        {
+          "fix": "jsc.guide.working_with_files.fix3",
+          "problem": "jsc.guide.working_with_files.problem3"
+        },
+        {
+          "fix": "jsc.guide.working_with_files.fix4",
+          "problem": "jsc.guide.working_with_files.problem4"
+        },
+        {
+          "fix": "jsc.guide.working_with_files.fix5",
+          "problem": "jsc.guide.working_with_files.problem5"
+        },
+        {
+          "fix": "jsc.guide.working_with_files.fix6",
+          "problem": "jsc.guide.working_with_files.problem6"
+        },
+        {
+          "fix": "jsc.guide.working_with_files.fix7",
+          "problem": "jsc.guide.working_with_files.problem7"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:paths_and_drives",
+        "jsc:storage"
+      ]
+    }
+  ],
+  "id": "jsc:working_with_files",
+  "order": 180,
+  "section": "jsc:prompt_files",
+  "title": "jsc.guide.working_with_files.title"
+}

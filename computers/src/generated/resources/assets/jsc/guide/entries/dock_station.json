@@ -1,0 +1,186 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.dock_station.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dock_station.definition1",
+      "term": "jsc.guide.dock_station.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dock_station.table1",
+      "heads": [
+        "jsc.guide.dock_station.table1_head1",
+        "jsc.guide.dock_station.table1_head2",
+        "jsc.guide.dock_station.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.dock_station.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.dock_station.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.dock_station.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dock_station.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.dock_station.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.dock_station.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dock_station.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.dock_station.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.dock_station.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dock_station.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.dock_station.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.dock_station.table1_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dock_station.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.dock_station.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.dock_station.step1",
+        "jsc.guide.dock_station.step2",
+        "jsc.guide.dock_station.step3",
+        "jsc.guide.dock_station.step4"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dock_station.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.dock_station.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dock_station.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dock_station.table2",
+      "heads": [
+        "jsc.guide.dock_station.table2_head1",
+        "jsc.guide.dock_station.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.dock_station.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.dock_station.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dock_station.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.dock_station.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dock_station.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.dock_station.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dock_station.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.dock_station.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dock_station.definition2",
+      "term": "jsc.guide.dock_station.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dock_station.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.dock_station.fix1",
+          "problem": "jsc.guide.dock_station.problem1"
+        },
+        {
+          "fix": "jsc.guide.dock_station.fix2",
+          "problem": "jsc.guide.dock_station.problem2"
+        },
+        {
+          "fix": "jsc.guide.dock_station.fix3",
+          "problem": "jsc.guide.dock_station.problem3"
+        },
+        {
+          "fix": "jsc.guide.dock_station.fix4",
+          "problem": "jsc.guide.dock_station.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:drives",
+        "jsc:disks",
+        "jsc:installing"
+      ]
+    }
+  ],
+  "icon": "jsc:dock_station",
+  "id": "jsc:dock_station",
+  "order": 43,
+  "section": "jsc:peripherals",
+  "title": "jsc.guide.dock_station.title"
+}

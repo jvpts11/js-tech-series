@@ -1,0 +1,137 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.jei_and_emi.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.jei_and_emi.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.jei_and_emi.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.jei_and_emi.table1",
+      "heads": [
+        "jsc.guide.jei_and_emi.table1_head1",
+        "jsc.guide.jei_and_emi.table1_head2",
+        "jsc.guide.jei_and_emi.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.jei_and_emi.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.jei_and_emi.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.jei_and_emi.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.jei_and_emi.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.jei_and_emi.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.jei_and_emi.table1_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.jei_and_emi.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.jei_and_emi.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.jei_and_emi.definition1",
+      "term": "jsc.guide.jei_and_emi.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.jei_and_emi.definition2",
+      "term": "jsc.guide.jei_and_emi.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.jei_and_emi.definition3",
+      "term": "jsc.guide.jei_and_emi.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.jei_and_emi.definition4",
+      "term": "jsc.guide.jei_and_emi.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.jei_and_emi.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.jei_and_emi.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.jei_and_emi.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.jei_and_emi.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.jei_and_emi.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.jei_and_emi.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.jei_and_emi.fix1",
+          "problem": "jsc.guide.jei_and_emi.problem1"
+        },
+        {
+          "fix": "jsc.guide.jei_and_emi.fix2",
+          "problem": "jsc.guide.jei_and_emi.problem2"
+        },
+        {
+          "fix": "jsc.guide.jei_and_emi.fix3",
+          "problem": "jsc.guide.jei_and_emi.problem3"
+        },
+        {
+          "fix": "jsc.guide.jei_and_emi.fix4",
+          "problem": "jsc.guide.jei_and_emi.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:pattern_studio",
+        "jsc:pattern_encoders"
+      ]
+    }
+  ],
+  "id": "jsc:jei_and_emi",
+  "order": 120,
+  "section": "jsc:mod_integrations",
+  "title": "jsc.guide.jei_and_emi.title"
+}

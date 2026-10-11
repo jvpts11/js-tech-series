@@ -1,0 +1,104 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_drive_bays.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.rack_drive_bays.definition1",
+      "term": "jsc.guide.rack_drive_bays.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_drive_bays.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_drive_bays.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_drive_bays.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.rack_drive_bays.definition2",
+      "term": "jsc.guide.rack_drive_bays.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_drive_bays.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.rack_drive_bays.table1",
+      "heads": [
+        "jsc.guide.rack_drive_bays.table1_head1",
+        "jsc.guide.rack_drive_bays.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.rack_drive_bays.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.rack_drive_bays.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_drive_bays.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.rack_drive_bays.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_drive_bays.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.rack_drive_bays.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_drive_bays.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_drive_bays.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.rack_drive_bays.fix1",
+          "problem": "jsc.guide.rack_drive_bays.problem1"
+        },
+        {
+          "fix": "jsc.guide.rack_drive_bays.fix2",
+          "problem": "jsc.guide.rack_drive_bays.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:server_types",
+        "jsc:disks"
+      ]
+    }
+  ],
+  "id": "jsc:rack_drive_bays",
+  "order": 29,
+  "section": "jsc:racks",
+  "title": "jsc.guide.rack_drive_bays.title"
+}

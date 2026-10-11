@@ -1,0 +1,260 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.loader.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.loader.definition1",
+      "term": "jsc.guide.loader.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.loader.definition2",
+      "term": "jsc.guide.loader.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.loader.definition3",
+      "term": "jsc.guide.loader.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.loader.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.loader.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.loader.table1",
+      "heads": [
+        "jsc.guide.loader.table1_head1",
+        "jsc.guide.loader.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.loader.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.loader.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.loader.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.loader.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.loader.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.loader.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.loader.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.loader.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.loader.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.loader.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.loader.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.loader.table2",
+      "heads": [
+        "jsc.guide.loader.table2_head1",
+        "jsc.guide.loader.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Loading kernel..., then Booting..."
+          },
+          {
+            "words": "jsc.guide.loader.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "FreeBSD 14.1-RELEASE GENERIC <architecture>"
+          },
+          {
+            "words": "jsc.guide.loader.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "CPU: <processor name>"
+          },
+          {
+            "words": "jsc.guide.loader.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "real memory  = <n> MB"
+          },
+          {
+            "words": "jsc.guide.loader.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "ada0: <<disk name>>"
+          },
+          {
+            "words": "jsc.guide.loader.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Trying to mount root from ufs:/dev/ada0p2 [rw]..."
+          },
+          {
+            "words": "jsc.guide.loader.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Setting hostname: <hostname>."
+          },
+          {
+            "words": "jsc.guide.loader.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Starting Network: lo0 em0."
+          },
+          {
+            "words": "jsc.guide.loader.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg: repository Mirror found on <mirror host>."
+          },
+          {
+            "words": "jsc.guide.loader.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Starting devd."
+          },
+          {
+            "words": "jsc.guide.loader.table2_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Starting syslogd."
+          },
+          {
+            "words": "jsc.guide.loader.table2_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "Starting cron."
+          },
+          {
+            "words": "jsc.guide.loader.table2_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "Starting sshd."
+          },
+          {
+            "words": "jsc.guide.loader.table2_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "Starting <desktop> display manager."
+          },
+          {
+            "words": "jsc.guide.loader.table2_14_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.loader.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.loader.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.loader.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.loader.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.loader.fix1",
+          "problem": "jsc.guide.loader.problem1"
+        },
+        {
+          "fix": "jsc.guide.loader.fix2",
+          "problem": "jsc.guide.loader.problem2"
+        },
+        {
+          "fix": "jsc.guide.loader.fix3",
+          "problem": "jsc.guide.loader.problem3"
+        },
+        {
+          "fix": "jsc.guide.loader.fix4",
+          "problem": "jsc.guide.loader.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:firmware",
+        "jsc:boot_menu",
+        "jsc:bsdinstall"
+      ]
+    }
+  ],
+  "id": "jsc:loader",
+  "order": 272,
+  "section": "jsc:freebsd_system",
+  "title": "jsc.guide.loader.title"
+}

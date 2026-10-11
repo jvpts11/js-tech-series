@@ -1,0 +1,134 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_keep_max_and_priority.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.bus_keep_max_and_priority.table1",
+      "heads": [
+        "jsc.guide.bus_keep_max_and_priority.table1_head1",
+        "jsc.guide.bus_keep_max_and_priority.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.bus_keep_max_and_priority.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.bus_keep_max_and_priority.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_keep_max_and_priority.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.bus_keep_max_and_priority.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_keep_max_and_priority.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.bus_keep_max_and_priority.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_keep_max_and_priority.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.bus_keep_max_and_priority.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_keep_max_and_priority.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.bus_keep_max_and_priority.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_keep_max_and_priority.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_keep_max_and_priority.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_keep_max_and_priority.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_keep_max_and_priority.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_keep_max_and_priority.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_keep_max_and_priority.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_keep_max_and_priority.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_keep_max_and_priority.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.bus_keep_max_and_priority.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_keep_max_and_priority.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.bus_keep_max_and_priority.fix1",
+          "problem": "jsc.guide.bus_keep_max_and_priority.problem1"
+        },
+        {
+          "fix": "jsc.guide.bus_keep_max_and_priority.fix2",
+          "problem": "jsc.guide.bus_keep_max_and_priority.problem2"
+        },
+        {
+          "fix": "jsc.guide.bus_keep_max_and_priority.fix3",
+          "problem": "jsc.guide.bus_keep_max_and_priority.problem3"
+        },
+        {
+          "fix": "jsc.guide.bus_keep_max_and_priority.fix4",
+          "problem": "jsc.guide.bus_keep_max_and_priority.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:bus_conditions",
+        "jsc:bus_filters_and_tags"
+      ]
+    }
+  ],
+  "id": "jsc:bus_keep_max_and_priority",
+  "order": 88,
+  "section": "jsc:bus_settings",
+  "title": "jsc.guide.bus_keep_max_and_priority.title"
+}

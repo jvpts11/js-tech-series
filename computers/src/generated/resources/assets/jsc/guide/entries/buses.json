@@ -5,6 +5,11 @@
       "text": "jsc.guide.buses.text1"
     },
     {
+      "type": "define",
+      "definition": "jsc.guide.buses.definition1",
+      "term": "jsc.guide.buses.term1"
+    },
+    {
       "type": "text",
       "text": "jsc.guide.buses.text2"
     },
@@ -13,8 +18,139 @@
       "text": "jsc.guide.buses.text3"
     },
     {
+      "type": "table",
+      "caption": "jsc.guide.buses.table1",
+      "heads": [
+        "jsc.guide.buses.table1_head1",
+        "jsc.guide.buses.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.buses.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.buses.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.buses.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.buses.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.buses.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.buses.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.buses.definition2",
+      "term": "jsc.guide.buses.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.buses.definition3",
+      "term": "jsc.guide.buses.term3"
+    },
+    {
       "type": "text",
       "text": "jsc.guide.buses.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.buses.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.buses.step1",
+        "jsc.guide.buses.step2",
+        "jsc.guide.buses.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.buses.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.buses.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.buses.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.buses.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.buses.table2",
+      "heads": [
+        "jsc.guide.buses.table2_head1",
+        "jsc.guide.buses.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.buses.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.buses.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.buses.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.buses.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.buses.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.buses.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.buses.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.buses.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.buses.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.buses.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.buses.definition4",
+      "term": "jsc.guide.buses.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.buses.text8"
     },
     {
       "type": "heading",
@@ -26,7 +162,22 @@
         {
           "fix": "jsc.guide.buses.fix1",
           "problem": "jsc.guide.buses.problem1"
+        },
+        {
+          "fix": "jsc.guide.buses.fix2",
+          "problem": "jsc.guide.buses.problem2"
+        },
+        {
+          "fix": "jsc.guide.buses.fix3",
+          "problem": "jsc.guide.buses.problem3"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:bus_filters_and_tags",
+        "jsc:buses_by_era"
       ]
     }
   ],
@@ -49,7 +200,7 @@
     "jsc:external_storage_bus",
     "jsc:advanced_external_storage_bus"
   ],
-  "order": 38,
-  "section": "jsc:storage",
+  "order": 85,
+  "section": "jsc:buses_and_eras",
   "title": "jsc.guide.buses.title"
 }

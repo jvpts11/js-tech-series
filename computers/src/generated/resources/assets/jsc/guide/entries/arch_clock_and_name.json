@@ -1,0 +1,99 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_clock_and_name.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_clock_and_name.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.arch_clock_and_name.definition1",
+      "term": "jsc.guide.arch_clock_and_name.term1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.arch_clock_and_name.step1",
+        "jsc.guide.arch_clock_and_name.step2",
+        "jsc.guide.arch_clock_and_name.step3"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.arch_clock_and_name.table1",
+      "heads": [
+        "jsc.guide.arch_clock_and_name.table1_head1",
+        "jsc.guide.arch_clock_and_name.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.arch_clock_and_name.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.arch_clock_and_name.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.arch_clock_and_name.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.arch_clock_and_name.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.arch_clock_and_name.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.arch_clock_and_name.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.arch_clock_and_name.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.arch_clock_and_name.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_clock_and_name.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.arch_clock_and_name.fix1",
+          "problem": "jsc.guide.arch_clock_and_name.problem1"
+        },
+        {
+          "fix": "jsc.guide.arch_clock_and_name.fix2",
+          "problem": "jsc.guide.arch_clock_and_name.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:arch_mkinitcpio"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:arch_clock_and_name",
+  "order": 250,
+  "section": "jsc:arch_system",
+  "title": "jsc.guide.arch_clock_and_name.title"
+}

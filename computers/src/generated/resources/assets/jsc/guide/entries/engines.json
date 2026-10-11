@@ -7,29 +7,43 @@
     {
       "type": "table",
       "caption": "jsc.guide.engines.table1",
+      "heads": [
+        "jsc.guide.engines.table1_head1",
+        "jsc.guide.engines.table1_head2",
+        "jsc.guide.engines.table1_head3"
+      ],
       "rows": [
         [
           {
-            "words": "jsc.guide.engines.table1_1"
+            "words": "jsc.guide.engines.table1_1_1"
           },
           {
-            "words": "jsc.guide.engines.value1_1"
+            "words": "jsc.guide.engines.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.engines.table1_1_3"
           }
         ],
         [
           {
-            "words": "jsc.guide.engines.table1_2"
+            "words": "jsc.guide.engines.table1_2_1"
           },
           {
-            "words": "jsc.guide.engines.value1_2"
+            "words": "jsc.guide.engines.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.engines.table1_2_3"
           }
         ],
         [
           {
-            "words": "jsc.guide.engines.table1_3"
+            "words": "jsc.guide.engines.table1_3_1"
           },
           {
-            "words": "jsc.guide.engines.value1_3"
+            "words": "jsc.guide.engines.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.engines.table1_3_3"
           }
         ]
       ]
@@ -43,6 +57,18 @@
       "text": "jsc.guide.engines.text3"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.engines.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engines.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.engines.text6"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -52,13 +78,28 @@
         {
           "fix": "jsc.guide.engines.fix1",
           "problem": "jsc.guide.engines.problem1"
+        },
+        {
+          "fix": "jsc.guide.engines.fix2",
+          "problem": "jsc.guide.engines.problem2"
+        },
+        {
+          "fix": "jsc.guide.engines.fix3",
+          "problem": "jsc.guide.engines.problem3"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:iql",
+        "jsc:automation_engine"
       ]
     }
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:engines",
-  "order": 36,
+  "order": 100,
   "section": "jsc:operations",
   "title": "jsc.guide.engines.title"
 }

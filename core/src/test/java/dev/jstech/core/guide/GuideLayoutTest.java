@@ -432,6 +432,18 @@ class GuideLayoutTest {
     }
 
     @Test
+    void wrap_breaksAPathOrCodeWhereItBreaksRatherThanBetweenTwoLetters() {
+        // Six pixels a character: a line of 12 characters.
+        final List<String> path = GuideLayout.wrap("/usr/ports/sysutils/screenfetch", 72, TextSize.CODE,
+                new FixedText(Map.of()));
+        assertEquals(List.of("/usr/ports/", "sysutils/", "screenfetch"), path);
+        assertEquals(List.of("Statement", "Starting"), GuideLayout.wrap("StatementStarting", 60, TextSize.CODE,
+                new FixedText(Map.of())), "a name in two words breaks before its capital");
+        assertEquals(List.of("abcdefghij", "klm"), GuideLayout.wrap("abcdefghijklm", 60, TextSize.CODE,
+                new FixedText(Map.of())), "and a word with nowhere to break is cut where the line ends");
+    }
+
+    @Test
     void lay_movesATableThatFitsOnAPageOnWhole() {
         final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t", table(10))))),
                 new FixedText(HEADS));
@@ -452,8 +464,10 @@ class GuideLayoutTest {
         assertEquals(3, rules(next));
         assertTrue(next.pieces().stream().anyMatch(piece -> piece instanceof GuidePiece.Box),
                 "the head is said again over the part that runs on");
-        assertTrue(next.pieces().stream().anyMatch(piece -> piece instanceof GuidePiece.Text text
-                && text.text().startsWith("jscore.guide.table_con")), "and the caption, continued");
+        // The caption's key stands for its words here, too long for a line, so it is broken after one of its dots.
+        assertTrue(next.pieces().stream().filter(piece -> piece instanceof GuidePiece.Text)
+                .map(piece -> ((GuidePiece.Text) piece).text()).reduce("", String::concat)
+                .contains("jscore.guide.table_continued"), "and the caption, continued");
     }
 
     @Test

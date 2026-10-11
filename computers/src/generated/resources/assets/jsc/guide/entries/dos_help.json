@@ -1,0 +1,237 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_help.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_help.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_help.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_help.table1",
+      "heads": [
+        "jsc.guide.dos_help.table1_head1",
+        "jsc.guide.dos_help.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.dos_help.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.dos_help.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_help.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.dos_help.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_help.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.dos_help.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.dos_help.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.dos_help.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.dos_help.step1",
+        "jsc.guide.dos_help.step2",
+        "jsc.guide.dos_help.step3",
+        "jsc.guide.dos_help.step4",
+        "jsc.guide.dos_help.step5",
+        "jsc.guide.dos_help.step6"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_help.table2",
+      "heads": [
+        "jsc.guide.dos_help.table2_head1",
+        "jsc.guide.dos_help.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Tab"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Up and Down"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Page Up and Page Down"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Home and End"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "F10 or Alt+F"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+S"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+C"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+N"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+B"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+I"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "F3"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "Esc"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+F4"
+          },
+          {
+            "words": "jsc.guide.dos_help.table2_14_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_help.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_help.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_help.definition1",
+      "term": "jsc.guide.dos_help.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.dos_help.definition2",
+      "term": "jsc.guide.dos_help.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.dos_help.fix1",
+          "problem": "jsc.guide.dos_help.problem1"
+        },
+        {
+          "fix": "jsc.guide.dos_help.fix2",
+          "problem": "jsc.guide.dos_help.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:help_on_a_computer",
+        "jsc:dos_prompt"
+      ]
+    }
+  ],
+  "id": "jsc:dos_help",
+  "order": 152,
+  "section": "jsc:dos_programs",
+  "title": "jsc.guide.dos_help.title"
+}

@@ -1,0 +1,315 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.prophet_watch.text1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.prophet_watch.step1",
+        "jsc.guide.prophet_watch.step2"
+      ]
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "WATCH redstone < 500 DO CRAFT redstone TO 1000"
+      ],
+      "name": "watch_redstone.iql"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.prophet_watch.table1",
+      "heads": [
+        "jsc.guide.prophet_watch.table1_head1",
+        "jsc.guide.prophet_watch.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "<"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "<="
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": ">"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": ">="
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prophet_watch.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prophet_watch.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.prophet_watch.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.prophet_watch.table2",
+      "heads": [
+        "jsc.guide.prophet_watch.table2_head1",
+        "jsc.guide.prophet_watch.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "CRAFT item TO n"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.prophet_watch.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table2_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.prophet_watch.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.prophet_watch.table3",
+      "heads": [
+        "jsc.guide.prophet_watch.table3_head1",
+        "jsc.guide.prophet_watch.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "FORGET item"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "FORGET WATCH n"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table3_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prophet_watch.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.prophet_watch.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prophet_watch.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.prophet_watch.table4",
+      "heads": [
+        "jsc.guide.prophet_watch.table4_head1",
+        "jsc.guide.prophet_watch.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.prophet_watch.table4_1_1"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table4_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.prophet_watch.table4_2_1"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table4_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.prophet_watch.table4_3_1"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table4_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.prophet_watch.table4_4_1"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table4_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.prophet_watch.table4_5_1"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table4_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.prophet_watch.heading4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.prophet_watch.table5",
+      "heads": [
+        "jsc.guide.prophet_watch.table5_head1",
+        "jsc.guide.prophet_watch.table5_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.prophet_watch.table5_1_1"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table5_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.prophet_watch.table5_2_1"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table5_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.prophet_watch.table5_3_1"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table5_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.prophet_watch.table5_4_1"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table5_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.prophet_watch.table5_5_1"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table5_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.prophet_watch.table5_6_1"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table5_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.prophet_watch.table5_7_1"
+          },
+          {
+            "words": "jsc.guide.prophet_watch.table5_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prophet_watch.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prophet_watch.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.prophet_watch.fix1",
+          "problem": "jsc.guide.prophet_watch.problem1"
+        },
+        {
+          "fix": "jsc.guide.prophet_watch.fix2",
+          "problem": "jsc.guide.prophet_watch.problem2"
+        },
+        {
+          "fix": "jsc.guide.prophet_watch.fix3",
+          "problem": "jsc.guide.prophet_watch.problem3"
+        },
+        {
+          "fix": "jsc.guide.prophet_watch.fix4",
+          "problem": "jsc.guide.prophet_watch.problem4"
+        },
+        {
+          "fix": "jsc.guide.prophet_watch.fix5",
+          "problem": "jsc.guide.prophet_watch.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:prophet_youriql",
+        "jsc:prophet_console",
+        "jsc:engine_problems"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:prophet_watch",
+  "order": 312,
+  "section": "jsc:engine_choice",
+  "title": "jsc.guide.prophet_watch.title"
+}

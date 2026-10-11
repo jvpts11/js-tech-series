@@ -1,0 +1,305 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.recipe_keep_stock.definition1",
+      "term": "jsc.guide.recipe_keep_stock.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.recipe_keep_stock.table1",
+      "heads": [
+        "jsc.guide.recipe_keep_stock.table1_head1",
+        "jsc.guide.recipe_keep_stock.table1_head2",
+        "jsc.guide.recipe_keep_stock.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.recipe_keep_stock.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.recipe_keep_stock.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.recipe_keep_stock.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.recipe_keep_stock.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.recipe_keep_stock.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.recipe_keep_stock.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.recipe_keep_stock.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.recipe_keep_stock.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.recipe_keep_stock.table1_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.recipe_keep_stock.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.recipe_keep_stock.step1",
+        "jsc.guide.recipe_keep_stock.step2",
+        "jsc.guide.recipe_keep_stock.step3",
+        "jsc.guide.recipe_keep_stock.step4"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.recipe_keep_stock.table2",
+      "heads": [
+        "jsc.guide.recipe_keep_stock.table2_head1",
+        "jsc.guide.recipe_keep_stock.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "KEEP iron_ingot >= 512"
+          },
+          {
+            "words": "jsc.guide.recipe_keep_stock.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "KEEP iron_ingot BETWEEN 256 AND 512"
+          },
+          {
+            "words": "jsc.guide.recipe_keep_stock.table2_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.recipe_keep_stock.definition2",
+      "term": "jsc.guide.recipe_keep_stock.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.recipe_keep_stock.table3",
+      "heads": [
+        "jsc.guide.recipe_keep_stock.table3_head1",
+        "jsc.guide.recipe_keep_stock.table3_head2",
+        "jsc.guide.recipe_keep_stock.table3_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.recipe_keep_stock.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.recipe_keep_stock.table3_1_2"
+          },
+          {
+            "words": "jsc.guide.recipe_keep_stock.table3_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.recipe_keep_stock.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.recipe_keep_stock.table3_2_2"
+          },
+          {
+            "words": "jsc.guide.recipe_keep_stock.table3_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.recipe_keep_stock.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text10"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.recipe_keep_stock.definition3",
+      "term": "jsc.guide.recipe_keep_stock.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text11"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.recipe_keep_stock.definition4",
+      "term": "jsc.guide.recipe_keep_stock.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text12"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.recipe_keep_stock.definition5",
+      "term": "jsc.guide.recipe_keep_stock.term5"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.recipe_keep_stock.step5",
+        "jsc.guide.recipe_keep_stock.step6",
+        "jsc.guide.recipe_keep_stock.step7",
+        "jsc.guide.recipe_keep_stock.step8"
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.recipe_keep_stock.table4",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.recipe_keep_stock.table4_1"
+          },
+          {
+            "literal": "CREATE JOB restock_iron AS CRAFT 64 iron_ingot WHEN qty(iron_ingot) < 512"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text13"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text14"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text15"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.recipe_keep_stock.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text16"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.recipe_keep_stock.table5",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.recipe_keep_stock.table5_1"
+          },
+          {
+            "literal": "CRAFT 64 iron_ingot IF qty < 100"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.recipe_keep_stock.text17"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.recipe_keep_stock.fix1",
+          "problem": "jsc.guide.recipe_keep_stock.problem1"
+        },
+        {
+          "fix": "jsc.guide.recipe_keep_stock.fix2",
+          "problem": "jsc.guide.recipe_keep_stock.problem2"
+        },
+        {
+          "fix": "jsc.guide.recipe_keep_stock.fix3",
+          "problem": "jsc.guide.recipe_keep_stock.problem3"
+        },
+        {
+          "fix": "jsc.guide.recipe_keep_stock.fix4",
+          "problem": "jsc.guide.recipe_keep_stock.problem4"
+        },
+        {
+          "fix": "jsc.guide.recipe_keep_stock.fix5",
+          "problem": "jsc.guide.recipe_keep_stock.problem5"
+        },
+        {
+          "fix": "jsc.guide.recipe_keep_stock.fix6",
+          "problem": "jsc.guide.recipe_keep_stock.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:iql_jobs",
+        "jsc:prophet_youriql",
+        "jsc:automation_manager",
+        "jsc:engines"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:recipe_keep_stock",
+  "order": 323,
+  "section": "jsc:iql_recipe_list",
+  "title": "jsc.guide.recipe_keep_stock.title"
+}

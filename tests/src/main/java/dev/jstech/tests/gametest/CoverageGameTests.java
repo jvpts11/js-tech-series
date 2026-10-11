@@ -29,6 +29,7 @@ import dev.jstech.core.guide.IGuideText;
 import dev.jstech.core.guide.ModGuide;
 import dev.jstech.core.guide.TextSize;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestFetchCommand;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -56,15 +57,19 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 public final class CoverageGameTests {
 
     private static final String ARENA = "empty";
-    /** The areas held to it now: each slice of the books switches on its own. */
-    private static final Set<Area> ENFORCED = EnumSet.noneOf(Area.class);
+    /** The areas held to it: every one, now that every book is written. */
+    private static final Set<Area> ENFORCED = EnumSet.allOf(Area.class);
     /** The clauses of the query language, which its parser reads by their words. */
     private static final List<String> IQL_CLAUSES = List.of("FROM", "TO", "IF", "WHERE", "ORDER BY", "LIMIT",
             "PRIORITY");
     /** How many missing pages a failure names. */
     private static final int NAMED = 12;
+    /** The commands this test mod adds to every shell, which no player's book has a page for. */
+    private static final Set<String> TEST_COMMANDS = Set.of(TestFetchCommand.NAME);
     /** What separates the words of a piece of text. */
     private static final Pattern GAP = Pattern.compile("[^A-Za-z0-9_.#-]+");
+    /** The points that end a word, as a sentence's last word ends. */
+    private static final Pattern END = Pattern.compile("\\.+ ");
 
     private CoverageGameTests() {
     }
@@ -75,8 +80,10 @@ public final class CoverageGameTests {
         final Map<String, List<GuideEntry>> books = books();
         final Map<Area, List<String>> missing = new HashMap<>();
         missing.put(Area.COMMANDS, commands(books));
-        missing.put(Area.PROGRAMS, named(OsRegistry.programs().stream().map(ProgramSpec::displayName).toList(),
-                allEntries(books), text));
+        // The programs this test mod installs for its own tests are no player's to read about.
+        missing.put(Area.PROGRAMS, named(OsRegistry.programs().stream()
+                .filter(program -> !program.id().getNamespace().equals(JsTests.MODID))
+                .map(ProgramSpec::displayName).toList(), allEntries(books), text));
         missing.put(Area.SYSTEMS, named(OsRegistry.oses().stream().map(OsDef::displayName).toList(),
                 allEntries(books), text));
         final List<String> iql = new ArrayList<>();
@@ -168,7 +175,8 @@ public final class CoverageGameTests {
                         .forEach(block -> printed.add(((GuideBlock.Command) block).source()));
             }
             for (final ICliCommand command : CliCommands.commandsFor(kernel.shellFamily())) {
-                if (CommandGuidePages.runsOn(command.scope(), os) && CommandGuidePages.pagesOf(os.platform(),
+                if (!TEST_COMMANDS.contains(command.name()) && CommandGuidePages.runsOn(command.scope(), os)
+                        && CommandGuidePages.pagesOf(os.platform(),
                         command.name()).stream().noneMatch(printed::contains)) {
                     missing.add(os.displayName() + ": " + command.name());
                 }
@@ -214,7 +222,8 @@ public final class CoverageGameTests {
                 }
             }
         }
-        final String written = " " + GAP.matcher(all.toString()).replaceAll(" ") + " ";
+        // The point closing a sentence is no part of the word before it: "with its ComponentAction.Value."
+        final String written = " " + END.matcher(GAP.matcher(all.toString()).replaceAll(" ") + " ").replaceAll(" ");
         return wanted.stream().filter(word -> !written.contains(" " + GAP.matcher(word).replaceAll(" ") + " "))
                 .distinct().toList();
     }

@@ -1,0 +1,170 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_reboot.text1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.gentoo_reboot.step1",
+        "jsc.guide.gentoo_reboot.step2",
+        "jsc.guide.gentoo_reboot.step3",
+        "jsc.guide.gentoo_reboot.step4"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_reboot.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.gentoo_reboot.table1",
+      "heads": [
+        "jsc.guide.gentoo_reboot.table1_head1",
+        "jsc.guide.gentoo_reboot.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.gentoo_reboot.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.gentoo_reboot.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gentoo_reboot.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.gentoo_reboot.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gentoo_reboot.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.gentoo_reboot.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gentoo_reboot.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.gentoo_reboot.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gentoo_reboot.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.gentoo_reboot.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_reboot.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.gentoo_reboot.table2",
+      "heads": [
+        "jsc.guide.gentoo_reboot.table2_head1",
+        "jsc.guide.gentoo_reboot.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.gentoo_reboot.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.gentoo_reboot.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gentoo_reboot.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.gentoo_reboot.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gentoo_reboot.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.gentoo_reboot.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gentoo_reboot.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.gentoo_reboot.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.gentoo_reboot.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.gentoo_reboot.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_reboot.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.gentoo_reboot.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.gentoo_reboot.fix1",
+          "problem": "jsc.guide.gentoo_reboot.problem1"
+        },
+        {
+          "fix": "jsc.guide.gentoo_reboot.fix2",
+          "problem": "jsc.guide.gentoo_reboot.problem2"
+        },
+        {
+          "fix": "jsc.guide.gentoo_reboot.fix3",
+          "problem": "jsc.guide.gentoo_reboot.problem3"
+        },
+        {
+          "fix": "jsc.guide.gentoo_reboot.fix4",
+          "problem": "jsc.guide.gentoo_reboot.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:reboot_checklist",
+        "jsc:will_not_boot_messages",
+        "jsc:after_reboot_checks"
+      ]
+    }
+  ],
+  "id": "jsc:gentoo_reboot",
+  "order": 264,
+  "section": "jsc:gentoo_system",
+  "title": "jsc.guide.gentoo_reboot.title"
+}

@@ -1,0 +1,75 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_workstation_info.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cde_workstation_info.table1",
+      "heads": [
+        "jsc.guide.cde_workstation_info.table1_head1",
+        "jsc.guide.cde_workstation_info.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cde_workstation_info.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.cde_workstation_info.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_workstation_info.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.cde_workstation_info.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cde_workstation_info.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.cde_workstation_info.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_workstation_info.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_workstation_info.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cde_workstation_info.fix1",
+          "problem": "jsc.guide.cde_workstation_info.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:desktop_program_names",
+        "jsc:cde"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:cde_workstation_info",
+  "order": 214,
+  "section": "jsc:cde_desktop",
+  "title": "jsc.guide.cde_workstation_info.title"
+}

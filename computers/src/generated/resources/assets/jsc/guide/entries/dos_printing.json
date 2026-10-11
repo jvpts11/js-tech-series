@@ -1,0 +1,39 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_printing.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_printing.text2"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/print"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.dos_printing.fix1",
+          "problem": "jsc.guide.dos_printing.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:printers"
+      ]
+    }
+  ],
+  "id": "jsc:dos_printing",
+  "order": 186,
+  "section": "jsc:prompt_system",
+  "title": "jsc.guide.dos_printing.title"
+}

@@ -1,0 +1,102 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.installing_by_hand.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing_by_hand.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.installing_by_hand.definition1",
+      "term": "jsc.guide.installing_by_hand.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.installing_by_hand.definition2",
+      "term": "jsc.guide.installing_by_hand.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing_by_hand.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.installing_by_hand.table1",
+      "heads": [
+        "jsc.guide.installing_by_hand.table1_head1",
+        "jsc.guide.installing_by_hand.table1_head2",
+        "jsc.guide.installing_by_hand.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.installing_by_hand.table1_1_1"
+          },
+          {
+            "literal": "zsh"
+          },
+          {
+            "words": "jsc.guide.installing_by_hand.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.installing_by_hand.table1_2_1"
+          },
+          {
+            "literal": "bash"
+          },
+          {
+            "words": "jsc.guide.installing_by_hand.table1_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.installing_by_hand.definition3",
+      "term": "jsc.guide.installing_by_hand.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.installing_by_hand.definition4",
+      "term": "jsc.guide.installing_by_hand.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing_by_hand.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.installing_by_hand.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.installing_by_hand.fix1",
+          "problem": "jsc.guide.installing_by_hand.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installing",
+        "jsc:the_systems"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:installing_by_hand",
+  "order": 237,
+  "section": "jsc:by_hand_basics",
+  "title": "jsc.guide.installing_by_hand.title"
+}

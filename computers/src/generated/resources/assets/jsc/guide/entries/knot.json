@@ -1,0 +1,323 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.knot.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.knot.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.knot.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.knot.table1",
+      "heads": [
+        "jsc.guide.knot.table1_head1",
+        "jsc.guide.knot.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.knot.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.knot.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.knot.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.knot.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.knot.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.knot.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.knot.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.knot.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.knot.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.knot.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.knot.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.knot.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.knot.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.knot.heading2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.knot.step1",
+        "jsc.guide.knot.step2",
+        "jsc.guide.knot.step3",
+        "jsc.guide.knot.step4"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.knot.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.knot.heading3"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.knot.step5",
+        "jsc.guide.knot.step6",
+        "jsc.guide.knot.step7"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.knot.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.knot.table2",
+      "heads": [
+        "jsc.guide.knot.table2_head1",
+        "jsc.guide.knot.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "No Computer"
+          },
+          {
+            "words": "jsc.guide.knot.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "No System Disk"
+          },
+          {
+            "words": "jsc.guide.knot.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "No <file> on this machine"
+          },
+          {
+            "words": "jsc.guide.knot.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Nothing changed since the last revision"
+          },
+          {
+            "words": "jsc.guide.knot.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Pushed <file>"
+          },
+          {
+            "words": "jsc.guide.knot.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "No such revision"
+          },
+          {
+            "words": "jsc.guide.knot.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Not enough free space"
+          },
+          {
+            "words": "jsc.guide.knot.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Could not write <file>"
+          },
+          {
+            "words": "jsc.guide.knot.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Wrote r<number> to <file>"
+          },
+          {
+            "words": "jsc.guide.knot.table2_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.knot.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.knot.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.knot.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.knot.table3",
+      "heads": [
+        "jsc.guide.knot.table3_head1",
+        "jsc.guide.knot.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.knot.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.knot.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.knot.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.knot.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.knot.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.knot.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.knot.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.knot.table3_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.knot.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.knot.table3_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "warning",
+      "text": "jsc.guide.knot.warning1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.knot.definition1",
+      "term": "jsc.guide.knot.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.knot.definition2",
+      "term": "jsc.guide.knot.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.knot.definition3",
+      "term": "jsc.guide.knot.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.knot.definition4",
+      "term": "jsc.guide.knot.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.knot.fix1",
+          "problem": "jsc.guide.knot.problem1"
+        },
+        {
+          "fix": "jsc.guide.knot.fix2",
+          "problem": "jsc.guide.knot.problem2"
+        },
+        {
+          "fix": "jsc.guide.knot.fix3",
+          "problem": "jsc.guide.knot.problem3"
+        },
+        {
+          "fix": "jsc.guide.knot.fix4",
+          "problem": "jsc.guide.knot.problem4"
+        },
+        {
+          "fix": "jsc.guide.knot.fix5",
+          "problem": "jsc.guide.knot.problem5"
+        },
+        {
+          "fix": "jsc.guide.knot.fix6",
+          "problem": "jsc.guide.knot.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:knothub_service",
+        "jsc:sigma_projects"
+      ]
+    }
+  ],
+  "id": "jsc:knot",
+  "order": 393,
+  "section": "jsc:sharing_knot",
+  "title": "jsc.guide.knot.title"
+}

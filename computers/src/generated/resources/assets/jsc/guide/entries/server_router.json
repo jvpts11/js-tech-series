@@ -17,6 +17,10 @@
       "text": "jsc.guide.server_router.text2"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.server_router.text3"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -28,6 +32,13 @@
           "problem": "jsc.guide.server_router.problem1"
         }
       ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:datacenters",
+        "jsc:load_balancing"
+      ]
     }
   ],
   "icon": "jsc:server_router",
@@ -35,7 +46,7 @@
   "items": [
     "jsc:server_router"
   ],
-  "order": 31,
-  "section": "jsc:network",
+  "order": 38,
+  "section": "jsc:clusters",
   "title": "jsc.guide.server_router.title"
 }

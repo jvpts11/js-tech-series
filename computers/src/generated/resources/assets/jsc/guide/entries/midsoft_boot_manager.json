@@ -1,0 +1,101 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.midsoft_boot_manager.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.midsoft_boot_manager.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.midsoft_boot_manager.table1",
+      "heads": [
+        "jsc.guide.midsoft_boot_manager.table1_head1",
+        "jsc.guide.midsoft_boot_manager.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Up"
+          },
+          {
+            "words": "jsc.guide.midsoft_boot_manager.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Down"
+          },
+          {
+            "words": "jsc.guide.midsoft_boot_manager.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.midsoft_boot_manager.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Esc"
+          },
+          {
+            "words": "jsc.guide.midsoft_boot_manager.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.midsoft_boot_manager.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.midsoft_boot_manager.definition1",
+      "term": "jsc.guide.midsoft_boot_manager.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.midsoft_boot_manager.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.midsoft_boot_manager.fix1",
+          "problem": "jsc.guide.midsoft_boot_manager.problem1"
+        },
+        {
+          "fix": "jsc.guide.midsoft_boot_manager.fix2",
+          "problem": "jsc.guide.midsoft_boot_manager.problem2"
+        },
+        {
+          "fix": "jsc.guide.midsoft_boot_manager.fix3",
+          "problem": "jsc.guide.midsoft_boot_manager.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:two_systems",
+        "jsc:firmware",
+        "jsc:units_and_ticks"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:midsoft_boot_manager",
+  "order": 145,
+  "section": "jsc:midsoft_installs",
+  "title": "jsc.guide.midsoft_boot_manager.title"
+}

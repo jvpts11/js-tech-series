@@ -1,0 +1,138 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_system_files.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.dos_system_files.table1",
+      "heads": [
+        "jsc.guide.dos_system_files.table1_head1",
+        "jsc.guide.dos_system_files.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "DOS\\"
+          },
+          {
+            "words": "jsc.guide.dos_system_files.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "AUTOEXEC.BAT"
+          },
+          {
+            "words": "jsc.guide.dos_system_files.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "CONFIG.SYS"
+          },
+          {
+            "words": "jsc.guide.dos_system_files.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "COMMAND.COM"
+          },
+          {
+            "words": "jsc.guide.dos_system_files.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "MCDOS.SYS"
+          },
+          {
+            "words": "jsc.guide.dos_system_files.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "DOS\\HIMEM.SYS"
+          },
+          {
+            "words": "jsc.guide.dos_system_files.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "DOS\\README.TXT"
+          },
+          {
+            "words": "jsc.guide.dos_system_files.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "PROGRAM\\"
+          },
+          {
+            "words": "jsc.guide.dos_system_files.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "PROGRAM\\PROGRAM.EXE"
+          },
+          {
+            "words": "jsc.guide.dos_system_files.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "PROGRAM\\README.TXT"
+          },
+          {
+            "words": "jsc.guide.dos_system_files.table1_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_system_files.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_system_files.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.dos_system_files.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.dos_system_files.fix1",
+          "problem": "jsc.guide.dos_system_files.problem1"
+        },
+        {
+          "fix": "jsc.guide.dos_system_files.fix2",
+          "problem": "jsc.guide.dos_system_files.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:dos_prompt",
+        "jsc:dos_shell"
+      ]
+    }
+  ],
+  "id": "jsc:dos_system_files",
+  "order": 149,
+  "section": "jsc:dos_basics",
+  "title": "jsc.guide.dos_system_files.title"
+}

@@ -9,35 +9,47 @@
       "text": "jsc.guide.firmware.text2"
     },
     {
-      "type": "picture",
-      "caption": "jsc.guide.firmware.figure1",
-      "data": {
-        "look": "cli_bios"
-      },
-      "drawing": "jsc:firmware",
-      "height": 97
-    },
-    {
-      "type": "picture",
-      "caption": "jsc.guide.firmware.figure2",
-      "data": {
-        "look": "blue_bios"
-      },
-      "drawing": "jsc:firmware",
-      "height": 97
-    },
-    {
-      "type": "picture",
-      "caption": "jsc.guide.firmware.figure3",
-      "data": {
-        "look": "uefi"
-      },
-      "drawing": "jsc:firmware",
-      "height": 97
+      "type": "table",
+      "caption": "jsc.guide.firmware.table1",
+      "heads": [
+        "jsc.guide.firmware.table1_head1",
+        "jsc.guide.firmware.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.firmware.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.firmware.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.firmware.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.firmware.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.firmware.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.firmware.table1_3_2"
+          }
+        ]
+      ]
     },
     {
       "type": "text",
       "text": "jsc.guide.firmware.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.firmware.definition1",
+      "term": "jsc.guide.firmware.term1"
     },
     {
       "type": "text",
@@ -48,9 +60,18 @@
       "text": "jsc.guide.firmware.text5"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.firmware.text6"
+    },
+    {
       "type": "define",
-      "definition": "jsc.guide.firmware.definition1",
-      "term": "jsc.guide.firmware.term1"
+      "definition": "jsc.guide.firmware.definition2",
+      "term": "jsc.guide.firmware.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.firmware.definition3",
+      "term": "jsc.guide.firmware.term3"
     },
     {
       "type": "heading",
@@ -66,18 +87,17 @@
         {
           "fix": "jsc.guide.firmware.fix2",
           "problem": "jsc.guide.firmware.problem2"
+        },
+        {
+          "fix": "jsc.guide.firmware.fix3",
+          "problem": "jsc.guide.firmware.problem3"
         }
       ]
     }
   ],
   "icon": "jsc:motherboard_atx_standard_lga1150",
   "id": "jsc:firmware",
-  "order": 2,
-  "section": "jsc:getting_started",
-  "shows": [
-    "jsc:motherboard_babyat_vintage",
-    "jsc:motherboard_atx_legacy_lga775",
-    "jsc:motherboard_atx_standard_lga1150"
-  ],
+  "order": 4,
+  "section": "jsc:starting_a_computer",
   "title": "jsc.guide.firmware.title"
 }

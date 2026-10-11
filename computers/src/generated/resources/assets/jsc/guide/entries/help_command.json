@@ -1,0 +1,193 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.help_command.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.help_command.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.help_command.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.help_command.step1",
+        "jsc.guide.help_command.step2",
+        "jsc.guide.help_command.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.help_command.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.help_command.table1",
+      "heads": [
+        "jsc.guide.help_command.table1_head1",
+        "jsc.guide.help_command.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Tab"
+          },
+          {
+            "words": "jsc.guide.help_command.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Shift+Tab"
+          },
+          {
+            "words": "jsc.guide.help_command.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.help_command.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Up, Down"
+          },
+          {
+            "words": "jsc.guide.help_command.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Page Up, Page Down"
+          },
+          {
+            "words": "jsc.guide.help_command.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Home, End"
+          },
+          {
+            "words": "jsc.guide.help_command.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "F10 or Alt+F"
+          },
+          {
+            "words": "jsc.guide.help_command.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+S"
+          },
+          {
+            "words": "jsc.guide.help_command.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "F3"
+          },
+          {
+            "words": "jsc.guide.help_command.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+C, Alt+N, Alt+B, Alt+I"
+          },
+          {
+            "words": "jsc.guide.help_command.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "Escape"
+          },
+          {
+            "words": "jsc.guide.help_command.table1_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "Alt+F4"
+          },
+          {
+            "words": "jsc.guide.help_command.table1_12_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.help_command.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.help_command.text5"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/help"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.help_command.definition1",
+      "term": "jsc.guide.help_command.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.help_command.definition2",
+      "term": "jsc.guide.help_command.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.help_command.fix1",
+          "problem": "jsc.guide.help_command.problem1"
+        },
+        {
+          "fix": "jsc.guide.help_command.fix2",
+          "problem": "jsc.guide.help_command.problem2"
+        },
+        {
+          "fix": "jsc.guide.help_command.fix3",
+          "problem": "jsc.guide.help_command.problem3"
+        },
+        {
+          "fix": "jsc.guide.help_command.fix4",
+          "problem": "jsc.guide.help_command.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:man_pages",
+        "jsc:help_on_a_computer"
+      ]
+    }
+  ],
+  "icon": "jsc:guide_to_operations",
+  "id": "jsc:help_command",
+  "order": 222,
+  "section": "jsc:help_at_the_prompt",
+  "title": "jsc.guide.help_command.title"
+}

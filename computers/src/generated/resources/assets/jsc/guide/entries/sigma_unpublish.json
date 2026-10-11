@@ -1,0 +1,50 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_unpublish.text1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.sigma_unpublish.step1",
+        "jsc.guide.sigma_unpublish.step2"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_unpublish.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_unpublish.fix1",
+          "problem": "jsc.guide.sigma_unpublish.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_unpublish.fix2",
+          "problem": "jsc.guide.sigma_unpublish.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_unpublish.fix3",
+          "problem": "jsc.guide.sigma_unpublish.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_publish_mirror"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_unpublish",
+  "order": 390,
+  "section": "jsc:sharing_packages",
+  "title": "jsc.guide.sigma_unpublish.title"
+}

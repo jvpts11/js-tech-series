@@ -1,0 +1,176 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_studio.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_studio.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_studio.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pattern_studio.table1",
+      "heads": [
+        "jsc.guide.pattern_studio.table1_head1",
+        "jsc.guide.pattern_studio.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.pattern_studio.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.pattern_studio.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_studio.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.pattern_studio.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_studio.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.pattern_studio.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_studio.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pattern_studio.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pattern_studio.table2",
+      "heads": [
+        "jsc.guide.pattern_studio.table2_head1",
+        "jsc.guide.pattern_studio.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.pattern_studio.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.pattern_studio.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_studio.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.pattern_studio.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_studio.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.pattern_studio.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_studio.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.pattern_studio.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pattern_studio.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.pattern_studio.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pattern_studio.heading2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.pattern_studio.step1",
+        "jsc.guide.pattern_studio.step2",
+        "jsc.guide.pattern_studio.step3",
+        "jsc.guide.pattern_studio.step4",
+        "jsc.guide.pattern_studio.step5"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_studio.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_studio.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_studio.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_studio.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_studio.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.pattern_studio.fix1",
+          "problem": "jsc.guide.pattern_studio.problem1"
+        },
+        {
+          "fix": "jsc.guide.pattern_studio.fix2",
+          "problem": "jsc.guide.pattern_studio.problem2"
+        },
+        {
+          "fix": "jsc.guide.pattern_studio.fix3",
+          "problem": "jsc.guide.pattern_studio.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:patterns",
+        "jsc:pattern_encoders",
+        "jsc:crafting_manager",
+        "jsc:crafting_cards"
+      ]
+    }
+  ],
+  "id": "jsc:pattern_studio",
+  "order": 104,
+  "section": "jsc:autocrafting",
+  "title": "jsc.guide.pattern_studio.title"
+}

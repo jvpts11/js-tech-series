@@ -1,0 +1,390 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.calculator_paint_exceed.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.calculator_paint_exceed.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.calculator_paint_exceed.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.calculator_paint_exceed.table1",
+      "heads": [
+        "jsc.guide.calculator_paint_exceed.table1_head1",
+        "jsc.guide.calculator_paint_exceed.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "DEG"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "C"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "<-"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "="
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "sin, cos, tan"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "^"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "sqrt"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "ln"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "log"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "!"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table1_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "pi, e"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table1_11_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.calculator_paint_exceed.fix1",
+          "problem": "jsc.guide.calculator_paint_exceed.problem1"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.calculator_paint_exceed.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.calculator_paint_exceed.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.calculator_paint_exceed.table2",
+      "heads": [
+        "jsc.guide.calculator_paint_exceed.table2_head1",
+        "jsc.guide.calculator_paint_exceed.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.calculator_paint_exceed.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.calculator_paint_exceed.fix2",
+          "problem": "jsc.guide.calculator_paint_exceed.problem2"
+        },
+        {
+          "fix": "jsc.guide.calculator_paint_exceed.fix3",
+          "problem": "jsc.guide.calculator_paint_exceed.problem3"
+        },
+        {
+          "fix": "jsc.guide.calculator_paint_exceed.fix4",
+          "problem": "jsc.guide.calculator_paint_exceed.problem4"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.calculator_paint_exceed.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.calculator_paint_exceed.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.calculator_paint_exceed.definition1",
+      "term": "jsc.guide.calculator_paint_exceed.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.calculator_paint_exceed.definition2",
+      "term": "jsc.guide.calculator_paint_exceed.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.calculator_paint_exceed.definition3",
+      "term": "jsc.guide.calculator_paint_exceed.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.calculator_paint_exceed.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.calculator_paint_exceed.table3",
+      "heads": [
+        "jsc.guide.calculator_paint_exceed.table3_head1",
+        "jsc.guide.calculator_paint_exceed.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "SUM"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "MIN"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "MAX"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "AVG"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "COUNT"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "QTY(\"item_id\")"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table3_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "FREE()"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table3_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "SERVERS()"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table3_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.calculator_paint_exceed.table4",
+      "heads": [
+        "jsc.guide.calculator_paint_exceed.table4_head1",
+        "jsc.guide.calculator_paint_exceed.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "#ERR"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "#LOOP"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "#NONE"
+          },
+          {
+            "words": "jsc.guide.calculator_paint_exceed.table4_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.calculator_paint_exceed.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.calculator_paint_exceed.fix5",
+          "problem": "jsc.guide.calculator_paint_exceed.problem5"
+        },
+        {
+          "fix": "jsc.guide.calculator_paint_exceed.fix6",
+          "problem": "jsc.guide.calculator_paint_exceed.problem6"
+        },
+        {
+          "fix": "jsc.guide.calculator_paint_exceed.fix7",
+          "problem": "jsc.guide.calculator_paint_exceed.problem7"
+        },
+        {
+          "fix": "jsc.guide.calculator_paint_exceed.fix8",
+          "problem": "jsc.guide.calculator_paint_exceed.problem8"
+        },
+        {
+          "fix": "jsc.guide.calculator_paint_exceed.fix9",
+          "problem": "jsc.guide.calculator_paint_exceed.problem9"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:programs",
+        "jsc:help_on_a_computer"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:calculator_paint_exceed",
+  "order": 52,
+  "section": "jsc:desktop_apps",
+  "title": "jsc.guide.calculator_paint_exceed.title"
+}

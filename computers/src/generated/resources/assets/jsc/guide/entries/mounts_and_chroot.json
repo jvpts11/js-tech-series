@@ -1,0 +1,81 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.mounts_and_chroot.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mounts_and_chroot.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.mounts_and_chroot.step1",
+        "jsc.guide.mounts_and_chroot.step2",
+        "jsc.guide.mounts_and_chroot.step3",
+        "jsc.guide.mounts_and_chroot.step4",
+        "jsc.guide.mounts_and_chroot.step5",
+        "jsc.guide.mounts_and_chroot.step6"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mounts_and_chroot.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mounts_and_chroot.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mounts_and_chroot.fix1",
+          "problem": "jsc.guide.mounts_and_chroot.problem1"
+        },
+        {
+          "fix": "jsc.guide.mounts_and_chroot.fix2",
+          "problem": "jsc.guide.mounts_and_chroot.problem2"
+        },
+        {
+          "fix": "jsc.guide.mounts_and_chroot.fix3",
+          "problem": "jsc.guide.mounts_and_chroot.problem3"
+        },
+        {
+          "fix": "jsc.guide.mounts_and_chroot.fix4",
+          "problem": "jsc.guide.mounts_and_chroot.problem4"
+        },
+        {
+          "fix": "jsc.guide.mounts_and_chroot.fix5",
+          "problem": "jsc.guide.mounts_and_chroot.problem5"
+        },
+        {
+          "fix": "jsc.guide.mounts_and_chroot.fix6",
+          "problem": "jsc.guide.mounts_and_chroot.problem6"
+        },
+        {
+          "fix": "jsc.guide.mounts_and_chroot.fix7",
+          "problem": "jsc.guide.mounts_and_chroot.problem7"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:arch_chroot",
+        "jsc:mounting",
+        "jsc:stage_three",
+        "jsc:gentoo_reboot"
+      ]
+    }
+  ],
+  "id": "jsc:mounts_and_chroot",
+  "order": 259,
+  "section": "jsc:gentoo_base",
+  "title": "jsc.guide.mounts_and_chroot.title"
+}

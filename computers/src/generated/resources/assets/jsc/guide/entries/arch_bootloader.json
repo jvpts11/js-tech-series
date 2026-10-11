@@ -1,0 +1,162 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_bootloader.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.arch_bootloader.definition1",
+      "term": "jsc.guide.arch_bootloader.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.arch_bootloader.definition2",
+      "term": "jsc.guide.arch_bootloader.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.arch_bootloader.definition3",
+      "term": "jsc.guide.arch_bootloader.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_bootloader.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.arch_bootloader.table1",
+      "heads": [
+        "jsc.guide.arch_bootloader.table1_head1",
+        "jsc.guide.arch_bootloader.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "grub"
+          },
+          {
+            "words": "jsc.guide.arch_bootloader.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "efibootmgr"
+          },
+          {
+            "words": "jsc.guide.arch_bootloader.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.arch_bootloader.step1",
+        "jsc.guide.arch_bootloader.step2",
+        "jsc.guide.arch_bootloader.step3",
+        "jsc.guide.arch_bootloader.step4"
+      ]
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "[root@archiso /]# ",
+          "text": "pacman -S grub efibootmgr",
+          "typed": true
+        },
+        {
+          "text": ":: Proceed with installation? [Y/n]"
+        }
+      ],
+      "look": "jsc:guide/terminal/zsh",
+      "title": "Arch Linux"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_bootloader.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.arch_bootloader.table2",
+      "heads": [
+        "jsc.guide.arch_bootloader.table2_head1",
+        "jsc.guide.arch_bootloader.table2_head2",
+        "jsc.guide.arch_bootloader.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.arch_bootloader.table2_1_1"
+          },
+          {
+            "literal": "grub-install --efi-directory=/boot"
+          },
+          {
+            "literal": "x86_64-efi"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.arch_bootloader.table2_2_1"
+          },
+          {
+            "literal": "grub-install /dev/sda"
+          },
+          {
+            "literal": "i386-pc"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_bootloader.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.arch_bootloader.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.arch_bootloader.fix1",
+          "problem": "jsc.guide.arch_bootloader.problem1"
+        },
+        {
+          "fix": "jsc.guide.arch_bootloader.fix2",
+          "problem": "jsc.guide.arch_bootloader.problem2"
+        },
+        {
+          "fix": "jsc.guide.arch_bootloader.fix3",
+          "problem": "jsc.guide.arch_bootloader.problem3"
+        },
+        {
+          "fix": "jsc.guide.arch_bootloader.fix4",
+          "problem": "jsc.guide.arch_bootloader.problem4"
+        },
+        {
+          "fix": "jsc.guide.arch_bootloader.fix5",
+          "problem": "jsc.guide.arch_bootloader.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:arch_grub_config"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:arch_bootloader",
+  "order": 252,
+  "section": "jsc:arch_boot",
+  "title": "jsc.guide.arch_bootloader.title"
+}

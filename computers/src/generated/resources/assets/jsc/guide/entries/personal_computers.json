@@ -65,7 +65,7 @@
             "words": "jsc.guide.personal_computers.table1_7"
           },
           {
-            "literal": "18"
+            "literal": "up to 18"
           }
         ]
       ]
@@ -79,6 +79,56 @@
       "text": "jsc.guide.personal_computers.text4"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.personal_computers.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.personal_computers.table2",
+      "heads": [
+        "jsc.guide.personal_computers.table2_head1",
+        "jsc.guide.personal_computers.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.personal_computers.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.personal_computers.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personal_computers.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.personal_computers.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personal_computers.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.personal_computers.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.personal_computers.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.personal_computers.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.personal_computers.text6"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -88,7 +138,30 @@
         {
           "fix": "jsc.guide.personal_computers.fix1",
           "problem": "jsc.guide.personal_computers.problem1"
+        },
+        {
+          "fix": "jsc.guide.personal_computers.fix2",
+          "problem": "jsc.guide.personal_computers.problem2"
+        },
+        {
+          "fix": "jsc.guide.personal_computers.fix3",
+          "problem": "jsc.guide.personal_computers.problem3"
+        },
+        {
+          "fix": "jsc.guide.personal_computers.fix4",
+          "problem": "jsc.guide.personal_computers.problem4"
+        },
+        {
+          "fix": "jsc.guide.personal_computers.fix5",
+          "problem": "jsc.guide.personal_computers.problem5"
         }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:first_computer",
+        "jsc:firmware"
       ]
     }
   ],
@@ -105,7 +178,7 @@
     "jsc:advanced_high_performance_personal_computer",
     "jsc:advanced_aesthetic_personal_computer"
   ],
-  "order": 13,
+  "order": 24,
   "section": "jsc:computers",
   "title": "jsc.guide.personal_computers.title"
 }

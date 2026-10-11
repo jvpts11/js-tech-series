@@ -1,0 +1,97 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cde.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cde.definition1",
+      "term": "jsc.guide.cde.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cde.definition2",
+      "term": "jsc.guide.cde.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.cde.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cde.definition3",
+      "term": "jsc.guide.cde.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.cde.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cde.definition4",
+      "term": "jsc.guide.cde.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cde.fix1",
+          "problem": "jsc.guide.cde.problem1"
+        },
+        {
+          "fix": "jsc.guide.cde.fix2",
+          "problem": "jsc.guide.cde.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:cde_front_panel",
+        "jsc:cde_style_manager",
+        "jsc:cde_application_manager",
+        "jsc:cde_workstation_info",
+        "jsc:cde_trash_can",
+        "jsc:install_a_desktop"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:cde",
+  "order": 210,
+  "section": "jsc:cde_desktop",
+  "title": "jsc.guide.cde.title"
+}

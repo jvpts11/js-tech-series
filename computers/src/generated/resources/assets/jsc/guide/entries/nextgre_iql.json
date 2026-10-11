@@ -1,0 +1,302 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.nextgre_iql.definition1",
+      "term": "jsc.guide.nextgre_iql.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.nextgre_iql.definition2",
+      "term": "jsc.guide.nextgre_iql.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.nextgre_iql.definition3",
+      "term": "jsc.guide.nextgre_iql.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.nextgre_iql.definition4",
+      "term": "jsc.guide.nextgre_iql.term4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.nextgre_iql.table1",
+      "heads": [
+        "jsc.guide.nextgre_iql.table1_head1",
+        "jsc.guide.nextgre_iql.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.nextgre_iql.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.nextgre_iql.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.nextgre_iql.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.nextgre_iql.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.nextgre_iql.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text4"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.nextgre_iql.step1",
+        "jsc.guide.nextgre_iql.step2"
+      ]
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "EXPLAIN CRAFT 64 iron_ingot"
+      ],
+      "name": "explain_craft.iql"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.nextgre_iql.table2",
+      "heads": [
+        "jsc.guide.nextgre_iql.table2_head1",
+        "jsc.guide.nextgre_iql.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.nextgre_iql.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.nextgre_iql.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.nextgre_iql.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.nextgre_iql.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.nextgre_iql.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.nextgre_iql.table3",
+      "heads": [
+        "jsc.guide.nextgre_iql.table3_head1",
+        "jsc.guide.nextgre_iql.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Craft <item> x<n>"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Process <item> x<n>"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Pull <item> x<n>"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Index Seek <item> x<n>"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Missing <item> x<n>"
+          },
+          {
+            "words": "jsc.guide.nextgre_iql.table3_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.nextgre_iql.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.nextgre_iql.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.nextgre_iql.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text10"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text11"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.nextgre_iql.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text12"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text13"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.nextgre_iql.text14"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.nextgre_iql.fix1",
+          "problem": "jsc.guide.nextgre_iql.problem1"
+        },
+        {
+          "fix": "jsc.guide.nextgre_iql.fix2",
+          "problem": "jsc.guide.nextgre_iql.problem2"
+        },
+        {
+          "fix": "jsc.guide.nextgre_iql.fix3",
+          "problem": "jsc.guide.nextgre_iql.problem3"
+        },
+        {
+          "fix": "jsc.guide.nextgre_iql.fix4",
+          "problem": "jsc.guide.nextgre_iql.problem4"
+        },
+        {
+          "fix": "jsc.guide.nextgre_iql.fix5",
+          "problem": "jsc.guide.nextgre_iql.problem5"
+        },
+        {
+          "fix": "jsc.guide.nextgre_iql.fix6",
+          "problem": "jsc.guide.nextgre_iql.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:nextgre_hints",
+        "jsc:nextgre_planner_studio"
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:nextgre_iql",
+  "order": 309,
+  "section": "jsc:engine_choice",
+  "title": "jsc.guide.nextgre_iql.title"
+}

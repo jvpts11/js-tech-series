@@ -1,7 +1,6 @@
 {
-  "chapter": "jsc",
-  "icon": "jsc:gpu_vertex_8800_gt",
+  "chapter": "jsc:building_computers",
   "id": "jsc:hardware",
-  "order": 1,
+  "order": 5,
   "title": "jsc.guide.section.hardware"
 }

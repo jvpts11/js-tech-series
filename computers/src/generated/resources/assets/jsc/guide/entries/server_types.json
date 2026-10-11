@@ -1,0 +1,320 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.server_types.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.server_types.table1",
+      "heads": [
+        "jsc.guide.server_types.table1_head1",
+        "jsc.guide.server_types.table1_head2",
+        "jsc.guide.server_types.table1_head3",
+        "jsc.guide.server_types.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.server_types.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_4_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_5_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_5_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_6_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_6_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_7_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_7_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_8_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_8_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table1_9_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_9_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table1_9_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.server_types.table2",
+      "heads": [
+        "jsc.guide.server_types.table2_head1",
+        "jsc.guide.server_types.table2_head2",
+        "jsc.guide.server_types.table2_head3",
+        "jsc.guide.server_types.table2_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.server_types.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_1_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_2_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_3_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_4_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_4_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_5_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_5_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_6_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_6_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_7_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_7_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_7_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table2_8_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_8_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_8_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_8_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.server_types.table2_9_1"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_9_2"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_9_3"
+          },
+          {
+            "words": "jsc.guide.server_types.table2_9_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_types.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_types.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.server_types.fix1",
+          "problem": "jsc.guide.server_types.problem1"
+        },
+        {
+          "fix": "jsc.guide.server_types.fix2",
+          "problem": "jsc.guide.server_types.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:server_racks",
+        "jsc:rack_drive_bays"
+      ]
+    }
+  ],
+  "id": "jsc:server_types",
+  "order": 28,
+  "section": "jsc:racks",
+  "title": "jsc.guide.server_types.title"
+}

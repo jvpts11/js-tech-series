@@ -1,0 +1,130 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.kde_plasma.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.kde_plasma.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.kde_plasma.definition1",
+      "term": "jsc.guide.kde_plasma.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.kde_plasma.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.kde_plasma.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.kde_plasma.table1",
+      "heads": [
+        "jsc.guide.kde_plasma.table1_head1",
+        "jsc.guide.kde_plasma.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.kde_plasma.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.kde_plasma.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.kde_plasma.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.kde_plasma.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.kde_plasma.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.kde_plasma.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.kde_plasma.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.kde_plasma.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.kde_plasma.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.kde_plasma.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.kde_plasma.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.kde_plasma.table1_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.kde_plasma.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.kde_plasma.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.kde_plasma.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.kde_plasma.definition2",
+      "term": "jsc.guide.kde_plasma.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.kde_plasma.fix1",
+          "problem": "jsc.guide.kde_plasma.problem1"
+        },
+        {
+          "fix": "jsc.guide.kde_plasma.fix2",
+          "problem": "jsc.guide.kde_plasma.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:install_a_desktop",
+        "jsc:desktop_program_names",
+        "jsc:eras"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:kde_plasma",
+  "order": 206,
+  "section": "jsc:desktop_environments",
+  "title": "jsc.guide.kde_plasma.title"
+}

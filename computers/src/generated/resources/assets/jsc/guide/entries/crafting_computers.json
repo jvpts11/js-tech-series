@@ -9,6 +9,10 @@
       "text": "jsc.guide.crafting_computers.text2"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.crafting_computers.text3"
+    },
+    {
       "type": "table",
       "caption": "jsc.guide.crafting_computers.table1",
       "rows": [
@@ -17,7 +21,7 @@
             "words": "jsc.guide.crafting_computers.table1_1"
           },
           {
-            "literal": "2"
+            "literal": "1"
           }
         ],
         [
@@ -25,7 +29,7 @@
             "words": "jsc.guide.crafting_computers.table1_2"
           },
           {
-            "literal": "4"
+            "literal": "1"
           }
         ],
         [
@@ -33,7 +37,7 @@
             "words": "jsc.guide.crafting_computers.table1_3"
           },
           {
-            "literal": "5"
+            "literal": "4"
           }
         ],
         [
@@ -41,7 +45,7 @@
             "words": "jsc.guide.crafting_computers.table1_4"
           },
           {
-            "literal": "6"
+            "literal": "4"
           }
         ],
         [
@@ -49,14 +53,100 @@
             "words": "jsc.guide.crafting_computers.table1_5"
           },
           {
-            "literal": "8"
+            "literal": "2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_computers.table1_6"
+          },
+          {
+            "literal": "1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_computers.table1_7"
+          },
+          {
+            "literal": "2"
           }
         ]
       ]
     },
     {
       "type": "text",
-      "text": "jsc.guide.crafting_computers.text3"
+      "text": "jsc.guide.crafting_computers.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.crafting_computers.table2",
+      "heads": [
+        "jsc.guide.crafting_computers.table2_head1",
+        "jsc.guide.crafting_computers.table2_head2",
+        "jsc.guide.crafting_computers.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.crafting_computers.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.crafting_computers.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.crafting_computers.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_computers.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.crafting_computers.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.crafting_computers.table2_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_computers.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.crafting_computers.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.crafting_computers.table2_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_computers.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.crafting_computers.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.crafting_computers.table2_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_computers.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.crafting_computers.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.crafting_computers.table2_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_computers.text5"
     },
     {
       "type": "heading",
@@ -74,6 +164,12 @@
           "problem": "jsc.guide.crafting_computers.problem2"
         }
       ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:autocrafting"
+      ]
     }
   ],
   "icon": "jsc:crafting_computer",
@@ -87,15 +183,9 @@
     "jsc:transition_crafting_computer",
     "jsc:advanced_crafting_computer",
     "jsc:advanced_high_performance_crafting_computer",
-    "jsc:advanced_aesthetic_crafting_computer",
-    "jsc:crafting_card_isa",
-    "jsc:crafting_card_pci",
-    "jsc:crafting_card_t2",
-    "jsc:crafting_card_t3",
-    "jsc:crafting_card_pcie3",
-    "jsc:crafting_card_t4"
+    "jsc:advanced_aesthetic_crafting_computer"
   ],
-  "order": 41,
-  "section": "jsc:autocrafting",
+  "order": 25,
+  "section": "jsc:computers",
   "title": "jsc.guide.crafting_computers.title"
 }

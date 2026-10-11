@@ -1,0 +1,108 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.set_redstone.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.set_redstone.table1",
+      "heads": [
+        "jsc.guide.set_redstone.table1_head1",
+        "jsc.guide.set_redstone.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "SET REDSTONE 'x' IN"
+          },
+          {
+            "words": "jsc.guide.set_redstone.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "SET REDSTONE 'x' OUT 15"
+          },
+          {
+            "words": "jsc.guide.set_redstone.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.set_redstone.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.set_redstone.table2",
+      "heads": [
+        "jsc.guide.set_redstone.table2_head1",
+        "jsc.guide.set_redstone.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Redstone Interface <name> reads"
+          },
+          {
+            "words": "jsc.guide.set_redstone.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Redstone Interface <name> emits <strength>"
+          },
+          {
+            "words": "jsc.guide.set_redstone.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "no Redstone Interface named <name> is linked to this machine"
+          },
+          {
+            "words": "jsc.guide.set_redstone.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.set_redstone.fix1",
+          "problem": "jsc.guide.set_redstone.problem1"
+        },
+        {
+          "fix": "jsc.guide.set_redstone.fix2",
+          "problem": "jsc.guide.set_redstone.problem2"
+        },
+        {
+          "fix": "jsc.guide.set_redstone.fix3",
+          "problem": "jsc.guide.set_redstone.problem3"
+        },
+        {
+          "fix": "jsc.guide.set_redstone.fix4",
+          "problem": "jsc.guide.set_redstone.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:redstone_interfaces",
+        "jsc:set_bus"
+      ]
+    }
+  ],
+  "id": "jsc:set_redstone",
+  "order": 300,
+  "section": "jsc:iql_settings",
+  "title": "jsc.guide.set_redstone.title"
+}

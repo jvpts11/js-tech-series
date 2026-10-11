@@ -1,0 +1,101 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.boot_menu.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.boot_menu.table1",
+      "heads": [
+        "jsc.guide.boot_menu.table1_head1",
+        "jsc.guide.boot_menu.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Up and Down"
+          },
+          {
+            "words": "jsc.guide.boot_menu.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter"
+          },
+          {
+            "words": "jsc.guide.boot_menu.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.boot_menu.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.boot_menu.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.boot_menu.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.boot_menu.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.boot_menu.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.boot_menu.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.boot_menu.text7"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.boot_menu.definition1",
+      "term": "jsc.guide.boot_menu.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.boot_menu.fix1",
+          "problem": "jsc.guide.boot_menu.problem1"
+        },
+        {
+          "fix": "jsc.guide.boot_menu.fix2",
+          "problem": "jsc.guide.boot_menu.problem2"
+        },
+        {
+          "fix": "jsc.guide.boot_menu.fix3",
+          "problem": "jsc.guide.boot_menu.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:two_systems",
+        "jsc:help_on_a_computer",
+        "jsc:firmware"
+      ]
+    }
+  ],
+  "icon": "jsc:floppy_disk",
+  "id": "jsc:boot_menu",
+  "order": 6,
+  "section": "jsc:starting_a_computer",
+  "title": "jsc.guide.boot_menu.title"
+}

@@ -1,0 +1,195 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_entry_points.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_entry_points.definition1",
+      "term": "jsc.guide.sigma_entry_points.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_entry_points.definition2",
+      "term": "jsc.guide.sigma_entry_points.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_entry_points.definition3",
+      "term": "jsc.guide.sigma_entry_points.term3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_entry_points.table1",
+      "heads": [
+        "jsc.guide.sigma_entry_points.table1_head1",
+        "jsc.guide.sigma_entry_points.table1_head2",
+        "jsc.guide.sigma_entry_points.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.sigma_entry_points.table1_1_1"
+          },
+          {
+            "literal": "static void Main()"
+          },
+          {
+            "words": "jsc.guide.sigma_entry_points.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_entry_points.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.sigma_entry_points.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_entry_points.table1_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_entry_points.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_entry_points.table2",
+      "heads": [
+        "jsc.guide.sigma_entry_points.table2_head1",
+        "jsc.guide.sigma_entry_points.table2_head2",
+        "jsc.guide.sigma_entry_points.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "static void Main()"
+          },
+          {
+            "words": "jsc.guide.sigma_entry_points.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_entry_points.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "static int Main()"
+          },
+          {
+            "words": "jsc.guide.sigma_entry_points.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_entry_points.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "static void Main(string[] args)"
+          },
+          {
+            "words": "jsc.guide.sigma_entry_points.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_entry_points.table2_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "static int Main(string[] args)"
+          },
+          {
+            "words": "jsc.guide.sigma_entry_points.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_entry_points.table2_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_entry_points.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_entry_points.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_entry_points.text5"
+    },
+    {
+      "type": "listing",
+      "language": "sg",
+      "lines": [
+        "using Standard.*;",
+        "",
+        "namespace Hello;",
+        "",
+        "class Greeter",
+        "{",
+        "    static void Main()",
+        "    {",
+        "        printf(\"Hello\");",
+        "    }",
+        "}"
+      ],
+      "name": "Greeter.sg"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_entry_points.text6"
+    },
+    {
+      "type": "listing",
+      "language": "sg",
+      "lines": [
+        "using Standard.*;",
+        "",
+        "namespace Lamp;",
+        "",
+        "class Light : Script",
+        "{",
+        "    public override void OnTick()",
+        "    {",
+        "        // runs every game tick",
+        "    }",
+        "}"
+      ],
+      "name": "Light.sg"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_entry_points.fix1",
+          "problem": "jsc.guide.sigma_entry_points.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_entry_points.fix2",
+          "problem": "jsc.guide.sigma_entry_points.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_namespaces_using",
+        "jsc:sigma_inheritance"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_entry_points",
+  "order": 345,
+  "section": "jsc:sigma_organising",
+  "title": "jsc.guide.sigma_entry_points.title"
+}

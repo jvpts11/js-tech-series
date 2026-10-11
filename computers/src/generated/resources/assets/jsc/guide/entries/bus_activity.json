@@ -1,0 +1,152 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_activity.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_activity.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_activity.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.bus_activity.table1",
+      "heads": [
+        "jsc.guide.bus_activity.table1_head1",
+        "jsc.guide.bus_activity.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "COMPLETED"
+          },
+          {
+            "words": "jsc.guide.bus_activity.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "COMPLETED_PARTIAL"
+          },
+          {
+            "words": "jsc.guide.bus_activity.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "WAITING"
+          },
+          {
+            "words": "jsc.guide.bus_activity.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "RESOURCE_LOCKED"
+          },
+          {
+            "words": "jsc.guide.bus_activity.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.bus_activity.table2",
+      "heads": [
+        "jsc.guide.bus_activity.table2_head1",
+        "jsc.guide.bus_activity.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.bus_activity.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.bus_activity.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_activity.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.bus_activity.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_activity.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.bus_activity.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_activity.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.bus_activity.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_activity.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.bus_activity.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.bus_activity.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.bus_activity.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.bus_activity.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.bus_activity.fix1",
+          "problem": "jsc.guide.bus_activity.problem1"
+        },
+        {
+          "fix": "jsc.guide.bus_activity.fix2",
+          "problem": "jsc.guide.bus_activity.problem2"
+        },
+        {
+          "fix": "jsc.guide.bus_activity.fix3",
+          "problem": "jsc.guide.bus_activity.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:bus_window",
+        "jsc:bus_conditions"
+      ]
+    }
+  ],
+  "id": "jsc:bus_activity",
+  "order": 91,
+  "section": "jsc:bus_windows",
+  "title": "jsc.guide.bus_activity.title"
+}

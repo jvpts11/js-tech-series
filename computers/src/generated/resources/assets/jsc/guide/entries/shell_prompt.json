@@ -1,0 +1,151 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_prompt.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_prompt.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_prompt.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.shell_prompt.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.shell_prompt.table1",
+      "heads": [
+        "jsc.guide.shell_prompt.table1_head1",
+        "jsc.guide.shell_prompt.table1_head2",
+        "jsc.guide.shell_prompt.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.shell_prompt.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.shell_prompt.table1_1_2"
+          },
+          {
+            "literal": "player@<name>:<folder>$"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.shell_prompt.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.shell_prompt.table1_2_2"
+          },
+          {
+            "literal": "player@<name>:<folder>$"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.shell_prompt.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.shell_prompt.table1_3_2"
+          },
+          {
+            "literal": "player@<name> <folder> %"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.shell_prompt.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.shell_prompt.table1_4_2"
+          },
+          {
+            "literal": "root@<name>:<folder> #"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.shell_prompt.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.shell_prompt.table1_5_2"
+          },
+          {
+            "literal": "player@<name>:<folder> $"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_prompt.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shell_prompt.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.shell_prompt.definition1",
+      "term": "jsc.guide.shell_prompt.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.shell_prompt.definition2",
+      "term": "jsc.guide.shell_prompt.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.shell_prompt.definition3",
+      "term": "jsc.guide.shell_prompt.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.shell_prompt.definition4",
+      "term": "jsc.guide.shell_prompt.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.shell_prompt.definition5",
+      "term": "jsc.guide.shell_prompt.term5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.shell_prompt.fix1",
+          "problem": "jsc.guide.shell_prompt.problem1"
+        },
+        {
+          "fix": "jsc.guide.shell_prompt.fix2",
+          "problem": "jsc.guide.shell_prompt.problem2"
+        },
+        {
+          "fix": "jsc.guide.shell_prompt.fix3",
+          "problem": "jsc.guide.shell_prompt.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:file_tree",
+        "jsc:help_command"
+      ]
+    }
+  ],
+  "id": "jsc:shell_prompt",
+  "order": 191,
+  "section": "jsc:shell_basics",
+  "title": "jsc.guide.shell_prompt.title"
+}

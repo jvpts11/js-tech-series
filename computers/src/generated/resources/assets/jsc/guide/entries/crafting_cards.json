@@ -1,0 +1,316 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_cards.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_cards.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.crafting_cards.definition1",
+      "term": "jsc.guide.crafting_cards.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.crafting_cards.table1",
+      "heads": [
+        "jsc.guide.crafting_cards.table1_head1",
+        "jsc.guide.crafting_cards.table1_head2",
+        "jsc.guide.crafting_cards.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_cards.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_cards.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_cards.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_cards.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.crafting_cards.definition2",
+      "term": "jsc.guide.crafting_cards.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.crafting_cards.table2",
+      "heads": [
+        "jsc.guide.crafting_cards.table2_head1",
+        "jsc.guide.crafting_cards.table2_head2",
+        "jsc.guide.crafting_cards.table2_head3",
+        "jsc.guide.crafting_cards.table2_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_1_3"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_2_3"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_3_3"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_3_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_4_3"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_4_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_5_3"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_5_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_6_3"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table2_6_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_cards.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.crafting_cards.table3",
+      "heads": [
+        "jsc.guide.crafting_cards.table3_head1",
+        "jsc.guide.crafting_cards.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table3_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table3_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.crafting_cards.table3_6_1"
+          },
+          {
+            "words": "jsc.guide.crafting_cards.table3_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_cards.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.crafting_cards.fix1",
+          "problem": "jsc.guide.crafting_cards.problem1"
+        },
+        {
+          "fix": "jsc.guide.crafting_cards.fix2",
+          "problem": "jsc.guide.crafting_cards.problem2"
+        },
+        {
+          "fix": "jsc.guide.crafting_cards.fix3",
+          "problem": "jsc.guide.crafting_cards.problem3"
+        },
+        {
+          "fix": "jsc.guide.crafting_cards.fix4",
+          "problem": "jsc.guide.crafting_cards.problem4"
+        },
+        {
+          "fix": "jsc.guide.crafting_cards.fix5",
+          "problem": "jsc.guide.crafting_cards.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:crafting_computers",
+        "jsc:crafting_manager",
+        "jsc:crafting_interfaces"
+      ]
+    }
+  ],
+  "icon": "jsc:crafting_card_pcie3",
+  "id": "jsc:crafting_cards",
+  "items": [
+    "jsc:crafting_card_isa",
+    "jsc:crafting_card_pci",
+    "jsc:crafting_card_t2",
+    "jsc:crafting_card_t3",
+    "jsc:crafting_card_pcie3",
+    "jsc:crafting_card_t4"
+  ],
+  "order": 102,
+  "section": "jsc:autocrafting",
+  "title": "jsc.guide.crafting_cards.title"
+}

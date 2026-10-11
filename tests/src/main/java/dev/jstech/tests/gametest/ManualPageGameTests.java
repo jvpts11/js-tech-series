@@ -11,6 +11,8 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.config.ComputersServerConfig;
+import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.program.cli.man.ManualEntries;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
@@ -62,17 +64,20 @@ public final class ManualPageGameTests {
         return computer;
     }
 
+    /*
+     * The books of the systems print a page for every command, the same page the command writes of itself, so man
+     * hands the terminal to the pager with the book's page instead of printing the page at the prompt.
+     */
     @GameTest(template = ARENA)
-    public static void man_printsThePageTheCommandItselfWrites(final GameTestHelper helper) {
+    public static void man_opensTheBooksPageOfTheCommandInThePager(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(ManualEntries.commandEntry(Platform.LINUX, "grep").isPresent(),
+                            "a book of Debian prints grep's page");
                     final List<String> page = shell(helper, computer, "man grep");
-                    helper.assertTrue(says(page, "NAME") && says(page, "SYNOPSIS") && says(page, "DESCRIPTION")
-                                    && says(page, "OPTIONS") && says(page, "EXAMPLES") && says(page, "SEE ALSO"),
-                            "a real page has all its parts; got " + page);
-                    helper.assertTrue(says(page, "-v") && says(page, "the lines that do NOT hold it"),
-                            "the options are the command's own words; got " + page);
+                    helper.assertTrue(page.isEmpty(), "and man opens it in the pager, leaving the prompt; got "
+                            + page);
                 })
                 .thenSucceed();
     }

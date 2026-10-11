@@ -1,0 +1,168 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.threads_and_locks.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.threads_and_locks.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.threads_and_locks.table1",
+      "heads": [
+        "jsc.guide.threads_and_locks.table1_head1",
+        "jsc.guide.threads_and_locks.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Thread.Start(action)"
+          },
+          {
+            "words": "jsc.guide.threads_and_locks.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Current"
+          },
+          {
+            "words": "jsc.guide.threads_and_locks.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Sleep(ticks)"
+          },
+          {
+            "words": "jsc.guide.threads_and_locks.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Yield()"
+          },
+          {
+            "words": "jsc.guide.threads_and_locks.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Id"
+          },
+          {
+            "words": "jsc.guide.threads_and_locks.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Running"
+          },
+          {
+            "words": "jsc.guide.threads_and_locks.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Join()"
+          },
+          {
+            "words": "jsc.guide.threads_and_locks.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Join(ticks)"
+          },
+          {
+            "words": "jsc.guide.threads_and_locks.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Thread.Stop()"
+          },
+          {
+            "words": "jsc.guide.threads_and_locks.table1_9_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.threads_and_locks.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.threads_and_locks.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.threads_and_locks.text4"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.threads_and_locks.step1",
+        "jsc.guide.threads_and_locks.step2"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.threads_and_locks.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.threads_and_locks.definition1",
+      "term": "jsc.guide.threads_and_locks.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.threads_and_locks.definition2",
+      "term": "jsc.guide.threads_and_locks.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.threads_and_locks.fix1",
+          "problem": "jsc.guide.threads_and_locks.problem1"
+        },
+        {
+          "fix": "jsc.guide.threads_and_locks.fix2",
+          "problem": "jsc.guide.threads_and_locks.problem2"
+        },
+        {
+          "fix": "jsc.guide.threads_and_locks.fix3",
+          "problem": "jsc.guide.threads_and_locks.problem3"
+        },
+        {
+          "fix": "jsc.guide.threads_and_locks.fix4",
+          "problem": "jsc.guide.threads_and_locks.problem4"
+        },
+        {
+          "fix": "jsc.guide.threads_and_locks.fix5",
+          "problem": "jsc.guide.threads_and_locks.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_delegates_events",
+        "jsc:sigma_runtime_stops",
+        "jsc:running_programs"
+      ]
+    }
+  ],
+  "id": "jsc:threads_and_locks",
+  "order": 358,
+  "section": "jsc:library_programs",
+  "title": "jsc.guide.threads_and_locks.title"
+}

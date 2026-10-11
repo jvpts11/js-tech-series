@@ -1,0 +1,187 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_strings_chars.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_strings_chars.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_strings_chars.table1",
+      "heads": [
+        "jsc.guide.sigma_strings_chars.table1_head1",
+        "jsc.guide.sigma_strings_chars.table1_head2",
+        "jsc.guide.sigma_strings_chars.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Length"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "Substring(start)"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "Substring(start, length)"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "IndexOf(text)"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "Contains, StartsWith, EndsWith"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "ToUpper(), ToLower(), Trim()"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "Replace(old, new)"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "Split(char)"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "string.Format(format, value)"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_9_3"
+          }
+        ],
+        [
+          {
+            "literal": "string.Compare(a, b)"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.sigma_strings_chars.table1_10_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_strings_chars.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_strings_chars.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_strings_chars.text5"
+    },
+    {
+      "type": "listing",
+      "language": "sg",
+      "lines": [
+        "string name = \"Ada Lovelace\";",
+        "int first = name.IndexOf(\" \");",
+        "string given = name.Substring(0, first);     // \"Ada\"",
+        "bool long_name = name.Length > 8;",
+        "string shout = given.ToUpper();              // \"ADA\"",
+        "int order = string.Compare(\"apple\", \"banana\"); // below zero"
+      ],
+      "name": "Names.sg"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_strings_chars.definition1",
+      "term": "jsc.guide.sigma_strings_chars.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_strings_chars.fix1",
+          "problem": "jsc.guide.sigma_strings_chars.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_list_map",
+        "jsc:sigma_printf_old_names"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_strings_chars",
+  "order": 346,
+  "section": "jsc:sigma_data",
+  "title": "jsc.guide.sigma_strings_chars.title"
+}

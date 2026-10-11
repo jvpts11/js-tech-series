@@ -1,0 +1,126 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.widgets_basic.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.widgets_basic.table1",
+      "heads": [
+        "jsc.guide.widgets_basic.table1_head1",
+        "jsc.guide.widgets_basic.table1_head2",
+        "jsc.guide.widgets_basic.table1_head3",
+        "jsc.guide.widgets_basic.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Label"
+          },
+          {
+            "literal": "Label.new(), Label.new(text)"
+          },
+          {
+            "literal": "Label.Text"
+          },
+          {
+            "words": "jsc.guide.widgets_basic.table1_1_4"
+          }
+        ],
+        [
+          {
+            "literal": "Button"
+          },
+          {
+            "literal": "Button.new(), Button.new(text)"
+          },
+          {
+            "literal": "Button.Text"
+          },
+          {
+            "literal": "Button.OnClick"
+          }
+        ],
+        [
+          {
+            "literal": "TextBox"
+          },
+          {
+            "literal": "TextBox.new(), TextBox.new(text)"
+          },
+          {
+            "literal": "TextBox.Text"
+          },
+          {
+            "literal": "TextBox.OnChange, TextBox.OnSubmit"
+          }
+        ],
+        [
+          {
+            "literal": "CheckBox"
+          },
+          {
+            "literal": "CheckBox.new(), CheckBox.new(text, checked)"
+          },
+          {
+            "literal": "CheckBox.Text, CheckBox.Checked"
+          },
+          {
+            "literal": "CheckBox.OnToggle"
+          }
+        ],
+        [
+          {
+            "literal": "ProgressBar"
+          },
+          {
+            "literal": "ProgressBar.new(), ProgressBar.new(least, most)"
+          },
+          {
+            "literal": "ProgressBar.Value, ProgressBar.Least, ProgressBar.Most"
+          },
+          {
+            "words": "jsc.guide.widgets_basic.table1_5_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.widgets_basic.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.widgets_basic.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.widgets_basic.fix1",
+          "problem": "jsc.guide.widgets_basic.problem1"
+        },
+        {
+          "fix": "jsc.guide.widgets_basic.fix2",
+          "problem": "jsc.guide.widgets_basic.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:windows_and_layout",
+        "jsc:widgets_lists"
+      ]
+    }
+  ],
+  "id": "jsc:widgets_basic",
+  "order": 370,
+  "section": "jsc:library_windows",
+  "title": "jsc.guide.widgets_basic.title"
+}

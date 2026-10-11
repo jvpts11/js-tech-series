@@ -1,0 +1,127 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.computercraft_side.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computercraft_side.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.computercraft_side.definition1",
+      "term": "jsc.guide.computercraft_side.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.computercraft_side.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computercraft_side.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computercraft_side.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.computercraft_side.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computercraft_side.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.computercraft_side.table1",
+      "heads": [
+        "jsc.guide.computercraft_side.table1_head1",
+        "jsc.guide.computercraft_side.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "jsc_operation(id, status)"
+          },
+          {
+            "words": "jsc.guide.computercraft_side.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "jsc_stock(name, total, previous)"
+          },
+          {
+            "words": "jsc.guide.computercraft_side.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "jsc_test(name)"
+          },
+          {
+            "words": "jsc.guide.computercraft_side.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computercraft_side.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.computercraft_side.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computercraft_side.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computercraft_side.text8"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.computercraft_side.fix1",
+          "problem": "jsc.guide.computercraft_side.problem1"
+        },
+        {
+          "fix": "jsc.guide.computercraft_side.fix2",
+          "problem": "jsc.guide.computercraft_side.problem2"
+        },
+        {
+          "fix": "jsc.guide.computercraft_side.fix3",
+          "problem": "jsc.guide.computercraft_side.problem3"
+        },
+        {
+          "fix": "jsc.guide.computercraft_side.fix4",
+          "problem": "jsc.guide.computercraft_side.problem4"
+        },
+        {
+          "fix": "jsc.guide.computercraft_side.fix5",
+          "problem": "jsc.guide.computercraft_side.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:gateway_manager",
+        "jsc:computercraft_peripheral"
+      ]
+    }
+  ],
+  "id": "jsc:computercraft_side",
+  "order": 124,
+  "section": "jsc:gateway",
+  "title": "jsc.guide.computercraft_side.title"
+}

@@ -1,0 +1,209 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.library.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.library.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.library.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.library.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.library.table1",
+      "heads": [
+        "jsc.guide.library.table1_head1",
+        "jsc.guide.library.table1_head2",
+        "jsc.guide.library.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.library.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.library.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.library.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.library.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.library.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.library.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.library.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.library.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.library.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.library.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.library.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.library.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.library.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.library.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.library.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.library.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.library.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.library.table1_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.library.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.library.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.library.table1_7_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.library.text5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.library.table2",
+      "heads": [
+        "jsc.guide.library.table2_head1",
+        "jsc.guide.library.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.library.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.library.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.library.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.library.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.library.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.library.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.library.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.library.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.library.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.library.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.library.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.library.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.library.fix1",
+          "problem": "jsc.guide.library.problem1"
+        },
+        {
+          "fix": "jsc.guide.library.fix2",
+          "problem": "jsc.guide.library.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:book_frames_resource_kit",
+        "jsc:book_linux_desk_reference",
+        "jsc:book_linux_by_hand",
+        "jsc:book_daemon_handbook",
+        "jsc:book_learning_iql",
+        "jsc:book_of_sigma",
+        "jsc:help_on_a_computer"
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.library.definition1",
+      "term": "jsc.guide.library.term1"
+    }
+  ],
+  "icon": "jsc:guide_to_operations",
+  "id": "jsc:library",
+  "order": 134,
+  "section": "jsc:the_library",
+  "title": "jsc.guide.library.title"
+}

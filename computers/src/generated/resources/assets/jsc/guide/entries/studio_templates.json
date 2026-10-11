@@ -1,0 +1,281 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_templates.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.studio_templates.definition1",
+      "term": "jsc.guide.studio_templates.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.studio_templates.table1",
+      "heads": [
+        "jsc.guide.studio_templates.table1_head1",
+        "jsc.guide.studio_templates.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.studio_templates.table1_1_1"
+          },
+          {
+            "literal": "QUERY <table, table, items> WHERE <column, column, qty> < <value, number, 64> ORDER BY <column, column, qty> DESC LIMIT <rows, number, 100>;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_templates.table1_2_1"
+          },
+          {
+            "literal": "COUNT <item, name, iron_ingot>;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_templates.table1_3_1"
+          },
+          {
+            "literal": "CRAFT <quantity, number, 64> <item, name, iron_ingot>;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_templates.table1_4_1"
+          },
+          {
+            "literal": "CREATE VIEW <name, name, low_stock> AS QUERY items WHERE qty < <value, number, 64>;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_templates.table1_5_1"
+          },
+          {
+            "literal": "CREATE PROCEDURE <name, name, restock> AS { CRAFT <quantity, number, 64> <item, name, torch>; };"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_templates.table1_6_1"
+          },
+          {
+            "literal": "CREATE JOB <name, name, nightly_vacuum> AS VACUUM EVERY <interval, interval, 20m>;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_templates.table1_7_1"
+          },
+          {
+            "literal": "LOCK <quantity, number, 64> <item, name, diamond>;"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.studio_templates.table1_8_1"
+          },
+          {
+            "literal": "UPDATE <quantity, number, 1> <item, name, iron_sword> SET REPAIR;"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_templates.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_templates.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.studio_templates.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.studio_templates.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.studio_templates.table2",
+      "heads": [
+        "jsc.guide.studio_templates.table2_head1",
+        "jsc.guide.studio_templates.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "QUERY table [WHERE ...] [ORDER BY ...] [LIMIT n]"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "COUNT item"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "SELECT n item"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "INSERT n item"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "DELETE n item TO place"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "MOVE n item FROM server TO server"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "DROP n item"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "CRAFT n item"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "UPDATE n item SET action"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "LOCK n item / UNLOCK item"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_10_2"
+          }
+        ],
+        [
+          {
+            "literal": "ANALYZE / REINDEX / VACUUM"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_11_2"
+          }
+        ],
+        [
+          {
+            "literal": "CREATE VIEW name AS query"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_12_2"
+          }
+        ],
+        [
+          {
+            "literal": "CREATE PROCEDURE name AS { ... }"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_13_2"
+          }
+        ],
+        [
+          {
+            "literal": "CREATE JOB name AS ... EVERY time"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_14_2"
+          }
+        ],
+        [
+          {
+            "literal": "EXEC name"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_15_2"
+          }
+        ],
+        [
+          {
+            "literal": "WHERE / ORDER BY / LIMIT"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_16_2"
+          }
+        ],
+        [
+          {
+            "literal": "; --"
+          },
+          {
+            "words": "jsc.guide.studio_templates.table2_17_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.studio_templates.fix1",
+          "problem": "jsc.guide.studio_templates.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:first_queries",
+        "jsc:query_and_select",
+        "jsc:iql_count",
+        "jsc:insert_delete_move_drop",
+        "jsc:iql_craft",
+        "jsc:update_cards",
+        "jsc:lock_unlock",
+        "jsc:iql_views",
+        "jsc:iql_procedures",
+        "jsc:iql_jobs"
+      ]
+    }
+  ],
+  "id": "jsc:studio_templates",
+  "order": 319,
+  "section": "jsc:isms_studio",
+  "title": "jsc.guide.studio_templates.title"
+}

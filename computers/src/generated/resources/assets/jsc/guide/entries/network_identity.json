@@ -1,0 +1,140 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.network_identity.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_identity.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_identity.table1",
+      "heads": [
+        "jsc.guide.network_identity.table1_head1",
+        "jsc.guide.network_identity.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "ONLINE"
+          },
+          {
+            "words": "jsc.guide.network_identity.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "OFFLINE"
+          },
+          {
+            "words": "jsc.guide.network_identity.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "READY"
+          },
+          {
+            "words": "jsc.guide.network_identity.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "STANDBY"
+          },
+          {
+            "words": "jsc.guide.network_identity.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "CONFLICT"
+          },
+          {
+            "words": "jsc.guide.network_identity.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "LINKED"
+          },
+          {
+            "words": "jsc.guide.network_identity.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "--"
+          },
+          {
+            "words": "jsc.guide.network_identity.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_identity.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_identity.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_identity.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_identity.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_identity.definition1",
+      "term": "jsc.guide.network_identity.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_identity.definition2",
+      "term": "jsc.guide.network_identity.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_identity.definition3",
+      "term": "jsc.guide.network_identity.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.network_identity.fix1",
+          "problem": "jsc.guide.network_identity.problem1"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.network_identity.fix2",
+          "problem": "jsc.guide.network_identity.problem2"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:mainframe",
+  "id": "jsc:network_identity",
+  "order": 68,
+  "section": "jsc:network_operation",
+  "title": "jsc.guide.network_identity.title"
+}

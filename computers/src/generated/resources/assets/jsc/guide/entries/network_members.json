@@ -1,0 +1,102 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.network_members.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_members.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.network_members.table1",
+      "heads": [
+        "jsc.guide.network_members.table1_head1",
+        "jsc.guide.network_members.table1_head2",
+        "jsc.guide.network_members.table1_head3",
+        "jsc.guide.network_members.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.network_members.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.network_members.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.network_members.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.network_members.table1_1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_members.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.network_members.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.network_members.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.network_members.table1_2_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_members.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.network_members.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.network_members.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.network_members.table1_3_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_members.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_members.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_members.definition1",
+      "term": "jsc.guide.network_members.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_members.definition2",
+      "term": "jsc.guide.network_members.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.network_members.fix1",
+          "problem": "jsc.guide.network_members.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:server_rack",
+  "id": "jsc:network_members",
+  "order": 63,
+  "section": "jsc:network_basics",
+  "title": "jsc.guide.network_members.title"
+}

@@ -1,0 +1,59 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_trash_can.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cde_trash_can.definition1",
+      "term": "jsc.guide.cde_trash_can.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cde_trash_can.definition2",
+      "term": "jsc.guide.cde_trash_can.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_trash_can.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_trash_can.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cde_trash_can.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.cde_trash_can.fix1",
+          "problem": "jsc.guide.cde_trash_can.problem1"
+        },
+        {
+          "fix": "jsc.guide.cde_trash_can.fix2",
+          "problem": "jsc.guide.cde_trash_can.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:cde_front_panel",
+        "jsc:desktops"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:cde_trash_can",
+  "order": 215,
+  "section": "jsc:cde_desktop",
+  "title": "jsc.guide.cde_trash_can.title"
+}

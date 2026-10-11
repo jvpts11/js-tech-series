@@ -1,0 +1,332 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_printf_old_names.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_printf_old_names.definition1",
+      "term": "jsc.guide.sigma_printf_old_names.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_printf_old_names.definition2",
+      "term": "jsc.guide.sigma_printf_old_names.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_printf_old_names.text2"
+    },
+    {
+      "type": "listing",
+      "language": "sg",
+      "lines": [
+        "using Standard.*;",
+        "",
+        "namespace Old;",
+        "",
+        "class Tool",
+        "{",
+        "    static void Main()",
+        "    {",
+        "        int n = 42;",
+        "        printf(\"n = %d, text = %s\", n, \"ok\");",
+        "    }",
+        "}"
+      ],
+      "name": "Old.sg"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_printf_old_names.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_printf_old_names.table1",
+      "heads": [
+        "jsc.guide.sigma_printf_old_names.table1_head1",
+        "jsc.guide.sigma_printf_old_names.table1_head2",
+        "jsc.guide.sigma_printf_old_names.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "%d, %i"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "%u, %x, %X, %o"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "%f"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "%e, %E"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "%s"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "%c"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "%%"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "l in front, as in %ld"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "ll, h, hh in front"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_9_3"
+          }
+        ],
+        [
+          {
+            "literal": "Flags, width, precision"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table1_10_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_printf_old_names.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_printf_old_names.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_printf_old_names.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_printf_old_names.table2",
+      "heads": [
+        "jsc.guide.sigma_printf_old_names.table2_head1",
+        "jsc.guide.sigma_printf_old_names.table2_head2",
+        "jsc.guide.sigma_printf_old_names.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "puts(text)"
+          },
+          {
+            "literal": "Console.PrintLine(text)"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "putchar(char)"
+          },
+          {
+            "literal": "Console.Print(char)"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "exit(int)"
+          },
+          {
+            "literal": "Program.Exit(int)"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table2_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "rand()"
+          },
+          {
+            "literal": "Random.Next(32768)"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table2_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "strlen(text)"
+          },
+          {
+            "literal": "text.Length"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table2_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "strcmp(a, b)"
+          },
+          {
+            "literal": "string.Compare(a, b)"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table2_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "atoi(text)"
+          },
+          {
+            "literal": "Convert.ToInt(text, 0)"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table2_7_3"
+          }
+        ],
+        [
+          {
+            "literal": "toupper(char)"
+          },
+          {
+            "literal": "char.ToUpper(char)"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table2_8_3"
+          }
+        ],
+        [
+          {
+            "literal": "fopen(path, mode)"
+          },
+          {
+            "literal": "File.Open(path, mode)"
+          },
+          {
+            "words": "jsc.guide.sigma_printf_old_names.table2_9_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_printf_old_names.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_printf_old_names.fix1",
+          "problem": "jsc.guide.sigma_printf_old_names.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_printf_old_names.fix2",
+          "problem": "jsc.guide.sigma_printf_old_names.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_printf_old_names.fix3",
+          "problem": "jsc.guide.sigma_printf_old_names.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_printf_old_names.fix4",
+          "problem": "jsc.guide.sigma_printf_old_names.problem4"
+        },
+        {
+          "fix": "jsc.guide.sigma_printf_old_names.fix5",
+          "problem": "jsc.guide.sigma_printf_old_names.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_strings_chars",
+        "jsc:sigma_library"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_printf_old_names",
+  "order": 350,
+  "section": "jsc:sigma_old_style",
+  "title": "jsc.guide.sigma_printf_old_names.title"
+}

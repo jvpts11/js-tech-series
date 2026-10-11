@@ -1,0 +1,189 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_library.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.crafting_library.table1",
+      "heads": [
+        "jsc.guide.crafting_library.table1_head1",
+        "jsc.guide.crafting_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "CraftInterface.Named(name)"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "CraftInterface.Name"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "CraftInterface.Exclusive(yes or no)"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "CraftInterface.MaxJobs(number)"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "CraftInterface.Pause()"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "CraftInterface.Resume()"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "CraftInterface.Route(pattern, input, router)"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.crafting_library.table2",
+      "heads": [
+        "jsc.guide.crafting_library.table2_head1",
+        "jsc.guide.crafting_library.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "CraftRouter.Named(name)"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "CraftRouter.Name"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "CraftRouter.Only(items)"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "CraftRouter.AllBut(items)"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "CraftRouter.Tag(tag)"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "CraftRouter.Any()"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "CraftRouter.Fuzzy(yes or no)"
+          },
+          {
+            "words": "jsc.guide.crafting_library.table2_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_library.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.crafting_library.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.crafting_library.fix1",
+          "problem": "jsc.guide.crafting_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.crafting_library.fix2",
+          "problem": "jsc.guide.crafting_library.problem2"
+        },
+        {
+          "fix": "jsc.guide.crafting_library.fix3",
+          "problem": "jsc.guide.crafting_library.problem3"
+        },
+        {
+          "fix": "jsc.guide.crafting_library.fix4",
+          "problem": "jsc.guide.crafting_library.problem4"
+        },
+        {
+          "fix": "jsc.guide.crafting_library.fix5",
+          "problem": "jsc.guide.crafting_library.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:crafting_interfaces",
+        "jsc:pattern_encoders",
+        "jsc:asking_for_a_craft"
+      ]
+    }
+  ],
+  "id": "jsc:crafting_library",
+  "order": 365,
+  "section": "jsc:library_machine",
+  "title": "jsc.guide.crafting_library.title"
+}

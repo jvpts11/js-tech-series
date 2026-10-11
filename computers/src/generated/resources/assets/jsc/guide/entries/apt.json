@@ -1,0 +1,198 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.apt.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.apt.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.apt.table1",
+      "heads": [
+        "jsc.guide.apt.table1_head1",
+        "jsc.guide.apt.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "apt install <package>"
+          },
+          {
+            "words": "jsc.guide.apt.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "apt remove <package>"
+          },
+          {
+            "words": "jsc.guide.apt.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "apt search [term]"
+          },
+          {
+            "words": "jsc.guide.apt.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "apt list"
+          },
+          {
+            "words": "jsc.guide.apt.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "apt update"
+          },
+          {
+            "words": "jsc.guide.apt.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "apt upgrade"
+          },
+          {
+            "words": "jsc.guide.apt.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/apt"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.apt.heading1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.apt.step1",
+        "jsc.guide.apt.step2",
+        "jsc.guide.apt.step3",
+        "jsc.guide.apt.step4"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.apt.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.apt.table2",
+      "heads": [
+        "jsc.guide.apt.table2_head1",
+        "jsc.guide.apt.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Reading package lists... Done"
+          },
+          {
+            "words": "jsc.guide.apt.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Building dependency tree... Done"
+          },
+          {
+            "words": "jsc.guide.apt.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "The following NEW packages will be installed:"
+          },
+          {
+            "words": "jsc.guide.apt.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Need to get <MB> MB of archives."
+          },
+          {
+            "words": "jsc.guide.apt.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Get:1 <mirror address> stable/main <package> <version> [<MB> MB]"
+          },
+          {
+            "words": "jsc.guide.apt.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.apt.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.apt.fix1",
+          "problem": "jsc.guide.apt.problem1"
+        },
+        {
+          "fix": "jsc.guide.apt.fix2",
+          "problem": "jsc.guide.apt.problem2"
+        },
+        {
+          "fix": "jsc.guide.apt.fix3",
+          "problem": "jsc.guide.apt.problem3"
+        },
+        {
+          "fix": "jsc.guide.apt.fix4",
+          "problem": "jsc.guide.apt.problem4"
+        },
+        {
+          "fix": "jsc.guide.apt.fix5",
+          "problem": "jsc.guide.apt.problem5"
+        },
+        {
+          "fix": "jsc.guide.apt.fix6",
+          "problem": "jsc.guide.apt.problem6"
+        },
+        {
+          "fix": "jsc.guide.apt.fix7",
+          "problem": "jsc.guide.apt.problem7"
+        },
+        {
+          "fix": "jsc.guide.apt.fix8",
+          "problem": "jsc.guide.apt.problem8"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:dnf",
+        "jsc:mirror_and_packages",
+        "jsc:what_is_missing"
+      ]
+    }
+  ],
+  "id": "jsc:apt",
+  "order": 233,
+  "section": "jsc:linux_packages",
+  "title": "jsc.guide.apt.title"
+}

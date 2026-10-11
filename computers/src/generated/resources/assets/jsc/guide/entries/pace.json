@@ -1,0 +1,315 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.pace.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.pace.definition1",
+      "term": "jsc.guide.pace.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pace.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pace.table1",
+      "heads": [
+        "jsc.guide.pace.table1_head1",
+        "jsc.guide.pace.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Office of player"
+          },
+          {
+            "words": "jsc.guide.pace.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pace.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.pace.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pace.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.pace.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pace.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.pace.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pace.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.pace.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pace.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pace.table2",
+      "heads": [
+        "jsc.guide.pace.table2_head1",
+        "jsc.guide.pace.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Up, Down, Home, End, Page Up, Page Down"
+          },
+          {
+            "words": "jsc.guide.pace.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Enter or F2"
+          },
+          {
+            "words": "jsc.guide.pace.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "F1"
+          },
+          {
+            "words": "jsc.guide.pace.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "F3"
+          },
+          {
+            "words": "jsc.guide.pace.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "F4"
+          },
+          {
+            "words": "jsc.guide.pace.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "F5 or Escape"
+          },
+          {
+            "words": "jsc.guide.pace.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "F6"
+          },
+          {
+            "words": "jsc.guide.pace.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "A letter"
+          },
+          {
+            "words": "jsc.guide.pace.table2_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pace.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pace.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pace.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pace.heading2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.pace.step1",
+        "jsc.guide.pace.step2",
+        "jsc.guide.pace.step3",
+        "jsc.guide.pace.step4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pace.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pace.text6"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pace.table3",
+      "heads": [
+        "jsc.guide.pace.table3_head1",
+        "jsc.guide.pace.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.pace.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.pace.table3_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pace.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.pace.table3_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pace.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.pace.table3_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pace.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.pace.table3_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pace.table3_5_1"
+          },
+          {
+            "words": "jsc.guide.pace.table3_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pace.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pace.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pace.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.pace.heading4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.pace.table4",
+      "heads": [
+        "jsc.guide.pace.table4_head1",
+        "jsc.guide.pace.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.pace.table4_1_1"
+          },
+          {
+            "literal": "uname -a"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pace.table4_2_1"
+          },
+          {
+            "literal": "df"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.pace.table4_3_1"
+          },
+          {
+            "literal": "installpkg"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/unix/pace"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.pace.fix1",
+          "problem": "jsc.guide.pace.problem1"
+        },
+        {
+          "fix": "jsc.guide.pace.fix2",
+          "problem": "jsc.guide.pace.problem2"
+        },
+        {
+          "fix": "jsc.guide.pace.fix3",
+          "problem": "jsc.guide.pace.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installpkg",
+        "jsc:vi",
+        "jsc:cde_on_system_v"
+      ]
+    }
+  ],
+  "id": "jsc:pace",
+  "order": 283,
+  "section": "jsc:system_v_menus",
+  "title": "jsc.guide.pace.title"
+}

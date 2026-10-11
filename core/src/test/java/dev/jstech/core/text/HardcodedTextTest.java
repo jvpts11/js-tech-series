@@ -63,7 +63,19 @@ class HardcodedTextTest {
             "titled", "whatItIs", "whatItIsFor", "howToGetIt", "howToUseIt", "whatCanGoWrong", "ifSomethingGoesWrong",
             "paragraph", "subheading", "figure", "picture", "drawing", "table", "property", "amount", "fixed",
             "warning", "define", "steps", "cover", "edition", "about", "note", "callout", "plan", "planPart",
-            "planOptional");
+            "planOptional", "scene", "balloon");
+
+    /**
+     * What a manual prints exactly as it is written, in every language: a listing's code and a session's prompts,
+     * what was typed and what the system answered.
+     */
+    private static final Set<String> VERBATIM = Set.of("listing", "listingIn", "session", "typed", "answer");
+
+    /**
+     * What a cell of a manual's table holds: words written to the language file, or code and a unit's symbol printed
+     * as they are.
+     */
+    private static final Set<String> CELLS = Set.of("words", "code", "amount");
 
     /** The toolkit's controls whose first words are the label a player reads on them. */
     private static final Set<String> LABELLED = Set.of("Button", "Label", "Checkbox", "Popup");
@@ -331,6 +343,8 @@ class HardcodedTextTest {
                     || (this.constructor && "TextKey".equals(this.name))
                     // A declaration's name or description, chained on it: the English the language file is made from.
                     || (this.name != null && DECLARATIONS.contains(this.name) && this.receiver == null)
+                    || (this.name != null && VERBATIM.contains(this.name) && this.receiver == null)
+                    || ("GuideCell".equals(this.receiver) && CELLS.contains(this.name))
                     || ("this".equals(this.receiver) && ADVANCEMENT_DECLARATIONS.contains(this.name))
                     // A config value's comment is written into the config file above it: a file's words, in English.
                     // So is a section's, declared apart from the values in it.

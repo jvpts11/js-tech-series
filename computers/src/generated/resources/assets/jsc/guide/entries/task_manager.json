@@ -1,0 +1,178 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.task_manager.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.task_manager.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.task_manager.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.task_manager.table1",
+      "heads": [
+        "jsc.guide.task_manager.table1_head1",
+        "jsc.guide.task_manager.table1_head2",
+        "jsc.guide.task_manager.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.task_manager.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.task_manager.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.task_manager.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.task_manager.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.task_manager.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.task_manager.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.task_manager.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.task_manager.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.task_manager.table1_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.task_manager.heading2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.task_manager.step1",
+        "jsc.guide.task_manager.step2"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.task_manager.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.task_manager.heading3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.task_manager.table2",
+      "heads": [
+        "jsc.guide.task_manager.table2_head1",
+        "jsc.guide.task_manager.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.task_manager.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.task_manager.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.task_manager.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.task_manager.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.task_manager.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.task_manager.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.task_manager.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.task_manager.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.task_manager.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.task_manager.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.task_manager.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.task_manager.definition1",
+      "term": "jsc.guide.task_manager.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.task_manager.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.task_manager.fix1",
+          "problem": "jsc.guide.task_manager.problem1"
+        },
+        {
+          "fix": "jsc.guide.task_manager.fix2",
+          "problem": "jsc.guide.task_manager.problem2"
+        },
+        {
+          "fix": "jsc.guide.task_manager.fix3",
+          "problem": "jsc.guide.task_manager.problem3"
+        },
+        {
+          "fix": "jsc.guide.task_manager.fix4",
+          "problem": "jsc.guide.task_manager.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:taskbar",
+        "jsc:network_manager"
+      ]
+    }
+  ],
+  "id": "jsc:task_manager",
+  "order": 167,
+  "section": "jsc:frames_machine_tools",
+  "title": "jsc.guide.task_manager.title"
+}

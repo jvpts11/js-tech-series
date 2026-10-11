@@ -1,0 +1,44 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.subframes.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.subframes.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.subframes.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.subframes.fix1",
+          "problem": "jsc.guide.subframes.problem1"
+        },
+        {
+          "fix": "jsc.guide.subframes.fix2",
+          "problem": "jsc.guide.subframes.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:states_and_queues",
+        "jsc:engines"
+      ]
+    }
+  ],
+  "id": "jsc:subframes",
+  "order": 33,
+  "section": "jsc:clusters",
+  "title": "jsc.guide.subframes.title"
+}

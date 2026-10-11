@@ -1,0 +1,173 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.tasks_and_jobs.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.tasks_and_jobs.definition1",
+      "term": "jsc.guide.tasks_and_jobs.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.tasks_and_jobs.definition2",
+      "term": "jsc.guide.tasks_and_jobs.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.tasks_and_jobs.definition3",
+      "term": "jsc.guide.tasks_and_jobs.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.tasks_and_jobs.definition4",
+      "term": "jsc.guide.tasks_and_jobs.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.tasks_and_jobs.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tasks_and_jobs.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tasks_and_jobs.text3"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/frames/tasklist"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tasks_and_jobs.text4"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/frames/taskkill"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.tasks_and_jobs.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tasks_and_jobs.text5"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/frames/where"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tasks_and_jobs.text6"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/start"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.tasks_and_jobs.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tasks_and_jobs.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.tasks_and_jobs.table1",
+      "heads": [
+        "jsc.guide.tasks_and_jobs.table1_head1",
+        "jsc.guide.tasks_and_jobs.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "at"
+          },
+          {
+            "words": "jsc.guide.tasks_and_jobs.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "at 06:00 COMMAND"
+          },
+          {
+            "words": "jsc.guide.tasks_and_jobs.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "at 06:00 /EVERY:M,W,F COMMAND"
+          },
+          {
+            "words": "jsc.guide.tasks_and_jobs.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "at 2 /DELETE"
+          },
+          {
+            "words": "jsc.guide.tasks_and_jobs.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tasks_and_jobs.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tasks_and_jobs.text9"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/at"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.tasks_and_jobs.fix1",
+          "problem": "jsc.guide.tasks_and_jobs.problem1"
+        },
+        {
+          "fix": "jsc.guide.tasks_and_jobs.fix2",
+          "problem": "jsc.guide.tasks_and_jobs.problem2"
+        },
+        {
+          "fix": "jsc.guide.tasks_and_jobs.fix3",
+          "problem": "jsc.guide.tasks_and_jobs.problem3"
+        },
+        {
+          "fix": "jsc.guide.tasks_and_jobs.fix4",
+          "problem": "jsc.guide.tasks_and_jobs.problem4"
+        },
+        {
+          "fix": "jsc.guide.tasks_and_jobs.fix5",
+          "problem": "jsc.guide.tasks_and_jobs.problem5"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:task_manager"
+      ]
+    }
+  ],
+  "id": "jsc:tasks_and_jobs",
+  "order": 185,
+  "section": "jsc:prompt_system",
+  "title": "jsc.guide.tasks_and_jobs.title"
+}

@@ -1,0 +1,189 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_sound.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_sound.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_example_sound.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_sound.heading1"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "using System.IO.*;",
+        "using System.Sound.*;",
+        "namespace Corpus;",
+        "class SoundCorpus {",
+        "    static void Main() {",
+        "        Sound.Beep(880, 200);",
+        "        bool tune = Sound.Tones(\"C4:250 E4 G4 C4+E4+G4:500\");",
+        "        bool song = Sound.Play(\"Users/Public/Music/intro.ogg\");",
+        "        Sound.Stop();",
+        "        Speaker desk = Speaker.Named(\"Desk left\");",
+        "        if (desk != null) {",
+        "            bool alone = desk.Play(\"Users/Public/Music/alarm.wav\");",
+        "            Console.PrintLine(desk.Name + alone);",
+        "        }",
+        "        Console.PrintLine(\"\" + tune + song);",
+        "    }",
+        "}"
+      ],
+      "name": "Sound.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.sigma_example_sound.heading2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_example_sound.table1",
+      "heads": [
+        "jsc.guide.sigma_example_sound.table1_head1",
+        "jsc.guide.sigma_example_sound.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Sound.Beep(880, 200)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_sound.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Sound.Tones(...)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_sound.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Sound.Play(...)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_sound.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Sound.Stop()"
+          },
+          {
+            "words": "jsc.guide.sigma_example_sound.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Speaker.Named(\"Desk left\")"
+          },
+          {
+            "words": "jsc.guide.sigma_example_sound.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "desk.Play(...)"
+          },
+          {
+            "words": "jsc.guide.sigma_example_sound.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "desk.Name"
+          },
+          {
+            "words": "jsc.guide.sigma_example_sound.table1_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_sound.definition1",
+      "term": "jsc.guide.sigma_example_sound.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_sound.definition2",
+      "term": "jsc.guide.sigma_example_sound.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_sound.definition3",
+      "term": "jsc.guide.sigma_example_sound.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_sound.definition4",
+      "term": "jsc.guide.sigma_example_sound.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_sound.definition5",
+      "term": "jsc.guide.sigma_example_sound.term5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_example_sound.definition6",
+      "term": "jsc.guide.sigma_example_sound.term6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_example_sound.fix1",
+          "problem": "jsc.guide.sigma_example_sound.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_sound.fix2",
+          "problem": "jsc.guide.sigma_example_sound.problem2"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_sound.fix3",
+          "problem": "jsc.guide.sigma_example_sound.problem3"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_sound.fix4",
+          "problem": "jsc.guide.sigma_example_sound.problem4"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_sound.fix5",
+          "problem": "jsc.guide.sigma_example_sound.problem5"
+        },
+        {
+          "fix": "jsc.guide.sigma_example_sound.fix6",
+          "problem": "jsc.guide.sigma_example_sound.problem6"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:soundfoundry",
+        "jsc:sigma_library"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_example_sound",
+  "order": 401,
+  "section": "jsc:examples_devices",
+  "title": "jsc.guide.sigma_example_sound.title"
+}

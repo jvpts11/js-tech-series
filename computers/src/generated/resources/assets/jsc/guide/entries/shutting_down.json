@@ -1,0 +1,170 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.shutting_down.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.shutting_down.table1",
+      "heads": [
+        "jsc.guide.shutting_down.table1_head1",
+        "jsc.guide.shutting_down.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.shutting_down.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.shutting_down.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.shutting_down.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.shutting_down.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.shutting_down.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.shutting_down.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.shutting_down.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.shutting_down.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.shutting_down.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.shutting_down.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.shutting_down.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shutting_down.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.shutting_down.table2",
+      "heads": [
+        "jsc.guide.shutting_down.table2_head1",
+        "jsc.guide.shutting_down.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.shutting_down.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.shutting_down.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.shutting_down.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.shutting_down.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.shutting_down.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.shutting_down.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shutting_down.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.shutting_down.heading2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.shutting_down.step1",
+        "jsc.guide.shutting_down.step2",
+        "jsc.guide.shutting_down.step3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.shutting_down.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shutting_down.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.shutting_down.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.shutting_down.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.shutting_down.fix1",
+          "problem": "jsc.guide.shutting_down.problem1"
+        },
+        {
+          "fix": "jsc.guide.shutting_down.fix2",
+          "problem": "jsc.guide.shutting_down.problem2"
+        },
+        {
+          "fix": "jsc.guide.shutting_down.fix3",
+          "problem": "jsc.guide.shutting_down.problem3"
+        }
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.shutting_down.definition1",
+      "term": "jsc.guide.shutting_down.term1"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:firmware",
+        "jsc:frames_settings"
+      ]
+    }
+  ],
+  "icon": "jsc:monitor",
+  "id": "jsc:shutting_down",
+  "order": 161,
+  "section": "jsc:desktop_settings",
+  "title": "jsc.guide.shutting_down.title"
+}
