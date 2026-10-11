@@ -1825,6 +1825,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Mainframe's queues tooltip names the card behind each queue; it named the item in another slot.
 - The setup on an installer medium, opened from the explorer, runs for a drive west or north of the world's origin;
   it did nothing there.
+- Recipes the Crafting Manager writes onto a disk in a Dock Station's tray are kept with the world; the disk was
+  written but not saved unless something else was.
 - The desktops' pointers, Frames 7's Start orb and the other pictures with soft edges (the systems' marks and logos,
   the panels' icons) have their edges blended into what is under them: a pointer's soft shadow came out as a hard
   black outline, and a pixel almost wholly clear in its full colour, the blue specks round the orb. A pointer's tip

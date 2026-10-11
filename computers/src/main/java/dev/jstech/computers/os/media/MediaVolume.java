@@ -30,6 +30,8 @@ public record MediaVolume(long readerPos, int bay) {
     private static final String FRONT = "f";
     /* The bay numbers below MEDIUM count a computer's front slots down from here: the first slot, then the next. */
     private static final int FIRST_FRONT = -2;
+    /* Far more slots than any front has, and few enough that counting them down stays a bay below MEDIUM. */
+    private static final int MOST_FRONT_SLOTS = 64;
 
     /** The medium in slot {@code slot} of the front of the computer at {@code computerPos}: a bay's, then a port's. */
     public static MediaVolume front(final long computerPos, final int slot) {
@@ -62,7 +64,7 @@ public record MediaVolume(long readerPos, int bay) {
             final String place = token.substring(dot + 1);
             if (place.startsWith(FRONT)) {
                 final int slot = Integer.parseInt(place.substring(FRONT.length()));
-                return slot < 0 ? null : front(reader, slot);
+                return slot < 0 || slot >= MOST_FRONT_SLOTS ? null : front(reader, slot);
             }
             final int bay = Integer.parseInt(place);
             return bay < MEDIUM ? null : new MediaVolume(reader, bay);

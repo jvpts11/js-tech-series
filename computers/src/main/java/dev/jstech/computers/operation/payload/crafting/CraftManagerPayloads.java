@@ -36,12 +36,10 @@ import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.MachineMedia;
-import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
-import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -62,6 +60,7 @@ import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.d
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.mirrorFileName;
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.reconcileCraftsFolder;
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.writeCraftToDisk;
+import static dev.jstech.computers.operation.payload.files.FileAccess.commitMedia;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaStackFor;
 
 /**
@@ -333,18 +332,8 @@ public final class CraftManagerPayloads {
             DiskFilesystem.write(media, fileName, FileType.CRAFT, content.get(), mediaFreeWeightFor(media),
                     FilesystemKind.HIERARCHICAL, level.getGameTime());
         }
-        // Propagate the updated filesystem component to the reader slot.
-        final String rest = key.substring("media:".length());
-        final int slash = rest.indexOf('/');
-        final String rawPos = slash < 0 ? rest : rest.substring(0, slash);
-        try {
-            final long encoded = Long.parseLong(rawPos);
-            if (Loaded.blockEntity(level, BlockPos.of(encoded)) instanceof MediaReaderBlockEntity reader) {
-                reader.setChanged();
-            }
-        } catch (final NumberFormatException ignored) {
-            // A key that names no reader writes to nothing a reader shows.
-        }
+        // Kept by whatever holds the medium: a reader, a dock's tray or a drive or port on the computer's own front.
+        commitMedia(level, cc, key);
         PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
     }
 

@@ -101,8 +101,8 @@ public final class FileAccess {
         return MediaVolume.subPath(mediaPath);
     }
 
-    /** Saves and shows the reader holding a media path's volume after its filesystem changed. */
-    static void commitMedia(final ServerLevel level,
+    /** Saves and shows the drive holding a media path's volume after its filesystem changed. */
+    public static void commitMedia(final ServerLevel level,
             final IOsHost computer,
             final String mediaPath) {
         final IMediaDrive drive = driveOf(level, computer, mediaPath);

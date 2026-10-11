@@ -74,5 +74,6 @@ class MediaVolumeTest {
         assertNull(MediaVolume.parse("media:42.f"));
         assertNull(MediaVolume.parse("media:42.f-1"));
         assertNull(MediaVolume.parse("media:42.-2"));
+        assertNull(MediaVolume.parse("media:42.f2147483647"));
     }
 }
