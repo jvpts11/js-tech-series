@@ -91,6 +91,44 @@ class HelpPagesTest {
     }
 
     @Test
+    void article_setsATableOfCommandsInColumnsAndASessionAKeyAndASceneAsText() {
+        final GuideEntry files = new GuideEntry("test:files", "test:hardware", 0, "files.title", "", List.of(),
+                List.of(new GuideBlock.Table("files.table", List.of("head.command", "head.does"), List.of(
+                                new GuideBlock.TableRow(List.of(new GuideBlock.GuideValue.Literal("dir"),
+                                        new GuideBlock.GuideValue.Words("does.dir"))),
+                                new GuideBlock.TableRow(List.of(new GuideBlock.GuideValue.Literal("del"),
+                                        new GuideBlock.GuideValue.Words("does.del"))))),
+                        new GuideBlock.Session("dos", "MC-DOS 6.22", List.of(
+                                GuideBlock.SessionLine.typed("C:\\>", "dir"),
+                                GuideBlock.SessionLine.answer(" Volume in drive C"))),
+                        new GuideBlock.Paragraph("files.keys"),
+                        new GuideBlock.Scene(List.of(new GuideBlock.SceneBlock(0, 0, 0, "test:case", "")),
+                                GuideBlock.SceneView.CORNER, List.of(new GuideBlock.SceneBalloon(1,
+                                GuideBlock.ScenePart.of(0, 0, 0), "files.balloon", "")), false, 90,
+                                "files.scene")));
+        final ManualReader reader = new ManualReader(new GuideManual("test:manual", "manual.title", List.of(), "",
+                "", "", List.of(GuideManual.EVERY_CHAPTER), List.of(), 0, ""), new GuideContents(List.of(
+                new GuideContents.Chapter(new GuideChapter("test", 0, "chapter.title", "", ""), List.of(
+                        new GuideContents.Section(new GuideSection("test:hardware", 0, "hardware.title", ""),
+                                List.of(files)))))), new Words());
+
+        for (final HelpPages.Voice voice : HelpPages.Voice.values()) {
+            final List<String> lines = text(HelpPages.article(reader, reader.article("test:files").orElseThrow(),
+                    voice, COLUMNS, ITextLanguage.ENGLISH, (type, output) -> List.of()));
+            assertTrue(lines.stream().anyMatch(line -> line.strip().equals("Command  What it does")),
+                    voice + ": the heads over their columns; got " + lines);
+            assertTrue(lines.stream().anyMatch(line -> line.strip().equals("dir      Lists the folder.")),
+                    voice + ": a command beside what it does; got " + lines);
+            assertTrue(lines.stream().anyMatch(line -> line.strip().equals("C:\\>dir")),
+                    voice + ": a session as the terminal printed it; got " + lines);
+            assertTrue(lines.stream().anyMatch(line -> line.contains("[Ctrl]+[S]")),
+                    voice + ": a key as its name in brackets; got " + lines);
+            assertTrue(lines.stream().anyMatch(line -> line.strip().startsWith("1 The front")),
+                    voice + ": a scene as the list of its balloons; got " + lines);
+        }
+    }
+
+    @Test
     void contents_listsTheTreeAsLinksThenTheCommandsAcross() {
         final List<HelpLine> lines = HelpPages.contents(reader(), List.of(), List.of(
                 new HelpCommand("Files", "dir", "list"), new HelpCommand("Files", "copy", "copy")), COLUMNS,
@@ -156,7 +194,12 @@ class HelpPagesTest {
                 Map.entry("what", "What it is"), Map.entry("cards.what", "The part that draws."),
                 Map.entry("monitors.what", "The glass."), Map.entry("cards.table", "A card"),
                 Map.entry("vram", "VRAM"), Map.entry("cores", "Cores"), Map.entry("jscore.guide.see_also",
-                        "See also:"), Map.entry("jscore.guide.table", "Table %s."));
+                        "See also:"), Map.entry("jscore.guide.table", "Table %s."),
+                Map.entry("jscore.guide.figure", "Figure %s."), Map.entry("files.title", "Files"),
+                Map.entry("files.table", "Commands"), Map.entry("head.command", "Command"),
+                Map.entry("head.does", "What it does"), Map.entry("does.dir", "Lists the folder."),
+                Map.entry("does.del", "Deletes a file."), Map.entry("files.keys", "Save with [[Ctrl]]+[[S]]."),
+                Map.entry("files.scene", "A case."), Map.entry("files.balloon", "The front"));
 
         @Override
         public String text(final String key, final Object... args) {

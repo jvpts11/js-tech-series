@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.gui.help;
 
+import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.program.cli.man.CommandGuidePages;
 import dev.jstech.core.gui.TextScreen;
 import dev.jstech.core.guide.ManualReader;
 import dev.jstech.core.text.ITextLanguage;
@@ -438,12 +440,28 @@ public final class DosHelp {
         return (args.length == 0 ? key.text() : key.with(args)).resolve(this.language);
     }
 
-    /** Where HELP opens: the contents, or the topic typed, a command when no manual has one of that name. */
+    /**
+     * Where HELP opens: the contents; or, for a command, the entry that prints its page on this system when a manual
+     * has one, which is its help here; or the topic typed; or the command's own page when no manual names it.
+     */
     private HelpTarget opening(final String topic) {
         final List<ManualReader> manuals = this.source.manuals();
         final String first = manuals.isEmpty() ? "" : manuals.getFirst().manualId();
         if (topic.isEmpty()) {
             return HelpTarget.contents(first);
+        }
+        for (final Platform platform : Platform.values()) {
+            if (!platform.label().equals(this.system)) {
+                continue;
+            }
+            for (final String page : CommandGuidePages.pagesOf(platform, topic.strip().toLowerCase(Locale.ROOT))) {
+                for (final ManualReader reader : manuals) {
+                    final Optional<String> entry = reader.commandPage(page);
+                    if (entry.isPresent()) {
+                        return HelpTarget.node(reader.manualId(), entry.get());
+                    }
+                }
+            }
         }
         for (final ManualReader reader : manuals) {
             final Optional<String> found = reader.find(topic);

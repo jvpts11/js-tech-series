@@ -46,6 +46,9 @@ public final class CommandGuidePages {
     private static final String PREFIX = "jsc:command/";
     private static final String LIVE = "live";
 
+    /** Every page registered for one command, by each of their ids: dir's page for MC-DOS and its page for Frames. */
+    private static Map<String, List<String>> alike = Map.of();
+
     private CommandGuidePages() {
     }
 
@@ -81,6 +84,27 @@ public final class CommandGuidePages {
         }
         pages.forEach((id, command) -> GuideFacts.command(id, () -> page(command,
                 systems.getOrDefault(key(command), List.of()))));
+        final Map<String, List<String>> byCommand = new HashMap<>();
+        pages.forEach((id, command) -> byCommand.computeIfAbsent(key(command), key -> new ArrayList<>()).add(id));
+        final Map<String, List<String>> found = new HashMap<>();
+        pages.forEach((id, command) -> found.put(id, List.copyOf(byCommand.get(key(command)))));
+        alike = Map.copyOf(found);
+    }
+
+    /**
+     * The ids of every page of the command typed by that name on a system of that family: its own first, then the
+     * pages other families have for the same command, so an entry printing any of them is that command's page there.
+     */
+    public static List<String> pagesOf(final Platform platform, final String name) {
+        final String own = id(platform, name);
+        final List<String> out = new ArrayList<>();
+        out.add(own);
+        for (final String other : alike.getOrDefault(own, List.of())) {
+            if (!other.equals(own)) {
+                out.add(other);
+            }
+        }
+        return out;
     }
 
     /** The id of the page of a command of that family of systems. */

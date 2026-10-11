@@ -194,6 +194,9 @@ class ManualReaderTest {
                 && links.links().stream().anyMatch(link -> link.target().equals("alpha:copy"))),
                 "the command to read next is listed with the entry's links");
         assertEquals(List.of("alpha:dir"), reader.search("names only"));
+        assertEquals(Optional.of("alpha:dir"), reader.commandPage("alpha:command/dir"),
+                "the entry printing a command's page is found by the page's source");
+        assertEquals(Optional.empty(), reader.commandPage("alpha:command/tree"));
     }
 
     @Test

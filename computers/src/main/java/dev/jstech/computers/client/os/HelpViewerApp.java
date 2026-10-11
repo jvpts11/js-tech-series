@@ -814,14 +814,14 @@ public final class HelpViewerApp implements IDesktopApp {
     /* What the parts do */
 
     private List<HelpTree.Row> rows() {
-        return HelpTree.rows(HelpBooks.all(), this.session.source().commands(),
+        return HelpTree.rows(this.session.source().manuals(), this.session.source().commands(),
                 GameText.resolve(HelpTexts.COMMANDS_PAGES), this.session.openBooks());
     }
 
     /** Frames 95's Index and Find lists: the index of the first manual from what was typed, or what answers to it. */
     private List<HelpTree.Row> listRows() {
         final List<HelpTree.Row> rows = new ArrayList<>();
-        final Optional<ManualReader> first = HelpBooks.first();
+        final Optional<ManualReader> first = this.session.source().manuals().stream().findFirst();
         if (first.isEmpty()) {
             return rows;
         }
@@ -989,7 +989,7 @@ public final class HelpViewerApp implements IDesktopApp {
         if (!shown.manual().isEmpty()) {
             return shown.manual();
         }
-        return HelpBooks.first().map(ManualReader::manualId).orElse("");
+        return this.session.source().manuals().stream().findFirst().map(ManualReader::manualId).orElse("");
     }
 
     /** GNOME's trail: the manual, then each book the page sits in. */

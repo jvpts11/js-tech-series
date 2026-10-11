@@ -200,6 +200,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   included, which the reader turns by dragging and brings nearer with the wheel, with Reset to go back. Numbered
   balloons point at their parts, a legend under the scene says what each is, and pointing at a number outlines its
   part and names it. A multiblock can be shown layer by layer to see inside it.
+- The computers' help programs read the manuals' new parts: a table of several columns as columns of text, set out
+  row by row on a screen too narrow for it; listings and sessions as their lines; keys by their names; scenes as their
+  captions and the list of their balloons. A command whose page a manual prints shows that page at `man`, at `HELP`
+  on MC-DOS and in each desktop's Help, and a system's help opens first on the book written for that system.
 - Pages for the commands in the manuals, made from each command itself: what it is for, how it is typed, what it
   does, a table of its options and one of its examples, every system it runs on (with the package to install first,
   where one is needed) and the commands to read next, each leading to its own page. They say what `man`, `help` and

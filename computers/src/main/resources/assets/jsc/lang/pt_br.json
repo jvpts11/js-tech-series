@@ -1846,7 +1846,7 @@
   "jsc.cli.posix.lpstat.usage": "[-p]",
   "jsc.cli.posix.ls.summary": "listar o conteúdo do diretório",
   "jsc.cli.posix.ls.usage": "[-l] [diretório]",
-  "jsc.cli.posix.man.about": "Imprime a página de manual de um comando. No UNIX e no FreeBSD também lê os manuais da série: uma entrada chamada pela última parte do seu id ou pelo seu título, como graphics-cards, abre como uma página da seção 7 no paginador.",
+  "jsc.cli.posix.man.about": "Imprime a página de manual de um comando; quando os manuais da série têm uma página para o comando, essa página abre no paginador. No UNIX e no FreeBSD também lê o resto dos manuais: uma entrada chamada pela última parte do seu id ou pelo seu título, como graphics-cards, abre como uma página da seção 7 no paginador.",
   "jsc.cli.posix.man.example.entry": "a entrada do manual sobre placas de vídeo, no UNIX e no FreeBSD",
   "jsc.cli.posix.man.no_entry": "Não há entrada no manual para %s",
   "jsc.cli.posix.man.summary": "mostrar a entrada do manual de um comando",

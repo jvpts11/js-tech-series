@@ -36,6 +36,13 @@ public final class ComputersGuide {
 
     /** The mod's own manual, and the style it is drawn in. */
     public static final String GUIDE_TO_OPERATIONS = "jsc:guide_to_operations";
+    /** The books of the systems and the languages, beside the Guide, each the first a system's help opens. */
+    public static final String FRAMES_RESOURCE_KIT = "jsc:frames_resource_kit";
+    public static final String LINUX_DESK_REFERENCE = "jsc:linux_desk_reference";
+    public static final String LINUX_BY_HAND = "jsc:linux_by_hand";
+    public static final String DAEMON_HANDBOOK = "jsc:daemon_handbook";
+    public static final String LEARNING_IQL = "jsc:learning_iql";
+    public static final String BOOK_OF_SIGMA = "jsc:book_of_sigma";
     public static final String OPERATIONS_STYLE = "jsc:operations";
     /** What a listing of the network's query language names its language, as its files' extension does. */
     public static final String IQL = "iql";

@@ -64,9 +64,10 @@ final class HelpSource implements IHelpSource, HelpAnswers.IListener {
         }
     }
 
+    /** Every manual, the book written for the machine's system first. */
     @Override
     public List<ManualReader> manuals() {
-        return HelpBooks.all();
+        return HelpBooks.forMachine(this.machine);
     }
 
     @Override

@@ -19,6 +19,7 @@ import dev.jstech.computers.program.cli.ICliCommand;
 import dev.jstech.computers.program.cli.LiveInstallCommands;
 import dev.jstech.computers.program.cli.man.CommandGuidePages;
 import dev.jstech.computers.program.cli.man.ManPage;
+import dev.jstech.computers.program.cli.man.ManualEntries;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.GuideCommand;
@@ -34,6 +35,7 @@ import dev.jstech.core.text.ITextLanguage;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextFormat;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestGuide;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -129,6 +131,24 @@ public final class CommandPagesGameTests {
                     && cells.get(1).equals(manOptions.get(2 * i + 1).text(ITextLanguage.ENGLISH).strip()),
                     "the option " + cells.get(0) + " says what the manual page says");
         }
+        helper.succeed();
+    }
+
+    /*
+     * The entry printing a command's page is that command's page on every system running it: the test manual prints
+     * MC-DOS's dir, and Frames, whose dir is the same command, finds the same entry; a word no command answers to
+     * finds none.
+     */
+    @GameTest(template = ARENA)
+    public static void commandEntry_isTheCommandsPageOnEverySystemRunningIt(final GameTestHelper helper) {
+        helper.assertTrue(CommandGuidePages.pagesOf(Platform.FRAMES, "dir").contains(
+                CommandGuidePages.id(Platform.MC_DOS, "dir")), "Frames' dir is MC-DOS's dir");
+        helper.assertTrue(ManualEntries.commandEntry(Platform.MC_DOS, "dir").equals(Optional.of(TestGuide.COMMAND)),
+                "MC-DOS finds the entry printing dir's page: " + ManualEntries.commandEntry(Platform.MC_DOS, "dir"));
+        helper.assertTrue(ManualEntries.commandEntry(Platform.FRAMES, "DIR").equals(Optional.of(TestGuide.COMMAND)),
+                "and so does Frames, whatever the word's case");
+        helper.assertTrue(ManualEntries.commandEntry(Platform.MC_DOS, "nonsense").isEmpty(),
+                "a word no command answers to finds no entry");
         helper.succeed();
     }
 

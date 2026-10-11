@@ -38,7 +38,7 @@ class DosHelpTest {
 
     @BeforeEach
     void setUp() {
-        this.source = new FakeSource();
+        this.source = new FakeSource(reader());
     }
 
     @Test
@@ -63,6 +63,25 @@ class DosHelpTest {
                 new DosHelp("MC-DOS", "monitors", this.source, ITextLanguage.ENGLISH).shown());
         assertEquals(HelpTarget.command("dir"),
                 new DosHelp("MC-DOS", "DIR", this.source, ITextLanguage.ENGLISH).shown());
+    }
+
+    @Test
+    void opening_showsTheEntryThatPrintsACommandsPageOnThisSystemAsItsHelp() {
+        final GuideEntry dir = new GuideEntry("test:listing_files", "test:hardware", 0, "Listing files", "",
+                List.of(), List.of(new GuideBlock.Paragraph("Every folder holds files."),
+                new GuideBlock.Command("jsc:command/mc_dos/dir")));
+        final ManualReader manual = new ManualReader(new GuideManual("test:manual", "The Manual", List.of(), "", "",
+                "", List.of(GuideManual.EVERY_CHAPTER), List.of(), 0, ""), new GuideContents(List.of(
+                new GuideContents.Chapter(new GuideChapter("test", 0, "Chapter", "", ""), List.of(
+                        new GuideContents.Section(new GuideSection("test:hardware", 0, "Hardware", ""),
+                                List.of(dir)))))), new KeysAsWords());
+
+        assertEquals(HelpTarget.node("test:manual", "test:listing_files"),
+                new DosHelp("MC-DOS", "DIR", new FakeSource(manual), ITextLanguage.ENGLISH).shown(),
+                "HELP DIR opens the entry printing dir's page, whatever the entry is called");
+        assertEquals(HelpTarget.command("dir"),
+                new DosHelp("MC-NET", "dir", new FakeSource(manual), ITextLanguage.ENGLISH).shown(),
+                "on a system whose dir no manual prints, the machine's own page");
     }
 
     @Test
@@ -204,13 +223,17 @@ class DosHelpTest {
         }
     }
 
-    /** The test manual, and a machine that answers when it is told to. */
+    /** A manual, and a machine that answers when it is told to. */
     private static final class FakeSource implements IHelpSource {
 
-        private final ManualReader reader = reader();
+        private final ManualReader reader;
         private final Map<String, List<String>> pages = new HashMap<>();
         private final List<String> asked = new ArrayList<>();
         private List<HelpCommand> commands = List.of();
+
+        private FakeSource(final ManualReader reader) {
+            this.reader = reader;
+        }
 
         @Override
         public List<ManualReader> manuals() {

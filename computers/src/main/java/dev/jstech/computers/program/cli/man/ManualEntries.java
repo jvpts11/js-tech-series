@@ -7,10 +7,13 @@
  */
 package dev.jstech.computers.program.cli.man;
 
+import dev.jstech.computers.os.Platform;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideEntry;
 import dev.jstech.core.guide.GuideIds;
 import dev.jstech.core.guide.ModGuide;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -44,6 +47,26 @@ public final class ManualEntries {
                     if (loose(GuideIds.path(entry.id())).equals(wanted)
                             || loose(english.getOrDefault(entry.titleKey(), "")).equals(wanted)) {
                         return Optional.of(entry.id());
+                    }
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * The id of the entry that prints the page of the command typed by that name on a system of that family, when one
+     * of the manuals has it: that entry is the command's page there, written round the command's own words.
+     */
+    public static Optional<String> commandEntry(final Platform platform, final String name) {
+        final List<String> pages = CommandGuidePages.pagesOf(platform, name.strip().toLowerCase(Locale.ROOT));
+        for (final ModContent content : ModContent.all()) {
+            for (final ModGuide guide : content.declaredGuides()) {
+                for (final GuideEntry entry : guide.declaredEntries()) {
+                    for (final GuideBlock block : entry.blocks()) {
+                        if (block instanceof GuideBlock.Command command && pages.contains(command.source())) {
+                            return Optional.of(entry.id());
+                        }
                     }
                 }
             }

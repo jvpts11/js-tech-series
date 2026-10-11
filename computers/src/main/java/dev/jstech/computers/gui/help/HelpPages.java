@@ -9,6 +9,7 @@ package dev.jstech.computers.gui.help;
 
 import dev.jstech.core.guide.GuideIds;
 import dev.jstech.core.guide.ManualReader;
+import dev.jstech.core.guide.TextTable;
 import dev.jstech.core.text.ITextLanguage;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
@@ -32,6 +33,9 @@ public final class HelpPages {
 
     /** How wide a column of command names is at least, in DOS's contents. */
     private static final int LEAST_COMMAND_COLUMN = 12;
+    /** A table's columns: the room between two, and the narrowest one of words may be left before rows stack. */
+    private static final int COLUMN_GAP = 2;
+    private static final int LEAST_COLUMN = 12;
 
     /** The section manual entries are filed under at a Unix prompt: the one for everything that is not a command. */
     public static final String MAN_SECTION = "7";
@@ -344,7 +348,7 @@ public final class HelpPages {
 
     private static void table(final List<HelpLine> lines, final ManualReader.Piece.Table table, final Voice voice,
                               final int width) {
-        if (voice == Voice.DOS) {
+        if (voice == Voice.DOS && table.heads().isEmpty()) {
             // DOS's help kept a table to one line of figures under the text, which is all a part's table holds.
             lines.add(HelpLine.BLANK);
             lines.addAll(wrapped(table.caption(), voice.headingIndent, width, HelpLine.Ink.TABLE));
@@ -378,14 +382,31 @@ public final class HelpPages {
             }
             return;
         }
-        lines.addAll(wrapped(table.caption(), voice.bodyIndent, width, HelpLine.Ink.TABLE));
-        int widest = 0;
-        for (final ManualReader.Row row : table.rows()) {
-            widest = Math.max(widest, row.label().length());
+        if (voice == Voice.DOS) {
+            lines.add(HelpLine.BLANK);
         }
-        for (final ManualReader.Row row : table.rows()) {
-            final String label = row.label() + " ".repeat(widest - row.label().length() + 2);
-            lines.addAll(hangingInk(label, row.value(), voice.bodyIndent + 2, width, HelpLine.Ink.TABLE));
+        final int indent = voice == Voice.DOS ? voice.headingIndent : voice.bodyIndent;
+        lines.addAll(wrapped(table.caption(), indent, width, HelpLine.Ink.TABLE));
+        // Its columns side by side as the glass's width allows, every cell wrapped in its own; or row by row.
+        final TextTable shaped = TextTable.shape(table.heads(), table.rows().stream().map(ManualReader.Row::cells)
+                .toList(), width - indent - 3, COLUMN_GAP, LEAST_COLUMN, String::length);
+        for (final TextTable.Line line : shaped.lines()) {
+            final List<HelpLine.Span> spans = new ArrayList<>();
+            spans.add(new HelpLine.Span(" ".repeat(indent + 2), HelpLine.Ink.BODY, ""));
+            int at = 0;
+            for (final TextTable.Cell cell : line.cells()) {
+                if (cell.x() > at) {
+                    spans.add(new HelpLine.Span(" ".repeat(cell.x() - at), HelpLine.Ink.BODY, ""));
+                    at = cell.x();
+                }
+                spans.add(new HelpLine.Span(cell.text(), switch (cell.role()) {
+                    case HEAD -> HelpLine.Ink.HEADING;
+                    case NAME -> HelpLine.Ink.TABLE;
+                    case CELL -> HelpLine.Ink.BODY;
+                }, ""));
+                at += cell.text().length();
+            }
+            lines.add(new HelpLine(spans));
         }
     }
 

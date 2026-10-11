@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.gui.help.HelpShelf;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OsDef;
 import dev.jstech.core.client.GameLocale;
 import dev.jstech.core.client.guide.ClientGuideText;
 import dev.jstech.core.client.guide.GuideLibrary;
@@ -20,7 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.locale.Language;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The manuals the player's game holds, read as text for the computers' help programs: the series' Technical Reference
@@ -53,6 +58,20 @@ public final class HelpBooks {
             readIn = language;
         }
         return readers;
+    }
+
+    /**
+     * Every manual, read as text, in the order a machine's help shows them: the book written for the system it runs
+     * first ({@link HelpShelf}), then the others; every manual in its own order for a machine with no system.
+     */
+    public static List<ManualReader> forMachine(@Nullable final BlockPos machine) {
+        final Minecraft game = Minecraft.getInstance();
+        if (machine == null || game.level == null || !(game.level.getBlockEntity(machine) instanceof IOsHost host)
+                || host.installedOs() == null) {
+            return all();
+        }
+        final OsDef system = host.installedOs();
+        return HelpShelf.first(all(), HelpShelf.bookFor(system.platform(), system.installMode()));
     }
 
     /** The manual of that id, read as text. */

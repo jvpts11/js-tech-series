@@ -535,9 +535,19 @@ reader.index();                       // titles and explained words, alphabetica
 
 `words` is the `IGuideText` that puts the keys in the reader's language, as the binder's screen does, and names items
 with `itemName`. An article's pieces are a sealed set (`Parts`, `Heading`, `Paragraph`, `Item`, `Term`, `Table`,
-`Picture`, `Recipes`, `Links`), so a viewer handles each one and the compiler says when a new one comes. Figures and tables keep their chapter's numbers
-("Table 3-7"); a block seen from three sides becomes its picture and its legend, a plan its parts, and a page break
-or a special block is left out. J's Computers reads the manuals this way in its help programs.
+`Code`, `Picture`, `Recipes`, `Links`), so a viewer handles each one and the compiler says when a new one comes.
+Figures and tables keep their chapter's numbers ("Table 3-7"); a block seen from three sides becomes its picture and
+its legend, a plan its parts, a scene its caption and the list of its balloons, a listing or a session at a terminal
+the lines it holds, a key its name in brackets ("[Ctrl]"), and a page break or a special block is left out. J's
+Computers reads the manuals this way in its help programs.
+
+*Added 2026-10-11.* `TextTable.shape(heads, rows, room, gap, least, measure)` lays a table out for a reader that
+writes in lines, whatever its letters measure (a terminal's characters, a window's pixels): its columns side by side
+when they fit, each as wide as its longest word at least and its cells wrapped between words, or else each row set
+out under the one before, each further cell after its column's head. Each line holds cells with where they start and
+what they are (a head, the first cell of a row, another cell), and `padded()` writes a line for letters of one
+width. `reader.commandPage(source)` names the entry printing a command's page read from that source, which a
+system's help shows for the command in place of the page made of its words alone.
 
 ## What a player does with it
 

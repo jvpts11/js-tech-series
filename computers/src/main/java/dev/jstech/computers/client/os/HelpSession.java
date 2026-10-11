@@ -9,13 +9,17 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.help.HelpTarget;
 import dev.jstech.computers.gui.help.HelpTree;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.program.cli.man.CommandGuidePages;
 import dev.jstech.core.guide.ManualReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 
 /**
@@ -27,6 +31,7 @@ import net.minecraft.core.BlockPos;
  */
 final class HelpSession {
 
+    private final BlockPos host;
     private final HelpSource source;
     private final List<HelpTarget> back = new ArrayList<>();
     private final List<HelpTarget> forward = new ArrayList<>();
@@ -44,8 +49,10 @@ final class HelpSession {
     private static final Map<BlockPos, HelpSession> SESSIONS = new HashMap<>();
 
     private HelpSession(final BlockPos host) {
+        this.host = host;
         this.source = new HelpSource(host, () -> this.answers++);
-        final List<ManualReader> manuals = HelpBooks.all();
+        // A help window opens on the book written for the machine's system.
+        final List<ManualReader> manuals = this.source.manuals();
         this.shown = HelpTarget.contents(manuals.isEmpty() ? "" : manuals.getFirst().manualId());
         this.open.add(this.shown.written());
     }
@@ -124,8 +131,12 @@ final class HelpSession {
         }
     }
 
-    /** Shows a page, opening the books it sits in. */
-    void go(final HelpTarget target) {
+    /**
+     * Shows a page, opening the books it sits in. A command whose page a manual prints for the machine's system shows
+     * that entry, which is its help there.
+     */
+    void go(final HelpTarget asked) {
+        final HelpTarget target = this.pageOf(asked);
         if (this.special == Special.NONE && target.equals(this.shown)) {
             return;
         }
@@ -185,6 +196,27 @@ final class HelpSession {
         if (!this.favorites.contains(this.shown)) {
             this.favorites.add(this.shown);
         }
+    }
+
+    /** The entry of a manual that prints a command's page on the machine's system, or the target as it is. */
+    private HelpTarget pageOf(final HelpTarget target) {
+        if (target.kind() != HelpTarget.Kind.COMMAND || target.id().isEmpty()) {
+            return target;
+        }
+        final Minecraft game = Minecraft.getInstance();
+        if (game.level == null || !(game.level.getBlockEntity(this.host) instanceof IOsHost machine)
+                || machine.installedOs() == null) {
+            return target;
+        }
+        for (final String page : CommandGuidePages.pagesOf(machine.installedOs().platform(), target.id())) {
+            for (final ManualReader reader : HelpBooks.all()) {
+                final Optional<String> entry = reader.commandPage(page);
+                if (entry.isPresent()) {
+                    return HelpTarget.node(reader.manualId(), entry.get());
+                }
+            }
+        }
+        return target;
     }
 
     private void read(final HelpTarget target) {

@@ -45,6 +45,8 @@ public final class ManualReader {
     private final List<IndexLine> index = new ArrayList<>();
     /** The entry that prints each command's page, by the command's name. */
     private final Map<String, String> commandEntries;
+    /** The entry that prints each command's page, by the source the page is read from. */
+    private final Map<String, String> commandSources = new HashMap<>();
 
     /** The characters a typed name may spell a gap with, all read alike: "graphics-cards" is "graphics cards". */
     private static final String GAPS = "[-_\\s]+";
@@ -175,6 +177,14 @@ public final class ManualReader {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * The entry that prints the page of a command read from that source, when this manual holds one: the page a
+     * system's help shows for the command, in place of the one made of the command's words alone.
+     */
+    public Optional<String> commandPage(final String source) {
+        return Optional.ofNullable(this.commandSources.get(source));
     }
 
     /** The number and title of a chapter, section or entry as a link names it: "3.4.2 Monitors". */
@@ -324,7 +334,10 @@ public final class ManualReader {
                                 ? this.text.text(GuideTexts.OPTIONAL_PART.key(), label) : label));
                     }
                 }
-                case GuideBlock.Command command -> this.command(command, pieces, linked);
+                case GuideBlock.Command command -> {
+                    this.commandSources.putIfAbsent(command.source(), entry.id());
+                    this.command(command, pieces, linked);
+                }
                 // Read as text, a scene is its caption, numbered with the figures, and the list of its balloons.
                 case GuideBlock.Scene scene -> {
                     figures++;

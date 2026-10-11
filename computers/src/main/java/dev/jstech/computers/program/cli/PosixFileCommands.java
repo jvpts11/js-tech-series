@@ -479,9 +479,10 @@ final class PosixFileCommands {
         private static final TextKey SUMMARY =
                 TextKey.of("jsc.cli.posix.man.summary", "show the manual entry for a command");
         private static final TextKey USAGE = TextKey.of("jsc.cli.posix.man.usage", "<command>");
-        private static final TextKey ABOUT = TextKey.of("jsc.cli.posix.man.about", "Prints a command's manual page."
-                + " On UNIX and FreeBSD it also reads the manuals of the series: an entry named by the last part of"
-                + " its id or by its title, such as graphics-cards, opens as a page of section 7 in the pager.");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.posix.man.about", "Prints a command's manual page;"
+                + " when the manuals of the series hold a page for the command, that page opens in the pager. On UNIX"
+                + " and FreeBSD it also reads the rest of the manuals: an entry named by the last part of its id or by"
+                + " its title, such as graphics-cards, opens as a page of section 7 in the pager.");
         private static final TextKey ENTRY_EXAMPLE = TextKey.of("jsc.cli.posix.man.example.entry",
                 "the manual's entry on graphics cards, on UNIX and FreeBSD");
         private static final TextKey WHICH_PAGE =
@@ -510,8 +511,9 @@ final class PosixFileCommands {
         }
 
         /**
-         * The terminal goes to the pager when what was asked for is no command and no topic but an entry of the
-         * manuals, on the two systems whose man reads them; the page is laid out on the player's side.
+         * The terminal goes to the pager when the manuals hold the page asked for: a command's own entry, which is its
+         * page wherever it runs, or, on the two systems whose man reads the manuals, an entry named by a word that
+         * names no command and no topic. The page is laid out on the player's side.
          */
         @Override public String fileOf(final ICliComputer computer, final List<String> args) {
             return args.isEmpty() ? null : manualEntry(computer, args.getFirst()).map(HelpViews::manual).orElse(null);
@@ -552,21 +554,21 @@ final class PosixFileCommands {
         }
 
         /**
-         * The manual's entry a word names, on UNIX and FreeBSD, when it names no command and no topic: a command's
-         * page is always the one man shows first, as a section 1 page comes before a section 7 one.
+         * The manual's entry man shows for a word. For a command, the entry that prints its page, when the manuals
+         * hold one: that is the command's page on every system that runs it. For no command and no topic, on UNIX
+         * and FreeBSD, the entry the word names; a command's page always comes first, as a section 1 page comes
+         * before a section 7 one.
          */
         private static Optional<String> manualEntry(final ICliComputer computer, final String word) {
             final Platform platform = computer.platform();
-            if (platform != Platform.UNIX && platform != Platform.FREEBSD) {
-                return Optional.empty();
-            }
             for (final ICliCommand command : CliCommands.commandsFor(computer.shellFamily())) {
                 if (command.available(computer) && (command.name().equalsIgnoreCase(word)
                         || command.aliases().stream().anyMatch(alias -> alias.equalsIgnoreCase(word)))) {
-                    return Optional.empty();
+                    return ManualEntries.commandEntry(platform, command.name());
                 }
             }
-            if (ManTopics.find(word, platform).isPresent()) {
+            if (platform != Platform.UNIX && platform != Platform.FREEBSD
+                    || ManTopics.find(word, platform).isPresent()) {
                 return Optional.empty();
             }
             return ManualEntries.find(word);

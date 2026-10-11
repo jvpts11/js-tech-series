@@ -14,6 +14,7 @@ import dev.jstech.computers.gui.help.HelpWindowTexts;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.guide.GuideRecipes;
 import dev.jstech.core.guide.ManualReader;
+import dev.jstech.core.guide.TextTable;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -56,6 +57,10 @@ final class HelpPageView {
     private static final int GAP = 3;
     private static final int TERM_INDENT = 8;
     private static final int ICON = 32;
+    /** A table's cells: the room inside its box, the room between two columns, and the narrowest a column is left. */
+    private static final int CELL_PAD = 3;
+    private static final int CELL_GAP = 8;
+    private static final int LEAST_COLUMN = 60;
     private static final int RECIPE_ROW = 18;
 
     private HelpPageView(final Font font, final int width, final Style style) {
@@ -432,27 +437,42 @@ final class HelpPageView {
         this.y += LINE;
     }
 
+    /**
+     * A table in a ruled box: its columns side by side as the window's width allows, each cell wrapped in its own,
+     * the heads on a shaded band; or each row set out under the one before when its columns cannot stand side by side.
+     */
     private void table(final ManualReader.Piece.Table table) {
         this.y += GAP;
-        this.words(table.caption(), 0, this.style.ink(), false);
-        int widest = 0;
-        for (final ManualReader.Row row : table.rows()) {
-            widest = Math.max(widest, this.font.width(row.label()));
+        if (!table.caption().isEmpty()) {
+            this.words(table.caption(), 0, this.style.ink(), false);
         }
-        final int tableW = Math.min(this.width - 2 * PAD, Math.max(120, widest * 2 + 40));
-        final int labelW = Math.min(widest + 8, tableW / 2);
-        for (final ManualReader.Row row : table.rows()) {
-            final String value = this.fit(row.value(), tableW - labelW - 6);
-            this.ops.add(new Fill(PAD, this.y, labelW, LINE + 2, this.style.shade()));
-            this.ops.add(new Outline(PAD, this.y, labelW, LINE + 2, this.style.rule()));
-            this.ops.add(new Outline(PAD + labelW - 1, this.y, tableW - labelW + 1, LINE + 2, this.style.rule()));
-            this.ops.add(new Text(PAD + 3, this.y + 2, this.font.width(row.label()), this.fit(row.label(),
-                    labelW - 4), this.style.ink(), false, 1.0f, ""));
-            this.ops.add(new Text(PAD + labelW + 3, this.y + 2, this.font.width(value), value, this.style.ink(),
-                    false, 1.0f, ""));
-            this.y += LINE + 1;
+        final TextTable shaped = TextTable.shape(table.heads(), table.rows().stream().map(ManualReader.Row::cells)
+                .toList(), this.width - 2 * PAD - 2 * CELL_PAD, CELL_GAP, LEAST_COLUMN, this.font::width);
+        int tableW = 0;
+        for (final TextTable.Line line : shaped.lines()) {
+            for (final TextTable.Cell cell : line.cells()) {
+                tableW = Math.max(tableW, cell.x() + this.font.width(cell.text()) + 2 * CELL_PAD);
+            }
         }
-        this.y += GAP + 1;
+        final int top = this.y;
+        boolean first = true;
+        for (final TextTable.Line line : shaped.lines()) {
+            final boolean heads = line.cells().stream().anyMatch(cell -> cell.role() == TextTable.Role.HEAD);
+            if (heads) {
+                this.ops.add(new Fill(PAD, this.y, tableW, LINE, this.style.shade()));
+            }
+            if (line.opens() && !first) {
+                this.ops.add(new Fill(PAD, this.y, tableW, 1, this.style.rule()));
+            }
+            for (final TextTable.Cell cell : line.cells()) {
+                this.ops.add(new Text(PAD + CELL_PAD + cell.x(), this.y + 2, this.font.width(cell.text()),
+                        cell.text(), this.style.ink(), false, 1.0f, ""));
+            }
+            this.y += LINE;
+            first = false;
+        }
+        this.ops.add(new Outline(PAD, top, tableW, this.y - top + 2, this.style.rule()));
+        this.y += GAP + 2;
     }
 
     private void picture(final ManualReader.Piece.Picture picture) {
