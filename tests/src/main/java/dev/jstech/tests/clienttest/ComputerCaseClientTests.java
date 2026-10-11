@@ -13,14 +13,20 @@ import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.hardware.CaseFrontLayout;
+import dev.jstech.computers.hardware.FrontArea;
+import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaVolume;
+import dev.jstech.computers.storage.LocalStore;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.content.BlockEntry;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import java.util.function.BiConsumer;
 import net.minecraft.core.BlockPos;
@@ -84,6 +90,9 @@ public final class ComputerCaseClientTests {
     /** The case and the Mainframe whose fronts are looked at, part by part, at the eye. */
     private static final BlockPos OUTLINED = new BlockPos(2, 3, 52);
     private static final BlockPos OUTLINED_MAINFRAME = new BlockPos(9, 2, 52);
+    /** The machine whose hot-swap bay is worked by hand, on its own, and the items it keeps on the bay's disk. */
+    private static final BlockPos HOT_SWAP_AT = new BlockPos(2, 2, 60);
+    private static final int KEPT = 32;
     /** A front of each age with what its bays and ports hold. */
     private static final List<Front> FRONTS = List.of(
             new Front("vintage-hot-swap-with-a-disk", ComputingModule.VINTAGE_PERSONAL_COMPUTER,
@@ -435,6 +444,62 @@ public final class ComputerCaseClientTests {
     }
 
     /**
+     * The hot-swap bay worked by hand, as a player does it, with the machine running: a click with a disk puts it in
+     * and it joins the build; the machine keeps its items on it, its only disk; and a sneak-click with an empty hand
+     * gives it back with the items on it, and the machine has none left.
+     */
+    @ClientTest(timeoutTicks = 900)
+    public static void hotSwapDisk_byHandKeepsTheMachinesItemsAndLeavesWithThem(final ClientTestContext ctx) {
+        final FrontArea bay = ComputingModule.LEGACY_PERSONAL_COMPUTER.get().frontLayout().bays().get(0);
+        final StorageKey cobblestone = StorageKey.of(Items.COBBLESTONE);
+        ctx.thenBuild(0, world -> {
+            world.setBlock(HOT_SWAP_AT, ComputingModule.LEGACY_PERSONAL_COMPUTER.get().defaultBlockState()
+                    .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+            final AbstractSmallComputerBlockEntity computer =
+                    world.blockEntity(HOT_SWAP_AT, AbstractSmallComputerBlockEntity.class);
+            final ComputerHardwareLayout layout = computer.hardwareLayout();
+            build("legacy-939").install(computer);
+            computer.getHardware().setStackInSlot(layout.diskStart(), ItemStack.EMPTY);
+            computer.getHardware().setStackInSlot(layout.bayStart(), Build.stack("hot_swap_drive_bay"));
+            computer.togglePower();
+        })
+                .thenTeleport(SETTLE, HOT_SWAP_AT.south(2), Direction.NORTH)
+                .thenGive(0, Build.stack("disk_vaultis_link_ide_20g"))
+                .then(0, () -> ctx.selectHotbar(0))
+                .thenWaitUntil(() -> ctx.player().getMainHandItem().getItem() instanceof DiskItem, SETTLE * 4,
+                        "the disk to reach the player's hand")
+                .thenRightClickFront(1, HOT_SWAP_AT, bay.middleX(), bay.middleY())
+                .thenWaitUntilServer(level -> {
+                            final PersonalComputerBlockEntity computer = hotSwapMachine(ctx, level);
+                            return !computer.front().held(0).isEmpty() && computer.currentBuild() != null
+                                    && computer.currentBuild().frontDisks().size() == 1;
+                        }, SETTLE * 4, "the clicked disk to go in and join the build",
+                        level -> "held=" + hotSwapMachine(ctx, level).front().held(0)
+                                + " build=" + hotSwapMachine(ctx, level).currentBuild())
+                .thenServer(0, level -> ctx.assertTrue(
+                        hotSwapMachine(ctx, level).localStore().insert(cobblestone, KEPT) == KEPT,
+                        "the machine keeps the items on the bay's disk, its only disk"))
+                .thenScreenshot(SETTLE * 3, "hot-swap-disk-in")
+                .then(0, () -> ctx.sneak(true))
+                .then(2, () -> ctx.rightClickFront(HOT_SWAP_AT, bay.middleX(), bay.middleY(), 0))
+                .then(1, () -> ctx.sneak(false))
+                .thenWaitUntilServer(level -> hotSwapMachine(ctx, level).front().held(0).isEmpty(), SETTLE * 4,
+                        "a sneak-click to take the disk out",
+                        level -> "held=" + hotSwapMachine(ctx, level).front().held(0))
+                .thenServer(0, level -> {
+                    final PersonalComputerBlockEntity computer = hotSwapMachine(ctx, level);
+                    final ItemStack out = ctx.serverPlayer().getInventory().getItem(0);
+                    ctx.assertTrue(out.getItem() instanceof DiskItem, "the disk is back in the hand; got " + out);
+                    ctx.assertEquals(KEPT, (int) new LocalStore(List.of(out), () -> { }).count(cobblestone),
+                            "with the machine's items on it");
+                    ctx.assertEquals(0, (int) computer.localStore().count(cobblestone), "and the machine has none left");
+                    ctx.assertTrue(computer.currentBuild() != null && computer.currentBuild().frontDisks().isEmpty(),
+                            "and the disk has left the build");
+                })
+                .thenScreenshot(SETTLE * 3, "hot-swap-disk-out");
+    }
+
+    /**
      * The assembly screens of the Transition and Advanced machines, each in the skin of its age: the case says the
      * age, whatever board is in it.
      */
@@ -463,6 +528,11 @@ public final class ComputerCaseClientTests {
     private static boolean runs(final ClientTestContext ctx, final BlockPos relative) {
         return ctx.mc().level != null && ctx.mc().level.getBlockEntity(ctx.abs(relative))
                 instanceof AbstractSmallComputerBlockEntity computer && computer.visualRunning();
+    }
+
+    /** The machine whose hot-swap bay is worked by hand, as the server knows it. */
+    private static PersonalComputerBlockEntity hotSwapMachine(final ClientTestContext ctx, final ServerLevel level) {
+        return TestWorldBuilder.at(level, ctx.origin()).blockEntity(HOT_SWAP_AT, PersonalComputerBlockEntity.class);
     }
 
     /** The front of the machine with the bays, as the player's game knows it. */
