@@ -54,14 +54,10 @@ public final class ManualReader {
         this.text = Objects.requireNonNull(text, "text");
         this.number(contents);
         for (final GuideContents.Chapter chapter : contents.chapters()) {
-            int figures = 0;
-            int tables = 0;
+            Counted counted = new Counted(0, 0, 0);
             for (final GuideContents.Section section : chapter.sections()) {
                 for (final GuideEntry entry : section.entries()) {
-                    final Counted counted = this.read(entry, this.nodes.get(chapter.chapter().id()).number(),
-                            figures, tables);
-                    figures = counted.figures();
-                    tables = counted.tables();
+                    counted = this.read(entry, this.nodes.get(chapter.chapter().id()).number(), counted);
                 }
             }
         }
@@ -224,10 +220,10 @@ public final class ManualReader {
     }
 
     /** Reads one entry into its article, numbering its figures and tables after those before it in its chapter. */
-    private Counted read(final GuideEntry entry, final String chapterNo, final int figuresBefore,
-                         final int tablesBefore) {
-        int figures = figuresBefore;
-        int tables = tablesBefore;
+    private Counted read(final GuideEntry entry, final String chapterNo, final Counted before) {
+        int figures = before.figures();
+        int tables = before.tables();
+        int listings = before.listings();
         final Node node = this.nodes.get(entry.id());
         final List<Piece> pieces = new ArrayList<>();
         final StringBuilder words = new StringBuilder(node.title()).append('\n');
@@ -284,6 +280,12 @@ public final class ManualReader {
                     }
                     pieces.add(new Piece.Table(this.text.text(GuideTexts.TABLE.key(), chapterNo + "-" + tables)
                             + " " + this.text.text(table.captionKey()), heads, rows));
+                }
+                case GuideBlock.Listing listing -> {
+                    listings++;
+                    final String label = this.text.text(GuideTexts.LISTING.key(), chapterNo + "-" + listings);
+                    pieces.add(new Piece.Code(listing.name().isEmpty() ? label : label + " " + listing.name(),
+                            listing.language(), listing.lines()));
                 }
                 case GuideBlock.Recipes recipes -> pieces.add(new Piece.Recipes(recipes.type(), recipes.output()));
                 case GuideBlock.Steps steps -> {
@@ -355,7 +357,7 @@ public final class ManualReader {
         this.articles.put(entry.id(), new Article(entry.id(), node.number(), node.title(), entry.icon(),
                 this.parents.getOrDefault(entry.id(), ""), pieces));
         this.searchable.put(entry.id(), words.toString().toLowerCase(Locale.ROOT));
-        return new Counted(figures, tables);
+        return new Counted(figures, tables, listings);
     }
 
     /**
@@ -484,6 +486,22 @@ public final class ManualReader {
         }
 
         /**
+         * A listing of code: its caption with its number and its file's name, the language that colours it, and its
+         * lines as typed, which a reader shows as they are, never wrapped inside a word.
+         */
+        record Code(String caption, String language, List<String> lines) implements Piece {
+
+            public Code {
+                lines = List.copyOf(lines);
+            }
+
+            @Override
+            public String words() {
+                return this.caption + " " + String.join(" ", this.lines);
+            }
+        }
+
+        /**
          * The items an entry shows under its title.
          *
          * @param line  them named in a line, for a reader that draws no items: "Items: ..."
@@ -579,7 +597,7 @@ public final class ManualReader {
     public record IndexLine(String text, String target, boolean term) {
     }
 
-    /** How many figures and tables a chapter has numbered so far. */
-    private record Counted(int figures, int tables) {
+    /** How many figures, tables and listings a chapter has numbered so far. */
+    private record Counted(int figures, int tables, int listings) {
     }
 }

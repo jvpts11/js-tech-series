@@ -42,6 +42,14 @@ public interface IGuideText {
         };
     }
 
+    /**
+     * The colours of a listing's lines in a language, as runs of each line. Whoever knows no language colours every
+     * line plain, as a test does; the game colours them as {@link GuideHighlighters} says.
+     */
+    default List<List<GuideCode.Run>> highlight(final String language, final List<String> lines) {
+        return GuideCode.plain(lines);
+    }
+
     /** The rows of a table read from its source as the manual is laid out, each with {@code columns} cells. */
     default List<GuideBlock.TableRow> rows(final String source, final int columns) {
         return GuideFacts.rowsOf(source, columns);

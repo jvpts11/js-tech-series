@@ -536,6 +536,19 @@ public final class ModGuide {
             return this;
         }
 
+        /**
+         * A listing of code: the file it is, such as {@code Hello.sgs}, whose extension names the language that
+         * colours it, and its lines as they are typed. Code reads the same in every language, so it is not translated.
+         */
+        public EntryBuilder listing(final String name, final String... lines) {
+            return this.add(() -> new GuideBlock.Listing(name, "", List.of(lines)));
+        }
+
+        /** A listing of code in a language its file's name does not say, such as a fragment with no file. */
+        public EntryBuilder listingIn(final String language, final String name, final String... lines) {
+            return this.add(() -> new GuideBlock.Listing(name, language, List.of(lines)));
+        }
+
         /** Every recipe of a type the game holds, or those making the item given. */
         public EntryBuilder recipes(final String type, final Supplier<? extends ItemLike> making) {
             return this.add(() -> new GuideBlock.Recipes(type, itemId(making)));

@@ -371,6 +371,16 @@ final class HelpPageView {
                     this.words(term.text(), TERM_INDENT, this.style.ink(), false);
                 }
                 case ManualReader.Piece.Table table -> this.table(table);
+                case ManualReader.Piece.Code code -> {
+                    this.words(code.caption(), 0, this.style.faint(), true);
+                    // Code keeps its lines as typed: one too long for the window is cut at its edge, not wrapped.
+                    for (final String line : code.lines()) {
+                        final String shown = this.fit(line, this.room(TERM_INDENT));
+                        this.ops.add(new Text(PAD + TERM_INDENT, this.y, this.font.width(shown), shown,
+                                this.style.ink(), false, 1.0f, ""));
+                        this.y += LINE;
+                    }
+                }
                 case ManualReader.Piece.Parts parts -> this.words(parts.line(), 0, this.style.faint(), false);
                 case ManualReader.Piece.Picture picture -> this.picture(picture);
                 case ManualReader.Piece.Recipes recipes -> this.recipes(recipes, source);

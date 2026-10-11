@@ -489,6 +489,28 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_numbersAListingAndRunsALongOneOnUnderItsStripAgain() {
+        final List<String> lines = new ArrayList<>();
+        for (int i = 0; i < 40; i++) {
+            lines.add("line " + i + ";");
+        }
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t",
+                new GuideBlock.Listing("Long.sgs", "", lines))))));
+
+        final List<GuidePiece.Listing> parts = book.pages().stream().flatMap(page -> page.pieces().stream())
+                .filter(piece -> piece instanceof GuidePiece.Listing).map(piece -> (GuidePiece.Listing) piece)
+                .toList();
+        assertTrue(parts.size() > 1, "forty lines run on past a page");
+        assertEquals("jscore.guide.listing[1-1]", parts.getFirst().label());
+        assertEquals("Long.sgs", parts.getFirst().name());
+        assertEquals("jscore.guide.table_continued[Long.sgs]", parts.get(1).name(), "the strip says it goes on");
+        assertEquals("sgs", parts.getFirst().language(), "the file's extension names its language");
+        final List<String> numbers = texts(book, "alpha:t").stream().filter(text -> text.size() == TextSize.CODE
+                && text.colour().equals(GuideStyle.FAINT)).map(GuidePiece.Text::text).toList();
+        assertEquals(40, numbers.size(), "every line is numbered once");
+    }
+
+    @Test
     void roman_writesSmallRomanNumerals() {
         assertEquals("i", GuideLayout.roman(1));
         assertEquals("iv", GuideLayout.roman(4));

@@ -32,6 +32,7 @@ import net.minecraft.util.ExtraCodecs;
  * {"type": "table", "caption": "...", "rows": [[{"words": "..."}, {"amount": 3072, "unit": "MB"}]]}
  * {"type": "table", "caption": "...", "heads": ["...", "..."], "rows": [[{"literal": "dir"}, {"words": "..."}]]}
  * {"type": "table", "caption": "...", "heads": ["...", "..."], "source": "jsc:cable_reach"}
+ * {"type": "listing", "name": "Hello.sgs", "lines": ["using System.IO.*;", "", "namespace Hello;"]}
  * {"type": "recipes", "recipe_type": "jsindustrial:compressing"}
  * }</pre>
  */
@@ -171,6 +172,12 @@ public final class GuideCodecs {
             TABLE_ROW.listOf().optionalFieldOf("rows", List.of()).forGetter(GuideBlock.Table::rows),
             Codec.STRING.optionalFieldOf("source", "").forGetter(GuideBlock.Table::source)
     ).apply(instance, GuideBlock.Table::new));
+    private static final MapCodec<GuideBlock.Listing> LISTING = RecordCodecBuilder.mapCodec(instance ->
+            instance.group(
+                    Codec.STRING.optionalFieldOf("name", "").forGetter(GuideBlock.Listing::name),
+                    Codec.STRING.optionalFieldOf("language", "").forGetter(GuideBlock.Listing::language),
+                    Codec.STRING.listOf().fieldOf("lines").forGetter(GuideBlock.Listing::lines)
+            ).apply(instance, GuideBlock.Listing::new));
     private static final MapCodec<GuideBlock.Recipes> RECIPES = RecordCodecBuilder.mapCodec(instance ->
             instance.group(
                     Codec.STRING.fieldOf("recipe_type").forGetter(GuideBlock.Recipes::type),
@@ -235,6 +242,7 @@ public final class GuideCodecs {
             case GuideBlock.Figure figure -> "figure";
             case GuideBlock.Picture picture -> "picture";
             case GuideBlock.Table table -> "table";
+            case GuideBlock.Listing listing -> "listing";
             case GuideBlock.Recipes recipes -> "recipes";
             case GuideBlock.Steps steps -> "steps";
             case GuideBlock.Warning warning -> "warning";
@@ -256,6 +264,7 @@ public final class GuideCodecs {
             case "figure" -> FIGURE;
             case "picture" -> PICTURE;
             case "table" -> TABLE;
+            case "listing" -> LISTING;
             case "recipes" -> RECIPES;
             case "steps" -> STEPS;
             case "warning" -> WARNING;

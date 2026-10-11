@@ -84,6 +84,25 @@ public sealed interface GuidePiece {
     }
 
     /**
+     * A listing's frame, or the part of it on this page: the strip over it with its label, its file's name and its
+     * Copy button, the paper its code is printed on, and the rule beside the numbers of its lines. The code itself is
+     * laid over it as text.
+     *
+     * @param label    "Listing 3-4."
+     * @param name     the file's name, with "(continued)" after it on a page the listing runs on to
+     * @param gutter   how wide the column of line numbers is, or 0 when its lines are not numbered
+     * @param language the language that colours it, for when it is opened over the whole book
+     * @param lines    all its lines as typed, for its Copy button and for when it is opened over the whole book
+     */
+    record Listing(int x, int y, int width, int height, String label, String name, int gutter, String language,
+                   List<String> lines) implements GuidePiece {
+
+        public Listing {
+            lines = List.copyOf(lines);
+        }
+    }
+
+    /**
      * The plate under an entry's title holding the items it shows, a row at a time: when they are more than a row
      * holds, the row turns over to the next ones every little while.
      *

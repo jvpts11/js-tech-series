@@ -62,6 +62,7 @@ public final class GuideLayout {
     private int pageInChapter;
     private int figures;
     private int tables;
+    private int listings;
     private String chapterId = "";
     private String chapterTitle = "";
     private String sectionLabel = "";
@@ -107,6 +108,11 @@ public final class GuideLayout {
     public static final int VIEWS_HEIGHT = 132;
     /** The room a plan takes: its blocks and their names under them. */
     public static final int PLAN_HEIGHT = 61;
+    /** A listing: the strip over it, how far apart its rows are, the room over and under them, its numbers' column. */
+    public static final int LISTING_HEAD = 10;
+    public static final int CODE_PITCH = 9;
+    public static final int CODE_PAD = 2;
+    public static final int LISTING_GUTTER = 13;
 
     private static final int PARAGRAPH_GAP = 4;
     private static final int BLOCK_GAP = 6;
@@ -323,6 +329,7 @@ public final class GuideLayout {
         this.pageInChapter = 0;
         this.figures = 0;
         this.tables = 0;
+        this.listings = 0;
         this.chapterId = part.chapter().id();
         this.chapterTitle = this.text.text(part.chapter().titleKey());
         this.sectionLabel = this.chapterTitle;
@@ -438,6 +445,7 @@ public final class GuideLayout {
             case GuideBlock.Figure figure -> this.figure(figure);
             case GuideBlock.Picture picture -> this.picture(picture);
             case GuideBlock.Table table -> this.table(table);
+            case GuideBlock.Listing listing -> this.listing(listing);
             case GuideBlock.Recipes recipes -> this.recipes(recipes);
             case GuideBlock.Steps steps -> this.steps(steps);
             case GuideBlock.Warning warning -> this.warning(warning);
@@ -566,6 +574,66 @@ public final class GuideLayout {
             }
         }
         this.y += BLOCK_GAP;
+    }
+
+    /**
+     * A listing of code ({@link GuideListing}), framed under its strip, its rows numbered and coloured. One that fits
+     * on a page moves on whole; a longer one runs on, its strip said again with "(continued)", keeping at least three
+     * rows on either side of where it parts.
+     */
+    private void listing(final GuideBlock.Listing block) {
+        this.listings++;
+        final String label = this.text.text(GuideTexts.LISTING.key(), this.chapterNumber + "-" + this.listings);
+        final int columns = (this.width - LISTING_GUTTER - 3) / Math.max(1, this.text.width("0", TextSize.CODE));
+        final List<GuideListing.Row> rows = GuideListing.rows(block.lines(),
+                this.text.highlight(block.language(), block.lines()), columns);
+        final int frame = LISTING_HEAD + 2 * CODE_PAD;
+        final int whole = frame + rows.size() * CODE_PITCH;
+        if (whole <= this.bottom() - this.top) {
+            this.ensure(whole);
+        } else if (this.y > this.top
+                && (this.bottom() - this.y - frame) / CODE_PITCH < Math.min(MIN_PART_ROWS, rows.size())) {
+            this.nextColumn();
+        }
+        int at = 0;
+        while (at < rows.size() || at == 0) {
+            int count = Math.max(1, Math.min(rows.size() - at, (this.bottom() - this.y - frame) / CODE_PITCH));
+            final int left = rows.size() - at - count;
+            if (left > 0 && left < MIN_PART_ROWS && count - (MIN_PART_ROWS - left) >= MIN_PART_ROWS) {
+                count -= MIN_PART_ROWS - left;
+            }
+            count = Math.min(count, rows.size() - at);
+            final String name = at == 0 ? block.name()
+                    : this.text.text(GuideTexts.TABLE_CONTINUED.key(), block.name()).strip();
+            this.place(new GuidePiece.Listing(this.x(), this.y, this.width, frame + count * CODE_PITCH, label, name,
+                    LISTING_GUTTER, block.language(), block.lines()));
+            for (int i = 0; i < count; i++) {
+                this.codeRow(rows.get(at + i), this.y + LISTING_HEAD + CODE_PAD + i * CODE_PITCH);
+            }
+            this.y += frame + count * CODE_PITCH;
+            at += Math.max(1, count);
+            if (at < rows.size()) {
+                this.nextColumn();
+            }
+        }
+        this.y += BLOCK_GAP;
+    }
+
+    /** One row of a listing: the number of the line it starts in the column beside it, then its coloured code. */
+    private void codeRow(final GuideListing.Row row, final int rowY) {
+        if (row.number() > 0) {
+            final String number = String.valueOf(row.number());
+            this.place(new GuidePiece.Text(this.x() + LISTING_GUTTER - 3 - this.text.width(number, TextSize.CODE),
+                    rowY, number, TextSize.CODE, GuideStyle.FAINT, ""));
+        }
+        int at = this.x() + LISTING_GUTTER + 1;
+        for (final GuideListing.Segment segment : row.segments()) {
+            if (!segment.text().isBlank()) {
+                this.place(new GuidePiece.Text(at, rowY, segment.text(), TextSize.CODE,
+                        GuideCode.role(segment.ink()), ""));
+            }
+            at += this.text.width(segment.text(), TextSize.CODE);
+        }
     }
 
     /**

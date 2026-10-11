@@ -187,6 +187,7 @@ A picture is numbered with the figures ("Figure 3-2.") and captioned like them, 
 | `table(caption)`, then `amount(label, value, unit)`, `property(label, words)`, `fixed(label, data)` | A numbered table of properties, headed "Property" and "Value". An amount is read from your code and written in the reader's way ("12,000 FE"); words are translated; fixed values (a model number) are not. |
 | `table(caption, heads...)`, then `row(cells...)` | A numbered table with heads of its own ("Command", "What it does"), a cell a column in each row: `GuideCell.words(english)`, `GuideCell.words(sharedKey)`, `GuideCell.code(text)` or `GuideCell.amount(value, unit)`. See [Tables](#tables). |
 | `tableFrom(source, caption, heads...)` | A numbered table whose rows your mod gives as the manual is laid out. See [Figures read from your mod](#figures-read-from-your-mod). |
+| `listing(name, lines...)`, `listingIn(language, name, lines...)` | A numbered listing of code ("Listing 3-4."), headed by its file's name, its lines numbered and coloured by its language, with a Copy button. See [Listings of code](#listings-of-code). |
 | `recipes(type)`, `recipes(type, making)` | Every recipe of a type the world holds, or those making one item, with the time and energy over the arrow. |
 | `steps(english...)` | Numbered steps of the entry's own. |
 | `warning(english)` | A warning in a box. |
@@ -239,6 +240,28 @@ A table is laid out to fit the page, never the other way round:
 
 Keep a table to what a reader looks up. Two or three columns read best; long explanations belong in the text, or in a
 table that will stack.
+
+### Listings of code
+
+*Added 2026-10-11.*
+
+```java
+.listing("Hello.sgs", "using System.IO.*;", "", "namespace Hello;", "", "class Program {",
+        "  static void Main() {", "    Console.PrintLine(\"Hello, world!\");", "  }", "}")
+```
+
+A listing is printed in the code font on a paper of its own, under a strip with its number, its file's name and a
+Copy button that puts the whole code on the clipboard, which the game's editors paste. Its lines are numbered; a line
+too long for the page goes on under itself, set in two places, unnumbered, broken after a space or an opening bracket
+and never inside a word. A listing that fits on a page moves on whole; a longer one runs on under its strip, marked
+"(continued)". A click on a listing opens it over the whole book with no line broken (the wheel scrolls it down, and
+across with Shift), with Copy and Close.
+
+The listing is coloured by its language: the extension of its file's name, or the language `listingIn` names. A
+language the game compiles colours itself, as its editors colour it; another registers how it is coloured, while the
+game loads, with `GuideHighlighters.register("iql", lines -> GuideCode.runs(lines, spans))`, the spans saying which
+characters are keywords, names, quoted text, numbers or comments. Code reads the same in every language and is not
+translated.
 
 ### Figures read from your mod
 
@@ -340,8 +363,10 @@ Two helpers make the usual ones in code:
 - `palette` names a declared palette ([Text and colour](TEXT_AND_COLOUR.md)) of the `GuidePalettes.Binder` kind,
   whose roles colour the book: `cover`, `coverEdge`, `paper`, `gutter`, `ink`, `faint`, `heading`, `link`, `rule`,
   `shade`, `highlight`, `ring`, `label`, `labelInk`, `tab`, `tabInk`, `warning`, `accent` (notes, what can go wrong,
-  a link pointed at on a drawing), `number` (the numbers of steps and balloons), `band`, `grid`, `spine` and
-  `coverLine` (the cover's first line). `colours` sets any of them outright, so a style needs no code at all.
+  a link pointed at on a drawing), `number` (the numbers of steps and balloons), `band`, `grid`, `spine`,
+  `coverLine` (the cover's first line), and a listing's `codePaper`, `codeHead` (its strip), `codeKeyword`,
+  `codeName`, `codeText`, `codeNumber`, `codeComment` and `codeCopied` (its Copy button once it has copied).
+  `colours` sets any of them outright, so a style needs no code at all.
 - `pages`: two at a time or one, their size, the margin, and how many columns the text runs in.
 - `decor`: a binder's `rings`; a drawing's `grid`, `frame` and `title_block`; `upper_headings`; `traced` blocks;
   `plain_numbers` for steps without a full stop; `small_text` for notes lettered small.

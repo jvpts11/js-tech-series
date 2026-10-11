@@ -39,7 +39,9 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
      * them: the cover and its edge, the paper, the gutter between two pages, the ink, faint ink, headings, links,
      * rules, shaded boxes, a warning's box, the rings, the cover's label and its ink, a chapter's tab and the number on
      * it, a warning's ink, the accent that marks notes and what can go wrong, the numbers of steps, a cover's band,
-     * a drawing's grid, a binder's spine, and the first line of the cover, which names the series or the mod.
+     * a drawing's grid, a binder's spine, and the first line of the cover, which names the series or the mod; and a
+     * listing's paper, the strip over it, the colours of its code by what each piece is, and its Copy button once it
+     * has copied.
      */
     public static final String COVER = "cover";
     public static final String COVER_EDGE = "coverEdge";
@@ -64,6 +66,14 @@ public record GuideStyle(String palette, Map<String, String> colours, Pages page
     public static final String GRID = "grid";
     public static final String SPINE = "spine";
     public static final String COVER_LINE = "coverLine";
+    public static final String CODE_PAPER = "codePaper";
+    public static final String CODE_HEAD = "codeHead";
+    public static final String CODE_KEYWORD = "codeKeyword";
+    public static final String CODE_NAME = "codeName";
+    public static final String CODE_TEXT = "codeText";
+    public static final String CODE_NUMBER = "codeNumber";
+    public static final String CODE_COMMENT = "codeComment";
+    public static final String CODE_COPIED = "codeCopied";
 
     public GuideStyle {
         palette = palette == null ? "" : palette;

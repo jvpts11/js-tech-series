@@ -136,6 +136,41 @@ public final class ManualClientTests {
     }
 
     @ClientTest(timeoutTicks = 300)
+    public static void manual_listsCodeColouredAndCopiesItWhole(final ClientTestContext ctx) {
+        ctx.then(0, () -> GuideClient.open(TestGuide.MANUAL, TestGuide.CODE))
+                .thenAwaitScreen(ManualScreen.class, OPEN)
+                .thenAssert(SETTLE, () -> codePiece("using").colour().equals(GuideStyle.CODE_KEYWORD)
+                        && codePiece("QUERY").colour().equals(GuideStyle.CODE_KEYWORD),
+                        "Sigma# is coloured as the game's editors colour it, and so is the network's query language")
+                .thenAssert(0, () -> {
+                    final GuidePiece.Listing hello = listingPiece(TestGuide.HELLO);
+                    final int rows = (hello.height() - GuideLayout.LISTING_HEAD - 2 * GuideLayout.CODE_PAD)
+                            / GuideLayout.CODE_PITCH;
+                    return rows > hello.lines().size();
+                }, "the line too long for the page goes on under itself")
+                .thenScreenshot(2, "manual_code")
+                .then(0, () -> ctx.click(manual().listingPoint(TestGuide.HELLO, true)[0],
+                        manual().listingPoint(TestGuide.HELLO, true)[1]))
+                .thenAssert(SETTLE, () -> Minecraft.getInstance().keyboardHandler.getClipboard().equals(String.join(
+                        "\n", listingPiece(TestGuide.HELLO).lines())), "Copy puts the whole listing on the clipboard")
+                .then(0, () -> ctx.click(manual().listingPoint(TestGuide.HELLO, false)[0],
+                        manual().listingPoint(TestGuide.HELLO, false)[1]))
+                .thenAssert(SETTLE, () -> manual().listingOpen(), "a click on a listing opens it over the book")
+                .thenScreenshot(2, "manual_code_open")
+                .then(0, () -> {
+                    for (int i = 0; i < 4; i++) {
+                        manual().mouseScrolled(0.0, 0.0, -1.0, 0.0);
+                    }
+                })
+                .thenScreenshot(2, "manual_code_open_across")
+                .thenAssert(0, () -> manual().keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0) && !manual().listingOpen()
+                        && Minecraft.getInstance().screen instanceof ManualScreen,
+                        "and Escape puts it away, the book still open")
+                .then(0, ManualClientTests::close)
+                .thenAwaitNoScreen(OPEN);
+    }
+
+    @ClientTest(timeoutTicks = 300)
     public static void manual_soundsLikeABook(final ClientTestContext ctx) {
         final long[] since = {0L};
         ctx.then(0, () -> since[0] = Util.getMillis())
@@ -420,6 +455,24 @@ public final class ManualClientTests {
 
     private static void close() {
         Minecraft.getInstance().setScreen(null);
+    }
+
+    /* The first piece of code reading those words on the pages of the code entry. */
+    private static GuidePiece.Text codePiece(final String words) {
+        final GuideBook book = manual().book();
+        return book.pages().subList(book.pageOf(TestGuide.CODE).orElseThrow(), book.indexAt()).stream()
+                .flatMap(page -> page.pieces().stream()).filter(piece -> piece instanceof GuidePiece.Text text
+                        && text.size() == TextSize.CODE && text.text().equals(words))
+                .map(piece -> (GuidePiece.Text) piece).findFirst().orElseThrow();
+    }
+
+    /* The listing of that file on the pages of the code entry. */
+    private static GuidePiece.Listing listingPiece(final String name) {
+        final GuideBook book = manual().book();
+        return book.pages().subList(book.pageOf(TestGuide.CODE).orElseThrow(), book.indexAt()).stream()
+                .flatMap(page -> page.pieces().stream()).filter(piece -> piece instanceof GuidePiece.Listing listing
+                        && listing.name().equals(name)).map(piece -> (GuidePiece.Listing) piece).findFirst()
+                .orElseThrow();
     }
 
     /* Whether that sound was let through to the speakers since the time given. */

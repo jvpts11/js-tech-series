@@ -106,6 +106,15 @@ public final class HelpPages {
                     lines.addAll(wrapped(term.text(), voice.termIndent, width, HelpLine.Ink.BODY));
                 }
                 case ManualReader.Piece.Table table -> table(lines, table, voice, width);
+                case ManualReader.Piece.Code code -> {
+                    lines.addAll(wrapped(code.caption(), voice.bodyIndent, width, HelpLine.Ink.DIM));
+                    // Code keeps its lines as typed: one too long for the glass is cut at its edge, not wrapped.
+                    final int room = Math.max(1, width - voice.bodyIndent - 2);
+                    for (final String line : code.lines()) {
+                        lines.add(HelpLine.of(voice.bodyIndent + 2, line.length() > room ? line.substring(0, room)
+                                : line, HelpLine.Ink.BODY));
+                    }
+                }
                 case ManualReader.Piece.Parts parts -> lines.addAll(wrapped(parts.line(), voice.bodyIndent, width,
                         HelpLine.Ink.DIM));
                 case ManualReader.Piece.Picture picture -> {

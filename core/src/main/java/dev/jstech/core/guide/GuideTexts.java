@@ -21,6 +21,11 @@ public final class GuideTexts {
     public static final TextKey TABLE = TextKey.of("jscore.guide.table", "Table %s.");
     /** The caption of a table again over the part of it that runs on to the next page. */
     public static final TextKey TABLE_CONTINUED = TextKey.of("jscore.guide.table_continued", "%s (continued)");
+    /** A listing of code, its button that copies it, what the button says once it has, and how it is put away. */
+    public static final TextKey LISTING = TextKey.of("jscore.guide.listing", "Listing %s.");
+    public static final TextKey COPY = TextKey.of("jscore.guide.copy", "Copy");
+    public static final TextKey COPIED = TextKey.of("jscore.guide.copied", "Copied");
+    public static final TextKey CLOSE = TextKey.of("jscore.guide.close", "Close");
     public static final TextKey PROPERTY = TextKey.of("jscore.guide.property", "Property");
     public static final TextKey VALUE = TextKey.of("jscore.guide.value", "Value");
     public static final TextKey WARNING = TextKey.of("jscore.guide.warning", "Warning");

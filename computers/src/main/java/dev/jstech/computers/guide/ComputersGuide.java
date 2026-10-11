@@ -8,12 +8,16 @@
 package dev.jstech.computers.guide;
 
 import dev.jstech.computers.block.part.CablePartItem;
+import dev.jstech.computers.os.edit.CodeRuns;
+import dev.jstech.computers.program.iql.IqlColouring;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.ItemEntry;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.guide.CoreGuide;
+import dev.jstech.core.guide.GuideCode;
+import dev.jstech.core.guide.GuideHighlighters;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.ManualItem;
 import dev.jstech.core.guide.ModGuide;
@@ -33,6 +37,8 @@ public final class ComputersGuide {
     /** The mod's own manual, and the style it is drawn in. */
     public static final String GUIDE_TO_OPERATIONS = "jsc:guide_to_operations";
     public static final String OPERATIONS_STYLE = "jsc:operations";
+    /** What a listing of the network's query language names its language, as its files' extension does. */
+    public static final String IQL = "iql";
 
     public static final ItemEntry<ManualItem> MANUAL = ComputingContent.CONTENT.item("guide_to_operations",
             properties -> new ManualItem(properties, GUIDE_TO_OPERATIONS)).named("Guide to Operations")
@@ -64,6 +70,23 @@ public final class ComputersGuide {
                         + " and let the network keep your items, move them and craft for you.")
                 .register();
         ComputersEntries.declare(guide);
+        // Sigma and Sigma# colour themselves as languages the game compiles; the network's queries are coloured here.
+        GuideHighlighters.register(IQL, lines -> GuideCode.runs(lines, IqlColouring.spans(lines).stream()
+                .map(span -> new GuideCode.Span(span.line(), span.column(), span.length(), inkOf(span.ink())))
+                .toList()));
+    }
+
+    /** What the manuals colour a kind of the editors' code as: the same kinds, by their own names. */
+    private static GuideCode.Ink inkOf(final CodeRuns.Ink ink) {
+        return switch (ink) {
+            case PLAIN -> GuideCode.Ink.PLAIN;
+            case KEYWORD -> GuideCode.Ink.KEYWORD;
+            case NAME -> GuideCode.Ink.NAME;
+            case TEXT -> GuideCode.Ink.TEXT;
+            case NUMBER -> GuideCode.Ink.NUMBER;
+            case COMMENT -> GuideCode.Ink.COMMENT;
+            case SYMBOL -> GuideCode.Ink.SYMBOL;
+        };
     }
 
     /** Every item the mod registers that is of one of those kinds, read when the files are written. */

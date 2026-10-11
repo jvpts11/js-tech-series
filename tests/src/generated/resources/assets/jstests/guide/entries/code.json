@@ -1,0 +1,85 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.code.what"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.IO.*;",
+        "",
+        "namespace Hello;",
+        "",
+        "class Program {",
+        "  static void Main() {",
+        "    Console.PrintLine(\"Hello, world! This line is long enough to go on under itself.\");",
+        "  }",
+        "}"
+      ],
+      "name": "Hello.sgs"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "-- the five commonest items",
+        "QUERY items",
+        "  ORDER BY count DESC",
+        "  LIMIT 5;"
+      ],
+      "name": "top.iql"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_it_is_for"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.code.for"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_get_it"
+    },
+    {
+      "type": "text",
+      "text": "jstests.guide.code.get"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.how_to_use_it"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jstests.guide.code.use1",
+        "jstests.guide.code.use2",
+        "jstests.guide.code.use3"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.what_can_go_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jstests.guide.code.fix1",
+          "problem": "jstests.guide.code.problem1"
+        }
+      ]
+    }
+  ],
+  "icon": "minecraft:command_block",
+  "id": "jstests:code",
+  "order": 4,
+  "section": "jstests:ideas",
+  "title": "jstests.guide.code.title"
+}

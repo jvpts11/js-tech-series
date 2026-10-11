@@ -169,6 +169,36 @@ public sealed interface GuideBlock {
     }
 
     /**
+     * A numbered listing of code ("Listing 3-4."), headed by the name of its file: its lines in the code font with
+     * their numbers beside them, coloured as its language colours them, with a button that copies it whole. A line too
+     * long for the page goes on under itself, set in, never broken inside a word; a click opens the listing over the
+     * whole book with no line broken.
+     *
+     * @param name     the file the code is, such as {@code Hello.sgs}, or empty for a fragment
+     * @param language the language that colours it: a language's own name, or the extension of its files; empty takes
+     *                 the extension of the file's name
+     * @param lines    its lines, as they are typed
+     */
+    record Listing(String name, String language, List<String> lines) implements GuideBlock {
+
+        public Listing {
+            name = name == null ? "" : name;
+            language = language == null || language.isEmpty() ? extensionOf(name) : language;
+            lines = List.copyOf(lines);
+        }
+
+        /** The listing's code as one text, its lines joined as typed: what its button copies. */
+        public String text() {
+            return String.join("\n", this.lines);
+        }
+
+        private static String extensionOf(final String name) {
+            final int dot = name.lastIndexOf('.');
+            return dot < 0 || dot == name.length() - 1 ? "" : name.substring(dot + 1);
+        }
+    }
+
+    /**
      * Every recipe of a recipe type, read from the game as it runs: the inputs, an arrow with the time and the energy,
      * and the outputs.
      *

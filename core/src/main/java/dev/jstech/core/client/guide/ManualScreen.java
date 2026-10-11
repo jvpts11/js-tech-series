@@ -20,7 +20,9 @@ import dev.jstech.core.gui.ManualButtonLook;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideBook;
 import dev.jstech.core.guide.GuideChapter;
+import dev.jstech.core.guide.GuideCode;
 import dev.jstech.core.guide.GuideContents;
+import dev.jstech.core.guide.GuideHighlighters;
 import dev.jstech.core.guide.GuideHistory;
 import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuideManual;
@@ -107,6 +109,16 @@ public final class ManualScreen extends Screen {
     /** The control held down under the pointer, drawn pressed until the button is let go; null when none is. */
     @Nullable
     private ManualScreenLayout.Rect pressed;
+    /** The listing opened over the whole book, its lines' colours, and how many lines down it is scrolled. */
+    @Nullable
+    private GuidePiece.Listing opened;
+    private List<List<GuideCode.Run>> openedRuns = List.of();
+    private int openedScroll;
+    /** How many characters across it is scrolled, for a line longer than the book is wide. */
+    private int openedShift;
+    /** The lines of the listing last copied, and when, so its button says so for a moment. */
+    private List<String> copied = List.of();
+    private long copiedAt;
 
     /** How far below the lines of the index its dots sit, at the size they are drawn. */
     private static final int DOT_DROP = 6;
@@ -152,6 +164,19 @@ public final class ManualScreen extends Screen {
     private static final int LINE_INDENT = 10;
     /** No spread drawn yet. */
     private static final int UNSET = Integer.MIN_VALUE;
+    /** A listing's Copy button, its Close button over the whole book, and how long Copy says it has copied. */
+    private static final int COPY_WIDTH = 24;
+    private static final int CLOSE_WIDTH = 26;
+    private static final int LISTING_BUTTON = 8;
+    private static final long COPIED_MILLIS = 2000L;
+    /** How far a listing's button face goes from its strip towards white. */
+    private static final double BUTTON_LIGHT = 0.35;
+    /** A listing opened over the whole book: where it stands, and the room kept under it. */
+    private static final int OPENED_X = 14;
+    private static final int OPENED_Y = 26;
+    private static final int OPENED_FOOT = 20;
+    /** How many characters a turn of the wheel scrolls a listing across. */
+    private static final int SHIFT_STEP = 4;
     /** The mouse's side buttons, back and forward, as the game numbers them. */
     private static final int MOUSE_BACK = GLFW.GLFW_MOUSE_BUTTON_4;
     private static final int MOUSE_FORWARD = GLFW.GLFW_MOUSE_BUTTON_5;
@@ -310,6 +335,35 @@ public final class ManualScreen extends Screen {
         return this.middleOf(this.geometry.contents());
     }
 
+    /**
+     * Where to click a listing of that file on the spread shown, in the screen's coordinates: its Copy button, or the
+     * middle of its code; null when the spread shows no such listing (client tests click it).
+     */
+    @Nullable
+    public int[] listingPoint(final String name, final boolean copy) {
+        final int first = this.style.spread() ? this.spread * 2 : this.spread;
+        for (final int index : new int[] {first, this.rightPage(first)}) {
+            final ManualScreenLayout.Rect page = index == first ? this.geometry.left() : this.geometry.right();
+            if (page == null || index < 0 || index >= this.book.pages().size()) {
+                continue;
+            }
+            for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+                if (piece instanceof GuidePiece.Listing listing && listing.name().equals(name)) {
+                    final int x = page.x() + listing.x();
+                    final int y = page.y() + listing.y();
+                    return copy ? this.middleOf(copyButton(x, y, listing.width()))
+                            : new int[] {this.left + x + listing.width() / 2, this.top + y + listing.height() / 2};
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Whether a listing is open over the whole book. */
+    public boolean listingOpen() {
+        return this.opened != null;
+    }
+
     /** Opens or closes the search on the left page. */
     public void toggleSearch() {
         this.searching = !this.searching;
@@ -372,10 +426,20 @@ public final class ManualScreen extends Screen {
         final int my = mouseY - this.top;
         if (this.spread < 0) {
             this.drawCover(g);
-        } else {
+        } else if (this.opened == null) {
             this.drawOpen(g, mx, my);
+        } else {
+            // Under a listing opened over it, the book is only seen: nothing on it lights for the pointer.
+            this.drawOpen(g, Integer.MIN_VALUE, Integer.MIN_VALUE);
         }
         g.pose().popPose();
+        if (this.opened != null && this.spread >= 0) {
+            this.renderTransparentBackground(g);
+            g.pose().pushPose();
+            g.pose().translate(this.left, this.top, 0.0F);
+            this.drawOpened(g, this.opened, mx, my);
+            g.pose().popPose();
+        }
     }
 
     @Override
@@ -402,13 +466,33 @@ public final class ManualScreen extends Screen {
         if (button == MOUSE_FORWARD) {
             return this.forward();
         }
+        final double mx = mouseX - this.left;
+        final double my = mouseY - this.top;
+        if (this.opened != null) {
+            // A listing over the book takes every click: its buttons, or a click outside it to put it away.
+            final ManualScreenLayout.Rect box = this.openedBox(this.opened);
+            if (openedCopyButton(box).contains(mx, my)) {
+                this.copy(this.opened.lines());
+            } else if (closeButton(box).contains(mx, my) || !box.contains(mx, my)) {
+                this.opened = null;
+                AudioEngine.playOnScreen(GuideSounds.CLICK);
+            }
+            return true;
+        }
         if (super.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }
-        final double mx = mouseX - this.left;
-        final double my = mouseY - this.top;
         if (this.spread < 0) {
             this.spread = 0;
+            return true;
+        }
+        final PlacedListing listing = this.listingAt(mx, my);
+        if (listing != null) {
+            if (copyButton(listing.x(), listing.y(), listing.listing().width()).contains(mx, my)) {
+                this.copy(listing.listing().lines());
+            } else {
+                this.open(listing.listing());
+            }
             return true;
         }
         for (final ManualScreenLayout.Rect control : List.of(this.geometry.contents(), this.geometry.back(),
@@ -473,11 +557,30 @@ public final class ManualScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(final double mouseX, final double mouseY, final double scrollX, final double scrollY) {
+        if (this.opened != null) {
+            // The wheel scrolls a listing opened over the book down when it is longer than the book is tall, and
+            // across, with Shift or the wheel's own sideways turn, when a line is longer than the book is wide.
+            final boolean across = scrollX != 0.0 || Screen.hasShiftDown();
+            final double turned = scrollX != 0.0 ? scrollX : scrollY;
+            if (across) {
+                this.openedShift = Math.max(0, Math.min(this.openedShiftMost(this.opened),
+                        this.openedShift + (turned < 0.0 ? SHIFT_STEP : -SHIFT_STEP)));
+            } else {
+                final int most = Math.max(0, this.opened.lines().size() - this.openedRows(this.opened));
+                this.openedScroll = Math.max(0, Math.min(most, this.openedScroll + (scrollY < 0.0 ? 1 : -1)));
+            }
+            return true;
+        }
         return scrollY != 0.0 && this.turn(scrollY < 0.0 ? 1 : -1);
     }
 
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
+        if (this.opened != null && key == GLFW.GLFW_KEY_ESCAPE) {
+            // Escape puts a listing opened over the book away, leaving the book open.
+            this.opened = null;
+            return true;
+        }
         if (this.searching && this.searchField.isFocused() && key != GLFW.GLFW_KEY_ESCAPE) {
             return this.searchField.keyPressed(key, scanCode, modifiers);
         }
@@ -554,6 +657,13 @@ public final class ManualScreen extends Screen {
     private boolean clickable(final double mx, final double my) {
         if (this.spread < 0) {
             return ManualScreenLayout.cover(this.geometry).contains(mx, my);
+        }
+        if (this.opened != null) {
+            final ManualScreenLayout.Rect box = this.openedBox(this.opened);
+            return openedCopyButton(box).contains(mx, my) || closeButton(box).contains(mx, my);
+        }
+        if (this.listingAt(mx, my) != null) {
+            return true;
         }
         if (this.geometry.contents().contains(mx, my) || this.geometry.search().contains(mx, my)
                 || this.geometry.back().contains(mx, my) && this.history.behind().isPresent()
@@ -1037,6 +1147,7 @@ public final class ManualScreen extends Screen {
             case GuidePiece.Item item -> this.drawItem(g, this.stackOf(item.item()), x, y, item.scale() * 100, mx,
                     my);
             case GuidePiece.Recipes rows -> this.drawRecipes(g, x, y, rows, chapter, mx, my);
+            case GuidePiece.Listing listing -> this.drawListing(g, x, y, listing, chapter, mx, my);
             case GuidePiece.Custom custom -> {
                 final IGuideBlockRenderer renderer = rendererOf(custom.type());
                 if (renderer != null) {
@@ -1089,6 +1200,193 @@ public final class ManualScreen extends Screen {
             renderer.draw(g, this.font, x, y, picture.width(), picture.height(), this.dataOf(picture.data()),
                     mx + this.left, my + this.top);
         }
+    }
+
+    /**
+     * A listing's frame: the strip with its label, its file's name and its Copy button, the paper its code is printed
+     * on, and the rule beside the numbers of its lines. The code itself is the text laid over it.
+     */
+    private void drawListing(final GuiGraphics g, final int x, final int y, final GuidePiece.Listing listing,
+                             final String chapter, final int mx, final int my) {
+        this.drawCodeFrame(g, x, y, listing.width(), listing.height(), listing.gutter(), chapter);
+        final ManualScreenLayout.Rect copy = copyButton(x, y, listing.width());
+        this.drawStrip(g, x, y, copy.x() - x - 4, listing.label(), listing.name(), chapter);
+        this.drawListingButton(g, copy, GuideTexts.COPY, this.justCopied(listing.lines()), chapter, mx, my);
+    }
+
+    /** The paper, the strip and the frame of a listing, and the rule beside its numbers. */
+    private void drawCodeFrame(final GuiGraphics g, final int x, final int y, final int width, final int height,
+                               final int gutter, final String chapter) {
+        final int rule = this.colour(GuideStyle.RULE, chapter);
+        g.fill(x, y, x + width, y + GuideLayout.LISTING_HEAD, this.colour(GuideStyle.CODE_HEAD, chapter));
+        g.fill(x, y + GuideLayout.LISTING_HEAD, x + width, y + height, this.colour(GuideStyle.CODE_PAPER, chapter));
+        Draw.outline(g, x, y, width, height, rule);
+        if (gutter > 0) {
+            g.fill(x + gutter - 2, y + GuideLayout.LISTING_HEAD, x + gutter - 1, y + height, rule);
+        }
+    }
+
+    /** The words on a listing's strip: its label in bold, then its file's name, cut short before its buttons. */
+    private void drawStrip(final GuiGraphics g, final int x, final int y, final int room, final String label,
+                           final String name, final String chapter) {
+        final int ink = this.colour(GuideStyle.INK, chapter);
+        GuideFonts.draw(g, this.font, label, TextSize.SMALL_BOLD, this.style, x + 3, y + 2, ink);
+        final int nameX = x + 3 + GuideFonts.width(this.font, label, TextSize.SMALL_BOLD, this.style) + 4;
+        GuideFonts.draw(g, this.font, this.fit(name, x + room - nameX, TextSize.SMALL), TextSize.SMALL, this.style,
+                nameX, y + 2, ink);
+    }
+
+    /** A button on a listing's strip, lit under the pointer; Copy turns to Copied for a moment once it has copied. */
+    private void drawListingButton(final GuiGraphics g, final ManualScreenLayout.Rect button, final TextKey word,
+                                   final boolean done, final String chapter, final int mx, final int my) {
+        final int face = done ? this.colour(GuideStyle.CODE_COPIED, chapter)
+                : ManualButtonLook.lighten(this.colour(GuideStyle.CODE_HEAD, chapter), BUTTON_LIGHT);
+        final ManualButtonLook look = ManualButtonLook.of(face, this.colour(GuideStyle.INK, chapter),
+                this.colour(GuideStyle.LABEL, chapter), button.contains(mx, my) ? ManualButtonLook.State.HOVER
+                        : ManualButtonLook.State.NORMAL);
+        ManualControls.bevel(g, button.x(), button.y(), button.width(), button.height(), look.fill(), look.light(),
+                look.dark());
+        if (look.framed()) {
+            Draw.outline(g, button.x(), button.y(), button.width(), button.height(), look.mark());
+        }
+        final String shown = this.text((done ? GuideTexts.COPIED : word).key());
+        final int width = GuideFonts.width(this.font, shown, TextSize.SMALL, this.style);
+        GuideFonts.draw(g, this.font, shown, TextSize.SMALL, this.style, button.x() + (button.width() - width) / 2,
+                button.y() + 1, look.mark());
+    }
+
+    /**
+     * A listing opened over the whole book: as wide as the binder, every line whole and never broken, scrolled by the
+     * mouse wheel when it is longer than the book is tall, with Copy and Close on its strip.
+     */
+    private void drawOpened(final GuiGraphics g, final GuidePiece.Listing listing, final int mx, final int my) {
+        final ManualScreenLayout.Rect box = this.openedBox(listing);
+        this.drawCodeFrame(g, box.x(), box.y(), box.width(), box.height(), listing.gutter(), "");
+        final ManualScreenLayout.Rect close = closeButton(box);
+        final ManualScreenLayout.Rect copy = openedCopyButton(box);
+        this.drawStrip(g, box.x(), box.y(), copy.x() - box.x() - 4, listing.label(), listing.name(), "");
+        this.drawListingButton(g, copy, GuideTexts.COPY, this.justCopied(listing.lines()), "", mx, my);
+        this.drawListingButton(g, close, GuideTexts.CLOSE, false, "", mx, my);
+        final int top = box.y() + GuideLayout.LISTING_HEAD + GuideLayout.CODE_PAD;
+        final int character = Math.max(1, GuideFonts.width(this.font, "0", TextSize.CODE, this.style));
+        for (int i = 0; i < this.openedRows(listing) && this.openedScroll + i < listing.lines().size(); i++) {
+            final String number = String.valueOf(this.openedScroll + i + 1);
+            GuideFonts.draw(g, this.font, number, TextSize.CODE, this.style, box.x() + listing.gutter() - 3
+                    - GuideFonts.width(this.font, number, TextSize.CODE, this.style),
+                    top + i * GuideLayout.CODE_PITCH, this.colour(GuideStyle.FAINT));
+        }
+        // The code is cut at the frame and the rule beside its numbers, so a line scrolled across slides under them.
+        g.enableScissor(this.left + box.x() + listing.gutter(), this.top + top, this.left + box.x() + box.width() - 1,
+                this.top + box.y() + box.height() - 1);
+        for (int i = 0; i < this.openedRows(listing) && this.openedScroll + i < listing.lines().size(); i++) {
+            final int index = this.openedScroll + i;
+            final int rowY = top + i * GuideLayout.CODE_PITCH;
+            final String line = listing.lines().get(index);
+            int at = box.x() + listing.gutter() + 1 - this.openedShift * character;
+            for (final GuideCode.Run run : index < this.openedRuns.size() ? this.openedRuns.get(index)
+                    : GuideCode.plain(List.of(line)).getFirst()) {
+                final String piece = line.substring(run.start(), Math.min(line.length(), run.start() + run.length()));
+                GuideFonts.draw(g, this.font, piece, TextSize.CODE, this.style, at, rowY,
+                        this.colour(GuideCode.role(run.ink())));
+                at += GuideFonts.width(this.font, piece, TextSize.CODE, this.style);
+            }
+        }
+        g.disableScissor();
+    }
+
+    /** Where a listing opened over the whole book stands: as wide as the binder, as tall as it needs or the book. */
+    private ManualScreenLayout.Rect openedBox(final GuidePiece.Listing listing) {
+        final int width = this.geometry.coverRight() - OPENED_X - 4;
+        final int whole = GuideLayout.LISTING_HEAD + 2 * GuideLayout.CODE_PAD
+                + listing.lines().size() * GuideLayout.CODE_PITCH;
+        return new ManualScreenLayout.Rect(OPENED_X, OPENED_Y, width, Math.min(whole,
+                this.geometry.height() - OPENED_Y - OPENED_FOOT));
+    }
+
+    /** How far across a listing opened over the book can scroll: its longest line past what the book shows. */
+    private int openedShiftMost(final GuidePiece.Listing listing) {
+        final ManualScreenLayout.Rect box = this.openedBox(listing);
+        final int character = Math.max(1, GuideFonts.width(this.font, "0", TextSize.CODE, this.style));
+        final int shown = (box.width() - listing.gutter() - 4) / character;
+        int longest = 0;
+        for (final String line : listing.lines()) {
+            longest = Math.max(longest, line.length());
+        }
+        return Math.max(0, longest - shown);
+    }
+
+    /** How many lines a listing opened over the book shows at once. */
+    private int openedRows(final GuidePiece.Listing listing) {
+        return (this.openedBox(listing).height() - GuideLayout.LISTING_HEAD - 2 * GuideLayout.CODE_PAD)
+                / GuideLayout.CODE_PITCH;
+    }
+
+    /** The Copy button on a listing's strip, at its right end. */
+    private static ManualScreenLayout.Rect copyButton(final int x, final int y, final int width) {
+        return new ManualScreenLayout.Rect(x + width - COPY_WIDTH - 2, y + 1, COPY_WIDTH, LISTING_BUTTON);
+    }
+
+    /** The Close button of a listing opened over the book, at its strip's right end, Copy just before it. */
+    private static ManualScreenLayout.Rect closeButton(final ManualScreenLayout.Rect box) {
+        return new ManualScreenLayout.Rect(box.x() + box.width() - CLOSE_WIDTH - 2, box.y() + 1, CLOSE_WIDTH,
+                LISTING_BUTTON);
+    }
+
+    /** The Copy button of a listing opened over the book, just before its Close. */
+    private static ManualScreenLayout.Rect openedCopyButton(final ManualScreenLayout.Rect box) {
+        return new ManualScreenLayout.Rect(closeButton(box).x() - 2 - COPY_WIDTH, box.y() + 1, COPY_WIDTH,
+                LISTING_BUTTON);
+    }
+
+    /** Whether those lines were the last copied, a moment ago. */
+    private boolean justCopied(final List<String> lines) {
+        return lines.equals(this.copied) && Util.getMillis() - this.copiedAt < COPIED_MILLIS;
+    }
+
+    /** Copies a listing's lines whole, as they are typed, so the game's editors paste them. */
+    private void copy(final List<String> lines) {
+        this.minecraft.keyboardHandler.setClipboard(String.join("\n", lines));
+        this.copied = lines;
+        this.copiedAt = Util.getMillis();
+        AudioEngine.playOnScreen(GuideSounds.CLICK);
+    }
+
+    /** Opens a listing over the whole book, coloured as its language colours it. */
+    private void open(final GuidePiece.Listing listing) {
+        this.opened = listing;
+        this.openedRuns = GuideHighlighters.colour(listing.language(), listing.lines());
+        this.openedScroll = 0;
+        this.openedShift = 0;
+        AudioEngine.playOnScreen(GuideSounds.CLICK);
+    }
+
+    /** The listing on a page shown under a point, with where it stands, or null. */
+    @Nullable
+    private PlacedListing listingAt(final double mx, final double my) {
+        final int first = this.style.spread() ? this.spread * 2 : this.spread;
+        final PlacedListing onLeft = this.listingOn(this.geometry.left(), first, mx, my);
+        if (onLeft != null || this.geometry.right() == null || this.searching) {
+            return onLeft;
+        }
+        return this.listingOn(this.geometry.right(), this.rightPage(first), mx, my);
+    }
+
+    @Nullable
+    private PlacedListing listingOn(final ManualScreenLayout.Rect page, final int index, final double mx,
+                                    final double my) {
+        if (this.searching && page == this.geometry.left() || index < 0 || index >= this.book.pages().size()) {
+            return null;
+        }
+        for (final GuidePiece piece : this.book.pages().get(index).pieces()) {
+            if (piece instanceof GuidePiece.Listing listing) {
+                final ManualScreenLayout.Rect rect = new ManualScreenLayout.Rect(page.x() + listing.x(),
+                        page.y() + listing.y(), listing.width(), listing.height());
+                if (rect.contains(mx, my)) {
+                    return new PlacedListing(listing, rect.x(), rect.y());
+                }
+            }
+        }
+        return null;
     }
 
     /** The items of a plate shown now: the row the plate has turned to. */
@@ -1631,5 +1929,9 @@ public final class ManualScreen extends Screen {
 
     /** A thing the search found, where its row stands on the left page and how tall the row is. */
     private record ResultRow(GuideSearch.Hit hit, int y, int height) {
+    }
+
+    /** A listing on a page shown, and where its frame stands on the binder. */
+    private record PlacedListing(GuidePiece.Listing listing, int x, int y) {
     }
 }

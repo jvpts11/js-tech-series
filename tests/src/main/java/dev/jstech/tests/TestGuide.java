@@ -42,6 +42,10 @@ public final class TestGuide {
     public static final String OTHER_BOOK = "jstests:other_book";
     public static final String SHARED_PAGE = "jstests:shared_page";
     public static final String TABLES = "jstests:tables";
+    public static final String CODE = "jstests:code";
+    /** The listings of the code entry, by the files they are. */
+    public static final String HELLO = "Hello.sgs";
+    public static final String QUERY = "top.iql";
     /** The name a sheet of paper takes to be the page of the shared entry. */
     public static final String SHARED_PAPER = "Shared Notes";
     /** The kind of special block the test mod draws. */
@@ -140,6 +144,17 @@ public final class TestGuide {
                 .howToGetIt("Open the test manual.")
                 .howToUseIt("Read the tables.")
                 .whatCanGoWrong("A word is cut in two.", "A column was left narrower than its longest word.")
+                .register();
+        GUIDE.page("code", IDEAS).titled("Code").icon(() -> Items.COMMAND_BLOCK)
+                .whatItIs("An entry of listings: a program, a query, and a line too long for its page.")
+                .listing(HELLO, "using System.IO.*;", "", "namespace Hello;", "", "class Program {",
+                        "  static void Main() {", "    Console.PrintLine(\"Hello, world! This line is long enough to go"
+                                + " on under itself.\");", "  }", "}")
+                .listing(QUERY, "-- the five commonest items", "QUERY items", "  ORDER BY count DESC", "  LIMIT 5;")
+                .whatItIsFor("Proving the layout of listings, their colours and their Copy button.")
+                .howToGetIt("Open the test manual.")
+                .howToUseIt("Read the listings.", "Copy one.", "Open one over the whole book.")
+                .whatCanGoWrong("A listing is one colour.", "Its language has no colours registered for the manuals.")
                 .register();
         GUIDE.page("other_book", IDEAS).titled("A Link to Another Book").icon(() -> Items.COMPASS)
                 .whatItIs("An entry whose words lead to [a page of another book](jstests:shared_page), which this"

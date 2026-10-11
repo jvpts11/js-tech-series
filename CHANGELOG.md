@@ -185,6 +185,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The manuals sound like the game's books: a page is heard turning, the book opening and being laid down, and the
   buttons and tabs click as the game's buttons do. A Manuals volume on the Sound Mixer turns them down apart from
   everything else.
+- Listings of code in the manuals: numbered, headed by their file's name, their lines numbered and coloured as the
+  game's editors colour Sigma, Sigma# and the network's query language, a long line going on under itself without a
+  word cut in two. A Copy button puts the whole listing on the clipboard for the game's editors, and a click opens it
+  over the whole book with no line broken.
 - The manuals inside the computers, beside the manual pages of each machine's commands, in each system's own help.
   Every desktop has Help: Frames 95's Help Topics with its Contents, Index and Find and a topic window of its own,
   XP's Help and Support Center, 7's Help and Support, Get Help on 10 and 11, KDE's Help Center, the Help of GNOME and

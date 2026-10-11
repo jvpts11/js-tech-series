@@ -8,7 +8,9 @@
 package dev.jstech.core.client.guide;
 
 import dev.jstech.core.client.GameLocale;
+import dev.jstech.core.guide.GuideCode;
 import dev.jstech.core.guide.GuideFacts;
+import dev.jstech.core.guide.GuideHighlighters;
 import dev.jstech.core.guide.GuideIds;
 import dev.jstech.core.guide.GuideStyle;
 import dev.jstech.core.guide.IGuideText;
@@ -71,6 +73,11 @@ public final class ClientGuideText implements IGuideText {
     @Override
     public String itemName(final String item) {
         return itemNameOf(item);
+    }
+
+    @Override
+    public List<List<GuideCode.Run>> highlight(final String language, final List<String> lines) {
+        return GuideHighlighters.colour(language, lines);
     }
 
     @Override
