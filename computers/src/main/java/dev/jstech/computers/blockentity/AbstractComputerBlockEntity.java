@@ -45,6 +45,7 @@ import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.boot.BootIdentity;
@@ -174,6 +175,14 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      */
     private final LongField vramTotalKb = fields().longInteger("VramTotalKb", 0L).toClient();
     private final LongField vramMonitorsKb = fields().longInteger("VramMonitorsKb", 0L).toClient();
+    /*
+     * The id of the system the machine boots, sent to the players who see it: the disks it is read from stay on the
+     * server, so without it the player's side never knows the system and a help program cannot open its book.
+     */
+    private final ValueField<String> clientOs = fields().value("ClientOs", Codec.STRING, "").toClient();
+
+    /** How often the system it boots is looked at again for the players who see it: once a second. */
+    private static final int OS_CHECK_TICKS = 20;
 
     /*
      * Each part is saved in turn, in the order declared here: the hardware first, because the console rides on the
@@ -1097,6 +1106,9 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      */
     @Nullable
     public ResourceLocation installedOsId() {
+        if (level != null && level.isClientSide()) {
+            return clientOs.get().isEmpty() ? null : ResourceLocation.tryParse(clientOs.get());
+        }
         return session.installedOsId();
     }
 
@@ -1106,6 +1118,10 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      */
     @Nullable
     public OsDef installedOs() {
+        if (level != null && level.isClientSide()) {
+            final ResourceLocation id = installedOsId();
+            return id == null ? null : OsRegistry.getOs(id);
+        }
         return session.installedOs();
     }
 
@@ -1153,6 +1169,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     public void tickTerminal(final ServerLevel level) {
         terminalFeed.tick(level);
         PeripheralReconciler.reconcile(this, level, worldPosition.asLong());
+        // Whether its players still know the system it boots is checked once a second, a change sent at once.
+        if (level.getGameTime() % OS_CHECK_TICKS == 0) {
+            final ResourceLocation os = session.installedOsId();
+            clientOs.set(os == null ? "" : os.toString());
+        }
     }
 
     /**

@@ -202,6 +202,66 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_runsALongTitleOnInTheContentsTheChaptersOpeningAndTheIndexAndNeverCutsIt() {
+        final String title = "a title long enough to run over more than one line";
+        final GuideBook book = lay(contents(), new FixedText(Map.of("parts.title", title, "only.title", title)));
+
+        final List<GuidePiece> contentsPage = book.pages().get(book.contents()).pieces();
+        assertTrue(read(contentsPage).contains("1.1  " + title), () -> "every word in the contents: "
+                + read(contentsPage));
+        final List<GuidePiece> facing = book.pages().get(book.pageOf("alpha").orElseThrow() + 1).pieces();
+        assertTrue(read(facing).contains("1.1 " + title), () -> "and on the chapter's opening: " + read(facing));
+        final List<GuidePiece> index = book.pages().subList(book.indexAt(), book.pages().size()).stream()
+                .flatMap(page -> page.pieces().stream()).toList();
+        assertTrue(read(index).contains(title), () -> "and in the index: " + read(index));
+        for (final List<GuidePiece> pieces : List.of(contentsPage, facing, index)) {
+            assertFalse(read(pieces).contains("..."), "nothing is cut short");
+            assertTrue(pieces.stream().anyMatch(piece -> piece instanceof GuidePiece.Leader leader
+                    && title.endsWith(leader.left()) && !leader.right().isEmpty()),
+                    "the page it leads to stands beside its last words");
+        }
+    }
+
+    @Test
+    void lay_carriesAHeadingOnWithTheTableItHeadsWhenTheTableMovesOn() {
+        // Room enough under the filler for the heading and a few lines, not for the ten rows that move on whole.
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t",
+                new GuideBlock.Custom("mod:filler", 80, ""), new GuideBlock.Heading("table.heading"), table(10))))));
+
+        final int first = book.pageOf("alpha:t").orElseThrow();
+        assertFalse(book.pages().get(first).pieces().stream().anyMatch(piece -> piece instanceof GuidePiece.Text
+                text && text.text().equalsIgnoreCase("table.heading")), "the heading is not left alone at the foot");
+        final GuidePiece.Text heading = book.pages().get(first + 1).pieces().stream()
+                .filter(piece -> piece instanceof GuidePiece.Text text
+                        && text.text().equalsIgnoreCase("table.heading"))
+                .map(piece -> (GuidePiece.Text) piece).findFirst().orElseThrow();
+        assertEquals(GuideLayout.top(STYLE), heading.y(), "it heads its table at the top of the next page");
+    }
+
+    @Test
+    void lay_partsATableRatherThanLeaveMoreThanHalfAPageEmpty() {
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t",
+                new GuideBlock.Custom("mod:filler", 30, ""), table(10))))));
+
+        final GuideBook.Page first = book.pages().get(book.pageOf("alpha:t").orElseThrow());
+        assertTrue(rules(first) >= 3, "the table starts under the filler, three rows at least, not on the next page");
+    }
+
+    @Test
+    void lay_breaksAWordWiderThanTheLineWhereItsNameBreaks() {
+        final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t",
+                new GuideBlock.Paragraph("long.text"))))), new FixedText(Map.of("long.text",
+                "Turn on install_by_hand.gentoo_every_step in the config.")));
+
+        final List<GuidePiece.Text> texts = texts(book, "alpha:t");
+        final int right = STYLE.margin() + 146;
+        assertTrue(texts.stream().allMatch(text -> text.x() + 6 * text.text().length() <= right),
+                () -> "no line runs past the page: " + texts);
+        assertTrue(String.join("", texts.stream().map(GuidePiece.Text::text).toList())
+                .contains("install_by_hand.gentoo_every_step"), "every character of the name is still there");
+    }
+
+    @Test
     void lay_numbersDrawingsBySectionInHundreds() {
         final GuideBook book = drawings();
 
@@ -337,12 +397,15 @@ class GuideLayoutTest {
                 Map.of("gamma:mill", "Mill Book"));
         final GuideBook book = lay(contents(), text);
 
-        // The link is long enough to run over two lines; its pieces read on from one to the next.
+        /*
+         * The link is long enough to run over lines, its last word wider than a line and so broken where its
+         * underscore is; its pieces read on from one to the next, whatever lines they part at.
+         */
         final List<GuidePiece.Text> link = book.pages().get(book.pageOf("alpha:first").orElseThrow()).pieces()
                 .stream().filter(piece -> piece instanceof GuidePiece.Text candidate
                         && candidate.link().equals("gamma:mill")).map(piece -> (GuidePiece.Text) piece).toList();
-        assertEquals("the mill (jscore.guide.in_book[Mill Book])",
-                String.join(" ", link.stream().map(piece -> piece.text().strip()).toList()),
+        assertEquals("themill(jscore.guide.in_book[MillBook])",
+                String.join("", link.stream().map(GuidePiece.Text::text).toList()).replace(" ", ""),
                 "the link names the book it opens");
         assertTrue(link.stream().allMatch(piece -> piece.colour().equals(GuideStyle.LINK)));
     }
@@ -526,7 +589,8 @@ class GuideLayoutTest {
         assertTrue(parts.size() > 1, "forty lines run on past a page");
         assertEquals("jscore.guide.listing[1-1]", parts.getFirst().label());
         assertEquals("Long.sgs", parts.getFirst().name());
-        assertEquals("jscore.guide.table_continued[Long.sgs]", parts.get(1).name(), "the strip says it goes on");
+        assertEquals("jscore.guide.table_continued[]", parts.get(1).name(),
+                "the strip says it goes on, leaving the name to its label where both do not fit beside Copy");
         assertEquals("sgs", parts.getFirst().language(), "the file's extension names its language");
         final List<String> numbers = texts(book, "alpha:t").stream().filter(text -> text.size() == TextSize.CODE
                 && text.colour().equals(GuideStyle.FAINT)).map(GuidePiece.Text::text).toList();
@@ -645,15 +709,15 @@ class GuideLayoutTest {
         assertTrue(texts.stream().anyMatch(text -> text.link().equals("mod:copy")),
                 "the command to read next leads to its page");
         assertFalse(texts.stream().anyMatch(text -> text.link().contains("tree")), "one with no page leads nowhere");
-        assertTrue(page.contains("MC-DOS 6.22"), "and the systems it runs on are named");
+        assertTrue(String.join("", words).contains("MC-DOS 6.22"), "and the systems it runs on are named");
     }
 
     @Test
     void lay_saysACommandsPageIsMissingWhenNoModAnswersForIt() {
         final GuideBook book = lay(commandBook());
 
-        assertTrue(texts(book, "mod:dir").stream().anyMatch(text -> text.text().startsWith(
-                GuideTexts.NO_COMMAND.key())), "the gap is printed where the page would be");
+        assertTrue(String.join("", texts(book, "mod:dir").stream().map(GuidePiece.Text::text).toList())
+                .contains(GuideTexts.NO_COMMAND.key()), "the gap is printed where the page would be");
     }
 
     @Test
@@ -829,6 +893,22 @@ class GuideLayoutTest {
         return book.pages().subList(book.pageOf(entry).orElseThrow(), book.indexAt()).stream()
                 .flatMap(page -> page.pieces().stream()).filter(piece -> piece instanceof GuidePiece.Text)
                 .map(piece -> (GuidePiece.Text) piece).toList();
+    }
+
+    /** The words of pieces in the order they were laid, a line's words and a leader's title, a space between. */
+    private static String read(final List<GuidePiece> pieces) {
+        final List<String> words = new ArrayList<>();
+        for (final GuidePiece piece : pieces) {
+            if (piece instanceof GuidePiece.Text text) {
+                words.add(text.text());
+            } else if (piece instanceof GuidePiece.Leader leader) {
+                if (!leader.lead().isEmpty()) {
+                    words.add(leader.lead());
+                }
+                words.add(leader.left().strip());
+            }
+        }
+        return String.join(" ", words);
     }
 
     /** How many rows of tables end on a page: a rule under each. */

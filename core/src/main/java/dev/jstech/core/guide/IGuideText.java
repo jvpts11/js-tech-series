@@ -91,4 +91,12 @@ public interface IGuideText {
     default String elsewhere(final String target) {
         return "";
     }
+
+    /**
+     * The title, in the reader's language, of a link's target another book holds, written where a link has no words
+     * of its own and so no number to show; empty when it is not known.
+     */
+    default String titleOf(final String target) {
+        return "";
+    }
 }

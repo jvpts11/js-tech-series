@@ -116,8 +116,8 @@ final class LibraryPages {
                         GuideCell.words("Build a working Standard computer."),
                         GuideCell.words("A computer of the Standard era is built and its build is valid."))
                 .row(GuideCell.words("Time Traveller (challenge)"),
-                        GuideCell.words("Build a working computer of every era: Vintage, Legacy, Transition, Standard"
-                                + " and Advanced."),
+                        GuideCell.words("Build a working computer of each of the five eras: Vintage, Legacy,"
+                                + " Transition, Standard and Advanced."),
                         GuideCell.words("Each of those five eras is built once, with a valid build."))
                 .row(GuideCell.words("Rack 'Em Up (goal)"),
                         GuideCell.words("Fill every unit of a Server Rack."),
@@ -372,7 +372,8 @@ final class LibraryPages {
                         GuideCell.words("Keep a program running for seven days without stopping."),
                         GuideCell.words("A program runs without stopping for 168,000 ticks."))
                 .paragraph("Five Nines counts ticks, not seconds: 24,000 ticks make one in-game day, so seven days make"
-                        + " 168,000 ticks. A tick is the game's beat ([](jsc:units_and_ticks)).")
+                        + " 168,000 ticks. A tick is the game's basic unit of time, one twentieth of a second"
+                        + " ([](jsc:units_and_ticks)).")
                 .paragraph("Works on My Machine needs the game to remember where you ran a program: it keeps up to 64"
                         + " program names for each player.")
                 .ifSomethingGoesWrong("The Expected ';' achievement appeared for an error you did not expect.",
@@ -429,8 +430,8 @@ final class LibraryPages {
                         GuideCell.words("Any install"))
                 .row(GuideCell.words("MC-NET"), GuideCell.words("The Guide to Operations"),
                         GuideCell.words("Any install"))
-                .paragraph("The system and its install decide the first book, not your choice. Every Linux install"
-                        + " that is not guided opens Linux by Hand: that means Arch Linux and Gentoo.")
+                .paragraph("Every Linux install that is not guided opens Linux by Hand, which means Arch Linux and"
+                        + " Gentoo.")
                 .table("The six books", "Book", "What it covers")
                 .row(GuideCell.words("Frames Resource Kit"),
                         GuideCell.words("MC-DOS and the Frames editions, from Frames 95 to Frames 11."))

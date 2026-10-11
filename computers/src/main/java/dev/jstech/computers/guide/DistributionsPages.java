@@ -195,9 +195,8 @@ final class DistributionsPages {
                 .row(GuideCell.words("Done"), GuideCell.words("Complete!"),
                         GuideCell.words("Take the install medium out, then press ENTER to reboot."))
                 .paragraph("The hint at the foot of the hub reads \"Please make a selection from the above ['b' to"
-                        + " begin installation, 'q' to quit, 'r' to refresh]:\". The 'q' and 'r' do nothing here, and"
-                        + " the 'c' of the other pages is ENTER. To quit, press F3 before anything is written"
-                        + " to a disk.")
+                        + " begin installation, 'q' to quit, 'r' to refresh]:\". The 'q' and 'r' do nothing"
+                        + " here. To quit, press F3 before anything is written to a disk.")
                 .steps("Boot the computer from the Fedora install medium.",
                         "Press 1 to open the first question.",
                         "Answer it, then press ENTER.",
@@ -265,7 +264,7 @@ final class DistributionsPages {
                         + " login line on the text console, the first screen of the machine.")
                 .paragraph("The boot begins with \"Loading Linux 6.8-jsc ...\" and \"Loading initial ramdisk ...\"."
                         + " The lines that begin with \"[  OK  ]\" report that a service started. The system is run by"
-                        + " systemd, the service manager that starts the services in order.")
+                        + " systemd.")
                 .define("Systemd", "The service manager of these systems. It starts the services at boot, in order.")
                 .table("Lines at the start", "Line", "When it shows")
                 .row(GuideCell.code("Loading Linux 6.8-jsc ..."), GuideCell.words("Always, first."))
@@ -283,7 +282,7 @@ final class DistributionsPages {
                 .row(GuideCell.code("[  OK  ] Found package mirror on <Mainframe name>."), GuideCell.words("Only when"
                         + " that Mainframe runs the Mirror."))
                 .row(GuideCell.code("Starting kde plasma Display Manager..."), GuideCell.words("Only when a desktop is"
-                        + " installed. The desktop is named in lower case: kde plasma, gnome or cinnamon."))
+                        + " installed, named in lower case: kde plasma, gnome or cinnamon."))
                 .paragraph("Without a desktop there is no display manager line. The boot ends at the text console: a"
                         + " banner, a login and a shell, and nothing else.")
                 .define("Display manager", "The program that shows the graphical login and starts the desktop. Here it"
@@ -332,9 +331,8 @@ final class DistributionsPages {
                         + " descriptions."))
                 .row(GuideCell.code("apt update"), GuideCell.words("Reads the package lists from the Mirror."
                         + " It installs nothing."))
-                .row(GuideCell.code("apt upgrade"), GuideCell.words("Brings each installed package up to the"
-                        + " version the Mirror offers. It adds no new packages. full-upgrade and dist-upgrade do"
-                        + " the same."))
+                .row(GuideCell.code("apt upgrade"), GuideCell.words("Upgrades installed packages to the"
+                        + " Mirror's versions; full-upgrade and dist-upgrade do the same."))
                 .command(CommandGuidePages.id(Platform.LINUX, "apt"))
                 .subheading("Installing a program")
                 .steps("Type apt search and a word from the program's name, then press ENTER.",
@@ -389,10 +387,9 @@ final class DistributionsPages {
                         GuideCell.words("Removes it. purge and erase do the same."))
                 .row(GuideCell.code("dnf search [term]"), GuideCell.words("Lists the matching packages."))
                 .row(GuideCell.code("dnf list"), GuideCell.words("Lists the installed packages."))
-                .row(GuideCell.code("dnf update"), GuideCell.words("Brings the installed packages up to date."
-                        + " On dnf this is the upgrade."))
+                .row(GuideCell.code("dnf update"), GuideCell.words("Brings the installed packages up to date."))
                 .row(GuideCell.code("dnf upgrade"), GuideCell.words("Brings the installed packages up to date, as dnf"
-                        + " update does. full-upgrade and dist-upgrade do the same."))
+                        + " update does; full-upgrade and dist-upgrade are the same."))
                 .command(CommandGuidePages.id(Platform.LINUX, "dnf"))
                 .paragraph("An install on Fedora prints its own lines, in this order.")
                 .table("What dnf prints for an install", "Line", "What it means")
@@ -443,8 +440,7 @@ final class DistributionsPages {
                         + " computers of the network."))
                 .row(GuideCell.code("Mirror: installed (Mainframe off)"), GuideCell.words("The Mirror is installed, but"
                         + " the Mainframe is off."))
-                .paragraph("A computer reaches the Mirror when a data cable joins it to the network and the"
-                        + " Mainframe is serving. Then the boot prints \"Found package mirror on\" and the"
+                .paragraph("When the Mainframe is serving, the boot prints \"Found package mirror on\" and the"
                         + " Mainframe's name.")
                 .subheading("What there is to install")
                 .paragraph("The table lists the programs that apt and dnf offer on Linux. For each one it gives"

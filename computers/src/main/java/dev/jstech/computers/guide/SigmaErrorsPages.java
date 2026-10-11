@@ -57,9 +57,9 @@ final class SigmaErrorsPages {
                 .paragraph("Read the list from the top and fix the first line first. A mistake early in a file can"
                         + " cause the lines after it, so the rest of the list can change when you fix it. The list"
                         + " is sorted by file, then by line, then by column.")
-                .paragraph("The compiler lists at most 100 mistakes. When a file has more, the last line of the list"
-                        + " reads \"too many errors; the rest were not reported\", and you fix the ones above it"
-                        + " before you compile again.")
+                .paragraph("The compiler lists at most 100 mistakes for each file. When a file has more, the last"
+                        + " line of the list reads \"too many errors; the rest were not reported\", and you fix the"
+                        + " ones above it before you compile again.")
                 .paragraph("The editor's problem list, see [the editors](jsc:sigma_editors), groups the problems by"
                         + " file. The file with the most problems comes first, so the list starts with the file that"
                         + " needs the most work.")
@@ -102,9 +102,7 @@ final class SigmaErrorsPages {
                 .row(GuideCell.words("Sigma#"), GuideCell.words("Σ#"), GuideCell.code("sgs"),
                         GuideCell.words("Everything the language has."))
                 .paragraph("The compiler builds a program for the oldest instruction set that runs every instruction"
-                        + " the program uses. An instruction set is the list of machine instructions a computer's"
-                        + " processor runs, and each computer has one. If you ask for a newer instruction set, the"
-                        + " compiler keeps your choice.")
+                        + " the program uses. If you ask for a newer instruction set, the compiler keeps your choice.")
                 .paragraph("The compiler reads at most 128 levels of nesting, which means blocks inside blocks inside"
                         + " blocks. Deeper than that, it reports code S2013 and does not read the rest of the file.")
                 .define("syntax error", "A mistake in the shape of the text: a missing bracket, a word where a"
@@ -116,8 +114,8 @@ final class SigmaErrorsPages {
                 .define("instruction set", "The machine instructions a computer's processor runs. Each computer has"
                         + " one, and a program is built for one.")
                 .ifSomethingGoesWrong("The list changed after you fixed one line, and new mistakes appeared.",
-                        "That is expected: the steps hide each other's mistakes. Fix the new first line and compile"
-                                + " again.",
+                        "That is expected: the steps hide each other's mistakes. Fix the first line of the new list,"
+                                + " then compile again.",
                         "The compiler gives you a list of mistakes and no listing.",
                         "The listing is written only when no mistake is left. Fix every line in the list, then"
                                 + " compile again.")
@@ -271,8 +269,8 @@ final class SigmaErrorsPages {
                                 + " project's version, or do not use the name."))
                 .row(GuideCell.code("S3028"),
                         GuideCell.words("'<name>' does not name a type"),
-                        GuideCell.words("Current builds do not give this message, so you should not meet it. If you"
-                                + " do, write the name of a type in that place."))
+                        GuideCell.words("This message is no longer shown, so you should not meet it. If you do,"
+                                + " write the name of a type in that place."))
                 .table("Types and conversions", "Code", "Message", "What it means and the fix")
                 .row(GuideCell.code("S3003"),
                         GuideCell.words("cannot convert '<type>' to '<type>'"),
@@ -480,7 +478,7 @@ final class SigmaErrorsPages {
         guide.page("sigma_build_errors", section).titled("Build refusals")
                 .paragraph("The compiler can also refuse a build for two reasons that have nothing to do with the"
                         + " mistakes of your text. The first is a feature the compiler does not build yet. The second"
-                        + " is an oldest machine that runs only the oldest instruction set.")
+                        + " is a target machine that runs only the oldest instruction set.")
                 .table("Refusals while building", "Code", "Message", "What it means and the fix")
                 .row(GuideCell.code("S4011"),
                         GuideCell.words("a string with holes that was never reduced is not built yet"),
@@ -502,7 +500,8 @@ final class SigmaErrorsPages {
                 .ifSomethingGoesWrong("It says a lambda is not built yet, or a text is not built yet.",
                         "The compiler does not support that form yet. Write the lambda or the text another way.",
                         "It says IA-16 runs Σ only.",
-                        "Your Sigma# program was asked for the oldest machines. Write it in Sigma, in a Sigma project.")
+                        "Your Sigma# program targets the oldest instruction set, IA-16, which runs only Sigma. Write it"
+                                + " in Sigma, in a Sigma project.")
                 .seeAlso("jsc:sigma_compile_errors")
                 .register();
     }
@@ -517,8 +516,8 @@ final class SigmaErrorsPages {
                 .paragraph("The machine shows the program's name, a colon, and then the problem line. For example:"
                         + " \"<program>: (4,1): error A4003: 'nonsense' is not an instruction\". A listing problem"
                         + " always shows column 1.")
-                .paragraph("Listing problems come from two places: a listing you edited by hand, and a listing made by"
-                        + " another compiler version. A third cause is a machine that does not run the instruction set"
+                .paragraph("Listing problems come from three causes: a listing you edited by hand, a listing made by"
+                        + " another compiler version, and a machine that does not run the instruction set"
                         + " the program was built for. A listing that the editor builds cleanly shows no listing"
                         + " problem.")
                 .paragraph("The runtime reads listing versions 2 and 3. A listing with no version line gives A4001,"
@@ -538,8 +537,8 @@ final class SigmaErrorsPages {
                 .row(GuideCell.code("A4002"),
                         GuideCell.words("this runtime reads assembly version <version>, and this listing is version"
                                 + " <version>"),
-                        GuideCell.words("The listing came from a newer compiler than this runtime reads. The message"
-                                + " gives no other fix: the listing needs a runtime that reads its version."))
+                        GuideCell.words("The listing came from a newer compiler than this runtime reads, so it needs a"
+                                + " runtime that reads its version."))
                 .row(GuideCell.code("A4003"),
                         GuideCell.words("'<name>' is not an instruction"),
                         GuideCell.words("The name is not an instruction of the listing format. Check the spelling, or"
@@ -594,11 +593,12 @@ final class SigmaErrorsPages {
                                 + " do not write to it."))
                 .row(GuideCell.code("A4015"),
                         GuideCell.words("built for <instruction set>; this machine is <instruction set>"),
-                        GuideCell.words("The program was built for another instruction set than this machine runs."
-                                + " Build it for this machine's instruction set, or run it on a machine that runs"
+                        GuideCell.words("The program was built for another instruction set than this machine runs, so"
+                                + " build it for this machine's instruction set or run it on a machine that runs"
                                 + " that set."))
-                .paragraph("The last code is different. The listing is fine, and the machine is the wrong one. The"
-                        + " names that A4013 refers to are the ones described in [the library](jsc:sigma_library).")
+                .paragraph("The problem with A4015 is different. The listing is fine, and the machine is the wrong"
+                        + " one. The names that A4013 refers to are the ones described in"
+                        + " [the library](jsc:sigma_library).")
                 .ifSomethingGoesWrong("The machine shows an A4001 problem, a missing version line.",
                         "A listing edited by hand can lose its version line. Compile the source again.",
                         "The machine shows an A4002 problem, a listing newer than the runtime reads.",
@@ -622,8 +622,8 @@ final class SigmaErrorsPages {
                 .define("halt", "An error during a program's run, which stops the program at once and writes one"
                         + " message to its console.")
                 .paragraph("When a halt happens, the program's threads stop and the program lets go of its locks."
-                        + " The message is all you see of the stop. It does not say which line of the program caused"
-                        + " it.")
+                        + " The message is all you see of the stop. Most messages do not say which line of the program"
+                        + " caused it.")
                 .paragraph("The table below numbers the 13 stops, so you can find each one. The game shows you only"
                         + " the message, not the number. In this chapter a program's memory is counted in megabytes"
                         + " (MB).")
@@ -777,7 +777,7 @@ final class SigmaErrorsPages {
                 .define("frame", "One active method call on a thread. A thread keeps one frame for each call that"
                         + " has not returned yet.")
                 .ifSomethingGoesWrong("It says divided by zero.",
-                        "Check the number you divide by, before the division. The message gives no other fix.",
+                        "Check the number you divide by, before the division.",
                         "It says out of memory.",
                         "Make the program hold fewer or smaller values, or give it more memory when it starts, up to"
                                 + " 64 MB.",

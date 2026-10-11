@@ -115,7 +115,7 @@ final class StoragePages {
                         "A slot says \"Blocked - the chassis does not cable this slot\".",
                         "That slot cannot hold a disk or a gadget. Use another slot.",
                         "A slot says \"Blocked - no unit in this row cables these slots\".",
-                        "That slot cannot hold a disk or a gadget. Use another slot.")
+                        "Use a slot that a unit in this row cables.")
                 .seeAlso("jsc:server_racks", "jsc:raid_arrays", "jsc:local_storage")
                 .register();
     }
@@ -130,7 +130,7 @@ final class StoragePages {
                         + " fluids and chemicals ([](jsc:items_as_data)). Once a disk holds something, its tooltip"
                         + " shows a line that starts with \"Used\".")
                 .paragraph("Each computer keeps its own disks as local storage, and that storage works without any"
-                        + " network. The computer shows its room in storage slots, a display unit of 64 items.")
+                        + " network. The computer shows its room in storage slots.")
                 .define("Storage slot", "A unit the game uses to show a computer's room, 64 items each. It is not a"
                         + " limit on what a disk holds.")
                 .table("Storage slots by computer", "Computer", "Disk slots", "Storage slots shown")
@@ -142,8 +142,8 @@ final class StoragePages {
                 .warning("Formatting a disk erases everything on it: the items the network keeps there, and its"
                         + " files and installed systems. Take out what you need first.")
                 .paragraph("Pulling a disk out of a computer does not erase it. The disk keeps its data for the"
-                        + " next machine it goes into. In a server's bay, the RAID mode decides"
-                        + " ([](jsc:raid_arrays)).")
+                        + " next machine it goes into. In a server's bay, the array's RAID mode decides what happens"
+                        + " to that data ([](jsc:raid_arrays)).")
                 .subheading("Who may read a disk")
                 .paragraph("The network does not read a computer's disks unless you let it. Each disk has a public"
                         + " share: the part of it that the network may read, counted in per-mille (parts of a"
@@ -155,7 +155,7 @@ final class StoragePages {
                 .row(GuideCell.code("1000"), GuideCell.words("Reads the whole disk."))
                 .paragraph("On a computer, you set the public share of its system disk in the Settings program,"
                         + " under Network, as \"System disk public share\" ([](jsc:this_pc_and_desktop_tools)). Each"
-                        + " step moves it by 5%.")
+                        + " step moves it by 5%, which is 50 per-mille.")
                 .paragraph("The network can take items out of a computer's public part, but it never puts items"
                         + " into it. The disks of a server are always fully public.")
                 .paragraph("In the Network Manager ([](jsc:network_manager)), each computer's line shows its share"
@@ -185,8 +185,7 @@ final class StoragePages {
                 .paragraph("Some items go back to the server they came from first, as far as that server has room."
                         + " This is how the results of a craft return ([](jsc:asking_for_a_craft)).")
                 .subheading("When items come out")
-                .paragraph("Taking items out uses another order: the fastest storage first, then the fuller one."
-                        + " Speed here means read latency: the ticks a storage waits before it gives items out.")
+                .paragraph("Taking items out uses another order: the fastest storage first, then the fuller one.")
                 .table("Read latency of the network's disks", "Disk", "Read latency")
                 .row(GuideCell.words("Hard disk (HDD)"), GuideCell.words("10 ticks"))
                 .row(GuideCell.words("Solid-state drive (SSD)"), GuideCell.words("3 ticks"))
@@ -228,7 +227,7 @@ final class StoragePages {
                 .paragraph("Its storage is much slower than the network's own disks. The speed below shows by how"
                         + " much.")
                 .paragraph("The Vintage, Legacy, Transition and Advanced versions carry their era in their names,"
-                        + " such as \"Vintage External Storage Bus\".")
+                        + " such as \"Vintage External Storage Bus\". The Standard version has the plain name.")
                 .subheading("What each era can do")
                 .table("The External Storage Bus by era", "Era", "Filter and access", "Priority",
                         "Tags and looser matching")
@@ -247,11 +246,11 @@ final class StoragePages {
                         + " and a Vintage bus always reads and writes.")
                 .table("Access of the bus", "Setting", "What the network does")
                 .row(GuideCell.words("READ AND WRITE"), GuideCell.words("Takes items out of the inventory and puts"
-                        + " items into it. This is the default."))
-                .row(GuideCell.words("READ ONLY"), GuideCell.words("Only takes items out. It never fills the"
+                        + " items into it (the default)."))
+                .row(GuideCell.words("READ ONLY"), GuideCell.words("Only takes items out, and never fills the"
                         + " inventory."))
-                .row(GuideCell.words("WRITE ONLY"), GuideCell.words("Only puts items in. What is in the inventory is"
-                        + " never taken, nor seen."))
+                .row(GuideCell.words("WRITE ONLY"), GuideCell.words("Only puts items in; what is in the inventory"
+                        + " is never taken or seen."))
                 .paragraph("The filter decides which items the bus lets through. With no item listed, the bus lets"
                         + " everything through. With items listed, only those pass, or with \"ALL BUT THESE\""
                         + " everything except them.")
@@ -304,14 +303,13 @@ final class StoragePages {
                 .row(GuideCell.words("Tank item"), GuideCell.words("Gives up as much as fits, up to what the item"
                         + " allows at once. The emptied tank comes back."))
                 .paragraph("Taking fluid out works the other way. A bucket is filled only with a full bucket's worth."
-                        + " A refill puts back whatever the network could not take.")
+                        + " Any fluid the network could not take goes back into the container.")
                 .subheading("Chemicals")
                 .define("Chemical", "A substance that a mod such as Mekanism keeps in its own tanks.")
                 .define("Bridge", "The piece of this mod that teaches the network how to read a chemical mod's"
                         + " tanks.")
-                .paragraph("Chemicals are stored as data too, and a chemical takes room in millibuckets, like a"
-                        + " fluid. They need Mekanism: install it, and a chemical bridge lets the network read its"
-                        + " chemical tanks ([](jsc:mekanism)).")
+                .paragraph("Chemicals take room in millibuckets, like a fluid. They need Mekanism: install it, and a"
+                        + " chemical bridge lets the network read its chemical tanks ([](jsc:mekanism)).")
                 .ifSomethingGoesWrong(
                         "The fluid does not go in.",
                         "The network's storage has no room left. Add disks or servers"
@@ -376,8 +374,8 @@ final class StoragePages {
                         GuideCell.words("That slot cannot hold a disk or a gadget. Use another slot."))
                 .warning("Pulling any disk out of a RAID 0 array erases the data on every disk of the array."
                         + " RAID 0 keeps no second copy.")
-                .paragraph("Pulling a disk out of a RAID 1 or RAID 5 array moves what the other disks can take onto"
-                        + " them. The array keeps working while it waits for a replacement, and it rebuilds when the"
+                .paragraph("Pulling a disk out of a RAID 1 or RAID 5 array keeps its items on the other disks. The"
+                        + " array keeps working while it waits for a replacement, and it rebuilds when the"
                         + " replacement goes into the bay ([](jsc:raid_arrays)).")
                 .subheading("Room on a disk")
                 .ifSomethingGoesWrong(
@@ -387,7 +385,7 @@ final class StoragePages {
                         "A file does not fit, and the computer says \"Not enough free space\".",
                         "Delete files you do not need, or use a bigger disk.",
                         "Installing a system says \"The target disk has no room for <system> (<number> MB needed).\"",
-                        "Use a bigger disk. The number is in megabytes (MB), the room the system takes.")
+                        "Use a bigger disk. The number is the room in megabytes (MB) that the system needs.")
                 .seeAlso("jsc:local_storage", "jsc:external_storage_bus", "jsc:raid_arrays", "jsc:disks")
                 .register();
     }

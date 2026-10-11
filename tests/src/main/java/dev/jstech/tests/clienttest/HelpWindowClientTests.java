@@ -37,10 +37,20 @@ public final class HelpWindowClientTests {
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
     private static final BlockPos PLAYER_AT_MONITOR = new BlockPos(8, 2, 2);
     private static final String MANUAL = "Technical Reference";
+    /** The book each system's help opens on, the one written for it, ahead of the others. */
+    private static final String FRAMES_BOOK = "Frames Resource Kit";
+    private static final String LINUX_BOOK = "The Linux Desk Reference";
+    private static final String UNIX_BOOK = "The Daemon Handbook";
     private static final String CARDS_TITLE = "Graphics cards";
-    private static final String COMPUTERS_CHAPTER = " J's Computers";
-    private static final String CHAPTER = HelpTarget.node(CoreGuide.TECHNICAL_REFERENCE, "jsc").written();
+    private static final String BUILDING_CHAPTER = " Building computers";
+    /** The Technical Reference's top page, among the other manuals a book's top page lists. */
+    private static final String REFERENCE = HelpTarget.contents(CoreGuide.TECHNICAL_REFERENCE).written();
+    /** J's Computers' chapter on building computers, which holds the section on the parts of a computer. */
+    private static final String BUILDING = HelpTarget.node(CoreGuide.TECHNICAL_REFERENCE, "jsc:building_computers")
+            .written();
     private static final String HARDWARE = HelpTarget.node(CoreGuide.TECHNICAL_REFERENCE, "jsc:hardware").written();
+    /** What Find is asked for: every book is searched, so the words are the entry's own title. */
+    private static final String SEARCHED = "graphics cards";
     private static final String CARDS = HelpTarget.node(CoreGuide.TECHNICAL_REFERENCE, "jsc:graphics_cards")
             .written();
 
@@ -55,10 +65,12 @@ public final class HelpWindowClientTests {
                 .thenWaitUntil(() -> help(ctx) != null && help(ctx).treeRows().contains(MANUAL), SCREEN_WAIT,
                         "Help Topics to list the Technical Reference")
                 .thenAssert(0, () -> help(ctx).form() == HelpForm.FRAMES_95, "Frames 95's Help Topics")
+                .thenAssert(0, () -> help(ctx).treeRows().getFirst().endsWith(FRAMES_BOOK),
+                        "the book written for Frames first")
                 .thenScreenshot(2, "help-95-contents")
                 .then(SETTLE, () -> ctx.clickDesktop(help(ctx).tabCentre(2)))
                 .then(SETTLE, () -> ctx.clickDesktop(help(ctx).searchCentre()))
-                .then(1, () -> ctx.type("graphics"))
+                .then(1, () -> ctx.type(SEARCHED))
                 .thenWaitUntil(() -> row(ctx, CARDS_TITLE) != null, SCREEN_WAIT, "Find to list the entry")
                 .then(SETTLE, () -> ctx.clickDesktop(help(ctx).rowCentre(row(ctx, CARDS_TITLE))))
                 .then(SETTLE, () -> ctx.clickDesktop(help(ctx).buttonCentre(0)))
@@ -72,11 +84,12 @@ public final class HelpWindowClientTests {
     public static void framesXp_searchesAndFollowsTheResult(final ClientTestContext ctx) {
         onFrames(ctx, "frames_xp")
                 .then(0, () -> DesktopScreen.requestOpen(HelpViewerApp.KEY))
-                .thenWaitUntil(() -> help(ctx) != null && help(ctx).pageLinks().contains(CHAPTER), SCREEN_WAIT,
-                        "the Help and Support Center to open on the Technical Reference")
+                .thenWaitUntil(() -> help(ctx) != null && help(ctx).pageLinks().contains(REFERENCE), SCREEN_WAIT,
+                        "the Help and Support Center to open on the book written for Frames, the others under it")
                 .thenAssert(0, () -> help(ctx).form() == HelpForm.FRAMES_XP, "XP's Help and Support Center")
+                .thenAssert(0, () -> words(help(ctx)).startsWith(FRAMES_BOOK), "the book written for Frames first")
                 .then(SETTLE, () -> ctx.clickDesktop(help(ctx).searchCentre()))
-                .then(1, () -> ctx.type("graphics"))
+                .then(1, () -> ctx.type(SEARCHED))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> help(ctx).pageLinks().contains(CARDS) && help(ctx).linkCentre(CARDS) != null,
                         SCREEN_WAIT, "the search to find the entry")
@@ -90,39 +103,47 @@ public final class HelpWindowClientTests {
     /** 7's Help and Support, followed from the tree. */
     @ClientTest(timeoutTicks = 2400)
     public static void frames7_followsTheTreeToTheEntry(final ClientTestContext ctx) {
-        downTheTree(onFrames(ctx, "frames_7"), ctx, HelpForm.FRAMES_7, "help-7");
+        downTheTree(onFrames(ctx, "frames_7"), ctx, HelpForm.FRAMES_7, FRAMES_BOOK, "help-7");
     }
 
     /** 11's Get Help, followed from the tree. */
     @ClientTest(timeoutTicks = 2400)
     public static void frames11_followsTheTreeToTheEntry(final ClientTestContext ctx) {
-        downTheTree(onFrames(ctx, "frames_11"), ctx, HelpForm.GET_HELP, "help-11");
+        downTheTree(onFrames(ctx, "frames_11"), ctx, HelpForm.GET_HELP, FRAMES_BOOK, "help-11");
     }
 
     /** KDE's Help Center, followed from the tree. */
     @ClientTest(timeoutTicks = 2400)
     public static void kde_followsTheTreeToTheEntry(final ClientTestContext ctx) {
-        downTheTree(onLinux(ctx, "jsc:kde_plasma"), ctx, HelpForm.KDE, "help-kde");
+        downTheTree(onLinux(ctx, "jsc:kde_plasma"), ctx, HelpForm.KDE, LINUX_BOOK, "help-kde");
     }
 
     /** CDE's Help Viewer, followed from its topic hierarchy, and Backtrack back up. */
     @ClientTest(timeoutTicks = 3600)
     public static void cde_followsTheHierarchyAndBacktracks(final ClientTestContext ctx) {
-        downTheTree(onCde(ctx), ctx, HelpForm.CDE, "help-cde")
+        downTheTree(onCde(ctx), ctx, HelpForm.CDE, UNIX_BOOK, "help-cde")
                 .then(SETTLE, () -> ctx.clickDesktop(help(ctx).buttonCentre(0)))
                 .thenWaitUntil(() -> help(ctx).shownPage().equals(HARDWARE), SCREEN_WAIT,
                         "Backtrack to go back to the section");
     }
 
-    /** GNOME's Help has no tree: its pages lead down, and the trail says where the entry is. */
+    /**
+     * GNOME's Help has no tree: it opens on the book written for the system, whose top page lists the other manuals,
+     * and its pages lead down from there.
+     */
     @ClientTest(timeoutTicks = 2400)
     public static void gnome_followsThePagesDownToTheEntry(final ClientTestContext ctx) {
         onLinux(ctx, "jsc:gnome")
                 .then(0, () -> DesktopScreen.requestOpen(HelpViewerApp.KEY))
-                .thenWaitUntil(() -> help(ctx) != null && help(ctx).linkCentre(CHAPTER) != null, SCREEN_WAIT,
-                        "Help to open on the Technical Reference's chapters")
+                .thenWaitUntil(() -> help(ctx) != null && help(ctx).linkCentre(REFERENCE) != null, SCREEN_WAIT,
+                        "Help to open on the book written for Ubuntu, the other manuals listed under it")
                 .thenAssert(0, () -> help(ctx).form() == HelpForm.YELP, "GNOME's Help")
-                .then(SETTLE, () -> ctx.clickDesktop(help(ctx).linkCentre(CHAPTER)))
+                .thenAssert(0, () -> words(help(ctx)).contains(LINUX_BOOK), "the book written for Ubuntu first")
+                .thenScreenshot(2, "help-gnome-home")
+                .then(SETTLE, () -> ctx.clickDesktop(help(ctx).linkCentre(REFERENCE)))
+                .thenWaitUntil(() -> help(ctx).linkCentre(BUILDING) != null, SCREEN_WAIT,
+                        "the Technical Reference's chapters")
+                .then(SETTLE, () -> ctx.clickDesktop(help(ctx).linkCentre(BUILDING)))
                 .thenWaitUntil(() -> help(ctx).linkCentre(HARDWARE) != null, SCREEN_WAIT, "the chapter's sections")
                 .then(SETTLE, () -> ctx.clickDesktop(help(ctx).linkCentre(HARDWARE)))
                 .thenWaitUntil(() -> help(ctx).linkCentre(CARDS) != null, SCREEN_WAIT, "the section's entries")
@@ -131,15 +152,22 @@ public final class HelpWindowClientTests {
                 .thenScreenshot(2, "help-gnome-entry");
     }
 
-    /** Opens help, then follows the tree's Computers chapter, its Hardware section and the entry on graphics cards. */
+    /**
+     * Opens help on the book written for the system, then goes to the Technical Reference and follows its chapter of
+     * J's Computers on building computers, the section on the parts and the entry on graphics cards.
+     */
     private static ClientTestContext downTheTree(final ClientTestContext chain, final ClientTestContext ctx,
-                                                 final HelpForm form, final String shot) {
+                                                 final HelpForm form, final String book, final String shot) {
         return chain.then(0, () -> DesktopScreen.requestOpen(HelpViewerApp.KEY))
-                .thenWaitUntil(() -> help(ctx) != null && row(ctx, COMPUTERS_CHAPTER) != null, SCREEN_WAIT,
-                        "help to list the Technical Reference's chapters")
+                .thenWaitUntil(() -> help(ctx) != null && reference(ctx) != null, SCREEN_WAIT,
+                        "help to open on its books")
                 .thenAssert(0, () -> help(ctx).form() == form, "the desktop's own form of help")
+                .thenAssert(0, () -> help(ctx).treeRows().getFirst().endsWith(book),
+                        "the book written for the system first")
                 .thenScreenshot(2, shot + "-home")
-                .then(SETTLE, () -> ctx.clickDesktop(help(ctx).rowCentre(row(ctx, COMPUTERS_CHAPTER))))
+                .then(SETTLE, () -> ctx.clickDesktop(reference(ctx)))
+                .thenWaitUntil(() -> building(ctx) != null, SCREEN_WAIT, "the Technical Reference's chapters")
+                .then(SETTLE, () -> ctx.clickDesktop(building(ctx)))
                 .thenWaitUntil(() -> help(ctx).linkCentre(HARDWARE) != null, SCREEN_WAIT,
                         "the chapter's page to list its sections")
                 .then(SETTLE, () -> ctx.clickDesktop(help(ctx).linkCentre(HARDWARE)))
@@ -148,9 +176,29 @@ public final class HelpWindowClientTests {
                 .then(SETTLE, () -> ctx.clickDesktop(help(ctx).linkCentre(CARDS)))
                 .thenWaitUntil(() -> help(ctx).shownPage().equals(CARDS) && words(help(ctx)).contains(CARDS_TITLE),
                         SCREEN_WAIT, "the entry on graphics cards")
-                .thenAssert(0, () -> help(ctx).treeRows().stream().anyMatch(label -> label.endsWith(CARDS_TITLE
-                        + " (GPU)")), "the tree opened down to the entry shown")
+                .thenAssert(0, () -> help(ctx).treeRows().stream().anyMatch(label -> label.endsWith(CARDS_TITLE)),
+                        "the tree opened down to the entry shown")
                 .thenScreenshot(2, shot + "-entry");
+    }
+
+    /**
+     * Where to click for the Technical Reference: its row in the tree when the row is in view, else its link among the
+     * other manuals on the book's top page; null while neither is shown.
+     */
+    @Nullable
+    private static int[] reference(final ClientTestContext ctx) {
+        final String row = row(ctx, MANUAL);
+        return row != null ? help(ctx).rowCentre(row) : help(ctx) == null ? null : help(ctx).linkCentre(REFERENCE);
+    }
+
+    /**
+     * Where to click for the chapter on building computers: its row in the tree when the row is in view, else its link
+     * on the page, as CDE's short topic hierarchy shows only the first chapters; null while neither is shown.
+     */
+    @Nullable
+    private static int[] building(final ClientTestContext ctx) {
+        final String row = row(ctx, BUILDING_CHAPTER);
+        return row != null ? help(ctx).rowCentre(row) : help(ctx) == null ? null : help(ctx).linkCentre(BUILDING);
     }
 
     /** A personal computer running that Frames edition, at its desktop. */

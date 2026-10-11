@@ -68,6 +68,12 @@ public final class GuideLayout {
     /** The words the tables laid so far had to cut, too wide for any room they had. */
     private final List<String> cut = new ArrayList<>();
     private List<GuidePiece> pieces = new ArrayList<>();
+    /**
+     * Where the last heading's lines start among the open page's pieces while nothing stands under it yet, or -1, and
+     * how tall it is: what it heads moving on carries it along.
+     */
+    private int headingFrom = -1;
+    private int headingHeight;
     private int y;
     private int column;
     private int front;
@@ -126,6 +132,9 @@ public final class GuideLayout {
     public static final int CODE_PITCH = 9;
     public static final int CODE_PAD = 2;
     public static final int LISTING_GUTTER = 13;
+    /** The width of the Copy button at the right end of a listing's strip, and the room kept clear around it. */
+    public static final int LISTING_COPY = 24;
+    private static final int LISTING_COPY_ROOM = LISTING_COPY + 13;
     /** A session at a terminal: the strip with its name, and the room between its frame and its text. */
     public static final int SESSION_HEAD = 9;
     public static final int SESSION_PAD = 3;
@@ -156,6 +165,8 @@ public final class GuideLayout {
     /** The fewest rows a part of a parted table keeps, at the foot of one page and at the top of the next. */
     private static final int MIN_PART_ROWS = 3;
     private static final int TITLE_GAP = 2;
+    /** How many lines of what a heading heads must fit under it on its page, or it starts the next. */
+    private static final int HEADING_KEEPS = 4;
     private static final int LEGEND_GAP = 8;
     /** The chapter's opening page: the room beside its number, under it, and the height of a line of its sections. */
     private static final int OPENER_GAP = 12;
@@ -173,6 +184,12 @@ public final class GuideLayout {
     private static final String GLOSSARY_FOLIO = "GL-";
     /** The least room a glossary's word leaves for the dots before its page, before it runs on to a second line. */
     private static final int LEAST_DOTS = 12;
+    /**
+     * A line of the contents, laid before the page it leads to is known: the widest page of a chapter it keeps clear
+     * after the chapter's number, and the least room it leaves for dots.
+     */
+    private static final String FOLIO_PAGES = "-000";
+    private static final int LEADER_DOTS = 6;
     /** The fewest lines of what a glossary's word means at the foot of one page and at the top of the next. */
     private static final int LEAST_LINES = 2;
 
@@ -310,8 +327,7 @@ public final class GuideLayout {
         this.glossary = GuideGlossary.of(contents, this.text);
         this.commandEntries = GuideCommandPage.entries(contents, this.text);
         final List<Leader> contentsLines = this.drawings ? List.of() : this.contentsLines(contents);
-        final int contentsPages = this.drawings ? 0
-                : Math.max(1, this.pagesFor(contentsLines.size(), TextSize.BODY, TextSize.TITLE));
+        final int contentsPages = this.drawings ? 0 : this.contentsPages(contentsLines);
         // Two pages side by side start a chapter on a left page; an even front matter keeps that count simple.
         final boolean pad = this.style.spread() && !this.drawings && (contentsPages + 1) % 2 == 1;
         this.front = contentsPages + 1 + (pad ? 1 : 0);
@@ -451,16 +467,35 @@ public final class GuideLayout {
             this.y += BLOCK_GAP;
         }
         for (final GuideContents.Section section : part.sections()) {
-            this.ensure(OPENER_ROW);
-            final int rowX = this.x();
             final String id = section.section().id();
+            final String sectionNumber = this.numbers.get(id);
+            final int hang = this.text.width(sectionNumber, TextSize.BOLD) + this.text.width(" ", TextSize.BODY);
+            final int room = this.width - ICON - 2;
+            // A title too long for its row runs on under itself, the dots and its page after its last line.
+            final List<String> words = wrap(this.text.text(section.section().titleKey()), room - hang
+                    - this.text.width(this.chapterNumber + FOLIO_PAGES, TextSize.BODY) - LEADER_DOTS, TextSize.BODY,
+                    this.text);
+            this.ensure(OPENER_ROW + (words.size() - 1) * TextSize.BODY.lineHeight());
+            final int rowX = this.x();
             if (!section.section().icon().isEmpty()) {
                 this.place(new GuidePiece.Item(rowX, this.y, section.section().icon(), 1));
             }
-            this.place(new GuidePiece.Leader(rowX + ICON + 2, this.y + 4, this.width - ICON - 2,
-                    this.numbers.get(id), " " + this.text.text(section.section().titleKey()), "", TextSize.BODY,
-                    GuideStyle.INK, id, ""));
-            this.y += OPENER_ROW;
+            int lineY = this.y + 4;
+            if (words.size() > 1) {
+                this.place(new GuidePiece.Text(rowX + ICON + 2, lineY, sectionNumber, TextSize.BOLD,
+                        GuideStyle.HEADING, ""));
+                for (final String line : words.subList(0, words.size() - 1)) {
+                    this.place(new GuidePiece.Text(rowX + ICON + 2 + hang, lineY, line, TextSize.BODY,
+                            GuideStyle.INK, ""));
+                    lineY += TextSize.BODY.lineHeight();
+                }
+                this.place(new GuidePiece.Leader(rowX + ICON + 2 + hang, lineY, room - hang, "", words.getLast(),
+                        "", TextSize.BODY, GuideStyle.INK, id, ""));
+            } else {
+                this.place(new GuidePiece.Leader(rowX + ICON + 2, lineY, room, sectionNumber, " " + words.getFirst(),
+                        "", TextSize.BODY, GuideStyle.INK, id, ""));
+            }
+            this.y = lineY - 4 + OPENER_ROW;
         }
     }
 
@@ -599,16 +634,27 @@ public final class GuideLayout {
 
     private void heading(final GuideBlock.Heading heading) {
         final TextSize size = this.sized(TextSize.HEADING);
-        this.ensure(size.lineHeight() + 2 * this.sized(TextSize.BODY).lineHeight());
+        final String words = this.upper(this.plainOf(this.text.text(heading.key())));
+        // A heading keeps a few lines of what it heads under it, so it is never left alone at a page's foot.
+        this.ensure(wrap(words, this.width, size, this.text).size() * size.lineHeight()
+                + HEADING_KEEPS * this.sized(TextSize.BODY).lineHeight());
         // A drawing's notes stand close, as lettered notes do: the gap after a paragraph is room enough.
         if (this.y > this.top && !this.style.decor().smallText()) {
             this.y += TITLE_GAP;
         }
         // What can go wrong stands out in the style's accent, so a reader in trouble finds it at a glance.
         final String colour = heading.leadsIntoTrouble() ? GuideStyle.ACCENT : GuideStyle.HEADING;
-        this.lines(this.upper(this.text.text(heading.key())), 0, this.width, size, colour, "");
+        final List<GuidePiece> page = this.pieces;
+        final int from = page.size();
+        final int startY = this.y;
+        this.lines(words, 0, this.width, size, colour, "");
         if (this.style.decor().smallText()) {
             this.y += 1;
+        }
+        if (this.pieces == page && page.subList(from, page.size()).stream()
+                .allMatch(piece -> piece instanceof GuidePiece.Text)) {
+            this.headingFrom = from;
+            this.headingHeight = this.y - startY;
         }
     }
 
@@ -648,10 +694,11 @@ public final class GuideLayout {
     }
 
     /**
-     * A table, shaped to the column ({@link GuideTable}). One that fits on a page is never parted: it moves on whole
-     * when the room left here is too little. One taller than a page runs on, its caption said again with "(continued)"
-     * and its head again over each part, and leaves at least three rows on either side of a part's end; a row taller
-     * than a page is cut between two of its lines rather than run past the page's foot.
+     * A table, shaped to the column ({@link GuideTable}). One that fits on a page moves on whole when the room left
+     * here is too little, unless that would leave more than half of the page empty: then it parts here, as a longer
+     * one does. One taller than a page runs on, its caption said again with "(continued)" and its head again over each
+     * part, and leaves at least three rows on either side of a part's end; a row taller than a page is cut between two
+     * of its lines rather than run past the page's foot.
      */
     private void table(final GuideBlock.Table declared) {
         this.tables++;
@@ -674,8 +721,14 @@ public final class GuideLayout {
         this.cut.addAll(table.cut());
         final int lead = (captioned ? this.captionHeight(label, caption) + CAPTION_GAP : 0) + table.headHeight();
         final int whole = lead + table.height();
+        final int fitsHere = whole(table, 0, this.bottom() - this.y - lead);
+        // Moving on whole would leave more than half of this page empty: the table parts here instead.
+        final boolean partsHere = this.bottom() - this.y >= (this.bottom() - this.top) / 2
+                && fitsHere >= MIN_PART_ROWS && table.rows() - fitsHere >= MIN_PART_ROWS;
         if (whole <= this.bottom() - this.top) {
-            this.ensure(whole);
+            if (!partsHere) {
+                this.ensure(whole);
+            }
         } else if (this.y > this.top
                 && whole(table, 0, this.bottom() - this.y - lead) < Math.min(MIN_PART_ROWS, table.rows())) {
             // A table that must part starts on the next page rather than leave a row or two at this one's foot.
@@ -742,8 +795,12 @@ public final class GuideLayout {
                 count -= MIN_PART_ROWS - left;
             }
             count = Math.min(count, rows.size() - at);
-            final String name = at == 0 ? block.name()
-                    : this.text.text(GuideTexts.TABLE_CONTINUED.key(), block.name()).strip();
+            final String continued = this.text.text(GuideTexts.TABLE_CONTINUED.key(), block.name()).strip();
+            // A strip too narrow for the name and "(continued)" beside the Copy button keeps the second only.
+            final boolean fits = this.text.width(label, TextSize.SMALL_BOLD) + this.text.width(continued,
+                    TextSize.SMALL) <= this.width - LISTING_COPY_ROOM;
+            final String name = at == 0 ? block.name() : fits ? continued
+                    : this.text.text(GuideTexts.TABLE_CONTINUED.key(), "").strip();
             this.place(new GuidePiece.Listing(this.x(), this.y, this.width, frame + count * CODE_PITCH, label, name,
                     LISTING_GUTTER, block.language(), block.lines()));
             for (int i = 0; i < count; i++) {
@@ -940,7 +997,7 @@ public final class GuideLayout {
         final int indent = small ? SMALL_FIX_INDENT : FIX_INDENT;
         for (final GuideBlock.Problem problem : problems.problems()) {
             this.ensure(2 * body.lineHeight());
-            this.lines(this.text.text(problem.problemKey()), 0, this.width, this.sized(TextSize.BOLD),
+            this.lines(this.plainOf(this.text.text(problem.problemKey())), 0, this.width, this.sized(TextSize.BOLD),
                     GuideStyle.INK, "");
             this.richLines(this.text.text(problem.fixKey()), indent, this.width - indent, body, GuideStyle.INK);
             this.y += small ? 3 : PARAGRAPH_GAP;
@@ -967,7 +1024,10 @@ public final class GuideLayout {
         at += this.text.width(lead, body);
         for (int i = 0; i < see.entries().size(); i++) {
             final String target = see.entries().get(i);
-            final String number = this.numbers.getOrDefault(target, GuideIds.path(target));
+            // A page this book does not hold is named by its title in the book that does.
+            final String held = this.numbers.get(target);
+            final String title = held == null ? this.titleElsewhere(target) : null;
+            final String number = held != null ? held : title != null ? title : GuideIds.path(target);
             final String joint = i == 0 ? "" : i == see.entries().size() - 1
                     ? " " + this.text.text(GuideTexts.AND.key()) + " " : ", ";
             final int needed = this.text.width(joint + number, body);
@@ -1090,8 +1150,9 @@ public final class GuideLayout {
     /** Blocks seen from above as they are placed, under the plan's title. */
     private void plan(final GuideBlock.Plan plan) {
         final TextSize bold = this.sized(TextSize.BOLD);
-        this.ensure(bold.lineHeight() + LABEL_GAP + PLAN_HEIGHT);
-        this.lines(this.text.text(plan.captionKey()), 0, this.width, bold, GuideStyle.HEADING, "");
+        final String caption = this.text.text(plan.captionKey());
+        this.ensure(wrap(caption, this.width, bold, this.text).size() * bold.lineHeight() + LABEL_GAP + PLAN_HEIGHT);
+        this.lines(caption, 0, this.width, bold, GuideStyle.HEADING, "");
         this.y += LABEL_GAP;
         final List<GuidePiece.PlanPart> parts = new ArrayList<>();
         for (final GuideBlock.PlanPart part : plan.parts()) {
@@ -1185,7 +1246,8 @@ public final class GuideLayout {
         final List<List<Run>> words = new ArrayList<>();
         List<Run> word = new ArrayList<>();
         // A word another entry explains leads there the first time this entry uses it.
-        final List<Run> runs = this.glossary.linked(GuideLinks.runs(sentence, this::numberOf, this::elsewhere),
+        final List<Run> runs = this.glossary.linked(GuideLinks.runs(sentence, this::numberOf, this::elsewhere,
+                this::titleElsewhere),
                 this.currentEntry, this.usedTerms);
         for (final Run run : runs) {
             if (run.key()) {
@@ -1215,9 +1277,13 @@ public final class GuideLayout {
         if (!word.isEmpty()) {
             words.add(word);
         }
+        final List<List<Run>> fitted = new ArrayList<>();
+        for (final List<Run> each : words) {
+            fitted.addAll(this.brokenWord(each, room, size));
+        }
         final List<List<Run>> lines = new ArrayList<>();
         List<Run> line = new ArrayList<>();
-        for (final List<Run> next : words) {
+        for (final List<Run> next : fitted) {
             final List<Run> tried = new ArrayList<>(line);
             if (!tried.isEmpty()) {
                 // A space between two words of one link belongs to the link; any other to the plain words.
@@ -1241,6 +1307,40 @@ public final class GuideLayout {
             joined.add(join(each));
         }
         return joined;
+    }
+
+    /**
+     * A word too wide for the room on its own, as a name in code or a setting is, in pieces that fit, broken where
+     * {@link #pieces} breaks a word, each character still leading where it did. A word with a key in it is left whole.
+     */
+    private List<List<Run>> brokenWord(final List<Run> word, final int room, final TextSize size) {
+        if (word.stream().anyMatch(Run::key) || this.runsWidth(word, size) <= room) {
+            return List.of(word);
+        }
+        final StringBuilder whole = new StringBuilder();
+        final List<String> targets = new ArrayList<>();
+        for (final Run run : word) {
+            whole.append(run.text());
+            for (int i = 0; i < run.text().length(); i++) {
+                targets.add(run.target());
+            }
+        }
+        final List<List<Run>> broken = new ArrayList<>();
+        int at = 0;
+        for (final String piece : pieces(whole.toString(), room, size, this.text)) {
+            final int end = at + piece.length();
+            final List<Run> runs = new ArrayList<>();
+            int start = at;
+            for (int i = at + 1; i <= end; i++) {
+                if (i == end || !targets.get(i).equals(targets.get(start))) {
+                    runs.add(new Run(whole.substring(start, i), targets.get(start)));
+                    start = i;
+                }
+            }
+            broken.add(runs);
+            at = end;
+        }
+        return broken;
     }
 
     /** Places lines of runs from the cursor down, each {@code indent} into its column, running on where it must. */
@@ -1302,6 +1402,17 @@ public final class GuideLayout {
         return book.isEmpty() ? null : this.text.text(GuideTexts.IN_BOOK.key(), book);
     }
 
+    /** A sentence as plain words: its links as their words and numbers, its keys as their names in brackets. */
+    private String plainOf(final String sentence) {
+        return GuideLinks.plain(sentence, this::numberOf, this::elsewhere, this::titleElsewhere);
+    }
+
+    /** For a link's target this manual does not hold, its title in the book that does, or null. */
+    private String titleElsewhere(final String target) {
+        final String title = this.text.titleOf(target);
+        return title.isEmpty() ? null : title;
+    }
+
     /** Runs side by side that lead to the same place made one, so a link is one piece to point at; a key stays one. */
     private static List<Run> join(final List<Run> runs) {
         final List<Run> joined = new ArrayList<>();
@@ -1324,13 +1435,33 @@ public final class GuideLayout {
         }
     }
 
-    /** Goes on at the top of the next column, or of the next page after the last column. */
+    /**
+     * Goes on at the top of the next column, or of the next page after the last column. A heading with nothing yet
+     * under it goes on too, at the top, so it is never left alone at the foot of the column before what it heads.
+     */
     private void nextColumn() {
+        final List<GuidePiece> heading = new ArrayList<>();
+        final int fromX = this.x();
+        final int fromY = this.y - this.headingHeight;
+        // A heading already at the top of its column stays: carried on, it would leave the column empty.
+        if (this.headingFrom >= 0 && this.headingFrom < this.pieces.size() && fromY > this.top) {
+            heading.addAll(this.pieces.subList(this.headingFrom, this.pieces.size()));
+            this.pieces.subList(this.headingFrom, this.pieces.size()).clear();
+        }
         if (this.column + 1 < this.style.pages().columns()) {
             this.column++;
             this.y = this.top;
         } else {
             this.startPage();
+        }
+        this.headingFrom = -1;
+        for (final GuidePiece piece : heading) {
+            final GuidePiece.Text line = (GuidePiece.Text) piece;
+            this.pieces.add(new GuidePiece.Text(line.x() - fromX + this.x(), line.y() - fromY + this.y, line.text(),
+                    line.size(), line.colour(), line.link()));
+        }
+        if (!heading.isEmpty()) {
+            this.y += this.headingHeight;
         }
     }
 
@@ -1338,6 +1469,7 @@ public final class GuideLayout {
     private void startPage() {
         this.finishPage();
         this.pieces = new ArrayList<>();
+        this.headingFrom = -1;
         this.y = this.top;
         this.column = 0;
         this.pageInChapter++;
@@ -1376,10 +1508,12 @@ public final class GuideLayout {
     }
 
     private void place(final GuidePiece piece) {
+        this.headingFrom = -1;
         this.pieces.add(piece);
     }
 
     private void placeAll(final List<GuidePiece> placed) {
+        this.headingFrom = -1;
         this.pieces.addAll(placed);
     }
 
@@ -1447,27 +1581,49 @@ public final class GuideLayout {
         int chapterNo = 0;
         for (final GuideContents.Chapter chapter : contents.chapters()) {
             chapterNo++;
-            lines.add(new Leader(chapterNo + "  " + this.text.text(chapter.chapter().titleKey()),
-                    chapter.chapter().id(), TextSize.BOLD, 0));
+            final String widest = chapterNo + FOLIO_PAGES;
+            lines.add(this.contentsLine(chapterNo + "  ", this.text.text(chapter.chapter().titleKey()),
+                    chapter.chapter().id(), TextSize.BOLD, 0, widest));
             for (final GuideContents.Section section : chapter.sections()) {
-                lines.add(new Leader(this.numbers.get(section.section().id()) + "  "
-                        + this.text.text(section.section().titleKey()), section.section().id(), TextSize.BODY,
-                        SECTION_INDENT));
+                lines.add(this.contentsLine(this.numbers.get(section.section().id()) + "  ",
+                        this.text.text(section.section().titleKey()), section.section().id(), TextSize.BODY,
+                        SECTION_INDENT, widest));
             }
         }
         if (!this.glossary.isEmpty()) {
-            lines.add(new Leader(this.text.text(GuideTexts.GLOSSARY.key()), GLOSSARY, TextSize.BOLD, 0));
+            lines.add(this.contentsLine("", this.text.text(GuideTexts.GLOSSARY.key()), GLOSSARY, TextSize.BOLD, 0,
+                    GLOSSARY_FOLIO + "1"));
         }
-        lines.add(new Leader(this.text.text(GuideTexts.INDEX.key()), "", TextSize.BOLD, 0));
+        lines.add(this.contentsLine("", this.text.text(GuideTexts.INDEX.key()), "", TextSize.BOLD, 0, "X-1"));
         return lines;
     }
 
-    /** How many pages that many lines take, the first page carrying a title above them. */
-    private int pagesFor(final int lines, final TextSize line, final TextSize title) {
-        final int room = bottom(this.style, 0) - this.top;
-        final int first = Math.max(1, (room - title.lineHeight() - BLOCK_GAP) / (line.lineHeight() + 2));
-        final int rest = Math.max(1, room / (line.lineHeight() + 2));
-        return lines <= first ? 1 : 1 + (lines - first + rest - 1) / rest;
+    /**
+     * A line of the contents, its title broken into as many lines as it needs beside the widest page it may lead to,
+     * the lines after the first set in under the title rather than under its number.
+     */
+    private Leader contentsLine(final String number, final String title, final String target, final TextSize size,
+                                final int indent, final String widest) {
+        final int hang = this.text.width(number, size);
+        final int room = this.fullWidth - indent - hang - this.text.width(widest, size) - LEADER_DOTS;
+        final List<String> lines = new ArrayList<>(wrap(title, room, size, this.text));
+        lines.set(0, number + lines.getFirst());
+        return new Leader(lines, hang, target, size, indent);
+    }
+
+    /** How many pages the contents take, the first carrying their title above them. */
+    private int contentsPages(final List<Leader> lines) {
+        final int bottom = bottom(this.style, 0);
+        int pages = 1;
+        int lineY = this.top + TextSize.TITLE.lineHeight() + BLOCK_GAP;
+        for (final Leader line : lines) {
+            if (lineY + line.height() > bottom) {
+                pages++;
+                lineY = this.top;
+            }
+            lineY += line.height();
+        }
+        return pages;
     }
 
     private void layContents(final List<GuideBook.Page> pages, final List<Leader> lines,
@@ -1480,17 +1636,23 @@ public final class GuideLayout {
         page.add(new GuidePiece.Text(x, lineY, contentsTitle, TextSize.TITLE, GuideStyle.HEADING, ""));
         lineY += TextSize.TITLE.lineHeight() + BLOCK_GAP;
         for (final Leader line : lines) {
-            final int height = line.size().lineHeight() + 2;
-            if (lineY + height > bottom) {
+            // A line that runs on keeps its lines together, on the next page when they do not fit this one.
+            if (lineY + line.height() > bottom) {
                 pages.add(new GuideBook.Page(roman(pages.size() + 1), contentsTitle, "", page));
                 page = new ArrayList<>();
                 lineY = this.top;
             }
             final String folio = line.target().isEmpty() ? "X-1" : GLOSSARY.equals(line.target())
                     ? GLOSSARY_FOLIO + "1" : this.folioOf(line.target(), bodyFolios);
-            page.add(new GuidePiece.Leader(x + line.indent(), lineY, this.fullWidth - line.indent(), "", line.text(),
+            final int lastX = x + line.indent() + (line.lines().size() > 1 ? line.hang() : 0);
+            for (int i = 0; i < line.lines().size() - 1; i++) {
+                page.add(new GuidePiece.Text(i == 0 ? x + line.indent() : lastX, lineY, line.lines().get(i),
+                        line.size(), GuideStyle.INK, ""));
+                lineY += line.size().lineHeight();
+            }
+            page.add(new GuidePiece.Leader(lastX, lineY, x + this.fullWidth - lastX, "", line.lines().getLast(),
                     folio, line.size(), GuideStyle.INK, line.target(), ""));
-            lineY += height;
+            lineY += line.size().lineHeight() + 2;
         }
         pages.add(new GuideBook.Page(roman(pages.size() + 1), contentsTitle, "", page));
     }
@@ -1631,7 +1793,7 @@ public final class GuideLayout {
         for (final GuideGlossary.Item item : this.glossary.items()) {
             final String first = item.term().substring(0, 1).toUpperCase(Locale.ROOT);
             final List<String> meaning = wrap(GuideLinks.plain(this.text.text(item.definitionKey()), this::numberOf,
-                    this::elsewhere), this.fullWidth - SECTION_INDENT, TextSize.BODY, this.text);
+                    this::elsewhere, this::titleElsewhere), this.fullWidth - SECTION_INDENT, TextSize.BODY, this.text);
             // The page that explains the word, as the index lists it.
             final String folio = index.stream().filter(line -> line.term() && line.text().equals(item.term())
                     && line.target().equals(item.entry())).map(GuideBook.IndexLine::folio).findFirst().orElse("");
@@ -1689,7 +1851,13 @@ public final class GuideLayout {
         String letter = "";
         for (final GuideBook.IndexLine line : lines) {
             final String first = line.text().isEmpty() ? "" : line.text().substring(0, 1).toUpperCase(Locale.ROOT);
-            final int height = TextSize.BODY.lineHeight() + 2 + (first.equals(letter) ? 0
+            final int indent = line.term() ? SECTION_INDENT : 0;
+            final TextSize size = line.term() ? TextSize.BODY : TextSize.BOLD;
+            // A line too long for the page runs on under itself, its item and its page beside its last words.
+            final int hang = line.icon().isEmpty() ? 0 : ICON - 4;
+            final List<String> words = wrap(line.text(), this.fullWidth - indent - hang
+                    - this.text.width(line.folio(), size) - LEADER_DOTS, size, this.text);
+            final int height = words.size() * TextSize.BODY.lineHeight() + 2 + (first.equals(letter) ? 0
                     : TextSize.LETTER.lineHeight());
             if (lineY + height > bottom) {
                 pages.add(new GuideBook.Page("X-" + number++, header, "", page));
@@ -1701,10 +1869,12 @@ public final class GuideLayout {
                 page.add(new GuidePiece.Text(x, lineY, letter, TextSize.LETTER, GuideStyle.HEADING, ""));
                 lineY += TextSize.LETTER.lineHeight();
             }
-            final int indent = line.term() ? SECTION_INDENT : 0;
-            page.add(new GuidePiece.Leader(x + indent, lineY, this.fullWidth - indent, "", line.text(),
-                    line.folio(), line.term() ? TextSize.BODY : TextSize.BOLD, GuideStyle.INK, line.target(),
-                    line.icon()));
+            for (final String part : words.subList(0, words.size() - 1)) {
+                page.add(new GuidePiece.Text(x + indent + hang, lineY, part, size, GuideStyle.INK, ""));
+                lineY += TextSize.BODY.lineHeight();
+            }
+            page.add(new GuidePiece.Leader(x + indent, lineY, this.fullWidth - indent, "", words.getLast(),
+                    line.folio(), size, GuideStyle.INK, line.target(), line.icon()));
             lineY += TextSize.BODY.lineHeight() + 2;
         }
         pages.add(new GuideBook.Page("X-" + number, header, "", page));
@@ -1720,8 +1890,18 @@ public final class GuideLayout {
                             int chapterNumber, int pageInChapter, String drawing, String title) {
     }
 
-    /** A line of the contents, before its page is known. */
-    private record Leader(String text, String target, TextSize size, int indent) {
+    /**
+     * A line of the contents, before its page is known.
+     *
+     * @param lines its title as it is broken, the first line opening with its number
+     * @param hang  how far in from the number the lines after the first are set
+     */
+    private record Leader(List<String> lines, int hang, String target, TextSize size, int indent) {
+
+        /** The height it takes on its page. */
+        int height() {
+            return this.lines.size() * this.size.lineHeight() + 2;
+        }
     }
 
     /** A line of the index, before its folio is known. */

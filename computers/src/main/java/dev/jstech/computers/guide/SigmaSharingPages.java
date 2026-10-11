@@ -57,7 +57,8 @@ final class SigmaSharingPages {
                 .paragraph("A key the game does not know is passed over, not refused. So a manifest written for a"
                         + " later version is still read here, without the newer ideas. When you publish a package,"
                         + " it goes to [the Mirror](jsc:mirror), the package service of the network, and the game"
-                        + " checks the manifest first.")
+                        + " checks the manifest first. The ram line is only recorded: the game does not refuse a"
+                        + " package on a small computer.")
                 .table("Keys of a manifest", "Key", "What it holds")
                 .row(GuideCell.code("name"), GuideCell.words("The package's name: lower case letters, digits and"
                         + " dashes, at most 32 characters."))
@@ -70,8 +71,7 @@ final class SigmaSharingPages {
                 .row(GuideCell.code("icon"), GuideCell.words("One of the eight icons below. Without this line the"
                         + " icon is gear."))
                 .row(GuideCell.code("ram"), GuideCell.words("The memory the package asks for, in megabytes: a"
-                        + " whole number of at least 1. The game records the value; it does not refuse a package"
-                        + " on a small computer."))
+                        + " whole number of at least 1."))
                 .row(GuideCell.code("about"), GuideCell.words("An optional line about the package. The Mirror shows"
                         + " it in place of the name and version."))
                 .row(GuideCell.code("file"), GuideCell.words("One line for each file the package carries, with its"
@@ -114,7 +114,7 @@ final class SigmaSharingPages {
                         "Add a file line with the same name as the entry.",
                         "The build says package.cpk: icon: must be one of gear, chart, box, bell, wrench, flask,"
                                 + " eye, clock; got \"star\".",
-                        "Pick one of the eight icons from the list above.",
+                        "Pick one of the eight icons: gear, chart, box, bell, wrench, flask, eye or clock.",
                         "The build says package.cpk: ram: a package needs at least a megabyte to run in.",
                         "Write 1 or a larger whole number on the ram line.",
                         "The build says package.cpk: files: a package with no files in it is not a package.",
@@ -152,8 +152,8 @@ final class SigmaSharingPages {
                         "Run sgpack init in this folder, or go to the folder that holds your manifest.",
                         "The build says sgpack: a file is named in the manifest but not here.",
                         "Copy that file into the folder, or remove its file line from package.cpk.",
-                        "The build says package.cpk: files: a file name is not a file name a package may carry;"
-                                + " it must stay inside the package's own folder.",
+                        "The build says package.cpk: files: and a name, then \"is not a file name a package may"
+                                + " carry; it must stay inside the package's own folder\".",
                         "Rename the file to a plain name, such as tools/run.asm, and change its file line to"
                                 + " match.")
                 .seeAlso("jsc:sigma_publish_mirror", "jsc:sigma_sharing_errors")
@@ -237,8 +237,8 @@ final class SigmaSharingPages {
                         + " first.")
                 .paragraph("The game unpacks each package into a folder of its own: PROGRAMS, then the package's"
                         + " name. The folder holds only that package's files, so two packages cannot overwrite each"
-                        + " other. The package then shows on the desktop with its icon, and opening it runs its entry"
-                        + " listing.")
+                        + " other. The package then shows on the desktop with its icon, and opening it runs the"
+                        + " program.")
                 .steps("Type the install command of your package manager, with the package's name.",
                         "Open the program from the desktop.")
                 .paragraph("To remove a package, type the remove command of your package manager, with its name, such"
@@ -265,8 +265,7 @@ final class SigmaSharingPages {
                         + " start with sgpack:. A line that starts with package.cpk: points at a line of your manifest."
                         + " A line that starts with a package file's name, such as mypkg-1.0.0.cpk:, comes from"
                         + " publish and points at that file.")
-                .paragraph("The table gives each text as the game shows it, with its cause and where its fix is"
-                        + " explained.")
+                .paragraph("The table gives each text as the game shows it, with what it means and how to fix it.")
                 .table("Errors of the sgpack command", "The text you see", "What it means and the fix")
                 .row(GuideCell.code("usage: sgpack init [name] | build | publish [file] | unpublish <name>"),
                         GuideCell.words("You typed no verb. Pick one of the four verbs."))
@@ -292,7 +291,7 @@ final class SigmaSharingPages {
                         GuideCell.words("The file is not a built package. Run sgpack build, then publish the .cpk"
                                 + " file."))
                 .row(GuideCell.code("the Mirror is full (64 packages)"),
-                        GuideCell.words("A new name is refused. Take a package off the Mirror"
+                        GuideCell.words("The Mirror has no room for a new name. Take a package off the Mirror"
                                 + " ([](jsc:sigma_unpublish))."))
                 .row(GuideCell.code("usage: sgpack unpublish <name>"),
                         GuideCell.words("unpublish has no name. Type the package's name after it."))
@@ -317,8 +316,8 @@ final class SigmaSharingPages {
                 .subheading("The window")
                 .table("Part of the window", "Part", "What it does")
                 .row(GuideCell.words("Push, Pull and Refresh"),
-                        GuideCell.words("Push saves the file as a new revision. Pull writes the picked revision back"
-                                + " to disk. Refresh asks the KnotHub for the state again."))
+                        GuideCell.words("Push saves a new revision, Pull writes the picked revision back to disk,"
+                                + " and Refresh asks the KnotHub for the state again."))
                 .row(GuideCell.words("File"),
                         GuideCell.words("The full path of the file a Push reads. A Pull does not use it."))
                 .row(GuideCell.words("Message box"),
@@ -395,7 +394,7 @@ final class SigmaSharingPages {
                         "Push says Nothing changed since the last revision.",
                         "The file has the same text as its newest revision, so nothing new was saved. Change the file"
                                 + " and push again. A new file is also refused once the repository holds 64 files, and"
-                                + " the window gives the same text for that case.",
+                                + " the window shows the same message for that case.",
                         "Pull says Not enough free space.",
                         "The system disk is full. Free some space on it, then pull again.",
                         "Pull says No such revision.",

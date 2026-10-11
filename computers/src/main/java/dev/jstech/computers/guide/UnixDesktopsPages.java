@@ -105,8 +105,7 @@ final class UnixDesktopsPages {
                         + " system installs, or add one afterwards from the terminal. Both ways read the Mirror,"
                         + " the network's package shelf ([](jsc:mirror)).")
                 .paragraph("A Mirror answers when your computer reaches a Mainframe that runs it, through a data"
-                        + " cable. The Mirror is a service, and a computer is on it only while the cable reaches a"
-                        + " Mainframe running it.")
+                        + " cable. The Mirror is a service, so it stops answering when the cable is cut.")
                 .subheading("At install time")
                 .paragraph("The installer of Ubuntu, Debian, Fedora and FreeBSD has a Desktop page. Gentoo, Arch"
                         + " Linux, UNIX System V and MC-DOS have none. The Desktop page appears only when a Mirror"
@@ -141,9 +140,6 @@ final class UnixDesktopsPages {
                                 + " runs the Mirror, or add a desktop after the install.",
                         "could not resolve mirror:// - connect this computer to a network whose Mainframe runs the"
                                 + " Mirror service",
-                        "Connect the computer to a network whose Mainframe runs the Mirror, then try again.",
-                        "The package manager says \"could not resolve mirror://\" and \"This computer is not on a"
-                                + " network whose Mainframe runs the Mirror service.\"",
                         "Connect the computer to a network whose Mainframe runs the Mirror, then try again.",
                         "The package manager says \"unable to locate package\" and the name.",
                         "The name is not a package this system is offered. Check the name: kde-plasma, gnome,"
@@ -266,7 +262,8 @@ final class UnixDesktopsPages {
                         "The package manager says \"cinnamon needs Standard hardware or later\".",
                         "The computer is older than Standard. Use a Standard computer or a newer one.",
                         "The installer does not offer Cinnamon on a Legacy computer.",
-                        "Cinnamon needs a Standard computer or a newer one.")
+                        "On a Legacy computer, choose another desktop, because Cinnamon is offered only on Standard"
+                                + " hardware or later.")
                 .seeAlso("jsc:install_a_desktop", "jsc:desktop_program_names", "jsc:eras")
                 .register();
     }
@@ -429,8 +426,8 @@ final class UnixDesktopsPages {
                 .paragraph("Audio has a volume scale with its value over the slider, and a Mute switch. It has two"
                         + " outputs, each a toggle, and both may be on. One output always stays on: the last one"
                         + " cannot be turned off.")
-                .paragraph("Nothing is sent to the machine while you work the page. OK sets the machine and closes the"
-                        + " page. Cancel leaves the machine as it was.")
+                .paragraph("Nothing is sent to the machine while you work the page, and only OK sends your choice to"
+                        + " it.")
                 .ifSomethingGoesWrong(
                         "A colour change does not stay.",
                         "You left the Color page with Cancel, or by closing it. Open the page again and press OK.",
@@ -448,8 +445,8 @@ final class UnixDesktopsPages {
                 .table("The groups", "Group", "What it holds")
                 .row(GuideCell.words("Desktop_Apps"), GuideCell.words("Files, Editor, Command Prompt, Calculator and"
                         + " Settings"))
-                .row(GuideCell.words("Desktop_Tools"), GuideCell.words("Every program named in no other group. A"
-                        + " program someone else wrote lands here."))
+                .row(GuideCell.words("Desktop_Tools"), GuideCell.words("Every program named in no other group, such"
+                        + " as one someone else wrote."))
                 .row(GuideCell.words("Network"), GuideCell.words("Network, Network Manager, ISMS, NextGre Studio,"
                         + " Prophet Console, Gateway Manager, Remote Control, Cluster Manager, Crafting Manager,"
                         + " Storage Insights, Craft Planner, Automation Manager and Pattern Studio"))
@@ -503,8 +500,7 @@ final class UnixDesktopsPages {
                 .paragraph("The Trash window has three menus: File, Selected and View. Put Back restores the selected"
                         + " items to where they were. Shred deletes them for good. The window also has Select All,"
                         + " Deselect All, By Name and By Size.")
-                .paragraph("CDE has no Empty Trash button. To empty the can, select everything and Shred it, as CDE"
-                        + " always did.")
+                .paragraph("CDE has no Empty Trash button.")
                 .paragraph("Before a delete, CDE asks Confirm File Delete. For one item it asks, for example, \"Delete"
                         + " the item in the Home for good?\" Its properties show the name, the original location and"
                         + " the size. The original location is Home or Desktop.")

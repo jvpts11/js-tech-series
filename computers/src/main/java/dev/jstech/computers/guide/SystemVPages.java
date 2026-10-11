@@ -43,9 +43,9 @@ final class SystemVPages {
                 .paragraph("UNIX System V is the oldest of the UNIX systems you meet at a prompt, and the one that a"
                         + " computer of the first era runs. Its release is 3.2. You work in it the way you work in"
                         + " any UNIX system: you type a command, the system answers, and your files sit in folders.")
-                .paragraph("The system was built for a small machine. It runs several programs at once, in 10"
-                        + " megabytes (MB) of disk and 2 megabytes (MB) of memory that the system keeps for itself"
-                        + " while it runs. It takes its programs from media and from nowhere else: there is no"
+                .paragraph("The system was built for a small machine. It takes 10 megabytes (MB) of disk, and it keeps"
+                        + " 2 megabytes (MB) of memory for itself while it runs, yet it runs several programs at"
+                        + " once. It takes its programs from media and from nowhere else: there is no"
                         + " Mirror to install from, only media ([](jsc:programs)).")
                 .table("UNIX System V at a glance")
                 .property("Release", "3.2")
@@ -147,8 +147,8 @@ final class SystemVPages {
                 .row(GuideCell.code("Install the UNIX System V beside <what it holds>"),
                         GuideCell.words("The new system goes on the same disk, next to the old one. This choice is"
                                 + " dimmed when the disk has no room for it."))
-                .paragraph("While the copy runs, the copy page names the disk you chose. Closing the monitor does not"
-                        + " stop the copy: open the monitor again to see its progress.")
+                .paragraph("While the copy runs, the copy page names the disk you chose. Open the monitor again to"
+                        + " see its progress.")
                 .paragraph("The done page says \"The UNIX System V is installed on <disk>.\" and then gives the name"
                         + " of the computer and the space used on the disk.")
                 .ifSomethingGoesWrong(
@@ -284,8 +284,9 @@ final class SystemVPages {
                 .row(GuideCell.words("Executable, a file in /usr/bin or /bin"),
                         GuideCell.words("Runs the program."))
                 .row(GuideCell.words("Standard file"), GuideCell.words("Opens the file in vi."))
-                .paragraph("Press F6 to open the command menu. Its items are cancel, exit, help, next-frm, prev-frm,"
-                        + " refresh, run and unix-system. Refresh reads the folder again.")
+                .paragraph("Press F6 to open the command menu, except on a Sigma listing, where F6 runs the file."
+                        + " The menu's items are cancel, exit, help, next-frm, prev-frm, refresh, run and"
+                        + " unix-system. Refresh reads the folder again.")
                 .paragraph("Run opens a command line. Type a UNIX command, press Enter, and read its output. Escape or"
                         + " F5 cancels the line.")
                 .paragraph("A command run from PACE shows its output, then says \"Press ENTER to return to PACE.\""
@@ -300,7 +301,8 @@ final class SystemVPages {
                         "Preferences is greyed out.",
                         "Nothing can be set on this system. The frame says \"Nothing to set on this machine.\"",
                         "The Other Users frame says \"(no other users)\".",
-                        "Your home folder is /usr/player, and PACE does not list bin, lib or player under /usr.",
+                        "Your home folder is /usr/player, and PACE does not list bin, lib or player under /usr, so no"
+                                + " other user shows up.",
                         "ENTER on a Sigma file opens it in vi, and it does not run.",
                         "Press F6 on a Sigma listing, a file ending in .sg, to run it.")
                 .seeAlso("jsc:installpkg", "jsc:vi", "jsc:cde_on_system_v")
@@ -340,7 +342,7 @@ final class SystemVPages {
                         "The installation says \"CDE needs Legacy hardware or newer. This computer is Vintage.\"",
                         "Use a Legacy computer or a newer one. A Vintage computer runs System V at a prompt only.",
                         "The installation says \"CDE needs 32 MB free on the disk. There are <n> MB.\"",
-                        "Free up disk space on the disk, or install on a bigger disk.",
+                        "Free up disk space, or install on a bigger disk.",
                         "The installpkg line says \"no package medium in a drive\".",
                         "Put the CDE CD in a CD Drive linked to the computer, and try again.",
                         "The computer starts at a prompt after CDE is installed.",
@@ -370,9 +372,8 @@ final class SystemVPages {
                         GuideCell.words("The file exists. The counts are its size."))
                 .subheading("lp")
                 .paragraph("lp sends a file to a printer linked to the computer ([](jsc:peripheral_cables)). Its"
-                        + " options and messages are on the printing page, [](jsc:printing). On this system the"
-                        + " printer is the first one linked to the computer, by position, unless you name one"
-                        + " with -d.")
+                        + " options and messages are on the printing page, [](jsc:printing). Unless you name a"
+                        + " printer with -d, lp uses the default one.")
                 .subheading("man")
                 .paragraph("man shows the manual page of a command. On this system it also reads the wider manuals:"
                         + " man graphics-cards opens the manual's entry on graphics cards, as a page of section 7."
@@ -385,7 +386,7 @@ final class SystemVPages {
                         "Link a printer to the computer. The first printer linked becomes the default.",
                         "man says \"No manual entry for intro\".",
                         "The intro topic belongs to FreeBSD. On UNIX System V, type man and the name of a command.",
-                        "man says \"What manual page do you want?\".",
+                        "man says \"What manual page do you want?\"",
                         "Give the name of a command after man, for example man graphics-cards.")
                 .seeAlso("jsc:vi", "jsc:printing", "jsc:man_pages")
                 .register();

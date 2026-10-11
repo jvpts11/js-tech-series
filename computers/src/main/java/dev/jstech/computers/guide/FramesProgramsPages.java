@@ -35,11 +35,10 @@ final class FramesProgramsPages {
                         + " are on each one. They are This PC, Settings, Files, the Editor, the Command Prompt,"
                         + " System Monitor, Calculator, the Device Manager, Help, and the Network and the Network"
                         + " Manager.")
-                .paragraph("A built-in program is one that comes with the edition, with no install step. An"
-                        + " installable program is one you add later, from a medium or from the Mirror. Most of"
-                        + " what you need is built in, but not all of it: Virtual Studio is installable.")
+                .paragraph("Most of what you need is built in, but not all of it: Virtual Studio is"
+                        + " installable.")
                 .paragraph("Some editions give the same program a name of their own. The Files window is called"
-                        + " File Explorer on Frames 10, and the machine's window is called Computer on Frames 7."
+                        + " File Explorer on Frames 10, and the This PC window is called Computer on Frames 7."
                         + " The table shows how the names of Files, This PC and Help change from edition to edition.")
                 .table("Program names by edition", "Edition", "Files", "This PC", "Help")
                 .row(GuideCell.words("Frames 95"), GuideCell.words("Files"), GuideCell.words("This PC"),
@@ -195,8 +194,8 @@ final class FramesProgramsPages {
                 .row(GuideCell.code("Esc"), GuideCell.words("While the find bar is open, closes it and returns to"
                         + " the text."))
                 .subheading("The find bar")
-                .paragraph("Press [[Ctrl]]+[[F]] to open the find bar. It is the strip where you type what to find,"
-                        + " and it offers Replace, Next and Replace all. Press [[Ctrl]]+[[G]] to use the same bar to"
+                .paragraph("Press [[Ctrl]]+[[F]] to open the find bar, which offers Replace, Next and"
+                        + " Replace all. Press [[Ctrl]]+[[G]] to use the same bar to"
                         + " go to a line: the bar then offers Go to and Go.")
                 .subheading("Saving and closing")
                 .steps("Press [[Ctrl]]+[[S]] to save the file under its name.",
@@ -269,9 +268,9 @@ final class FramesProgramsPages {
                         + " plugged into.")
                 .define("Hub", "A device that adds ports of its own. A device plugged into a hub is listed under"
                         + " it.")
-                .paragraph("A hub is a device too, and disabling a hub disables every device under it. The Device"
-                        + " Manager. If you unlink a device, its disabled setting"
-                        + " is removed, so a device you link again comes back enabled.")
+                .paragraph("A hub is a device too, and disabling a hub disables every device under it. If you"
+                        + " unlink a device, its disabled setting is removed, so a device you link again comes"
+                        + " back enabled.")
                 .ifSomethingGoesWrong("The device you want to disable is missing from the list.",
                         "Only a device on one of this computer's linked ports can be disabled. Link it first"
                                 + " ([](jsc:peripheral_cables)).",
@@ -385,7 +384,7 @@ final class FramesProgramsPages {
                 .row(GuideCell.code("Backspace"), GuideCell.words("Goes back, or deletes a letter while you type a"
                         + " search."))
                 .row(GuideCell.code("Page Up, Page Down"), GuideCell.words("Scrolls the page."))
-                .row(GuideCell.code("Enter"), GuideCell.words("Runs the search while you type. On Frames 95 it"
+                .row(GuideCell.code("Enter"), GuideCell.words("Runs the search. On Frames 95 it"
                         + " displays the selected topic."))
                 .row(GuideCell.code("Esc"), GuideCell.words("Stops typing the search."))
                 .define("Topic", "One page of help. On Frames 95 each topic opens in its own window.")
@@ -395,7 +394,7 @@ final class FramesProgramsPages {
                         + " followed by your word.",
                         "Try a shorter word, or the name of the command.",
                         "A command you expected is missing from the results.",
-                        "The help shows only the commands this machine has. Look for it on a machine that has it.")
+                        "Look for the command on a machine that has it.")
                 .seeAlso("jsc:help_on_a_computer")
                 .register();
         guide.page("virtual_studio", section).titled("Virtual Studio")

@@ -272,11 +272,11 @@ final class AutocraftingPages {
                         + " each time the machine runs.")
                 .table("Parts of a machine pattern", "Part", "What it holds")
                 .row(GuideCell.words("Input"), GuideCell.words("An item, a fluid or a chemical, with the amount it"
-                        + " takes per run. The amount is at least 1."))
+                        + " takes per run (at least 1)."))
                 .row(GuideCell.words("Output"), GuideCell.words("An item, a fluid or a chemical, with the amount it"
                         + " gives per run and a chance in percent."))
                 .row(GuideCell.words("Timeout"), GuideCell.words("How long the craft waits while nothing moves on the"
-                        + " interface, in ticks. The default is 200 ticks, which is 10 seconds."))
+                        + " interface, in ticks (the default is 200, which is 10 seconds)."))
                 .paragraph("The chance of an output is between 1 and 100 percent. An output of 100 always comes out."
                         + " A smaller chance makes a byproduct that may or may not come out. The network counts a"
                         + " byproduct at its expected amount when it plans the craft, but a byproduct never blocks a"
@@ -319,8 +319,8 @@ final class AutocraftingPages {
                         + " back to it.")
                 .paragraph("Nothing is used up in the Studio. A click on a cell of the editor records a copy of what"
                         + " your cursor holds, and your inventory sits in a band under the editor.")
-                .paragraph("Only a Crafting Computer loads recipes, so the Load button works on a Crafting Computer"
-                        + " only ([](jsc:crafting_computers)).")
+                .paragraph("The Load button works only on a Crafting Computer, because only that computer loads"
+                        + " recipes ([](jsc:crafting_computers)).")
                 .table("The tabs of the Studio", "Tab", "What it writes")
                 .row(GuideCell.words("Bench"), GuideCell.words("A bench pattern: a 3x3 grid and its result."))
                 .row(GuideCell.words("Machine"), GuideCell.words("A machine pattern: its inputs, its outputs and its"
@@ -354,7 +354,7 @@ final class AutocraftingPages {
                         + " would use:\" and \"In stock:\". A cell that takes a tag shows \"Any #\" and the tag.")
                 .paragraph("Until you add a stage, the multi-stage tab reads \"No stages yet\". Each stage then shows"
                         + " its number, its kind in brackets, \"[bench]\" or \"[machine]\", and its name.")
-                .paragraph("With Just Enough Items (JEI), the recipe viewer, installed, the transfer button of"
+                .paragraph("If Just Enough Items (JEI), the recipe viewer, is installed, the transfer button of"
                         + " a recipe sends it into the open Studio. A bench recipe goes to the bench draft, and any"
                         + " recipe with inputs and outputs goes to the machine draft.")
                 .paragraph("The Studio answers \"Recipe placed on the bench\" or \"Recipe placed in the machine"
@@ -510,7 +510,7 @@ final class AutocraftingPages {
                 .paragraph("An interface works one recipe at a time, or several jobs at once. Its mode decides which.")
                 .table("The modes of an interface", "Mode", "What it does")
                 .row(GuideCell.words("EXCLUSIVE"), GuideCell.words("One recipe at a time on this machine, as its"
-                        + " routers need. Jobs of the same pattern run together."))
+                        + " routers need; jobs of the same pattern run together."))
                 .row(GuideCell.words("NOT EXCLUSIVE"), GuideCell.words("Several jobs at once, different recipes too,"
                         + " as far as the machine takes them."))
                 .paragraph("MAX JOBS sets how many jobs the interface runs at once, from 0 to 64 jobs. Auto (0)"
@@ -518,12 +518,13 @@ final class AutocraftingPages {
                         + " new job. You name the interface too, with a name of up to 32 characters.")
                 .paragraph("An interface is driven when a Crafting Computer drives the cable it sits on. A card drives"
                         + " the interfaces of its cable in cable order.")
-                .paragraph("The rest wait, driven by no computer, until another card goes in. The screen reads"
+                .paragraph("Interfaces beyond what the cards can drive wait, driven by no computer, until another"
+                        + " card goes in. The screen reads"
                         + " \"Driven by a Crafting Computer\" or \"Driven by no Crafting Computer\".")
                 .table("The jobs log of an interface", "Line in the log", "What it means")
                 .row(GuideCell.words("No jobs yet."), GuideCell.words("The interface has run no job."))
                 .row(GuideCell.words("3 of 8 made"), GuideCell.words("How many pieces of a job's output the machine has"
-                        + " made, out of how many it must make. The numbers here are an example."))
+                        + " made, out of how many it must make; the numbers shown are an example."))
                 .row(GuideCell.words("the machine gave none of the expected outputs"), GuideCell.words("The job ended"
                         + " with none of the outputs its pattern lists."))
                 .row(GuideCell.words("unexpected outputs, sent to the network"), GuideCell.words("The machine made"
@@ -585,8 +586,8 @@ final class AutocraftingPages {
                 .balloon(4, GuideBlock.ScenePart.of(0, 0, 2), "The Crafting Cable")
                 .paragraph("The bus ties itself to the Crafting Interface that feeds its machine, either against it or"
                         + " through the routers of its own cable. You can also tie it by hand to one interface, or to"
-                        + " several. That is how an output that goes into a chest beside the machine is handled. By"
-                        + " hand, the bus takes up to 8 ties.")
+                        + " several. Tying it by hand is how an output that goes into a chest beside the machine is"
+                        + " handled, and by hand the bus takes up to 8 ties.")
                 .table("The tie texts of a bus", "The text", "What it means")
                 .row(GuideCell.words("by itself: the interface that feeds this machine"),
                         GuideCell.words("The bus found the interface on its own."))
@@ -667,7 +668,7 @@ final class AutocraftingPages {
                         + " jobs, then wrap back to Auto, and a right-click lowers them. The interface's own screen"
                         + " allows up to 64 jobs. The Pause and Resume buttons pause and restart an interface.")
                 .paragraph("Each card is listed with the interfaces it drives and how full its ROM is. A line reads"
-                        + " \"more on the crafting cable wait, driven by none, until another card goes in\" when some"
+                        + " \"N more on the crafting cable wait, driven by none, until another card goes in\" when some"
                         + " interfaces have no card to drive them.")
                 .ifSomethingGoesWrong("The screen says \"A Crafting Card is required to manage recipes.\"",
                         "Put a Crafting Card in the Crafting Computer.",
@@ -774,9 +775,9 @@ final class AutocraftingPages {
                         GuideCell.words("The estimated time of the craft, in "
                         + "seconds."))
                 .row(GuideCell.words("EST followed by two hyphens"), GuideCell.words("There is no estimate yet."))
-                .row(GuideCell.words("Prio, then a level"), GuideCell.words("The priority of the craft, which the "
-                        + "priority"
-                        + " button changes. The levels are LOW, MED-, MED, MED+ and HIGH, and MED is the default."))
+                .row(GuideCell.words("Prio, then a level"),
+                        GuideCell.words("The craft's priority, changed with the priority button: LOW, MED-, MED,"
+                        + " MED+ or HIGH, with MED as the default."))
                 .paragraph("The computer remembers your choice of recipe for each item, so you choose once.")
                 .subheading("In the terminal")
                 .paragraph("The craft popup of the terminal has the buttons CRAFT and PARTIAL. CRAFT makes the whole"
@@ -848,7 +849,7 @@ final class AutocraftingPages {
                 .subheading("UPDATE through the cards")
                 .paragraph("An UPDATE changes an item that the network stores. It runs in three steps. First, the item"
                         + " leaves the storage servers for the card's drawer, as a SELECT takes it out. Then the card"
-                        + " does its work. Last, the result goes back into the item's own server first, and what has"
+                        + " does its work. Last, the result goes back into the item's own server, and what has"
                         + " no room there stays at the card's output.")
                 .paragraph("A smelt of more than one stack runs the three steps again, one stack at a time. A step that"
                         + " cannot be done sends the item back as it was.")

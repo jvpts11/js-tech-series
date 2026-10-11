@@ -57,8 +57,8 @@ final class GentooPages {
                         + " setting install_by_hand.gentoo_every_step decides which steps you are asked, and it is"
                         + " off by default.")
                 .table("Which steps you are asked", "Setting", "What you are asked")
-                .row(GuideCell.code("false"), GuideCell.words("Only the steps marked with an asterisk. This is"
-                        + " the default."))
+                .row(GuideCell.code("false"), GuideCell.words("Only the steps marked with an asterisk (the"
+                        + " default)."))
                 .row(GuideCell.code("true"), GuideCell.words("Every step of the handbook, the optional ones too."))
                 .paragraph("Every download and every package comes from the [Mirror](jsc:mirror). A"
                         + " [Mainframe](jsc:mainframes) on the same network must run the Mirror, or the fetch steps"
@@ -156,9 +156,9 @@ final class GentooPages {
                         "Save the file and close nano.")
                 .paragraph("You can also add the line in one command, from inside the new system: type echo"
                         + " 'MAKEOPTS=\"-j4\"' >> /etc/portage/make.conf and press [[Enter]].")
-                .paragraph("The number follows -j. The count comes from the line that starts the setting, and a line"
-                        + " that begins with # sets nothing. More compiles at once than cores buys nothing, so the"
-                        + " build uses the smaller of the two numbers.")
+                .paragraph("The number follows -j. The count comes from the MAKEOPTS line that is not commented out,"
+                        + " and a line that begins with # sets nothing. More compiles at once than cores buys"
+                        + " nothing, so the build uses the smaller of the two numbers.")
                 .table("How many compiles run at once", "The line in make.conf", "Cores", "Compiles at once")
                 .row(GuideCell.words("none"), GuideCell.words("any"), GuideCell.words("1"))
                 .row(GuideCell.code("MAKEOPTS=\"-j4\""), GuideCell.words("8"), GuideCell.words("4"))
@@ -166,9 +166,7 @@ final class GentooPages {
                 .row(GuideCell.code("MAKEOPTS=\"-j\""), GuideCell.words("any"), GuideCell.words("1"))
                 .row(GuideCell.code("MAKEOPTS=\"-j0\""), GuideCell.words("any"), GuideCell.words("1"))
                 .paragraph("A -j with no number counts as no setting, and a count below 1 becomes 1 compile. If you"
-                        + " write"
-                        + " several MAKEOPTS lines, the last one counts. A build finishes sooner with more compiles at"
-                        + " once, up to the number of cores you have.")
+                        + " write several MAKEOPTS lines, the last one counts.")
                 .ifSomethingGoesWrong("Builds are slow, even on a strong machine.",
                         "The base file has no MAKEOPTS line, so every build runs one compile at a time. Add one, as"
                                 + " shown above.",
@@ -247,8 +245,7 @@ final class GentooPages {
                 .row(GuideCell.words("5"), GuideCell.code("default/linux/vel64/23.0/desktop/plasma"))
                 .row(GuideCell.words("6"), GuideCell.code("default/linux/vel64/23.0/no-multilib"))
                 .row(GuideCell.words("7"), GuideCell.code("default/linux/vel64/23.0/hardened"))
-                .paragraph("The whole-handbook checklist asks you to choose a profile with eselect profile set, even"
-                        + " when profile 1 suits you.")
+                .paragraph("Choose a profile with eselect profile set, even when profile 1 suits you.")
                 .define("@world", "The set of packages the system wants. Updating it brings each one up to date.")
                 .paragraph("The update command compiles every package of the world that is out of date. Each package"
                         + " has USE flags, which are switches that turn its optional features on or off.")
@@ -275,7 +272,8 @@ final class GentooPages {
                         "emerge says \"Could not resolve mirror://mainframe\".",
                         "No Mainframe running the [Mirror](jsc:mirror) is on this network. Connect to one, then try"
                                 + " again.",
-                        "emerge says \"command not found\", and that the package manager is the new system's.",
+                        "emerge says \"command not found\" when run outside the new system, since the package manager"
+                                + " is the new system's.",
                         "Step into the new system first: chroot /mnt/gentoo /bin/bash.",
                         "emerge says \"No packages given.\"",
                         "Type the name of at least one package after emerge.",
@@ -318,11 +316,11 @@ final class GentooPages {
                 .row(GuideCell.words("By hand"), GuideCell.code("make -j4 && make modules_install && make install"),
                         GuideCell.words("Builds in /usr/src/linux, installs the modules, and copies the kernel into"
                                 + " /boot."))
-                .paragraph("A module is a piece of the kernel that loads when something needs it. The modules live"
-                        + " under /lib/modules, in a folder named for the kernel version.")
+                .paragraph("The modules live under /lib/modules, in a folder named for the kernel version.")
                 .define("module", "A piece of the kernel that loads when something needs it, kept as its own file.")
                 .ifSomethingGoesWrong(
-                        "genkernel says \"command not found\", and that the command is the new system's.",
+                        "genkernel says \"command not found\", because the command is on the new system and you are"
+                                + " still in the live medium.",
                         "Step into the new system first: chroot /mnt/gentoo /bin/bash. make needs the same step.",
                         "genkernel says \"* ERROR: no kernel sources found in /usr/src\".",
                         "Download the sources first: emerge sys-kernel/gentoo-sources.",
@@ -366,7 +364,7 @@ final class GentooPages {
                         + " the root, so the reboot checks for it before it starts.")
                 .ifSomethingGoesWrong(
                         "The reboot says \"no root filesystem in /etc/fstab\".",
-                        "No line in the file mounts / . Write the root line as shown above, then reboot again"
+                        "No line in the file mounts /. Write the root line as shown above, then reboot again"
                                 + " ([](jsc:gentoo_reboot)).")
                 .seeAlso("jsc:arch_fstab", "jsc:gentoo_reboot")
                 .register();
@@ -394,7 +392,8 @@ final class GentooPages {
                 .ifSomethingGoesWrong(
                         "bash says \"grub-install: command not found\".",
                         "GRUB is not compiled yet. Type emerge --ask sys-boot/grub first.",
-                        "grub-install says \"command not found\", and that the command is the new system's.",
+                        "grub-install says \"command not found\". The program belongs to the new system and is not"
+                                + " built there yet.",
                         "Step into the new system first: chroot /mnt/gentoo /bin/bash, then run the command there.",
                         "grub-install says \"warning: no kernel image found in /boot.\"",
                         "Build the kernel first: genkernel all, or make in /usr/src/linux"
@@ -448,8 +447,8 @@ final class GentooPages {
                 .paragraph("The name is set inside the new system, with echo <name> > /etc/hostname or with hostname"
                         + " <name>. A name starts with a letter or digit, holds up to 15 characters, and may contain"
                         + " hyphens.")
-                .paragraph("When every item is in place, the reboot writes the new system to the disk you chose, and"
-                        + " that disk boots first. The machine answers \"Rebooting into the new system\".")
+                .paragraph("When every item is in place, the reboot makes the disk you chose boot first. The machine"
+                        + " answers \"Rebooting into the new system\".")
                 .ifSomethingGoesWrong(
                         "reboot says \"you are inside the new system. exit first.\"",
                         "Type exit to leave the new system, then type reboot again.",

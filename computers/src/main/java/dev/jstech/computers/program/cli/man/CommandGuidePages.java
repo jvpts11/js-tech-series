@@ -59,7 +59,7 @@ public final class CommandGuidePages {
     public static void register() {
         final Map<String, ICliCommand> pages = new LinkedHashMap<>();
         // The systems a command runs on, by the command; a command in two families' pages is one command.
-        final Map<String, List<Text>> systems = new HashMap<>();
+        final Map<String, List<OnSystem>> found = new HashMap<>();
         for (final OsDef os : OsRegistry.oses()) {
             final KernelDef kernel = OsRegistry.getKernel(os.kernelId());
             if (kernel == null) {
@@ -68,10 +68,13 @@ public final class CommandGuidePages {
             for (final ICliCommand command : CliCommands.commandsFor(kernel.shellFamily())) {
                 if (runsOn(command.scope(), os)) {
                     pages.putIfAbsent(id(os.platform(), command.name()), command);
-                    systems.computeIfAbsent(key(command), key -> new ArrayList<>()).add(system(command.scope(), os));
+                    found.computeIfAbsent(key(command), key -> new ArrayList<>()).add(new OnSystem(os.displayName(),
+                            command.scope().fromAPackage() ? packageName(command.scope().packageId()) : ""));
                 }
             }
         }
+        final Map<String, List<Text>> systems = new HashMap<>();
+        found.forEach((key, on) -> systems.put(key, named(on)));
         final List<Text> media = new ArrayList<>();
         for (final OsDef os : OsRegistry.oses()) {
             if (os.installMode() != InstallMode.GUIDED) {
@@ -86,9 +89,9 @@ public final class CommandGuidePages {
                 systems.getOrDefault(key(command), List.of()))));
         final Map<String, List<String>> byCommand = new HashMap<>();
         pages.forEach((id, command) -> byCommand.computeIfAbsent(key(command), key -> new ArrayList<>()).add(id));
-        final Map<String, List<String>> found = new HashMap<>();
-        pages.forEach((id, command) -> found.put(id, List.copyOf(byCommand.get(key(command)))));
-        alike = Map.copyOf(found);
+        final Map<String, List<String>> same = new HashMap<>();
+        pages.forEach((id, command) -> same.put(id, List.copyOf(byCommand.get(key(command)))));
+        alike = Map.copyOf(same);
     }
 
     /**
@@ -137,10 +140,21 @@ public final class CommandGuidePages {
                 && (scope.manager() == null || scope.manager() == os.packageManager());
     }
 
-    /** The system as a reader knows it, and the package to install first when the command comes with one. */
-    private static Text system(final CommandScope scope, final OsDef os) {
-        return scope.fromAPackage() ? FROM_PACKAGE.with(os.displayName(), packageName(scope.packageId()))
-                : Text.literal(os.displayName());
+    /**
+     * The systems as a page names them, each as a reader knows it and the package to install first after it; when
+     * every one needs the same package it is said once, after the last, so a long list does not repeat it.
+     */
+    private static List<Text> named(final List<OnSystem> systems) {
+        final String first = systems.getFirst().packageName();
+        final boolean onePackage = systems.size() > 1 && !first.isEmpty()
+                && systems.stream().allMatch(system -> system.packageName().equals(first));
+        final List<Text> out = new ArrayList<>();
+        for (int i = 0; i < systems.size(); i++) {
+            final OnSystem system = systems.get(i);
+            final boolean said = !system.packageName().isEmpty() && (!onePackage || i == systems.size() - 1);
+            out.add(said ? FROM_PACKAGE.with(system.name(), system.packageName()) : Text.literal(system.name()));
+        }
+        return out;
     }
 
     /** A package's name as it is typed to install it: the path of its id. */
@@ -152,5 +166,14 @@ public final class CommandGuidePages {
     /** What tells one command from another: what it is, and the word that runs it. */
     private static String key(final ICliCommand command) {
         return command.getClass().getName() + "/" + command.name();
+    }
+
+    /**
+     * A system a command runs on.
+     *
+     * @param name        the system as a reader knows it
+     * @param packageName the package to install first for the command, or empty when the system has it already
+     */
+    private record OnSystem(String name, String packageName) {
     }
 }

@@ -57,7 +57,7 @@ final class FreeBsdPages {
         guide.page("freebsd_overview", section).titled("FreeBSD on this computer")
                 .paragraph("FreeBSD is a UNIX-like system, and the Daemon Handbook is about it and about UNIX System V."
                         + " On your computer it works the way the other systems do: you install it from a medium,"
-                        + " you start it, and you work at its prompt. It is a terminal system. It starts at a text"
+                        + " you start it, and you work at its prompt. It starts at a text"
                         + " prompt, and a desktop is an extra package you may add later.")
                 .define("Terminal system", "A system that starts at a text prompt. A desktop is an optional package.")
                 .paragraph("FreeBSD needs Legacy hardware or newer, the first hardware era it runs on. A computer of"
@@ -158,9 +158,10 @@ final class FreeBsdPages {
                 .paragraph("The Mirror Selection page asks where pkg and ports fetch from. The row mirror://mainframe"
                         + " appears only when a Mirror answers ([](jsc:mirror)). Otherwise you install from the CD.")
                 .paragraph("When the copy is done, your answers become settings. Ticking cron turns cron on, and"
-                        + " ticking sshd turns remote on. The two are one setting ([](jsc:rc_services)). With the"
-                        + " ports box ticked and a Mirror in use, the whole ports tree is laid onto the disk now."
-                        + " Without a Mirror, the installer leaves an empty /usr/ports folder for portsnap to fill.")
+                        + " ticking sshd turns remote on. Both are the settings you can change later"
+                        + " ([](jsc:rc_services)). With the ports box ticked and a Mirror in use, the whole ports"
+                        + " tree is laid onto the disk now. Without a Mirror, the installer leaves an"
+                        + " empty /usr/ports folder for portsnap to fill.")
                 .paragraph("At the end, the computer restarts into the new system once you take the CD out.")
                 .define("Distribution set", "A compressed bundle of system files, such as base.txz or kernel.txz.")
                 .ifSomethingGoesWrong("The Desktop page has no desktop in its list.",
@@ -192,7 +193,7 @@ final class FreeBsdPages {
                 .row(GuideCell.words("Boot"), GuideCell.words("Starts the running system. It is the default: Enter"
                         + " starts it."))
                 .row(GuideCell.words("Reboot"), GuideCell.words("Starts the machine over."))
-                .row(GuideCell.words("Firmware settings"), GuideCell.words("Opens the firmware's settings. It is shown"
+                .row(GuideCell.words("Firmware settings"), GuideCell.words("Opens the firmware's settings, shown"
                         + " only on Standard and later hardware, which uses UEFI (the Unified Extensible Firmware"
                         + " Interface)."))
                 .paragraph("The menu counts down from 5 seconds. Its top line says \"Welcome to FreeBSD\", and the line"
@@ -270,7 +271,7 @@ final class FreeBsdPages {
                         "Type config remote on to let other computers reach this one.",
                         "Type config remote off to refuse the remote calls of other computers.")
                 .paragraph("A successful change answers with the name of the setting and the word set, such as"
-                        + " cron set. The list shows the two lines below, one for each setting.")
+                        + " cron set. Typing config alone lists both settings, one line for each.")
                 .table("The lines of config", "Line", "What it means")
                 .row(GuideCell.code("remote  on (other computers may run programs here)"),
                         GuideCell.words("The remote setting is on."))
@@ -311,14 +312,14 @@ final class FreeBsdPages {
                 .define("Outdated", "An installed package whose version differs from the one the Mirror serves now.")
                 .table("The verbs of pkg", "Command", "What it does")
                 .row(GuideCell.code("pkg install <package>"), GuideCell.words("Fetches a package from the Mirror and"
-                        + " installs it. The setup runs as a job you can watch."))
+                        + " installs it."))
                 .row(GuideCell.code("pkg delete <package>"), GuideCell.words("Removes an installed package."))
                 .row(GuideCell.code("pkg search [term]"), GuideCell.words("Lists the packages that match the term, one"
                         + " row each."))
                 .row(GuideCell.code("pkg info"), GuideCell.words("Lists every installed package, with its"
                         + " description."))
-                .row(GuideCell.code("pkg update"), GuideCell.words("Refreshes the Mirror's list of packages. It changes"
-                        + " no installed package."))
+                .row(GuideCell.code("pkg update"), GuideCell.words("Refreshes the Mirror's list of packages"
+                        + " without changing any installed package."))
                 .row(GuideCell.code("pkg upgrade"), GuideCell.words("Installs newer versions of the packages you have"
                         + " installed."))
                 .paragraph("Three shorter words also work: add means install, remove means delete, and query means"
@@ -350,7 +351,7 @@ final class FreeBsdPages {
                 .row(GuideCell.code("pkg: <name> is not installed."), GuideCell.words("You tried to delete a package"
                         + " that is not installed."))
                 .row(GuideCell.code("pkg: <name> comes with every system."), GuideCell.words("The program is already"
-                        + " there. There is nothing to install."))
+                        + " there, so there is nothing to install."))
                 .row(GuideCell.code("pkg: <name> is already installed."), GuideCell.words("The package is on the"
                         + " computer already."))
                 .row(GuideCell.code("pkg: <name> needs <era> hardware or later"),
@@ -390,8 +391,8 @@ final class FreeBsdPages {
                         + " pkg-descr holds the one-line description.")
                 .subheading("The words of portsnap")
                 .table("The words of portsnap", "Word", "What it does")
-                .row(GuideCell.code("fetch"), GuideCell.words("Brings the snapshot from the Mirror. It lays out no"
-                        + " tree."))
+                .row(GuideCell.code("fetch"), GuideCell.words("Brings the snapshot from the Mirror without laying out"
+                        + " a tree."))
                 .row(GuideCell.code("extract"), GuideCell.words("Lays out the tree afresh from the snapshot, replacing"
                         + " any tree there."))
                 .row(GuideCell.code("update"), GuideCell.words("Brings a tree that is laid out already up to date."))
@@ -416,13 +417,13 @@ final class FreeBsdPages {
                 .row(GuideCell.code("portsnap: this computer has no system disk"),
                         GuideCell.words("The computer has no disk to hold the tree."))
                 .row(GuideCell.code("Looking up the Mirror for the ports tree... none found."),
-                        GuideCell.words("fetch found no Mirror, so no snapshot comes. Then it prints No mirrors"
+                        GuideCell.words("fetch found no Mirror, so no snapshot comes; it then prints No mirrors"
                                 + " remaining, giving up."))
                 .row(GuideCell.code("No snapshot available.  Try running portsnap fetch"),
                         GuideCell.words("extract and update need a snapshot first."))
                 .row(GuideCell.code("/usr/ports was not created by portsnap."),
-                        GuideCell.words("update works only on a tree that portsnap laid out."
-                                + " Run portsnap extract once."))
+                        GuideCell.words("update works only on a tree that portsnap laid out,"
+                                + " so run portsnap extract once."))
                 .row(GuideCell.code("portsnap: No space left on device"), GuideCell.words("The disk is full."))
                 .ifSomethingGoesWrong("portsnap says none found for the Mirror.",
                         "Connect the network to a Mainframe that runs the Mirror service.",
@@ -449,20 +450,20 @@ final class FreeBsdPages {
                         "Type make deinstall to take the program off the computer again.")
                 .command(CommandGuidePages.id(Platform.FREEBSD, "make"))
                 .table("The targets of make", "Target", "What it does")
-                .row(GuideCell.code("build"), GuideCell.words("Builds the port on this computer. make does this when"
-                        + " you give no target."))
+                .row(GuideCell.code("build"), GuideCell.words("Builds the port on this computer, which is"
+                        + " what make does when you give no target."))
                 .row(GuideCell.code("install"),
                         GuideCell.words("Builds the port if it is not built, then installs it."))
                 .row(GuideCell.code("reinstall"),
                         GuideCell.words("Builds and installs the port over the one installed."))
-                .row(GuideCell.code("deinstall"), GuideCell.words("Takes the installed port off the computer. With"
+                .row(GuideCell.code("deinstall"), GuideCell.words("Takes the installed port off the computer; with"
                         + " clean, it cleans first."))
                 .row(GuideCell.code("clean"), GuideCell.words("Deletes the work folder that the build left."))
                 .paragraph("You combine targets in one line, such as make install clean. A build takes between 5"
                         + " seconds and 30 minutes. It runs one job per processor core, and a faster processor shortens"
                         + " it.")
                 .subheading("The 10% lighter build")
-                .paragraph("A program you build on this computer asks 10% less than the package of the same program."
+                .paragraph("A program you build on this computer needs 10% less than the package of the same program."
                         + " When a build ends, it prints Built for this machine:, then a line such as 10% less memory,"
                         + " disk and processor than the package.")
                 .table("What a build here saves", "What", "Saved by a build here")
@@ -477,11 +478,12 @@ final class FreeBsdPages {
                 .row(GuideCell.code("make: don't know how to make <target>. Stop"),
                         GuideCell.words("make does not know that target."))
                 .row(GuideCell.code("===>  <pkg> is already installed"), GuideCell.words("The port is on the computer"
-                        + " already. The message suggests make deinstall, then make install, or make reinstall."))
+                        + " already; the message suggests make deinstall and make install, or make reinstall."))
                 .row(GuideCell.code("===>  <pkg> is marked as broken: <reason>."), GuideCell.words("A gate of the"
                         + " install blocks the port, such as its era or the kind of computer."))
                 .row(GuideCell.code("===>  <pkg> cannot install: a Mainframe's services come prebuilt; use pkg install"
-                        + " <name>."), GuideCell.words("A Mainframe service is installed with pkg instead."))
+                        + " <name>."),
+                        GuideCell.words("The port is a Mainframe service, so install it with pkg instead."))
                 .row(GuideCell.code("===>  <pkg> cannot install: this computer cannot store installed programs."),
                         GuideCell.words("The computer has no disk to keep programs on."))
                 .row(GuideCell.code("===>  <pkg> cannot install: this machine is short of the processor or the free"
@@ -518,9 +520,9 @@ final class FreeBsdPages {
                         + " \"<name>\" with the number of lines and the number of characters.")
                 .paragraph("vi shows <name>: new file: line 1 for a new file, and <name>: unmodified: line 1 for a file"
                         + " that exists. After a write, it shows the number of lines and characters.")
-                .paragraph("To leave ee, press [[Esc]] to open its menu, then [[Enter]] for leave editor. The"
-                        + " screen shows the same tip: ESC-Enter: exit. In vi, press [[Esc]] to return to normal"
-                        + " mode, then type :wq to write and quit.")
+                .paragraph("To leave ee, press [[Esc]] to open its menu, then press [[Enter]] to choose leave"
+                        + " editor. The screen shows the same tip: ESC-Enter: exit. In vi, press [[Esc]] to return"
+                        + " to normal mode, then type :wq to write and quit.")
                 .ifSomethingGoesWrong("ee says Unknown command at its command prompt.",
                         "The command prompt takes write, quit and exit. Type one of them.",
                         "vi says E37: no write since last change (add ! to override).",

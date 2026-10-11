@@ -92,7 +92,7 @@ final class McDosPages {
                 .define("Search path", "The list of folders MC-DOS searches for a program when you type only the"
                         + " program's name.")
                 .ifSomethingGoesWrong(
-                        "The prompt says command not found: HELLO, then type 'help' to list commands.",
+                        "The prompt says \"command not found: HELLO\".",
                         "No command or program of that name is in the folder you are in or on the search path."
                                 + " Check the spelling, or type the full path, such as C:\\DOS\\HELLO."
                                 + " [Finding a command](jsc:finding_a_command) explains the rest.",
@@ -185,7 +185,7 @@ final class McDosPages {
                 .paragraph("AUTOEXEC.BAT holds three lines: @ECHO OFF, PROMPT $P$G and a PATH line. The PATH line lists"
                         + " the DOS folder first, then the folder of each installed program in the order they were"
                         + " installed. When you type only a program's name, MC-DOS searches the folders on that line."
-                        + " If the file is missing, it searches the DOS folder only.")
+                        + " If AUTOEXEC.BAT or its PATH line is missing, it searches the DOS folder only.")
                 .paragraph("The PROMPT line does not set your prompt. The prompt always shows the folder you are in and"
                         + " a greater-than sign ([](jsc:dos_prompt)).")
                 .paragraph("CONFIG.SYS holds the lines DEVICE=C:\\DOS\\HIMEM.SYS, DOS=HIGH, FILES=30 and BUFFERS=20."
@@ -212,7 +212,7 @@ final class McDosPages {
                 .steps("Type dosshell at the prompt and press [[Enter]].",
                         "Press [[Tab]] to move from one area to the next, and the arrow keys to move within one.",
                         "Press [[Enter]] on a program to start it as a task.",
-                        "Hold [[Alt]] and press [[Tab]] to name the next task, and let go of [[Alt]] to switch to it.",
+                        "Hold [[Alt]] and press [[Tab]] to pick the next task, and let go of [[Alt]] to switch to it.",
                         "Press [[F3]] to leave the shell, once no task is listed.")
                 .table("The areas of the screen", "Area", "What it shows")
                 .row(GuideCell.words("Directory Tree"), GuideCell.words("The folders of the disk you are on."))
@@ -375,7 +375,7 @@ final class McDosPages {
                 .command(CommandGuidePages.id(Platform.MC_DOS, "msd"))
                 .ifSomethingGoesWrong(
                         "The screen says msd: there is no machine to read.",
-                        "The program was opened on nothing. Type msd at the prompt of a computer.",
+                        "msd has no computer to read. Type msd at the prompt of a computer.",
                         "A port says (none) under Attached.",
                         "Nothing is plugged into that port, so there is no device to enable or disable.",
                         "A port says Off (disabled) under Status.",

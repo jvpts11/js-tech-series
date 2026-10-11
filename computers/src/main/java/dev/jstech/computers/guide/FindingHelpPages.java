@@ -151,7 +151,7 @@ final class FindingHelpPages {
                 .row(GuideCell.code("b"), GuideCell.words("Moves one page up."))
                 .row(GuideCell.code("j or Down"), GuideCell.words("Moves one line down."))
                 .row(GuideCell.code("k or Up"), GuideCell.words("Moves one line up."))
-                .row(GuideCell.code("Page Down, Page Up"), GuideCell.words("Move one page each way."))
+                .row(GuideCell.code("Page Down, Page Up"), GuideCell.words("Moves one page in either direction."))
                 .row(GuideCell.code("g or Home"), GuideCell.words("Goes to the top of the page."))
                 .row(GuideCell.code("G or End"), GuideCell.words("Goes to the end of the page."))
                 .row(GuideCell.code("/"), GuideCell.words("Starts a search for the text you type."))
@@ -234,7 +234,7 @@ final class FindingHelpPages {
                         + " as linked screens. Each chapter, section and entry of a manual is a node, and the"
                         + " commands of this computer sit beside them.")
                 .paragraph("info takes the whole terminal, as the help screens do. Press q to leave it and get your"
-                        + " prompt back. info exists on Linux only, so on UNIX System V and FreeBSD, use man.")
+                        + " prompt back.")
                 .subheading("Using info")
                 .steps("Type info and press [[Enter]] to open the directory, the list of every manual and command.",
                         "Type info, a space and a name, such as info graphics-cards, to open that entry directly.",
@@ -264,7 +264,7 @@ final class FindingHelpPages {
                         + " \"info: not found. Try: apropos <word>, or man intro\".",
                         "info is on Linux only. Use man <command> on UNIX System V and FreeBSD, or help <command>"
                                 + " on MC-DOS, MC-NET and Frames.",
-                        "The reply is \"No menu item\" and a name, after m.",
+                        "The reply is \"No menu item\" and a name, after you press m.",
                         "The name must match a menu item of this node. Press d or t to go elsewhere, or pick a link"
                                 + " with Tab.",
                         "The reply is \"No 'Next' pointer for this node.\", or the same for Prev or Up.",
@@ -300,8 +300,8 @@ final class FindingHelpPages {
                         + " one-line summary."))
                 .row(GuideCell.code("PROGRAMS"), GuideCell.words("One row per installed program, with its name and its"
                         + " id."))
-                .paragraph("Each computer lists only what it has. The commands depend on its system, and the programs"
-                        + " depend on what is installed on it. When the switch is on, listcmd also appears in the"
+                .paragraph("The commands depend on the computer's system, and the programs depend on what is"
+                        + " installed on it. When the switch is on, listcmd also appears in the"
                         + " list that help prints, like any other command.")
                 .command(CommandGuidePages.id(Platform.LINUX, "listcmd"))
                 .ifSomethingGoesWrong("The reply is \"command not found: listcmd\".",

@@ -242,7 +242,7 @@ final class FramesEditionsPages {
                         + " animations (when possible)\".")
                 .paragraph("On a new computer, Frames 7 shows its own Welcome, not \"Hi.\". It plays"
                         + " \"Frames 7 chimes\""
-                        + " when it starts. Its error sound is the one of Frames XP, \"Frames XP error\".")
+                        + " when it starts. Its error sound is Frames XP's, \"Frames XP error\".")
                 .paragraph("Its splash screen is black: four coloured lights sweep in and close into a waving flag,"
                         + " with"
                         + " the name of the system under it.")
@@ -344,16 +344,15 @@ final class FramesEditionsPages {
                         + " when it starts and \"Frames 11 error\" when something goes wrong. Its splash screen is near"
                         + " black, with the maker's mark in the middle and a ring of dots turning below.")
                 .subheading("The Megashell")
-                .paragraph("Frames 11 has its own shell, under the name Megashell. A shell is the program that takes"
-                        + " the commands you type at the prompt. Frames 95, XP, 7 and 10 call it Command Prompt, and on"
-                        + " Frames 11 its window and its name on the desktop are Megashell.")
+                .paragraph("Frames 11 has its own shell, under the name Megashell. Frames 95, XP, 7 and 10 call it"
+                        + " Command Prompt, and on Frames 11 its window and its name on the desktop are Megashell.")
                 .define("Megashell", "The shell of Frames 11: the program that takes your commands, under its own name"
                         + " on that edition.")
                 .paragraph("For the commands you type, see [The Command Prompt](jsc:command_prompt). Help on this"
                         + " edition"
                         + " opens the Get Help window ([](jsc:help_on_a_computer)).")
                 .subheading("Edge snapping")
-                .paragraph("Edge snapping tiles a window against an edge when you drag it there and let go. It works on"
+                .paragraph("Edge snapping tiles a window against an edge of the screen. It works on"
                         + " Frames 11 and on the KDE, GNOME and Cinnamon desktops of the Linux systems"
                         + " ([](jsc:unix_desktops)). Frames 95, XP, 7 and 10 do not snap.")
                 .define("Edge snapping", "Tiling a window against an edge of the screen when you let go of it there.")
@@ -404,10 +403,10 @@ final class FramesEditionsPages {
                 .paragraph("The page shows the first graphics card in the computer's build. With no card, it shows the"
                         + " graphics of the processor, if the processor has any, and the memory is then shared with the"
                         + " computer.")
-                .paragraph("The utilisation figure grows with two things. The fill of the memory adds up to 50 points,"
-                        + " and each open graphics window adds 20 points. The figure is 0 when no video memory is in"
-                        + " use, and it never goes above 100 points.")
-                .paragraph("A lit monitor holds video memory in blocks of its own size, and a graphics window takes a"
+                .paragraph("The utilisation percentage grows with two things. The memory fill adds up to 50 percent,"
+                        + " and each open graphics window adds 20 percent. It is 0 when no video memory is in"
+                        + " use, and it never goes above 100 percent.")
+                .paragraph("A lit monitor holds video memory in blocks, and a graphics window takes a"
                         + " quarter of a monitor block, or a whole block while it fills the screen. A block's size"
                         + " depends on the era of the computer.")
                 .table("Video memory by era", "Era", "One monitor block", "Window", "Full-screen window")
@@ -427,8 +426,8 @@ final class FramesEditionsPages {
                 .ifSomethingGoesWrong(
                         "The monitor says \"The computer has no video output: install a graphics card\".",
                         "Install a graphics card in the computer ([](jsc:graphics_cards)).",
-                        "The monitor stays dark and says \"Not enough video memory\", and \"It lights when the card"
-                                + " has room.\"",
+                        "The monitor stays dark and says \"Not enough video memory\". It lights when the card has"
+                                + " room.",
                         "Turn off a monitor, or use a card with more memory ([](jsc:graphics_cards)).",
                         "A graphics window does not open, and the desktop says \"Not enough video memory\".",
                         "Turn off a monitor or close a graphics program.",

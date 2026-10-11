@@ -99,10 +99,10 @@ final class SigmaStartPages {
                         + " each one does.")
                 .table("What Sigma leaves out", "Missing in Sigma", "What the compiler suggests you write")
                 .row(GuideCell.words("Interfaces"),
-                        GuideCell.words("A class whose methods are virtual, and stand on it instead."))
+                        GuideCell.words("A class whose methods are virtual, and build on it instead."))
                 .row(GuideCell.words("Records"), GuideCell.words("A struct with the same fields."))
                 .row(GuideCell.words("Abstract classes"),
-                        GuideCell.words("A class with virtual methods that do nothing, and stand on that."))
+                        GuideCell.words("A class with virtual methods that do nothing, and build on that."))
                 .row(GuideCell.words("Abstract methods"),
                         GuideCell.words("Give it a body that does nothing, and write it virtual."))
                 .row(GuideCell.words("Delegates"),
@@ -280,15 +280,15 @@ final class SigmaStartPages {
                 .answer("usage: sgsc <file.sgs> [more.sgs ...] [-o <out.asm>] [--arch <isa>] [--lang <version>]")
                 .table("The options of sgsc and scc", "Option", "What it does")
                 .row(GuideCell.code("-o <file>"),
-                        GuideCell.words("Names the listing it writes. Without it, the listing takes the name of the"
-                                + " first source file, with .asm in place of its ending."))
+                        GuideCell.words("Names the listing it writes; without it, the listing takes the first source"
+                                + " file's name with .asm in place of its ending."))
                 .row(GuideCell.code("--arch <isa>"),
-                        GuideCell.words("Builds for an instruction set: IA-16, x86 or x86-64, in any letter case."
-                                + " Without it, the default of the language applies."))
+                        GuideCell.words("Builds for an instruction set: IA-16, x86 or x86-64, in any letter case;"
+                                + " without it, the language's default applies."))
                 .row(GuideCell.code("--lang <version>"),
-                        GuideCell.words("Holds the build to a language version, 1 or 2. Without it, the build uses"
-                                + " the newest version the installed compiler knows."))
-                .paragraph("The full page of each compiler follows, made from the command itself.")
+                        GuideCell.words("Holds the build to a language version, 1 or 2; without it, the newest"
+                                + " version the installed compiler knows is used."))
+                .paragraph("The full page of each compiler follows.")
                 .command(CommandGuidePages.id(Platform.LINUX, "sgsc"))
                 .command(CommandGuidePages.id(Platform.LINUX, "scc"))
                 .paragraph("A successful compile prints the compiler's name and version first, then what it wrote."
@@ -377,8 +377,8 @@ final class SigmaStartPages {
                         GuideCell.words("running, parked (it waits for something outside it), finished, halted"
                                 + " (it stopped on a mistake), or input (it waits for the keyboard)."))
                 .row(GuideCell.words("memory"),
-                        GuideCell.words("The memory the program holds, of the heap it was given, in KB (or in B"
-                                + " under 1,024 bytes)."))
+                        GuideCell.words("The memory the program holds, out of the heap it was given, in KB (or in"
+                                + " bytes when it is under 1,024)."))
                 .paragraph("With no program running, the list says so. Here is that answer:")
                 .session("jsc:guide/terminal/bash", "Ubuntu")
                 .typed("player@pc:~$ ", "sigma ps")
@@ -428,13 +428,11 @@ final class SigmaStartPages {
                 .define("solution", "A folder that groups several projects, with one file that lists them.")
                 .table("Keys of Virtual Studio", "Key", "What it does")
                 .row(GuideCell.code("F5"),
-                        GuideCell.words("Start: builds and runs the program. With no solution open, it builds the open"
-                                + " file and runs its listing. With a solution, it builds the startup project and runs"
-                                + " it."))
+                        GuideCell.words("Start: builds and runs the open file, or the startup project when a solution"
+                                + " is open."))
                 .row(GuideCell.code("Ctrl+Shift+B"),
-                        GuideCell.words("Builds the solution: each project that makes a listing is built in turn,"
-                                + " and the output appears in the Output tab. With no solution, it builds the open"
-                                + " file."))
+                        GuideCell.words("Builds each project of the solution that makes a listing, in turn, and shows"
+                                + " the output in the Output tab; with no solution, builds the open file."))
                 .row(GuideCell.code("Ctrl+Shift+N"), GuideCell.words("Opens the New Project wizard."))
                 .row(GuideCell.code("Ctrl+S"), GuideCell.words("Saves the file."))
                 .row(GuideCell.code("Ctrl+F"), GuideCell.words("Finds text in the file."))
@@ -462,8 +460,8 @@ final class SigmaStartPages {
                         GuideCell.words("Surveys the folder: it asks for every program in it at once and lists the"
                                 + " problems."))
                 .row(GuideCell.code("F6"),
-                        GuideCell.words("Run at Terminal: saves the file, compiles it, then runs the listing at the"
-                                + " terminal. The listing is written beside the source file."))
+                        GuideCell.words("Saves, compiles and runs the file at the terminal, with the listing written"
+                                + " beside the source file."))
                 .paragraph("The window of Exposure shows PROBLEMS, a count of the problems the survey found, and WHAT"
                         + " THE COMPILER SAID, the compiler's own words about the problem. The Rebuild all button"
                         + " compiles everything again.")

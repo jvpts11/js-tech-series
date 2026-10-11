@@ -66,8 +66,8 @@ final class NetworkPages {
                         + " racks, the long distance line joins two networks, gateway to gateway, and the high compute"
                         + " line joins a supercomputer's nodes ([](jsc:data_cables)). You lay the line the job asks"
                         + " for, and you never count what a cable holds.")
-                .paragraph("What a cable does have is a speed and a range: how many items a tick an Operation"
-                        + " crossing it moves, and how many cables a run can be before a router or a repeater renews"
+                .paragraph("What a cable does have is a speed and a range: how many items per tick an Operation"
+                        + " crossing it can move, and how many cables a run can be before a router or a repeater renews"
                         + " it. So a network built with the right cables in the right places is a fast network.")
                 .paragraph("And what does the network do for you? It keeps your items as data on its servers' disks"
                         + " ([](jsc:items_as_data)), gives them back when you ask, and crafts what you need"
@@ -81,7 +81,7 @@ final class NetworkPages {
                         + " extends the network it is part of.")
                 .define("Repeater", "A block laid in a run of cable that renews the run's range, and carries each"
                         + " line on.")
-                .define("Speed", "The items a tick an Operation crossing a cable moves at most.")
+                .define("Speed", "The most items per tick that an Operation crossing a cable can move.")
                 .define("Range", "How many cables a run can be before a router or a repeater renews it. A run longer"
                         + " than its range carries nothing.")
                 .register();
@@ -183,7 +183,7 @@ final class NetworkPages {
                 .row(GuideCell.words("Advanced"), GuideCell.words("Cat 6a Cable"),
                         GuideCell.words("OM5 Fibre Cable"), GuideCell.words("Dark Fibre Cable"),
                         GuideCell.words("OSFP Cable"))
-                .paragraph("The crafting line has one cable for every era, the Crafting Cable. It is the only line"
+                .paragraph("The crafting line has one cable for all eras, the Crafting Cable. It is the only line"
                         + " that is not split by era.")
                 .table("Speed and range of each line", "Line", "Vintage", "Legacy", "Transition", "Standard",
                         "Advanced")
@@ -219,13 +219,13 @@ final class NetworkPages {
                         + " runs between exactly two ends and holds its block alone.")
                 .ifSomethingGoesWrong("Fibre will not turn a corner.",
                         "From the Standard on, fibre runs only straight. Turn it at an optical router.",
-                        "A run carries nothing past a point.",
+                        "A run carries nothing beyond its range.",
                         "The run is longer than its range. Add a repeater or a router inside it, so that the cable"
                                 + " after it starts counting again ([](jsc:routers)).")
                 .register();
         guide.page("data_cable_colours", section).titled("Colours and lanes of the cables")
                 .icon(() -> ComputingModule.GIGABIT_CABLE)
-                .paragraph("Every block of cable holds up to nine wires side by side. Each wire sits in one of nine"
+                .paragraph("Every block of cable holds up to nine wires. Each wire sits in one of nine"
                         + " lanes, laid out three across and three up, so one block can carry several lines at once.")
                 .paragraph("Each line has its own lane, so a data cable, a peripheral cable and a crafting cable can"
                         + " share one block without joining.")
@@ -366,7 +366,7 @@ final class NetworkPages {
                                 + " network has one Mainframe.")
                 .ifSomethingGoesWrong("The network is orphaned after you broke a Mainframe.",
                         "That Mainframe was the last one of its network, so no Mainframe runs it now. Its storage is"
-                                + " kept, as the network says above.")
+                                + " kept, as described in the section above.")
                 .register();
         guide.page("failover", section).titled("Failover").icon(ComputingModule.MAINFRAME)
                 .paragraph("A Mainframe can be a failover member. A failover member does not run the network while its"
@@ -583,7 +583,7 @@ final class NetworkPages {
                 .row(GuideCell.words("Connected to <machine>. Type exit to return."),
                         GuideCell.words("The session is open on the other computer."))
                 .row(GuideCell.words("<name>: host not found on this network"),
-                        GuideCell.words("No machine on your network has that name. Type ssh alone to see the names."))
+                        GuideCell.words("No machine on your network has that name; type ssh alone to see the names."))
                 .row(GuideCell.words("<name> matches <n> machines (<names>) - use the host name or node id"),
                         GuideCell.words("Use the host name or the start of the node id instead."))
                 .row(GuideCell.words("connect to host <name>: machine is powered off"),
@@ -595,8 +595,8 @@ final class NetworkPages {
                         GuideCell.words("Other computers may run programs here. This is the default."))
                 .row(GuideCell.code("config remote off"),
                         GuideCell.words("Other computers cannot run programs here."))
-                .paragraph("Remote Control is the point-and-click way into the network's other machines. It takes over"
-                        + " another machine and shows it on your screen ([](jsc:remote_control)).")
+                .paragraph("Remote Control is the point-and-click way into the network's other machines"
+                        + " ([](jsc:remote_control)).")
                 .define("Remote Control", "The desktop program that takes over another machine of the network and"
                         + " shows it on your screen.")
                 .ifSomethingGoesWrong("host not found on this network",

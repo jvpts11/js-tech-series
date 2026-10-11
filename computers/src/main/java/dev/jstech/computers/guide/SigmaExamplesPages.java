@@ -215,11 +215,12 @@ final class SigmaExamplesPages {
                 .row(GuideCell.code("Mainframe.Stats(...), Work()"),
                         GuideCell.words("The work done for one kind, and the work done for every kind."))
                 .row(GuideCell.code("Operations.Pull, Push, Craft"),
-                        GuideCell.words("Ask the network for a job of one kind. Each answers Ok and a Message."))
+                        GuideCell.words("Ask the network for a job of one kind. Each one answers with an Ok flag"
+                                + " and a Message."))
                 .row(GuideCell.code("Operations.Cancel, Reprioritise"),
                         GuideCell.words("Cancel a job, or change its priority."))
                 .row(GuideCell.code("Operations.Get, List()"),
-                        GuideCell.words("Read one job, or every job. Get gives null for a job that has finished."))
+                        GuideCell.words("Read one job, or every job."))
                 .paragraph("Watching is better than asking. The handler Told is called when the stock changes, so the"
                         + " program does not have to ask every tick. Told prints the item, the total and the stock"
                         + " before the change.")
@@ -273,7 +274,7 @@ final class SigmaExamplesPages {
                 .subheading("What the lines do")
                 .table("Lines of the program", "Line", "What it does")
                 .row(GuideCell.code("bus(\"Ore in\")"),
-                        GuideCell.words("Finds the bus called Ore in. It gives null when no bus has that name."))
+                        GuideCell.words("Finds the bus called Ore in, or gives null when no bus has that name."))
                 .row(GuideCell.code("if (ore != null)"),
                         GuideCell.words("Checks that the bus was found before any setting is used."))
                 .row(GuideCell.code("On(), Continuous(), Only(...)"),
@@ -296,7 +297,8 @@ final class SigmaExamplesPages {
                         GuideCell.words("Gives the settings of one item on the bus, so Keep and Max can be set for"
                                 + " that item alone."))
                 .row(GuideCell.code("Console.PrintLine(...)"),
-                        GuideCell.words("Prints the bus name, and the bus and the item of the item settings."))
+                        GuideCell.words("Prints the bus name, then the bus and the item that these settings"
+                                + " belong to."))
                 .row(GuideCell.code("wall.ReadWrite(), ReadOnly(), WriteOnly()"),
                         GuideCell.words("Shows the three access settings, one after another, on the second bus."))
                 .ifSomethingGoesWrong("The name gives nothing: no bus has that name, so the bus is null.",
@@ -354,8 +356,8 @@ final class SigmaExamplesPages {
                 .subheading("What the lines do")
                 .table("Lines of the program", "Line", "What it does")
                 .row(GuideCell.code("craftInterface(\"Kiln\")"),
-                        GuideCell.words("Finds the crafting interface by the name its window gives it. It gives null"
-                                + " when none has that name."))
+                        GuideCell.words("Finds the crafting interface by the name its window gives it, or gives"
+                                + " null when none has that name."))
                 .row(GuideCell.code("Exclusive(true), MaxJobs(4), Pause()"),
                         GuideCell.words("Keeps the interface for this program, allows four jobs at once, and stops"
                                 + " the interface taking jobs."))
@@ -374,7 +376,7 @@ final class SigmaExamplesPages {
                 .row(GuideCell.code("Route(\"Coarse dirt\", \"dirt\", null)"),
                         GuideCell.words("Routes the dirt input by the routers' own filters, since no router is given."))
                 .row(GuideCell.code("Operations.Update(...)"),
-                        GuideCell.words("Asks the network to smelt eight raw iron. It gives back an answer with Ok and"
+                        GuideCell.words("Asks the network to smelt eight raw iron, and gives back an answer with Ok and"
                                 + " Message."))
                 .row(GuideCell.code("Console.PrintLine(...)"), GuideCell.words("Prints the message of that answer."))
                 .define("Pattern", "A stored description of an item the network can make, and of the items it"
@@ -477,7 +479,7 @@ final class SigmaExamplesPages {
                 .define("Block", "The unit a file is read or written in. The cost of reading or writing grows with each"
                         + " block.")
                 .paragraph("The processor record names its era, which is the hardware era of the machine"
-                        + " ([](jsc:eras)). A file is written in blocks, so a big file costs more than a small one.")
+                        + " ([](jsc:eras)).")
                 .ifSomethingGoesWrong("File.Read is asked for a file that is not there, and the program stops.",
                         "Use File.TryRead instead, which answers false when the file is not there.",
                         "A write does not happen, because the disk is full, and the write answers false.",
@@ -494,8 +496,8 @@ final class SigmaExamplesPages {
                         + " Interface links the machine to the redstone of the world, so a program can read a signal"
                         + " or emit one ([](jsc:redstone_interfaces)).")
                 .paragraph("This example finds an interface called Gate, sets it to read and to emit strength 15, and"
-                        + " prints its name and its level. You can match each line with the table below. It then finds"
-                        + " an interface called Lever and prints its"
+                        + " prints its name and its strength. You can match each line with the table below. It then"
+                        + " finds an interface called Lever and prints its"
                         + " name.")
                 .subheading("The program")
                 .listing("Redstone.sgs",
@@ -665,7 +667,7 @@ final class SigmaExamplesPages {
                 .row(GuideCell.code("Gateway.Current"), GuideCell.words("The name of the Gateway that is selected."))
                 .row(GuideCell.code("Gateway.Names()"), GuideCell.words("The names of the Gateways on the machine."))
                 .row(GuideCell.code("Gateway.Select(\"east\")"),
-                        GuideCell.words("Selects the Gateway called east. It answers true when it is chosen."))
+                        GuideCell.words("Selects the Gateway called east, and answers true when it is chosen."))
                 .row(GuideCell.code("Gateway.Computers()"),
                         GuideCell.words("Lists the ComputerCraft computers, each with its number, name, label and"
                                 + " whether it is online."))
@@ -675,14 +677,14 @@ final class SigmaExamplesPages {
                 .row(GuideCell.code("Gateway.Call(\"left\", \"getName\")"),
                         GuideCell.words("Calls the method getName on the peripheral left, with no argument."))
                 .row(GuideCell.code("Gateway.Call(...)"),
-                        GuideCell.words("The same call with one argument, two arguments, and three arguments."))
+                        GuideCell.words("Calls the same method with one argument, with two, and with three."))
                 .row(GuideCell.code("Gateway.TurnOn(1), Shutdown(1), Reboot(1)"),
-                        GuideCell.words("Turn on, shut down, or restart the ComputerCraft computer with number 1. Each"
-                                + " answers true or false."))
+                        GuideCell.words("Turns on, shuts down, or restarts the ComputerCraft computer with number 1,"
+                                + " and answers true or false."))
                 .row(GuideCell.code("Gateway.Send(1, \"hello\")"),
                         GuideCell.words("Sends the text hello to the computer with number 1."))
                 .row(GuideCell.code("Gateway.OnMessage(Heard)"),
-                        GuideCell.words("Names Heard as the method called with each message that arrives."))
+                        GuideCell.words("Sets Heard as the method called with each message that arrives."))
                 .row(GuideCell.code("Heard(GatewayMessage message)"),
                         GuideCell.words("Prints the sender's number, the text and the tick it arrived on."))
                 .define("ComputerCraft", "Another mod with computers and peripherals of its own, which a Gateway"
@@ -836,7 +838,8 @@ final class SigmaExamplesPages {
                 .paragraph("A field you did not give a value starts as an empty struct, so a struct field is never"
                         + " nothing. An array of structs works the same way: new Vec[3] makes three empty ones.")
                 .ifSomethingGoesWrong("A struct declares a base class, and the compiler refuses it with code S3041.",
-                        "A struct can implement interfaces, but it stands on no class. Keep the class apart.")
+                        "A struct can implement interfaces, but it cannot have a base class. Remove the base class"
+                                + " from the struct.")
                 .seeAlso("jsc:sigma_classes", "jsc:sigma_library")
                 .register();
     }
@@ -1433,8 +1436,8 @@ final class SigmaExamplesPages {
                 .ifSomethingGoesWrong("A window holds more than 256 widgets, counting the ones inside rows and columns,"
                         + " and the program stops with \"a window holds at most 256 widgets, counting the ones inside"
                         + " rows and columns\".",
-                        "Put fewer widgets in the window. Group some of them in a row or a column, and count "
-                                + "those too.",
+                        "Put fewer widgets in the window. Widgets inside rows and columns count too, so"
+                                + " remove some of those as well.",
                         "A row or a column holds more than 256 widgets, and the program stops with \"a row or a column"
                                 + " holds at most 256 widgets\".",
                         "Split the widgets between two rows or two columns.",
@@ -1457,8 +1460,7 @@ final class SigmaExamplesPages {
                         + " components that a mod adds.")
                 .paragraph("Some widgets draw pictures, charts, items or components. A machine with only its terminal"
                         + " cannot draw them, so making one there stops the program, and the message says so.")
-                .paragraph("An event is something that happens, such as a click or a change. The handler is a method"
-                        + " that you write and name on the widget.")
+                .paragraph("The handler is a method that you write and name on the widget.")
                 .paragraph("Widgets have events such as OnChange, OnSelect and OnClick. Each one names the method"
                         + " called when the player acts.")
                 .subheading("The program")
@@ -1659,7 +1661,8 @@ final class SigmaExamplesPages {
                 .row(GuideCell.code("NumberBox, Slider"),
                         GuideCell.words("A whole number between a least and a most, moved a step at a time."))
                 .row(GuideCell.code("RadioGroup"),
-                        GuideCell.words("Choices of which one is picked. Selected is the picked choice, counted from 1,"
+                        GuideCell.words("A set of choices, one of which is picked. Selected is the picked choice,"
+                                + " counted from 1,"
                                 + " and 0 for none."))
                 .row(GuideCell.code("ComboBox"),
                         GuideCell.words("A box with a list of choices. Selected is the picked choice."))

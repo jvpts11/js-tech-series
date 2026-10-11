@@ -123,7 +123,7 @@ public final class GuideProse {
                 .toList();
         final Map<String, String> own = new HashMap<>();
         for (final GuideEntry entry : entries) {
-            own.put(entry.id(), QUOTED.matcher(wordsOf(entry, text)).replaceAll(" ").toLowerCase(Locale.ROOT));
+            own.put(entry.id(), QUOTED.matcher(wordsOf(entry, text)).replaceAll(" "));
         }
         final List<Early> wrong = new ArrayList<>();
         for (final GuideGlossary.Item item : glossary.items()) {
@@ -164,14 +164,20 @@ public final class GuideProse {
         return words.toString();
     }
 
-    /** Whether the text holds the word whole somewhere it is not part of a longer word the book explains. */
+    /**
+     * Whether the text holds the word whole somewhere it is not part of a longer word the book explains, nor of a
+     * name written with capitals, a path or a name in code.
+     */
     private static boolean uses(final String text, final String word, final List<String> explained) {
-        int at = GuideGlossary.wordAt(text, word, 0);
+        final String lower = text.toLowerCase(Locale.ROOT);
+        int at = GuideGlossary.wordAt(lower, word, 0);
         while (at >= 0) {
-            if (!insideALongerWord(text, at, word, explained)) {
+            if (!insideALongerWord(lower, at, word, explained)
+                    && (word.contains(" ") || !GuideGlossary.inAName(text, at, at + word.length()))
+                    && !GuideGlossary.inCode(text, at, at + word.length())) {
                 return true;
             }
-            at = GuideGlossary.wordAt(text, word, at + 1);
+            at = GuideGlossary.wordAt(lower, word, at + 1);
         }
         return false;
     }

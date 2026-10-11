@@ -55,8 +55,8 @@ final class OperationsPages {
                         + " hardware matters so much ([](jsc:mainframes)).")
                 .define("queue", "A lane on the Mainframe that moves items for one Operation at a time. More queues"
                         + " mean more Operations at once.")
-                .paragraph("Every Operation goes through the same stages. It waits in a queue, it runs over game"
-                        + " ticks (20 ticks make a second), and then it settles in one of eight states"
+                .paragraph("Most Operations go through the same stages. An Operation waits in a queue, runs over game"
+                        + " ticks (20 ticks make a second), and then settles in one of eight states"
                         + " ([](jsc:operation_states)).")
                 .paragraph("A timed Operation does not finish on the spot. A SELECT first takes a moment to find the"
                         + " items, and then it streams them out over ticks. By default that moment is 10 ticks on a"
@@ -73,7 +73,7 @@ final class OperationsPages {
                         "The Mainframe is off, or it is not on this network. Switch it on, or join it to the"
                                 + " network ([](jsc:first_network)).",
                         "The Mainframe has no operating system installed, so it refuses new Operations.",
-                        "Install one on it ([](jsc:installing)).")
+                        "Install an operating system on it ([](jsc:installing)).")
                 .seeAlso("jsc:operations_catalogue", "jsc:iql")
                 .register();
     }
@@ -156,7 +156,7 @@ final class OperationsPages {
                 .paragraph("Every Operation is in one of eight states at any time. The Processes tab of the"
                         + " [Network Manager](jsc:network_manager) shows you each one, in the words of the table"
                         + " below.")
-                .paragraph("Three states mean that the Operation is still going: PENDING, PROCESSING and WAITING."
+                .paragraph("Three states mean that the Operation is still going: queued, running and waiting."
                         + " The other five are final. The Operation is then done, and it is kept in the"
                         + " log ([](jsc:cancelling_and_the_log)).")
                 .define("log", "The Mainframe's list of the last 32 Operations that settled, newest first.")
@@ -192,17 +192,17 @@ final class OperationsPages {
                         + " more than the network holds."))
                 .row(GuideCell.code("the network had no room left for the"), GuideCell.words("An INSERT found no"
                         + " room left in the network's storage."))
-                .ifSomethingGoesWrong("An Operation stays PENDING.",
+                .ifSomethingGoesWrong("An Operation stays queued.",
                         "All the queues are busy. A Mainframe with more graphics cards has more queues"
                                 + " ([](jsc:expansion_cards)), and a faster processor finishes each one sooner"
                                 + " ([](jsc:mainframes)).",
-                        "It ends RESOURCE_LOCKED.",
+                        "It ends locked.",
                         "The items were held for longer than the waiting time, which is 60 seconds by default."
                                 + " Wait, or UNLOCK the item ([](jsc:lock_unlock)).",
-                        "It ends COMPLETED_PARTIAL.",
+                        "It ends partial.",
                         "The network held less than you asked for. Store more of the item"
                                 + " ([](jsc:storage_servers)), or ask for less.",
-                        "It ends FAILED.",
+                        "It ends failed.",
                         "The network held none of the item, or a step was refused. Check the item's name, and that"
                                 + " the item is stored.")
                 .seeAlso("jsc:states_and_queues", "jsc:cancelling_and_the_log")
@@ -221,11 +221,12 @@ final class OperationsPages {
                 .define("Items a tick (it/t)", "How many items a queue or the Mainframe moves in one game tick.")
                 .paragraph("Each queue runs at its own speed, measured in items a tick (it/t). The processor's queue"
                         + " runs at the processor's capacity. A graphics card's queue runs at the lower of the"
-                        + " processor's capacity and the card's own speed.")
+                        + " processor's capacity and the card's own speed. A weak card, or a card in an older slot, is"
+                        + " slower.")
                 .table("The speed of each queue", "Queue", "Runs at")
                 .row(GuideCell.words("The processor's queue"), GuideCell.words("The processor's capacity."))
                 .row(GuideCell.words("Each graphics card's queue"), GuideCell.words("The lower of the processor's"
-                        + " capacity and the card's speed. A weak card, or a card in an older slot, is slower."))
+                        + " capacity and the card's speed."))
                 .paragraph("The queues do not share their capacity among themselves. A second graphics card gives"
                         + " you a second lane. It does not make the first lane faster.")
                 .paragraph("The pace of the whole Mainframe is the lower of two figures. One is its orchestration"
@@ -266,8 +267,8 @@ final class OperationsPages {
                         + " it waits. By default, that is 600 ticks. It climbs no higher than HIGH, so low work is"
                         + " delayed, but it is never left behind for good. The mod's configuration sets this period,"
                         + " and a period of 0 switches aging off.")
-                .paragraph("The level you chose never changes. Each tick, the Mainframe works out the level it uses"
-                        + " for that tick: the chosen level, plus what aging has added.")
+                .paragraph("Aging does not change the level you chose. Each tick, the Mainframe works out the level"
+                        + " it uses for that tick: the chosen level, plus what aging has added.")
                 .subheading("Changing a priority")
                 .steps("Open the Processes tab of the Network Manager, and click the row of the Operation.",
                         "Press > to raise its level one step, or < to lower it.")
@@ -298,8 +299,8 @@ final class OperationsPages {
                         "Press Cancel in the popup.")
                 .paragraph("Cancelling hands back what the Operation held. The Operation then settles as DISCARDED on"
                         + " the next tick, and the log records it.")
-                .paragraph("The Command Prompt has the same control through the interac command. The two commands"
-                        + " below work on the Operations in flight.")
+                .paragraph("The Command Prompt has the same control through its interac command. The two forms in"
+                        + " the next table work on the Operations in flight.")
                 .table("The Command Prompt commands")
                 .fixed("Lists the Operations in flight, with their identifiers (IDs)", "interac ops")
                 .fixed("Cancels one, by the start of its ID", "interac cancel <id>")
@@ -309,7 +310,7 @@ final class OperationsPages {
                 .row(GuideCell.words("Type"), GuideCell.words("The kind of Operation, such as SELECT or MOVE."))
                 .row(GuideCell.words("Item"), GuideCell.words("The item that it worked on."))
                 .row(GuideCell.words("Amount"), GuideCell.words("How much moved, out of how much was asked."))
-                .row(GuideCell.words("Status"), GuideCell.words("Its state, in the words of the table of states."))
+                .row(GuideCell.words("Status"), GuideCell.words("Its state, such as PENDING, COMPLETED or DISCARDED."))
                 .row(GuideCell.words("Reason"), GuideCell.words("The line with the reason, when there is one."))
                 .row(GuideCell.words("Waited and ran"), GuideCell.words("How many ticks it waited for a queue, and how"
                         + " many it ran."))
@@ -323,8 +324,8 @@ final class OperationsPages {
                         + " than 24 hours is discarded and logged instead, by default. The mod's configuration can"
                         + " change that time.")
                 .ifSomethingGoesWrong("The Operation is still in the list after I cancelled it.",
-                        "It is settled as DISCARDED on the next tick, not at once. Wait one tick, and the list"
-                                + " refreshes.",
+                        "The Operation is settled as DISCARDED on the next tick, not at once. Wait one tick, and the"
+                                + " list refreshes.",
                         "My Operation vanished after a reload.",
                         "The save was older than 24 hours, so the Mainframe discarded it and logged it. Look for it in"
                                 + " the log.",
@@ -405,16 +406,15 @@ final class OperationsPages {
                 .row(GuideCell.words("NextgreIQL"), GuideCell.words("Shows the plan it made and how it ran, takes"
                         + " hints that change the plan, and takes extras from other mods."),
                         GuideCell.words("Legacy 7.0, Transition 8.3, Standard 9.0, Advanced 16"))
-                .row(GuideCell.words("Prophet YourIQL"), GuideCell.words("You declare the state the network keeps, and"
-                        + " it works out the Operations to reach that state and hold it. It also answers"
-                        + " subscriptions to changes."),
+                .row(GuideCell.words("Prophet YourIQL"), GuideCell.words("You declare the state the network keeps;"
+                        + " it works out the Operations to hold it, and answers subscriptions."),
                         GuideCell.words("Legacy 3.23, Transition 5.0, Standard 5.6, Advanced 8.0"))
                 .paragraph("NextgreIQL and Prophet YourIQL come from the Legacy era on. Prophet works differently from"
                         + " the others: you say what state the network must keep, and it does the work to keep it."
                         + " The book Learning IQL explains each engine ([](jsc:iql_engines_overview)).")
                 .paragraph("A program names the engine it needs. The IQL Server Management Studio needs the Midsoft IQL"
                         + " Server, version 2000 or newer. The Nextgre Planner Studio needs NextgreIQL, and the Prophet"
-                        + " Reactive Console needs YourIQL, version 3.23 or newer.")
+                        + " Reactive Console needs Prophet YourIQL, version 3.23 or newer.")
                 .paragraph("Replacing an engine takes at least 2 seconds, and up to 2 minutes. A network with"
                         + " more kinds of item takes longer. While the engine is replaced, the work already running"
                         + " carries on, and new plans are refused.")

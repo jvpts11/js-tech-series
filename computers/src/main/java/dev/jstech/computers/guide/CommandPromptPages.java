@@ -144,8 +144,8 @@ final class CommandPromptPages {
                         + " folder, not from the folder you are in."))
                 .row(GuideCell.code("D:\\WORK"), GuideCell.words("Starts from the root of drive D:, whichever folder"
                         + " you were in."))
-                .row(GuideCell.code("D:"), GuideCell.words("Goes to the root of drive D:. The shell keeps no folder"
-                        + " for each drive, so a drive letter alone never returns you to an older folder."))
+                .row(GuideCell.code("D:"), GuideCell.words("Goes to the root of drive D:, not to the folder you used"
+                        + " there before."))
                 .row(GuideCell.code("."), GuideCell.words("Is skipped, so it adds nothing to the path."))
                 .paragraph("The prompt shows where you are: the current folder, then a greater-than sign. At the top of"
                         + " drive C: it reads C:\\>. After you type cd C:\\DOS, it reads C:\\DOS>.")
@@ -155,11 +155,11 @@ final class CommandPromptPages {
                 .session("jsc:guide/terminal/dos", "MC-DOS")
                 .typed("C:\\DOS> ", "cd")
                 .answer("C:\\DOS")
-                .paragraph("With no words after it, cd prints the folder you are in, as in the answer above.")
+                .paragraph("With no words after it, cd prints the folder you are in, such as C:\\DOS.")
                 .subheading("Switches")
-                .paragraph("A switch is an option word after a command's name. It changes what the command does, and"
-                        + " you write it the way that command takes it, such as /y. Each command reads only the"
-                        + " switches it declares; the shell itself knows none of them.")
+                .paragraph("A switch changes what the command does. You write it the way that command takes it, such"
+                        + " as /y. Each command reads only the switches it declares; the shell itself knows none of"
+                        + " them.")
                 .define("Switch", "An option word after a command's name, written the way that command takes it.")
                 .table("Switches of the DOS family", "Switch", "Command and what it does")
                 .row(GuideCell.code("/y"), GuideCell.words("format: confirms that you want the drive erased."))
@@ -185,8 +185,8 @@ final class CommandPromptPages {
                         + " way, so find \"oak log\" looks for the whole phrase.")
                 .paragraph("On the DOS family, a name between percent signs, such as %USERNAME%, is replaced by its"
                         + " value before the command runs. The built-in names are HOSTNAME, COMPUTERNAME, USER,"
-                        + " USERNAME, OS, CD (the prompt) and PATH, which counts only when the line holds a percent"
-                        + " sign. You give a name a value with set ([](jsc:shell_verbs)).")
+                        + " USERNAME, OS, CD (the prompt) and PATH. You give a name a value with set"
+                        + " ([](jsc:shell_verbs)).")
                 .paragraph("A star (*) in a name is passed to the command as it is. The command decides what the star"
                         + " matches.")
                 .paragraph("If the word you type is not a command, the shell searches for a program of that name in"
@@ -375,7 +375,7 @@ final class CommandPromptPages {
                         "format says the drive is not ready.",
                         "Link a disk to that drive ([](jsc:drives)), then try again.",
                         "The wrong drive was erased.",
-                        "There is no undo. Check the drive letter and the warning before you add /y.")
+                        "Check the drive letter and the warning before you add /y.")
                 .seeAlso("jsc:disks", "jsc:drives")
                 .register();
     }
@@ -424,7 +424,8 @@ final class CommandPromptPages {
                 .row(GuideCell.code("q"), GuideCell.words("Gives the terminal back."))
                 .command(CommandGuidePages.id(Platform.MC_DOS, "more"))
                 .ifSomethingGoesWrong("find prints nothing.",
-                        "find is case-sensitive unless you add /I. Check the text too, and keep it in double quotes.",
+                        "find is case-sensitive unless you add /I. Check the capital letters too, and keep the"
+                                + " text in double quotes.",
                         "sort does not put the numbers in order as numbers.",
                         "sort compares lines as text, so a line \"10\" comes before a line \"9\". The DOS sort has no"
                                 + " numeric option.",
@@ -535,7 +536,8 @@ final class CommandPromptPages {
                 .command(CommandGuidePages.id(Platform.MC_DOS, "status"))
                 .subheading("config")
                 .paragraph("config with no words lists this computer's settings under the heading settings, and tells"
-                        + " you how to change one. With two words, config key value changes one setting.")
+                        + " you how to change one. With a key and a value after it, config key value changes one"
+                        + " setting.")
                 .table("Settings with their own rules", "Key", "What it does")
                 .row(GuideCell.code("name"), GuideCell.words("The computer's name, which whoami shows."))
                 .row(GuideCell.code("theme"), GuideCell.words("Applies a preset of accent colour and wallpaper."))
@@ -546,8 +548,8 @@ final class CommandPromptPages {
                         + " shared folder shows as \\\\<host>\\<name>."))
                 .row(GuideCell.code("unshare NAME"), GuideCell.words("Closes a shared folder."))
                 .paragraph("Other keys go to the machine's settings store. A machine without one says that it has no"
-                        + " settings store. For example, this sets how much of the disk the network may read to half"
-                        + " of it.")
+                        + " settings store. For example, config netshare 500 sets how much of the disk the network"
+                        + " may read to half of it.")
                 .session("jsc:guide/terminal/dos", "MC-DOS")
                 .typed("C:\\> ", "config netshare 500")
                 .answer("netshare set")
@@ -630,7 +632,7 @@ final class CommandPromptPages {
                 .command(CommandGuidePages.id(Platform.MC_DOS, "start"))
                 .subheading("at and the schedule")
                 .paragraph("at runs a command at an hour of the day, every day or only on the days that you name. The"
-                        + " shortest time a job repeats is an hour of the world's clock.")
+                        + " smallest time step a job can use is one hour of the world's clock.")
                 .table("Forms of at", "Form", "What it does")
                 .row(GuideCell.code("at"), GuideCell.words("Lists the jobs, with their hours and days."))
                 .row(GuideCell.code("at 06:00 COMMAND"), GuideCell.words("Runs the command every day at that hour."))
@@ -665,7 +667,8 @@ final class CommandPromptPages {
                 .paragraph("print sends text files to the printer in the background, so the prompt is free while the"
                         + " files print. You need a printer linked to the computer ([](jsc:printers)).")
                 .paragraph("The first time you use print, it says \"Resident part of PRINT installed\". Each file that"
-                        + " you name joins the queue. The queue lists the file being printed, then the files in queue."
+                        + " you name joins the queue. The queue lists the file being printed, then the files waiting in"
+                        + " the queue."
                         + " When the queue is empty, it says \"PRINT queue is empty\".")
                 .command(CommandGuidePages.id(Platform.MC_DOS, "print"))
                 .ifSomethingGoesWrong("print says Errors on list device indicate that it may be off-line.",
@@ -803,7 +806,7 @@ final class CommandPromptPages {
                         "The message names the word where the parser stopped. Fix that word. The grammar is in"
                                 + " [](jsc:iql).",
                         "iql SELECT says no rows.",
-                        "Nothing matches the name. Check its spelling with interac list and part of the name.",
+                        "Nothing matches the name. Use interac list with part of the name to check its spelling.",
                         "no other computers reachable on this network",
                         "No other computer of this network is up and reachable. Try again when one is.")
                 .seeAlso("jsc:what_a_network_is", "jsc:first_network", "jsc:iql")

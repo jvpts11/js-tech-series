@@ -44,7 +44,8 @@ final class SigmaLibraryPages {
                         + " had. A using line, explained in [](jsc:sigma_namespaces_using), brings a namespace in.")
                 .subheading("Bringing names into a program")
                 .steps("Write using Standard.*; at the top of the file, to bring in everything in Standard.",
-                        "Write namespace, your own name and a semicolon, below the using line.",
+                        "Below the using line, write namespace, then a name of your own and a semicolon, such as"
+                                + " namespace MyProgram;.",
                         "Write the entry point of your kind of program, as the table below shows.")
                 .table("Where a program starts", "Kind of program", "What you write")
                 .row(GuideCell.words("A console program"), GuideCell.code("static void Main()"))
@@ -85,13 +86,13 @@ final class SigmaLibraryPages {
                         "Add the using line it names at the top of the file: using System.IO.*; for everything in"
                                 + " the namespace, or using System.IO.<name>; for one type.",
                         "The compiler says a name is a namespace and refuses it alone.",
-                        "Write .* after the namespace, as in using System.IO.*;, to bring in everything in it.",
+                        "Write .* after the namespace to bring in everything in it.",
                         "The compiler says Sigma has no System library, and that everything Sigma has is in"
                                 + " Standard.",
                         "Write using Standard.*; and use the names it holds, or write the program in Sigma#.",
                         "The compiler refuses List, Map or Thread.",
                         "Use the replacement in the table of names Sigma refuses, or write the program in Sigma#, which"
-                                + " has all three. Its threads have their own page ([](jsc:threads_and_locks)).",
+                                + " has all of them. Threads have their own page ([](jsc:threads_and_locks)).",
                         "The compiler refuses a member that Sigma does not offer.",
                         "Use one of the members the compiler lists in its message.",
                         "A version 1 build refuses a name that came in version 2.",
@@ -157,10 +158,9 @@ final class SigmaLibraryPages {
                         + " that name."))
                 .row(GuideCell.code("craftInterface(name)"), GuideCell.words("CraftInterface.Named."))
                 .row(GuideCell.code("craftRouter(name)"), GuideCell.words("CraftRouter.Named."))
-                .paragraph("The formats of printf, sprintf, scanf, fprintf and fscanf work the same way. A hole is a"
-                        + " place in the format text that is filled with a value. A hole starts with a percent sign"
-                        + " and a letter: %d for a whole number, %f for a decimal number, %s for text, %c for a"
-                        + " character and %% for a percent sign.")
+                .paragraph("The formats of printf, sprintf, scanf, fprintf and fscanf work the same way. A hole"
+                        + " starts with a percent sign and a letter: %d for a whole number, %f for a decimal number,"
+                        + " %s for text, %c for a character and %% for a percent sign.")
                 .paragraph("The compiler knows %d, %i, %u, %x, %X, %o, %f, %e, %E, %s, %c and %%. A version 1 hole"
                         + " takes only the plain letters d, i, f, s and c, with nothing between the percent sign"
                         + " and the letter. Flags, widths and precisions came in version 2.")
@@ -178,8 +178,9 @@ final class SigmaLibraryPages {
                         "Write the number into the format, as in %5d, instead of a star.",
                         "The compiler says the format must be written out.",
                         "Put the format between quotes in the call, not in a variable.",
-                        "The program stops and says that a hole is no printf hole this machine writes.",
-                        "Use a hole from the list above, such as %d or %s.")
+                        "The program stops and says that the hole is not one this machine's"
+                                + " printf can write.",
+                        "Use a hole from the list above.")
                 .seeAlso("jsc:sigma_printf_old_names", "jsc:sigma_methods_out_ref")
                 .register();
 
@@ -188,8 +189,7 @@ final class SigmaLibraryPages {
                         + " Whatever you print appears there, and whatever you read is a line the player typed"
                         + " there. Most programs start by printing a question and reading the answer.")
                 .paragraph("Console calls cost nothing. Printing does not end the line, but PrintLine does. A"
-                        + " read waits until a line is typed, and a program that waits is parked: it uses no credits"
-                        + " while it waits.")
+                        + " read waits until a line is typed, and a program that waits is parked.")
                 .table("Console members", "Member", "What it does", "Language")
                 .row(GuideCell.code("Console.Print(text)"), GuideCell.words("Writes the text and leaves the line"
                         + " open."), GuideCell.words("Sigma and Sigma#"))
@@ -205,8 +205,8 @@ final class SigmaLibraryPages {
                         + " never waits."), GuideCell.words("Sigma# only"))
                 .row(GuideCell.code("Console.Read()"), GuideCell.words("The next character as a number, the line"
                         + " break included."), GuideCell.words("Sigma and Sigma#, version 2"))
-                .row(GuideCell.code("Console.Scan(out value)"), GuideCell.words("Reads one value of the variable's"
-                        + " type. Gives 1 for a value and 0 when the text is not one."),
+                .row(GuideCell.code("Console.Scan(out value)"), GuideCell.words("Reads a value of the variable's"
+                        + " type, giving 1 when it works and 0 when the text is not one."),
                         GuideCell.words("Sigma and Sigma#, version 2"))
                 .row(GuideCell.code("Console.ReadInt()"), GuideCell.words("Reads the whole line as a whole number."),
                         GuideCell.words("Sigma and Sigma#"))
@@ -262,8 +262,8 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("File.Delete(path)"), GuideCell.words("Removes the file. False when refused."))
                 .row(GuideCell.code("File.MkDir(path)"), GuideCell.words("Makes a folder. False when refused."))
                 .row(GuideCell.code("File.List(path)"), GuideCell.words("The names in a folder, as a list."))
-                .row(GuideCell.code("File.Open(path, mode)"), GuideCell.words("Opens a file for a piece-by-piece"
-                        + " work: gives a FILE, or null. Version 2."))
+                .row(GuideCell.code("File.Open(path, mode)"), GuideCell.words("Opens a file to work on it piece by"
+                        + " piece: gives a FILE, or null. Version 2."))
                 .row(GuideCell.code("File.Move(from, to)"), GuideCell.words("Renames the file. False when refused."
                         + " Version 2."))
                 .paragraph("Exists, Read and TryRead only look at a file. Write, Append, Delete, MkDir and Move"
@@ -287,7 +287,7 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("FILE.Write(text)"), GuideCell.words("Writes the text into the file."))
                 .row(GuideCell.code("FILE.Write(char)"), GuideCell.words("Writes one character."))
                 .row(GuideCell.code("FILE.Seek(place)"), GuideCell.words("Moves to a place, counted in characters from"
-                        + " the start. The place stays between 0 and the length of the file."))
+                        + " the start and kept between 0 and the length of the file."))
                 .row(GuideCell.code("FILE.Position"), GuideCell.words("The place now, in characters from the start."))
                 .row(GuideCell.code("FILE.AtEnd"), GuideCell.words("Yes when the place is at the end of the file."))
                 .subheading("Modes")
@@ -374,8 +374,8 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("Convert.TryLong, Convert.TryDouble, Convert.TryBool"), GuideCell.words("The "
                         + "same as TryInt, for"
                         + " the other kinds. Sigma# only."))
-                .paragraph("A base is the number of digits a number is written with. Base 10 is the ordinary way, and"
-                        + " base 16 is hexadecimal. Base 10 keeps the minus sign. Every other base writes the 32 "
+                .paragraph("A base is how many different digits a number is written with. Base 10 is the ordinary way,"
+                        + " and base 16 is hexadecimal. Base 10 keeps the minus sign. Every other base writes the 32 "
                         + "bits of"
                         + " the number, so -1 in base 16 is ffffffff.")
                 .paragraph("Convert.ToBool takes true, yes, y, on or 1 for true, and false, no, n, off or 0 for false,"
@@ -417,8 +417,8 @@ final class SigmaLibraryPages {
                 .paragraph("A program can ask the machine it runs on what it is: its name, its processor, its system,"
                         + " its memory and its disks. The answers are pictures taken when you ask, not views that"
                         + " update by themselves.")
-                .paragraph("You read the machine through Computer, a type you call on the type itself. Write"
-                        + " Computer.Name, not the name of a variable that holds a computer.")
+                .paragraph("You read the machine through Computer, a built-in type whose members you read"
+                        + " directly. Write Computer.Name, not the name of a variable that holds a computer.")
                 .table("Computer members", "Member", "What it gives")
                 .row(GuideCell.code("Computer.Name"), GuideCell.words("The name of the machine, as text."))
                 .row(GuideCell.code("Computer.Cpu"), GuideCell.words("The processor (CPU), as a CpuInfo record."
@@ -488,9 +488,8 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("Program.DroppedEvents"), GuideCell.words("How many events the program lost, "
                         + "because"
                         + " its queue was full. Sigma# only."))
-                .row(GuideCell.code("Program.Start(path)"), GuideCell.words("Starts the program at the path and gives a"
-                        + " Process. Start(path, args) and Start(path, args, priority) add the arguments and the"
-                        + " priority. Sigma# only."))
+                .row(GuideCell.code("Program.Start(path)"), GuideCell.words("Starts the program at the path, with"
+                        + " optional arguments and priority, and gives a Process. Sigma# only."))
                 .row(GuideCell.code("Program.Current"), GuideCell.words("The program itself, as a Process. Sigma#"
                         + " only."))
                 .row(GuideCell.code("Program.Shell(line)"), GuideCell.words("Runs one line at this machine's own "
@@ -500,7 +499,8 @@ final class SigmaLibraryPages {
                         + " message other programs send this one. Sigma# only."))
                 .paragraph("Program.Start compiles a file of source (.sg or .sgs) before it starts it. A compiled"
                         + " file runs as it is.")
-                .paragraph("The third value of Start is a priority name: low, medium or high, in any case. Any other"
+                .paragraph("Start takes the path, then optional arguments, then an optional priority. The priority"
+                        + " is a name: low, medium or high, in any case. Any other"
                         + " name, or none, gives medium. A low program gets a turn only every other round, and a high"
                         + " program runs like a medium one.")
                 .paragraph("A program started from another program gets 1 megabyte (MB) of memory, its heap. The most"
@@ -555,18 +555,19 @@ final class SigmaLibraryPages {
                         "Read the error the compiler gives, and fix the line it names. The errors are explained in"
                                 + " [](jsc:sigma_reading_an_error).",
                         "Process.Output or Process.ExitCode stops the program: there is no process here.",
-                        "The process ended and left the machine. Read its output while it is still here.",
+                        "The process has ended, so it is no longer on the machine. Read its output while the process"
+                                + " is still running.",
                         "Process.Send gives false.",
                         "The receiving program has no room in its queue. Send again later.",
                         "The program stops with an error, and its files close.",
-                        "Read the message in the console. The program's work stops with it.")
+                        "Read the error in the console. The program's work stops with that error.")
                 .seeAlso("jsc:running_programs", "jsc:threads_and_locks", "jsc:sigma_runtime_stops")
                 .register();
 
         guide.page("threads_and_locks", section).titled("Threads and lock")
                 .paragraph("A thread is a line of work inside one program. Threads of one program share its memory,"
                         + " and only one of them runs at a time: the machine gives each a turn in turn.")
-                .paragraph("Thread is in Sigma# only. Sigma has no threads, and it has no lock statement either.")
+                .paragraph("Thread exists only in Sigma#. Sigma has no threads, and it has no lock statement either.")
                 .table("Thread members", "Member", "What it does")
                 .row(GuideCell.code("Thread.Start(action)"), GuideCell.words("Starts a new thread that runs the method"
                         + " the action points at."))
@@ -647,7 +648,8 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("Network.Computer(host)"), GuideCell.words("The computer with that host name, or "
                         + "null"
                         + " when there is none."))
-                .paragraph("Every member of Network is Sigma# only. Total counts every server that holds the item.")
+                .paragraph("Every member of Network is available in Sigma#"
+                        + " only. Total counts every server that holds the item.")
                 .subheading("What the records hold")
                 .table("Records of Network", "Record", "Fields", "What each field holds")
                 .row(GuideCell.code("HoldingInfo"), GuideCell.code("HoldingInfo.Server, HoldingInfo.Quantity"),
@@ -695,7 +697,7 @@ final class SigmaLibraryPages {
                         + " teaches it from zero in [](jsc:what_iql_is).")
                 .paragraph("Iql lets a program send those statements itself, instead of you typing them at a prompt. "
                         + "Every"
-                        + " Iql call needs a network with a Mainframe. Sigma# only.")
+                        + " Iql call needs a network with a Mainframe. Only Sigma# programs can use it.")
                 .table("Iql members", "Member", "What it does")
                 .row(GuideCell.code("Iql.Run(statement)"), GuideCell.words("Runs one statement and gives an "
                         + "IqlResult. A"
@@ -780,7 +782,7 @@ final class SigmaLibraryPages {
                         + " what it runs. The other computer is a RemoteComputer, and you get one from Network.Computer"
                         + " or Network.Computers.")
                 .paragraph("The computer must be on the same network. A host name that matches several machines is"
-                        + " refused, so use the host name or the node id instead.")
+                        + " refused, so use the node id or the full host name instead.")
                 .define("Host name", "The name a machine answers to on the network.")
                 .define("Node id", "The machine's own identifier. Use it in place of a host name that matches"
                         + " several machines.")
@@ -797,7 +799,7 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("RemoteComputer.Start(path)"), GuideCell.words("Starts a program on that "
                         + "computer, as "
                         + "Program.Start"
-                        + " does, and gives a Process. Start(path, args) and Start(path, args, priority) also exist."))
+                        + " does, and gives a Process; Start also takes (path, args) or (path, args, priority)."))
                 .row(GuideCell.code("RemoteComputer.Shell(line)"), GuideCell.words("Runs a line at that computer's "
                         + "prompt, and "
                         + "gives back"
@@ -855,16 +857,16 @@ final class SigmaLibraryPages {
                         + " Operation runs."))
                 .row(GuideCell.code("Operations.Update(item, action, amount)"), GuideCell.words("Asks for an UPDATE "
                         + "with"
-                        + " the action, such as SMELT. Version 2."))
+                        + " the action, such as SMELT. Added in version 2."))
                 .row(GuideCell.code("Operations.Get(id)"), GuideCell.words("The OperationInfo of the Operation with "
                         + "that id,"
                         + " or nothing when it is no longer in flight."))
                 .row(GuideCell.code("Operations.List()"), GuideCell.words("Every Operation in flight, as a list of"
                         + " OperationInfo."))
                 .paragraph("Pull, Push, Craft, Cancel, Reprioritise and Update give an AskResult. Get and List give"
-                        + " OperationInfo. Cancel takes the start of an id, as long as it is at least as long as the "
-                        + "short"
-                        + " form of the id. Get needs the whole id, and ignores case.")
+                        + " OperationInfo. Cancel accepts the start of an id, provided that start is at least as long "
+                        + "as the"
+                        + " short form of the id. Get needs the whole id, and ignores case.")
                 .subheading("What the results hold")
                 .table("Records of Operations", "Record", "Fields", "What each field holds")
                 .row(GuideCell.code("AskResult"), GuideCell.code("AskResult.Ok, AskResult.Message"),
@@ -881,8 +883,8 @@ final class SigmaLibraryPages {
                 .row(GuideCell.words("Medium"), GuideCell.code("medium, or normal"))
                 .row(GuideCell.words("Medium high"), GuideCell.code("medium_high"))
                 .row(GuideCell.words("High"), GuideCell.code("high"))
-                .paragraph("The Operation levels are not the scale of a program's priority, which runs low, medium and"
-                        + " high.")
+                .paragraph("The five Operation levels in the table are not the same scale as a program's priority,"
+                        + " which is written as low, medium or high.")
                 .subheading("Messages the network answers with")
                 .table("Messages of an AskResult", "Message", "What it means")
                 .row(GuideCell.words("unknown item: <item>"), GuideCell.words("The network does not know the item."))
@@ -1008,7 +1010,7 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("CraftInterface.Route(pattern, input, router)"), GuideCell.words("Sends one "
                         + "input of a"
                         + " pattern through one router of the interface's own cable. A null router routes that input by"
-                        + " the filters of the routers instead."))
+                        + " the routers' filters."))
                 .table("CraftRouter members", "Member", "What it does")
                 .row(GuideCell.code("CraftRouter.Named(name)"), GuideCell.words("The router with that name, or null "
                         + "when"
@@ -1028,8 +1030,8 @@ final class SigmaLibraryPages {
                         + "program"
                         + " finds them by is the name their windows give, and a window can rename them.")
                 .paragraph("Each setting goes through the same engine as the bus settings. A refused setting stops the"
-                        + " program with the engine's text. Each setting is marked with the program's class name, or"
-                        + " Sigma when there is none.")
+                        + " program with the engine's text. Each setting is recorded under the program's class name, or"
+                        + " under Sigma when the program has none.")
                 .ifSomethingGoesWrong(
                         "The program stops and says there is no Crafting Interface with that name on this network.",
                         "Check the name in the interface's window.",
@@ -1057,7 +1059,7 @@ final class SigmaLibraryPages {
                 .table("Redstone members", "Member", "What it does")
                 .row(GuideCell.code("Redstone.Named(name)"), GuideCell.words("The interface with that name, or null "
                         + "when no"
-                        + " interface linked to this machine answers to it. The name is not case-sensitive."))
+                        + " interface linked to this machine answers to it, ignoring capitals."))
                 .row(GuideCell.code("Redstone.Name"), GuideCell.words("The name of the interface."))
                 .row(GuideCell.code("Redstone.In()"), GuideCell.words("Sets the interface to read the signal. It stops"
                         + " emitting."))
@@ -1066,7 +1068,8 @@ final class SigmaLibraryPages {
                         + " from 0 to 15."))
                 .row(GuideCell.code("Redstone.Level()"), GuideCell.words("The strength the interface shows now."))
                 .paragraph("In sets the interface to read, and Out sets it to emit. The last one you call wins. Each"
-                        + " setting is marked with the program that made it, or Sigma when it has no class name.")
+                        + " setting is marked with the name of the program that made it, or with Sigma when that"
+                        + " program has no name of its own.")
                 .paragraph("Level shows the strength that is emitted while the interface is live, or the strength it "
                         + "reads"
                         + " when it does not emit. It gives 0 when the interface is not live.")
@@ -1110,8 +1113,8 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("Speaker.Play(path)"), GuideCell.words("Plays a recording out of that speaker "
                         + "alone."
                         + " Gives true when it plays."))
-                .paragraph("Beep comes out of the speaker in the machine's case, and it cuts off the beep before it. "
-                        + "Its"
+                .paragraph("Beep comes out of the speaker in the machine's case. A new beep cuts off the one before "
+                        + "it. Its"
                         + " pitch stays between 20 and 20,000 hertz (Hz), and its length between 1 and 60,000 "
                         + "milliseconds"
                         + " (ms).")
@@ -1176,7 +1179,8 @@ final class SigmaLibraryPages {
                         + " CcPeripheral."))
                 .row(GuideCell.code("Gateway.Call(peripheral, method, args)"), GuideCell.words("Asks a peripheral to "
                         + "run a"
-                        + " method, and gives back what it returns. Up to three arguments follow the two names."))
+                        + " method, with up to three arguments after the two names, and gives back what it"
+                        + " returns."))
                 .row(GuideCell.code("Gateway.TurnOn(id)"), GuideCell.words("Switches on the computer with that "
                         + "number."))
                 .row(GuideCell.code("Gateway.Shutdown(id)"), GuideCell.words("Switches off the computer with that "
@@ -1212,7 +1216,7 @@ final class SigmaLibraryPages {
                         + "ComputerCraft"
                                 + " is installed.",
                         "Install ComputerCraft, then start the game again.",
-                        "Gateway.Call stops the program with the other mod's text.",
+                        "Gateway.Call stops the program with the error text from ComputerCraft.",
                         "The peripheral refused the call. Check the method name and the arguments in "
                         + "Gateway.Peripherals.")
                 .seeAlso("jsc:network_gateway", "jsc:computercraft_peripheral")
@@ -1241,9 +1245,6 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("Window.Add(widget, x, y, width, height)"), GuideCell.words("Places a widget at an"
                         + " exact place in the window."))
                 .row(GuideCell.code("Window.OnClose"), GuideCell.words("The event that runs when the window closes."))
-                .paragraph("A window's default size is 240 wide and 160 high. Its width stays between 60 and 640, "
-                        + "and its"
-                        + " height between 60 and 360.")
                 .subheading("Rows and columns")
                 .paragraph("A row puts its widgets side by side, and a column stacks them. A row shares its width "
                         + "among its"
@@ -1252,9 +1253,8 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("Row.new()"), GuideCell.words("Makes an empty row. Column.new() makes an empty "
                         + "column."))
                 .row(GuideCell.code("Row.Add(widget)"), GuideCell.words("Adds a widget at its own size."))
-                .row(GuideCell.code("Row.Add(widget, weight)"), GuideCell.words("Adds a widget that takes a share of "
-                        + "the room"
-                        + " left over. A weight of 1 or more takes a share, and no weight takes none."))
+                .row(GuideCell.code("Row.Add(widget, weight)"), GuideCell.words("Adds a widget that shares the room "
+                        + "left over, by its weight (1 or more)."))
                 .row(GuideCell.code("Row.Spacing"), GuideCell.words("The gap between the widgets, 4 by default."))
                 .row(GuideCell.code("Row.Clear()"), GuideCell.words("Removes the widgets from the row."))
                 .row(GuideCell.code("Column.Add"), GuideCell.words("The same as Row.Add, for a column."))
@@ -1317,7 +1317,7 @@ final class SigmaLibraryPages {
                 .paragraph("A text box keeps at most 256 characters of text.")
                 .ifSomethingGoesWrong(
                         "The text box stops taking characters.",
-                        "It holds 256 characters at most. Shorten the text, or split it between two boxes.",
+                        "Shorten the text, or split it between two boxes.",
                         "The program does not react when the player presses Enter.",
                         "Listen for OnSubmit, which runs when the player presses Enter in the box.")
                 .seeAlso("jsc:windows_and_layout", "jsc:widgets_lists")
@@ -1425,8 +1425,7 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("LogView"), GuideCell.code("LogView.new()"), GuideCell.code("LogView.Add(text), "
                         + "LogView.Clear, "
                         + "LogView.Count"))
-                .paragraph("A canvas holds at most 4,096 strokes. A chart holds 120 points, and when it is full the "
-                        + "oldest"
+                .paragraph("A chart holds 120 points, and when it is full the oldest"
                         + " point goes. A log view holds 256 lines, and the oldest line goes first. Image, Chart, "
                         + "LogView"
                         + " and the widgets below are version 2.")
@@ -1496,9 +1495,10 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("MessageBox.Show(title, text)"), GuideCell.words("A window with a title and one "
                         + "line of"
                         + " text. Sigma# only."))
-                .paragraph("A dialog opens over a window that is open, and a window holds one dialog at a time.")
+                .paragraph("A window holds one dialog at a time.")
                 .ifSomethingGoesWrong(
-                        "The program stops and says a dialog opens over a window that is open.",
+                        "The program stops and says \"a dialog opens over a window that is open\", because the owner"
+                                + " window is not open.",
                         "Show the owner window first, then open the dialog over it.",
                         "The program stops and says this window already has a dialog open over it.",
                         "Close the open dialog first, then open the next one.")

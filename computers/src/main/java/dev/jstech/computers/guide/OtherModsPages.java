@@ -56,10 +56,9 @@ final class OtherModsPages {
                         + " feature when they are installed: ComputerCraft, JEI, EMI, Mekanism and Jade.")
                 .paragraph("Each of them is optional. Without one of these mods, its feature is missing,"
                         + " and the rest of J's Computers works as before.")
-                .paragraph("ComputerCraft is the mod CC: Tweaked, which adds programmable computers to Minecraft."
-                        + " Its computers run programs written in Lua. The Network Gateway is the bridge between"
-                        + " those computers and yours ([](jsc:network_gateway)). The section after this one explains"
-                        + " the Gateway in detail.")
+                .paragraph("ComputerCraft computers run programs written in Lua. The Network Gateway is the bridge"
+                        + " between those computers and yours ([](jsc:network_gateway)). The section after this one"
+                        + " explains the Gateway in detail.")
                 .define("Network Gateway", "A block that links one of your computers to ComputerCraft"
                         + " computers.")
                 .define("ComputerCraft", "The mod CC: Tweaked, which adds programmable computers to Minecraft.")
@@ -97,9 +96,8 @@ final class OtherModsPages {
                 .define("Millibucket (mB)", "The unit of volume for fluids on the network: one thousandth of a"
                         + " bucket.")
                 .subheading("Before a transfer works")
-                .paragraph("The Pattern Studio must be the front window of its desktop. If it is not, the transfer"
-                        + " button refuses, and the viewer shows an error. Bring the Studio to the front and press"
-                        + " the button again.")
+                .paragraph("The Pattern Studio must be the front window of its desktop, or the transfer"
+                        + " button refuses and the viewer shows an error.")
                 .paragraph("You can also drag an item from the ingredient list onto a cell of the Studio. The cell"
                         + " takes that item, as if you had clicked it with the item on your cursor.")
                 .subheading("EMI and Industrial")
@@ -216,8 +214,9 @@ final class OtherModsPages {
                 .paragraph("Items that a ComputerCraft program pulls from the network arrive in the buffer, and items"
                         + " it pushes leave from there. The buffer's items drop on the ground when you break the"
                         + " block, so empty it first.")
-                .paragraph("Everything else about the Gateway is set on its host computer: its name, its permissions"
-                        + " and its other controls.")
+                .paragraph("Everything else about the Gateway, such as its permissions and its other"
+                        + " controls, is set on"
+                        + " its host computer.")
                 .subheading("Name and light")
                 .paragraph("The first time it links, the Gateway takes the name gateway-1, then gateway-2, and so on."
                         + " You rename it in the Gateway Manager or with the gateway command"
@@ -404,8 +403,8 @@ final class OtherModsPages {
                                 + " the cap."))
                 .row(GuideCell.code("which item?"), GuideCell.words("The request named no item."))
                 .row(GuideCell.code("unknown item: <name>"),
-                        GuideCell.words("The game knows no item by that name. Fluids and chemicals say unknown fluid"
-                                + " or unknown chemical."))
+                        GuideCell.words("The game knows no item by that name, and fluids and chemicals say unknown"
+                                + " fluid or unknown chemical."))
                 .row(GuideCell.code("the computer is not on a network"),
                         GuideCell.words("The host has no network to serve the request from."))
                 .row(GuideCell.code("the network has no running Mainframe"),
@@ -522,7 +521,7 @@ final class OtherModsPages {
                         GuideCell.words("Returns a list of the operations, the running ones and those settled in the"
                                 + " past hour."))
                 .row(GuideCell.code("watch(name)"),
-                        GuideCell.words("Returns the total now, and follows the name, so that a jsc_stock event comes"
+                        GuideCell.words("Returns the total now, and watches the name, so that a jsc_stock event comes"
                                 + " when it moves."))
                 .row(GuideCell.code("unwatch(name)"),
                         GuideCell.words("Returns true or false: true when the watch ends."))

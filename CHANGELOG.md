@@ -169,9 +169,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   small, and their commands, codes and figures in Misc Fixed 5x8, a fourth size of the terminal font the Core now
   carries. A word is never cut in two: every column is at least as wide as its longest word. A table whose columns
   cannot stand side by side, such as a list of error codes with what each means and how to fix it, lists each row
-  under the one before. A table that fits on a page is never parted, moving to the next page whole; a longer one
-  carries its caption, marked "(continued)", and its head on to each page, and leaves at least three rows on either
-  side of where it parts.
+  under the one before. A table that fits on a page moves to the next page whole, unless that would leave more than
+  half the page empty; one that parts carries its caption, marked "(continued)", and its head on to each page, and
+  leaves at least three rows on either side of where it parts. A heading goes on with what it heads, never left
+  alone at the foot of a page.
 - A mod can have its manuals read their figures from the mod itself as the book is opened, rather than print numbers
   written by hand: a figure in a sentence, written the reader's way, and the rows of a whole table, such as every
   part of a family. A part another mod adds, or a setting changed, is in the next book opened.
@@ -187,15 +188,20 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   everything else.
 - Listings of code in the manuals: numbered, headed by their file's name, their lines numbered and coloured as the
   game's editors colour Sigma, Sigma# and the network's query language, a long line going on under itself without a
-  word cut in two. A Copy button puts the whole listing on the clipboard for the game's editors, and a click opens it
-  over the whole book with no line broken.
+  word cut in two, at a space, a bracket, a comma or the point of a name such as Console.PrintLine. A Copy button
+  puts the whole listing on the clipboard for the game's editors, and a click opens it over the whole book with no
+  line broken.
 - Sessions at a terminal in the manuals, printed as each system draws its console: MC-DOS white on black, a Linux
   console with its green prompt, the Arch Linux media's red root prompt, FreeBSD's sh on its warm dark ground; the
   prompt, what was typed and what the system answered each in its colour. Keys named in a sentence, such as Ctrl+S,
   are drawn as keys.
 - A glossary at the back of every manual, before its index: each word a page explains, alphabetical under its
   letter, with what it means and the page that explains it. The first time another page uses one of those words, the
-  word leads to where it is explained.
+  word leads to where it is explained, unless it is part of a name (the Network Manager) or of a path or a name in
+  code. A title too long for its line in the contents, on a chapter's opening pages or in the index runs on under
+  itself, its page beside its last words, rather than being cut short; a name too long for any line, such as a
+  setting's, breaks where its points and underscores are; and a link to a page of another book reads that page's
+  title.
 - Scenes in the manuals: a few blocks drawn on the page as the game draws them, block entities and GeckoLib models
   included, which the reader turns by dragging and brings nearer with the wheel, with Reset to go back. Numbered
   balloons point at their parts, a legend under the scene says what each is, and pointing at a number outlines its
@@ -238,10 +244,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The computers' help programs read the manuals' new parts: a table of several columns as columns of text, set out
   row by row on a screen too narrow for it; listings and sessions as their lines; keys by their names; scenes as their
   captions and the list of their balloons. A command whose page a manual prints shows that page at `man`, at `HELP`
-  on MC-DOS and in each desktop's Help, and a system's help opens first on the book written for that system.
+  on MC-DOS and in each desktop's Help, and a system's help opens first on the book written for that system, whose
+  top page lists the other manuals after its chapters, so a Help with no tree of its books, as GNOME's and CDE's,
+  still reaches every one.
 - Pages for the commands in the manuals, made from each command itself: what it is for, how it is typed, what it
   does, a table of its options and one of its examples, every system it runs on (with the package to install first,
-  where one is needed) and the commands to read next, each leading to its own page. They say what `man`, `help` and
+  where one is needed, said once when every system needs the same one) and the commands to read next, each leading
+  to its own page. They say what `man`, `help` and
   `/?` say at a prompt, word for word, so the book and the machine never disagree.
 - The manuals inside the computers, beside the manual pages of each machine's commands, in each system's own help.
   Every desktop has Help: Frames 95's Help Topics with its Contents, Index and Find and a topic window of its own,

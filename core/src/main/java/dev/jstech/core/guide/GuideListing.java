@@ -13,14 +13,16 @@ import java.util.List;
 
 /**
  * A listing's lines cut to the width of a page, before they are placed. A line that fits is one row; one too long is
- * broken after the last space or opening bracket that fits, never inside a word, and goes on in rows under itself,
- * set in two places past where it started and with no number, so a reader sees it is one line. Only a word wider than
- * the whole row is cut where it has to be. Every character keeps the colour its language gave it.
+ * broken at the last space, opening bracket, comma or point that fits, never inside a word, and goes on in rows under
+ * itself, set in two places past where it started and with no number, so a reader sees it is one line. Only a word
+ * wider than the whole row is cut where it has to be. Every character keeps the colour its language gave it.
  */
 final class GuideListing {
 
     /** How far a line that goes on is set in past where it started. */
     static final int GOES_ON = 2;
+    /** What a line too long for its row may break after when no space fits. */
+    private static final String BREAKS_AFTER = "(,.";
 
     private GuideListing() {
     }
@@ -66,10 +68,16 @@ final class GuideListing {
         return rows;
     }
 
-    /** Where a line too long for the row breaks: after its last space or opening bracket that fits. */
+    /**
+     * Where a line too long for the row breaks: at its last space that fits, or after its last opening bracket, comma
+     * or point, so a name such as Console.PrintLine goes on whole at its point rather than cut inside a word.
+     */
     private static int cutAt(final String line, final int room) {
         final int indent = line.length() - line.stripLeading().length();
-        final int cut = Math.max(line.lastIndexOf(' ', room), line.lastIndexOf('(', room - 1) + 1);
+        int cut = line.lastIndexOf(' ', room);
+        for (int mark = 0; mark < BREAKS_AFTER.length(); mark++) {
+            cut = Math.max(cut, line.lastIndexOf(BREAKS_AFTER.charAt(mark), room - 1) + 1);
+        }
         // Nowhere to break but inside the first word: the word is cut where it has to be.
         return cut <= indent ? room : cut;
     }

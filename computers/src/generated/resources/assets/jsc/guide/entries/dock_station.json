@@ -298,10 +298,6 @@
         {
           "fix": "jsc.guide.dock_station.fix3",
           "problem": "jsc.guide.dock_station.problem3"
-        },
-        {
-          "fix": "jsc.guide.dock_station.fix4",
-          "problem": "jsc.guide.dock_station.problem4"
         }
       ]
     },

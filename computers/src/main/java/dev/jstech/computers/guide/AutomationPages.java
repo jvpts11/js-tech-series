@@ -53,9 +53,8 @@ final class AutomationPages {
                 .paragraph("If the Mainframe is off, the jobs stay in the list and none of them fires. Turn the"
                         + " Mainframe back on, and they fire again.")
                 .subheading("Triggers")
-                .paragraph("The trigger is the part of a job that says when it fires. You give it after EVERY, with"
-                        + " an interval, or after WHEN, with a condition. The Automation Engine checks the jobs every"
-                        + " 10 ticks, which is half a second.")
+                .paragraph("You give a trigger after EVERY, with an interval, or after WHEN, with a condition. The"
+                        + " Automation Engine checks the jobs every 10 ticks, which is half a second.")
                 .define("Trigger", "The part of a job that says when it fires: an interval after EVERY, or a"
                         + " condition after WHEN.")
                 .paragraph("EVERY fires the job again after each interval. The first check only starts the count, so"
@@ -116,16 +115,16 @@ final class AutomationPages {
                         "It says \"CREATE JOB trigger needs a value\".",
                         "Write the duration or the condition after EVERY or WHEN.",
                         "It says \"CREATE expects VIEW, PROCEDURE, or JOB\".",
-                        "Write one of those three words after CREATE.",
+                        "Write VIEW, PROCEDURE or JOB after CREATE.",
                         "It says that CREATE needs a name and an AS body, or that AS must follow the name.",
                         "Write CREATE JOB, the name, then AS and the statement.",
                         "It says \"a name is at most 64 characters long\".",
                         "Choose a shorter name, of no more than 64 characters.",
                         "A job made in IQL with a bad interval never fires.",
-                        "IQL keeps an EVERY duration without checking it. Write a number with an optional unit: s, m,"
-                                + " h or t, such as 30s or 100t.",
+                        "IQL does not check an EVERY duration when you type the job, so a bad one never fires. Write"
+                                + " a number with an optional unit: s, m, h or t, such as 30s or 100t.",
                         "A job is listed as PAUSED.",
-                        "Restart it on the Processes tab, or press the > control in the Automation Manager.",
+                        "Restart it with the > control in the Automation Manager.",
                         "The job fires, but nothing moves.",
                         "The job runs as ordinary Operations. Look at the Operations it started ([](jsc:operations)),"
                                 + " where each one shows its status.")
@@ -143,7 +142,7 @@ final class AutomationPages {
                 .table("The parts of the window", "Part", "What it does")
                 .row(GuideCell.words("The top band"),
                         GuideCell.words("Green, with the engine's name and \"online\", while the Automation"
-                                + " Engine runs. Otherwise amber, with \"No engine - install the Automation Engine"
+                                + " Engine runs; otherwise amber, with \"No engine - install the Automation Engine"
                                 + " on the Mainframe\"."))
                 .row(GuideCell.words("The job count"),
                         GuideCell.words("How many jobs the network keeps, such as 3 jobs."))
@@ -173,8 +172,8 @@ final class AutomationPages {
                 .row(GuideCell.words("Batch Craft"), GuideCell.words("Name, Item id, Amount, Every"),
                         GuideCell.words("Crafts the amount of the item every interval."))
                 .row(GuideCell.words("Move"), GuideCell.words("Name, Item (blank=all), Amount, From, To, Every"),
-                        GuideCell.words("Moves the amount of the item from one place to the other every interval. A"
-                                + " blank item moves everything. The job is listed as a Periodic Move."))
+                        GuideCell.words("Moves the amount of the item from one place to the other every interval; a"
+                                + " blank item moves everything."))
                 .row(GuideCell.words("IQL"), GuideCell.words("Name, Script (on Mainframe disk), Every"),
                         GuideCell.words("Runs one .iql file from the Mainframe's system disk every interval."))
                 .paragraph("The Script field lists the .iql files on the Mainframe's system disk. If the disk has none,"
@@ -241,7 +240,7 @@ final class AutomationPages {
                 .row(GuideCell.code(".In()"), GuideCell.words("Makes the interface read."))
                 .row(GuideCell.code(".Out(15)"), GuideCell.words("Makes the interface emit 15, from 0 to 15."))
                 .row(GuideCell.code(".Level()"),
-                        GuideCell.words("Returns the strength it reads or emits. It returns 0 while it has no power."))
+                        GuideCell.words("Returns the strength it reads or emits, or 0 while it has no power."))
                 .listing("Lamp.sgs", "redstone(\"Gate\").Out(15);")
                 .paragraph("Each call marks the setting with the name of the program that made it, so the window shows"
                         + " that program.")
@@ -285,9 +284,8 @@ final class AutomationPages {
                 .paragraph("The Cluster Manager is the window that lets you run many machines as one. It is a desktop"
                         + " program for a Cluster Management Computer ([](jsc:cluster_management_computers)). It needs"
                         + " a Cluster Interface Card in that computer ([](jsc:expansion_cards)).")
-                .paragraph("A cluster is a group of machines that the card can address: a supercomputer, or one section"
-                        + " of a datacenter. Each machine in a cluster is a node. Which clusters you reach depends on"
-                        + " the card's reach.")
+                .paragraph("Each machine in a cluster is a node. Which clusters you reach depends on the card's"
+                        + " reach.")
                 .define("Cluster", "A group of machines that the Cluster Manager runs as one unit: a supercomputer,"
                         + " or one section of a datacenter.")
                 .define("Node", "One machine in a cluster, which the Cluster Manager can power, and install a system"
@@ -325,7 +323,7 @@ final class AutomationPages {
                 .subheading("Names")
                 .paragraph("Press RENAME and type a name. An empty name goes back to the default. Supercomputers are"
                         + " named SC-1, SC-2 and onward, in the order the network registered them. A section takes its"
-                        + " router's name and the face it sits on, such as Router, then NORTH.")
+                        + " router's name and the face it sits on, such as Router · NORTH.")
                 .subheading("Node states")
                 .paragraph("Each node row shows its state in capitals. NO SYSTEM means the node has no system"
                         + " installed. BAY OFF means the node is switched off. INSTALLING means a system or a"
@@ -357,28 +355,28 @@ final class AutomationPages {
                         + " <name> [R:U] on|off | install <name> system|program | status | cancel.")
                 .table("The subcommands", "Command", "What it does")
                 .row(GuideCell.code("list"), GuideCell.words("Lists the supercomputers and datacenter sections the card"
-                        + " reaches. The word ls, or no word at all, does the same."))
+                        + " reaches; ls or no word at all does the same."))
                 .row(GuideCell.code("nodes <name>"), GuideCell.words("Lists the nodes of one cluster, with their rack,"
                         + " unit, system and power."))
                 .row(GuideCell.code("power <name> on|off"), GuideCell.words("Switches every node of the cluster on or"
-                        + " off. It installs nothing."))
+                        + " off, without installing anything."))
                 .row(GuideCell.code("power <name> R:U on|off"), GuideCell.words("Switches one node on or off."))
                 .row(GuideCell.code("install <name> system|program"),
                         GuideCell.words("Starts a bulk install of a system or a program on the cluster"
                                 + " ([](jsc:cluster_installs))."))
                 .row(GuideCell.code("status"), GuideCell.words("Shows the install running now, or the last one."))
-                .row(GuideCell.code("cancel"), GuideCell.words("Stops the running install after the nodes being"
-                        + " written."))
+                .row(GuideCell.code("cancel"), GuideCell.words("Stops the running install once the nodes now being"
+                        + " written are done."))
                 .paragraph("Names are matched without regard to capitals. The install command answers with the job it"
                         + " started, how many nodes it writes at once, and a reminder to follow it with cluster status."
                         + " The status line lists the job, then how many nodes are done, writing, queued and skipped.")
                 .table("The list columns", "Column", "What it shows")
                 .row(GuideCell.code("KIND"), GuideCell.words("Supercomputer or datacenter."))
                 .row(GuideCell.code("NAME"), GuideCell.words("The name the Cluster Manager shows for the cluster."))
-                .row(GuideCell.code("STATE"), GuideCell.words("Online or offline for a supercomputer. Online or empty"
+                .row(GuideCell.code("STATE"), GuideCell.words("Online or offline for a supercomputer; online or empty"
                         + " for a section."))
-                .row(GuideCell.code("LOAD"), GuideCell.words("The crafts in use out of the parallel crafts, for a"
-                        + " supercomputer. The number of servers, for a section."))
+                .row(GuideCell.code("LOAD"), GuideCell.words("The crafts in use of the supercomputer's parallel"
+                        + " crafts, or the number of servers for a section."))
                 .paragraph("A cluster the card cannot reach ends its row with \"(out of this card's reach)\".")
                 .table("The nodes columns", "Column", "What it shows")
                 .row(GuideCell.code("RACK"),
@@ -490,8 +488,6 @@ final class AutomationPages {
                 .paragraph("Cancel stops the job after the nodes being written. The nodes still in the queue"
                         + " are left as they were. The ALL ON and ALL OFF buttons, and the power command, only"
                         + " switch power. They never start an install.")
-                .paragraph("A job does not survive a reload of the world. When the world loads again, start the install"
-                        + " again.")
                 .ifSomethingGoesWrong("The install does not start, and it says \"a job is already running\".",
                         "Wait for the job to finish, or cancel it with CANCEL JOB.",
                         "Every node is skipped.",

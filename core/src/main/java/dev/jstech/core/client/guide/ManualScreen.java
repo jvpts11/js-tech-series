@@ -131,7 +131,11 @@ public final class ManualScreen extends Screen {
     /** How far below the lines of the index its dots sit, at the size they are drawn. */
     private static final int DOT_DROP = 6;
     private static final int DOT_PITCH = 3;
-    private static final int LINK_DROP = 9;
+    /**
+     * The row a link's underline is drawn on, the one under the letters' foot, as the game underlines text: a row
+     * lower would touch the tall letters of the line below and read as a line struck through them.
+     */
+    private static final int LINK_DROP = 8;
     /** How far the rings reach into each page: past the gutter's shade, short of the text. */
     private static final int RING_SPAN = 8;
     private static final int[] RINGS = {28, 96, 164};
@@ -172,8 +176,10 @@ public final class ManualScreen extends Screen {
     private static final int LINE_INDENT = 10;
     /** No spread drawn yet. */
     private static final int UNSET = Integer.MIN_VALUE;
+    /** The least room between a page's folio and the manual's title at its foot. */
+    private static final int FOOT_GAP = 10;
     /** A listing's Copy button, its Close button over the whole book, and how long Copy says it has copied. */
-    private static final int COPY_WIDTH = 24;
+    private static final int COPY_WIDTH = GuideLayout.LISTING_COPY;
     private static final int CLOSE_WIDTH = 26;
     private static final int LISTING_BUTTON = 8;
     private static final long COPIED_MILLIS = 2000L;
@@ -1207,8 +1213,12 @@ public final class ManualScreen extends Screen {
                 : contentX + contentWidth - folioWidth, footY + 5, this.colour(GuideStyle.INK));
         final String title = this.text(this.manual.titleKey());
         final int titleWidth = GuideFonts.width(this.font, title, TextSize.SMALL, this.style);
-        GuideFonts.draw(g, this.font, title, TextSize.SMALL, this.style, contentX + (contentWidth - titleWidth) / 2,
-                footY + 5, this.colour(GuideStyle.FAINT));
+        // A long title stands in the middle only as far as it keeps clear of the folio; then it moves aside.
+        final int middle = contentX + (contentWidth - titleWidth) / 2;
+        final int titleX = leftPage ? Math.max(middle, contentX + folioWidth + FOOT_GAP)
+                : Math.min(middle, contentX + contentWidth - folioWidth - FOOT_GAP - titleWidth);
+        GuideFonts.draw(g, this.font, title, TextSize.SMALL, this.style, titleX, footY + 5,
+                this.colour(GuideStyle.FAINT));
     }
 
     /** A drawing's faint grid over the whole sheet. */
@@ -2062,9 +2072,12 @@ public final class ManualScreen extends Screen {
         }
         if (!found.isEmpty()) {
             final String wanted = found.getFirst().text();
+            final String target = found.getFirst().target();
             for (int page = this.book.indexAt(); page < this.book.pages().size(); page++) {
                 for (final GuidePiece piece : this.book.pages().get(page).pieces()) {
-                    if (piece instanceof GuidePiece.Leader leader && leader.left().equals(wanted)) {
+                    // A line too long for the index runs on, its page beside its last words.
+                    if (piece instanceof GuidePiece.Leader leader && leader.link().equals(target)
+                            && wanted.endsWith(leader.left())) {
                         return page;
                     }
                 }

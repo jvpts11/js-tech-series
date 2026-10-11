@@ -79,8 +79,7 @@ final class IqlLanguagePages {
                 .paragraph("Item names have no spaces, so an item is always a plain word. A bus name can have"
                         + " spaces, so you put it in quotes after SET: SET BUS 'Ore in' ON.")
                 .subheading("Columns and fields")
-                .paragraph("A column is one field that a QUERY table shows. You can name the same field in WHERE"
-                        + " and in ORDER BY. These are the tables and their columns:")
+                .paragraph("These are the tables and their columns:")
                 .table("The tables and their columns", "Table", "Columns")
                 .row(GuideCell.code("items"), GuideCell.words("item, qty, server, tag, enchant"))
                 .row(GuideCell.code("servers"), GuideCell.words("name, used, free, era"))
@@ -171,10 +170,10 @@ final class IqlLanguagePages {
                         + " capitals."))
                 .row(GuideCell.code("has"), GuideCell.words("The same test as contains."))
                 .row(GuideCell.code("like"), GuideCell.words("A pattern, where * stands for any run of characters."))
-                .paragraph("Join conditions with AND, OR and NOT, and use brackets to group them. NOT binds tightest,"
-                        + " then AND, then OR. A condition can have at most 64 levels of NOT and brackets, and at most"
-                        + " 256 comparisons. A condition ends at the first word it cannot use, such as IF, ORDER or"
-                        + " LIMIT.")
+                .paragraph("Combine conditions with AND and OR, reverse one with NOT, and use brackets to group"
+                        + " them. NOT binds tightest, then AND, then OR. A condition can have at most 64 levels of NOT"
+                        + " and brackets, and at most 256 comparisons. A condition ends at the first word it cannot"
+                        + " use, such as IF, ORDER or LIMIT.")
                 .listingIn("iql", "rare.iql", "QUERY items WHERE name contains \"rare\" AND NOT damaged = true")
                 .subheading("ORDER BY and LIMIT")
                 .paragraph("ORDER BY sorts the rows by one field: smallest first, or A to Z for words. ASC is the"
@@ -193,7 +192,7 @@ final class IqlLanguagePages {
                 .ifSomethingGoesWrong("FROM is not valid on a read",
                         "A QUERY has no FROM. Move the server into WHERE, as in QUERY items WHERE server ="
                                 + " \"Main Storage\".",
-                        "unknown item: <name>, for a SELECT that names an item the network holds",
+                        "unknown item: <name>",
                         "The WHERE kept no row for the item, so the reply says unknown item even though the item"
                                 + " exists. Check the WHERE, the server after FROM and the stock with QUERY items.",
                         "expected a field name",
@@ -208,8 +207,8 @@ final class IqlLanguagePages {
 
     private static void count(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("iql_count", section).titled("COUNT")
-                .paragraph("COUNT is written like a query, but it does not add up the quantities. It works the same as"
-                        + " QUERY: it lists the rows that match, and the reply tells you how many rows there are.")
+                .paragraph("COUNT is written like a query, but it does not add up the quantities. It reads the same"
+                        + " rows as QUERY, and the reply tells you how many rows there are.")
                 .listingIn("iql", "count.iql", "COUNT items WHERE qty > 100")
                 .paragraph("So the reply is a row count, such as \"12 rows\". To see each row's quantity, read the qty"
                         + " column of a QUERY items, or open the table view in the Management Studio"
@@ -259,7 +258,7 @@ final class IqlLanguagePages {
                 .subheading("DELETE")
                 .paragraph("DELETE sends items out of the network. It needs TO and the name of a bus, and a server name"
                         + " is not valid there. Only items the network holds are sent, so a second DELETE does nothing"
-                        + " once the stock runs out. FROM is read, but DELETE does not use it.")
+                        + " once the stock runs out. DELETE accepts FROM but ignores it.")
                 .table("The replies of DELETE", "Reply", "What it means")
                 .row(GuideCell.code("DELETE queued: <quantity> <item>"), GuideCell.words("The items are on their way"
                         + " out to the bus."))
@@ -322,10 +321,10 @@ final class IqlLanguagePages {
                 .row(GuideCell.code("no pattern crafts <item>"), GuideCell.words("No recipe on the network makes"
                         + " the item."))
                 .row(GuideCell.code("unknown item: <name>"), GuideCell.words("The name is not an item."))
-                .paragraph("With no quantity, the reply says ALL. PRIORITY works on a CRAFT as it does on the other"
-                        + " actions ([](jsc:clauses_priority_if_with)). FROM and TO are read, but CRAFT does not use"
-                        + " them. The recipes are the patterns the network has learned, such as those a Crafting"
-                        + " Interface holds ([](jsc:crafting_interfaces)).")
+                .paragraph("With no quantity, the reply shows \"all\" in place of the number. PRIORITY works on a"
+                        + " CRAFT as it does on the other actions ([](jsc:clauses_priority_if_with)). FROM and TO are"
+                        + " read, but CRAFT does not use them. The recipes are the patterns the network has learned,"
+                        + " such as those a Crafting Interface holds ([](jsc:crafting_interfaces)).")
                 .ifSomethingGoesWrong("Network Operations Service unavailable",
                         "Start an engine on the Mainframe ([](jsc:iql_engines_overview)).",
                         "no pattern crafts <item>",
@@ -531,7 +530,7 @@ final class IqlLanguagePages {
                         "an offer is 1, 2 or 3, not <n>",
                         "Type 1, 2 or 3 after OFFER.",
                         "an offer after OFFER (1, 2 or 3)",
-                        "Type the number of the offer after the word OFFER.",
+                        "You left the number out. Type it right after the word OFFER.",
                         "unknown priority level: <word> (expected LOW, MEDIUM_LOW, MEDIUM, MEDIUM_HIGH or HIGH)",
                         "Type one of the five level words.",
                         "IF is not valid on a read",
@@ -551,7 +550,7 @@ final class IqlLanguagePages {
     private static void setBus(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("set_bus", section).titled("SET BUS")
                 .paragraph("SET BUS changes the settings of a [bus](jsc:buses) from the prompt. It does what the bus's"
-                        + " window does, as one statement: switch the bus on or off, choose the items it moves, how"
+                        + " window does: it switches the bus on or off, choose the items it moves, how"
                         + " many, and when ([](jsc:bus_window)).")
                 .paragraph("Write the bus's name as its window shows it, in quotes when it has spaces. Each statement"
                         + " changes one setting, so you type one statement for each setting you need.")
@@ -592,11 +591,10 @@ final class IqlLanguagePages {
                         + " the inventory."))
                 .row(GuideCell.code("SET BUS 'x' ACCESS WRITE ONLY"), GuideCell.words("The network may only put into"
                         + " the inventory."))
-                .paragraph("The stock threshold after WHEN STOCK takes only the < sign. KEEP and MAX take a whole "
-                        + "number"
-                        + " that is not negative. The hours after WHEN TIME are whole numbers from 0 to 23. A list of"
-                        + " items is separated by commas, and a fluid is written with its kind first, as in FLUID"
-                        + " water.")
+                .paragraph("After WHEN STOCK, the only comparison allowed is the < sign. KEEP and MAX take a whole"
+                        + " number that is not negative. The hours after WHEN TIME are whole numbers from 0 to 23. A"
+                        + " list of items is separated by commas, and a fluid is written with its kind first, as in"
+                        + " FLUID water.")
                 .table("The replies of SET BUS", "Reply", "What it means")
                 .row(GuideCell.code("bus <name> set"), GuideCell.words("The setting is saved."))
                 .row(GuideCell.code("no bus named <name> on this network"), GuideCell.words("No bus of that name is on"
@@ -812,7 +810,7 @@ final class IqlLanguagePages {
     private static void jobs(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("iql_jobs", section).titled("Jobs, EVERY and WHEN")
                 .define("job", "A statement that the network runs on its own, each time its trigger fires.")
-                .define("tick", "The game's beat. 20 ticks make one second.")
+                .define("tick", "One step of the game's clock. 20 ticks make one second.")
                 .paragraph("A job is a statement that the network runs on its own. You give it a trigger: a time"
                         + " interval with EVERY, or a condition with WHEN. Each time the trigger fires, the statement"
                         + " runs again.")

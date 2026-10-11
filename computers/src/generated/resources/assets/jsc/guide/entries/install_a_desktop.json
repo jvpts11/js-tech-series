@@ -162,10 +162,6 @@
         {
           "fix": "jsc.guide.install_a_desktop.fix9",
           "problem": "jsc.guide.install_a_desktop.problem9"
-        },
-        {
-          "fix": "jsc.guide.install_a_desktop.fix10",
-          "problem": "jsc.guide.install_a_desktop.problem10"
         }
       ]
     },

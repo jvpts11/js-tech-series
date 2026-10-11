@@ -238,7 +238,10 @@ final class HelpPageView {
         }
     }
 
-    /** A manual's top page: its title and every chapter, then the machine's commands. */
+    /**
+     * A manual's top page: its title and every chapter, the machine's commands, then every other manual, so a help
+     * with no tree of its books, as GNOME's and CDE's are, still reaches each one from the book it opens on.
+     */
     private void top(final ManualReader reader) {
         this.title(reader.title(), "");
         for (final String chapter : reader.chapters()) {
@@ -247,6 +250,15 @@ final class HelpPageView {
         }
         this.y += GAP;
         this.link(0, GameText.resolve(HelpTexts.COMMANDS_PAGES), HelpTarget.command(""));
+        final List<ManualReader> others = HelpBooks.all().stream()
+                .filter(other -> !other.manualId().equals(reader.manualId())).toList();
+        if (!others.isEmpty()) {
+            this.y += GAP;
+            this.heading(GameText.resolve(HelpTexts.OTHER_MANUALS), false);
+            for (final ManualReader other : others) {
+                this.link(0, other.title(), HelpTarget.contents(other.manualId()));
+            }
+        }
     }
 
     private void commands(final List<HelpCommand> commands) {

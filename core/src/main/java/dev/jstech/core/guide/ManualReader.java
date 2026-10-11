@@ -191,7 +191,12 @@ public final class ManualReader {
     /** The number and title of a chapter, section or entry as a link names it: "3.4.2 Monitors". */
     public String label(final String id) {
         final Node node = this.nodes.get(id);
-        return node == null ? GuideIds.path(id) : node.number() + " " + node.title();
+        if (node != null) {
+            return node.number() + " " + node.title();
+        }
+        // A page another book holds is named by its title there.
+        final String title = this.text.titleOf(id);
+        return title.isEmpty() ? GuideIds.path(id) : title;
     }
 
     /** A name the way two spellings of it compare: lower case, every run of gaps one underscore. */
@@ -463,7 +468,7 @@ public final class ManualReader {
         }, target -> {
             final String book = this.text.elsewhere(target);
             return book.isEmpty() ? null : this.text.text(GuideTexts.IN_BOOK.key(), book);
-        });
+        }, target -> this.text.titleOf(target).isEmpty() ? null : this.text.titleOf(target));
     }
 
     /** What a node of the manual is. */

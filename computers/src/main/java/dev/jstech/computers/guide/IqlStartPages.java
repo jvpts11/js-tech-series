@@ -49,9 +49,8 @@ final class IqlStartPages {
                         + " anything.")
                 .define("row", "One line of an answer, such as one disk or one item, with its details.")
                 .paragraph("When a statement asks for work, the network turns it into an Operation. An Operation is"
-                        + " one action the network carries out. It waits its turn, the network works on it over game"
-                        + " ticks, and then it ends in one of eight states. Its action words, such as SELECT and"
-                        + " DELETE, are SQL-style words.")
+                        + " one action the network carries out. It waits its turn, and the network works on it over"
+                        + " game ticks.")
                 .define("Operation", "One action the network carries out, from the moment it is asked until it ends.")
                 .define("tick", "One beat of the game. 20 ticks make a second.")
                 .paragraph("Take SELECT 64 iron_ingot. It asks the network to bring 64 iron ingots to you. That is"
@@ -138,7 +137,8 @@ final class IqlStartPages {
                         + " run, a space and the file's name. The computer needs a disk, and run takes only files that"
                         + " end in .iql.")
                 .paragraph("run is stricter than ISMS. It reads one statement a line, skips every line that starts with"
-                        + " two dashes, and has no semicolons. It asks you for no values. It refuses the reads, QUERY"
+                        + " two dashes, and takes statements without semicolons. It asks you for no values. It refuses"
+                        + " the reads, QUERY"
                         + " and COUNT. It checks the whole file before the first line runs, so a bad line moves"
                         + " nothing.")
                 .subheading("The Iql class in Sigma")
@@ -165,7 +165,7 @@ final class IqlStartPages {
                         "run says \"only .iql files can be run\".",
                         "Rename the file so that it ends in .iql, or write the statements in a new .iql file.",
                         "run says \"QUERY/COUNT are not supported by 'run'\".",
-                        "A run cannot read. Type the read at the prompt, with iql or operation.",
+                        "run does not take reads, QUERY or COUNT. Type the read at the prompt, with iql or operation.",
                         "run says \"syntax error in\", followed by a line.",
                         "The whole file is checked first, so no line ran. Fix the line that the message names.",
                         "ISMS says \"No compatible Midsoft IQL Server was found on this network.\"",
@@ -242,7 +242,7 @@ final class IqlStartPages {
                         "The reply says \"syntax: SELECT has no TO destination\".",
                         "SELECT brings items to you. Leave out TO. To send items between two places, use MOVE.",
                         "The reply says \"syntax: DELETE exports out of the network and needs a TO destination\".",
-                        "Add TO, and the place the items leave for.",
+                        "Add TO, followed by the place where the items go.",
                         "The reply says \"syntax: MOVE is internal and needs both FROM and TO\".",
                         "Give both places, FROM where the items come from and TO where they go.",
                         "The reply says \"syntax: FROM is not valid on a read\".",

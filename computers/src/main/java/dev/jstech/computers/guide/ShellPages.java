@@ -126,8 +126,7 @@ final class ShellPages {
                         GuideCell.code("/usr/player/Documents"))
                 .row(GuideCell.words("The other drives, one folder each"), GuideCell.code("/media"),
                         GuideCell.code("/mnt"))
-                .paragraph("You name a folder or file with a path. A path is the address of a file: its folder names,"
-                        + " with a slash between them. The first character tells the shell where to start.")
+                .paragraph("You name a folder or file with a path. The first character tells the shell where to start.")
                 .table("How a path starts", "What you type", "What it means")
                 .row(GuideCell.code("/x/y"), GuideCell.words("An absolute path: it starts at the top folder and"
                         + " names the whole address."))
@@ -195,7 +194,7 @@ final class ShellPages {
                 .row(GuideCell.code("USER"), GuideCell.words("The login name, which is always player."))
                 .row(GuideCell.code("OS"), GuideCell.words("The system: Linux, FreeBSD or UNIX."))
                 .row(GuideCell.code("PWD"), GuideCell.words("The folder you are in."))
-                .row(GuideCell.code("PATH"), GuideCell.words("Set by default only on UNIX System V. On Linux and"
+                .row(GuideCell.code("PATH"), GuideCell.words("Set by default only on UNIX System V; on Linux and"
                         + " FreeBSD it is empty until you set it."))
                 .paragraph("A variable belongs to the computer, not to one window, so a name you set stays set for"
                         + " the whole computer.")
@@ -216,32 +215,33 @@ final class ShellPages {
                 .paragraph("Some shell features of other systems are missing from these three. The table says what"
                         + " each one does here.")
                 .table("Missing here", "Feature", "What happens")
-                .row(GuideCell.code(";"), GuideCell.words("The semicolon, && and || are plain words. The command"
-                        + " receives them as text."))
-                .row(GuideCell.code("2>"), GuideCell.words("There is no way to send errors to a file. Only the"
+                .row(GuideCell.code(";"), GuideCell.words("The semicolon, && and || are plain words that the"
+                        + " command receives as text."))
+                .row(GuideCell.code("2>"), GuideCell.words("There is no way to send errors to a file; only the"
                         + " arrows above exist."))
                 .row(GuideCell.code("$(command)"),
                         GuideCell.words("A command cannot take the place of its own answer."))
                 .row(GuideCell.code("alias"), GuideCell.words("There is no alias command, and no ! history form, on"
                         + " any of these systems."))
-                .row(GuideCell.code("find"), GuideCell.words("Not on Unix: find is a DOS command. grep searches the"
-                        + " lines of a file instead."))
-                .row(GuideCell.code("more"), GuideCell.words("Not on Unix. The Unix command for reading by the"
+                .row(GuideCell.code("find"), GuideCell.words("Not on Unix, where find is a DOS command; grep"
+                        + " searches the lines of a file instead."))
+                .row(GuideCell.code("more"), GuideCell.words("Not on Unix, where the command for reading by the"
                         + " page is less."))
                 .ifSomethingGoesWrong("The shell says syntax error near unexpected token, followed by a bar or an"
                         + " arrow.",
                         "A pipe needs a command on each side, and an arrow needs a file name. Put a space around the"
                                 + " bar.",
                         "The shell says the command takes the whole terminal, so it cannot be piped or redirected.",
-                        "Run the command alone. To read a long answer, pipe a short command into grep or head, or"
-                                + " write the answer to a file and read it with less.",
+                        "Run the command alone. To read a long answer, pipe the command into grep or head to keep only"
+                                + " the lines you need, or write the answer to a file and read it with less.",
                         "The shell says the machine has no memory left for another job.",
                         "Stop a finished or unwanted job with kill %<id> ([](jsc:processes_and_jobs)).",
                         "ls | wc -l prints 1.",
                         "The ls command prints every name on one line unless you give -l. Use ls -l, which prints one"
                                 + " line for each name.",
                         "The shell says a name is letters, digits and underscores, and does not start with a digit.",
-                        "Choose a variable name with only those characters.")
+                        "Choose a variable name with only letters, digits and underscores, and do not start it with a"
+                                + " digit.")
                 .seeAlso("jsc:shell_prompt", "jsc:processes_and_jobs")
                 .register();
     }
@@ -316,8 +316,8 @@ final class ShellPages {
                         "grep matches the exact text you type, so check the spelling. Add -i to ignore upper and"
                                 + " lower case.",
                         "less says it cannot be piped.",
-                        "Type less alone, with a file name. To pick lines first, pipe into grep, then read the result"
-                                + " in a file with less.")
+                        "Type less alone, with a file name. To read only some lines, first pick them with grep, then"
+                                + " read the result in a file with less.")
                 .seeAlso("jsc:file_commands", "jsc:pipes_and_variables")
                 .register();
     }
@@ -333,8 +333,7 @@ final class ShellPages {
                 .row(GuideCell.code("name"), GuideCell.words("The computer's name, which the prompt shows after the at"
                         + " sign."))
                 .row(GuideCell.code("netshare"), GuideCell.words("A number from 0 to 1000, in thousandths (permille)."))
-                .paragraph("The config command has more settings, such as wallpaper and theme. Run config with no"
-                        + " argument to list all of them.")
+                .paragraph("The config command has more settings, such as wallpaper and theme.")
                 .command(CommandGuidePages.id(Platform.LINUX, "uname"))
                 .command(CommandGuidePages.id(Platform.LINUX, "hostname"))
                 .command(CommandGuidePages.id(Platform.LINUX, "date"))
@@ -435,7 +434,7 @@ final class ShellPages {
                 .ifSomethingGoesWrong("The lp command says there is no default destination.",
                         "Name a printer with -d, and check its name with lpstat.",
                         "The lp command says the destination is non-existent.",
-                        "Check the name with lpstat, and type it exactly as lpstat shows it.",
+                        "Type the name exactly as lpstat shows it.",
                         "The lp command says there are no files to print.",
                         "Give at least one file name after the command.")
                 .seeAlso("jsc:shell_commands", "jsc:pipes_and_variables")
@@ -457,8 +456,8 @@ final class ShellPages {
                 .table("Options of interac", "Option", "What it does")
                 .row(GuideCell.code("--to"), GuideCell.words("Leaves what you take in this computer, not in your"
                         + " hands."))
-                .row(GuideCell.code("--sort name"), GuideCell.words("Puts the lines in order of name. The default"
-                        + " order is by amount."))
+                .row(GuideCell.code("--sort name"),
+                        GuideCell.words("Sorts the lines by name instead of by amount, which is the default."))
                 .command(CommandGuidePages.id(Platform.LINUX, "interac"))
                 .paragraph("The ssh command opens a shell on another computer of the network, and the exit"
                         + " command closes that remote shell and returns you to this computer. Typed with no"

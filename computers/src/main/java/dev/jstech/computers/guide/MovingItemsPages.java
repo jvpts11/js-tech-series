@@ -242,11 +242,12 @@ final class MovingItemsPages {
                         "Its filter is empty, and an empty list takes everything. List the items you want, with ONLY"
                                 + " THESE.",
                         "A damaged or enchanted tool does not move.",
-                        "Choose FUZZY for MATCH on an Advanced bus, so the tool matches its plain item.")
+                        "Choose FUZZY for MATCH on an Advanced bus, so a damaged or enchanted tool matches its plain"
+                                + " item.")
                 .seeAlso("jsc:bus_keep_max_and_priority")
                 .register();
         guide.page("bus_keep_max_and_priority", section).titled("Keep, max, priority and mode")
-                .paragraph("Four settings decide how much your bus moves and when. KEEP and MAX set the amounts."
+                .paragraph("Five settings decide how much your bus moves and when. KEEP and MAX set the amounts."
                         + " PRIORITY decides who goes first when buses compete. MODE and POWER decide whether a bus"
                         + " moves at all.")
                 .table("The settings of a bus", "Setting", "What it does")
@@ -269,7 +270,7 @@ final class MovingItemsPages {
                         + " chest it faces, and takes only what is above that number. An Export Bus fills the chest up"
                         + " to that number, and then stops.")
                 .paragraph("MAX is the most one move takes, not a total. Zero means no cap: the bus moves as much as"
-                        + " its speed allows in 20 ticks, which is one second of its speed. The window shows"
+                        + " its speed allows in one second, which is 20 ticks. The window shows"
                         + " \"any\" with the note \"a time\" when MAX is zero.")
                 .subheading("Priority")
                 .paragraph("Each bus that wants something says so with its priority, every tick it wants it. A bus"
@@ -317,10 +318,9 @@ final class MovingItemsPages {
                         GuideCell.words("after the bus Coal in finishes"),
                         GuideCell.words("The named bus has made no move for 40 ticks."))
                 .subheading("STOCK")
-                .paragraph("STOCK counts what the whole network holds. Stock here is the network's total of one item,"
-                        + " not the count in one chest. The condition holds while that total is below the number you"
-                        + " set. The number starts at 64 items and changes by 1 item; with Shift held, it changes by 64"
-                        + " items.")
+                .paragraph("STOCK counts what the whole network holds. The condition holds while that total is below"
+                        + " the number you set. The number starts at 64 items and changes by 1 item; with Shift held,"
+                        + " it changes by 64 items.")
                 .define("Stock", "How many of an item the whole network holds, not the count in one chest.")
                 .paragraph("Write a tag after a # sign, such as #c:ores, and STOCK counts every held item that carries"
                         + " the tag. In the window, click the item field with an item in your hand to write that"
@@ -346,8 +346,9 @@ final class MovingItemsPages {
                         "To take a condition off, click the right end of its row.")
                 .ifSomethingGoesWrong(
                         "The bus waits and does not move.",
-                        "Open its Activity tab. A line that says \"a condition holds it\" means a condition does not"
-                                + " hold. Read the sentence of each condition in CONFIGURE ([](jsc:bus_activity)).",
+                        "Open its Activity tab. A line that says \"a condition holds it\" means a condition is not"
+                                + " met, so the bus waits. Read the sentence of each condition in CONFIGURE"
+                                + " ([](jsc:bus_activity)).",
                         "The window refuses a STOCK condition.",
                         "A count below 1, an unknown item id or a bad tag is refused. The window shows nothing when it"
                                 + " refuses.",
@@ -418,9 +419,9 @@ final class MovingItemsPages {
                 .paragraph("The Activity tab is the log of one bus. Each line is a move the bus made, or a time it"
                         + " waited, with the reason. The bus keeps the latest 16 lines and shows 8 at a time, so you"
                         + " scroll to see the rest.")
-                .paragraph("Each move is an Operation ([](jsc:what_operations_are)). The window's note reads \"Each"
-                        + " move is an Operation: the terminal and the Network Manager list the same log.\" You can"
-                        + " read the same moves in the Network Manager ([](jsc:network_manager)).")
+                .paragraph("Each move is an Operation ([](jsc:what_operations_are)). The terminal and the Network"
+                        + " Manager list the same log, so you can read these moves in the Network Manager"
+                        + " ([](jsc:network_manager)).")
                 .paragraph("A line shows the time, the item with its amount after an x, a status on the right, and the"
                         + " reason under the status.")
                 .table("Status", "Status", "What it means")
@@ -470,8 +471,8 @@ final class MovingItemsPages {
                 .paragraph("Programs set a bus in IQL or in Sigma. IQL is the network's query language"
                         + " ([](jsc:iql)). Sigma is a programming language, and its sister language is Sigma#."
                         + " The Book of Sigma covers both ([](jsc:sigma_two_languages)).")
-                .paragraph("A name matches whatever the case, and the first bus with that name on the network is"
-                        + " the one used. Put a name in quotes when it has spaces.")
+                .paragraph("A name matches regardless of capital letters, and the first bus with that name on the"
+                        + " network is the one used. Put a name in quotes when it has spaces.")
                 .paragraph("Vanilla items are written by their short name, such as iron_ore. Items from other mods"
                         + " are written in full, as namespace:path. Fluids are written with the word FLUID before"
                         + " them, as in FLUID water.")

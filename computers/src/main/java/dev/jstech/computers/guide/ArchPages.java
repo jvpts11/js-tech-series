@@ -74,8 +74,7 @@ final class ArchPages {
                         + " ([](jsc:arch_mkinitcpio)) are in /boot. The step is recorded as done only at that moment.")
                 .paragraph("Running pacstrap again starts over. The steps you did before, such as the file system"
                         + " table and the boot steps, are forgotten, and you do them again. The clock setting is kept.")
-                .paragraph("You can stop pacstrap with [[Ctrl]]+[[C]]. A stopped run is not recorded as done, so"
-                        + " you run it again from the start.")
+                .paragraph("You can stop pacstrap with [[Ctrl]]+[[C]].")
                 .ifSomethingGoesWrong(
                         "The screen says \"==> ERROR: /mnt is not a mountpoint!\".",
                         "Nothing is mounted on /mnt. Mount the root partition there, after its file system is made"
@@ -97,7 +96,7 @@ final class ArchPages {
                 .paragraph("A system must know which disk to mount, and where, every time it starts. That list lives in"
                         + " one file, /etc/fstab, the file system table. The tool genfstab writes that file for you,"
                         + " from the disks you mounted.")
-                .paragraph("Each line names a partition by its universally unique identifier (UUID), which the file"
+                .paragraph("Most lines name a partition by its universally unique identifier (UUID), which the file"
                         + " system carries on its disk. The UUID stays the same when the disk gets another letter, so"
                         + " a renamed disk still boots. Here the same disk always gives the same UUID.")
                 .steps("Make sure the base system is installed.",
@@ -328,10 +327,10 @@ final class ArchPages {
                         "Warning: os-prober will not be executed to detect other bootable",
                         "partitions. Systems on them will not be added to the GRUB boot",
                         "configuration. Check GRUB_DISABLE_OS_PROBER documentation entry.", "done")
-                .paragraph("The first line of the output says the configuration file is being generated. The warning is"
-                        + " expected. os-prober is a tool that looks for other systems on other disks, and here it"
-                        + " does not run, so no other system gets an entry. On UEFI, the output also says it adds a"
-                        + " boot menu entry for the firmware settings.")
+                .paragraph("The first line of the output says the configuration file is being generated. A warning"
+                        + " follows, and it is expected. os-prober is a tool that looks for other systems on other"
+                        + " disks, and here it does not run, so no other system gets an entry. On UEFI, the output"
+                        + " also says it adds a boot menu entry for the firmware settings.")
                 .paragraph("The file has one menu entry, named Arch Linux. It loads the kernel and the boot"
                         + " images, and it tells the kernel which partition is the root, by its UUID.")
                 .ifSomethingGoesWrong(
@@ -415,7 +414,8 @@ final class ArchPages {
                 .subheading("pacman on the system you installed")
                 .paragraph("Once Arch Linux starts from your own disk, pacman stays as its package manager. Then pacman"
                         + " -S installs a package at once, and pacman has words to search, list, update and remove"
-                        + " your packages too. Each of them reaches the Mirror over the network.")
+                        + " your packages too. Searching, installing and updating reach the Mirror over the network,"
+                        + " while listing and removing work on the packages already on this computer.")
                 .table("What pacman does on the installed system", "Words", "What they do")
                 .row(GuideCell.code("pacman -S <package>"), GuideCell.words("Installs the package from the Mirror."))
                 .row(GuideCell.code("pacman -Ss [term]"),
@@ -429,7 +429,7 @@ final class ArchPages {
                 .ifSomethingGoesWrong(
                         "The screen says \"error: target not found:\" and then the name you typed.",
                         "The Mirror has no program by that name for Linux, or this machine cannot run it. Check the"
-                                + " spelling, and the programs on the Mirror ([](jsc:programs)).",
+                                + " spelling, and look at the programs on the Mirror ([](jsc:programs)).",
                         "The screen says \"error: no targets specified (use -h for help)\".",
                         "You typed only flags, and no name. Add the name of a program after -S.",
                         "The screen says \"error: no operation specified (use -h for help)\".",

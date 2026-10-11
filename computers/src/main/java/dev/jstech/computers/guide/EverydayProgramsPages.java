@@ -222,7 +222,7 @@ final class EverydayProgramsPages {
                         + " storage. The second lists what is running, and it lets you end a program.")
                 .subheading("The System Monitor")
                 .paragraph("The System Monitor is on the desktop systems. It reads the machine as it works, and"
-                        + " it changes as the load changes. You cannot change anything in it.")
+                        + " it changes as the load changes.")
                 .table("Parts of the System Monitor", "Part", "What it shows")
                 .row(GuideCell.words("Processor"), GuideCell.words("The load on the processor."))
                 .row(GuideCell.words("Memory"),
@@ -231,8 +231,8 @@ final class EverydayProgramsPages {
                         GuideCell.words("The video memory in use and the load on the card. Without a card it"
                                 + " says no GPU."))
                 .row(GuideCell.words("Storage"),
-                        GuideCell.words("How many programs are installed, and each disk. The system's disk is"
-                                + " marked as the system."))
+                        GuideCell.words("How many programs are installed, and each disk, with the system's disk"
+                                + " marked (system)."))
                 .subheading("The Task Manager")
                 .paragraph("Right-click the panel and open the Task Manager from its menu. It is not on the"
                         + " Start menu or the desktop. Each desktop has its own manager, so what you see depends"
@@ -249,8 +249,7 @@ final class EverydayProgramsPages {
                         + " minute.")
                 .table("Buttons of the Task Manager", "Button", "What it does")
                 .row(GuideCell.code("End Task"),
-                        GuideCell.words("Ends the selected window or program. Only a window or a program can be"
-                                + " ended."))
+                        GuideCell.words("Ends the selected window or program."))
                 .row(GuideCell.code("End Process"), GuideCell.words("Ends the selected program."))
                 .row(GuideCell.code("Switch To"), GuideCell.words("Brings the selected window to the front."))
                 .paragraph("Next to the buttons the window warns: \"Ending a program may lose unsaved work.\""
@@ -330,7 +329,7 @@ final class EverydayProgramsPages {
                 .row(GuideCell.code("AVG"), GuideCell.words("The average of a range."))
                 .row(GuideCell.code("COUNT"), GuideCell.words("How many values a range holds."))
                 .row(GuideCell.code("QTY(\"item_id\")"),
-                        GuideCell.words("How many of an item the network holds. Write the item's id in quotes."))
+                        GuideCell.words("How many of an item the network holds, given by the item's id in quotes."))
                 .row(GuideCell.code("FREE()"), GuideCell.words("How much room the network has left."))
                 .row(GuideCell.code("SERVERS()"), GuideCell.words("How many servers are on the network."))
                 .table("Errors in a cell", "Shown", "What it means")
@@ -370,7 +369,7 @@ final class EverydayProgramsPages {
                 .row(GuideCell.words("Size"),
                         GuideCell.words("The size of the file, in bytes, kilobytes or megabytes."))
                 .row(GuideCell.words("Saved"),
-                        GuideCell.words("The percentage the archive is smaller than the files."))
+                        GuideCell.words("The percentage by which the archive is smaller than the files."))
                 .steps("Open an archive, or start a new one with New.",
                         "Press Add, and choose the files you want to pack.",
                         "Press Pack. The server does the packing, so the saving on disk is real.",
@@ -400,10 +399,10 @@ final class EverydayProgramsPages {
                         GuideCell.words("99"))
                 .paragraph("The game starts on Beginner.")
                 .subheading("Solitaire")
-                .paragraph("Solitaire is Klondike. The stock is drawn one card at a time. The seven columns of"
-                        + " cards are the tableau, and the four piles, one for each suit, are the foundations,"
-                        + " built from ace up to king. The stock is the face-down pile, and the waste holds the"
-                        + " cards you drew.")
+                .paragraph("Solitaire is Klondike. You draw one card at a time from the stock, the face-down"
+                        + " pile, into the waste, which holds the cards you drew. The seven columns of cards are"
+                        + " the tableau, and the four piles, one for each suit, are the foundations, built from"
+                        + " ace up to king.")
                 .define("Tableau", "The seven columns of cards in Solitaire, where the cards are laid out in a"
                         + " row.")
                 .define("Foundation", "One of the four piles in Solitaire, where a suit is built from ace up to"
@@ -461,7 +460,7 @@ final class EverydayProgramsPages {
                 .row(GuideCell.words("Inventory band"),
                         GuideCell.words("The slots of your inventory, at the foot of the window."))
                 .row(GuideCell.words("Grips"),
-                        GuideCell.words("Two handles that reshape the window. One adds columns to the grid, and"
+                        GuideCell.words("Two handles that reshape the window: one adds columns to the grid, and"
                                 + " the other shows from 1 to 4 rows of your inventory."))
                 .row(GuideCell.words("Status bar"),
                         GuideCell.words("The Mainframe's state, the counts and a storage gauge."))
@@ -529,7 +528,7 @@ final class EverydayProgramsPages {
                         + " Craft makes the whole amount, Partial makes what can be made now, and [[Enter]] makes"
                         + " the whole amount too.")
                 .paragraph("When an item can be made in more than one way, up to three recipe cards sit side by"
-                        + " side. [[Left]] and [[Right]] change the card, and the machine remembers the choice for"
+                        + " side. [[Left]] and [[Right]] change the card, and the computer remembers the choice for"
                         + " each item. The estimate, marked EST, shows a time, or EST -- while the plan is still"
                         + " being worked out.")
                 .subheading("Updating an item")
@@ -586,10 +585,8 @@ final class EverydayProgramsPages {
                         GuideCell.words("The machine's kind and its system, and whether it is up or off."))
                 .row(GuideCell.words("Button"),
                         GuideCell.words("Take over, or Select a machine when no row is chosen."))
-                .paragraph("Only a machine that is running can be taken over. A machine that is off is listed as"
-                        + " off.")
                 .ifSomethingGoesWrong("A machine is listed as off.",
-                        "It must be started before you can take it over.",
+                        "Switch the machine on before you can take it over.",
                         "The list says No other machine is reachable.",
                         "Check that this computer is on the network whose machines you want to reach.")
                 .seeAlso("jsc:mainframes", "jsc:remote_access", "jsc:monitors")
@@ -618,7 +615,7 @@ final class EverydayProgramsPages {
                         + " network again on its own, every so often, so the numbers keep up with the network.")
                 .ifSomethingGoesWrong("The list says no match.",
                         "No item type fits the search. Try a shorter word.",
-                        "The dashboard says nothing on the network.",
+                        "The dashboard shows no numbers.",
                         "The network holds no items yet. Put items on the network, and the numbers will follow.")
                 .seeAlso("jsc:buses", "jsc:items_as_data", "jsc:storage")
                 .register();
@@ -639,8 +636,8 @@ final class EverydayProgramsPages {
                         + " ([](jsc:server_racks)). A Personal Computer or a Mainframe cannot host it.")
                 .subheading("The window")
                 .table("Parts of Messenger", "Part", "What it does")
-                .row(GuideCell.words("Roster"), GuideCell.words("The people on the network, under On the network."
-                        + " Everybody is the room that everyone on the network reads."))
+                .row(GuideCell.words("Roster"), GuideCell.words("The people on the network, under On the network;"
+                        + " Everybody is the one room they all read."))
                 .row(GuideCell.words("Conversation"), GuideCell.words("What has been said, on the right."))
                 .row(GuideCell.words("Compose line"), GuideCell.words("Where you type a message."))
                 .row(GuideCell.words("Send"), GuideCell.words("Sends the message."))
@@ -723,8 +720,8 @@ final class EverydayProgramsPages {
                 .paragraph("A file keeps at most 64 revisions, and the oldest go first. A repository keeps at most"
                         + " 64 files. Each revision is kept whole, not as a difference from the last one, so the"
                         + " computer that holds the repository needs the disk space for all of them.")
-                .paragraph("KnotHub runs on a server in a rack, and it keeps the repository for the network."
-                        + " Install it on a server in a rack of the network ([](jsc:server_racks)). The"
+                .paragraph("KnotHub keeps the repository for the network, and it runs on a server in a rack"
+                        + " of the network ([](jsc:server_racks)). The"
                         + " [Book of Sigma](jsc:knot) explains Knot for programs.")
                 .ifSomethingGoesWrong("The window says No KnotHub on this network.",
                         "Install KnotHub on a server in a rack of this network, and let it run.",

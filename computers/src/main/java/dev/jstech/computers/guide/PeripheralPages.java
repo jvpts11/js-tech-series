@@ -104,9 +104,8 @@ final class PeripheralPages {
                         + " graphics card, or on a board, and you can use it for one monitor only"
                         + " ([](jsc:graphics_cards)).")
                 .define("Video output", "A connector on a graphics card, or on a board, that drives one monitor.")
-                .paragraph("A lit monitor also takes video memory, one block for each monitor of its screen. A joined"
-                        + " screen takes one block for each of its monitors. The bigger the era, the more memory a"
-                        + " block takes:")
+                .paragraph("A lit monitor also takes video memory, one block for each monitor of its screen. The"
+                        + " bigger the era, the more memory a block takes:")
                 .table("Video memory per block", "Monitor", "Memory per block")
                 .row(GuideCell.words("Vintage, monochrome"), GuideCell.amount(64, "KB"))
                 .row(GuideCell.words("Vintage, sixteen colours"), GuideCell.amount(256, "KB"))
@@ -133,8 +132,8 @@ final class PeripheralPages {
                 .paragraph("A picture tube, in the Vintage or the Legacy, makes a sound when it switches on or off. A"
                         + " flat panel goes dark without a sound.")
                 .ifSomethingGoesWrong("No computer found in range over a Peripheral Cable",
-                        "Lay the peripheral cable all the way, within the reach of its era ([](jsc:peripheral_cables)),"
-                                + " or stand the monitor right against the computer.",
+                        "Run the peripheral cable all the way to the computer, within the reach of its era"
+                                + " ([](jsc:peripheral_cables)), or stand the monitor right against the computer.",
                         "The computer has no video output: install a graphics card",
                         "Put a graphics card in the computer, or use a processor with built-in graphics"
                                 + " ([](jsc:graphics_cards)).",
@@ -334,8 +333,8 @@ final class PeripheralPages {
     private static void dockStation(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("dock_station", section).titled("The Dock Station").icon(ComputingModule.DOCK_STATION)
                 .paragraph("The Dock Station reads storage disks and Universal Serial Bus (USB) flash drives for a"
-                        + " computer. You join it to a computer like any device ([](jsc:peripheral_cables)), and it"
-                        + " takes a cable of any era. It has three bays for disks, and a USB port for one flash"
+                        + " computer. You join it to a computer like any device ([](jsc:peripheral_cables)), with a"
+                        + " cable of any era. It has three bays for disks, and a USB port for one flash"
                         + " drive.")
                 .scene("A Dock Station joined to a Personal Computer, with a disk in each of its three bays and a USB"
                         + " flash drive in its port. Drag the scene to see the back.", 120)
@@ -399,9 +398,7 @@ final class PeripheralPages {
                         + " it. The Dock works only while a computer is linked to it.")
                 .ifSomethingGoesWrong("That tray already holds a disk - sneak-click or use the window to take it out.",
                         "Take the disk out in the window first.",
-                        "Not docked to a computer",
-                        "Join the Dock to a computer with a peripheral cable ([](jsc:peripheral_cables)).",
-                        "No computer linked",
+                        "The Dock says \"Not docked to a computer\" or \"No computer linked\".",
                         "Join the Dock to a computer with a peripheral cable ([](jsc:peripheral_cables)).",
                         "Nothing happens when you click the Dock.",
                         "Only disks and USB flash drives go in the Dock. Anything else is refused, and the Dock says"
@@ -544,7 +541,7 @@ final class PeripheralPages {
                         "Stand a Transition subwoofer against one of the linked Transition speakers.",
                         "The speaker's window says \"Not linked\".",
                         "Join the speaker to the computer with a peripheral cable ([](jsc:peripheral_cables)).",
-                        "Another speaker already has this name",
+                        "Another speaker already has this name.",
                         "Pick another name for this speaker.")
                 .seeAlso("jsc:sound_cards", "jsc:peripheral_cables", "jsc:monitors")
                 .register();
@@ -618,8 +615,7 @@ final class PeripheralPages {
     private static void kvmSwitch(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("kvm_switch", section).titled("The KVM Switch").icon(ComputingModule.KVM_SWITCH)
                 .paragraph("A KVM Switch lets one monitor reach every computer of a rack. It is a rack unit that you"
-                        + " mount in a Server Rack ([](jsc:server_racks)). Its tooltip reads \"Lets one monitor address"
-                        + " every machine in the rack\".")
+                        + " mount in a Server Rack ([](jsc:server_racks)).")
                 .define("Rack unit", "One slot of height in a rack, counted in U. A KVM Switch takes one.")
                 .paragraph("Each computer of the rack is a channel. A rack with one computer needs no KVM Switch: the"
                         + " monitor shows that computer. With two or more, the monitor first shows the channel bar, and"
@@ -661,8 +657,8 @@ final class PeripheralPages {
                         "Select the device.",
                         "Press Disable, or Enable if the device is already disabled.")
                 .paragraph("The status line says that the device is disabled, and that the computer stops reading and"
-                        + " writing it. If a device is missing from the list, use the \"Show hidden devices\""
-                        + " option.")
+                        + " writing it. If a device is missing from the list, look for it in another view, because the"
+                        + " Show hidden devices option does nothing.")
                 .subheading("On MC-DOS and MC-NET")
                 .paragraph("MC-DOS and MC-NET have no Device Manager. Their Midsoft Diagnostics program, MSD"
                         + " ([](jsc:dos_msd)), takes the whole terminal. Press L for the LPT ports, or C for the COM"
@@ -684,7 +680,8 @@ final class PeripheralPages {
                 .ifSomethingGoesWrong("A device is dark, or not seen, after you disabled it.",
                         "Enable it again: Enable in the Device Manager or in Workstation Info, or E in the MSD list.",
                         "The Device Manager does not list a device.",
-                        "Use the \"Show hidden devices\" option.")
+                        "Look for it in another view of the list, because the Show hidden devices option does"
+                                + " nothing.")
                 .seeAlso("jsc:device_manager", "jsc:dos_msd", "jsc:cde_workstation_info", "jsc:kde_plasma")
                 .register();
     }

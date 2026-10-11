@@ -96,9 +96,8 @@ final class BuildingPages {
                         "It sits behind the front of the case.")
                 .paragraph("A computer runs only when its parts make a build that stands. You read the state of the"
                         + " build in the header of the window, and the window shows each part in its own slot.")
-                .paragraph("The POWER button's tooltip names the parts a computer needs: a board, a CPU, RAM, a disk"
-                        + " and a PSU. Without a graphics card the monitor stays dark, unless the processor has"
-                        + " graphics built in.")
+                .paragraph("The POWER button's tooltip names the parts a computer needs. Without a graphics card the"
+                        + " monitor stays dark, unless the processor has graphics built in.")
                 .define("Build", "The set of parts in the slots of the assembly screen. It is valid when it has no"
                         + " problems.")
                 .define("Motherboard", "The board every other part sits on. It decides which parts the computer can"
@@ -143,18 +142,18 @@ final class BuildingPages {
                 .paragraph("A tower has readouts that show its numbers. Hover one to read its tooltip.")
                 .table("The readouts of a tower", "Readout", "What it shows")
                 .row(GuideCell.code("CAPACITY"),
-                        GuideCell.words("How many items a tick (it/t) the computer handles. It lights while it runs."))
+                        GuideCell.words("The items per tick (it/t) the computer handles, lit while it runs."))
                 .row(GuideCell.code("RAM BUFFER"),
                         GuideCell.words("The buffer of its memory, in items (it)."))
                 .row(GuideCell.code("NETWORK"),
-                        GuideCell.words("LINKED in the accent colour when it is on a network, otherwise a dim"
-                                + " \"--\". Its tooltip counts the servers it is linked to."))
+                        GuideCell.words("LINKED in the accent colour on a network, otherwise a dim \"--\"; the tooltip"
+                                + " counts the linked servers."))
                 .subheading("The switches and the power button")
                 .paragraph("The large button on the left of a tower's front panel is POWER. It switches the computer"
                         + " on and off. A tower has two switches.")
                 .table("The switches of a tower", "Switch", "What it does")
                 .row(GuideCell.code("AUTO START"),
-                        GuideCell.words("Keeps the computer on while its build stands. See below."))
+                        GuideCell.words("Keeps the computer on while its build stands (see below)."))
                 .row(GuideCell.code("SIDE PANEL"),
                         GuideCell.words("Lit while the side panel is off, so you can see the parts."))
                 .paragraph("Switch AUTO START on while the build is valid, and the computer turns on at once. It stays"
@@ -275,7 +274,7 @@ final class BuildingPages {
                                 + " finish.\"",
                         "The drive is reading a disc. Wait for it to finish.",
                         "The drive already holds a disc.",
-                        "Sneak-click the drive to eject the disc.",
+                        "Press the eject button to open the tray, then sneak-click the open tray to take the disc out.",
                         "The port already holds a stick.",
                         "Sneak-click the port to pull its stick out.",
                         "The bay already holds a disk.",
@@ -344,8 +343,7 @@ final class BuildingPages {
                                 + " shows the total."))
                 .paragraph("The numbers in each line change to match your build.")
                 .subheading("Parts that stay out without a line")
-                .paragraph("Some parts never go into a slot, and the window gives no line for them. The part"
-                        + " stays out of the slot.")
+                .paragraph("Some parts never go into a slot, and the window gives no line for them.")
                 .table("Parts that stay out", "Part", "Why it stays out")
                 .row(GuideCell.words("A board of another form factor or era"),
                         GuideCell.words("The case takes only its own form factors, and boards of its own era."))
@@ -404,7 +402,7 @@ final class BuildingPages {
                         GuideCell.words("The processor slots and their socket. The memory slots and the kinds of"
                                 + " memory it takes. The expansion slots and their bus."))
                 .row(GuideCell.code("On-board audio"),
-                        GuideCell.words("The board has sound of its own. Boards from the Transition on have it."))
+                        GuideCell.words("Boards from the Transition on have sound of their own."))
                 .row(GuideCell.code("Seats parts of its own era only"),
                         GuideCell.words("The board takes parts of its own era only."))
                 .paragraph("Each computer takes only some boards. The table shows which ones, and the board's era must"
@@ -590,9 +588,8 @@ final class BuildingPages {
                 .paragraph("In a Mainframe, each card adds one parallel queue: a line of work the Mainframe runs at the"
                         + " same time as the others. A Mainframe with three cards runs four queues, one from its"
                         + " processors and one for each card ([States, priorities and queues](jsc:states_and_queues)).")
-                .paragraph("A card's queue never runs faster than the processors of the Mainframe. A card that"
-                        + " holds its"
-                        + " queue below that speed shows in amber.")
+                .paragraph("A card's queue never runs faster than the processors of the Mainframe. A card whose"
+                        + " queue runs slower than that is shown in amber.")
                 .paragraph("Cards go in the board's expansion slots ([Expansion cards](jsc:expansion_cards)). A card in"
                         + " an older slot runs slower than its tooltip says. The table shows how much of its speed it"
                         + " keeps.")
@@ -699,8 +696,7 @@ final class BuildingPages {
                 .paragraph("Most parts draw power, and the power supply gives it. The processors, the memory,"
                         + " the graphics cards, the disks and the expansion cards each draw watts. The supply has"
                         + " to give at least their total.")
-                .paragraph("There are twelve supplies, from 200 W to 3,000 W. Each one has an efficiency, and the"
-                        + " efficiency is the share of the power it takes in that reaches the parts.")
+                .paragraph("There are twelve supplies, from 200 W to 3,000 W, each with its own efficiency.")
                 .define("Efficiency", "The share of the power a supply takes in that reaches the parts. The build check"
                         + " does not use it.")
                 .table("The power supplies", "Power supply", "Era", "Power", "Efficiency")
@@ -737,10 +733,8 @@ final class BuildingPages {
                         + " the draw is over. A tower has no draw readout, so keep the sum in mind when you choose.")
                 .paragraph("A computer whose supply gives less than its parts draw does not start. It stays off, and a"
                         + " server says why.")
-                .ifSomethingGoesWrong("The computer does not start.",
-                        "Its parts draw more than its supply gives. Use a supply with more watts.",
-                        "The build says \"PSU insufficient\".",
-                        "Use a power supply with more watts than the draw.")
+                .ifSomethingGoesWrong("The computer does not start, or the build says \"PSU insufficient\".",
+                        "Its parts draw more than its supply gives. Use a supply with more watts.")
                 .seeAlso("jsc:build_refusals", "jsc:disks", "jsc:processors")
                 .register();
     }
@@ -780,8 +774,8 @@ final class BuildingPages {
                         "The build says \"one sound card per machine\".",
                         "Take one of the two sound cards out.",
                         "A Vintage or Legacy computer only beeps.",
-                        "It has no sound card, and no monitor or speaker takes its sound. Put in a sound card of the"
-                                + " board's era, or link a monitor or speakers.")
+                        "It has no sound card, and no monitor or speaker is linked to carry its sound. Put in a sound"
+                                + " card of the board's era, or link a monitor or speakers.")
                 .seeAlso("jsc:speakers", "jsc:monitors", "jsc:motherboards")
                 .register();
     }
@@ -817,9 +811,9 @@ final class BuildingPages {
                         GuideCell.words("Everything, every kind of rack"), GuideCell.words("4 nodes at a time"))
                 .row(GuideCell.words("Fabric DPU"), GuideCell.words("Advanced, PCI-e 4.0"),
                         GuideCell.words("Everything, every kind of rack"), GuideCell.words("8 nodes at a time"))
-                .define("Reach", "The kinds of machine a card can manage, from the rack servers of a datacenter"
-                        + " up to every rack, of every kind.")
-                .define("Lane", "One node that a bulk install writes at a time. In an older slot the lanes fall,"
+                .define("Reach", "The kinds of machine a card can reach, from the rack servers of a datacenter"
+                        + " up to every kind of rack.")
+                .define("Lane", "The number of nodes a bulk install writes at once. In an older slot the lanes fall,"
                         + " but never"
                         + " below one.")
                 .paragraph("Only a Cluster Management Computer uses these cards.")

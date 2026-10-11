@@ -100,6 +100,14 @@ final class GuideGlossary {
                 }
                 final String key = best.term().toLowerCase(Locale.ROOT);
                 final int end = bestAt + key.length();
+                /*
+                 * A word that is part of a name, as "Task" is of "Task Manager", or of a path or a name in code, as
+                 * "gentoo" is of /mnt/gentoo, is the name's and leads nowhere.
+                 */
+                if (!key.contains(" ") && inAName(text, bestAt, end) || inCode(text, bestAt, end)) {
+                    from = end;
+                    continue;
+                }
                 // A word already led from is passed over whole, so no shorter word is found inside it.
                 if (used.add(key)) {
                     if (bestAt > written) {
@@ -115,6 +123,47 @@ final class GuideGlossary {
             }
         }
         return out;
+    }
+
+    /**
+     * Whether the word standing there, from {@code at} to {@code end}, is part of a longer name written with
+     * capitals: followed by a word with a capital ("Task" in "Task Manager"), or after one that does not open the
+     * sentence ("Computer" in "a Personal Computer").
+     */
+    static boolean inAName(final String text, final int at, final int end) {
+        if (end + 1 < text.length() && text.charAt(end) == ' ' && Character.isUpperCase(text.charAt(end + 1))) {
+            return true;
+        }
+        final int gap = at - 1;
+        if (gap < 1 || text.charAt(gap) != ' ') {
+            return false;
+        }
+        int wordStart = gap;
+        while (wordStart > 0 && Character.isLetter(text.charAt(wordStart - 1))) {
+            wordStart--;
+        }
+        if (wordStart == gap || !Character.isUpperCase(text.charAt(wordStart))) {
+            return false;
+        }
+        int before = wordStart - 1;
+        while (before >= 0 && text.charAt(before) == ' ') {
+            before--;
+        }
+        // The first word of a sentence has its capital for the sentence, not for a name.
+        return before >= 0 && ".!?:(\"".indexOf(text.charAt(before)) < 0;
+    }
+
+    /**
+     * Whether the word standing there, from {@code at} to {@code end}, is part of a path, a command or a name in code:
+     * joined to what is before or after it by a slash, an underscore, a hyphen or a bar ("/mnt/gentoo",
+     * "grub-install", "stock_report", "system|program"), or by a point or a colon going on into more of the name.
+     */
+    static boolean inCode(final String text, final int at, final int end) {
+        final boolean before = at > 0 && "/_-|\\.:".indexOf(text.charAt(at - 1)) >= 0;
+        final boolean after = end < text.length() && "/_-|\\".indexOf(text.charAt(end)) >= 0
+                || end + 1 < text.length() && ".:".indexOf(text.charAt(end)) >= 0
+                && Character.isLetterOrDigit(text.charAt(end + 1));
+        return before || after;
     }
 
     /** Where the word stands whole in the lower-cased text, from {@code from} on, or -1. */

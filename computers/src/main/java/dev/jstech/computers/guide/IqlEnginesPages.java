@@ -136,7 +136,7 @@ final class IqlEnginesPages {
                 .paragraph("A replacement takes 40 ticks, plus one tick for every four item types the network stores,"
                         + " up to 2,400 ticks. A tick is the game's basic time step: 20 ticks make a second.")
                 .define("Tick", "One twentieth of a second in the game.")
-                .define("Item type", "One kind of item the network stores, such as iron ingot.")
+                .define("Item type", "One kind of item the network stores, such as an iron ingot.")
                 .table("How long a replacement takes", "Item types stored", "Time")
                 .row(GuideCell.words("0"), GuideCell.words("40 ticks, 2 seconds"))
                 .row(GuideCell.words("400"), GuideCell.words("140 ticks, 7 seconds"))
@@ -165,7 +165,7 @@ final class IqlEnginesPages {
                 .paragraph("An install is refused when the engine is already installed, or when it was not made for"
                         + " the Mainframe's age.")
                 .warning("Formatting the disk of the Mainframe removes every engine installed on it.")
-                .paragraph("If you remove the engine that runs, the network has no engine until you start another.")
+                .paragraph("Removing the engine that runs leaves the network with no engine, as a stop does.")
                 .subheading("The iqlengine command")
                 .paragraph("The Midsoft IQL Server also has a command of its own, typed at a prompt: iqlengine. It"
                         + " takes one of four verbs.")
@@ -309,7 +309,7 @@ final class IqlEnginesPages {
                         "Write the CRAFT or the SELECT after EXPLAIN.",
                         "The answer is \"no item is called\" and the name you typed.",
                         "Check the spelling, and use the short name, such as iron_ingot.",
-                        "The answer says nothing on the network knows how to make the item.",
+                        "The answer says that nothing on the network knows how to make the item.",
                         "No recipe makes it. Choose another item.",
                         "The answer says every plan for the item was set aside.",
                         "The planner's rules rejected every plan. Look at the Rules tab of the Nextgre Planner Studio.",
@@ -342,7 +342,7 @@ final class IqlEnginesPages {
                 .paragraph("A craft with two hints looks like this. The server named Storage B must be on the network.")
                 .listingIn("iql", "hints_example.iql",
                         "CRAFT 64 iron_ingot PREFER SOURCE 'Storage B'" + " MAX PARALLEL 2")
-                .paragraph("Write the server's name as the network shows it. Capitals do not matter.")
+                .paragraph("Capitals do not matter.")
                 .paragraph("MAX PARALLEL takes a whole number above zero. Hints go after a CRAFT only, because"
                         + " the other statements refuse them.")
                 .paragraph("Other mods can add hints of their own.")
@@ -471,8 +471,8 @@ final class IqlEnginesPages {
                 .row(GuideCell.words("status"), GuideCell.words("The status word from the table below."))
                 .row(GuideCell.words("held"), GuideCell.words("What the network holds of the item."))
                 .row(GuideCell.words("coming"), GuideCell.words("The Operations on their way for the item."))
-                .row(GuideCell.words("last"), GuideCell.words("The last thing the engine did for it. A watch row"
-                        + " leaves held, coming and last empty."))
+                .row(GuideCell.words("last"), GuideCell.words("The last thing the engine did for it; left empty on a"
+                        + " watch row."))
                 .subheading("The status words")
                 .table("The status words", "Status", "What it means")
                 .row(GuideCell.words("New"), GuideCell.words("Not looked at yet."))
@@ -505,8 +505,8 @@ final class IqlEnginesPages {
     private static void engineProblems(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("engine_problems", section).titled("When an engine refuses").icon(ComputingModule.MAINFRAME)
                 .paragraph("An engine answers a request it cannot do with a short message, and the Services tab shows"
-                        + " its own messages. Find your message in the tables below, read its cause, and follow its"
-                        + " fix.")
+                        + " its own messages. Find your message in the tables below, check when you see it, and"
+                        + " follow what to do.")
                 .table("Messages of the engines and the Services tab", "Message", "When you see it", "What to do")
                 .row(GuideCell.code("Network Operations Service unavailable"),
                         GuideCell.words("A craft, query or update is asked while no engine runs."),
@@ -540,7 +540,8 @@ final class IqlEnginesPages {
                         GuideCell.words("An install is asked, and no matching disc is in a linked drive."),
                         GuideCell.words("Put the disc in a drive linked to the Mainframe."))
                 .paragraph("Some refusals show no message at all. A press on a Services button that the server does not"
-                        + " accept does nothing, and the tab shows the true state. Read the state word again.")
+                        + " accept does nothing, and the tab keeps showing the true state. Check the state the tab"
+                        + " shows before you press again.")
                 .table("Messages of NextgreIQL and Prophet YourIQL", "Message", "When you see it", "What to do")
                 .row(GuideCell.code("EXPLAIN needs a statement to explain"),
                         GuideCell.words("EXPLAIN has nothing after it."),

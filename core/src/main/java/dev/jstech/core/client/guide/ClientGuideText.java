@@ -85,6 +85,11 @@ public final class ClientGuideText implements IGuideText {
         return GuideLibrary.loaded().manualForTarget(target).map(manual -> this.text(manual.titleKey())).orElse("");
     }
 
+    @Override
+    public String titleOf(final String target) {
+        return GuideLibrary.loaded().titleKeyOf(target).map(key -> this.text(key)).orElse("");
+    }
+
     /** An item's name in the loaded language, read from the game's items; its id's path when it has none. */
     public static String itemNameOf(final String item) {
         final ResourceLocation id = ResourceLocation.tryParse(item);

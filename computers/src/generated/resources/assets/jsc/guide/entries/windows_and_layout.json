@@ -89,16 +89,12 @@
       ]
     },
     {
-      "type": "text",
-      "text": "jsc.guide.windows_and_layout.text2"
-    },
-    {
       "type": "heading",
       "text": "jsc.guide.windows_and_layout.heading1"
     },
     {
       "type": "text",
-      "text": "jsc.guide.windows_and_layout.text3"
+      "text": "jsc.guide.windows_and_layout.text2"
     },
     {
       "type": "table",
@@ -176,7 +172,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.windows_and_layout.text4"
+      "text": "jsc.guide.windows_and_layout.text3"
     },
     {
       "type": "heading",
@@ -184,7 +180,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.windows_and_layout.text5"
+      "text": "jsc.guide.windows_and_layout.text4"
     },
     {
       "type": "table",

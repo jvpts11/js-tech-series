@@ -83,6 +83,16 @@ public final class GuideLibrary {
         return Optional.ofNullable(this.entries.get(id));
     }
 
+    /** The key of the title of a link's target: an entry, a section or a chapter. */
+    public Optional<String> titleKeyOf(final String target) {
+        final GuideEntry entry = this.entries.get(target);
+        if (entry != null) {
+            return Optional.of(entry.titleKey());
+        }
+        final GuideSection section = this.sections.get(target);
+        return section != null ? Optional.of(section.titleKey()) : this.chapter(target).map(GuideChapter::titleKey);
+    }
+
     /** The entry an item's page is, when one covers it. */
     public Optional<String> pageOf(final String item) {
         return Optional.ofNullable(this.pagesOfItems.get(item));

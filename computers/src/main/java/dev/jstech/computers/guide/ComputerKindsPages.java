@@ -234,14 +234,14 @@ final class ComputerKindsPages {
                         + " buffer, so a small buffer holds back fast processors.")
                 .define("Subframe", "A computer that lends its capacity and its queues to the Mainframe of its"
                         + " network.")
-                .define("Capacity", "The items a tick that the Mainframe's processors can handle, added up.")
+                .define("Capacity", "The items per tick that the Mainframe's processors can handle, added up.")
                 .paragraph("The processors run one queue, and each graphics card runs one more. The queues do not"
                         + " share capacity. A weak card can hold its queue down, and the assembly screen then says"
                         + " \"A card's queue runs at most at the CPU's speed, and no faster than the card\".")
                 .paragraph("The assembly screen shows these parts of the Mainframe:")
                 .table("The assembly screen", "Part", "What it shows")
                 .row(GuideCell.words("CAPACITY (it/t)"),
-                        GuideCell.words("The items a tick its processors can handle, added up."))
+                        GuideCell.words("The items per tick its processors can handle, added up."))
                 .row(GuideCell.words("QUEUES"),
                         GuideCell.words("The queues of its processors and graphics cards."))
                 .row(GuideCell.words("RAM BUFFER (it)"),
@@ -298,9 +298,8 @@ final class ComputerKindsPages {
                 .paragraph("Your items have to live somewhere. In J's Computers they live on the disks of servers,"
                         + " and the servers live in racks.")
                 .define("Server", "A computer built to sit in a Server Rack.")
-                .paragraph("A Server Rack is a cabinet two blocks wide, three tall and two deep, with eight rack units"
-                        + " of room. A machine's height is counted in those units: most servers take one, the bigger"
-                        + " ones take two.")
+                .paragraph("A Server Rack gives eight rack units of room. A machine's height is counted in those"
+                        + " units: most servers take one, the bigger ones take two.")
                 .define("Server Rack", "A cabinet, two blocks wide, three tall and two deep, that holds machines in"
                         + " rows.")
                 .define("Rack unit (U)", "The height a machine takes in a rack, counted in units. Each cabinet has"
@@ -385,8 +384,8 @@ final class ComputerKindsPages {
                         + " in a Supercomputer Rack, and the Advanced Supercomputer Node goes in an Advanced"
                         + " Supercomputer Rack. A Vintage Server has no gadget bay, so no gadget fits in it.")
                 .paragraph("Each rack unit has five front slots. A machine fills the slots of its rows in order: drive"
-                        + " bays first, then gadget bays, and the rest are blocked. The screen says why a slot is"
-                        + " blocked, in one of two ways.")
+                        + " bays first, then gadget bays, and the rest are blocked. When a slot is"
+                        + " blocked, the screen says why, with one of two fixed messages.")
                 .ifSomethingGoesWrong("A slot is blocked: \"Blocked - no unit in this row cables these slots\".",
                         "Mount a unit in that row that cables those slots, or pick a chassis that fits the row.",
                         "A slot is blocked: \"Blocked - the chassis does not cable this slot\".",
@@ -416,14 +415,15 @@ final class ComputerKindsPages {
                 .row(GuideCell.words("A RAID 1 or RAID 5 array"),
                         GuideCell.words("The array keeps working while a replacement drive rebuilds it."))
                 .paragraph("In a RAID 1 or RAID 5 array, a pulled drive's contents move to the drives that stay, as"
-                        + " far as those drives accept them. Nothing is copied twice.")
+                        + " far as those drives have room for them.")
                 .paragraph("A rebuild takes 20 ticks for each 1,000 items of array capacity. It never takes less than"
                         + " 40 ticks, which is 2 seconds, or more than 3 minutes. While it runs, the rack shows REBUILD"
-                        + " and a percentage. It marks an array DEGRADED or FAILED.")
+                        + " and a percentage. The rack also marks an array DEGRADED or FAILED.")
                 .ifSomethingGoesWrong("The bay refuses the item.",
                         "A drive bay takes only a disk, and a gadget bay only a gadget.",
                         "The array lost everything.",
-                        "A RAID 0 array keeps nothing when a drive is lost. Use RAID 1 or RAID 5 for a copy"
+                        "A RAID 0 array keeps no copy, so it loses everything when a drive is lost. Use RAID 1 or"
+                                + " RAID 5 for a copy"
                                 + " ([](jsc:raid_arrays)).")
                 .seeAlso("jsc:server_types", "jsc:disks")
                 .register();
@@ -493,9 +493,8 @@ final class ComputerKindsPages {
 
     private static void rackCoolingAndHeat(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("rack_cooling_and_heat", section).titled("Cooling and heat")
-                .paragraph("When you fill a rack, it can carry only so much heat before its machines slow down. Passive"
-                        + " cooling carries 1,000 W. Each Cooling Unit in the rack adds 1,500 W, and every Cooling Unit"
-                        + " counts, wherever it sits.")
+                .paragraph("When you fill a rack, it can carry only so much heat before its machines slow down. Every"
+                        + " Cooling Unit in the rack counts toward that limit, wherever it sits.")
                 .define("Heat budget", "The watts of heat that a rack can carry before its machines slow down.")
                 .paragraph("The heat budget is 1,000 W plus 1,500 W for each Cooling Unit. The load is the power draw"
                         + " of every machine whose bay is on: its processors and cards, added up.")
@@ -642,7 +641,7 @@ final class ComputerKindsPages {
                         GuideCell.words("96 cores at 1.8 GHz"), GuideCell.words("300 W"))
                 .paragraph("A Phi's tooltip gives its slots as \"Supercomputer slots 1-2\" for the Integra Phi 5100."
                         + " The nodes are counted across the racks on the run, from the top down, and the first six"
-                        + " nodes are the rated slots, numbered 1 to 6. A node past the sixth adds nothing.")
+                        + " nodes are the rated slots, numbered 1 to 6.")
                 .paragraph("Each slot gives parallel crafts: slot 1 gives 8 crafts, slot 2 gives 16 crafts, doubling"
                         + " up to slot 6 with 256 crafts. Together the six slots give up to 504 parallel crafts. Each"
                         + " slot shows its state:")

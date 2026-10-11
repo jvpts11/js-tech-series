@@ -54,6 +54,17 @@ public final class GuideLinks {
      */
     public static List<Run> runs(final String sentence, final Function<String, String> numbers,
                                  final Function<String, String> elsewhere) {
+        return runs(sentence, numbers, elsewhere, target -> null);
+    }
+
+    /**
+     * The sentence in runs of words, each run plain or one link's words and where it leads; a link with no words of
+     * its own to a target another book holds is written with that target's title.
+     *
+     * @param titles for a target the manual does not hold, its title in the book that does, or null when unknown
+     */
+    public static List<Run> runs(final String sentence, final Function<String, String> numbers,
+                                 final Function<String, String> elsewhere, final Function<String, String> titles) {
         final List<Run> runs = new ArrayList<>();
         final Matcher matcher = LINK.matcher(sentence);
         int at = 0;
@@ -64,7 +75,9 @@ public final class GuideLinks {
             final String words = matcher.group(1).strip();
             final String target = matcher.group(2);
             final String number = numbers.apply(target);
-            final String shown = words.isEmpty() ? GuideIds.path(target) : words;
+            final String title = words.isEmpty() ? titles.apply(target) : null;
+            final String shown = !words.isEmpty() ? words
+                    : title != null && !title.isEmpty() ? title : GuideIds.path(target);
             if (number != null) {
                 runs.add(new Run(words.isEmpty() ? number : words + " (" + number + ")", target));
             } else {
@@ -91,8 +104,14 @@ public final class GuideLinks {
      */
     public static String plain(final String sentence, final Function<String, String> numbers,
                                final Function<String, String> elsewhere) {
+        return plain(sentence, numbers, elsewhere, target -> null);
+    }
+
+    /** The sentence as plain words, a link with no words of its own to another book written with its title. */
+    public static String plain(final String sentence, final Function<String, String> numbers,
+                               final Function<String, String> elsewhere, final Function<String, String> titles) {
         final StringBuilder out = new StringBuilder();
-        for (final Run run : runs(sentence, numbers, elsewhere)) {
+        for (final Run run : runs(sentence, numbers, elsewhere, titles)) {
             out.append(run.key() ? "[" + run.text() + "]" : run.text());
         }
         return out.toString();

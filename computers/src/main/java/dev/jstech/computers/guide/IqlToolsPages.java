@@ -49,8 +49,8 @@ final class IqlToolsPages {
                         + " before the studio can work: [the Midsoft IQL Server](jsc:midsoft_iql_server).")
                 .paragraph("The studio runs from the Legacy era on, and it needs 128 MB of memory.")
                 .subheading("Its look in each era")
-                .paragraph("The studio's dress follows the era of your computer. Every look has the same functions."
-                        + " Only the dress and a few names change.")
+                .paragraph("The studio's look follows the era of your computer. Every look has the same functions."
+                        + " Only the appearance and a few names change.")
                 .table("Look by era", "Era", "Look")
                 .row(GuideCell.words("Legacy"), GuideCell.words("The 2000 look. The name in the window is"
                         + " \"IQL Query Analyzer\"."))
@@ -170,15 +170,15 @@ final class IqlToolsPages {
                 .row(GuideCell.words("Automation Agent"), GuideCell.words("The Jobs folder."))
                 .row(GuideCell.words("Jobs"), GuideCell.words("The jobs you made with CREATE JOB. A paused job shows"
                         + " (paused) beside its name."))
-                .paragraph("The Index is the network's record of what each storage holds. Its note tells you how"
-                        + " healthy it is. The next table shows each note and the statement that fixes it.")
+                .paragraph("The Index note tells you how"
+                        + " healthy the Index is. The next table shows each note and the statement that fixes it.")
                 .table("Index notes", "Note", "What it means", "Fix")
                 .row(GuideCell.words("healthy"), GuideCell.words("Consistent."), GuideCell.words("none"))
                 .row(GuideCell.words("stale"), GuideCell.words("Hot events left entries the index has not re-read."),
                         GuideCell.code("REINDEX;"))
                 .row(GuideCell.words("fragmented"), GuideCell.words("Mass removals left ghost entries pointing at"
                         + " storage that is gone."), GuideCell.code("VACUUM;"))
-                .paragraph("A lock holds items so that other Operations cannot take them. Each entry under Locks"
+                .paragraph("Each entry under Locks"
                         + " shows the item and its quantity, as an item name with x and a number.")
                 .define("Index", "The network's record of what each storage holds. ANALYZE, REINDEX and VACUUM keep"
                         + " it fresh.")
@@ -432,7 +432,7 @@ final class IqlToolsPages {
                 .row(GuideCell.words("Events"), GuideCell.words("Chooses the groups to record: Statements, Operations,"
                         + " Locks, Plans and Buses."))
                 .paragraph("Changing the groups while a trace runs restarts it with the new groups. A group that"
-                        + " nobody watches records nothing.")
+                        + " is not chosen records nothing.")
                 .paragraph("The status line reads \"Trace is running.\", \"Trace is paused.\" or \"Trace is"
                         + " stopped.\" A new trace with no rows says \"No events yet. Start the trace to record what"
                         + " the network does.\"")
@@ -455,7 +455,7 @@ final class IqlToolsPages {
                         + " replaced by underscores, and the extension .log. The file has a header line with the seven"
                         + " column names, then one line for each row, and its values are separated by tabs.")
                 .paragraph("The detail lines of a row are joined with \" | \", and a line break inside a row becomes a"
-                        + " space. Save is off until the trace has rows.")
+                        + " space.")
                 .ifSomethingGoesWrong(
                         "The window says \"No events yet. Start the trace to record what the network does.\"",
                         "Press Start. The Profiler records only what happens after the trace starts.",
@@ -502,7 +502,8 @@ final class IqlToolsPages {
                         + " Analyze. Explain plans the statement without running it. Explain Analyze runs it too, and"
                         + " the boxes fill in as the craft goes.")
                 .paragraph("The plan is a tree of boxes. Each box is one step, with its name and its time. Before the"
-                        + " craft runs, a box reads \"est <n> s\", the estimate in seconds. After Explain Analyze, it"
+                        + " craft runs, a box reads \"est <n> s\", the estimate in seconds (20 ticks make one second)."
+                        + " After Explain Analyze, it"
                         + " reads \"est <n> s, actual <n> s\".")
                 .table("The text on a box", "Text", "What the step does")
                 .row(GuideCell.code("Craft <item> x<quantity>"), GuideCell.words("Makes the item from a recipe."))
@@ -720,7 +721,7 @@ final class IqlToolsPages {
                         "Wait: the engine tries again after 600 ticks (30 seconds). Check that the network holds the"
                                 + " items the craft needs.",
                         "The Reactions tab stays empty, and no state reacts.",
-                        "Open the Settings tab and set React to changes to On.")
+                        "Open the Settings tab and set \"React to changes\" to On.")
                 .seeAlso("jsc:prophet_youriql", "jsc:prophet_watch", "jsc:recipe_keep_stock")
                 .register();
     }

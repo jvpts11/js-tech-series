@@ -124,7 +124,7 @@ final class MidsoftSystemsPages {
                         "Read the check on the first page, then press [[Enter]] to continue, or [[F3]] to exit.",
                         "Choose the disk for the system, then go on to the next page.",
                         "Type the computer's name, then go on.",
-                        "Wait while the files are copied. Leave the CD in the drive until the copy is done.",
+                        "Wait while the files are copied.",
                         "When the last page says \"Setup is finished.\", the copy is done.",
                         "You can then take the CD out of the drive.")
                 .table("The pages of Frames 95", "Page", "What it shows")
@@ -181,8 +181,8 @@ final class MidsoftSystemsPages {
                 .paragraph("Each of the three has its own setup window, in the look of its era. They ask for the same"
                         + " things, a disk, a name and a copy, but in a different order and with different words.")
                 .subheading("Frames 7")
-                .paragraph("The setup is a glass window titled \"Install Frames\". Its welcome page has one large"
-                        + " \"Install now\" button.")
+                .paragraph("On Frames 7, the setup is a glass window titled \"Install"
+                        + " Frames\". Its welcome page has one large \"Install now\" button.")
                 .steps("Put the Frames 7 DVD in a DVD Drive that is joined to the computer.",
                         "Turn the computer on, and choose \"Frames 7 installer\" in the firmware.",
                         "Follow the pages in the table below, in the order the table gives them.")
@@ -247,9 +247,10 @@ final class MidsoftSystemsPages {
         guide.page("two_systems", section).titled("Two systems on one computer").icon(ComputingModule.CD_ROM)
                 .paragraph("Why choose? Install a second system on another disk of the same computer, and you have"
                         + " both.")
-                .paragraph("Each start of a computer with two systems stops at a boot manager, so you pick which"
-                        + " system to start: the Midsoft Boot Manager on Frames, GRUB on Linux, FreeBSD's own"
-                        + " loader. With one system only, a Frames machine goes straight through"
+                .paragraph("Unless the server's boot menu is turned off, each start of a computer with two systems"
+                        + " stops at a boot manager, so you pick which system to start: the Midsoft Boot"
+                        + " Manager on Frames, GRUB on Linux, FreeBSD's own loader."
+                        + " With one system only, a Frames machine goes straight through"
                         + " ([](jsc:midsoft_boot_manager)). The boot order in the firmware sets which disk the firmware"
                         + " tries first ([](jsc:firmware)).")
                 .paragraph("The installer proposes a default disk for the new system: the first disk with no system on"
@@ -291,8 +292,8 @@ final class MidsoftSystemsPages {
                 .row(GuideCell.code("Up"), GuideCell.words("Moves the cursor up the list."))
                 .row(GuideCell.code("Down"), GuideCell.words("Moves the cursor down the list."))
                 .row(GuideCell.code("Enter"), GuideCell.words("Starts the system under the cursor."))
-                .row(GuideCell.code("Esc"), GuideCell.words("Leaves the monitor. The list keeps its place, so opening"
-                        + " the monitor again brings you back to the same list."))
+                .row(GuideCell.code("Esc"), GuideCell.words("Leaves the monitor, and the list keeps its place for"
+                        + " the next opening."))
                 .paragraph("The countdown lasts 5 seconds, which is 100 ticks ([](jsc:units_and_ticks)). The first key"
                         + " you press stops the countdown, and the list then waits for you. Any key counts, not only"
                         + " the arrows and Enter.")
@@ -352,12 +353,11 @@ final class MidsoftSystemsPages {
                 .row(GuideCell.words("Frames 7"), GuideCell.amount(768, "MB"))
                 .row(GuideCell.words("Frames 10"), GuideCell.amount(1024, "MB"))
                 .row(GuideCell.words("Frames 11"), GuideCell.amount(1536, "MB"))
-                .paragraph("A boot takes about one second, plus the system's footprint in megabytes divided by 160"
-                        + " times the disk's speed times the machine's era factor. The disk's speed is 1 for a hard"
-                        + " disk,"
-                        + " 4 for a solid-state drive (SSD) and 16 for an NVMe drive. The era factor is 2 for Legacy,"
-                        + " 3 for Transition, 4 for Standard and 8 for Advanced. The result is at least 2 seconds and"
-                        + " at most 20 seconds.")
+                .paragraph("A boot takes about one second, plus the system's footprint in megabytes divided by (160"
+                        + " times the disk's speed times the machine's era factor). The disk's speed is 1 for a hard"
+                        + " disk, 4 for a solid-state drive (SSD) and 16 for an NVMe drive. The era factor is 2 for"
+                        + " Legacy, 3 for Transition, 4 for Standard and 8 for Advanced. The result is at least 2"
+                        + " seconds and at most 20 seconds.")
                 .paragraph("With enough RAM, on a hard disk, Frames XP on a Legacy machine boots in about 6 seconds,"
                         + " and Frames 11 on an Advanced machine in about 17 seconds. Frames 7 on a Transition machine"
                         + " and"
@@ -369,7 +369,7 @@ final class MidsoftSystemsPages {
                         + " hold the processor.")
                 .define("Balloon", "The small notice that appears in the notification area of the desktop.")
                 .define("Tight RAM", "The state of a machine that holds less than twice its system's own RAM.")
-                .ifSomethingGoesWrong("The computer reboots, after a crash page on Frames 95.",
+                .ifSomethingGoesWrong("The computer reboots after a crash page on Frames 95.",
                         "The new window needed more memory than was free. Close a program before you open another one,"
                                 + " or add RAM ([](jsc:memory)).",
                         "A balloon says \"Low on memory\".",

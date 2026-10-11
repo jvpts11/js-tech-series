@@ -57,6 +57,7 @@ public final class ClientTestSuite {
             SeriesManualsClientTests.class,
             BookStylesClientTests.class,
             GuideScenesClientTests.class,
+            BookPagesClientTests.class,
             HelpWindowClientTests.class,
             HelpTerminalClientTests.class,
             FreeBsdClientTests.class,

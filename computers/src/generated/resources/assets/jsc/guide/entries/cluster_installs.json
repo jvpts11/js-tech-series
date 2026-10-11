@@ -313,10 +313,6 @@
       "text": "jsc.guide.cluster_installs.text8"
     },
     {
-      "type": "text",
-      "text": "jsc.guide.cluster_installs.text9"
-    },
-    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },

@@ -124,9 +124,9 @@ final class PreparingDisksPages {
                 .paragraph("A new disk has no partition table, and fdisk says so when you open it. Type g to make a"
                         + " GPT, the modern kind that UEFI (Unified Extensible Firmware Interface) machines read."
                         + " The old kind, which p prints as dos, is not one this editor can make.")
-                .paragraph("The line that g prints shows the disk's GUID, a long identifier. The same disk always"
-                        + " gets the same GUID. Only g makes a table GPT, although a disk that already has"
-                        + " partitions is GPT as well.")
+                .paragraph("The line that g prints shows the disk's GUID, a long identifier that stays the same for"
+                        + " that disk. Only g makes a new GPT, although a disk that already has partitions may be"
+                        + " GPT as well.")
                 .subheading("Making a partition (n)")
                 .paragraph("With a size on the line, n makes the partition at once. Type n +512M for 512 megabytes,"
                         + " or n +1G for a gigabyte. A plain number, such as \"n 1024\", also means megabytes.")
@@ -141,8 +141,6 @@ final class PreparingDisksPages {
                         + " You change it with t, when it is to be the EFI (Extensible Firmware Interface) system"
                         + " partition.")
                 .subheading("Choosing the type (t)")
-                .paragraph("The EFI system partition is the small partition the firmware reads to find the boot"
-                        + " loader ([](jsc:firmware)). Only UEFI machines need one.")
                 .table("The words that set a type", "Type", "Words you can type")
                 .row(GuideCell.words("EFI System"), GuideCell.code("1, uefi, efi, ef"))
                 .row(GuideCell.words("Linux filesystem"), GuideCell.code("20, linux, 83"))
@@ -206,9 +204,10 @@ final class PreparingDisksPages {
 
     private static void filesystemsAndMkfs(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("filesystems_and_mkfs", section).titled("Giving a partition a file system")
-                .paragraph("A partition is an empty space until it holds a file system, the way its files are"
-                        + " stored. The new system's root goes on an ext4 file system (the fourth extended file"
-                        + " system), and the EFI system partition gets a FAT (File Allocation Table) file system.")
+                .paragraph("A partition is an empty space until it holds a file system, which decides how its"
+                        + " files are stored. The new system's root goes on an ext4 file system (the fourth extended"
+                        + " file system), and the EFI system partition gets a FAT (File Allocation Table) file"
+                        + " system.")
                 .paragraph("Each command below makes one file system, and it erases what was on the partition"
                         + " before. Make a file system only on the partition you have divided for it.")
                 .subheading("The root: mkfs.ext4")
@@ -262,8 +261,8 @@ final class PreparingDisksPages {
                 .define("Journal", "A small area where ext4 writes each change before it makes the change final, so"
                         + " that a crash does not damage the file system.")
                 .define("UUID", "A universally unique identifier, a long number that names one file system. The new"
-                        + " system's file table can name a file system by its UUID, so the disk's name does not"
-                        + " matter.")
+                        + " system's file table, /etc/fstab, can name a file system by its UUID, so the device name"
+                        + " of the disk does not matter.")
                 .ifSomethingGoesWrong("Usage: mkfs.ext4 /dev/<device>",
                         "You did not name a partition. Type mkfs.ext4 /dev/sda2, with the name lsblk gave it.",
                         "mke2fs: No such file or directory while trying to determine filesystem size",
@@ -308,15 +307,16 @@ final class PreparingDisksPages {
                 .steps("Type mount /dev/sda2 /mnt/gentoo and press [[Enter]], to mount the root.",
                         "Type mount /dev/sda1 /mnt/gentoo/efi and press [[Enter]], to mount the EFI system"
                                 + " partition.")
-                .paragraph("The --mkdir flag is not needed: the tool makes the folder of the EFI system partition"
-                        + " anyway. It ignores the flag, and it ignores the option word after -o, such as noatime.")
+                .paragraph("The tool makes the folder of the EFI system partition anyway, so you can leave out"
+                        + " --mkdir. It ignores that flag if you type it, and it ignores the option word after -o,"
+                        + " such as noatime.")
                 .subheading("Binding the medium's own folders")
                 .paragraph("Gentoo's checklist asks for four folders of the live medium to be bound into the new"
                         + " system before you step into it: /proc, /sys, /dev and /run. The new system needs them"
                         + " while it is set up. You bind them with the type proc, or with the flag --rbind or --bind.")
-                .paragraph("A bind goes after the root is mounted, and it names the folder of the medium as its"
-                        + " first word. For example, mount --types proc /proc /mnt/gentoo/proc binds /proc. Each"
-                        + " bind is silent when it works.")
+                .paragraph("A bind goes after the root is mounted, and it names the folder of the medium first, then"
+                        + " the place in the new system. For example, mount --types proc /proc /mnt/gentoo/proc binds"
+                        + " /proc. Each bind is silent when it works.")
                 .define("Bind mount", "A folder of the running medium that appears again inside the new system, with"
                         + " the same contents.")
                 .ifSomethingGoesWrong("mount: bad usage",
@@ -328,7 +328,7 @@ final class PreparingDisksPages {
                         "That partition is not the FAT partition the tool expects. Run mkfs.fat -F 32 /dev/sda1 first,"
                                 + " and check the name.",
                         "mount: /mnt: wrong fs type, bad option, bad superblock on /dev/sda2.",
-                        "The root is not the partition that mkfs.ext4 formatted last. Run mkfs.ext4 /dev/sda2 first.",
+                        "The root is not formatted as ext4 yet. Run mkfs.ext4 /dev/sda2 first.",
                         "mount: /mnt: mount point does not exist.",
                         "You tried to bind a folder before mounting the root. Mount the root first, then bind.",
                         "mount: /mnt/data: mount point does not exist.",

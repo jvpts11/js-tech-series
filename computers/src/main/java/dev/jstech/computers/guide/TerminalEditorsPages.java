@@ -41,8 +41,7 @@ final class TerminalEditorsPages {
                         + " ([](jsc:shell_prompt)).")
                 .paragraph("Four editors take the screen: [vim](jsc:vim), [emacs](jsc:emacs), [vi](jsc:vi) and"
                         + " [ee](jsc:ee). Each one has its own keys, and its entry lists them.")
-                .paragraph("The caret is the mark in the text where the next letter you type goes. The arrow keys"
-                        + " move it.")
+                .paragraph("The arrow keys move the caret.")
                 .define("Caret", "The cursor in the text: the place where the next letter goes.")
                 .paragraph("You start an editor by typing its name, a space, and the name of the file. The file does"
                         + " not have to exist. The editor opens an empty file under that name, and the file is made"
@@ -71,7 +70,7 @@ final class TerminalEditorsPages {
                                 + " its name again.",
                         "On FreeBSD the same problem looks like \"vim: not found. Try: apropos <word>, or man"
                                 + " intro\".",
-                        "Install the editor first ([](jsc:programs)), then type its name again.",
+                        "The cause and the cure are the same.",
                         "You type ee on Linux or MC-DOS, and the prompt says the command is not found.",
                         "ee comes only with FreeBSD ([](jsc:the_systems)). On other systems, use another editor.",
                         "You type the name of an editor and nothing else, and the prompt says \"usage: vim"
@@ -236,7 +235,7 @@ final class TerminalEditorsPages {
                         + " it asks first."),
                         GuideCell.words("Modified buffers exist; exit anyway? (y or n)"))
                 .row(GuideCell.code("C-x u"), GuideCell.words("Undoes the last change."),
-                        GuideCell.words("Undo. At the start: No further undo information"))
+                        GuideCell.words("Undo, or No further undo information at the start of the text"))
                 .row(GuideCell.code("C-g"), GuideCell.words("Cancels what you are doing."), GuideCell.words("Quit"))
                 .row(GuideCell.code("C-b"), GuideCell.words("Moves one character left."), GuideCell.words("none"))
                 .row(GuideCell.code("C-f"), GuideCell.words("Moves one character right."), GuideCell.words("none"))
@@ -246,8 +245,8 @@ final class TerminalEditorsPages {
                 .row(GuideCell.code("C-e"), GuideCell.words("Moves to the end of the line."), GuideCell.words("none"))
                 .row(GuideCell.code("C-d"), GuideCell.words("Deletes the character after the caret."),
                         GuideCell.words("none"))
-                .row(GuideCell.code("C-k"), GuideCell.words("Kills the text from the caret to the end of the line."
-                        + " At the end of a line, it kills the line break."), GuideCell.words("none"))
+                .row(GuideCell.code("C-k"), GuideCell.words("Kills the text from the caret to the end of the line;"
+                        + " at the end of a line, kills the line break."), GuideCell.words("none"))
                 .row(GuideCell.code("C-y"), GuideCell.words("Yanks back the text that C-k killed last."),
                         GuideCell.words("none"))
                 .row(GuideCell.code("M-<"), GuideCell.words("Moves to the start of the file."), GuideCell.words("none"))
@@ -388,10 +387,10 @@ final class TerminalEditorsPages {
                 .table("The main menu", "Item", "What it does")
                 .row(GuideCell.words("leave editor"), GuideCell.words("Asks what to do with the changes: save changes,"
                         + " which is selected at first, or no save."))
-                .row(GuideCell.words("help"), GuideCell.words("Shows the page ee command reference. Press any key to"
+                .row(GuideCell.words("help"), GuideCell.words("Shows the page ee command reference; press any key to"
                         + " close it."))
                 .row(GuideCell.words("file operations"), GuideCell.words("read a file asks for a file and puts its"
-                        + " text in at the caret. save file writes the open file."))
+                        + " text in at the caret; save file writes the open file."))
                 .row(GuideCell.words("redraw screen"), GuideCell.words("Draws the screen again."))
                 .row(GuideCell.words("settings"), GuideCell.words("info window: on and info window: off show or hide"
                         + " the five rows."))
@@ -431,8 +430,8 @@ final class TerminalEditorsPages {
                         "The file does not exist, or its name is wrong. Type the name again, exactly as the file has"
                                 + " it.",
                         "You leave with no save or with quit, and your changes are gone.",
-                        "ee does not ask before it leaves. Choose save changes, or type write at ^c before you"
-                                + " leave.",
+                        "ee does not ask first when you leave with no save or with quit. Choose save changes in the"
+                                + " main menu, or type write at the command prompt (^c), before you leave.",
                         "The shortcut rows have disappeared.",
                         "The info window is off. Open the main menu, choose settings, then info window: on.")
                 .seeAlso("jsc:vi", "jsc:vim", "jsc:the_systems")

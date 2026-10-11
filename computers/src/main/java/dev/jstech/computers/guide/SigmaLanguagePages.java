@@ -66,12 +66,12 @@ final class SigmaLanguagePages {
                         GuideCell.code("if else while for foreach do switch case default break continue return"
                                 + " lock in out"))
                 .row(GuideCell.words("Values and tests"), GuideCell.code("true false null is as"))
-                .paragraph("Sigma refuses some of these words, even though the language knows them. The table near"
-                        + " the end of this page shows which features each language has.")
+                .paragraph("Sigma refuses some of these words, even though the language knows them. The table"
+                        + " \"What Sigma has, and what Sigma# adds\" shows which features each language has.")
                 .paragraph("A literal is a value written out in the program, such as the number 42, the number 0.5,"
                         + " true, or a text in double quotes. Each literal has a type, and the table shows which one."
-                        + " Numbers are written in plain decimal digits. A number with an exponent, such as 1e5, or with underscores, such"
-                        + " as 1_000, is not a number the language can read.")
+                        + " Numbers are written in plain decimal digits. A number with an exponent, such as 1e5, or"
+                        + " with underscores, such as 1_000, is not a number the language can read.")
                 .table("Literals", "Written as", "Type", "What it means")
                 .row(GuideCell.code("42"), GuideCell.code("int"),
                         GuideCell.words("A whole number, up to 2,147,483,647."))
@@ -311,8 +311,8 @@ final class SigmaLanguagePages {
                 .paragraph("Some statements hold other statements inside them. They decide whether the inside runs, or"
                         + " how many times it runs. Most of them test a condition: an expression that is true or"
                         + " false.")
-                .paragraph("A block is a group of statements between a pair of braces. A block can stand wherever one"
-                        + " statement can. A variable declared inside a block exists only until the closing brace.")
+                .paragraph("A block can stand wherever one statement can. A variable declared inside a block exists"
+                        + " only until the closing brace.")
                 .table("Control statements", "Statement", "Form", "Language")
                 .row(GuideCell.code("if"), GuideCell.code("if (condition) statement else statement"),
                         GuideCell.words("Sigma and Sigma#"))
@@ -354,10 +354,10 @@ final class SigmaLanguagePages {
                         "}")
                 .paragraph("The break statement leaves the nearest loop or switch. The continue statement skips to the"
                         + " next turn of the nearest loop. The return statement ends a method. A method that gives"
-                        + " back a value must return one on every way out, so the last statement of the method must"
-                        + " always return.")
-                .paragraph("The lock statement, in Sigma# only, takes an object. The object you name must be an"
-                        + " object: a number cannot be locked. How locks are used with threads is explained in"
+                        + " back a value must return one on every way out, so the code cannot reach the end of the"
+                        + " method without a return.")
+                .paragraph("The lock statement, in Sigma# only, takes an object, and a number cannot be locked."
+                        + " How locks are used with threads is explained in"
                         + " [Threads and locks](jsc:threads_and_locks).")
                 .define("Block", "A group of statements between a pair of braces, which counts as one statement.")
                 .define("Loop", "A statement that repeats another statement, such as while, do or for.")
@@ -374,7 +374,8 @@ final class SigmaLanguagePages {
                         "The compiler says a method that gives back 'int' must return a value.",
                         "End the method with a return that gives a value, such as return total;",
                         "The compiler says a method that gives back nothing cannot return a value.",
-                        "Remove the value after return, or change the method so that it gives back a type.")
+                        "Remove the value after return, or change the method so that it gives back a value of some"
+                                + " type, such as int.")
                 .seeAlso("jsc:sigma_methods_out_ref", "jsc:sigma_dispose")
                 .register();
     }
@@ -536,8 +537,8 @@ final class SigmaLanguagePages {
                         "Check the spelling, and check that the class declares that member.",
                         "The compiler says 'Add' belongs to an object, not to the type.",
                         "Call it on an object, such as till.Add(50).",
-                        "Mark a field readonly, then write it in a method: the compiler says 'count' is readonly, so it"
-                                + " can only be written where it is declared or in a constructor.",
+                        "You mark a field readonly, then write it in a method: the compiler says 'count' is readonly,"
+                                + " so it can only be written where it is declared or in a constructor.",
                         "Write it in the constructor, or leave out readonly.",
                         "The compiler says an enum's number has to be written as a number.",
                         "Write the number as a plain whole number, such as Mid = 5.",
@@ -606,7 +607,8 @@ final class SigmaLanguagePages {
     private static void interfacesAndRecords(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("sigma_interfaces_records", section).titled("Interfaces and records")
                 .paragraph("This page describes Sigma#. Sigma has neither interfaces nor records. Its compiler refuses"
-                        + " both words and suggests a class with virtual methods instead.")
+                        + " the word interface and suggests a class with virtual methods instead, and it refuses the"
+                        + " word record and suggests a struct with the same fields.")
                 .paragraph("An interface lists the methods that a class must write. It holds method signatures only: a"
                         + " result type, a name and parameters, ending in a semicolon, with no body. A class says"
                         + " that it"
@@ -642,7 +644,7 @@ final class SigmaLanguagePages {
                         "The compiler says 'Square' says it is a 'IShape' but does not have 'Area'.",
                         "Write every method the interface lists, as a public method.",
                         "Sigma refuses the word interface and suggests a class with virtual methods.",
-                        "In Sigma, write a class whose methods are virtual, and stand on it, as the Sigma page"
+                        "In Sigma, write a class whose methods are virtual, and derive from it, as the Sigma page"
                                 + " on inheritance shows.",
                         "Sigma refuses the word record and suggests a struct with the same fields.",
                         "In Sigma, write a struct with the same fields, or use Sigma# for a record.")
@@ -682,10 +684,9 @@ final class SigmaLanguagePages {
                         "        Console.PrintLine(\"\" + biggest(3, 9));",
                         "    }",
                         "}")
-                .paragraph("An event is a way for an object to announce that something happened. A class declares one"
-                        + " with the word event and a delegate type, as in event Action Changed;. Other code subscribes"
-                        + " with += and unsubscribes with -=. Only the class that declares the event can raise it, by"
-                        + " calling it.")
+                .paragraph("A class declares an event with the word event and a delegate type, as in event Action"
+                        + " Changed;. Other code subscribes with += and unsubscribes with -=. Only the class that"
+                        + " declares the event can raise it, by calling it.")
                 .paragraph("A lambda is a short method written in place. x => x * 2 takes one value, and"
                         + " () => { statements }"
                         + " takes none, with a block of statements for its body. The shape comes from the delegate that"
@@ -781,7 +782,7 @@ final class SigmaLanguagePages {
                 .ifSomethingGoesWrong(
                         "The compiler says 'Console' is in System.IO; add 'using System.IO.*;' or"
                                 + " 'using System.IO.Console;' at the top of the file.",
-                        "Add that using line at the top of the file, above the namespace line.",
+                        "Add that using line at the top of the file.",
                         "The compiler says 'System.IO' names a namespace.",
                         "Write 'using System.IO.*;' to bring in everything in it, or name one of its types.",
                         "The compiler says a using has to come before the namespace and the types.",
@@ -810,8 +811,9 @@ final class SigmaLanguagePages {
                         GuideCell.words("A class that stands on Script, or, in Sigma#, a class that implements"
                                 + " IScript."),
                         GuideCell.words("It calls Program.Exit, or the program is removed."))
-                .paragraph("A class that does both is a resident program, because writing the interface is a deliberate"
-                        + " act. A file with no start place is refused, and so is a file with more than one.")
+                .paragraph("A class that both stands on Script and implements IScript is a resident program, because"
+                        + " writing the interface is a deliberate act. A file with no start place is refused, and so"
+                        + " is a file with more than one.")
                 .table("The forms of Main", "Form", "Version", "Meaning")
                 .row(GuideCell.code("static void Main()"), GuideCell.words("1"),
                         GuideCell.words("Runs once, takes nothing and gives nothing back."))
@@ -906,7 +908,7 @@ final class SigmaLanguagePages {
                 .row(GuideCell.code("string.Compare(a, b)"), GuideCell.words("An int"),
                         GuideCell.words("Puts two texts in order: below zero, zero or above zero."))
                 .paragraph("Text cannot be indexed like an array: text[0] is refused. To take the first character as"
-                        + " text, use Substring(0, 1). The index is the place of an item in a row, counted from 0.")
+                        + " text, use Substring(0, 1).")
                 .paragraph("A char has its own tests: char.IsDigit(c), char.IsLetter(c), char.IsWhiteSpace(c),"
                         + " char.ToUpper(c) and char.ToLower(c). They need version 2 of the project. The older names,"
                         + " such as toupper, are on the [old names page](jsc:sigma_printf_old_names).")
@@ -958,7 +960,7 @@ final class SigmaLanguagePages {
                 .paragraph("A Map holds pairs: a key, and the value that belongs to it. Map<string, int> makes a map"
                         + " from text keys to int values. Put adds a pair, and the key finds the value again. A map"
                         + " has no Clear member. Sigma# only.")
-                .define("Key", "The value that finds another value in a map, such as the name of a fruit.")
+                .define("Key", "The part of a pair that finds its value in a map, such as the name of a fruit.")
                 .define("Map", "A collection of pairs: each key leads to one value. Written Map<K, V> in Sigma#.")
                 .table("Members of Map", "Member", "Gives back", "What it does")
                 .row(GuideCell.code("Count"), GuideCell.words("An int"),
@@ -1035,7 +1037,7 @@ final class SigmaLanguagePages {
                 .paragraph("Many languages report a failed step with an exception, which another part of the program"
                         + " can catch and handle. This language has no exceptions. It has no try, catch, throw or"
                         + " finally, and the compiler refuses those words as the start of a statement. When you read"
-                        + " a number from text, use a Try form first, so the program does not stop.")
+                        + " a number from text in Sigma#, use a Try form first, so the program does not stop.")
                 .define("Exception", "A signal that a step failed, which a program can catch and handle somewhere"
                         + " else.")
                 .paragraph("Instead, a program can ask first with a Try form, or it can let the problem stop it. A Try"
@@ -1121,9 +1123,8 @@ final class SigmaLanguagePages {
     private static void dispose(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("sigma_dispose", section).titled("Freeing objects with dispose")
                 .paragraph("A program makes objects with new, and each object takes some of the memory the program may"
-                        + " use. This language has no garbage collector, which is a part of the machine that finds"
-                        + " unused objects and frees them. Here, an object stays until your program disposes of it, or"
-                        + " until the program ends.")
+                        + " use. This language has no garbage collector. Here, an object stays until your program"
+                        + " disposes of it, or until the program ends.")
                 .define("Garbage collector", "A part of a machine that finds objects nothing uses any more, and frees"
                         + " them. This language has none.")
                 .paragraph("The dispose statement says that you have finished with an object. You write the word, then"

@@ -54,6 +54,17 @@ class GuideListingTest {
     }
 
     @Test
+    void rows_breakAfterAPointRatherThanInsideAName() {
+        final List<String> lines = List.of("Console.PrintLine(\"long\")");
+
+        final List<GuideListing.Row> rows = GuideListing.rows(lines, GuideCode.plain(lines), 12);
+
+        assertEquals("Console.", rows.get(0).text());
+        assertTrue(rows.get(1).text().strip().startsWith("PrintLine("), () -> "the name goes on whole: "
+                + rows.get(1).text());
+    }
+
+    @Test
     void rows_cutAWordWiderThanTheWholeRowWhereItMust() {
         final List<String> lines = List.of("abcdefghijklmnopqrstuvwxyz");
 

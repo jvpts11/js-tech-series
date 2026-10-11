@@ -43,10 +43,6 @@
       ]
     },
     {
-      "type": "text",
-      "text": "jsc.guide.remote_control.text3"
-    },
-    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },

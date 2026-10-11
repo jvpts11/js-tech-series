@@ -91,7 +91,9 @@ final class GuideTable {
             final List<String> written = new ArrayList<>();
             for (final GuideBlock.GuideValue cell : row.cells()) {
                 written.add(cell instanceof GuideBlock.GuideValue.Words
-                        ? GuideLinks.plain(text.valueText(cell), numbers, elsewhere) : text.valueText(cell));
+                        ? GuideLinks.plain(text.valueText(cell), numbers, elsewhere,
+                                target -> text.titleOf(target).isEmpty() ? null : text.titleOf(target))
+                        : text.valueText(cell));
             }
             cells.add(written);
         }

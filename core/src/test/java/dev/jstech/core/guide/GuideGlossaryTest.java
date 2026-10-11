@@ -48,6 +48,19 @@ class GuideGlossaryTest {
     }
 
     @Test
+    void linked_leavesAWordThatIsPartOfAName() {
+        final List<GuideLinks.Run> runs = glossary().linked(List.of(new GuideLinks.Run(
+                "Open the Network Manager on a Mainframe.", "")), "mod:other", new HashSet<>());
+
+        assertEquals(List.of(new GuideLinks.Run("Open the Network Manager on a ", ""),
+                new GuideLinks.Run("Mainframe", "mod:mainframes"), new GuideLinks.Run(".", "")), runs,
+                "the network is not led from inside the Network Manager's name");
+        assertEquals(List.of(new GuideLinks.Run("Type cd /mnt/network or run network_check.", "")),
+                glossary().linked(List.of(new GuideLinks.Run("Type cd /mnt/network or run network_check.", "")),
+                        "mod:other", new HashSet<>()), "nor from inside a path or a name in code");
+    }
+
+    @Test
     void linked_leavesTheWordsAnEntryExplainsItself() {
         final List<GuideLinks.Run> runs = glossary().linked(List.of(new GuideLinks.Run("The network.", "")),
                 "mod:network", new HashSet<>());

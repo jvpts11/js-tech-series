@@ -60,7 +60,7 @@ final class IqlRecipesPages {
                         "Type SHOW STATES to see the item and its status.")
                 .table("Lines for KEEP", "Line", "What it asks for")
                 .row(GuideCell.code("KEEP iron_ingot >= 512"),
-                        GuideCell.words("At least 512 iron ingots. The network crafts what it needs to reach that."))
+                        GuideCell.words("At least 512 iron ingots, crafted as needed."))
                 .row(GuideCell.code("KEEP iron_ingot BETWEEN 256 AND 512"),
                         GuideCell.words("Between 256 and 512 iron ingots."))
                 .paragraph("The spaces around >= are required, and so are the words BETWEEN and AND. A name with no"
@@ -104,8 +104,8 @@ final class IqlRecipesPages {
                         "CREATE JOB restock_iron AS CRAFT 64 iron_ingot WHEN qty(iron_ingot) < 512")
                 .paragraph("The reply reads \"job restock_iron created\". The job checks the stock about every half"
                         + " second. If the stock is already below 512 at its first check, the job fires at once.")
-                .paragraph("The job looks only at the stock on the network. It does not count what is on its way,"
-                        + " so while the stock stays below 512 it does not fire again.")
+                .paragraph("The job looks only at the stock on the network, not at what is on its way."
+                        + " It fires again only after the stock has reached 512 or more and fallen below it once more.")
                 .paragraph("The Automation Manager writes the same job for you, without any IQL. Its form is called"
                         + " Restock below: you give it an item and an amount, and it creates a job that crafts that"
                         + " amount when the stock falls below the same amount ([](jsc:automation_manager)).")
@@ -144,7 +144,7 @@ final class IqlRecipesPages {
                         + " the inventory it faces ([](jsc:buses)).")
                 .define("Import Bus", "A part on a data cable that moves items from the inventory it faces into the"
                         + " network.")
-                .paragraph("A bus moves only the items on its filter, the list of items it may move. You set the"
+                .paragraph("A bus moves only the items on its filter. You set the"
                         + " filter with a SET BUS line ([](jsc:set_bus)). Write the bus's name in single quotes when"
                         + " it has a space in it.")
                 .define("Filter", "The list of items a bus may move.")
@@ -170,8 +170,7 @@ final class IqlRecipesPages {
                         GuideCell.words("Moves the items that carry these tags."))
                 .row(GuideCell.code("SET BUS 'Ore in' WHEN STOCK iron_ore < 512"),
                         GuideCell.words("Waits while the network holds 512 or more iron ore."))
-                .paragraph("Advanced buses can filter by tag. A tag is a group of items that share a label, such as"
-                        + " c:ores for ores. The c: prefix marks the groups that many mods share.")
+                .paragraph("Advanced buses can filter by tag. The c: prefix marks the tags that many mods share.")
                 .define("Tag", "A group of items that share a label, such as c:ores for ores.")
                 .table("What each era of Import Bus can set", "Era", "Filter", "Tags", "Conditions")
                 .row(GuideCell.words("Vintage"), GuideCell.words("No"), GuideCell.words("No"),
@@ -191,7 +190,7 @@ final class IqlRecipesPages {
                 .ifSomethingGoesWrong(
                         "The reply reads \"the bus Ore in cannot be set so: its era or its kind has no such setting\".",
                         "The bus is a Vintage bus, which has no filter, or you asked for tags on a bus below Advanced."
-                                + " A filter of more than 5 items gets the same reply: split the list.",
+                                + " A filter of more than 5 items is refused as well, so split the list.",
                         "The reply reads \"no item or fluid named steel_ingt\".",
                         "Check the spelling of the item's id, such as iron_ore.",
                         "The reply reads \"no bus named Ore in on this network\".",
@@ -226,8 +225,8 @@ final class IqlRecipesPages {
                         "Wait for one interval. The first run comes one interval after the job's first check.")
                 .table("A line for a job").fixed("Craft 64 torches every hour",
                         "CREATE JOB torch_hourly AS CRAFT 64 torch EVERY 1h")
-                .paragraph("The Automation Manager has the same as a form, called Batch Craft. Its field is labelled"
-                        + " Every (30s), and it takes a duration such as 30s or 5m.")
+                .paragraph("The Automation Manager has the same feature as a form, called Batch Craft. Its field is"
+                        + " labelled Every (30s), and it takes a duration such as 30s or 5m.")
                 .table("Forms of a duration", "Written", "Ticks", "Seconds")
                 .row(GuideCell.code("100t"), GuideCell.words("100"), GuideCell.words("5"))
                 .row(GuideCell.code("30s"), GuideCell.words("600"), GuideCell.words("30"))
@@ -355,7 +354,7 @@ final class IqlRecipesPages {
                         "The reply reads \"IQL recursion too deep (a procedure or view referencing itself?)\".",
                         "The view calls itself. Remove the reference to the view's own name.",
                         "The reply reads \"IQL stopped after 4096 statements for one request\".",
-                        "The view runs others too many times. Make it shorter, or take out a procedure.",
+                        "The view makes too many statements for one request. Make it shorter, or take out a procedure.",
                         "The reply reads \"a name is at most 64 characters long\".",
                         "Shorten the view's name.",
                         "The studio reads \"There are no results to save.\"",

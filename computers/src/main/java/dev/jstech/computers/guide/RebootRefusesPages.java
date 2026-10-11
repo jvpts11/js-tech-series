@@ -195,9 +195,8 @@ final class RebootRefusesPages {
 
     private static void afterRebootChecks(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("after_reboot_checks", section).titled("What the machine checks when it starts")
-                .paragraph("When the new system starts, the machine runs the power-on self-test (POST) first. The"
-                        + " firmware tests the hardware in it before it starts any system. At the end of the test,"
-                        + " the machine checks the system disk once, and then it decides what to do next.")
+                .paragraph("When the machine starts, it runs the power-on self-test (POST) first. At the end of the"
+                        + " test, the machine checks the system disk once, and then it decides what to do next.")
                 .paragraph("The check looks for two things on the disk: a folder named boot, and the kernel file"
                         + " boot/vmlinuz inside it. The kernel file is the one file that starts a Linux system. If"
                         + " both are there, the machine starts the system.")

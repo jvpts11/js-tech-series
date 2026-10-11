@@ -68,7 +68,7 @@ final class SigmaRunningPages {
                         + " for it, and says which number it started as. Any other program keeps the prompt"
                         + " until it returns, and whatever you type goes to that program.")
                 .paragraph("The list has one row per process. With nothing running, the prompt says that no"
-                        + " programs of that language are running.")
+                        + " programs are running.")
                 .table("The columns of sigma ps", "Column", "What it shows")
                 .row(GuideCell.words("id"), GuideCell.words("The program's number, which sigma stop takes."))
                 .row(GuideCell.words("name"),
@@ -148,9 +148,8 @@ final class SigmaRunningPages {
                                 + " first, or install the package that runs that kind of file"
                                 + " ([the programs page](jsc:programs)).",
                         "The prompt answers with the file's name and \"does not compile\", and gives no reason.",
-                        "The compiler had no complaint to show. Run the compiler on the file again to see its"
-                                + " messages. [Reading an error line](jsc:sigma_reading_an_error) shows how to read"
-                                + " them.",
+                        "The prompt gave no reason. Run the compiler on the file yourself to see its messages."
+                                + " [Reading an error line](jsc:sigma_reading_an_error) shows how to read them.",
                         "The prompt says \"<file> is not a <language> program\".",
                         "sigma run starts only files that end in .asm, .sgs or .sg. Start one of those instead.",
                         "The prompt answers \"sigma: nothing is running as <id>\".",
@@ -212,7 +211,7 @@ final class SigmaRunningPages {
                 .subheading("The goodbye budget")
                 .paragraph("A stopped program runs its goodbye out of a budget of 4,096 instructions per tick."
                         + " All the programs stopped in that tick share the budget. A program that runs past its"
-                        + " share stops without its goodbye.")
+                        + " share stops before it can run its farewell code.")
                 .paragraph("When a computer is switched off, or its build is no longer valid, the budget is split"
                         + " evenly among the programs that are stopped.")
                 .ifSomethingGoesWrong(
@@ -316,8 +315,8 @@ final class SigmaRunningPages {
                         "A call that brings back a list costs more as the list grows, one row at a time. Ask for"
                                 + " less, or make the call once and keep its answer.",
                         "A call that reads a big file costs more than expected.",
-                        "Reading a file costs 50 credits, plus 1 credit for each 4 KB block. A 40 KB file is ten"
-                                + " blocks, so reading it with File.Read costs 60 credits.")
+                        "Reading a file costs 50 instructions, plus 1 for each 4 KB block. A 40 KB file is ten"
+                                + " blocks, so reading it with File.Read costs 60 instructions.")
                 .seeAlso("jsc:credits_per_tick", "jsc:what_operations_are")
                 .register();
     }
@@ -367,7 +366,7 @@ final class SigmaRunningPages {
                         GuideCell.words("No computer runs its programs in that tick, and the computers go first"
                                 + " on the next tick."))
                 .row(GuideCell.words("Farewell budget per tick"), GuideCell.words("4,096 instructions, shared"),
-                        GuideCell.words("A program over its share stops without its goodbye."))
+                        GuideCell.words("A program over its share stops before it can run its farewell code."))
                 .row(GuideCell.words("Calls one inside another"), GuideCell.words("1,024"),
                         GuideCell.words("The program halts, and the message says that a method may be calling"
                                 + " itself without end."))
@@ -473,7 +472,7 @@ final class SigmaRunningPages {
                         "The prompt says \"the programs that were running could not be brought back from the save\".",
                         "The save came from another version of the mod, or a listing changed since it started."
                                 + " Start the programs again.",
-                        "A program in another language is gone after a reload.",
+                        "A program in a language that is no longer installed is gone after a reload.",
                         "Its language is no longer installed, so the program is left out. Install that language.",
                         "A program is gone after the computer was switched off.",
                         "It was stopped, not kept. Start it again.")
@@ -571,7 +570,7 @@ final class SigmaRunningPages {
                         "The folder was shared without write. Its owner runs config unshare on it, then config"
                                 + " share with write.",
                         "The prompt says that this computer already shares 16 folders.",
-                        "Unshare one folder with config unshare before you share another.",
+                        "Unshare a folder with config unshare to make room for another share.",
                         "The prompt says that another folder is already shared under that name.",
                         "A share takes the folder's name, so only one folder can have it. Unshare the other folder"
                                 + " first.",

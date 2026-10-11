@@ -78,7 +78,8 @@ final class StartingPages {
                         + " to another entry.")
                 .paragraph("Hold the manual key over an item and the manual opens at the item's page. The manual key"
                         + " is [[M]] unless you changed it.")
-                .paragraph("Search the manual finds anything by name. A search that finds nothing says \"Nothing by"
+                .paragraph("The Search button finds anything in the manual by name. A search that finds nothing says"
+                        + " \"Nothing by"
                         + " that name\".")
                 .paragraph("The buttons Contents, Index and Glossary, and Back and Forward, move you around the book.")
                 .paragraph("This book, the Guide to Operations, is one of seven books. The other six are the Frames"
@@ -230,7 +231,7 @@ final class StartingPages {
                 .steps("Press the power button on the front of the case ([](jsc:case_front)).",
                         "Watch the monitor while the self-test runs.",
                         "Press [[DEL]] during the self-test to enter the Setup, or [[F12]] to open the Boot Menu.")
-                .paragraph("A computer that is switched off during its self-test keeps its screen until you press"
+                .paragraph("If you switch the computer off during its self-test, its screen stays up until you press"
                         + " [[Esc]].")
                 .table("The keys while the computer starts", "Key", "What it does")
                 .row(GuideCell.code("DEL"), GuideCell.words("Enters the Setup, while the self-test runs."))
@@ -310,8 +311,8 @@ final class StartingPages {
                                 + " ([](jsc:installing)). The exact words depend on the era"
                                 + " ([](jsc:no_bootable_device)).",
                         "A disk is not in the list.",
-                        "It is not joined to the computer, or the medium is in the wrong kind of drive. A floppy goes"
-                                + " in a Floppy Drive and a CD in a CD Drive ([](jsc:drives)).",
+                        "The disk is not connected to the computer, or the medium is in the wrong kind of drive."
+                                + " A floppy goes in a Floppy Drive and a CD in a CD Drive ([](jsc:drives)).",
                         "The computer starts from the wrong disk.",
                         "Change the boot order on the Boot Order page of the Setup, or pick the disk in the Boot Menu"
                                 + " ([](jsc:setup_utility)).")
@@ -365,8 +366,8 @@ final class StartingPages {
                 .row(GuideCell.code("Up and Down"), GuideCell.words("Select an entry in the list."))
                 .row(GuideCell.code("Enter"), GuideCell.words("Boot the selected entry."))
                 .paragraph("The screen is titled Boot Menu. On a blue BIOS machine it reads"
-                        + " Boot Menu  (this boot only), and its list is headed Boot Menu:.")
-                .paragraph("The choice is for this start only. The computer does not save it, so the next start follows"
+                        + " \"Boot Menu  (this boot only)\", and its list is headed \"Boot Menu:\".")
+                .paragraph("The computer does not save the choice, so the next start follows"
                         + " the boot order ([](jsc:firmware)) again.")
                 .subheading("Boot managers")
                 .paragraph("The boot manager is a different menu from the Boot Menu. Some systems show their own start"
@@ -608,7 +609,7 @@ final class StartingPages {
                 .row(GuideCell.words("2 TB"), GuideCell.words("8,192 items"))
                 .row(GuideCell.words("4 TB"), GuideCell.words("16,384 items"))
                 .row(GuideCell.words("8 TB"), GuideCell.words("32,768 items"))
-                .paragraph("Above 8 TB only hard disks come, up to 24 TB, which is 98,304 items.")
+                .paragraph("Above 8 TB, only hard disks are made, up to 24 TB, which holds 98,304 items.")
                 .paragraph("Memory works in items too, in its own way. Each memory module keeps a buffer of items for"
                         + " the Mainframe, one item for every 4 MB of the module's size ([](jsc:memory)). A buffer too"
                         + " small for the processor leaves the processor waiting for memory.")

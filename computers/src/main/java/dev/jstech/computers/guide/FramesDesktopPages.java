@@ -49,8 +49,7 @@ final class FramesDesktopPages {
     private static void startMenus(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("start_menus", section).titled("The Start menu of each edition")
                 .icon(ComputingModule.MONITOR)
-                .paragraph("A desktop is the face a system shows after it starts: the wallpaper, the windows,"
-                        + " the taskbar and the Start menu. The Start menu is where you find the programs of"
+                .paragraph("The Start menu is where you find the programs of"
                         + " your Frames. Click the Start button on the taskbar, and the menu opens above it."
                         + " The general idea is on the page [Desktops](jsc:desktops).")
                 .paragraph("Each Frames edition draws its Start menu in its own style. Every one of them lists"
@@ -214,8 +213,8 @@ final class FramesDesktopPages {
                 .row(GuideCell.words("The clock"),
                         GuideCell.words("The time: 24-hour by default, or 12-hour if you choose it on Personalize."))
                 .row(GuideCell.words("The day"),
-                        GuideCell.words("On Frames 7 and Frames 10: the day of the world, under the time, marked"
-                                + " \"Day\"."))
+                        GuideCell.words("On Frames 7 and Frames 10: the current in-game day, under the time,"
+                                + " marked \"Day\"."))
                 .subheading("The Task Manager")
                 .paragraph("The [Task Manager](jsc:task_manager) lists the programs that are running. It also"
                         + " shows the processor, the memory, the network and the disks, and it ends a program"
@@ -294,7 +293,8 @@ final class FramesDesktopPages {
                 .icon(ComputingModule.MONITOR)
                 .paragraph("A notice is a message that the desktop or a program sends you. Frames has three kinds of"
                         + " notice, and each one asks something different of you. A dialog waits for your answer."
-                        + " A balloon says one thing and goes away by itself.")
+                        + " A balloon says one thing and goes away by itself. A toast is the Frames 10 form of the"
+                        + " balloon.")
                 .table("The kinds of notice", "Kind", "What it does", "Where it appears")
                 .row(GuideCell.words("Dialog"),
                         GuideCell.words("Waits until you answer it: an error, a question, or the Open with chooser."),
@@ -410,7 +410,7 @@ final class FramesDesktopPages {
                 .row(GuideCell.words("Appearance and Personalization"), GuideCell.words("Change the theme"),
                         GuideCell.words("Personalize"))
                 .row(GuideCell.words("Hardware and Sound"), GuideCell.words("Adjust the display"),
-                        GuideCell.words("Sound, from the title; Display, from the line"))
+                        GuideCell.words("Sound, through its title; Display, through its line of text"))
                 .row(GuideCell.words("Programs"), GuideCell.words("Uninstall a program"), GuideCell.words("Programs"))
                 .row(GuideCell.words("Ease of Access"), GuideCell.words("Optimize visual display"),
                         GuideCell.words("The Effects page, Performance Options"))
@@ -426,8 +426,7 @@ final class FramesDesktopPages {
                         + " platform.")
                 .paragraph("On Frames 7, the page also shows the [experience rating](jsc:effects), which is a set of"
                         + " scores for the parts. The button \"Restart to firmware\" restarts the computer into its"
-                        + " [firmware](jsc:firmware) setup. It appears only when a monitor is linked to the"
-                        + " computer.")
+                        + " [firmware](jsc:firmware) setup.")
                 .ifSomethingGoesWrong("A page says \"Coming in a future update\".",
                         "The Users page is not built yet, so the game shows that note.",
                         "The button \"Restart to firmware\" is missing.",
@@ -479,7 +478,7 @@ final class FramesDesktopPages {
                 .row(GuideCell.words("Frames 7"), GuideCell.words("A night blue, banded with falling light."))
                 .row(GuideCell.words("Frames 10"), GuideCell.words("A dark room, with a window of four panes lit."))
                 .row(GuideCell.words("Frames 11"),
-                        GuideCell.words("The blue bloom. It has a dark picture for the dark look."))
+                        GuideCell.words("The blue bloom, with a dark picture for the dark look."))
                 .row(GuideCell.words("Other desktops"),
                         GuideCell.words("The backdrops of KDE, GNOME, Cinnamon and FreeBSD."))
                 .paragraph("The backdrop of the Common Desktop Environment (CDE) cannot be chosen on a Frames.")
@@ -488,7 +487,7 @@ final class FramesDesktopPages {
                         + " green, orange, violet, pink or amber. A theme sets the accent and the wallpaper for you."
                         + " Frames has three themes:")
                 .table("The themes", "Theme", "What it sets")
-                .row(GuideCell.words("system"), GuideCell.words("No change to the accent. The desktop keeps its own"
+                .row(GuideCell.words("system"), GuideCell.words("No change to the accent; the desktop keeps its own"
                         + " wallpaper."))
                 .row(GuideCell.words("ocean"),
                         GuideCell.words("The green accent, and the Frames XP wallpaper, the green hill."))
@@ -507,13 +506,12 @@ final class FramesDesktopPages {
                 .steps("Open Settings, and open the Personalize page.",
                         "Click a wallpaper in the grid.")
                 .ifSomethingGoesWrong("The wallpaper you want is not in the grid.",
-                        "Only the wallpapers the game offers appear there. The CDE backdrop is not offered on a"
-                                + " Frames.",
+                        "Only the wallpapers the game offers appear there.",
                         "Frames 95 has no accent or theme row.",
                         "The classic look of Frames 95 has no accent or theme rows. Change the wallpaper and the clock"
                                 + " instead.",
                         "Frames 7 or Frames XP has no light or dark look.",
-                        "The light and dark look is a feature of Frames 10 and Frames 11 only.")
+                        "Use Frames 10 or Frames 11 for a light or dark look.")
                 .seeAlso("jsc:frames_settings", "jsc:effects", "jsc:editions_compared")
                 .register();
     }
@@ -540,7 +538,8 @@ final class FramesDesktopPages {
                 .row(GuideCell.words("Frames XP"),
                         GuideCell.words("Four presets, from \"Let Frames choose what's best for my computer\" to"
                                 + " \"Custom:\". Four boxes: animating windows, fading or sliding menus, fading or"
-                                + " sliding ToolTips, and drop shadows for icon labels. OK, Cancel and Apply."))
+                                + " sliding ToolTips, and drop shadows for icon labels; the footer has"
+                                + " OK, Cancel and Apply."))
                 .row(GuideCell.words("Frames 7"),
                         GuideCell.words("The same presets, plus \"Enable transparent glass\", and boxes for the"
                                 + " animations, the menus, the ToolTips and the icon shadows. Under Ease of Access, a"
@@ -587,7 +586,7 @@ final class FramesDesktopPages {
                         "Animations stop on Frames 10.",
                         "Play animations in Frames is off. Switch it on, on the Effects page.",
                         "Animations stop on Frames 7.",
-                        "The box Turn off all unnecessary animations is ticked. Untick it.")
+                        "The Ease of Access switch Turn off all unnecessary animations is on. Switch it off.")
                 .define("Basic look", "The opaque look that Frames 7 falls back to, when its graphics cannot run the"
                         + " glass.")
                 .seeAlso("jsc:personalize", "jsc:graphics_cards", "jsc:frames_settings")
@@ -650,8 +649,7 @@ final class FramesDesktopPages {
         guide.page("shutting_down", section).titled("Signing out, shutting down and restarting")
                 .icon(ComputingModule.MONITOR)
                 .paragraph("When you have finished, you can log off, shut the machine down, or restart it. Each"
-                        + " edition has its own control for this, and most of them open the same Power dialog."
-                        + " Frames XP's Log Off is the exception: it closes the desktop at once.")
+                        + " edition has its own control for this, and most of them open the same Power dialog.")
                 .table("The power control of each edition", "Edition", "Where it is")
                 .row(GuideCell.words("Frames 95"), GuideCell.words("The row Shut Down, under the programs in Start."))
                 .row(GuideCell.words("Frames XP"),
