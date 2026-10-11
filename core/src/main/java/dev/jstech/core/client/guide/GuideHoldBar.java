@@ -24,7 +24,7 @@ import net.minecraft.client.gui.GuiGraphics;
 @PaletteHolder
 final class GuideHoldBar {
 
-    /** How big the bar is, in the screen's units. */
+    /** How big the bar is, in the screen's units: its width under the crosshair, and the least it is drawn at. */
     static final int WIDTH = 26;
     static final int HEIGHT = 7;
 
@@ -43,31 +43,34 @@ final class GuideHoldBar {
     private GuideHoldBar() {
     }
 
-    /** Draws the bar with its top left at ({@code x}, {@code y}), filled to {@code progress}, from 0 to 1. */
-    static void draw(final GuiGraphics g, final int x, final int y, final float progress,
+    /**
+     * Draws the bar {@code width} wide with its top left at ({@code x}, {@code y}), filled to {@code progress}, from 0
+     * to 1. A wider bar holds more blocks, not bigger ones, as a longer loading bar does.
+     */
+    static void draw(final GuiGraphics g, final int x, final int y, final int width, final float progress,
                      final GuideStyle.HoldBar kind) {
         final float done = Math.max(0.0F, Math.min(1.0F, progress));
         switch (kind) {
-            case PLAIN -> plain(g, x, y, done);
-            case BLOCKS -> blocks(g, x, y, done);
-            case HAZARD -> hazard(g, x, y, done);
+            case PLAIN -> plain(g, x, y, width, done);
+            case BLOCKS -> blocks(g, x, y, width, done);
+            case HAZARD -> hazard(g, x, y, width, done);
         }
     }
 
-    private static void plain(final GuiGraphics g, final int x, final int y, final float done) {
+    private static void plain(final GuiGraphics g, final int x, final int y, final int width, final float done) {
         final Colours c = PALETTE.get();
-        g.fill(x, y + 1, x + WIDTH, y + HEIGHT - 1, c.plainTrack());
-        Draw.outline(g, x, y + 1, WIDTH, HEIGHT - 2, c.plainEdge());
-        g.fill(x + 1, y + 2, x + 1 + Math.round(done * (WIDTH - 2)), y + HEIGHT - 2, c.plainFill());
+        g.fill(x, y + 1, x + width, y + HEIGHT - 1, c.plainTrack());
+        Draw.outline(g, x, y + 1, width, HEIGHT - 2, c.plainEdge());
+        g.fill(x + 1, y + 2, x + 1 + Math.round(done * (width - 2)), y + HEIGHT - 2, c.plainFill());
     }
 
     /* A dark track with a light rim and its corners cut round, and the blocks in it lit from the left. */
-    private static void blocks(final GuiGraphics g, final int x, final int y, final float done) {
+    private static void blocks(final GuiGraphics g, final int x, final int y, final int width, final float done) {
         final Colours c = PALETTE.get();
-        g.fill(x + 1, y, x + WIDTH - 1, y + HEIGHT, c.blocksEdge());
-        g.fill(x, y + 1, x + WIDTH, y + HEIGHT - 1, c.blocksEdge());
-        g.fill(x + 1, y + 1, x + WIDTH - 1, y + HEIGHT - 1, c.blocksTrack());
-        final int count = (WIDTH - 4 + BLOCK_GAP) / (BLOCK + BLOCK_GAP);
+        g.fill(x + 1, y, x + width - 1, y + HEIGHT, c.blocksEdge());
+        g.fill(x, y + 1, x + width, y + HEIGHT - 1, c.blocksEdge());
+        g.fill(x + 1, y + 1, x + width - 1, y + HEIGHT - 1, c.blocksTrack());
+        final int count = (width - 4 + BLOCK_GAP) / (BLOCK + BLOCK_GAP);
         final int lit = (int) Math.ceil(done * count);
         for (int i = 0; i < lit; i++) {
             final int bx = x + 2 + i * (BLOCK + BLOCK_GAP);
@@ -78,11 +81,11 @@ final class GuideHoldBar {
     }
 
     /* Diagonal stripes of black and yellow running in from the left, over a dark track. */
-    private static void hazard(final GuiGraphics g, final int x, final int y, final float done) {
+    private static void hazard(final GuiGraphics g, final int x, final int y, final int width, final float done) {
         final Colours c = PALETTE.get();
-        g.fill(x, y + 1, x + WIDTH, y + HEIGHT - 1, c.hazardBlack());
-        g.fill(x + 1, y + 2, x + WIDTH - 1, y + HEIGHT - 2, c.hazardEmpty());
-        final int filled = Math.round(done * (WIDTH - 2));
+        g.fill(x, y + 1, x + width, y + HEIGHT - 1, c.hazardBlack());
+        g.fill(x + 1, y + 2, x + width - 1, y + HEIGHT - 2, c.hazardEmpty());
+        final int filled = Math.round(done * (width - 2));
         for (int column = 0; column < filled; column++) {
             for (int row = 0; row < HEIGHT - 4; row++) {
                 final boolean yellow = Math.floorMod(column + row, 2 * STRIPE) < STRIPE;

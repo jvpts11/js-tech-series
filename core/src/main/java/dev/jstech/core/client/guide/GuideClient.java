@@ -26,6 +26,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
@@ -147,6 +148,26 @@ public final class GuideClient {
         elements.add(under, Either.right(new HoldBarTooltip(barKind())));
     }
 
+    /*
+     * The bar runs from one side of the tooltip to the other: the lines are final here, wrapped to the screen, so the
+     * widest of them is the width the tooltip is drawn at.
+     */
+    @SubscribeEvent
+    public static void onTooltipShown(final RenderTooltipEvent.Pre event) {
+        HoldBarTooltip bar = null;
+        int widest = 0;
+        for (final ClientTooltipComponent line : event.getComponents()) {
+            if (line instanceof HoldBarTooltip found) {
+                bar = found;
+            } else {
+                widest = Math.max(widest, line.getWidth(event.getFont()));
+            }
+        }
+        if (bar != null) {
+            bar.spanTo(widest);
+        }
+    }
+
     /* Out of every screen, the key is held over the item in the main hand. */
     @SubscribeEvent
     public static void onClientTick(final ClientTickEvent.Post event) {
@@ -168,7 +189,7 @@ public final class GuideClient {
         }
         final GuiGraphics g = event.getGuiGraphics();
         GuideHoldBar.draw(g, (g.guiWidth() - GuideHoldBar.WIDTH) / 2, g.guiHeight() / 2 + BELOW_CROSSHAIR,
-                holdProgress(), barKind());
+                GuideHoldBar.WIDTH, holdProgress(), barKind());
     }
 
     /*

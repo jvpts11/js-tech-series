@@ -1849,7 +1849,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A Pattern Encoder's Cancel queue and Eject buttons could be clicked on the first frame of its screen, before the
   screen knew whether they had anything to do.
 - The bar that fills while the manual key is held over an item in an inventory is drawn in the item's tooltip, under
-  the line that says to hold the key; it was drawn under the slot, outside the tooltip.
+  the line that says to hold the key, from one side of the tooltip to the other; it was drawn under the slot, outside
+  the tooltip.
 - A supercomputer node's assembly screen is titled Supercomputer Node, its name field asking for a node's name; it
   said Server.
 - The player's items in the Network Interactor, the Workshop and the Pattern Studio stay on their cells while the
