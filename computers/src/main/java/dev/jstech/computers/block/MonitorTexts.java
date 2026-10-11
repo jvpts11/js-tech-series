@@ -25,6 +25,8 @@ final class MonitorTexts {
     static final TextKey AT_CAPACITY = TextKey.of("block.jsc.monitor.at_capacity",
             "The computer's video outputs are all in use");
     static final TextKey NO_POWER = TextKey.of("block.jsc.monitor.no_power", "No signal - the computer is powered off");
+    /* The monitor's own switch is off: whatever runs behind it, its face is dark and a click opens nothing. */
+    static final TextKey OFF = TextKey.of("block.jsc.monitor.off", "The monitor is off");
     static final TextKey DISABLED = TextKey.of("block.jsc.monitor.disabled",
             "No signal - the computer has disabled this monitor");
     static final TextKey RACK_EMPTY = TextKey.of("block.jsc.monitor.rack_empty", "The rack holds no computer to show");

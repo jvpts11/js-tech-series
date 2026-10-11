@@ -83,6 +83,14 @@ public enum MonitorKind implements StringRepresentable {
         return era.isAtMost(HardwareEra.LEGACY);
     }
 
+    /**
+     * Whether it goes to sleep switched on with no picture, its lamp amber: the monitors from the nineties on saved
+     * power that way, while the ones of the eighties kept their lamp lit whether or not a picture came.
+     */
+    public boolean sleeps() {
+        return era != HardwareEra.VINTAGE;
+    }
+
     /** One edge of the glass, in sixty-fourths of the front: 0 left, 1 top, 2 right, 3 bottom. */
     public int glass(final int edge) {
         return glass[edge];

@@ -54,6 +54,11 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
     private final PeripheralLink link = new PeripheralLink(fields(), PeripheralCableType.COMPUTING,
             PeripheralLinks.COMPUTING);
     private final BoolField lit = fields().flag("Lit", false).save();
+    /*
+     * Its own power switch, on or off whatever its computer does: every monitor starts on, the ones already in a world
+     * too, since a save from before the switch holds no key for it. In a big screen every monitor holds the same.
+     */
+    private final BoolField switchedOn = fields().flag("SwitchedOn", true).save();
     /** The terminal tab the player last used on this screen, which it reopens on. */
     private final IntField lastTab = fields().integer("LastTab", ComputerTerminalMenu.TAB_NETWORK).save();
     /*
@@ -86,6 +91,7 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
         super(ComputingModule.MONITOR_BE.get(), pos, state);
         fields().mirror(MonitorBlock.LIT, lit::get);
         fields().mirror(MonitorBlock.BUTTON, this::showsButton);
+        fields().mirror(MonitorBlock.ON, switchedOn::get);
     }
 
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
@@ -131,6 +137,31 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
         return lit.get();
     }
 
+    /** Whether its own switch is on. */
+    public boolean switchedOn() {
+        return switchedOn.get();
+    }
+
+    /**
+     * Switches the monitor on or off at its button, the whole big screen with it. Its computer runs on either way.
+     * Switched off it goes dark at once, and every screen open on it closes, since a monitor switched off shows
+     * nothing; switched on it lights a moment later, as it does when its computer starts.
+     */
+    public void switchPower(final ServerLevel level) {
+        final boolean to = !switchedOn.get();
+        final MonitorPanel big = panel();
+        if (big == null) {
+            switchedOn.set(to);
+        } else {
+            for (final BlockPos member : big.members()) {
+                if (Loaded.blockEntity(level, member) instanceof MonitorBlockEntity monitor) {
+                    monitor.switchedOn.set(to);
+                }
+            }
+        }
+        Audio.at(level, worldPosition, ComputingSounds.POWER_BUTTON);
+    }
+
     /** Whether its computer runs but has no video memory left for it, which keeps it dark. */
     public boolean starved() {
         return starvedNeedKb.get() > 0L;
@@ -158,12 +189,12 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
     }
 
     /**
-     * Whether this monitor legitimately shows {@code machine}: either its cable links to it, or a remote session put
-     * it there. The menus validate through this, so a taken-over screen is not torn down for showing a computer that
-     * is not its own.
+     * Whether this monitor legitimately shows {@code machine}: it is switched on, and either its cable links to it or
+     * a remote session put it there. The menus validate through this, so a taken-over screen is not torn down for
+     * showing a computer that is not its own, and every screen open on a monitor closes when it is switched off.
      */
     public boolean shows(final BlockPos machine) {
-        return machine != null
+        return machine != null && switchedOn.get()
                 && (machine.equals(ownerPos()) || machine.equals(remoteSession));
     }
 
@@ -229,6 +260,7 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
             }
             bootTicks = 0;
             lit.set(holder.lit());
+            switchedOn.set(holder.switchedOn());
             return;
         }
         final boolean wasLinked = link.linkedOwner().isPresent();
@@ -281,21 +313,24 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
     }
 
     private void updateScreen(final ServerLevel level) {
-        // Lit only when the linked computer is actively running and drives it: not powered off, nor disabling it.
+        /*
+         * Lit only when the monitor is switched on and the linked computer is actively running and drives it: not
+         * powered off, nor disabling it.
+         */
         final BlockPos owner = link.ownerPos();
-        if (owner != null && !level.isLoaded(owner)) {
+        final boolean on = switchedOn.get();
+        if (on && owner != null && !level.isLoaded(owner)) {
             return; // a computer whose chunk is away is not asked, nor loaded back; the screen stays as it is
         }
-        final IOsHost host = owner != null && level.getBlockEntity(owner) instanceof IOsHost running ? running : null;
-        final boolean computerRunning = host != null
-                && host.isRunning() && !host.isDisabled(worldPosition.asLong());
+        final IOsHost host = on && owner != null && level.getBlockEntity(owner) instanceof IOsHost running
+                ? running : null;
+        final boolean driven = host != null && host.isRunning() && !host.isDisabled(worldPosition.asLong());
         // A running computer lights this screen only while its video memory has room for it.
-        final VideoMemory.Screen share = computerRunning
-                ? VideoMemory.of(level, host).screen(worldPosition.asLong()) : null;
+        final VideoMemory.Screen share = driven ? VideoMemory.of(level, host).screen(worldPosition.asLong()) : null;
         final boolean starvedNow = share != null && !share.fits();
         starvedNeedKb.set(starvedNow ? share.needKb() : 0L);
         starvedFreeKb.set(starvedNow ? share.freeKb() : 0L);
-        if (!computerRunning || starvedNow) {
+        if (!driven || starvedNow) {
             bootTicks = 0;
             if (lit.get()) {
                 lit.set(false);

@@ -200,6 +200,7 @@
   "block.jsc.monitor.no_gpu": "The computer has no video output: install a graphics card",
   "block.jsc.monitor.no_power": "No signal - the computer is powered off",
   "block.jsc.monitor.no_vram": "Not enough video memory: this monitor needs %s, and %s are free",
+  "block.jsc.monitor.off": "The monitor is off",
   "block.jsc.monitor.rack_empty": "The rack holds no computer to show",
   "block.jsc.monitor.tube.amber": "Amber phosphor: shows every system in amber",
   "block.jsc.monitor.tube.colour": "Colour picture tube",

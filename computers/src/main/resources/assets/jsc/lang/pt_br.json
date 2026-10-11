@@ -184,6 +184,7 @@
   "block.jsc.monitor.no_computer": "Nenhum computador encontrado ao alcance por um Cabo Periférico",
   "block.jsc.monitor.no_gpu": "O computador não tem saída de vídeo: instale uma placa de vídeo",
   "block.jsc.monitor.no_power": "Sem sinal - o computador está desligado",
+  "block.jsc.monitor.off": "O monitor está desligado",
   "block.jsc.monitor.disabled": "Sem sinal - o computador desativou este monitor",
   "block.jsc.monitor.rack_empty": "O rack não contém nenhum computador para mostrar",
   "block.jsc.monitor.unlinked": "Nenhum computador vinculado",

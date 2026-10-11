@@ -15,7 +15,6 @@ import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.JscTriggers;
 import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.audio.SoundHardwareTexts;
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.HardwareTooltip;
@@ -87,9 +86,9 @@ import org.jetbrains.annotations.Nullable;
  * A monitor: a peripheral that shows the computer it is linked to, against it or along a peripheral cable.
  *
  * <p>Which monitor it is ({@link MonitorKind}) gives its era, its looks and the tube its picture goes through. Its face
- * shows live what the machine shows; its power button, a real part standing out of the bezel, switches the machine on
- * and off; a click anywhere else opens the screen. Flat panels side by side join into one screen
- * ({@link MonitorPanel}).
+ * shows live what the machine shows; its power button, a real part standing out of the bezel, switches the monitor
+ * itself on and off, the machine running on either way; a click anywhere else opens the screen. Flat panels side by
+ * side join into one screen ({@link MonitorPanel}).
  */
 public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
 
@@ -104,6 +103,8 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
     /** Whether this monitor shows its power button: every one but the monitors of a big screen past its corner. */
     public static final BooleanProperty BUTTON = BooleanProperty.create("button");
+    /** Whether the monitor's own switch is on, which lights its lamp even with no picture to show. */
+    public static final BooleanProperty ON = BooleanProperty.create("on");
 
     /** The monitor's block entity, ticking to keep its link and to light its screen. */
     private static final Device<MonitorBlockEntity> DEVICE =
@@ -112,7 +113,7 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
     public MonitorBlock(final Properties properties, final MonitorKind kind) {
         super(properties, DEVICE);
         this.kind = kind;
-        registerDefaultState(defaultBlockState().setValue(LIT, false).setValue(BUTTON, true));
+        registerDefaultState(defaultBlockState().setValue(LIT, false).setValue(BUTTON, true).setValue(ON, true));
     }
 
     @Override
@@ -160,16 +161,17 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(LIT, BUTTON);
+        builder.add(LIT, BUTTON, ON);
     }
 
     @Override
     public BlockState getStateForPlacement(final BlockPlaceContext context) {
-        // A Monitor is meant to be looked AT, so the screen faces the player who places it.
+        // A Monitor is meant to be looked AT, so the screen faces the player who places it. It comes switched on.
         return defaultBlockState()
                 .setValue(FACING, context.getHorizontalDirection())
                 .setValue(LIT, false)
-                .setValue(BUTTON, true);
+                .setValue(BUTTON, true)
+                .setValue(ON, true);
     }
 
     /**
@@ -208,38 +210,12 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
         final MonitorBlockEntity monitor = clicked.screen();
         final double[] at = frontPoint(state, pos, hit);
         if (at != null && state.getValue(BUTTON) && kind.onButton(at[0], at[1])) {
-            if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
-                pressPowerButton(serverPlayer, level, monitor);
+            if (level instanceof ServerLevel server) {
+                monitor.switchPower(server);
             }
             return InteractionResult.sidedSuccess(level.isClientSide());
         }
         return openScreen(level, monitor.getBlockPos(), player, monitor);
-    }
-
-    /**
-     * The power button: switches the computer the screen shows on or off, as its own button would. A rack switches
-     * the machine its switch is showing.
-     */
-    public static void pressPowerButton(final ServerPlayer player, final Level level,
-                                        final MonitorBlockEntity monitor) {
-        final BlockPos owner = monitor.ownerPos();
-        if (owner == null) {
-            player.displayClientMessage(diagnoseUnlinked(level, monitor.getBlockPos()), true);
-            return;
-        }
-        final BlockEntity machine = Loaded.blockEntity(level, owner);
-        if (machine instanceof IPeripheralOwner linkedTo && linkedTo.isDisabled(monitor.getBlockPos().asLong())) {
-            player.displayClientMessage(GameText.component(MonitorTexts.DISABLED), true);
-            return;
-        }
-        MachineOperators.note(level, owner, player);
-        if (machine instanceof AbstractComputerBlockEntity computer) {
-            computer.togglePower();
-        } else if (machine instanceof ServerRackBlockEntity rack && !rack.computerSlots().isEmpty()) {
-            final int slot = rack.computerSlots().contains(rack.activeChannel()) ? rack.activeChannel()
-                    : rack.computerSlots().getFirst();
-            rack.toggleBayPower(slot);
-        }
     }
 
     /**
@@ -731,6 +707,13 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
 
     private InteractionResult openScreen(final Level level, final BlockPos pos, final Player player,
                                          final MonitorBlockEntity monitor) {
+        // A monitor switched off shows nothing, whatever is behind it, and says so rather than staying silent.
+        if (!level.isClientSide() && !monitor.switchedOn()) {
+            if (player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(GameText.component(MonitorTexts.OFF), true);
+            }
+            return InteractionResult.SUCCESS;
+        }
         final BlockPos owner = monitor.ownerPos();
         if (owner == null) {
             /*

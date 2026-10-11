@@ -1128,7 +1128,8 @@ public final class ComputingModule {
 
     /**
      * A screen, its front toward the player who placed it: its model by hand, with the power button standing out of
-     * the bezel, lit while its computer runs, and left off on the monitors of a big screen past its corner.
+     * the bezel, lit while it shows its computer, and left off on the monitors of a big screen past its corner. Switched
+     * on with no picture, a monitor from the Legacy on sleeps with its lamp amber, and a Vintage one keeps it lit.
      */
     private static BlockBuilder<MonitorBlock> monitor(final String id, final MonitorKind kind) {
         final String model = "monitor/" + kind.getSerializedName();
@@ -1137,7 +1138,9 @@ public final class ComputingModule {
                         .sound(SoundType.METAL).noOcclusion())
                 .look(IBlockLook.facingByState(state -> new IBlockModel.Handmade(
                         kind.flat() && !state.getValue(MonitorBlock.BUTTON) ? model + "_bare"
-                                : state.getValue(MonitorBlock.LIT) ? model + "_on" : model))
+                                : state.getValue(MonitorBlock.LIT) ? model + "_on"
+                                : !state.getValue(MonitorBlock.ON) ? model
+                                : kind.sleeps() ? model + "_sleep" : model + "_on"))
                         .frontAgainstFacing())
                 .item().itemLook(IItemLook.parent("block/" + model)).tab(shelf(Shelf.PERIPHERALS, kind.era()));
     }

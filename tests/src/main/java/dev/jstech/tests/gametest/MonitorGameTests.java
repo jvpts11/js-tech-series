@@ -15,18 +15,23 @@ import dev.jstech.computers.block.MonitorKind;
 import dev.jstech.computers.block.MonitorPanel;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.menu.DesktopMenu;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.monitor.IMonitorPicture;
 import dev.jstech.computers.monitor.MonitorPictures;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.core.peripheral.PortKind;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import io.netty.buffer.Unpooled;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -42,9 +47,10 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The monitors of every era: a monitor against its computer needs no cable, flat panels side by side join into one
- * big screen that takes one video output, the power button on the block switches the computer, the three Haswell
- * desktop chips drive a screen with no card, and what a monitor's face shows is described from what its machine
- * holds, a start or an install by the screen a player at the machine sees.
+ * big screen that takes one video output, the power button on the block switches the monitor itself (the whole big
+ * screen from its corner, the computer running on, every screen open on it closing), the three Haswell desktop chips
+ * drive a screen with no card, and what a monitor's face shows is described from what its machine holds, a start or
+ * an install by the screen a player at the machine sees.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -160,7 +166,7 @@ public final class MonitorGameTests {
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)
-    public static void powerButton_switchesTheComputerOffAndOn(final GameTestHelper helper) {
+    public static void powerButton_switchesTheMonitorAndLeavesTheComputerRunning(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = TestWorldBuilder.forGameTest(helper)
                 .placeRunningPersonalComputer(PC);
         final BlockPos monitorAt = PC.east();
@@ -168,13 +174,116 @@ public final class MonitorGameTests {
         final ServerPlayer player = FakePlayerFactory.get(helper.getLevel(),
                 new GameProfile(UUID.randomUUID(), "button-presser"));
         helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(entity(helper, monitorAt).ownerPos() != null, "it links"))
+                .thenWaitUntil(() -> helper.assertTrue(entity(helper, monitorAt).lit(), "the monitor lights"))
                 .thenExecute(() -> {
-                    helper.assertTrue(computer.isRunning(), "the computer starts out running");
+                    helper.assertTrue(entity(helper, monitorAt).switchedOn(), "a monitor comes switched on");
                     pressButton(helper, monitorAt, player);
-                    helper.assertTrue(!computer.isRunning(), "the monitor's power button switches it off");
+                    helper.assertTrue(!entity(helper, monitorAt).switchedOn(), "its button switches it off");
+                    helper.assertTrue(computer.isRunning(), "and its computer runs on");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(!entity(helper, monitorAt).lit()
+                        && !helper.getBlockState(monitorAt).getValue(MonitorBlock.ON), "it goes dark, its lamp out"))
+                .thenExecute(() -> {
+                    helper.assertTrue(MonitorPictures.describe(helper.getLevel(), entity(helper, monitorAt))
+                            == IMonitorPicture.DARK, "switched off it shows dark glass");
                     pressButton(helper, monitorAt, player);
-                    helper.assertTrue(computer.isRunning(), "and on again");
+                    helper.assertTrue(entity(helper, monitorAt).switchedOn(), "a second press switches it on");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(entity(helper, monitorAt).lit(),
+                        "and it lights again with its computer"))
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void switchedOff_closesTheScreensOpenOnItAndOpensNone(final GameTestHelper helper) {
+        TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(PC);
+        final BlockPos monitorAt = PC.east();
+        helper.setBlock(monitorAt, facing(ComputingModule.MONITOR.get(), Direction.WEST));
+        final ServerPlayer player = FakePlayerFactory.get(helper.getLevel(),
+                new GameProfile(UUID.randomUUID(), "screen-watcher"));
+        final Vec3 standing = helper.absoluteVec(Vec3.atBottomCenterOf(monitorAt.east(2)));
+        player.setPos(standing.x, standing.y, standing.z);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(entity(helper, monitorAt).lit(), "the monitor lights"))
+                .thenExecute(() -> {
+                    final BlockPos monitor = helper.absolutePos(monitorAt);
+                    final BlockPos host = helper.absolutePos(PC);
+                    final MonitorSessionMenu session = new MonitorSessionMenu(1, player.getInventory(), monitor, host,
+                            HardwareEra.STANDARD, MonitorSessionMenu.Phase.FIRMWARE);
+                    final DesktopMenu desktop = new DesktopMenu(2, player.getInventory(), monitor, host,
+                            ResourceLocation.fromNamespaceAndPath("jsc", "frames_xp"), "Desk", 8192, 0);
+                    helper.assertTrue(session.stillValid(player) && desktop.stillValid(player),
+                            "screens open on the monitor hold while it is on");
+                    pressButton(helper, monitorAt, player);
+                    helper.assertFalse(session.stillValid(player), "switched off, the session on it closes");
+                    helper.assertFalse(desktop.stillValid(player), "and so does the desktop");
+                    clickGlass(helper, monitorAt, player);
+                    helper.assertTrue(player.containerMenu == player.inventoryMenu,
+                            "a click on the glass of a monitor switched off opens nothing");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void computerOff_leavesTheMonitorSwitchedOnWithItsLampAsleep(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(PC);
+        final BlockPos monitorAt = PC.east();
+        helper.setBlock(monitorAt, facing(ComputingModule.MONITOR.get(), Direction.WEST));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(entity(helper, monitorAt).lit(), "the monitor lights"))
+                .thenExecute(computer::togglePower)
+                .thenWaitUntil(() -> helper.assertTrue(!entity(helper, monitorAt).lit(), "the monitor goes dark"))
+                .thenExecute(() -> helper.assertTrue(entity(helper, monitorAt).switchedOn()
+                                && helper.getBlockState(monitorAt).getValue(MonitorBlock.ON),
+                        "with its computer off the monitor stays switched on, its lamp asleep"))
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void switchedOff_isKeptInTheSaveAndAnOlderSaveComesOn(final GameTestHelper helper) {
+        helper.setBlock(PC, ComputingModule.LEGACY_MONITOR.get());
+        final MonitorBlockEntity monitor = entity(helper, PC);
+        final HolderLookup.Provider registries = helper.getLevel().registryAccess();
+        monitor.switchPower(helper.getLevel());
+        final CompoundTag saved = monitor.saveWithFullMetadata(registries);
+        final MonitorBlockEntity loaded = new MonitorBlockEntity(monitor.getBlockPos(), monitor.getBlockState());
+        loaded.loadWithComponents(saved, registries);
+        helper.assertFalse(loaded.switchedOn(), "a monitor switched off is still off when its world is loaded");
+        // A save from before monitors had a switch holds no key for it.
+        saved.remove("SwitchedOn");
+        final MonitorBlockEntity older = new MonitorBlockEntity(monitor.getBlockPos(), monitor.getBlockState());
+        older.loadWithComponents(saved, registries);
+        helper.assertTrue(older.switchedOn(), "a monitor from an older save comes switched on");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void panel_switchesWholeFromItsCornerButton(final GameTestHelper helper) {
+        TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(PC);
+        final BlockPos[] wall = wall(PC.north(), 3, 2);
+        for (final BlockPos member : wall) {
+            helper.setBlock(member, facing(ComputingModule.MONITOR.get(), Direction.SOUTH));
+        }
+        final ServerPlayer player = FakePlayerFactory.get(helper.getLevel(),
+                new GameProfile(UUID.randomUUID(), "wall-presser"));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(lit(helper, wall), "every monitor of the screen lights"))
+                .thenExecute(() -> {
+                    BlockPos corner = null;
+                    for (final BlockPos member : wall) {
+                        if (helper.getBlockState(member).getValue(MonitorBlock.BUTTON)) {
+                            corner = member;
+                        }
+                    }
+                    helper.assertTrue(corner != null, "the screen has its button on a corner");
+                    pressButton(helper, corner, player);
+                })
+                .thenWaitUntil(() -> {
+                    for (final BlockPos member : wall) {
+                        helper.assertTrue(!entity(helper, member).switchedOn() && !entity(helper, member).lit(),
+                                "the corner's button switches off every monitor of the screen");
+                    }
                 })
                 .thenSucceed();
     }
@@ -297,14 +406,28 @@ public final class MonitorGameTests {
 
     /* Clicks the middle of the monitor's power button, as a player aiming at it would. */
     private static void pressButton(final GameTestHelper helper, final BlockPos relative, final ServerPlayer player) {
+        final MonitorKind kind = kind(helper.getLevel().getBlockState(helper.absolutePos(relative)).getBlock());
+        clickFront(helper, relative, player, (kind.button(0) + kind.button(2)) / 2.0,
+                (kind.button(1) + kind.button(3)) / 2.0);
+    }
+
+    /* Clicks the middle of the monitor's glass. */
+    private static void clickGlass(final GameTestHelper helper, final BlockPos relative, final ServerPlayer player) {
+        final MonitorKind kind = kind(helper.getLevel().getBlockState(helper.absolutePos(relative)).getBlock());
+        clickFront(helper, relative, player, (kind.glass(0) + kind.glass(2)) / 2.0,
+                (kind.glass(1) + kind.glass(3)) / 2.0);
+    }
+
+    /* Clicks the monitor's front at (x, y), in sixty-fourths of the front from its top left as seen. */
+    private static void clickFront(final GameTestHelper helper, final BlockPos relative, final ServerPlayer player,
+                                   final double x64, final double y64) {
         final BlockPos at = helper.absolutePos(relative);
         final BlockState state = helper.getLevel().getBlockState(at);
-        final MonitorKind kind = kind(state.getBlock());
         final Direction facing = state.getValue(MonitorBlock.FACING);
         final Direction front = facing.getOpposite();
         final Direction right = facing.getClockWise();
-        final double across = (kind.button(0) + kind.button(2)) / 2.0 / MonitorKind.FRONT;
-        final double down = (kind.button(1) + kind.button(3)) / 2.0 / MonitorKind.FRONT;
+        final double across = x64 / MonitorKind.FRONT;
+        final double down = y64 / MonitorKind.FRONT;
         // From the front's left edge as seen, along the viewer's right; the face itself, on its outer plane.
         final double fromLeft = right.getAxisDirection() == Direction.AxisDirection.POSITIVE ? across : 1.0 - across;
         final double x = right.getAxis() == Direction.Axis.X ? fromLeft : front.getStepX() > 0 ? 1.0 : 0.0;

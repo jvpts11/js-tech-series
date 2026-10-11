@@ -342,6 +342,35 @@ public final class MonitorClientTests {
                 .thenScreenshot(SETTLE, "power-button-outline");
     }
 
+    /**
+     * The power button switches the monitor alone: pressed, the face goes dark and the lamp out while the computer runs
+     * on, and a click on the glass opens nothing and says on the action bar that the monitor is off.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void powerButton_switchesTheMonitorDarkAndAClickSaysItIsOff(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    world.placeRunningPersonalComputer(COMPUTER);
+                    world.placeMonitor(SCREEN, Direction.WEST);
+                })
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .thenWaitUntil(() -> lit(ctx, SCREEN), LIGHT_WAIT, "the monitor to light")
+                .then(SETTLE, () -> lookAt(ctx, buttonMiddle(ctx)))
+                .thenWaitUntil(() -> ctx.mc().hitResult instanceof BlockHitResult hit
+                        && hit.getBlockPos().equals(ctx.abs(SCREEN)), LIGHT_WAIT, "the crosshair on the monitor");
+        DeviceCloseUp.clickCrosshair(ctx, SETTLE)
+                .thenWaitUntil(() -> ctx.mc().level != null
+                                && !ctx.mc().level.getBlockState(ctx.abs(SCREEN)).getValue(MonitorBlock.LIT)
+                                && !ctx.mc().level.getBlockState(ctx.abs(SCREEN)).getValue(MonitorBlock.ON),
+                        LIGHT_WAIT, "the monitor to go dark with its lamp out")
+                .thenServer(0, level -> ctx.assertTrue(TestWorldBuilder.at(level, ctx.origin())
+                        .blockEntity(COMPUTER, PersonalComputerBlockEntity.class).isRunning(),
+                        "the computer runs on with its monitor off"))
+                .thenScreenshot(SETTLE, "monitor-switched-off")
+                .thenRightClick(SETTLE, SCREEN)
+                .thenAssert(SETTLE * 2, () -> ctx.mc().screen == null, "a click on a monitor switched off opens nothing")
+                .thenScreenshot(0, "monitor-off-says-so");
+    }
+
     @ClientTest(timeoutTicks = 2400)
     public static void face_showsTheInstallerOnThePageThePlayerIsOn(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {

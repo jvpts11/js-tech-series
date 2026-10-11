@@ -1415,6 +1415,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   biggest disk, so the most room is left once the system is on it.
 
 ### Changed
+- A monitor's power button switches the monitor alone: the computer behind it runs on, and is switched on and off at
+  its own case or on its assembly screen. Switched off, the face goes dark and its lamp goes out, every screen open on
+  it closes, and a click on its glass opens nothing and says "The monitor is off". Switched on with no picture, a
+  monitor from the Legacy on sleeps with its lamp amber, as monitors with power saving did, and a Vintage one keeps its
+  lamp lit. A big screen switches whole from its corner's button. Every monitor starts switched on, the ones already in
+  a world too.
 - The assembly screens are drawn as the machine they assemble. On the left, the open case of its age, the board on
   its tray once there is one, and every part's seat where that part sits: the processor in its socket, the memory
   beside it, the cards along their slots, each drawn as its own model shows it, with its bracket on the back panel,
