@@ -12,6 +12,8 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.ModGuide;
@@ -22,6 +24,18 @@ import dev.jstech.core.guide.ModGuide;
  * zero, starts with the idea, and ends with what can go wrong.
  */
 final class StartingPages {
+
+    /*
+     * A Standard computer with a build that is valid together: an ATX board and a processor of the same socket, two
+     * memory modules of the board's kind, a graphics card, a disk and a power supply that carries their draw. The
+     * lamps value is what the server sends a client (bit 0 is the power lamp), so the scene shows it running.
+     */
+    private static final String COMPUTER_RUNNING = "{Hardware:{Size:15,Items:["
+            + "{Slot:0,id:\"jsc:motherboard_atx_standard_lga1150\",count:1},"
+            + "{Slot:1,id:\"jsc:cpu_integra_centro_c5_4690k\",count:1},"
+            + "{Slot:2,id:\"jsc:ram_ddr3_8192\",count:1},{Slot:3,id:\"jsc:ram_ddr3_8192\",count:1},"
+            + "{Slot:6,id:\"jsc:gpu_vertex_gtx_970\",count:1},{Slot:10,id:\"jsc:psu_650g\",count:1},"
+            + "{Slot:11,id:\"jsc:disk_ssd_1t\",count:1}]},ManualOn:1b,Lamps:1}";
 
     private StartingPages() {
     }
@@ -152,6 +166,20 @@ final class StartingPages {
                 .paragraph("A computer with no screen is not much use. Place a Monitor ([](jsc:monitors)) right"
                         + " against the case, and it is joined to the computer. Lay a"
                         + " [Peripheral Cable](jsc:peripheral_cables) when the monitor has to stand further away.")
+                .scene("A Personal Computer with its Monitor, joined by a Peripheral Cable. Drag it to see the back.",
+                        120)
+                .place(14, 0, 15, () -> ComputingModule.PERSONAL_COMPUTER.get(), "facing=south", COMPUTER_RUNNING)
+                .place(16, 0, 15, () -> ComputingModule.MONITOR.get(), "facing=north,button=true,lit=true,on=true",
+                        "{Lit:1b,SwitchedOn:1b}")
+                .place(15, 0, 15, () -> CoreCables.BLOCK.get(), "", cable(4116))
+                .place(15, 0, 14, () -> CoreCables.BLOCK.get(), "", cable(40))
+                .place(16, 0, 14, () -> CoreCables.BLOCK.get(), "", cable(2072))
+                .balloon(1, GuideBlock.ScenePart.of(14, 0, 15), "The Personal Computer")
+                .balloon(2, GuideBlock.ScenePart.of(14, 0, 15).box(12, 9, 15, 14, 12, 16), "Power button",
+                        "Press it to turn the computer on.")
+                .balloon(3, GuideBlock.ScenePart.of(16, 0, 15), "The Monitor")
+                .balloon(4, GuideBlock.ScenePart.of(15, 0, 15), "The Peripheral Cable",
+                        "It joins the monitor to the computer when the monitor cannot stand against the case.")
                 .paragraph("The Dock Station ([](jsc:dock_station)) reads USB sticks, and that is where a USB install"
                         + " medium goes. Join it to the computer like any other drive.")
                 .define("Install medium", "The floppy, CD, DVD or USB stick a system is installed from. The installer"
@@ -611,5 +639,13 @@ final class StartingPages {
                         + " of its size, and the disks count by the era of each disk ([](jsc:items_as_data)).")
                 .seeAlso("jsc:items_as_data", "jsc:boot_menu")
                 .register();
+    }
+
+    /*
+     * One Peripheral Cable block. The wire sits in the cable's own lane, number 3, and the number says which faces it
+     * crosses, with a second bit per face for a plug where it meets a device.
+     */
+    private static String cable(final int faces) {
+        return "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0," + faces + ",0,0,0,0,0]}";
     }
 }

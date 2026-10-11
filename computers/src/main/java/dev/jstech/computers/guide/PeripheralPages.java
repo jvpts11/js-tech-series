@@ -20,7 +20,9 @@ import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.block.SubwooferBlock;
 import dev.jstech.computers.item.PrintedPaperItem;
 import dev.jstech.computers.os.media.MediaReaderBlock;
+import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.ModGuide;
@@ -89,6 +91,15 @@ final class PeripheralPages {
                         + " or a step in the wall, leaves them as separate monitors. The game's tooltip reads \"Joins"
                         + " the same monitors beside it into one screen, up to 8 wide and 6 tall\", so one screen holds"
                         + " 48 monitors at most. Vintage and Legacy monitors do not join.")
+                .scene("Three flat Monitors side by side in one wall, switched on. Only the corner monitor shows its"
+                        + " power button. Drag the scene to see the back.", 110)
+                .place(14, 0, 14, () -> ComputingModule.MONITOR.get(), "facing=north,button=false,lit=true", "")
+                .place(15, 0, 14, () -> ComputingModule.MONITOR.get(), "facing=north,button=false,lit=true", "")
+                .place(16, 0, 14, () -> ComputingModule.MONITOR.get(), "facing=north,button=true,lit=true", "")
+                .balloon(1, GuideBlock.ScenePart.of(15, 0, 14), "A flat Monitor",
+                        "Monitors of one kind, touching and facing the same way, make one screen.")
+                .balloon(2, GuideBlock.ScenePart.of(16, 0, 14).box(13, 1, 15, 15, 3, 16), "Power button",
+                        "Click it to switch the whole screen on or off.")
                 .paragraph("Each monitor takes one video output of its computer. A video output is a connector on a"
                         + " graphics card, or on a board, and you can use it for one monitor only"
                         + " ([](jsc:graphics_cards)).")
@@ -159,6 +170,44 @@ final class PeripheralPages {
                         + " printers and Redstone Interfaces. It is not a data cable, and it carries no network. A"
                         + " device placed"
                         + " right against its computer needs no cable at all.")
+                .scene("A Personal Computer with its devices on a Peripheral Cable: two speakers, a Hub, a Floppy"
+                        + " Drive, a CD Drive and a Printer. Drag the scene to see the back.", 130)
+                .place(9, 0, 11, () -> ComputingModule.PERSONAL_COMPUTER.get(), "facing=south", "")
+                .place(10, 0, 11, () -> CoreCables.BLOCK.get(), "",
+                        "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,4144,0,0,0,0,0]}")
+                .place(11, 0, 11, () -> CoreCables.BLOCK.get(), "",
+                        "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,2104,0,0,0,0,0]}")
+                .place(12, 0, 11, () -> CoreCables.BLOCK.get(), "",
+                        "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,10296,0,0,0,0,0]}")
+                .place(13, 0, 11, () -> ComputingModule.STANDARD_HUB.get(), "", "{LinkedOwner:2473901207552L}")
+                .place(14, 0, 11, () -> CoreCables.BLOCK.get(), "",
+                        "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,6200,0,0,0,0,0]}")
+                .place(15, 0, 11, () -> CoreCables.BLOCK.get(), "",
+                        "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,2072,0,0,0,0,0]}")
+                .place(11, 0, 12, () -> ComputingModule.SPEAKER.get(), "facing=south,lit=true",
+                        "{LinkedOwner:2473901207552L,Powered:1b}")
+                .place(12, 0, 12, () -> ComputingModule.SPEAKER.get(), "facing=south,lit=true",
+                        "{LinkedOwner:2473901207552L,Powered:1b}")
+                .place(13, 0, 12, () -> ComputingModule.FLOPPY_DRIVE.get(), "facing=south,loaded=true",
+                        "{LinkedOwner:2473901207552L,MediaSlot:{Size:1,Items:[{Slot:0,id:\"jsc:floppy_disk\","
+                                + "count:1}]}}")
+                .place(14, 0, 12, () -> ComputingModule.CD_DRIVE.get(), "facing=south,loaded=true",
+                        "{LinkedOwner:2473901207552L,TrayOpen:1b,MediaSlot:{Size:1,Items:[{Slot:0,"
+                                + "id:\"jsc:cd_rom\",count:1}]}}")
+                .place(15, 0, 12, () -> ComputingModule.PRINTER.get(), "facing=south",
+                        "{LinkedOwner:2473901207552L}")
+                .view(-35, 25, 1.35F)
+                .balloon(1, GuideBlock.ScenePart.of(9, 0, 11), "The computer")
+                .balloon(2, GuideBlock.ScenePart.of(10, 0, 11), "The Peripheral Cable",
+                        "It joins the computer to its devices and carries no network.")
+                .balloon(3, GuideBlock.ScenePart.of(11, 0, 12), "A speaker",
+                        "Join speakers to the computer's own cable, before the Hub: they do not pass through a Hub.")
+                .balloon(4, GuideBlock.ScenePart.of(13, 0, 11), "The Hub",
+                        "It takes one port of the computer and offers more ports of its own.")
+                .balloon(5, GuideBlock.ScenePart.of(13, 0, 12), "A Floppy Drive")
+                .balloon(6, GuideBlock.ScenePart.of(14, 0, 12), "A CD Drive",
+                        "Press the eject button beside a drive to bring its tray out.")
+                .balloon(7, GuideBlock.ScenePart.of(15, 0, 12), "The Printer")
                 .paragraph("Each era has its own peripheral cable, and each one reaches a fixed number of cables from"
                         + " its computer. A device further away than that is not seen. A port takes the cable of its"
                         + " own era and of every earlier era, never a newer one.")
@@ -288,6 +337,32 @@ final class PeripheralPages {
                         + " computer. You join it to a computer like any device ([](jsc:peripheral_cables)), and it"
                         + " takes a cable of any era. It has three bays for disks, and a USB port for one flash"
                         + " drive.")
+                .scene("A Dock Station joined to a Personal Computer, with a disk in each of its three bays and a USB"
+                        + " flash drive in its port. Drag the scene to see the back.", 120)
+                .place(12, 0, 14, () -> ComputingModule.PERSONAL_COMPUTER.get(), "facing=south", "")
+                .place(13, 0, 14, () -> CoreCables.BLOCK.get(), "",
+                        "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,4144,0,0,0,0,0]}")
+                .place(14, 0, 14, () -> CoreCables.BLOCK.get(), "",
+                        "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,48,0,0,0,0,0]}")
+                .place(15, 0, 14, () -> CoreCables.BLOCK.get(), "",
+                        "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,2072,0,0,0,0,0]}")
+                .place(15, 0, 15, () -> ComputingModule.DOCK_STATION.get(), "facing=south,loaded=true",
+                        "{LinkedOwner:3298534940672L,MediaSlot:{Size:1,Items:[{Slot:0,"
+                                + "id:\"jsc:usb_flash_drive\",count:1}]},Bays:{Size:3,Items:["
+                                + "{Slot:0,id:\"jsc:disk_hdd_500g\",count:1},"
+                                + "{Slot:1,id:\"jsc:disk_ssd_500g\",count:1},"
+                                + "{Slot:2,id:\"jsc:disk_nvme_500g\",count:1}]}}")
+                .view(-35, 25, 1.35F)
+                .balloon(1, GuideBlock.ScenePart.of(15, 0, 15).box(5, 10, 15, 14, 14, 16), "The 3.5\" bay",
+                        "It takes a hard disk.")
+                .balloon(2, GuideBlock.ScenePart.of(15, 0, 15).box(5, 6, 15, 14, 9, 16), "The 2.5\" bay",
+                        "It takes a solid-state drive.")
+                .balloon(3, GuideBlock.ScenePart.of(15, 0, 15).box(5, 2, 15, 14, 5, 16), "The M.2 tray",
+                        "It takes a Non-Volatile Memory Express (NVMe) disk.")
+                .balloon(4, GuideBlock.ScenePart.of(15, 0, 15).box(2, 7, 15, 4, 9, 16), "The USB port",
+                        "It takes one USB flash drive.")
+                .balloon(5, GuideBlock.ScenePart.of(15, 0, 14), "The Peripheral Cable")
+                .balloon(6, GuideBlock.ScenePart.of(12, 0, 14), "The computer")
                 .define("Bay", "A tray of the Dock Station that takes one disk of one size.")
                 .table("The bays and the port", "Place", "Takes", "Shown on the Dock")
                 .row(GuideCell.words("Bay"), GuideCell.words("A hard disk"), GuideCell.words("3.5\" BAY"))
@@ -484,6 +559,24 @@ final class PeripheralPages {
                         + " A computer"
                         + " reaches the interface through a peripheral cable, as it reaches its other devices"
                         + " ([](jsc:peripheral_cables)).")
+                .scene("A Redstone Interface, its lens toward a redstone lamp that it lights, cabled to its computer."
+                        + " Drag the scene to see the back.", 110)
+                .place(14, 0, 10, () -> ComputingModule.PERSONAL_COMPUTER.get(), "facing=south", "")
+                .place(13, 0, 10, () -> CoreCables.BLOCK.get(), "",
+                        "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,8240,0,0,0,0,0]}")
+                .place(12, 0, 10, () -> CoreCables.BLOCK.get(), "",
+                        "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,2088,0,0,0,0,0]}")
+                .place(12, 0, 11, () -> ComputingModule.STANDARD_REDSTONE_INTERFACE.get(), "facing=south",
+                        "{Emits:1b,Strength:15,LinkedOwner:3848290738176L}")
+                .place(12, 0, 12, "minecraft:redstone_lamp", "lit=true", "")
+                .balloon(1, GuideBlock.ScenePart.of(12, 0, 11).box(5, 1, 15, 11, 7, 16), "The lens",
+                        "It reads or emits the redstone signal at the face it looks at.")
+                .balloon(2, GuideBlock.ScenePart.of(12, 0, 11), "The Redstone Interface")
+                .balloon(3, GuideBlock.ScenePart.of(12, 0, 12), "A redstone lamp",
+                        "It lights while the interface emits a signal.")
+                .balloon(4, GuideBlock.ScenePart.of(12, 0, 10), "The Peripheral Cable",
+                        "It plugs into the back of the interface.")
+                .balloon(5, GuideBlock.ScenePart.of(14, 0, 10), "The computer")
                 .define("Lens", "The face of the block that reads or emits a signal. It is the face you look at when"
                         + " you place the block.")
                 .paragraph("Place it the way you place an observer. Its lens points toward what you look at. Its back,"

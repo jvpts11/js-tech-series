@@ -9,6 +9,8 @@ package dev.jstech.computers.guide;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.NetworkGatewayBlock;
+import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.ModGuide;
@@ -175,6 +177,25 @@ final class OtherModsPages {
                 .paragraph("The Gateway is placed facing you. Its front joins the ComputerCraft side, and its back"
                         + " has the socket for a [Peripheral Cable](jsc:peripheral_cables). Every computer takes that"
                         + " cable, and a cable of a later era does not fit this socket.")
+                .scene("A Network Gateway cabled to a Personal Computer, with a ComputerCraft computer against its"
+                        + " front. The ComputerCraft computer shows only when ComputerCraft is installed. Drag the"
+                        + " scene to see the back.", 120)
+                .place(13, 0, 13, () -> ComputingModule.PERSONAL_COMPUTER.get(), "facing=south", "")
+                .place(14, 0, 13, () -> CoreCables.BLOCK.get(), "",
+                        "{Wires:[{cable:\"jsc:vintage_peripheral_cable\"}],Links:[I;0,0,0,4144,0,0,0,0,0]}")
+                .place(15, 0, 13, () -> CoreCables.BLOCK.get(), "",
+                        "{Wires:[{cable:\"jsc:vintage_peripheral_cable\"}],Links:[I;0,0,0,24,0,0,0,0,0]}")
+                .place(15, 0, 14, () -> CoreCables.BLOCK.get(), "",
+                        "{Wires:[{cable:\"jsc:vintage_peripheral_cable\"}],Links:[I;0,0,0,2060,0,0,0,0,0]}")
+                .place(15, 0, 15, () -> ComputingModule.NETWORK_GATEWAY.get(), "facing=south,lit=true",
+                        "{LinkedOwner:3573412843520L,LinkLength:3}")
+                .place(15, 0, 16, "computercraft:computer_normal", "facing=north", "")
+                .view(-75, 25, 1.3F)
+                .balloon(1, GuideBlock.ScenePart.of(15, 0, 15), "The Network Gateway",
+                        "Its front joins ComputerCraft and its back takes the cable to your computer.")
+                .balloon(2, GuideBlock.ScenePart.of(15, 0, 16), "A ComputerCraft computer")
+                .balloon(3, GuideBlock.ScenePart.of(15, 0, 14), "The Peripheral Cable")
+                .balloon(4, GuideBlock.ScenePart.of(13, 0, 13), "The host")
                 .define("Wired network", "The cables and wired modems that ComputerCraft computers use to reach"
                         + " each other and the devices around them.")
                 .subheading("Linking to a host")

@@ -9,6 +9,8 @@ package dev.jstech.computers.guide;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.part.ComputingParts;
+import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.ModGuide;
@@ -19,6 +21,17 @@ import dev.jstech.core.guide.ModGuide;
  * set them.
  */
 final class MovingItemsPages {
+
+    /*
+     * The cables of the buses scene. Lane 0 carries the access line; bit 5 is the east face and bit 4 the west
+     * face. A bus sits on the up face (face 1), which its cable does not cross.
+     */
+    private static final String BUS_RUN =
+            "{Wires:[{cable:\"jsc:gigabit_cable\"}],Links:[I;48,0,0,0,0,0,0,0,0]}";
+    private static final String BUS_END_IMPORT = "{Wires:[{cable:\"jsc:gigabit_cable\"}],Links:[I;32,0,0,0,0,0,0,0,0],"
+            + "Parts:[{Face:1b,Type:\"jsc:import_bus\",Data:{}}]}";
+    private static final String BUS_END_EXPORT = "{Wires:[{cable:\"jsc:gigabit_cable\"}],Links:[I;16,0,0,0,0,0,0,0,0],"
+            + "Parts:[{Face:1b,Type:\"jsc:export_bus\",Data:{}}]}";
 
     private MovingItemsPages() {
     }
@@ -39,6 +52,25 @@ final class MovingItemsPages {
                         || ComputingParts.isExport(kind) || ComputingParts.isExternal(kind)))
                 .paragraph("Buses are thin parts you put on the face of a data cable, against a chest or a"
                         + " machine, so the network can reach it without you.")
+                .scene("An Import Bus on one cable face pulls items out of a chest, and an Export Bus on another"
+                        + " face fills a furnace. The cable between them joins both to the network. Drag it to look"
+                        + " at the buses from the side.", 120)
+                .place(1, 0, 1, () -> CoreCables.BLOCK.get(), "", BUS_END_IMPORT)
+                .place(2, 0, 1, () -> CoreCables.BLOCK.get(), "", BUS_RUN)
+                .place(3, 0, 1, () -> CoreCables.BLOCK.get(), "", BUS_RUN)
+                .place(4, 0, 1, () -> CoreCables.BLOCK.get(), "", BUS_RUN)
+                .place(5, 0, 1, () -> CoreCables.BLOCK.get(), "", BUS_END_EXPORT)
+                .place(1, 1, 1, "minecraft:chest", "facing=south", "")
+                .place(5, 1, 1, "minecraft:furnace", "facing=south,lit=false", "")
+                .view(-35, 30, 1.35F)
+                .balloon(1, GuideBlock.ScenePart.of(1, 0, 1).box(2, 11, 2, 14, 16, 14), "The Import Bus",
+                        "It takes items from the chest above it and puts them into the network.")
+                .balloon(2, GuideBlock.ScenePart.of(5, 0, 1).box(2, 11, 2, 14, 16, 14), "The Export Bus",
+                        "It takes items from the network and puts them into the furnace above it.")
+                .balloon(3, GuideBlock.ScenePart.of(1, 1, 1), "The chest")
+                .balloon(4, GuideBlock.ScenePart.of(5, 1, 1), "The furnace")
+                .balloon(5, GuideBlock.ScenePart.of(3, 0, 1), "The data cable",
+                        "It carries the buses' work to the network.")
                 .define("Bus", "A thin part on one face of a data cable that moves items between the network and"
                         + " the block it touches.")
                 .paragraph("Every move a bus makes is an Operation ([](jsc:what_operations_are)) that the network's"

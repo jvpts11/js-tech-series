@@ -174,6 +174,71 @@
       "text": "jsc.guide.pattern_encoders.text4"
     },
     {
+      "type": "scene",
+      "balloons": [
+        {
+          "number": 1,
+          "part": {
+            "x": 1,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.pattern_encoders.balloon1"
+        },
+        {
+          "detail": "jsc.guide.pattern_encoders.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              2,
+              11,
+              12,
+              12,
+              13,
+              16
+            ],
+            "x": 1,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.pattern_encoders.balloon2"
+        },
+        {
+          "number": 3,
+          "part": {
+            "box": [
+              12,
+              9,
+              15,
+              14,
+              11,
+              16
+            ],
+            "x": 1,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.pattern_encoders.balloon3"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{Media:{Size:1,Items:[{Slot:0,id:\"jsc:dvd_rw\",count:1}]},TrayOpen:1b}",
+          "state": "jsc:pattern_encoder[facing=south]",
+          "x": 1,
+          "y": 0,
+          "z": 1
+        }
+      ],
+      "caption": "jsc.guide.pattern_encoders.figure1",
+      "height": 110,
+      "view": {
+        "pitch": 20.0,
+        "yaw": -25.0,
+        "zoom": 1.2
+      }
+    },
+    {
       "type": "text",
       "text": "jsc.guide.pattern_encoders.text5"
     },

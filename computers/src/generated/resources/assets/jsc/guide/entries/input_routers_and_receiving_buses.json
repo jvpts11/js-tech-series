@@ -71,6 +71,106 @@
       "text": "jsc.guide.input_routers_and_receiving_buses.text5"
     },
     {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.input_routers_and_receiving_buses.balloon1_detail",
+          "number": 1,
+          "part": {
+            "box": [
+              6,
+              2,
+              2,
+              16,
+              14,
+              14
+            ],
+            "x": 0,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.input_routers_and_receiving_buses.balloon1"
+        },
+        {
+          "detail": "jsc.guide.input_routers_and_receiving_buses.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              0,
+              2,
+              2,
+              10,
+              14,
+              14
+            ],
+            "x": 2,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.input_routers_and_receiving_buses.balloon2"
+        },
+        {
+          "number": 3,
+          "part": {
+            "x": 1,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.input_routers_and_receiving_buses.balloon3"
+        },
+        {
+          "number": 4,
+          "part": {
+            "x": 0,
+            "y": 0,
+            "z": 2
+          },
+          "text": "jsc.guide.input_routers_and_receiving_buses.balloon4"
+        }
+      ],
+      "blocks": [
+        {
+          "state": "minecraft:furnace[facing=south]",
+          "x": 1,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:crafting_cable\"}],Links:[I;0,0,0,0,0,8,0,0,0],Parts:[{Face:5b,Type:\"jsc:crafting_input_router\",Data:{}}]}",
+          "state": "jscore:cable",
+          "x": 0,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:crafting_cable\"}],Links:[I;0,0,0,0,0,4,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 0,
+          "y": 0,
+          "z": 2
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:crafting_cable\"}],Links:[I;0,0,0,0,0,8,0,0,0],Parts:[{Face:4b,Type:\"jsc:receiving_bus\",Data:{}}]}",
+          "state": "jscore:cable",
+          "x": 2,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:crafting_cable\"}],Links:[I;0,0,0,0,0,4,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 2,
+          "y": 0,
+          "z": 2
+        }
+      ],
+      "caption": "jsc.guide.input_routers_and_receiving_buses.figure1",
+      "height": 110,
+      "view": {
+        "zoom": 1.2
+      }
+    },
+    {
       "type": "text",
       "text": "jsc.guide.input_routers_and_receiving_buses.text6"
     },

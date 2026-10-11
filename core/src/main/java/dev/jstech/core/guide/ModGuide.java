@@ -729,6 +729,19 @@ public final class ModGuide {
             return this;
         }
 
+        /**
+         * A block of another mod in the last scene, named by its id ({@code computercraft:computer_normal}), so that
+         * declaring it needs nothing of that mod. Where that mod is not installed the place stays empty, and the
+         * scene's legend still says what stands there.
+         */
+        public EntryBuilder place(final int x, final int y, final int z, final String blockId, final String properties,
+                                  final String data) {
+            final SceneDraft draft = this.sceneDraft();
+            draft.blocks.add(() -> new GuideBlock.SceneBlock(x, y, z,
+                    properties.isEmpty() ? blockId : blockId + "[" + properties + "]", data));
+            return this;
+        }
+
         /** How the last scene is first seen, and what Reset goes back to: turned, tilted, and how near. */
         public EntryBuilder view(final float yaw, final float pitch, final float zoom) {
             this.sceneDraft().view = new GuideBlock.SceneView(yaw, pitch, zoom);

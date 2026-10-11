@@ -66,6 +66,12 @@ class HardcodedTextTest {
             "planOptional", "scene", "balloon");
 
     /**
+     * The names a manual's entry builder is kept under when part of an entry is declared in a method of its own, as a
+     * scene of many blocks is: a declaration made on one is a declaration still.
+     */
+    private static final Set<String> ENTRY_BUILDERS = Set.of("entry", "page");
+
+    /**
      * What a manual prints exactly as it is written, in every language: a listing's code and a session's prompts,
      * what was typed and what the system answered.
      */
@@ -342,7 +348,8 @@ class HardcodedTextTest {
                     || ("TextKey".equals(this.receiver) && "of".equals(this.name))
                     || (this.constructor && "TextKey".equals(this.name))
                     // A declaration's name or description, chained on it: the English the language file is made from.
-                    || (this.name != null && DECLARATIONS.contains(this.name) && this.receiver == null)
+                    || (this.name != null && DECLARATIONS.contains(this.name)
+                            && (this.receiver == null || ENTRY_BUILDERS.contains(this.receiver)))
                     || (this.name != null && VERBATIM.contains(this.name) && this.receiver == null)
                     || ("GuideCell".equals(this.receiver) && CELLS.contains(this.name))
                     || ("this".equals(this.receiver) && ADVANCEMENT_DECLARATIONS.contains(this.name))

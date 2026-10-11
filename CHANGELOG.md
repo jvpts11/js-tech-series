@@ -225,6 +225,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   IQL is in Learning IQL, and every member of the Sigma library and every error of its compiler is in the Book of
   Sigma. Every page speaks to its reader, says what its numbers count, and a word used before its own page leads
   there. In English and Brazilian Portuguese.
+- Twenty-one scenes in the Guide to Operations, each beside the page it shows, with numbered balloons: the first
+  computer and its monitor, the front of a case and a case open with every part in its seat, a running Mainframe with
+  its service panel off, a Server Rack, a supercomputer, a datacenter, a Cluster Management Computer and its racks,
+  monitors joined into one screen, devices on a hub, the Dock Station, a first network, routers and fibre, failover,
+  storage in a rack, buses at a chest and a furnace, the whole autocrafting line, the Pattern Encoder, an Input Router
+  and a Receiving Bus, a Redstone Interface lighting a lamp, and the Network Gateway beside a ComputerCraft computer.
+- A scene is framed round its blocks wherever they stand, is drawn shorter when a page cannot hold it with its
+  caption, draws its machines as a client sees them (lamps lit, parts in their seats), and can show a block of another
+  mod, which stays out of the scene when that mod is not installed. A cable's plugs are chosen from the world the
+  cable is drawn in, so a cable in a scene ends in the plug of the device beside it there.
 - The computers' help programs read the manuals' new parts: a table of several columns as columns of text, set out
   row by row on a screen too narrow for it; listings and sessions as their lines; keys by their names; scenes as their
   captions and the list of their balloons. A command whose page a manual prints shows that page at `man`, at `HELP`

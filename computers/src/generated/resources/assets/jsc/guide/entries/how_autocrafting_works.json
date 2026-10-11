@@ -23,6 +23,162 @@
       "text": "jsc.guide.how_autocrafting_works.text3"
     },
     {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.how_autocrafting_works.balloon1_detail",
+          "number": 1,
+          "part": {
+            "x": 0,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.how_autocrafting_works.balloon1"
+        },
+        {
+          "number": 2,
+          "part": {
+            "x": 2,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.how_autocrafting_works.balloon2"
+        },
+        {
+          "detail": "jsc.guide.how_autocrafting_works.balloon3_detail",
+          "number": 3,
+          "part": {
+            "box": [
+              6,
+              1,
+              1,
+              16,
+              15,
+              15
+            ],
+            "x": 3,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.how_autocrafting_works.balloon3"
+        },
+        {
+          "detail": "jsc.guide.how_autocrafting_works.balloon4_detail",
+          "number": 4,
+          "part": {
+            "box": [
+              1,
+              1,
+              6,
+              15,
+              15,
+              16
+            ],
+            "x": 4,
+            "y": 0,
+            "z": 0
+          },
+          "text": "jsc.guide.how_autocrafting_works.balloon4"
+        },
+        {
+          "detail": "jsc.guide.how_autocrafting_works.balloon5_detail",
+          "number": 5,
+          "part": {
+            "box": [
+              1,
+              1,
+              0,
+              15,
+              15,
+              10
+            ],
+            "x": 4,
+            "y": 0,
+            "z": 2
+          },
+          "text": "jsc.guide.how_autocrafting_works.balloon5"
+        },
+        {
+          "number": 6,
+          "part": {
+            "x": 4,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.how_autocrafting_works.balloon6"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{Hardware:{Size:15,Items:[{Slot:0,id:\"jsc:motherboard_atx_standard_1155\",count:1},{Slot:1,id:\"jsc:cpu_integra_celer_g530\",count:1},{Slot:2,id:\"jsc:ram_ddr3_8192\",count:1},{Slot:3,id:\"jsc:ram_ddr3_8192\",count:1},{Slot:6,id:\"jsc:crafting_card_pcie3\",count:1},{Slot:10,id:\"jsc:psu_850g\",count:1},{Slot:11,id:\"jsc:disk_ssd_500g\",count:1}]}}",
+          "state": "jsc:crafting_computer[facing=south]",
+          "x": 0,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:crafting_cable\"}],Links:[I;0,0,0,0,0,4144,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 1,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:crafting_cable\"}],Links:[I;0,0,0,0,0,48,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 2,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:crafting_cable\"}],Links:[I;0,0,0,0,0,28,0,0,0],Parts:[{Face:5b,Type:\"jsc:crafting_interface\",Data:{}}]}",
+          "state": "jscore:cable",
+          "x": 3,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:crafting_cable\"}],Links:[I;0,0,0,0,0,40,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:crafting_cable\"}],Links:[I;0,0,0,0,0,36,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 3,
+          "y": 0,
+          "z": 2
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:crafting_cable\"}],Links:[I;0,0,0,0,0,16,0,0,0],Parts:[{Face:3b,Type:\"jsc:crafting_input_router\",Data:{}}]}",
+          "state": "jscore:cable",
+          "x": 4,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:crafting_cable\"}],Links:[I;0,0,0,0,0,16,0,0,0],Parts:[{Face:2b,Type:\"jsc:receiving_bus\",Data:{}}]}",
+          "state": "jscore:cable",
+          "x": 4,
+          "y": 0,
+          "z": 2
+        },
+        {
+          "state": "minecraft:furnace[facing=south]",
+          "x": 4,
+          "y": 0,
+          "z": 1
+        }
+      ],
+      "caption": "jsc.guide.how_autocrafting_works.figure1",
+      "height": 130,
+      "view": {
+        "zoom": 1.35
+      }
+    },
+    {
       "type": "define",
       "definition": "jsc.guide.how_autocrafting_works.definition3",
       "term": "jsc.guide.how_autocrafting_works.term3"

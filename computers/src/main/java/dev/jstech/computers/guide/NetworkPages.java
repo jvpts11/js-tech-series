@@ -15,7 +15,9 @@ import dev.jstech.computers.block.RepeaterBlock;
 import dev.jstech.computers.block.RouterBlock;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.program.cli.man.CommandGuidePages;
+import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.grid.GridKind;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.ModGuide;
@@ -25,6 +27,21 @@ import dev.jstech.core.guide.ModGuide;
  * running it (identity, failover, the Network Manager, the Mirror, services), reaching other machines, and MC-NET.
  */
 final class NetworkPages {
+
+    /*
+     * What a scene's Mainframe tells a renderer it is doing: running, its build valid and joined to a network, which
+     * lights its annunciator lamps. The saved parts of a machine are left out since the closed cabinet shows none.
+     */
+    private static final String MAINFRAME_UP = "{VisualFlags:7}";
+    /* The wire lanes of the two data lines a scene draws: the access line top left, the backbone top middle. */
+    private static final int ACCESS_LANE = 0;
+    private static final int BACKBONE_LANE = 1;
+    /* The faces of a cable block as its links count them, and the bit that marks a device plugged in on a face. */
+    private static final int NORTH = 1 << 2;
+    private static final int SOUTH = 1 << 3;
+    private static final int WEST = 1 << 4;
+    private static final int EAST = 1 << 5;
+    private static final int PLUGGED = 8;
 
     private NetworkPages() {
     }
@@ -102,6 +119,27 @@ final class NetworkPages {
                         ComputingModule.STANDARD_ROUTER, () -> ComputingModule.FIBRE_CABLE,
                         () -> ComputingModule.GIGABIT_CABLE, ComputingModule.PERSONAL_COMPUTER)
                 .paragraph("Here is the smallest network that does something useful.")
+                .scene("A Mainframe, a router, data cables and a Personal Computer: the smallest network. Drag it to"
+                        + " see the back.", 120)
+                .place(1, 0, 1, ComputingModule.MAINFRAME, "facing=south,optical=true", MAINFRAME_UP)
+                .place(3, 0, 1, CoreCables.BLOCK, "",
+                        wire("fibre_cable", BACKBONE_LANE, WEST | EAST, WEST))
+                .place(4, 0, 1, CoreCables.BLOCK, "",
+                        wire("fibre_cable", BACKBONE_LANE, WEST | EAST, EAST))
+                .place(5, 0, 1, ComputingModule.STANDARD_ROUTER)
+                .place(6, 0, 1, CoreCables.BLOCK, "",
+                        wire("gigabit_cable", ACCESS_LANE, WEST | SOUTH, WEST | SOUTH))
+                .place(6, 0, 2, ComputingModule.PERSONAL_COMPUTER, "facing=south", "")
+                .balloon(1, GuideBlock.ScenePart.of(1, 0, 1), "The Mainframe",
+                        "It runs the network. Join the backbone cable to any side of it.")
+                .balloon(2, GuideBlock.ScenePart.of(3, 0, 1), "The backbone cable",
+                        "Run it from the router to the Mainframe.")
+                .balloon(3, GuideBlock.ScenePart.of(5, 0, 1), "The router",
+                        "Join the access cable and the backbone cable to it.")
+                .balloon(4, GuideBlock.ScenePart.of(6, 0, 1), "The access cable",
+                        "Run it from the computer to the router.")
+                .balloon(5, GuideBlock.ScenePart.of(6, 0, 2), "The Personal Computer",
+                        "Plug the access cable into its back.")
                 .steps("Build a Mainframe and give it its parts: an MTX motherboard, a power supply, processors and"
                                 + " memory ([](jsc:mainframes)).",
                         "Build a Server Rack and put servers with disks in its bays ([](jsc:server_racks)).",
@@ -242,6 +280,35 @@ final class NetworkPages {
                         + " counting its range again, so the run can go on past its first range. A repeater takes every"
                         + " line of its era and of every earlier one, except the long distance line. It carries each"
                         + " line on its own and never joins one line to another; that is a router's work.")
+                .scene("Routers, a repeater and optical fibre carrying a network far. The fibre runs straight, so the"
+                        + " Optical Router turns it. Drag it to see it from the other side.", 120)
+                .place(0, 0, 0, ComputingModule.STANDARD_ROUTER)
+                .place(1, 0, 0, CoreCables.BLOCK, "",
+                        wire("fibre_cable", BACKBONE_LANE, WEST | EAST, WEST))
+                .place(2, 0, 0, CoreCables.BLOCK, "",
+                        wire("fibre_cable", BACKBONE_LANE, WEST | EAST, EAST))
+                .place(3, 0, 0, ComputingModule.STANDARD_REPEATER)
+                .place(4, 0, 0, CoreCables.BLOCK, "",
+                        wire("fibre_cable", BACKBONE_LANE, WEST | EAST, WEST))
+                .place(5, 0, 0, CoreCables.BLOCK, "",
+                        wire("fibre_cable", BACKBONE_LANE, WEST | EAST, EAST))
+                .place(6, 0, 0, ComputingModule.OPTICAL_ROUTER)
+                .place(6, 0, 1, CoreCables.BLOCK, "",
+                        wire("fibre_cable", BACKBONE_LANE, NORTH | SOUTH, NORTH))
+                .place(6, 0, 2, CoreCables.BLOCK, "",
+                        wire("fibre_cable", BACKBONE_LANE, NORTH | SOUTH, SOUTH))
+                .place(6, 0, 3, ComputingModule.STANDARD_ROUTER)
+                .view(-35, 25, 1.35F)
+                .balloon(1, GuideBlock.ScenePart.of(0, 0, 0), "The Standard Router",
+                        "It joins the access line to the backbone.")
+                .balloon(2, GuideBlock.ScenePart.of(1, 0, 0), "The Fibre Optic Cable",
+                        "It carries the backbone far, but only straight.")
+                .balloon(3, GuideBlock.ScenePart.of(3, 0, 0), "The Standard Repeater",
+                        "Lay it in a long run to renew the range of the cable.")
+                .balloon(4, GuideBlock.ScenePart.of(6, 0, 0), "The Optical Router",
+                        "Turn and branch the fibre here.")
+                .balloon(5, GuideBlock.ScenePart.of(6, 0, 3), "The router at the far end",
+                        "The access cables of the far computers join it.")
                 .paragraph("Hubs are not data blocks. A hub belongs to the peripheral line: it takes one of its"
                         + " computer's device ports and offers ports of its own, so one computer can reach more"
                         + " devices. A hub does not carry the network ([](jsc:peripheral_cables)).")
@@ -304,6 +371,24 @@ final class NetworkPages {
         guide.page("failover", section).titled("Failover").icon(ComputingModule.MAINFRAME)
                 .paragraph("A Mainframe can be a failover member. A failover member does not run the network while its"
                         + " owner is there. It waits, powered and ready, and takes over when the owner is gone.")
+                .scene("Two Mainframes on one network: one runs it and the other stands by to take over. Drag it to see"
+                        + " them from behind.", 110)
+                .place(1, 0, 1, ComputingModule.MAINFRAME, "facing=south,optical=true", MAINFRAME_UP)
+                .place(3, 0, 1, CoreCables.BLOCK, "",
+                        wire("fibre_cable", BACKBONE_LANE, WEST | EAST, WEST))
+                .place(4, 0, 1, CoreCables.BLOCK, "",
+                        wire("fibre_cable", BACKBONE_LANE, WEST | EAST, 0))
+                .place(5, 0, 1, CoreCables.BLOCK, "",
+                        wire("fibre_cable", BACKBONE_LANE, WEST | EAST, 0))
+                .place(6, 0, 1, CoreCables.BLOCK, "",
+                        wire("fibre_cable", BACKBONE_LANE, WEST | EAST, EAST))
+                .place(8, 0, 1, ComputingModule.MAINFRAME, "facing=south,optical=true", MAINFRAME_UP)
+                .balloon(1, GuideBlock.ScenePart.of(1, 0, 1), "The Mainframe that runs the network",
+                        "Its screen reads ONLINE.")
+                .balloon(2, GuideBlock.ScenePart.of(4, 0, 1), "The cable of the segment",
+                        "Wire both Mainframes to the same segment.")
+                .balloon(3, GuideBlock.ScenePart.of(8, 0, 1), "The standby Mainframe",
+                        "Turn on its FAILOVER switch. Its screen reads STANDBY.")
                 .paragraph("Turning failover on removes the network this Mainframe owned, instead of leaving it"
                         + " orphaned. A machine that is about to"
                         + " back somebody else's network cannot keep one of its own, or the two would be in conflict"
@@ -693,5 +778,18 @@ final class NetworkPages {
                 .command(CommandGuidePages.id(Platform.MC_NET, "sgpack"))
                 .seeAlso("jsc:interactor_screen", "jsc:remote_control")
                 .register();
+    }
+
+    /*
+     * What a cable block of a scene holds: one wire of the named cable in its lane, the faces it crosses, and the
+     * faces where it plugs into a device. A scene runs no server to work these out, so each block says them itself,
+     * and a plug always comes with the crossing of its face.
+     */
+    private static String wire(final String cable, final int lane, final int crossed, final int plugged) {
+        final StringBuilder links = new StringBuilder();
+        for (int each = 0; each < 9; each++) {
+            links.append(each == 0 ? "" : ",").append(each == lane ? crossed | plugged << PLUGGED : 0);
+        }
+        return "{Wires:[{cable:\"jsc:" + cable + "\"}],Links:[I;" + links + "]}";
     }
 }

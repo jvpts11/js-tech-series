@@ -10,6 +10,7 @@ package dev.jstech.tests.clienttest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.CablePlugs;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.multipart.ModelLayout;
@@ -91,7 +92,8 @@ public final class PeripheralCableClientTests {
                 || !(ctx.mc().level.getBlockEntity(ctx.abs(relative)) instanceof CableBlockEntity cable)) {
             return null;
         }
-        final ModelLayout layout = cable.getModelData().get(ModelLayout.PROPERTY);
+        final ModelLayout layout = CablePlugs.placed(cable.getModelData(), ctx.mc().level, cable.getBlockPos())
+                .get(ModelLayout.PROPERTY);
         if (layout == null) {
             return null;
         }

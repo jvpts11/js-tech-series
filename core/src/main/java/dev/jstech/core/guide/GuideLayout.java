@@ -1036,8 +1036,10 @@ public final class GuideLayout {
         this.figures++;
         final String label = this.text.text(GuideTexts.FIGURE.key(), this.chapterNumber + "-" + this.figures);
         final List<String> caption = this.captionLines(label, this.text.text(scene.captionKey()));
-        final int frame = scene.height() + SCENE_STRIP;
-        this.ensure(frame + CAPTION_GAP + this.captionHeight(label, caption));
+        final int captionRoom = CAPTION_GAP + this.captionHeight(label, caption);
+        // A scene taller than a fresh page holds with its caption is drawn shorter, so nothing runs past the foot.
+        final int frame = Math.min(scene.height() + SCENE_STRIP, this.bottom() - this.top - captionRoom);
+        this.ensure(frame + captionRoom);
         this.entryScenes++;
         final String id = this.currentEntry + "#" + this.entryScenes;
         this.place(new GuidePiece.Scene(this.x(), this.y, this.width, frame, id, scene));

@@ -34,9 +34,9 @@ public final class SceneProjection {
     /** The projection of that scene, seen that way, on a frame of that size in pixels. */
     public SceneProjection(final GuideBlock.Scene scene, final GuideBlock.SceneView view, final int width,
                            final int height) {
-        this.middleX = scene.width() / 2.0;
+        this.middleX = scene.fromX() + scene.width() / 2.0;
         this.middleY = scene.tall() / 2.0;
-        this.middleZ = scene.depth() / 2.0;
+        this.middleZ = scene.fromZ() + scene.depth() / 2.0;
         this.sinYaw = Math.sin(Math.toRadians(view.yaw()));
         this.cosYaw = Math.cos(Math.toRadians(view.yaw()));
         this.sinPitch = Math.sin(Math.toRadians(view.pitch()));

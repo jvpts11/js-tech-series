@@ -5,6 +5,104 @@
       "text": "jsc.guide.redstone_interfaces.text1"
     },
     {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.redstone_interfaces.balloon1_detail",
+          "number": 1,
+          "part": {
+            "box": [
+              5,
+              1,
+              15,
+              11,
+              7,
+              16
+            ],
+            "x": 12,
+            "y": 0,
+            "z": 11
+          },
+          "text": "jsc.guide.redstone_interfaces.balloon1"
+        },
+        {
+          "number": 2,
+          "part": {
+            "x": 12,
+            "y": 0,
+            "z": 11
+          },
+          "text": "jsc.guide.redstone_interfaces.balloon2"
+        },
+        {
+          "detail": "jsc.guide.redstone_interfaces.balloon3_detail",
+          "number": 3,
+          "part": {
+            "x": 12,
+            "y": 0,
+            "z": 12
+          },
+          "text": "jsc.guide.redstone_interfaces.balloon3"
+        },
+        {
+          "detail": "jsc.guide.redstone_interfaces.balloon4_detail",
+          "number": 4,
+          "part": {
+            "x": 12,
+            "y": 0,
+            "z": 10
+          },
+          "text": "jsc.guide.redstone_interfaces.balloon4"
+        },
+        {
+          "number": 5,
+          "part": {
+            "x": 14,
+            "y": 0,
+            "z": 10
+          },
+          "text": "jsc.guide.redstone_interfaces.balloon5"
+        }
+      ],
+      "blocks": [
+        {
+          "state": "jsc:personal_computer[facing=south]",
+          "x": 14,
+          "y": 0,
+          "z": 10
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,8240,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 13,
+          "y": 0,
+          "z": 10
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,2088,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 12,
+          "y": 0,
+          "z": 10
+        },
+        {
+          "data": "{Emits:1b,Strength:15,LinkedOwner:3848290738176L}",
+          "state": "jsc:standard_redstone_interface[facing=south]",
+          "x": 12,
+          "y": 0,
+          "z": 11
+        },
+        {
+          "state": "minecraft:redstone_lamp[lit=true]",
+          "x": 12,
+          "y": 0,
+          "z": 12
+        }
+      ],
+      "caption": "jsc.guide.redstone_interfaces.figure1",
+      "height": 110
+    },
+    {
       "type": "define",
       "definition": "jsc.guide.redstone_interfaces.definition1",
       "term": "jsc.guide.redstone_interfaces.term1"

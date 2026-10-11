@@ -5,6 +5,168 @@
       "text": "jsc.guide.peripheral_cables.text1"
     },
     {
+      "type": "scene",
+      "balloons": [
+        {
+          "number": 1,
+          "part": {
+            "x": 9,
+            "y": 0,
+            "z": 11
+          },
+          "text": "jsc.guide.peripheral_cables.balloon1"
+        },
+        {
+          "detail": "jsc.guide.peripheral_cables.balloon2_detail",
+          "number": 2,
+          "part": {
+            "x": 10,
+            "y": 0,
+            "z": 11
+          },
+          "text": "jsc.guide.peripheral_cables.balloon2"
+        },
+        {
+          "detail": "jsc.guide.peripheral_cables.balloon3_detail",
+          "number": 3,
+          "part": {
+            "x": 11,
+            "y": 0,
+            "z": 12
+          },
+          "text": "jsc.guide.peripheral_cables.balloon3"
+        },
+        {
+          "detail": "jsc.guide.peripheral_cables.balloon4_detail",
+          "number": 4,
+          "part": {
+            "x": 13,
+            "y": 0,
+            "z": 11
+          },
+          "text": "jsc.guide.peripheral_cables.balloon4"
+        },
+        {
+          "number": 5,
+          "part": {
+            "x": 13,
+            "y": 0,
+            "z": 12
+          },
+          "text": "jsc.guide.peripheral_cables.balloon5"
+        },
+        {
+          "detail": "jsc.guide.peripheral_cables.balloon6_detail",
+          "number": 6,
+          "part": {
+            "x": 14,
+            "y": 0,
+            "z": 12
+          },
+          "text": "jsc.guide.peripheral_cables.balloon6"
+        },
+        {
+          "number": 7,
+          "part": {
+            "x": 15,
+            "y": 0,
+            "z": 12
+          },
+          "text": "jsc.guide.peripheral_cables.balloon7"
+        }
+      ],
+      "blocks": [
+        {
+          "state": "jsc:personal_computer[facing=south]",
+          "x": 9,
+          "y": 0,
+          "z": 11
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,4144,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 10,
+          "y": 0,
+          "z": 11
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,2104,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 11,
+          "y": 0,
+          "z": 11
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,10296,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 12,
+          "y": 0,
+          "z": 11
+        },
+        {
+          "data": "{LinkedOwner:2473901207552L}",
+          "state": "jsc:standard_hub",
+          "x": 13,
+          "y": 0,
+          "z": 11
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,6200,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 14,
+          "y": 0,
+          "z": 11
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:peripheral_cable\"}],Links:[I;0,0,0,2072,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 15,
+          "y": 0,
+          "z": 11
+        },
+        {
+          "data": "{LinkedOwner:2473901207552L,Powered:1b}",
+          "state": "jsc:speaker[facing=south,lit=true]",
+          "x": 11,
+          "y": 0,
+          "z": 12
+        },
+        {
+          "data": "{LinkedOwner:2473901207552L,Powered:1b}",
+          "state": "jsc:speaker[facing=south,lit=true]",
+          "x": 12,
+          "y": 0,
+          "z": 12
+        },
+        {
+          "data": "{LinkedOwner:2473901207552L,MediaSlot:{Size:1,Items:[{Slot:0,id:\"jsc:floppy_disk\",count:1}]}}",
+          "state": "jsc:floppy_drive[facing=south,loaded=true]",
+          "x": 13,
+          "y": 0,
+          "z": 12
+        },
+        {
+          "data": "{LinkedOwner:2473901207552L,TrayOpen:1b,MediaSlot:{Size:1,Items:[{Slot:0,id:\"jsc:cd_rom\",count:1}]}}",
+          "state": "jsc:cd_drive[facing=south,loaded=true]",
+          "x": 14,
+          "y": 0,
+          "z": 12
+        },
+        {
+          "data": "{LinkedOwner:2473901207552L}",
+          "state": "jsc:printer[facing=south]",
+          "x": 15,
+          "y": 0,
+          "z": 12
+        }
+      ],
+      "caption": "jsc.guide.peripheral_cables.figure1",
+      "height": 130,
+      "view": {
+        "zoom": 1.35
+      }
+    },
+    {
       "type": "text",
       "text": "jsc.guide.peripheral_cables.text2"
     },

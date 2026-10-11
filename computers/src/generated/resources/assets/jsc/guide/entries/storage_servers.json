@@ -77,6 +77,134 @@
       "text": "jsc.guide.storage_servers.text3"
     },
     {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.storage_servers.balloon1_detail",
+          "number": 1,
+          "part": {
+            "x": 16,
+            "y": 0,
+            "z": 16
+          },
+          "text": "jsc.guide.storage_servers.balloon1"
+        },
+        {
+          "detail": "jsc.guide.storage_servers.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              0,
+              4,
+              14,
+              10,
+              14,
+              16
+            ],
+            "x": 16,
+            "y": 2,
+            "z": 16
+          },
+          "text": "jsc.guide.storage_servers.balloon2"
+        },
+        {
+          "detail": "jsc.guide.storage_servers.balloon3_detail",
+          "number": 3,
+          "part": {
+            "box": [
+              6,
+              4,
+              14,
+              16,
+              14,
+              16
+            ],
+            "x": 15,
+            "y": 2,
+            "z": 16
+          },
+          "text": "jsc.guide.storage_servers.balloon3"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{Servers:{Size:8,Items:[{Slot:0,id:\"jsc:storage_server\",count:1}]},FrontSlots:{Size:40,Items:[{Slot:0,id:\"jsc:disk_hdd_4t\",count:1},{Slot:1,id:\"jsc:disk_hdd_4t\",count:1},{Slot:2,id:\"jsc:disk_hdd_4t\",count:1},{Slot:3,id:\"jsc:disk_hdd_4t\",count:1},{Slot:4,id:\"jsc:disk_hdd_4t\",count:1},{Slot:5,id:\"jsc:disk_hdd_4t\",count:1},{Slot:6,id:\"jsc:disk_hdd_4t\",count:1},{Slot:7,id:\"jsc:disk_hdd_4t\",count:1},{Slot:8,id:\"jsc:raid_controller\",count:1,components:{\"jsc:raid_mode\":\"raid5\",\"jsc:raid_members\":8}}]},BayPowerOff:0,ServicePanelOff:0b,ActiveChannel:0,DisplayEra:3,Units:[B;4b,0b,0b,0b,0b,0b,0b,0b]}",
+          "state": "jsc:server_rack[facing=south]",
+          "x": 16,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false]",
+          "x": 16,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true]",
+          "x": 15,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false]",
+          "x": 15,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true]",
+          "x": 16,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false]",
+          "x": 16,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=true]",
+          "x": 15,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=false,front=false]",
+          "x": 15,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false]",
+          "x": 16,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false]",
+          "x": 16,
+          "y": 2,
+          "z": 15
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false]",
+          "x": 15,
+          "y": 2,
+          "z": 16
+        },
+        {
+          "state": "jsc:server_rack_part[facing=south,top=true,front=false]",
+          "x": 15,
+          "y": 2,
+          "z": 15
+        }
+      ],
+      "caption": "jsc.guide.storage_servers.figure1",
+      "height": 130
+    },
+    {
       "type": "text",
       "text": "jsc.guide.storage_servers.text4"
     },

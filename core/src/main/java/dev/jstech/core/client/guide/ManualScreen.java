@@ -391,7 +391,7 @@ public final class ManualScreen extends Screen {
         return this.onScene(id, placed -> reset
                 ? this.middleOf(this.scenes.resetButton(placed.scene(), placed.x(), placed.y()))
                 : new int[] {this.left + placed.x() + placed.scene().width() / 2,
-                        this.top + placed.y() + placed.scene().scene().height() / 2});
+                        this.top + placed.y() + (placed.scene().height() - GuideLayout.SCENE_STRIP) / 2});
     }
 
     /**

@@ -12,6 +12,7 @@ import dev.jstech.core.api.client.GpuSurface;
 import dev.jstech.core.client.audio.AudioEngine;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.guide.GuideBlock;
+import dev.jstech.core.guide.GuideLayout;
 import dev.jstech.core.guide.GuidePiece;
 import dev.jstech.core.guide.GuideSounds;
 import dev.jstech.core.guide.GuideStyle;
@@ -110,7 +111,7 @@ final class ManualScenes {
         final State state = this.state(piece);
         final GuideBlock.Scene scene = piece.scene();
         final int width = piece.width() - 2;
-        final int height = scene.height() - 1;
+        final int height = pictureHeight(piece) - 1;
         g.fill(x, y, x + piece.width(), y + piece.height(), this.colour.applyAsInt(GuideStyle.SHADE));
         Draw.outline(g, x, y, piece.width(), piece.height(), this.colour.applyAsInt(GuideStyle.RULE));
         this.picture(g, state, x + 1, y + 1, width, height);
@@ -139,7 +140,7 @@ final class ManualScenes {
             this.balloon(g, x + 1 + placed.x(), y + 1 + placed.y(), placed.balloon().number(),
                     placed.balloon().number() == lit);
         }
-        this.strip(g, state, piece, x, y + scene.height(), mx, my);
+        this.strip(g, state, piece, x, y + pictureHeight(piece), mx, my);
         if (pointed == null) {
             return List.of();
         }
@@ -177,7 +178,7 @@ final class ManualScenes {
         }
         final State state = this.state(piece);
         final GuideBlock.Scene scene = piece.scene();
-        final int stripY = y + scene.height();
+        final int stripY = y + pictureHeight(piece);
         final ManualScreenLayout.Rect reset = this.reset(piece, x, stripY);
         if (reset.contains(mx, my)) {
             this.pressed = reset;
@@ -228,7 +229,7 @@ final class ManualScenes {
     /** Brings the scene under the pointer nearer or sends it farther, a turn of the wheel at a time. */
     boolean scroll(final GuidePiece.Scene piece, final int x, final int y, final double mx, final double my,
                    final double turned) {
-        if (turned == 0.0 || !new ManualScreenLayout.Rect(x, y, piece.width(), piece.scene().height())
+        if (turned == 0.0 || !new ManualScreenLayout.Rect(x, y, piece.width(), pictureHeight(piece))
                 .contains(mx, my)) {
             return false;
         }
@@ -241,7 +242,7 @@ final class ManualScenes {
     /** Whether the pointer is on one of a scene's buttons, which take a click. */
     boolean clickable(final GuidePiece.Scene piece, final int x, final int y, final double mx, final double my) {
         final GuideBlock.Scene scene = piece.scene();
-        final ManualScreenLayout.Rect reset = this.reset(piece, x, y + scene.height());
+        final ManualScreenLayout.Rect reset = this.reset(piece, x, y + pictureHeight(piece));
         if (reset.contains(mx, my)) {
             return true;
         }
@@ -254,12 +255,12 @@ final class ManualScenes {
 
     /** The Reset button of a scene whose frame stands at that place. */
     ManualScreenLayout.Rect resetButton(final GuidePiece.Scene piece, final int x, final int y) {
-        return this.reset(piece, x, y + piece.scene().height());
+        return this.reset(piece, x, y + pictureHeight(piece));
     }
 
     /** The button that shows a layer more of a scene drawn at that place, or the one that hides its top layer. */
     ManualScreenLayout.Rect layerButton(final GuidePiece.Scene piece, final int x, final int y, final boolean more) {
-        final ManualScreenLayout.Rect shown = this.more(this.reset(piece, x, y + piece.scene().height()));
+        final ManualScreenLayout.Rect shown = this.more(this.reset(piece, x, y + pictureHeight(piece)));
         return more ? shown : this.fewer(piece.scene(), shown);
     }
 
@@ -488,6 +489,14 @@ final class ManualScenes {
             cut = cut.substring(0, cut.length() - 1);
         }
         return cut.isEmpty() ? "" : cut.stripTrailing() + ELLIPSIS;
+    }
+
+    /**
+     * How tall a scene's picture is: the frame its page gave it, which is shorter than the scene asked when a page
+     * holds no more, less the strip of its controls under it.
+     */
+    private static int pictureHeight(final GuidePiece.Scene piece) {
+        return piece.height() - GuideLayout.SCENE_STRIP;
     }
 
     /** How a reader has left one scene, and its picture. */

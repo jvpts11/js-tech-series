@@ -448,9 +448,22 @@ public sealed interface GuideBlock {
             }
         }
 
-        /** How many blocks it spans across, from the grid's corner to its farthest block. */
+        /**
+         * How many blocks it spans across, from its westmost block to its eastmost: a scene is framed round its blocks
+         * wherever in the grid they stand.
+         */
         public int width() {
-            return this.blocks.stream().mapToInt(SceneBlock::x).max().orElse(0) + 1;
+            return this.blocks.stream().mapToInt(SceneBlock::x).max().orElse(0) - this.fromX() + 1;
+        }
+
+        /** The grid line its westmost block stands on, where its frame starts across. */
+        public int fromX() {
+            return this.blocks.stream().mapToInt(SceneBlock::x).min().orElse(0);
+        }
+
+        /** The grid line its northmost block stands on, where its frame starts back. */
+        public int fromZ() {
+            return this.blocks.stream().mapToInt(SceneBlock::z).min().orElse(0);
         }
 
         /** How many blocks it stands tall: its layers, when it is peeled. */
@@ -458,9 +471,9 @@ public sealed interface GuideBlock {
             return this.blocks.stream().mapToInt(SceneBlock::y).max().orElse(0) + 1;
         }
 
-        /** How many blocks deep it goes. */
+        /** How many blocks deep it goes, from its northmost block to its southmost. */
         public int depth() {
-            return this.blocks.stream().mapToInt(SceneBlock::z).max().orElse(0) + 1;
+            return this.blocks.stream().mapToInt(SceneBlock::z).max().orElse(0) - this.fromZ() + 1;
         }
 
         /** The block standing there, if one does. */

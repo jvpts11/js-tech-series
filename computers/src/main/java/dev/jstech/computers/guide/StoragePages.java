@@ -9,6 +9,7 @@ package dev.jstech.computers.guide;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.ModGuide;
@@ -21,6 +22,22 @@ import net.minecraft.world.item.Items;
  * rest, so no subject is written twice.
  */
 final class StoragePages {
+
+    /*
+     * The rack of the storage scene. The storage server sits in the top rack units (slot 0 holds the chassis, the
+     * second unit it spans stays empty), so its front slots are 0 to 7 for the eight drives and 8 and 9 for the
+     * gadgets. Units is what the renderer draws on a client (code 4 is the 2U storage chassis); the rest is what the
+     * rack saves.
+     */
+    private static final String STORAGE_RACK_DATA = "{Servers:{Size:8,Items:[{Slot:0,id:\"jsc:storage_server\","
+            + "count:1}]},FrontSlots:{Size:40,Items:["
+            + "{Slot:0,id:\"jsc:disk_hdd_4t\",count:1},{Slot:1,id:\"jsc:disk_hdd_4t\",count:1},"
+            + "{Slot:2,id:\"jsc:disk_hdd_4t\",count:1},{Slot:3,id:\"jsc:disk_hdd_4t\",count:1},"
+            + "{Slot:4,id:\"jsc:disk_hdd_4t\",count:1},{Slot:5,id:\"jsc:disk_hdd_4t\",count:1},"
+            + "{Slot:6,id:\"jsc:disk_hdd_4t\",count:1},{Slot:7,id:\"jsc:disk_hdd_4t\",count:1},"
+            + "{Slot:8,id:\"jsc:raid_controller\",count:1,components:"
+            + "{\"jsc:raid_mode\":\"raid5\",\"jsc:raid_members\":8}}]},BayPowerOff:0,ServicePanelOff:0b,"
+            + "ActiveChannel:0,DisplayEra:3,Units:[B;4b,0b,0b,0b,0b,0b,0b,0b]}";
 
     private StoragePages() {
     }
@@ -60,6 +77,38 @@ final class StoragePages {
                         + " disk for the network. You put a RAID Controller in a gadget bay, and you choose the"
                         + " mode on the STORAGE page of the server's Setup ([](jsc:setup_utility)). The modes and"
                         + " their numbers are in [](jsc:raid_arrays).")
+                .scene("A Server Rack with a storage server in its top rack units: eight disks in the drive bays,"
+                        + " and a RAID Controller in a gadget bay set as a RAID 5 array. Drag it to see the rack"
+                        + " from the side.", 130)
+                .place(16, 0, 16, () -> ComputingModule.SERVER_RACK.get(), "facing=south", STORAGE_RACK_DATA)
+                .place(16, 0, 15, () -> ComputingModule.SERVER_RACK_PART.get(),
+                        "facing=south,top=false,front=false", "")
+                .place(15, 0, 16, () -> ComputingModule.SERVER_RACK_PART.get(),
+                        "facing=south,top=false,front=true", "")
+                .place(15, 0, 15, () -> ComputingModule.SERVER_RACK_PART.get(),
+                        "facing=south,top=false,front=false", "")
+                .place(16, 1, 16, () -> ComputingModule.SERVER_RACK_PART.get(),
+                        "facing=south,top=false,front=true", "")
+                .place(16, 1, 15, () -> ComputingModule.SERVER_RACK_PART.get(),
+                        "facing=south,top=false,front=false", "")
+                .place(15, 1, 16, () -> ComputingModule.SERVER_RACK_PART.get(),
+                        "facing=south,top=false,front=true", "")
+                .place(15, 1, 15, () -> ComputingModule.SERVER_RACK_PART.get(),
+                        "facing=south,top=false,front=false", "")
+                .place(16, 2, 16, () -> ComputingModule.SERVER_RACK_PART.get(),
+                        "facing=south,top=true,front=false", "")
+                .place(16, 2, 15, () -> ComputingModule.SERVER_RACK_PART.get(),
+                        "facing=south,top=true,front=false", "")
+                .place(15, 2, 16, () -> ComputingModule.SERVER_RACK_PART.get(),
+                        "facing=south,top=true,front=false", "")
+                .place(15, 2, 15, () -> ComputingModule.SERVER_RACK_PART.get(),
+                        "facing=south,top=true,front=false", "")
+                .balloon(1, GuideBlock.ScenePart.of(16, 0, 16), "The Server Rack",
+                        "Right-click its front to open the bays.")
+                .balloon(2, GuideBlock.ScenePart.of(16, 2, 16).box(0, 4, 14, 10, 14, 16), "The drive bays",
+                        "The storage server has 8 of them.")
+                .balloon(3, GuideBlock.ScenePart.of(15, 2, 16).box(6, 4, 14, 16, 14, 16), "The disks",
+                        "Pull one out and push another in while the server runs.")
                 .paragraph("The network counts the room of every disk in every server of a rack. A server with no"
                         + " disks adds nothing to the network's room.")
                 .ifSomethingGoesWrong(

@@ -5,6 +5,168 @@
       "text": "jsc.guide.assembly_screen.text1"
     },
     {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.assembly_screen.balloon1_detail",
+          "number": 1,
+          "part": {
+            "box": [
+              1,
+              5,
+              0,
+              13,
+              15,
+              3
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon1"
+        },
+        {
+          "detail": "jsc.guide.assembly_screen.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              4,
+              10,
+              2,
+              9,
+              15,
+              7
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon2"
+        },
+        {
+          "detail": "jsc.guide.assembly_screen.balloon3_detail",
+          "number": 3,
+          "part": {
+            "box": [
+              9,
+              9,
+              1,
+              13,
+              15,
+              4
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon3"
+        },
+        {
+          "number": 4,
+          "part": {
+            "box": [
+              1,
+              7,
+              1,
+              11,
+              10,
+              5
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon4"
+        },
+        {
+          "number": 5,
+          "part": {
+            "box": [
+              1,
+              0,
+              1,
+              13,
+              4,
+              9
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon5"
+        },
+        {
+          "number": 6,
+          "part": {
+            "box": [
+              9,
+              0,
+              6,
+              14,
+              2,
+              11
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon6"
+        },
+        {
+          "detail": "jsc.guide.assembly_screen.balloon7_detail",
+          "number": 7,
+          "part": {
+            "box": [
+              8,
+              6,
+              1,
+              12,
+              8,
+              3
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon7"
+        },
+        {
+          "detail": "jsc.guide.assembly_screen.balloon8_detail",
+          "number": 8,
+          "part": {
+            "box": [
+              7,
+              12,
+              3,
+              16,
+              15,
+              13
+            ],
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.assembly_screen.balloon8"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{Hardware:{Size:15,Items:[{Slot:0,id:\"jsc:motherboard_atx_standard_lga1150\",count:1},{Slot:1,id:\"jsc:cpu_integra_centro_c5_4690k\",count:1},{Slot:2,id:\"jsc:ram_ddr3_8192\",count:1},{Slot:3,id:\"jsc:ram_ddr3_8192\",count:1},{Slot:6,id:\"jsc:gpu_vertex_gtx_970\",count:1},{Slot:10,id:\"jsc:psu_650g\",count:1},{Slot:11,id:\"jsc:disk_hdd_4t\",count:1},{Slot:12,id:\"jsc:disk_nvme_500g\",count:1},{Slot:13,id:\"jsc:internal_dvd_drive\",count:1}]},SidePanelOff:1b}",
+          "state": "jsc:personal_computer[facing=east]",
+          "x": 15,
+          "y": 0,
+          "z": 15
+        }
+      ],
+      "caption": "jsc.guide.assembly_screen.figure1",
+      "height": 130,
+      "view": {
+        "pitch": 20.0,
+        "yaw": -20.0,
+        "zoom": 1.2
+      }
+    },
+    {
       "type": "text",
       "text": "jsc.guide.assembly_screen.text2"
     },

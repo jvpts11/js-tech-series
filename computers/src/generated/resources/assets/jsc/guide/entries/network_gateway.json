@@ -9,6 +9,96 @@
       "text": "jsc.guide.network_gateway.text2"
     },
     {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.network_gateway.balloon1_detail",
+          "number": 1,
+          "part": {
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          "text": "jsc.guide.network_gateway.balloon1"
+        },
+        {
+          "number": 2,
+          "part": {
+            "x": 15,
+            "y": 0,
+            "z": 16
+          },
+          "text": "jsc.guide.network_gateway.balloon2"
+        },
+        {
+          "number": 3,
+          "part": {
+            "x": 15,
+            "y": 0,
+            "z": 14
+          },
+          "text": "jsc.guide.network_gateway.balloon3"
+        },
+        {
+          "number": 4,
+          "part": {
+            "x": 13,
+            "y": 0,
+            "z": 13
+          },
+          "text": "jsc.guide.network_gateway.balloon4"
+        }
+      ],
+      "blocks": [
+        {
+          "state": "jsc:personal_computer[facing=south]",
+          "x": 13,
+          "y": 0,
+          "z": 13
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:vintage_peripheral_cable\"}],Links:[I;0,0,0,4144,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 14,
+          "y": 0,
+          "z": 13
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:vintage_peripheral_cable\"}],Links:[I;0,0,0,24,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 15,
+          "y": 0,
+          "z": 13
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:vintage_peripheral_cable\"}],Links:[I;0,0,0,2060,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 15,
+          "y": 0,
+          "z": 14
+        },
+        {
+          "data": "{LinkedOwner:3573412843520L,LinkLength:3}",
+          "state": "jsc:network_gateway[facing=south,lit=true]",
+          "x": 15,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "computercraft:computer_normal[facing=north]",
+          "x": 15,
+          "y": 0,
+          "z": 16
+        }
+      ],
+      "caption": "jsc.guide.network_gateway.figure1",
+      "height": 120,
+      "view": {
+        "yaw": -75.0,
+        "zoom": 1.3
+      }
+    },
+    {
       "type": "define",
       "definition": "jsc.guide.network_gateway.definition1",
       "term": "jsc.guide.network_gateway.term1"

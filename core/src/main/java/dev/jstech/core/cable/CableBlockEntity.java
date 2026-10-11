@@ -26,7 +26,6 @@ import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.multipart.PlacedModel;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.NetworkSystem;
-import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -40,7 +39,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -424,16 +422,21 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         }
     }
 
-    /* The cable's model draws its wires, their plugs and its parts from this, into the world's mesh. */
+    /*
+     * The cable's model draws its wires, their plugs and its parts from this, into the world's mesh. Which plug each
+     * wire ends in is chosen by the model, from the world it is drawn in (CablePlugs).
+     */
     @Override
     public ModelData getModelData() {
-        final List<PlacedModel> placed = new ArrayList<>(this.parts.layout().models());
+        final List<PlacedModel> parts = this.parts.layout().models();
         final List<Wire> wires = this.bundle.wires();
+        final List<CablePlugs.Socket> sockets = new ArrayList<>();
         for (final BundleShape.Plug plug : shape().plugs()) {
-            placed.add(plugModel(wires.get(plug.strand()).type(), plug));
+            sockets.add(socket(wires.get(plug.strand()).type(), plug));
         }
         return ModelData.builder()
-                .with(ModelLayout.PROPERTY, placed.isEmpty() ? ModelLayout.EMPTY : new ModelLayout(placed))
+                .with(ModelLayout.PROPERTY, parts.isEmpty() ? ModelLayout.EMPTY : new ModelLayout(parts))
+                .with(CablePlugs.PROPERTY, sockets.isEmpty() ? CablePlugs.NONE : new CablePlugs(sockets))
                 .with(CableDrawing.PROPERTY, drawing())
                 .build();
     }
@@ -632,23 +635,15 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
                 box.maxX() * PIXEL, box.maxY() * PIXEL, box.maxZ() * PIXEL);
     }
 
-    /*
-     * A wire's plug, turned to its face and moved to where the wire crosses it: the plug of the port it enters, a
-     * video plug at a screen, the cable's own anywhere else.
-     */
-    private PlacedModel plugModel(final CableType type, final BundleShape.Plug plug) {
+    /* Where a wire's plug goes: turned to its face and moved to where the wire crosses it. */
+    private static CablePlugs.Socket socket(final CableType type, final BundleShape.Plug plug) {
         final int axis = BundleShape.axis(plug.face());
         final float[] offset = new float[3];
         final int across = axis == 0 ? 2 : 0;
         final int up = axis == 1 ? 2 : 1;
         offset[across] = (float) plug.across();
         offset[up] = (float) plug.up();
-        final Direction face = Direction.from3DDataValue(plug.face());
-        final BlockPos beyond = this.worldPosition.relative(face);
-        final ResourceLocation model = this.level != null
-                && this.level.getBlockEntity(beyond) instanceof IPeripheralEndpoint peripheral
-                ? type.plug(peripheral.portKind()) : type.plug();
-        return new PlacedModel(model, face, offset[0], offset[1], offset[2]);
+        return new CablePlugs.Socket(type, Direction.from3DDataValue(plug.face()), offset[0], offset[1], offset[2]);
     }
 
     /**

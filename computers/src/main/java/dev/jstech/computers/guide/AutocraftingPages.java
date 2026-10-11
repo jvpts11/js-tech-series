@@ -11,15 +11,57 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.PatternEncoderBlock;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.item.CraftingCardItem;
+import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.ModGuide;
+import net.minecraft.world.level.block.Blocks;
 
 /**
  * Declares the autocrafting pages of the Guide to Operations: the flow of a craft, the cards and the patterns,
  * the programs that write and manage them, the machine line that runs a machine, and what to do when a craft fails.
  */
 final class AutocraftingPages {
+
+    /*
+     * The faces of a cable block as the game numbers them, which is how a part names the face it stands on.
+     */
+    private static final int NORTH_FACE = 2;
+    private static final int SOUTH_FACE = 3;
+    private static final int WEST_FACE = 4;
+    private static final int EAST_FACE = 5;
+
+    /*
+     * What a crafting cable crosses, one bit per face it leaves by (down 1, up 2, north 4, south 8, west 16, east 32).
+     * A cable that meets a device also carries that face shifted up eight bits, which makes its plug: 4096 is the
+     * west one. A face that holds a part is left out, since a part closes its face to wires.
+     */
+    private static final int NORTH_ONLY = 4;
+    private static final int SOUTH_ONLY = 8;
+    private static final int WEST_ONLY = 16;
+    private static final int NORTH_AND_EAST = 36;
+    private static final int SOUTH_AND_EAST = 40;
+    private static final int WEST_AND_EAST = 48;
+    private static final int WEST_NORTH_AND_SOUTH = 28;
+    private static final int PLUGGED_WEST_AND_EAST = 16 + 4096 + 32;
+
+    /*
+     * A standard Crafting Computer with the parts a valid build needs. Slot 0 is the board, 1 the processor, 2 to 5 the
+     * memory, 6 to 9 the expansion cards, 10 the power supply and 11 and 12 the disks.
+     */
+    private static final String COMPUTER_DATA = "{Hardware:{Size:15,Items:["
+            + "{Slot:0,id:\"jsc:motherboard_atx_standard_1155\",count:1},"
+            + "{Slot:1,id:\"jsc:cpu_integra_celer_g530\",count:1},"
+            + "{Slot:2,id:\"jsc:ram_ddr3_8192\",count:1},"
+            + "{Slot:3,id:\"jsc:ram_ddr3_8192\",count:1},"
+            + "{Slot:6,id:\"jsc:crafting_card_pcie3\",count:1},"
+            + "{Slot:10,id:\"jsc:psu_850g\",count:1},"
+            + "{Slot:11,id:\"jsc:disk_ssd_500g\",count:1}]}}";
+
+    /* A standard encoder with a writable DVD in its bay and its tray held out. */
+    private static final String ENCODER_DATA =
+            "{Media:{Size:1,Items:[{Slot:0,id:\"jsc:dvd_rw\",count:1}]},TrayOpen:1b}";
 
     private AutocraftingPages() {
     }
@@ -42,6 +84,20 @@ final class AutocraftingPages {
         whenACraftGoesWrong(guide, section);
     }
 
+    /**
+     * The block entity data of a cable block holding one crafting wire: its links go in the crafting lane, which is the
+     * sixth of the nine, and a part on a face is written beside them. A scene runs no server, so a cable never works
+     * out its own links and must be told them.
+     */
+    private static String wire(final int links, final String parts) {
+        return "{Wires:[{cable:\"jsc:crafting_cable\"}],Links:[I;0,0,0,0,0," + links + ",0,0,0]"
+                + (parts.isEmpty() ? "" : ",Parts:[" + parts + "]") + "}";
+    }
+
+    private static String part(final int face, final String type) {
+        return "{Face:" + face + "b,Type:\"" + type + "\",Data:{}}";
+    }
+
     private static void howAutocraftingWorks(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("how_autocrafting_works", section).titled("How autocrafting works")
                 .icon(() -> ComputingModule.CRAFTING_CABLE)
@@ -62,7 +118,32 @@ final class AutocraftingPages {
                         + " Crafting Cable that joins it to the machines, and on that cable the parts that feed each"
                         + " machine. A Crafting Card in the computer is what lets it craft at all"
                         + " ([](jsc:crafting_cards)).")
-                .define("Crafting Cable", "The cable that joins a Crafting Computer to the machines it feeds, and"
+                .scene("The whole line: a Crafting Computer, the Crafting Cable, and a furnace with the parts that feed"
+                        + " it and take back what it makes. Drag it to see the back.", 130)
+                .place(0, 0, 1, () -> ComputingModule.CRAFTING_COMPUTER.get(), "facing=south", COMPUTER_DATA)
+                .place(1, 0, 1, () -> CoreCables.BLOCK.get(), "", wire(PLUGGED_WEST_AND_EAST, ""))
+                .place(2, 0, 1, () -> CoreCables.BLOCK.get(), "", wire(WEST_AND_EAST, ""))
+                .place(3, 0, 1, () -> CoreCables.BLOCK.get(), "",
+                        wire(WEST_NORTH_AND_SOUTH, part(EAST_FACE, "jsc:crafting_interface")))
+                .place(3, 0, 0, () -> CoreCables.BLOCK.get(), "", wire(SOUTH_AND_EAST, ""))
+                .place(3, 0, 2, () -> CoreCables.BLOCK.get(), "", wire(NORTH_AND_EAST, ""))
+                .place(4, 0, 0, () -> CoreCables.BLOCK.get(), "",
+                        wire(WEST_ONLY, part(SOUTH_FACE, "jsc:crafting_input_router")))
+                .place(4, 0, 2, () -> CoreCables.BLOCK.get(), "",
+                        wire(WEST_ONLY, part(NORTH_FACE, "jsc:receiving_bus")))
+                .place(4, 0, 1, () -> Blocks.FURNACE, "facing=south", "")
+                .view(-35, 25, 1.35F)
+                .balloon(1, GuideBlock.ScenePart.of(0, 0, 1), "The Crafting Computer",
+                        "It runs the crafts and holds the Crafting Card.")
+                .balloon(2, GuideBlock.ScenePart.of(2, 0, 1), "The Crafting Cable")
+                .balloon(3, GuideBlock.ScenePart.of(3, 0, 1).box(6, 1, 1, 16, 15, 15), "The Crafting Interface",
+                        "It holds the machine's patterns and feeds the machine.")
+                .balloon(4, GuideBlock.ScenePart.of(4, 0, 0).box(1, 1, 6, 15, 15, 16), "The Crafting Input Router",
+                        "Put one against each input face of a machine that has several.")
+                .balloon(5, GuideBlock.ScenePart.of(4, 0, 2).box(1, 1, 0, 15, 15, 10), "The Crafting Receiving Bus",
+                        "Put it against the machine's output.")
+                .balloon(6, GuideBlock.ScenePart.of(4, 0, 1), "The machine")
+                .define("Crafting Cable","The cable that joins a Crafting Computer to the machines it feeds, and"
                         + " carries the crafting parts on it.")
                 .define("Crafting Card", "A card that goes in an expansion slot of a Crafting Computer, and sets how"
                         + " many interfaces it drives and how many recipes it keeps.")
@@ -326,6 +407,14 @@ final class AutocraftingPages {
                         + " push the tray in with an empty hand. Nothing is burned while the tray is out, and the tray"
                         + " stays shut while a pattern is written. A floppy disk or a USB stick does not use the tray:"
                         + " it goes into its slot whatever the tray does.")
+                .scene("A Pattern Encoder with its tray out and a DVD-RW lying on it. Drag it to see the other"
+                        + " sides.", 110)
+                .place(1, 0, 1, () -> ComputingModule.PATTERN_ENCODER.get(), "facing=south", ENCODER_DATA)
+                .view(-25, 20, 1.2F)
+                .balloon(1, GuideBlock.ScenePart.of(1, 0, 1), "The Pattern Encoder")
+                .balloon(2, GuideBlock.ScenePart.of(1, 0, 1).box(2, 11, 12, 12, 13, 16), "The disc tray",
+                        "Press the eject button to bring it out or to take it in.")
+                .balloon(3, GuideBlock.ScenePart.of(1, 0, 1).box(12, 9, 15, 14, 11, 16), "The eject button")
                 .paragraph("A burn runs in three phases: seeking, writing and verifying. The display shows"
                         + " \"Seeking\", then \"Writing\" and the file's name, then \"Verifying\" and the name,"
                         + " and last \"Done:\" and the name.")
@@ -478,6 +567,22 @@ final class AutocraftingPages {
                         + " reads \"On the crafting cable, against a machine's output; takes back what its interface's"
                         + " jobs made\". It takes back what comes out of the machine and credits it to the craft that"
                         + " fed the machine.")
+                .scene("An Input Router and a Receiving Bus on the crafting cable, each against a face of a"
+                        + " furnace. Drag it to see them from behind.", 110)
+                .place(1, 0, 1, () -> Blocks.FURNACE, "facing=south", "")
+                .place(0, 0, 1, () -> CoreCables.BLOCK.get(), "",
+                        wire(SOUTH_ONLY, part(EAST_FACE, "jsc:crafting_input_router")))
+                .place(0, 0, 2, () -> CoreCables.BLOCK.get(), "", wire(NORTH_ONLY, ""))
+                .place(2, 0, 1, () -> CoreCables.BLOCK.get(), "",
+                        wire(SOUTH_ONLY, part(WEST_FACE, "jsc:receiving_bus")))
+                .place(2, 0, 2, () -> CoreCables.BLOCK.get(), "", wire(NORTH_ONLY, ""))
+                .view(-35, 25, 1.2F)
+                .balloon(1, GuideBlock.ScenePart.of(0, 0, 1).box(6, 2, 2, 16, 14, 14), "The Crafting Input Router",
+                        "It stands against one input face of the machine.")
+                .balloon(2, GuideBlock.ScenePart.of(2, 0, 1).box(0, 2, 2, 10, 14, 14), "The Crafting Receiving Bus",
+                        "It stands against the machine's output.")
+                .balloon(3, GuideBlock.ScenePart.of(1, 0, 1), "The machine")
+                .balloon(4, GuideBlock.ScenePart.of(0, 0, 2), "The Crafting Cable")
                 .paragraph("The bus ties itself to the Crafting Interface that feeds its machine, either against it or"
                         + " through the routers of its own cable. You can also tie it by hand to one interface, or to"
                         + " several. That is how an output that goes into a chest beside the machine is handled. By"

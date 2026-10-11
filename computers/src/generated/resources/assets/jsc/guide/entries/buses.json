@@ -5,6 +5,130 @@
       "text": "jsc.guide.buses.text1"
     },
     {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.buses.balloon1_detail",
+          "number": 1,
+          "part": {
+            "box": [
+              2,
+              11,
+              2,
+              14,
+              16,
+              14
+            ],
+            "x": 1,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.buses.balloon1"
+        },
+        {
+          "detail": "jsc.guide.buses.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              2,
+              11,
+              2,
+              14,
+              16,
+              14
+            ],
+            "x": 5,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.buses.balloon2"
+        },
+        {
+          "number": 3,
+          "part": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "text": "jsc.guide.buses.balloon3"
+        },
+        {
+          "number": 4,
+          "part": {
+            "x": 5,
+            "y": 1,
+            "z": 1
+          },
+          "text": "jsc.guide.buses.balloon4"
+        },
+        {
+          "detail": "jsc.guide.buses.balloon5_detail",
+          "number": 5,
+          "part": {
+            "x": 3,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.buses.balloon5"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{Wires:[{cable:\"jsc:gigabit_cable\"}],Links:[I;32,0,0,0,0,0,0,0,0],Parts:[{Face:1b,Type:\"jsc:import_bus\",Data:{}}]}",
+          "state": "jscore:cable",
+          "x": 1,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:gigabit_cable\"}],Links:[I;48,0,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 2,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:gigabit_cable\"}],Links:[I;48,0,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 3,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:gigabit_cable\"}],Links:[I;48,0,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 4,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:gigabit_cable\"}],Links:[I;16,0,0,0,0,0,0,0,0],Parts:[{Face:1b,Type:\"jsc:export_bus\",Data:{}}]}",
+          "state": "jscore:cable",
+          "x": 5,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "state": "minecraft:chest[facing=south]",
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        {
+          "state": "minecraft:furnace[facing=south,lit=false]",
+          "x": 5,
+          "y": 1,
+          "z": 1
+        }
+      ],
+      "caption": "jsc.guide.buses.figure1",
+      "height": 120,
+      "view": {
+        "pitch": 30.0,
+        "zoom": 1.35
+      }
+    },
+    {
       "type": "define",
       "definition": "jsc.guide.buses.definition1",
       "term": "jsc.guide.buses.term1"

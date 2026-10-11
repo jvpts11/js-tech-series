@@ -19,7 +19,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ColorResolver;
@@ -34,6 +36,7 @@ import net.minecraft.world.level.chunk.LightChunk;
 import net.minecraft.world.level.chunk.LightChunkGetter;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
+import net.neoforged.fml.ModList;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -168,6 +171,10 @@ final class SceneLevel implements BlockAndTintGetter {
 
     /** A scene block's state, as the game reads one written in a command; air for a block the game does not know. */
     private static BlockState stateOf(final GuideBlock.SceneBlock block) {
+        // A block of a mod that is not installed leaves its place empty, as the scene's author meant, unremarked.
+        if (!ModList.get().isLoaded(namespaceOf(block.state()))) {
+            return Blocks.AIR.defaultBlockState();
+        }
         try {
             return BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), block.state(), false)
                     .blockState();
@@ -177,14 +184,26 @@ final class SceneLevel implements BlockAndTintGetter {
         }
     }
 
-    /** Gives a block entity what the scene says it holds. */
+    /** The namespace of a block's state as written, the vanilla one when it names none. */
+    private static String namespaceOf(final String state) {
+        final int colon = state.indexOf(':');
+        final int bracket = state.indexOf('[');
+        return colon < 0 || bracket >= 0 && bracket < colon ? ResourceLocation.DEFAULT_NAMESPACE
+                : state.substring(0, colon);
+    }
+
+    /**
+     * Gives a block entity what the scene says it holds, read both as what the block keeps and as what a server sends
+     * a client about it, since many renderers draw from the second: which parts a cabinet shows, whether it runs.
+     */
     private void load(final BlockEntity entity, final GuideBlock.SceneBlock block) {
         if (block.data().isEmpty() || Minecraft.getInstance().level == null) {
             return;
         }
         try {
-            entity.loadWithComponents(TagParser.parseTag(block.data()),
-                    Minecraft.getInstance().level.registryAccess());
+            final CompoundTag data = TagParser.parseTag(block.data());
+            entity.loadWithComponents(data, Minecraft.getInstance().level.registryAccess());
+            entity.handleUpdateTag(data, Minecraft.getInstance().level.registryAccess());
         } catch (final CommandSyntaxException e) {
             LOGGER.warn("A manual's scene gives {} data that is no compound tag: {}", block.state(), e.getMessage());
         }

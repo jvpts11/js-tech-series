@@ -41,6 +41,7 @@ import net.minecraft.nbt.TagParser;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -238,8 +239,15 @@ public final class GuideGameTests {
         helper.succeed();
     }
 
-    /** Fails the test unless the game reads a scene block's state as a block it has, and its data as a tag. */
+    /**
+     * Fails the test unless the game reads a scene block's state as a block it has, and its data as a tag. A block of
+     * a mod that is not installed is the scene's to leave empty.
+     */
     private static void readable(final GameTestHelper helper, final String entry, final GuideBlock.SceneBlock placed) {
+        final int colon = placed.state().indexOf(':');
+        if (colon > 0 && !ModList.get().isLoaded(placed.state().substring(0, colon))) {
+            return;
+        }
         try {
             final BlockState state = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(),
                     placed.state(), false).blockState();

@@ -19,9 +19,14 @@ import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerCaseItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.core.cable.CoreCables;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.ModGuide;
+import java.util.List;
+import java.util.function.Supplier;
+import net.minecraft.world.level.block.Block;
 
 /**
  * The pages about the computers the network runs: the Personal Computer and the Crafting Computer, the Mainframe
@@ -29,6 +34,40 @@ import dev.jstech.core.guide.ModGuide;
  * machines, the supercomputers, and the datacenters with the way their load is balanced.
  */
 final class ComputerKindsPages {
+
+    /*
+     * The faces of a block as a cable's links count them, one bit for each; the bit of the face where a wire meets a
+     * device is set a second time, eight places higher, beside the bit of the face it crosses.
+     */
+    private static final int DOWN = 1;
+    private static final int UP = 2;
+    private static final int NORTH = 4;
+    private static final int SOUTH = 8;
+    private static final int WEST = 16;
+    private static final int EAST = 32;
+    private static final int PLUG_SHIFT = 8;
+    /** How many lanes a cable block keeps links for, and the lanes the backbone and the compute fabric run in. */
+    private static final int LANES = 9;
+    private static final int BACKBONE_LANE = 1;
+    private static final int FABRIC_LANE = 4;
+    /** The four horizontal facings in clockwise order, and the way each of them points along the grid. */
+    private static final List<String> FACINGS = List.of("north", "east", "south", "west");
+    private static final int[] FACING_X = {0, 1, 0, -1};
+    private static final int[] FACING_Z = {-1, 0, 1, 0};
+    private static final String BACKBONE_CABLE = "jsc:cx4_cable";
+    private static final String FABRIC_CABLE = "jsc:hpc_cable";
+
+    /*
+     * What a Mainframe cabinet draws from: which hardware slots hold a part (the board, two processors, four memory
+     * modules, two graphics cards, the power supply and two disks), no disk carrying a system, and a machine that is
+     * running, built right, on a network and with its service panel off so that its parts show.
+     */
+    private static final String MAINFRAME_DATA = "{VisualHardware:3695079,VisualSystems:0,VisualFlags:15}";
+    /** The rack units, from the top row down, of a rack with a server, a KVM switch, a storage server and the rest. */
+    private static final int[] MIXED_RACK = {1, 10, 0, 4, 0, 1, 12, 11};
+    private static final int[] PLAIN_RACK = {1, 1, 1, 1, 1, 1, 12, 11};
+    /** A supercomputer rack: four nodes of two rack units each. */
+    private static final int[] NODE_RACK = {6, 0, 6, 0, 6, 0, 6, 0};
 
     private ComputerKindsPages() {
     }
@@ -165,7 +204,8 @@ final class ComputerKindsPages {
     }
 
     private static void mainframes(final ModGuide guide, final ModGuide.SectionRef section) {
-        guide.page("mainframes", section).titled("Mainframes").icon(ComputingModule.MAINFRAME)
+        final ModGuide.EntryBuilder page = guide.page("mainframes", section).titled("Mainframes")
+                .icon(ComputingModule.MAINFRAME)
                 .coversAll(ComputersGuide.blocksOf(MainframeBlock.class))
                 .paragraph("Every network has exactly one Mainframe, and it is the network's control room. Only the"
                         + " Mainframe runs the Network Manager. Two Mainframes on one network are a conflict, so give"
@@ -219,8 +259,9 @@ final class ComputerKindsPages {
                 .paragraph("Its power button sits on the sill, the ledge at the bottom of the front, in the middle. A"
                         + " click on it switches the Mainframe on or off, whatever you hold. A click anywhere else on"
                         + " the cabinet opens its assembly screen. Sneak-click the cabinet to open or close the service"
-                        + " panel. Its processors, memory and cards are seen only through that opening.")
-                .paragraph("AUTO START keeps the Mainframe ready. With it on and a valid build, the Mainframe starts"
+                        + " panel. Its processors, memory and cards are seen only through that opening.");
+        mainframeScene(page);
+        page.paragraph("AUTO START keeps the Mainframe ready. With it on and a valid build, the Mainframe starts"
                         + " at once, as a cold start that runs its self-test. If a change breaks the build, the"
                         + " Mainframe turns off. When the build stands again, it turns on by itself.")
                 .paragraph("With the [FAILOVER](jsc:failover) switch off, the Mainframe is an owner: it takes the"
@@ -250,7 +291,7 @@ final class ComputerKindsPages {
     }
 
     private static void serverRacks(final ModGuide guide, final ModGuide.SectionRef section) {
-        guide.page("server_racks", section).titled("Server racks and servers")
+        final ModGuide.EntryBuilder page = guide.page("server_racks", section).titled("Server racks and servers")
                 .icon(ComputingModule.SERVER_RACK)
                 .coversAll(ComputersGuide.blocksOf(ServerRackBlock.class))
                 .coversAll(ComputersGuide.itemsOf(ServerItem.class, ServerCaseItem.class))
@@ -263,8 +304,9 @@ final class ComputerKindsPages {
                 .define("Server Rack", "A cabinet, two blocks wide, three tall and two deep, that holds machines in"
                         + " rows.")
                 .define("Rack unit (U)", "The height a machine takes in a rack, counted in units. Each cabinet has"
-                        + " eight.")
-                .paragraph("The Supercomputer Rack holds supercomputer nodes only, and comes in the Standard and the"
+                        + " eight.");
+        serverRackScene(page);
+        page.paragraph("The Supercomputer Rack holds supercomputer nodes only, and comes in the Standard and the"
                         + " Advanced ([](jsc:supercomputers)).")
                 .define("Supercomputer", "Many computers that work as one large machine, joined by high compute"
                         + " cable.")
@@ -495,14 +537,16 @@ final class ComputerKindsPages {
     }
 
     private static void clusterManagementComputers(final ModGuide guide, final ModGuide.SectionRef section) {
-        guide.page("cluster_management_computers", section).titled("Cluster Management Computers")
+        final ModGuide.EntryBuilder page = guide.page("cluster_management_computers", section)
+                .titled("Cluster Management Computers")
                 .icon(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER)
                 .coversAll(ComputersGuide.blocksOf(ClusterManagementComputerBlock.class))
                 .paragraph("When you have one rack, you walk up to each server. When you have ten, you will not want"
                         + " to. The Cluster Management Computer installs systems and programs on the machines of your"
                         + " racks, and switches their bays on and off, all from one desk.")
-                .define("Cluster", "A group of machines that one computer manages as one set.")
-                .paragraph("Build it as you would a Personal Computer ([](jsc:personal_computers)), and give it a"
+                .define("Cluster", "A group of machines that one computer manages as one set.");
+        clusterScene(page);
+        page.paragraph("Build it as you would a Personal Computer ([](jsc:personal_computers)), and give it a"
                         + " Cluster Interface Card. Without one, it is an ordinary computer"
                         + " ([](jsc:expansion_cards)). With one, it is the manager of its cluster: each card reaches a"
                         + " different set of machines, and installs on a set number of them at once.")
@@ -576,13 +620,14 @@ final class ComputerKindsPages {
     }
 
     private static void supercomputers(final ModGuide guide, final ModGuide.SectionRef section) {
-        guide.page("supercomputers", section).titled("Supercomputers")
+        final ModGuide.EntryBuilder page = guide.page("supercomputers", section).titled("Supercomputers")
                 .paragraph("A supercomputer is every Supercomputer Rack tied together by a fabric cable, meeting the"
                         + " network at one HBW Interface ([](jsc:hbw_interface)). The Standard and the Advanced have"
                         + " an interface of their own.")
                 .paragraph("The fabric cables are the InfiniBand Cable (Transition), the High Compute Cable (Standard)"
-                        + " and the OSFP Cable (Advanced).")
-                .paragraph("Each Supercomputer Rack holds Supercomputer Nodes, which are full computers. A node adds"
+                        + " and the OSFP Cable (Advanced).");
+        supercomputerScene(page);
+        page.paragraph("Each Supercomputer Rack holds Supercomputer Nodes, which are full computers. A node adds"
                         + " crafts only when it holds a Phi that fits its slot, is assembled, and has its bay on."
                         + " The Integra Phi co-processors come in four models.")
                 .define("Co-processor", "A card that adds extra processing to a node, such as the Integra Phi series.")
@@ -640,15 +685,16 @@ final class ComputerKindsPages {
     }
 
     private static void datacenters(final ModGuide guide, final ModGuide.SectionRef section) {
-        guide.page("datacenters", section).titled("Datacenters")
+        final ModGuide.EntryBuilder page = guide.page("datacenters", section).titled("Datacenters")
                 .paragraph("When you have many Server Racks, you group them into a datacenter. A Server Router does the"
                         + " grouping: it splits the racks into sections.")
                 .paragraph("A section is the racks that one output face of a Server Router reaches, without crossing"
                         + " back through the router. The face joining the router to the network is its uplink, and the"
                         + " router detects it. Up to five sections hang off one router, one for each other face.")
                 .define("Uplink", "The face of a Server Router that joins it to the network.")
-                .define("Datacenter section", "The Server Racks that one output face of a Server Router reaches.")
-                .paragraph("The label of a section shows its racks (R) and its servers (S). A section's default"
+                .define("Datacenter section", "The Server Racks that one output face of a Server Router reaches.");
+        datacenterScene(page);
+        page.paragraph("The label of a section shows its racks (R) and its servers (S). A section's default"
                         + " name is the router's name and its face.")
                 .paragraph("A Server Router has one budget for all its sections together. At its tier, T3, it manages 8"
                         + " Server Racks in all, counted section by section. Racks past the eighth are counted as"
@@ -709,5 +755,202 @@ final class ComputerKindsPages {
                         "Run the Load Balancer service on that server.")
                 .seeAlso("jsc:server_router", "jsc:programs")
                 .register();
+    }
+
+    private static void mainframeScene(final ModGuide.EntryBuilder entry) {
+        entry.scene("A Standard Mainframe, running, with its service panel off so that its parts show. Drag it to"
+                + " turn it.", 130);
+        entry.place(16, 0, 16, () -> ComputingModule.MAINFRAME.get(), "facing=south,optical=false", MAINFRAME_DATA);
+        /* The cabinet is drawn whole by its controller; its other eleven blocks only hold the places. */
+        for (int up = 0; up < 2; up++) {
+            for (int back = 0; back < 2; back++) {
+                for (int across = -1; across <= 1; across++) {
+                    if (up == 0 && back == 0 && across == 0) {
+                        continue;
+                    }
+                    entry.place(16 + across, up, 16 - back, () -> ComputingModule.MAINFRAME_PART.get(),
+                            "facing=south,core=" + (across == 0) + ",era=3,optical=false", "");
+                }
+            }
+        }
+        entry.balloon(1, GuideBlock.ScenePart.of(15, 1, 16).box(4, 6, 5, 16, 8, 11), "Processors",
+                "Their capacity adds up to the speed of the network.");
+        entry.balloon(2, GuideBlock.ScenePart.of(15, 1, 16).box(4, 1, 5, 15, 5, 11), "Memory",
+                "Its size sets the RAM buffer.");
+        entry.balloon(3, GuideBlock.ScenePart.of(15, 0, 16).box(4, 11, 5, 12, 16, 11), "Graphics cards",
+                "Each card runs one more queue.");
+        entry.balloon(4, GuideBlock.ScenePart.of(15, 0, 16).box(4, 6, 5, 11, 11, 11), "Power supply");
+        entry.balloon(5, GuideBlock.ScenePart.of(17, 0, 16).box(0, 7, 4, 12, 14, 11), "Disks");
+        entry.balloon(6, GuideBlock.ScenePart.of(16, 0, 16).box(7, 3, 14, 9, 6, 16), "Power button",
+                "Click it to switch the Mainframe on or off.");
+        entry.balloon(7, GuideBlock.ScenePart.of(17, 1, 16).box(0, 9, 14, 11, 11, 16), "Status lamps",
+                "They show that it runs, that it is on a network, and when it has a fault.");
+    }
+
+    private static void serverRackScene(final ModGuide.EntryBuilder entry) {
+        entry.scene("A Server Rack with its rack units filled: a server, a KVM Switch, a Storage Server, another"
+                + " server, a Cooling Unit and a Rack UPS. Drag it to turn it.", 130);
+        rackAt(entry, () -> ComputingModule.SERVER_RACK.get(), 16, 16, "south", false, rackData(false, MIXED_RACK));
+        entry.balloon(1, GuideBlock.ScenePart.of(15, 2, 16).box(6, 9, 14, 16, 14, 16), "Server",
+                "Click the front of the rack with a server in your hand to mount it.");
+        entry.balloon(2, GuideBlock.ScenePart.of(15, 2, 16).box(6, 4, 14, 16, 8, 16), "KVM Switch",
+                "It lets one monitor reach every machine in the rack.");
+        entry.balloon(3, GuideBlock.ScenePart.of(15, 1, 16).box(6, 4, 14, 16, 13, 16), "Storage Server",
+                "It takes two rack units, and its eight drive bays hold the disks.");
+        entry.balloon(4, GuideBlock.ScenePart.of(15, 0, 16).box(6, 8, 14, 16, 13, 16), "Cooling Unit",
+                "It adds 1,500 W to the heat the rack can carry.");
+        entry.balloon(5, GuideBlock.ScenePart.of(15, 0, 16).box(6, 3, 14, 16, 7, 16), "Rack UPS");
+    }
+
+    private static void supercomputerScene(final ModGuide.EntryBuilder entry) {
+        entry.scene("A supercomputer: two Supercomputer Racks of nodes, joined by High Compute Cable to the HBW"
+                + " Interface, which meets the network. Drag it to see the cables behind the racks.", 130);
+        final String nodes = rackData(true, NODE_RACK);
+        rackAt(entry, () -> ComputingModule.SUPERCOMPUTER_RACK.get(), 14, 16, "south", true, nodes);
+        rackAt(entry, () -> ComputingModule.SUPERCOMPUTER_RACK.get(), 11, 16, "south", true, nodes);
+        /*
+         * The fabric runs along the top of the racks' backs, where the first view can see it past the cabinets, and
+         * drops to the interface.
+         */
+        cableAt(entry, 10, 2, 14, FABRIC_CABLE, FABRIC_LANE, EAST | plugged(SOUTH));
+        cableAt(entry, 11, 2, 14, FABRIC_CABLE, FABRIC_LANE, WEST | EAST | plugged(SOUTH));
+        cableAt(entry, 12, 2, 14, FABRIC_CABLE, FABRIC_LANE, WEST | EAST);
+        cableAt(entry, 13, 2, 14, FABRIC_CABLE, FABRIC_LANE, WEST | EAST | plugged(SOUTH));
+        cableAt(entry, 14, 2, 14, FABRIC_CABLE, FABRIC_LANE, WEST | EAST | plugged(SOUTH));
+        cableAt(entry, 15, 2, 14, FABRIC_CABLE, FABRIC_LANE, WEST | DOWN);
+        cableAt(entry, 15, 1, 14, FABRIC_CABLE, FABRIC_LANE, UP | DOWN);
+        cableAt(entry, 15, 0, 14, FABRIC_CABLE, FABRIC_LANE, UP | plugged(EAST));
+        entry.place(16, 0, 14, () -> ComputingModule.HBW_INTERFACE.get(), "", "");
+        cableAt(entry, 17, 0, 14, BACKBONE_CABLE, BACKBONE_LANE, plugged(WEST) | plugged(EAST));
+        entry.place(18, 0, 14, () -> ComputingModule.STANDARD_ROUTER.get(), "", "");
+        entry.view(-35, 25, 1.35F);
+        entry.balloon(1, GuideBlock.ScenePart.of(13, 2, 16).box(6, 4, 13, 16, 14, 16), "Supercomputer Node",
+                "A full computer of two rack units, with its own co-processor.");
+        entry.balloon(2, GuideBlock.ScenePart.of(14, 1, 16), "Supercomputer Rack");
+        entry.balloon(3, GuideBlock.ScenePart.of(12, 2, 14), "High Compute Cable",
+                "It ties every rack of the supercomputer to the interface.");
+        entry.balloon(4, GuideBlock.ScenePart.of(16, 0, 14), "HBW Interface",
+                "The one point where the supercomputer meets the network.");
+        entry.balloon(5, GuideBlock.ScenePart.of(17, 0, 14), "Backbone cable");
+        entry.balloon(6, GuideBlock.ScenePart.of(18, 0, 14), "A router of the network");
+    }
+
+    private static void datacenterScene(final ModGuide.EntryBuilder entry) {
+        entry.scene("A datacenter: a Server Router with a section of racks behind each of three faces, and its"
+                + " uplink to the network on the fourth. Drag it to look at each section.", 130);
+        entry.place(16, 0, 16, () -> ComputingModule.SERVER_ROUTER.get(), "facing=north", "");
+        /* The uplink is the face opposite the router's facing, here the south one. */
+        cableAt(entry, 16, 0, 17, BACKBONE_CABLE, BACKBONE_LANE, plugged(NORTH) | plugged(SOUTH));
+        entry.place(16, 0, 18, () -> ComputingModule.STANDARD_ROUTER.get(), "", "");
+        /* The west section. */
+        cableAt(entry, 15, 0, 16, BACKBONE_CABLE, BACKBONE_LANE, plugged(EAST) | WEST);
+        cableAt(entry, 14, 0, 16, BACKBONE_CABLE, BACKBONE_LANE, WEST | EAST);
+        cableAt(entry, 13, 0, 16, BACKBONE_CABLE, BACKBONE_LANE, EAST | plugged(WEST));
+        rackAt(entry, () -> ComputingModule.SERVER_RACK.get(), 11, 16, "west", false, rackData(false, PLAIN_RACK));
+        /* The east section. */
+        cableAt(entry, 17, 0, 16, BACKBONE_CABLE, BACKBONE_LANE, plugged(WEST) | EAST);
+        cableAt(entry, 18, 0, 16, BACKBONE_CABLE, BACKBONE_LANE, WEST | EAST);
+        cableAt(entry, 19, 0, 16, BACKBONE_CABLE, BACKBONE_LANE, WEST | plugged(EAST));
+        rackAt(entry, () -> ComputingModule.SERVER_RACK.get(), 21, 16, "east", false, rackData(false, MIXED_RACK));
+        /* The north section. */
+        cableAt(entry, 16, 0, 15, BACKBONE_CABLE, BACKBONE_LANE, plugged(SOUTH) | NORTH);
+        cableAt(entry, 16, 0, 14, BACKBONE_CABLE, BACKBONE_LANE, SOUTH | plugged(NORTH));
+        rackAt(entry, () -> ComputingModule.SERVER_RACK.get(), 16, 12, "north", false, rackData(false, PLAIN_RACK));
+        entry.view(-35, 25, 1.35F);
+        entry.balloon(1, GuideBlock.ScenePart.of(16, 0, 16), "Server Router",
+                "Each of its other faces leads to a section of racks.");
+        entry.balloon(2, GuideBlock.ScenePart.of(16, 0, 17), "Uplink",
+                "The face that joins the router to the network.");
+        entry.balloon(3, GuideBlock.ScenePart.of(11, 1, 16), "A section of racks");
+        entry.balloon(4, GuideBlock.ScenePart.of(21, 1, 16), "A section of racks");
+        entry.balloon(5, GuideBlock.ScenePart.of(16, 1, 12), "A section of racks");
+        entry.balloon(6, GuideBlock.ScenePart.of(18, 0, 16), "Data cable");
+        entry.balloon(7, GuideBlock.ScenePart.of(16, 0, 18), "The network");
+    }
+
+    private static void clusterScene(final ModGuide.EntryBuilder entry) {
+        entry.scene("A Cluster Management Computer, cabled to the two Server Racks it manages. Drag it to follow the"
+                + " cable behind the racks.", 130);
+        rackAt(entry, () -> ComputingModule.SERVER_RACK.get(), 16, 16, "south", false, rackData(false, MIXED_RACK));
+        rackAt(entry, () -> ComputingModule.SERVER_RACK.get(), 13, 16, "south", false, rackData(false, PLAIN_RACK));
+        entry.place(18, 0, 15, () -> ComputingModule.CLUSTER_MANAGEMENT_COMPUTER.get(),
+                "facing=south,optical=false", "");
+        /*
+         * The cable runs along the top of the racks' backs, where the first view can see it past the cabinets, and
+         * drops to the computer.
+         */
+        cableAt(entry, 12, 2, 14, BACKBONE_CABLE, BACKBONE_LANE, EAST | plugged(SOUTH));
+        cableAt(entry, 13, 2, 14, BACKBONE_CABLE, BACKBONE_LANE, WEST | EAST | plugged(SOUTH));
+        cableAt(entry, 14, 2, 14, BACKBONE_CABLE, BACKBONE_LANE, WEST | EAST);
+        cableAt(entry, 15, 2, 14, BACKBONE_CABLE, BACKBONE_LANE, WEST | EAST | plugged(SOUTH));
+        cableAt(entry, 16, 2, 14, BACKBONE_CABLE, BACKBONE_LANE, WEST | EAST | plugged(SOUTH));
+        cableAt(entry, 17, 2, 14, BACKBONE_CABLE, BACKBONE_LANE, WEST | EAST);
+        cableAt(entry, 18, 2, 14, BACKBONE_CABLE, BACKBONE_LANE, WEST | DOWN);
+        cableAt(entry, 18, 1, 14, BACKBONE_CABLE, BACKBONE_LANE, UP | DOWN);
+        cableAt(entry, 18, 0, 14, BACKBONE_CABLE, BACKBONE_LANE, UP | plugged(SOUTH));
+        entry.balloon(1, GuideBlock.ScenePart.of(18, 0, 15), "Cluster Management Computer",
+                "It installs systems and programs on the machines of the racks, and switches their bays.");
+        entry.balloon(2, GuideBlock.ScenePart.of(16, 1, 16), "A Server Rack it manages");
+        entry.balloon(3, GuideBlock.ScenePart.of(13, 1, 16), "A Server Rack it manages");
+        entry.balloon(4, GuideBlock.ScenePart.of(14, 2, 14), "Backbone cable",
+                "It joins the computer to the back of every rack.");
+    }
+
+    /**
+     * A rack and the eleven blocks of its cabinet that only hold the places, standing where its controller stands. The
+     * cabinet is two blocks across, to the right of the controller, two deep, behind it, and three tall.
+     */
+    private static void rackAt(final ModGuide.EntryBuilder entry, final Supplier<? extends Block> cabinet,
+                               final int x, final int z, final String facing, final boolean compute,
+                               final String data) {
+        final int turn = FACINGS.indexOf(facing);
+        final int rightX = FACING_X[(turn + 1) % FACINGS.size()];
+        final int rightZ = FACING_Z[(turn + 1) % FACINGS.size()];
+        final int backX = FACING_X[(turn + 2) % FACINGS.size()];
+        final int backZ = FACING_Z[(turn + 2) % FACINGS.size()];
+        entry.place(x, 0, z, cabinet, "facing=" + facing, data);
+        for (int up = 0; up < 3; up++) {
+            for (int across = 0; across < 2; across++) {
+                for (int deep = 0; deep < 2; deep++) {
+                    if (up == 0 && across == 0 && deep == 0) {
+                        continue;
+                    }
+                    final String state = "facing=" + facing + ",top=" + (up == 2) + ",front=" + (up < 2 && deep == 0)
+                            + ",compute=" + compute;
+                    entry.place(x + rightX * across + backX * deep, up, z + rightZ * across + backZ * deep,
+                            () -> ComputingModule.SERVER_RACK_PART.get(), state, "");
+                }
+            }
+        }
+    }
+
+    /** What a rack draws from: the unit in each row from the top, the bays all on, and the livery panel on or off. */
+    private static String rackData(final boolean panelOff, final int... units) {
+        final StringBuilder bytes = new StringBuilder();
+        for (final int unit : units) {
+            if (bytes.length() > 0) {
+                bytes.append(',');
+            }
+            bytes.append(unit).append('b');
+        }
+        return "{Units:[B;" + bytes + "],DisplayEra:3,BayPowerOff:0,ServicePanelOff:" + (panelOff ? "1b" : "0b") + "}";
+    }
+
+    private static void cableAt(final ModGuide.EntryBuilder entry, final int x, final int y, final int z,
+                                final String cable, final int lane, final int links) {
+        final StringBuilder lanes = new StringBuilder();
+        for (int i = 0; i < LANES; i++) {
+            if (i > 0) {
+                lanes.append(',');
+            }
+            lanes.append(i == lane ? links : 0);
+        }
+        entry.place(x, y, z, () -> CoreCables.BLOCK.get(), "",
+                "{Wires:[{cable:\"" + cable + "\"}],Links:[I;" + lanes + "]}");
+    }
+
+    /** A face a wire crosses and meets a device on, which a cable's links write as two bits. */
+    private static int plugged(final int face) {
+        return face | face << PLUG_SHIFT;
     }
 }

@@ -10,6 +10,7 @@ package dev.jstech.core.client.model;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.BundleShape;
 import dev.jstech.core.cable.CableDrawing;
+import dev.jstech.core.cable.CablePlugs;
 import dev.jstech.core.cable.Wire;
 import dev.jstech.core.connect.ConnectedFaces;
 import java.util.ArrayList;
@@ -22,11 +23,13 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.ChunkRenderTypeSet;
 import net.neoforged.neoforge.client.model.BakedModelWrapper;
@@ -85,6 +88,13 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
         final List<BakedQuad> out = new ArrayList<>(own);
         out.addAll(WIRES.computeIfAbsent(drawing, CableBakedModel::make));
         return out;
+    }
+
+    /* The plugs are chosen here, from the world the block is drawn in, which is a manual's scene in a scene. */
+    @Override
+    public ModelData getModelData(final BlockAndTintGetter level, final BlockPos pos, final BlockState state,
+                                  final ModelData data) {
+        return CablePlugs.placed(super.getModelData(level, pos, state, data), level, pos);
     }
 
     @Override

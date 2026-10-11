@@ -5,6 +5,87 @@
       "text": "jsc.guide.failover.text1"
     },
     {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.failover.balloon1_detail",
+          "number": 1,
+          "part": {
+            "x": 1,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.failover.balloon1"
+        },
+        {
+          "detail": "jsc.guide.failover.balloon2_detail",
+          "number": 2,
+          "part": {
+            "x": 4,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.failover.balloon2"
+        },
+        {
+          "detail": "jsc.guide.failover.balloon3_detail",
+          "number": 3,
+          "part": {
+            "x": 8,
+            "y": 0,
+            "z": 1
+          },
+          "text": "jsc.guide.failover.balloon3"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{VisualFlags:7}",
+          "state": "jsc:mainframe[facing=south,optical=true]",
+          "x": 1,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,4144,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 3,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,48,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 4,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,48,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 5,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{Wires:[{cable:\"jsc:fibre_cable\"}],Links:[I;0,8240,0,0,0,0,0,0,0]}",
+          "state": "jscore:cable",
+          "x": 6,
+          "y": 0,
+          "z": 1
+        },
+        {
+          "data": "{VisualFlags:7}",
+          "state": "jsc:mainframe[facing=south,optical=true]",
+          "x": 8,
+          "y": 0,
+          "z": 1
+        }
+      ],
+      "caption": "jsc.guide.failover.figure1",
+      "height": 110
+    },
+    {
       "type": "text",
       "text": "jsc.guide.failover.text2"
     },

@@ -152,6 +152,61 @@
       "text": "jsc.guide.monitors.text3"
     },
     {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.monitors.balloon1_detail",
+          "number": 1,
+          "part": {
+            "x": 15,
+            "y": 0,
+            "z": 14
+          },
+          "text": "jsc.guide.monitors.balloon1"
+        },
+        {
+          "detail": "jsc.guide.monitors.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              13,
+              1,
+              15,
+              15,
+              3,
+              16
+            ],
+            "x": 16,
+            "y": 0,
+            "z": 14
+          },
+          "text": "jsc.guide.monitors.balloon2"
+        }
+      ],
+      "blocks": [
+        {
+          "state": "jsc:monitor[facing=north,button=false,lit=true]",
+          "x": 14,
+          "y": 0,
+          "z": 14
+        },
+        {
+          "state": "jsc:monitor[facing=north,button=false,lit=true]",
+          "x": 15,
+          "y": 0,
+          "z": 14
+        },
+        {
+          "state": "jsc:monitor[facing=north,button=true,lit=true]",
+          "x": 16,
+          "y": 0,
+          "z": 14
+        }
+      ],
+      "caption": "jsc.guide.monitors.figure1",
+      "height": 110
+    },
+    {
       "type": "text",
       "text": "jsc.guide.monitors.text4"
     },

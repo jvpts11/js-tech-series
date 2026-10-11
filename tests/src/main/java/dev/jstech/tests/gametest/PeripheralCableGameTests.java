@@ -14,6 +14,7 @@ import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.CablePlugs;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.multipart.ModelLayout;
 import dev.jstech.core.multipart.PlacedModel;
@@ -268,7 +269,9 @@ public final class PeripheralCableGameTests {
     /* The plug models the cable at {@code at} draws on {@code face}. */
     private static List<ResourceLocation> plugsAt(final GameTestHelper helper, final BlockPos at,
                                                   final Direction face) {
-        final ModelLayout layout = cable(helper, at).getModelData().get(ModelLayout.PROPERTY);
+        final CableBlockEntity cable = cable(helper, at);
+        final ModelLayout layout = CablePlugs.placed(cable.getModelData(), helper.getLevel(), cable.getBlockPos())
+                .get(ModelLayout.PROPERTY);
         return layout == null ? List.of() : layout.models().stream()
                 .filter(placed -> placed.facing() == face)
                 .map(PlacedModel::model)

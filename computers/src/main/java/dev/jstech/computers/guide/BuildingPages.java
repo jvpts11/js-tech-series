@@ -23,6 +23,7 @@ import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.item.SoundCardItem;
 import dev.jstech.computers.item.WorkshopCardItem;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.ModGuide;
@@ -33,6 +34,22 @@ import dev.jstech.core.guide.ModGuide;
  * tells the player, what decides whether it fits, and what each refusal means.
  */
 final class BuildingPages {
+
+    /*
+     * The parts of a Standard Personal Computer that make a valid build, as its block entity saves them: the board,
+     * the processor, two memory modules, a graphics card, the supply, a hard disk and an M.2 drive, and the DVD drive
+     * in the bay.
+     */
+    private static final String PC_PARTS = "Hardware:{Size:15,Items:["
+            + "{Slot:0,id:\"jsc:motherboard_atx_standard_lga1150\",count:1},"
+            + "{Slot:1,id:\"jsc:cpu_integra_centro_c5_4690k\",count:1},"
+            + "{Slot:2,id:\"jsc:ram_ddr3_8192\",count:1},{Slot:3,id:\"jsc:ram_ddr3_8192\",count:1},"
+            + "{Slot:6,id:\"jsc:gpu_vertex_gtx_970\",count:1},{Slot:10,id:\"jsc:psu_650g\",count:1},"
+            + "{Slot:11,id:\"jsc:disk_hdd_4t\",count:1},{Slot:12,id:\"jsc:disk_nvme_500g\",count:1},"
+            + "{Slot:13,id:\"jsc:internal_dvd_drive\",count:1}]}";
+    /** A disc in the bay's drive and a stick in the first USB port. */
+    private static final String PC_FRONT = "Front:{Size:4,Items:[{Slot:0,id:\"jsc:dvd_rom\",count:1},"
+            + "{Slot:2,id:\"jsc:usb_flash_drive\",count:1}]}";
 
     private BuildingPages() {
     }
@@ -59,6 +76,24 @@ final class BuildingPages {
                         + " screen. It shows the inside of the computer: a slot for each part, and the switches and"
                         + " lamps that run it. Sneak-click the side of the case, not one of its front parts, to take"
                         + " its left side panel off or put it back.")
+                .scene("A Personal Computer with its side panel off and every part in its seat. Drag it to turn the"
+                        + " case.", 130)
+                .place(15, 0, 15, () -> ComputingModule.PERSONAL_COMPUTER.get(), "facing=east",
+                        "{" + PC_PARTS + ",SidePanelOff:1b}")
+                .view(-20, 20, 1.2F)
+                .balloon(1, GuideBlock.ScenePart.of(15, 0, 15).box(1, 5, 0, 13, 15, 3), "The motherboard",
+                        "Every other part sits on it, and it decides which parts fit.")
+                .balloon(2, GuideBlock.ScenePart.of(15, 0, 15).box(4, 10, 2, 9, 15, 7), "The processor and its cooler",
+                        "The processor sits under the cooler, in the socket its board names.")
+                .balloon(3, GuideBlock.ScenePart.of(15, 0, 15).box(9, 9, 1, 13, 15, 4), "The memory",
+                        "Two modules stand in their slots.")
+                .balloon(4, GuideBlock.ScenePart.of(15, 0, 15).box(1, 7, 1, 11, 10, 5), "The graphics card")
+                .balloon(5, GuideBlock.ScenePart.of(15, 0, 15).box(1, 0, 1, 13, 4, 9), "The power supply")
+                .balloon(6, GuideBlock.ScenePart.of(15, 0, 15).box(9, 0, 6, 14, 2, 11), "The hard disk")
+                .balloon(7, GuideBlock.ScenePart.of(15, 0, 15).box(8, 6, 1, 12, 8, 3), "The M.2 drive",
+                        "It sits on the board itself, not in a bay.")
+                .balloon(8, GuideBlock.ScenePart.of(15, 0, 15).box(7, 12, 3, 16, 15, 13), "The DVD drive in the bay",
+                        "It sits behind the front of the case.")
                 .paragraph("A computer runs only when its parts make a build that stands. You read the state of the"
                         + " build in the header of the window, and the window shows each part in its own slot.")
                 .paragraph("The POWER button's tooltip names the parts a computer needs: a board, a CPU, RAM, a disk"
@@ -166,6 +201,24 @@ final class BuildingPages {
                         + " It has a power button, bays for drives and, from the Transition on, USB ports. Click one of"
                         + " those parts and it does its job. Click anywhere else on the case and the assembly screen"
                         + " opens, or, with a sneak-click, the side panel comes off or goes back on.")
+                .scene("The front of a Standard Personal Computer: the power button and its two lamps, a DVD drive"
+                        + " with its tray out, and a USB stick in a port. Drag it to look at the case from the side.",
+                        130)
+                .place(15, 0, 15, () -> ComputingModule.PERSONAL_COMPUTER.get(), "facing=south",
+                        "{" + PC_PARTS + "," + PC_FRONT + ",Bay0TrayOpen:1b,Lamps:3}")
+                .view(-20, 15, 1.4F)
+                .balloon(1, GuideBlock.ScenePart.of(15, 0, 15).box(12, 9, 15, 14, 12, 16), "Power button",
+                        "Click it to switch the computer on or off.")
+                .balloon(2, GuideBlock.ScenePart.of(15, 0, 15).box(9, 10, 15, 12, 12, 16), "Power and disk lamps",
+                        "The first is lit while the computer runs. The second blinks while it works its disk.")
+                .balloon(3, GuideBlock.ScenePart.of(15, 0, 15).box(3, 13, 14, 13, 15, 16), "The Internal DVD Drive",
+                        "Its eject button opens and closes the tray.")
+                .balloon(4, GuideBlock.ScenePart.of(15, 0, 15).box(4, 12, 14, 12, 13, 16), "The tray and its disc",
+                        "Click with a disc in your hand to lay it on the open tray. Sneak-click to take it out.")
+                .balloon(5, GuideBlock.ScenePart.of(15, 0, 15).box(1, 11, 15, 5, 13, 16), "A USB flash drive",
+                        "Sneak-click the port to pull the stick out.")
+                .balloon(6, GuideBlock.ScenePart.of(15, 0, 15).box(1, 9, 15, 5, 10, 16), "A free USB port",
+                        "Click it with a USB flash drive in your hand to plug the stick in.")
                 .paragraph("Look at a standing part, such as an open tray or a stick in a port, and your click goes to"
                         + " that part. The power button, at the top of the front, switches the computer on and off,"
                         + " whatever you hold. It does the same as POWER on the assembly screen.")

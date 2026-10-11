@@ -67,6 +67,19 @@ class SceneProjectionTest {
     }
 
     @Test
+    void project_framesASceneRoundItsBlocksWhereverInTheGridTheyStand() {
+        final GuideBlock.Scene moved = new GuideBlock.Scene(List.of(new GuideBlock.SceneBlock(14, 0, 15,
+                "minecraft:stone", "")), GuideBlock.SceneView.CORNER, List.of(), false, 100, "caption");
+        final GuideBlock.SceneView view = new GuideBlock.SceneView(-35, 25, 1);
+        final SceneProjection atCorner = new SceneProjection(ONE_BLOCK, view, 100, 80);
+        final SceneProjection away = new SceneProjection(moved, view, 100, 80);
+
+        assertEquals(atCorner.scale(), away.scale(), CLOSE, "one block is drawn as large wherever it stands");
+        assertEquals(atCorner.project(0, 1, 1).x(), away.project(14, 1, 16).x(), CLOSE);
+        assertEquals(atCorner.project(0, 1, 1).y(), away.project(14, 1, 16).y(), CLOSE);
+    }
+
+    @Test
     void bounds_holdEveryCornerOfAPart() {
         final SceneProjection projection = new SceneProjection(ONE_BLOCK, new GuideBlock.SceneView(-35, 25, 1),
                 100, 100);
