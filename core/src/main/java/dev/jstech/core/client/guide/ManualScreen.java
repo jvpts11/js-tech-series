@@ -85,6 +85,8 @@ public final class ManualScreen extends Screen {
     private final Map<String, Integer> colours = new HashMap<>();
     private final Map<String, Integer> tabColours = new HashMap<>();
     private final Map<String, CompoundTag> customData = new HashMap<>();
+    /** The colours of each terminal a session names, read once when the manual's colours are. */
+    private final Map<String, Map<String, Integer>> terminals = new HashMap<>();
     private final List<String> chapters = new ArrayList<>();
     /** Where the reader jumped from in this manual: the book's own way back. */
     private final GuideHistory history;
@@ -177,6 +179,12 @@ public final class ManualScreen extends Screen {
     private static final int OPENED_FOOT = 20;
     /** How many characters a turn of the wheel scrolls a listing across. */
     private static final int SHIFT_STEP = 4;
+    /** A terminal's colours by their roles, and how far its strip's ground goes from the console's towards white. */
+    private static final String TERMINAL_GROUND = "ground";
+    private static final String TERMINAL_TEXT = "text";
+    private static final String TERMINAL_PROMPT = "prompt";
+    private static final String TERMINAL_TYPED = "typed";
+    private static final double STRIP_LIGHT = 0.18;
     /** The mouse's side buttons, back and forward, as the game numbers them. */
     private static final int MOUSE_BACK = GLFW.GLFW_MOUSE_BUTTON_4;
     private static final int MOUSE_FORWARD = GLFW.GLFW_MOUSE_BUTTON_5;
@@ -707,6 +715,7 @@ public final class ManualScreen extends Screen {
 
     private void resolveColours() {
         this.colours.clear();
+        this.terminals.clear();
         // The binder's colours are the ground every role falls back on, read once here and not on each frame.
         this.colours.putAll(PaletteRoles.read(GuidePalettes.BINDER.get()));
         if (!this.style.palette().isEmpty()) {
@@ -1148,6 +1157,7 @@ public final class ManualScreen extends Screen {
                     my);
             case GuidePiece.Recipes rows -> this.drawRecipes(g, x, y, rows, chapter, mx, my);
             case GuidePiece.Listing listing -> this.drawListing(g, x, y, listing, chapter, mx, my);
+            case GuidePiece.Session session -> this.drawSession(g, x, y, session);
             case GuidePiece.Custom custom -> {
                 final IGuideBlockRenderer renderer = rendererOf(custom.type());
                 if (renderer != null) {
@@ -1212,6 +1222,37 @@ public final class ManualScreen extends Screen {
         final ManualScreenLayout.Rect copy = copyButton(x, y, listing.width());
         this.drawStrip(g, x, y, copy.x() - x - 4, listing.label(), listing.name(), chapter);
         this.drawListingButton(g, copy, GuideTexts.COPY, this.justCopied(listing.lines()), chapter, mx, my);
+    }
+
+    /**
+     * A session at a terminal in that terminal's own colours: its name on a strip of its ground lightened, then its
+     * rows, the prompt, what was typed and what the system said each in its colour.
+     */
+    private void drawSession(final GuiGraphics g, final int x, final int y, final GuidePiece.Session session) {
+        final Map<String, Integer> look = this.terminals.computeIfAbsent(session.look(), id -> {
+            final Map<String, Integer> named = PaletteLookup.roles(id);
+            return named.isEmpty() ? PaletteRoles.read(GuidePalettes.TERMINAL.get()) : named;
+        });
+        final int ground = look.getOrDefault(TERMINAL_GROUND, this.colour(GuideStyle.INK));
+        final int typed = look.getOrDefault(TERMINAL_TYPED, this.colour(GuideStyle.PAPER));
+        g.fill(x, y, x + session.width(), y + GuideLayout.SESSION_HEAD, ManualButtonLook.lighten(ground, STRIP_LIGHT));
+        g.fill(x, y + GuideLayout.SESSION_HEAD, x + session.width(), y + session.height(), ground);
+        GuideFonts.draw(g, this.font, this.fit(session.title(), session.width() - 6, TextSize.SMALL), TextSize.SMALL,
+                this.style, x + GuideLayout.SESSION_PAD, y + 1, typed);
+        int rowY = y + GuideLayout.SESSION_HEAD + GuideLayout.CODE_PAD;
+        for (final List<GuidePiece.SessionRun> row : session.rows()) {
+            int at = x + GuideLayout.SESSION_PAD;
+            for (final GuidePiece.SessionRun run : row) {
+                final int colour = switch (run.ink()) {
+                    case PROMPT -> look.getOrDefault(TERMINAL_PROMPT, typed);
+                    case TYPED -> typed;
+                    case ANSWER -> look.getOrDefault(TERMINAL_TEXT, typed);
+                };
+                GuideFonts.draw(g, this.font, run.text(), TextSize.CODE, this.style, at, rowY, colour);
+                at += GuideFonts.width(this.font, run.text(), TextSize.CODE, this.style);
+            }
+            rowY += GuideLayout.CODE_PITCH;
+        }
     }
 
     /** The paper, the strip and the frame of a listing, and the rule beside its numbers. */

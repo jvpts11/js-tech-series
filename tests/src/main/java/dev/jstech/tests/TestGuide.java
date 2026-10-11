@@ -151,6 +151,10 @@ public final class TestGuide {
                         "  static void Main() {", "    Console.PrintLine(\"Hello, world! This line is long enough to go"
                                 + " on under itself.\");", "  }", "}")
                 .listing(QUERY, "-- the five commonest items", "QUERY items", "  ORDER BY count DESC", "  LIMIT 5;")
+                .session("jsc:guide/terminal/dos", "MC-DOS 6.22").typed("C:\\>", "sgsc Hello.sgs")
+                .answer("Hello.sgs: 0 errors").typed("C:\\>", "sigma run Hello.asm").answer("Hello, world!")
+                .session("jsc:guide/terminal/bash", "Ubuntu  -  bash").typed("player@pc:~$ ", "apt install vim")
+                .answer("Reading package lists...", "Setting up vim (9.1) ...").typed("player@pc:~$ ", "")
                 .whatItIsFor("Proving the layout of listings, their colours and their Copy button.")
                 .howToGetIt("Open the test manual.")
                 .howToUseIt("Read the listings.", "Copy one.", "Open one over the whole book.")

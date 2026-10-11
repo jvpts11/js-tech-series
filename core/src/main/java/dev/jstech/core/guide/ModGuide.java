@@ -326,6 +326,7 @@ public final class ModGuide {
         /** How many columns the last table has, which every row of it fills. */
         private int columns;
         private List<GuideBlock.TableRow> rows;
+        private List<GuideBlock.SessionLine> sessionLines;
         private List<GuideBlock.Callout> callouts;
         private List<Supplier<GuideBlock.PlanPart>> planParts;
 
@@ -549,6 +550,30 @@ public final class ModGuide {
             return this.add(() -> new GuideBlock.Listing(name, language, List.of(lines)));
         }
 
+        /**
+         * A session at a terminal, in the colours of the palette {@code look} names and under the terminal's name; its
+         * lines follow with {@link #typed} and {@link #answer}. What a terminal prints is the same in every language.
+         */
+        public EntryBuilder session(final String look, final String title) {
+            final List<GuideBlock.SessionLine> list = new ArrayList<>();
+            this.sessionLines = list;
+            return this.add(() -> new GuideBlock.Session(look, title, list));
+        }
+
+        /** A line of the last session the player typed: the prompt, then what was typed after it. */
+        public EntryBuilder typed(final String prompt, final String text) {
+            this.sessionLines().add(GuideBlock.SessionLine.typed(prompt, text));
+            return this;
+        }
+
+        /** Lines the system answered in the last session, one each. */
+        public EntryBuilder answer(final String... lines) {
+            for (final String line : lines) {
+                this.sessionLines().add(GuideBlock.SessionLine.answer(line));
+            }
+            return this;
+        }
+
         /** Every recipe of a type the game holds, or those making the item given. */
         public EntryBuilder recipes(final String type, final Supplier<? extends ItemLike> making) {
             return this.add(() -> new GuideBlock.Recipes(type, itemId(making)));
@@ -751,6 +776,13 @@ public final class ModGuide {
             }
             this.planParts.add(() -> new GuideBlock.PlanPart(itemId(block), key, optional));
             return this;
+        }
+
+        private List<GuideBlock.SessionLine> sessionLines() {
+            if (this.sessionLines == null) {
+                throw new IllegalStateException("a session's lines follow its session");
+            }
+            return this.sessionLines;
         }
 
         private EntryBuilder tableOf(final String caption, final List<String> heads, final int count,

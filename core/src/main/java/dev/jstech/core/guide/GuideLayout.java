@@ -113,6 +113,9 @@ public final class GuideLayout {
     public static final int CODE_PITCH = 9;
     public static final int CODE_PAD = 2;
     public static final int LISTING_GUTTER = 13;
+    /** A session at a terminal: the strip with its name, and the room between its frame and its text. */
+    public static final int SESSION_HEAD = 9;
+    public static final int SESSION_PAD = 3;
 
     private static final int PARAGRAPH_GAP = 4;
     private static final int BLOCK_GAP = 6;
@@ -446,6 +449,7 @@ public final class GuideLayout {
             case GuideBlock.Picture picture -> this.picture(picture);
             case GuideBlock.Table table -> this.table(table);
             case GuideBlock.Listing listing -> this.listing(listing);
+            case GuideBlock.Session session -> this.session(session);
             case GuideBlock.Recipes recipes -> this.recipes(recipes);
             case GuideBlock.Steps steps -> this.steps(steps);
             case GuideBlock.Warning warning -> this.warning(warning);
@@ -617,6 +621,62 @@ public final class GuideLayout {
             }
         }
         this.y += BLOCK_GAP;
+    }
+
+    /**
+     * A session at a terminal, its strip over it and its rows in the code font, each line cut where the page ends and
+     * going on at the next row's first character, as a terminal wraps it. One that fits on a page moves on whole; a
+     * longer one runs on, its strip said again with "(continued)".
+     */
+    private void session(final GuideBlock.Session block) {
+        final int columns = Math.max(1, (this.width - 2 * SESSION_PAD) / Math.max(1,
+                this.text.width("0", TextSize.CODE)));
+        final List<List<GuidePiece.SessionRun>> rows = new ArrayList<>();
+        for (final GuideBlock.SessionLine line : block.lines()) {
+            rows.addAll(sessionRows(line, columns));
+        }
+        final int frame = SESSION_HEAD + 2 * CODE_PAD;
+        if (frame + rows.size() * CODE_PITCH <= this.bottom() - this.top) {
+            this.ensure(frame + rows.size() * CODE_PITCH);
+        }
+        int at = 0;
+        while (at < rows.size() || at == 0) {
+            final int count = Math.min(rows.size() - at, Math.max(1, (this.bottom() - this.y - frame) / CODE_PITCH));
+            final String title = at == 0 ? block.title()
+                    : this.text.text(GuideTexts.TABLE_CONTINUED.key(), block.title()).strip();
+            this.place(new GuidePiece.Session(this.x(), this.y, this.width, frame + count * CODE_PITCH,
+                    block.look(), title, rows.subList(at, at + count)));
+            this.y += frame + count * CODE_PITCH;
+            at += Math.max(1, count);
+            if (at < rows.size()) {
+                this.nextColumn();
+            }
+        }
+        this.y += BLOCK_GAP;
+    }
+
+    /** The rows a line of a session takes, cut every {@code columns} characters as a terminal cuts it. */
+    private static List<List<GuidePiece.SessionRun>> sessionRows(final GuideBlock.SessionLine line,
+                                                                 final int columns) {
+        final String printed = line.prompt() + line.text();
+        final int typedFrom = line.typed() ? line.prompt().length() : Integer.MAX_VALUE;
+        final List<List<GuidePiece.SessionRun>> rows = new ArrayList<>();
+        int start = 0;
+        do {
+            final int end = Math.min(printed.length(), start + columns);
+            final List<GuidePiece.SessionRun> row = new ArrayList<>();
+            final int split = Math.max(start, Math.min(end, typedFrom));
+            if (split > start) {
+                row.add(new GuidePiece.SessionRun(printed.substring(start, split), line.typed()
+                        ? GuidePiece.SessionInk.PROMPT : GuidePiece.SessionInk.ANSWER));
+            }
+            if (end > split) {
+                row.add(new GuidePiece.SessionRun(printed.substring(split, end), GuidePiece.SessionInk.TYPED));
+            }
+            rows.add(row);
+            start = end;
+        } while (start < printed.length());
+        return rows;
     }
 
     /** One row of a listing: the number of the line it starts in the column beside it, then its coloured code. */

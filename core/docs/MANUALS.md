@@ -188,6 +188,7 @@ A picture is numbered with the figures ("Figure 3-2.") and captioned like them, 
 | `table(caption, heads...)`, then `row(cells...)` | A numbered table with heads of its own ("Command", "What it does"), a cell a column in each row: `GuideCell.words(english)`, `GuideCell.words(sharedKey)`, `GuideCell.code(text)` or `GuideCell.amount(value, unit)`. See [Tables](#tables). |
 | `tableFrom(source, caption, heads...)` | A numbered table whose rows your mod gives as the manual is laid out. See [Figures read from your mod](#figures-read-from-your-mod). |
 | `listing(name, lines...)`, `listingIn(language, name, lines...)` | A numbered listing of code ("Listing 3-4."), headed by its file's name, its lines numbered and coloured by its language, with a Copy button. See [Listings of code](#listings-of-code). |
+| `session(look, title)`, then `typed(prompt, text)`, `answer(lines...)` | A session at a terminal, in the colours of the terminal's palette, under its name: what was typed after each prompt and what the system answered. See [Sessions at a terminal](#sessions-at-a-terminal). |
 | `recipes(type)`, `recipes(type, making)` | Every recipe of a type the world holds, or those making one item, with the time and energy over the arrow. |
 | `steps(english...)` | Numbered steps of the entry's own. |
 | `warning(english)` | A warning in a box. |
@@ -262,6 +263,24 @@ language the game compiles colours itself, as its editors colour it; another reg
 game loads, with `GuideHighlighters.register("iql", lines -> GuideCode.runs(lines, spans))`, the spans saying which
 characters are keywords, names, quoted text, numbers or comments. Code reads the same in every language and is not
 translated.
+
+### Sessions at a terminal
+
+*Added 2026-10-11.*
+
+```java
+.session("jsc:guide/terminal/dos", "MC-DOS 6.22")
+.typed("C:\\>", "sgsc Hello.sgs").answer("Hello.sgs: 0 errors")
+.typed("C:\\>", "sigma run Hello.asm").answer("Hello, world!")
+```
+
+A session shows a terminal as the system draws it, so a reader knows the screen when they meet it: the terminal's
+name on a strip, then each line in the code font, the prompt, what was typed and what the system said each in the
+terminal's own colour. A line too long for the page goes on at the next row's first character, as a terminal wraps
+it. The colours are a palette of the `GuidePalettes.Terminal` kind (`ground`, `text`, `prompt`, `typed`) a mod
+declares for each of its terminals; J's Computers declares `jsc:guide/terminal/dos`, `bash`, `zsh` and `sh`, and a
+session naming no palette the game knows takes the Core's `jscore:guide/terminal`. What a terminal prints is the same
+in every language and is not translated.
 
 ### Figures read from your mod
 

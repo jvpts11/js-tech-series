@@ -189,6 +189,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   game's editors colour Sigma, Sigma# and the network's query language, a long line going on under itself without a
   word cut in two. A Copy button puts the whole listing on the clipboard for the game's editors, and a click opens it
   over the whole book with no line broken.
+- Sessions at a terminal in the manuals, printed as each system draws its console: MC-DOS white on black, a Linux
+  console with its green prompt, the Arch Linux media's red root prompt, FreeBSD's sh on its warm dark ground; the
+  prompt, what was typed and what the system answered each in its colour.
 - The manuals inside the computers, beside the manual pages of each machine's commands, in each system's own help.
   Every desktop has Help: Frames 95's Help Topics with its Contents, Index and Find and a topic window of its own,
   XP's Help and Support Center, 7's Help and Support, Get Help on 10 and 11, KDE's Help Center, the Help of GNOME and

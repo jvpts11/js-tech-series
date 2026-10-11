@@ -36,6 +36,52 @@
       "name": "top.iql"
     },
     {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "C:\\>",
+          "text": "sgsc Hello.sgs",
+          "typed": true
+        },
+        {
+          "text": "Hello.sgs: 0 errors"
+        },
+        {
+          "prompt": "C:\\>",
+          "text": "sigma run Hello.asm",
+          "typed": true
+        },
+        {
+          "text": "Hello, world!"
+        }
+      ],
+      "look": "jsc:guide/terminal/dos",
+      "title": "MC-DOS 6.22"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "player@pc:~$ ",
+          "text": "apt install vim",
+          "typed": true
+        },
+        {
+          "text": "Reading package lists..."
+        },
+        {
+          "text": "Setting up vim (9.1) ..."
+        },
+        {
+          "prompt": "player@pc:~$ ",
+          "text": "",
+          "typed": true
+        }
+      ],
+      "look": "jsc:guide/terminal/bash",
+      "title": "Ubuntu  -  bash"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.what_it_is_for"
     },

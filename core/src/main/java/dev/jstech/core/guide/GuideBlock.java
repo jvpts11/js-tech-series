@@ -199,6 +199,55 @@ public sealed interface GuideBlock {
     }
 
     /**
+     * A session at a terminal as one system shows it: its name on a strip above, then its lines in the code font in
+     * the system's own colours, each line typed after its prompt or the system's answer. A line too long for the page
+     * goes on in the next row at its first character, as a terminal wraps it.
+     *
+     * @param look  the palette of the terminal's colours, {@code namespace:path}, of the {@code GuidePalettes.Terminal}
+     *              kind
+     * @param title what its strip says, such as {@code Ubuntu - bash}; the same in every language
+     * @param lines its lines, in order
+     */
+    record Session(String look, String title, List<SessionLine> lines) implements GuideBlock {
+
+        public Session {
+            Objects.requireNonNull(look, "look");
+            title = title == null ? "" : title;
+            lines = List.copyOf(lines);
+        }
+
+        /** Its lines as a terminal prints them, each prompt with what was typed after it. */
+        public List<String> printed() {
+            return this.lines.stream().map(line -> line.prompt() + line.text()).toList();
+        }
+    }
+
+    /**
+     * A line of a session: what was typed after a prompt, or what the system answered.
+     *
+     * @param prompt the prompt, such as {@code C:\>}, when it was typed; empty for an answer
+     * @param text   what was typed, or what the system said
+     * @param typed  whether it was typed rather than said
+     */
+    record SessionLine(String prompt, String text, boolean typed) {
+
+        public SessionLine {
+            prompt = prompt == null ? "" : prompt;
+            Objects.requireNonNull(text, "text");
+        }
+
+        /** A line the player typed after the prompt. */
+        public static SessionLine typed(final String prompt, final String text) {
+            return new SessionLine(prompt, text, true);
+        }
+
+        /** A line the system answered. */
+        public static SessionLine answer(final String text) {
+            return new SessionLine("", text, false);
+        }
+    }
+
+    /**
      * Every recipe of a recipe type, read from the game as it runs: the inputs, an arrow with the time and the energy,
      * and the outputs.
      *

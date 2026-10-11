@@ -33,6 +33,8 @@ import net.minecraft.util.ExtraCodecs;
  * {"type": "table", "caption": "...", "heads": ["...", "..."], "rows": [[{"literal": "dir"}, {"words": "..."}]]}
  * {"type": "table", "caption": "...", "heads": ["...", "..."], "source": "jsc:cable_reach"}
  * {"type": "listing", "name": "Hello.sgs", "lines": ["using System.IO.*;", "", "namespace Hello;"]}
+ * {"type": "session", "look": "jsc:guide/terminal/dos", "title": "MC-DOS 6.22",
+ *  "lines": [{"prompt": "C:\\>", "text": "dir", "typed": true}, {"text": " Directory of C:\\"}]}
  * {"type": "recipes", "recipe_type": "jsindustrial:compressing"}
  * }</pre>
  */
@@ -178,6 +180,18 @@ public final class GuideCodecs {
                     Codec.STRING.optionalFieldOf("language", "").forGetter(GuideBlock.Listing::language),
                     Codec.STRING.listOf().fieldOf("lines").forGetter(GuideBlock.Listing::lines)
             ).apply(instance, GuideBlock.Listing::new));
+    private static final Codec<GuideBlock.SessionLine> SESSION_LINE = RecordCodecBuilder.create(instance ->
+            instance.group(
+                    Codec.STRING.optionalFieldOf("prompt", "").forGetter(GuideBlock.SessionLine::prompt),
+                    Codec.STRING.fieldOf("text").forGetter(GuideBlock.SessionLine::text),
+                    Codec.BOOL.optionalFieldOf("typed", false).forGetter(GuideBlock.SessionLine::typed)
+            ).apply(instance, GuideBlock.SessionLine::new));
+    private static final MapCodec<GuideBlock.Session> SESSION = RecordCodecBuilder.mapCodec(instance ->
+            instance.group(
+                    Codec.STRING.fieldOf("look").forGetter(GuideBlock.Session::look),
+                    Codec.STRING.optionalFieldOf("title", "").forGetter(GuideBlock.Session::title),
+                    SESSION_LINE.listOf().fieldOf("lines").forGetter(GuideBlock.Session::lines)
+            ).apply(instance, GuideBlock.Session::new));
     private static final MapCodec<GuideBlock.Recipes> RECIPES = RecordCodecBuilder.mapCodec(instance ->
             instance.group(
                     Codec.STRING.fieldOf("recipe_type").forGetter(GuideBlock.Recipes::type),
@@ -243,6 +257,7 @@ public final class GuideCodecs {
             case GuideBlock.Picture picture -> "picture";
             case GuideBlock.Table table -> "table";
             case GuideBlock.Listing listing -> "listing";
+            case GuideBlock.Session session -> "session";
             case GuideBlock.Recipes recipes -> "recipes";
             case GuideBlock.Steps steps -> "steps";
             case GuideBlock.Warning warning -> "warning";
@@ -265,6 +280,7 @@ public final class GuideCodecs {
             case "picture" -> PICTURE;
             case "table" -> TABLE;
             case "listing" -> LISTING;
+            case "session" -> SESSION;
             case "recipes" -> RECIPES;
             case "steps" -> STEPS;
             case "warning" -> WARNING;

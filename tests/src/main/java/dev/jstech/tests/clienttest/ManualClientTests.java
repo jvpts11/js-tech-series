@@ -166,6 +166,15 @@ public final class ManualClientTests {
                 .thenAssert(0, () -> manual().keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0) && !manual().listingOpen()
                         && Minecraft.getInstance().screen instanceof ManualScreen,
                         "and Escape puts it away, the book still open")
+                .thenAssert(0, () -> {
+                    final GuideBook book = manual().book();
+                    return book.pages().subList(book.pageOf(TestGuide.CODE).orElseThrow(), book.indexAt()).stream()
+                            .flatMap(page -> page.pieces().stream()).anyMatch(piece -> piece
+                                    instanceof GuidePiece.Session session && session.title().equals("MC-DOS 6.22")
+                                    && session.rows().getFirst().getFirst().ink() == GuidePiece.SessionInk.PROMPT);
+                }, "a session at MC-DOS is printed, its first line opening with the prompt")
+                .then(0, () -> manual().turn(1))
+                .thenScreenshot(2, "manual_code_sessions")
                 .then(0, ManualClientTests::close)
                 .thenAwaitNoScreen(OPEN);
     }

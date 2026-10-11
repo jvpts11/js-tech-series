@@ -26,7 +26,23 @@ public final class GuidePalettes {
             0xFF8A4F12, 0xFF1F3F8A, 0xFF23252A, 0xFF39D6C4, 0xFFD3CCB6, 0xFF121A2A, 0xFF1F3F8A,
             0xFFF5F1E4, 0xFFD8CEB2, 0xFF1F3F8A, 0xFF0F6E66, 0xFF9A3B16, 0xFF7A2D8A, 0xFF6E6A5E, 0xFFCFE8CF));
 
+    /** The look of a terminal a session names when it names none of its own: a dark console with a green prompt. */
+    public static final Palette<Terminal> TERMINAL = Palettes.declare(JsCore.MODID, "guide/terminal",
+            new Terminal(0xFF14161C, 0xFFCDD6E2, 0xFF5FE07A, 0xFFF4F1E6));
+
     private GuidePalettes() {
+    }
+
+    /**
+     * The colours of a terminal a manual's session is printed in, as one system draws its console. The strip with
+     * the terminal's name is its ground lightened, in the colour of what is typed.
+     *
+     * @param ground the console's ground
+     * @param text   what the system says
+     * @param prompt the prompt
+     * @param typed  what the player types, and the terminal's name on its strip
+     */
+    public record Terminal(int ground, int text, int prompt, int typed) {
     }
 
     /**

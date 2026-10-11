@@ -287,6 +287,8 @@ public final class ManualReader {
                     pieces.add(new Piece.Code(listing.name().isEmpty() ? label : label + " " + listing.name(),
                             listing.language(), listing.lines()));
                 }
+                // Read as text, a session is the lines its terminal printed, under the terminal's name.
+                case GuideBlock.Session session -> pieces.add(new Piece.Code(session.title(), "", session.printed()));
                 case GuideBlock.Recipes recipes -> pieces.add(new Piece.Recipes(recipes.type(), recipes.output()));
                 case GuideBlock.Steps steps -> {
                     int number = 0;

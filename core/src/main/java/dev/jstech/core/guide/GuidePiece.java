@@ -103,6 +103,31 @@ public sealed interface GuidePiece {
     }
 
     /**
+     * A session at a terminal, or the part of it on this page, drawn in its terminal's own colours: the strip with
+     * its name, and its rows, each in stretches of what was typed, its prompt and what the system said.
+     *
+     * @param look  the palette of the terminal's colours
+     * @param title what its strip says, with "(continued)" on a page it runs on to
+     * @param rows  its rows, already cut to the width of the page as a terminal cuts them
+     */
+    record Session(int x, int y, int width, int height, String look, String title, List<List<SessionRun>> rows)
+            implements GuidePiece {
+
+        public Session {
+            rows = rows.stream().map(List::copyOf).toList();
+        }
+    }
+
+    /** A stretch of a session's row, in one of its terminal's colours. */
+    record SessionRun(String text, SessionInk ink) {
+    }
+
+    /** What a stretch of a session is, and so its colour: a prompt, what was typed, or what the system said. */
+    enum SessionInk {
+        PROMPT, TYPED, ANSWER
+    }
+
+    /**
      * The plate under an entry's title holding the items it shows, a row at a time: when they are more than a row
      * holds, the row turns over to the next ones every little while.
      *

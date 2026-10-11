@@ -61,16 +61,34 @@ public final class GuideSearch {
                 continue;
             }
             for (final GuidePiece piece : book.pages().get(page).pieces()) {
-                if (piece instanceof GuidePiece.Text text && text.text().toLowerCase(Locale.ROOT).contains(wanted)) {
+                final String line = lineHolding(piece, wanted);
+                if (!line.isEmpty()) {
                     final GuideBook.IndexLine found = entry.getValue();
                     hits.add(new Hit(found.text(), found.target(), book.pages().get(page).folio(), found.icon(),
-                            false, page, text.text().strip()));
+                            false, page, line));
                     listed.add(found.target());
                     break;
                 }
             }
         }
         return hits.size() > MOST ? List.copyOf(hits.subList(0, MOST)) : List.copyOf(hits);
+    }
+
+    /** The line of a piece holding the words, a session's row among them, or empty when it holds none. */
+    private static String lineHolding(final GuidePiece piece, final String wanted) {
+        if (piece instanceof GuidePiece.Text text && text.text().toLowerCase(Locale.ROOT).contains(wanted)) {
+            return text.text().strip();
+        }
+        if (piece instanceof GuidePiece.Session session) {
+            for (final List<GuidePiece.SessionRun> row : session.rows()) {
+                final StringBuilder written = new StringBuilder();
+                row.forEach(run -> written.append(run.text()));
+                if (written.toString().toLowerCase(Locale.ROOT).contains(wanted)) {
+                    return written.toString().strip();
+                }
+            }
+        }
+        return "";
     }
 
     /**
