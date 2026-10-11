@@ -2222,6 +2222,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the assembly screen, and the other way round; the two kept names of their own and showed different ones. A disk
   put into a machine with no name of its own names it, as a disk sold with a system does, and a machine with a
   name keeps it over the disk's. A server in a rack and its system are named the same way.
+- The cursor stays where the player left it when a monitor moves on by itself from one screen to the next: a system
+  coming up hands its start to the desktop, a restart goes to the self-test, an installer turns its page. Each change
+  used to put the cursor in the middle of the window. J's Core does this for every window built on it.
 
 ## [0.4.0a] - 2026-09-21 - The Booting Update
 

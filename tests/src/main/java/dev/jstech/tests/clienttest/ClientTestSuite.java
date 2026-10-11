@@ -71,6 +71,7 @@ public final class ClientTestSuite {
             LiveInstallClientTests.class,
             McNetSpaceClientTests.class,
             MotionClientTests.class,
+            MenuSwapCursorClientTests.class,
             MediaDriveClientTests.class,
             MonitorClientTests.class,
             MsdClientTests.class,
