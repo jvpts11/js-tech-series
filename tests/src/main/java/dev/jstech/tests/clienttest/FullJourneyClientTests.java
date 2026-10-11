@@ -53,15 +53,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
@@ -750,29 +746,13 @@ public final class FullJourneyClientTests {
                         "the tray of the device at " + relative + " to go back in", level -> "");
     }
 
-    /*
-     * The player's click on the eject button of the disc device at relative, whichever way it faces: aimed from where
-     * the player's eyes are at the middle of the button, set into the front by its depth, and landing where that look
-     * crosses the front of the block, as the game's own aim would.
-     */
+    /* The player's click on the middle of the eject button of the disc device at relative, whichever way it faces. */
     private static void pressEject(final ClientTestContext ctx, final BlockPos relative) {
-        final BlockPos at = ctx.abs(relative);
-        final BlockState state = Objects.requireNonNull(ctx.mc().level, "no level").getBlockState(at);
+        final BlockState state = Objects.requireNonNull(ctx.mc().level, "no level").getBlockState(ctx.abs(relative));
         final EjectButton button = Objects.requireNonNull(((ITrayBlock) state.getBlock()).ejectButton(),
                 "a device with a tray at " + relative);
-        final Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
-        final Vec3 out = Vec3.atLowerCornerOf(facing.getNormal());
-        final Vec3 right = Vec3.atLowerCornerOf(facing.getCounterClockWise().getNormal());
-        final Vec3 faceCentre = Vec3.atCenterOf(at).add(out.scale(0.5));
-        final double across = (button.left() + button.right()) / 2.0 / EjectButton.FRONT;
-        final double down = (button.top() + button.bottom()) / 2.0 / EjectButton.FRONT;
-        final Vec3 target = faceCentre.add(right.scale(across - 0.5)).add(0, 0.5 - down, 0)
-                .subtract(out.scale(button.depth() / (double) EjectButton.FRONT));
-        final Vec3 eye = ctx.player().getEyePosition();
-        final Vec3 look = target.subtract(eye);
-        final Vec3 hit = eye.add(look.scale(out.dot(faceCentre.subtract(eye)) / out.dot(look)));
-        Objects.requireNonNull(ctx.mc().gameMode, "no game mode")
-                .useItemOn(ctx.player(), InteractionHand.MAIN_HAND, new BlockHitResult(hit, facing, at, false));
+        ctx.rightClickFront(relative, (button.left() + button.right()) / 2.0, (button.top() + button.bottom()) / 2.0,
+                button.depth());
     }
 
     private static DiscTray trayOf(final ClientTestContext ctx, final ServerLevel level, final BlockPos relative) {

@@ -34,6 +34,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -57,6 +58,9 @@ public final class AssemblyScreensClientTests {
     private static final int RUNS_WITHIN = 100;
     /** The towers stand in a row facing south, two blocks apart. */
     private static final int TOWER_Z = 4;
+    /** Low on a tower's front, in sixty-fourths from its top left: plain on every case, clear of what a click works. */
+    private static final double PLAIN_X = 32;
+    private static final double PLAIN_Y = 56;
     private static final BlockPos MAINFRAME = new BlockPos(2, 2, 12);
     private static final BlockPos RACK = new BlockPos(2, 2, 20);
     /** The rack's units: a server, a storage server over two units, a KVM Switch, and a server with no processor. */
@@ -219,11 +223,14 @@ public final class AssemblyScreensClientTests {
                 .thenAwaitNoScreen(SCREEN_WAIT);
     }
 
-    /** Right-clicks the machine at {@code at}, waits for its screen, shoots it, checks it stays, and closes it. */
+    /**
+     * Right-clicks the machine at {@code at} low on its front, clear of its power button, bays and ports, waits for its
+     * screen, shoots it, checks it stays, and closes it.
+     */
     private static void open(final ClientTestContext ctx, final BlockPos at, final Class<? extends Screen> screen,
                              final String label) {
         ctx.thenTeleport(SETTLE, at.south(2), Direction.NORTH)
-                .thenRightClick(SETTLE, at)
+                .thenRightClickFront(SETTLE, at, PLAIN_X, PLAIN_Y)
                 .thenAwaitScreen(screen, SCREEN_WAIT)
                 .thenScreenshot(SETTLE, label)
                 .thenAssert(0, () -> ctx.openScreen(screen) != null, label + " must open and stay")
@@ -235,8 +242,7 @@ public final class AssemblyScreensClientTests {
         return new BlockPos(index * 2, 2, TOWER_Z);
     }
 
-    private static ServerRackBlockEntity rack(final ClientTestContext ctx,
-                                              final net.minecraft.server.level.ServerLevel level) {
+    private static ServerRackBlockEntity rack(final ClientTestContext ctx, final ServerLevel level) {
         return (ServerRackBlockEntity) level.getBlockEntity(ctx.abs(RACK));
     }
 

@@ -8,6 +8,7 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
+import dev.jstech.computers.hardware.CaseFrontLayout;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.tier.HardwareEra;
@@ -19,11 +20,14 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -40,8 +44,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * What the three small computers (Personal, Crafting and Cluster Management) share as blocks: a case that faces the
- * player, the side panel that comes off when sneaking, the hardware menu, and handing the hardware back when the
- * block goes. Each one brings its block entity, its menu and its ports; a rule about how any of them is clicked,
+ * player, the power button on its front, the side panel that comes off when sneaking, the hardware menu a click
+ * anywhere else on the case opens, and handing the hardware back when the block goes. Each one brings its block entity, its menu and its ports; a rule about how any of them is clicked,
  * broken or ticked is written once, here.
  *
  * @param <E> the block entity the block holds
@@ -52,6 +56,8 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
     private final HardwareEra era;
     private final CaseStyle caseStyle;
     private final FacePorts ports;
+    /** Where the case's front carries its power button, its bays and its USB ports. */
+    private final CaseFrontLayout front;
     private final Class<E> entityClass;
     private final Supplier<BlockEntityType<E>> entityType;
     private final BlockEntityTicker<E> serverTicker;
@@ -64,6 +70,7 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
         this.era = era;
         this.caseStyle = caseStyle;
         this.ports = ports;
+        this.front = CaseFrontLayout.of(era, caseStyle);
         this.entityClass = entityClass;
         this.entityType = entityType;
         this.serverTicker = serverTicker;
@@ -91,6 +98,11 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
     @Override
     public FacePorts ports() {
         return ports;
+    }
+
+    /** Where the case's front carries its power button, its bays and its USB ports. */
+    public CaseFrontLayout frontLayout() {
+        return front;
     }
 
     @Override
@@ -129,6 +141,26 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(final ItemStack held, final BlockState state, final Level level,
+                                              final BlockPos pos, final Player player, final InteractionHand hand,
+                                              final BlockHitResult hit) {
+        final E computer = computerAt(level, pos);
+        final double[] at = DeviceFront.point(state.getValue(FACING), pos, hit, player.getEyePosition(), 0);
+        if (computer == null || at == null) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        // The power button answers whatever the hand holds, as the one on the assembly screen does.
+        if (front.power().contains(at[0], at[1])) {
+            if (!level.isClientSide()) {
+                computer.togglePower();
+                computer.showPowerPressed();
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+        }
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     @Override

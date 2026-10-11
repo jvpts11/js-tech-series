@@ -11,6 +11,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.os.media.EjectButton;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.client.Minecraft;
@@ -25,6 +26,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
@@ -334,6 +337,15 @@ public final class ClientTestContext {
         return then(delayTicks, () -> rightClick(relative));
     }
 
+    /**
+     * Right-clicks the front of the device at {@code relative} at {@code x}, {@code y} sixty-fourths from its top
+     * left as seen, as {@link #rightClickFront} does: a plain spot of a front whose middle carries a button.
+     */
+    public ClientTestContext thenRightClickFront(final int delayTicks, final BlockPos relative, final double x,
+                                                 final double y) {
+        return then(delayTicks, () -> rightClickFront(relative, x, y, 0));
+    }
+
     /** Takes a screenshot named after the test and {@code label}. */
     public ClientTestContext thenScreenshot(final int delayTicks, final String label) {
         return then(delayTicks, () -> screenshot(label));
@@ -439,6 +451,29 @@ public final class ClientTestContext {
         final Vec3 location = center.add(Vec3.atLowerCornerOf(face.getNormal()).scale(0.5));
         final BlockHitResult hit = new BlockHitResult(location, face, target, false);
         Objects.requireNonNull(mc.gameMode, "no game mode").useItemOn(player(), InteractionHand.MAIN_HAND, hit);
+    }
+
+    /**
+     * Client-side: uses the held item on the front of the device at {@code relative}, the face it turns to whoever
+     * placed it, at {@code x}, {@code y} sixty-fourths from the front's top left as seen and {@code depth}
+     * sixty-fourths behind its face: aimed from the player's eyes at that point and landing where the look crosses
+     * the face of the block, as the game's own aim would, so a part set back in the front is pressed where it is drawn.
+     */
+    public void rightClickFront(final BlockPos relative, final double x, final double y, final int depth) {
+        final BlockPos at = abs(relative);
+        final BlockState state = Objects.requireNonNull(mc.level, "no level").getBlockState(at);
+        final Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
+        final Vec3 out = Vec3.atLowerCornerOf(facing.getNormal());
+        final Vec3 right = Vec3.atLowerCornerOf(facing.getCounterClockWise().getNormal());
+        final Vec3 faceCentre = Vec3.atCenterOf(at).add(out.scale(0.5));
+        final double front = EjectButton.FRONT;
+        final Vec3 target = faceCentre.add(right.scale(x / front - 0.5)).add(0, 0.5 - y / front, 0)
+                .subtract(out.scale(depth / front));
+        final Vec3 eye = player().getEyePosition();
+        final Vec3 look = target.subtract(eye);
+        final Vec3 hit = eye.add(look.scale(out.dot(faceCentre.subtract(eye)) / out.dot(look)));
+        Objects.requireNonNull(mc.gameMode, "no game mode")
+                .useItemOn(player(), InteractionHand.MAIN_HAND, new BlockHitResult(hit, facing, at, false));
     }
 
     /**
