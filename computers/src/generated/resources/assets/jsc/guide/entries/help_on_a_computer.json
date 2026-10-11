@@ -28,7 +28,7 @@
   ],
   "icon": "jsc:guide_to_operations",
   "id": "jsc:help_on_a_computer",
-  "order": 22,
+  "order": 23,
   "section": "jsc:systems",
   "title": "jsc.guide.help_on_a_computer.title"
 }

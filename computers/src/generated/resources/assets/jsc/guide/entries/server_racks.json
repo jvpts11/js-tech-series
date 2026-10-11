@@ -114,7 +114,7 @@
     "jsc:supercomputer_node",
     "jsc:advanced_supercomputer_node"
   ],
-  "order": 15,
+  "order": 16,
   "section": "jsc:computers",
   "title": "jsc.guide.server_racks.title"
 }

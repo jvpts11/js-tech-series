@@ -37,7 +37,7 @@
   ],
   "icon": "jsc:disk_vaultis_trench_20m",
   "id": "jsc:items_as_data",
-  "order": 35,
+  "order": 36,
   "section": "jsc:storage",
   "title": "jsc.guide.items_as_data.title"
 }

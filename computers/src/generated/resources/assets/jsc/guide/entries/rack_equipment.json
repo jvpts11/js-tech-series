@@ -40,7 +40,7 @@
     "jsc:rack_ups",
     "jsc:cooling_unit"
   ],
-  "order": 16,
+  "order": 17,
   "section": "jsc:computers",
   "title": "jsc.guide.rack_equipment.title"
 }

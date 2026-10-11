@@ -13,6 +13,10 @@
       "text": "jsc.guide.monitors.text3"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.monitors.text4"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -26,6 +30,10 @@
         {
           "fix": "jsc.guide.monitors.fix2",
           "problem": "jsc.guide.monitors.problem2"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix3",
+          "problem": "jsc.guide.monitors.problem3"
         }
       ]
     }
@@ -42,7 +50,7 @@
     "jsc:monitor",
     "jsc:color_monitor"
   ],
-  "order": 43,
+  "order": 44,
   "section": "jsc:peripherals",
   "title": "jsc.guide.monitors.title"
 }

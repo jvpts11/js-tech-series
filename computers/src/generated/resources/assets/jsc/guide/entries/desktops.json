@@ -28,7 +28,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:desktops",
-  "order": 19,
+  "order": 20,
   "section": "jsc:systems",
   "title": "jsc.guide.desktops.title"
 }

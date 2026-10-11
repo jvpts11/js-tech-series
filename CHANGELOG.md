@@ -113,7 +113,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   screen. To the system each drive and port on the front is a drive like the external ones: a letter, This PC (whose
   Eject opens a drive's tray), the explorers, installing systems and programs, the firmware and its boot menu, the
   Crafting Manager, the Pattern Studio and live media. The power button, each drive's eject button, each port and
-  the hot-swap bay are outlined on their own while looked at, exactly where a click works them.
+  the hot-swap bay are outlined on their own while looked at, exactly where a click works them. The Guide to
+  Operations has a page on the front of the case, and its pages on monitors, Mainframes, drives and building a first
+  computer say how their buttons now work.
 - A Mainframe has a power button on the sill in the middle of its cabinet, in every era: a click switches the machine
   on and off, whatever the hand holds, as the button on its assembly screen does, and it is outlined on its own while
   looked at; a click anywhere else on the cabinet still opens that screen.

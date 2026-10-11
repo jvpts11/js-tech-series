@@ -34,6 +34,7 @@ import dev.jstech.computers.block.SubwooferBlock;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.item.BayDriveItem;
 import dev.jstech.computers.item.ClusterInterfaceCardItem;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.CraftingCardItem;
@@ -159,11 +160,13 @@ final class ComputersEntries {
                         + " join them with Peripheral Cable if you want the monitor somewhere else"
                         + " ([](jsc:peripheral_cables)). Do the same with a Dock Station: that is where the install"
                         + " stick goes.")
-                .paragraph("Here is the thing that surprises most players: using the computer block always opens the"
-                        + " case. Everything you do with the computer itself, its system and its programs, you do at"
-                        + " the monitor.")
+                .paragraph("Here is the thing that surprises most players: using the computer block opens the case,"
+                        + " unless you click its power button or another part of its front ([](jsc:case_front))."
+                        + " Everything you do with the computer itself, its system and its programs, you do at the"
+                        + " monitor.")
                 .subheading("Turning it on")
-                .paragraph("Turn the computer on from its window and use the monitor. There is no system on the disk"
+                .paragraph("Turn the computer on with the power button on the front of its case, or the one in its"
+                        + " window, and use the monitor. There is no system on the disk"
                         + " yet, so you land in the firmware ([](jsc:firmware)). Put the Frames 10 install stick in"
                         + " the Dock Station, choose it, and follow the installer ([](jsc:installing)). When it is"
                         + " done, the computer starts into its desktop: open This PC, Files, the Command Prompt, the"
@@ -468,10 +471,58 @@ final class ComputersEntries {
                         + " that differ only in look: the plain one, High Performance and Aesthetic. Pick the one you"
                         + " like; inside they are the same.")
                 .paragraph("If you have never built one, [Building your first computer](jsc:first_computer) walks you"
-                        + " through it.")
+                        + " through it. Its front works too: a power button, bays for drives and, in the later eras,"
+                        + " USB ports ([](jsc:case_front)).")
                 .ifSomethingGoesWrong("The window refuses the build.",
                         "It says why: no processor or memory, a processor that does not fit the socket, memory the"
                                 + " board does not take, or more power than the power supply gives.")
+                .register();
+        guide.page("case_front", section).titled("The front of the case").icon(HardwareItems.INTERNAL_CD_DRIVE)
+                .coversAll(itemsOf(BayDriveItem.class))
+                .paragraph("The case of a Personal Computer, a Crafting Computer or a Cluster Management Computer has a"
+                        + " front that works: a power button, its 5.25-inch bays and, from the Transition on, two USB"
+                        + " ports on the left of the face. Click one of them and it does its job; click anywhere else"
+                        + " and the case opens, as always, and a sneak-click there takes its side off.")
+                .paragraph("The power button switches the computer on and off, whatever you are holding, the same as"
+                        + " the button on the assembly screen. Look at a part of the front and it is outlined on its"
+                        + " own: that is exactly where a click works it.")
+                .table("The front of each era's case")
+                .property("Vintage", "1 bay, no front ports")
+                .property("Legacy", "2 bays, no front ports")
+                .property("Transition", "2 bays, 2 USB ports")
+                .property("Standard", "1 bay, 2 USB ports")
+                .property("Advanced", "no bays, 2 USB ports")
+                .subheading("What goes in a bay")
+                .paragraph("Four parts go in the bays, one to a bay, on the assembly screen: the Internal CD Drive"
+                        + " (Legacy), the Internal DVD Drive (Transition), the Internal Blu-ray Drive (Advanced) and"
+                        + " the Hot-Swap Drive Bay (Vintage). Any of them goes in any bay. The Advanced cases have no"
+                        + " bays, so the Internal Blu-ray Drive is there to read the newest discs in an older"
+                        + " computer, as people did.")
+                .paragraph("An internal drive works like the drive of its kind standing outside ([](jsc:drives)):"
+                        + " press the eject button on its front and the tray comes out, click with a disc to lay it"
+                        + " on the tray, press the button again to take it in, and sneak-click to lift the disc off"
+                        + " the open tray. The tray stays in while the computer reads the disc, and the drive's lamp"
+                        + " blinks meanwhile. Take the drive out of its bay and the disc falls out with it.")
+                .paragraph("The Hot-Swap Drive Bay takes a disk from the front: click with the disk to slide it in"
+                        + " and sneak-click to take it out, with the computer on or off. It takes the disks the"
+                        + " computer takes in its own disk slots, of the computer's era or older, so no NVMe drive in"
+                        + " a Vintage computer ([](jsc:disks)). The disk in it is one of the computer's own: it has a"
+                        + " letter, a system goes on it and the computer boots from it. Take out the disk the"
+                        + " computer runs from while it runs, and it is the same as taking it out on the assembly"
+                        + " screen.")
+                .subheading("The USB ports")
+                .paragraph("Click a port with a USB flash drive to plug it in, and sneak-click to pull it out.")
+                .paragraph("To the computer's system, a drive in a bay and a stick in a port are drives like the"
+                        + " external ones: each has a letter, shows in This PC, whose Eject brings a drive's tray"
+                        + " out, opens in the files, installs systems and programs, and the firmware starts from it"
+                        + " ([](jsc:installing)).")
+                .ifSomethingGoesWrong("The disc will not go in.",
+                        "The tray is closed: press the eject button on the drive's front. Or the drive cannot read"
+                                + " it: a CD drive reads CDs, a DVD drive DVDs and CDs, a Blu-ray drive all three.",
+                        "The tray will not come out.",
+                        "The computer is reading the disc. Wait for it to finish.",
+                        "The hot-swap bay refuses a disk.",
+                        "The disk is newer than the computer's era.")
                 .register();
         guide.page("mainframes", section).titled("Mainframes").icon(ComputingModule.MAINFRAME)
                 .coversAll(blocksOf(MainframeBlock.class))
@@ -499,6 +550,9 @@ final class ComputersEntries {
                         + " processors set it.")
                 .paragraph("Only the Mainframe runs the Network Manager, the network's control room: every machine on"
                         + " it, the storage, and the Operations being worked.")
+                .paragraph("Its power button sits on the sill in the middle of the cabinet: a click switches it on and"
+                        + " off, the same as the button on its assembly screen, and a click anywhere else on the"
+                        + " cabinet opens that screen.")
                 .ifSomethingGoesWrong("The network is slow.",
                         "Faster processors raise the Mainframe's capacity; more graphics cards give it more queues.",
                         "Two Mainframes, and nothing works.",
@@ -1075,10 +1129,18 @@ final class ComputersEntries {
                         + " monitor more ([](jsc:graphics_cards)).")
                 .paragraph("And when nobody is sitting at it, the monitor still shows what the computer is doing, out"
                         + " in the world.")
+                .paragraph("A monitor has a power button of its own, on its bezel, and it switches the monitor alone:"
+                        + " the computer behind it runs on, and is switched on and off at its case. Switched off, the"
+                        + " monitor's face is black and a click on it opens nothing; a screen open on it closes. From"
+                        + " the Legacy on, the button's lamp glows amber while the monitor is on and its computer is"
+                        + " off. Every monitor comes switched on, and on a big screen the button in its corner"
+                        + " switches the whole screen.")
                 .ifSomethingGoesWrong("The monitor says no computer is in range.",
                         "Lay peripheral cable all the way, within its range.",
                         "The monitor says there is not enough video memory.",
-                        "Use a card with more, or fewer or smaller monitors.")
+                        "Use a card with more, or fewer or smaller monitors.",
+                        "The face is black and a click says the monitor is off.",
+                        "Press the power button on its bezel.")
                 .register();
         guide.page("drives", section).titled("Drives and the Dock Station").icon(ComputingModule.FLOPPY_DRIVE)
                 .coversAll(blocksOf(MediaReaderBlock.class))
@@ -1091,6 +1153,8 @@ final class ComputersEntries {
                         + " beside it to bring it out, put the disc on it, and press the button again to take it in;"
                         + " sneak-click to lift a disc off the open tray. A computer sees the drive empty while the"
                         + " tray is out, and the tray stays shut while the computer reads the disc.")
+                .paragraph("The same drives also come as parts that go in the bays of a computer's case, and a USB"
+                        + " stick plugs straight into the front ports of the later cases ([](jsc:case_front)).")
                 .ifSomethingGoesWrong("The medium will not go in.",
                         "Each medium goes in its own kind of drive.",
                         "The disc will not go in, or will not come out.",

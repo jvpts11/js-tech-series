@@ -85,7 +85,7 @@
     "jsc:crafting_card_pcie3",
     "jsc:crafting_card_t4"
   ],
-  "order": 39,
+  "order": 40,
   "section": "jsc:autocrafting",
   "title": "jsc.guide.crafting_computers.title"
 }

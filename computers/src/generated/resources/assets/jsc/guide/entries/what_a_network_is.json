@@ -19,7 +19,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:what_a_network_is",
-  "order": 23,
+  "order": 24,
   "section": "jsc:network",
   "title": "jsc.guide.what_a_network_is.title"
 }

@@ -84,7 +84,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:programs",
-  "order": 20,
+  "order": 21,
   "section": "jsc:systems",
   "title": "jsc.guide.programs.title"
 }

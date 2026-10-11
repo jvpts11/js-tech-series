@@ -1,0 +1,108 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.case_front.table1",
+      "rows": [
+        {
+          "label": "jsc.guide.case_front.table1_1",
+          "value": {
+            "words": "jsc.guide.case_front.value1_1"
+          }
+        },
+        {
+          "label": "jsc.guide.case_front.table1_2",
+          "value": {
+            "words": "jsc.guide.case_front.value1_2"
+          }
+        },
+        {
+          "label": "jsc.guide.case_front.table1_3",
+          "value": {
+            "words": "jsc.guide.case_front.value1_3"
+          }
+        },
+        {
+          "label": "jsc.guide.case_front.table1_4",
+          "value": {
+            "words": "jsc.guide.case_front.value1_4"
+          }
+        },
+        {
+          "label": "jsc.guide.case_front.table1_5",
+          "value": {
+            "words": "jsc.guide.case_front.value1_5"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.case_front.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.case_front.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.case_front.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.case_front.fix1",
+          "problem": "jsc.guide.case_front.problem1"
+        },
+        {
+          "fix": "jsc.guide.case_front.fix2",
+          "problem": "jsc.guide.case_front.problem2"
+        },
+        {
+          "fix": "jsc.guide.case_front.fix3",
+          "problem": "jsc.guide.case_front.problem3"
+        }
+      ]
+    }
+  ],
+  "icon": "jsc:internal_cd_drive",
+  "id": "jsc:case_front",
+  "items": [
+    "jsc:hot_swap_drive_bay",
+    "jsc:internal_cd_drive",
+    "jsc:internal_dvd_drive",
+    "jsc:internal_blu_ray_drive"
+  ],
+  "order": 14,
+  "section": "jsc:computers",
+  "title": "jsc.guide.case_front.title"
+}

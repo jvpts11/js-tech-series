@@ -39,7 +39,7 @@
     "jsc:advanced_high_performance_cluster_management_computer",
     "jsc:advanced_aesthetic_cluster_management_computer"
   ],
-  "order": 17,
+  "order": 18,
   "section": "jsc:computers",
   "title": "jsc.guide.cluster_management_computers.title"
 }

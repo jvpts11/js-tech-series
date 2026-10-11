@@ -28,7 +28,7 @@
   ],
   "icon": "jsc:crafting_computer",
   "id": "jsc:asking_for_a_craft",
-  "order": 42,
+  "order": 43,
   "section": "jsc:autocrafting",
   "title": "jsc.guide.asking_for_a_craft.title"
 }

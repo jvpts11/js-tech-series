@@ -13,6 +13,10 @@
       "text": "jsc.guide.drives.text3"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.drives.text4"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -39,7 +43,7 @@
     "jsc:blu_ray_drive",
     "jsc:dock_station"
   ],
-  "order": 44,
+  "order": 45,
   "section": "jsc:peripherals",
   "title": "jsc.guide.drives.title"
 }

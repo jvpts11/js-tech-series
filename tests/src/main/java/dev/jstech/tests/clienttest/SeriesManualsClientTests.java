@@ -74,6 +74,11 @@ public final class SeriesManualsClientTests {
                 .thenAssert(0, () -> manual().goTo("jsc:graphics_cards") && shows("jsc:graphics_cards"),
                         "and at the graphics cards, a family of many items")
                 .thenScreenshot(SETTLE, "series_operations_family")
+                .thenAssert(0, () -> manual().goTo("jsc:case_front") && shows("jsc:case_front"),
+                        "and at the front of the case, the page of the drives that go in its bays")
+                .thenScreenshot(SETTLE, "series_operations_case_front")
+                .then(0, () -> manual().turn(1))
+                .thenScreenshot(SETTLE, "series_operations_case_front_2")
                 .then(0, SeriesManualsClientTests::close)
                 .thenAwaitNoScreen(OPEN);
     }

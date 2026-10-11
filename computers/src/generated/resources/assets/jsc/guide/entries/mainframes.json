@@ -64,6 +64,10 @@
       "text": "jsc.guide.mainframes.text4"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text5"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -90,7 +94,7 @@
     "jsc:transition_mainframe",
     "jsc:advanced_mainframe"
   ],
-  "order": 14,
+  "order": 15,
   "section": "jsc:computers",
   "title": "jsc.guide.mainframes.title"
 }

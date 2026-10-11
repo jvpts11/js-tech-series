@@ -28,7 +28,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:two_systems",
-  "order": 21,
+  "order": 22,
   "section": "jsc:systems",
   "title": "jsc.guide.two_systems.title"
 }
