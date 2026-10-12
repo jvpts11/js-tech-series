@@ -1975,6 +1975,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- The help command's manual page gives first a line that works on every system that has help, help on help itself;
+  its only example was help dir, a command of the DOS family alone, which answered with an error on every Unix.
 - A computer, a Mainframe or a rack taken by anything but a player, an explosion, a command or another mod's machine,
   gives back what it holds: its parts, its servers and drives, and a Mainframe or a rack its own cabinet too. Only a
   player's break in survival gave them back; anything else lost them, and a creeper took a whole Mainframe. A player

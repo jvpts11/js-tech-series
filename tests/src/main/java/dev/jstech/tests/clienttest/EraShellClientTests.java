@@ -75,7 +75,7 @@ public final class EraShellClientTests {
         EraJourney.atTheDesk(ctx, kit);
         if (kit != EraKit.VINTAGE) {
             final String terminal = EraJourney.terminal(kit);
-            EraJourney.launch(ctx, terminal)
+            EraJourney.launch(ctx, kit, terminal)
                     .thenWaitUntil(() -> DesktopSteps.app(ctx, terminal, ShellApp.class) != null,
                             EraJourney.SCREEN_WAIT, "the " + terminal + " window to open");
         }
