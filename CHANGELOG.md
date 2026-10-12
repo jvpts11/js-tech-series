@@ -1965,6 +1965,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Mainframe, a Server Rack or a Cluster Management Computer only while it holds an Optical Network Card; and the
   Pattern Studio and the Crafting Manager come with no system, but are installed from their CDs or the Mirror. Its
   problems now cover a Mainframe shown offline, Operations that stay queued and fibre that will not join.
+- A Server Rack's drive bays take a disk of the rack's era or an older one, as a computer's disk slots do; they
+  took a disk of any era. The manual's page on disks said the rule the wrong way round: a disk fits a computer of
+  its own era or a later one.
 - A big screen of monitors running west or north is drawn whenever any of it is in view; the box the game checks
   its view against lost a monitor at each end.
 - A USB stick in the Dock Station's port and in the Advanced Pattern Encoder's lies across as the port does; it

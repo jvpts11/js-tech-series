@@ -415,7 +415,8 @@ final class ComputerKindsPages {
                 .define("Hot-swap", "Taking a part out of a machine, or putting one in, while the machine stays on.")
                 .paragraph("The bays belong to the rack, not to the server. A drive stays in its bay when the server is"
                         + " pulled out, and the next server mounted over those rows inherits its drives.")
-                .paragraph("A drive bay takes only a disk. A gadget bay takes only a gadget, such as the Cache Card"
+                .paragraph("A drive bay takes only a disk of the rack's era or an older one, as a computer's disk slots"
+                        + " do ([](jsc:disks)). A gadget bay takes only a gadget, such as the Cache Card"
                         + " ([](jsc:rack_equipment)).")
                 .paragraph("Drives can join into one volume, called RAID. Depending on the mode, a RAID array keeps"
                         + " working when a drive is lost ([](jsc:raid_arrays)).")
@@ -434,7 +435,8 @@ final class ComputerKindsPages {
                         + " 40 ticks, which is 2 seconds, or more than 3 minutes. While it runs, the rack shows REBUILD"
                         + " and a percentage. The rack also marks an array DEGRADED or FAILED.")
                 .ifSomethingGoesWrong("The bay refuses the item.",
-                        "A drive bay takes only a disk, and a gadget bay only a gadget.",
+                        "A drive bay takes only a disk of the rack's era or an older one, and a gadget bay only a"
+                                + " gadget.",
                         "The array lost everything.",
                         "A RAID 0 array keeps no copy, so it loses everything when a drive is lost. Use RAID 1 or"
                                 + " RAID 5 for a copy"

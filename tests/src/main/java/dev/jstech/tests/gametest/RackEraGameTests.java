@@ -93,6 +93,24 @@ public final class RackEraGameTests {
                 .thenSucceed();
     }
 
+    /** A rack's drive bays take a disk of the rack's era or an older one, as a computer's disk slots do. */
+    @GameTest(template = ARENA)
+    public static void driveBays_takeOnlyDisksOfTheirRacksEraOrOlder(final GameTestHelper helper) {
+        final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2),
+                ComputingModule.LEGACY_SERVER_RACK.get());
+        rack.getServers().setStackInSlot(0, stack(ComputingModule.LEGACY_SERVER.get()));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertFalse(rack.insertDrive(0, stack(HardwareItems.DISK_LINK_SATA_SSD_64G.get())),
+                            "a Legacy rack refuses a Transition disk");
+                    helper.assertTrue(rack.insertDrive(0, stack(HardwareItems.DISK_LINK_IDE_4G.get())),
+                            "a Legacy rack takes a Legacy disk");
+                    helper.assertTrue(rack.insertDrive(0, stack(HardwareItems.DISK_TRENCH_20M.get())),
+                            "a Legacy rack takes a Vintage disk");
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void rackEra_vintageRackSeatsOnlyVintageServers(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2), ComputingModule.VINTAGE_SERVER_RACK.get());

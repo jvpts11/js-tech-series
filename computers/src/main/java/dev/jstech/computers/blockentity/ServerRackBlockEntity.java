@@ -693,7 +693,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
              * (RAID controller, cache card) in a gadget bay, nothing in a blocked one.
              */
             return switch (roleOfFrontSlot(slot)) {
-                case DRIVE -> stack.getItem() instanceof DiskItem;
+                case DRIVE -> fitsBay(stack);
                 case GADGET -> stack.getItem()
                         instanceof RackGadgetItem;
                 case BLOCKED_NO_UNIT, BLOCKED_BUDGET -> false;
@@ -1000,7 +1000,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     /** Inserts a drive into the first free claimed drive slot of the unit at {@code serverSlot}. */
     public boolean insertDrive(final int serverSlot, final ItemStack drive) {
         final RackChassis chassis = ServerItem.chassisOf(servers.getStackInSlot(serverSlot));
-        if (chassis == null || !(drive.getItem() instanceof DiskItem)) {
+        if (chassis == null || !fitsBay(drive)) {
             return false;
         }
         final List<RackLayout.Unit> mounted = mountedUnits();
@@ -2073,6 +2073,14 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         final OsDef os =
                 osId != null ? OsRegistry.getOs(osId) : null;
         return os != null ? os.footprintItemsOn(diskEra(disk)) : 0L;
+    }
+
+    /*
+     * The bays belong to the cabinet, so the cabinet's era sets which disks they take, as a computer's era sets its
+     * disk slots': a disk of that era or an older one. A disk made for a later machine has nothing to plug into.
+     */
+    private boolean fitsBay(final ItemStack stack) {
+        return stack.getItem() instanceof DiskItem disk && disk.spec().era().isAtMost(rackEra());
     }
 
     /** The era a disk was made for, which sets what an item and a system cost on it; standard for no disk. */

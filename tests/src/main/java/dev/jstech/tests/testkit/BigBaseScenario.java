@@ -378,7 +378,11 @@ public final class BigBaseScenario {
         // The router's back is its uplink: it faces away from the backbone, so its back meets the cable.
         world.setBlock(new BlockPos(rx, Y, routerZ), ComputingModule.SERVER_ROUTER.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, away));
-        return placeCabinetRow(world, ComputingModule.HBW_CABLE, ComputingModule.SERVER_RACK.get(), rx,
+        // A cabinet's bays take drives of its own era or older, so the Advanced drives need an Advanced cabinet.
+        final HardwareEra driveEra = ComputingModule.disk(StorageTier.NVME, params.driveSize()).spec().era();
+        final Block cabinet = driveEra.isAtMost(HardwareEra.STANDARD)
+                ? ComputingModule.SERVER_RACK.get() : ComputingModule.ADVANCED_SERVER_RACK.get();
+        return placeCabinetRow(world, ComputingModule.HBW_CABLE, cabinet, rx,
                 routerZ + away.getStepZ(), away, racks, rack -> {
                     for (int slot = 0; slot < params.serversPerRack(); slot++) {
                         final int row = params.chassis() == Chassis.STORAGE ? slot * 2 : slot;

@@ -675,9 +675,8 @@ final class BuildingPages {
                         + " hard disks are Vaultis Link IDE-HDD drives of 4G, 20G and 40G, and the Transition SSD"
                         + " is a Vaultis Link"
                         + " SATA-SSD of 64G.")
-                .paragraph("A disk fits a computer of its own era or of an older one. A newer disk is refused, in"
-                        + " a disk"
-                        + " slot and in the hot-swap bay.")
+                .paragraph("A disk fits a computer of its own era or of a later one. A disk newer than the computer"
+                        + " is refused, in a disk slot, in the hot-swap bay and in a rack's drive bay.")
                 .paragraph("The board's disk slots count the disks you put in them. A disk in the hot-swap bay"
                         + " takes none"
                         + " of those slots. Each disk also draws power, as the table shows.")

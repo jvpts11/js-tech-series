@@ -185,8 +185,9 @@ public final class NetworkOperationGameTests {
             return;
         }
         rackBe.getServers().setStackInSlot(0, ServerStacks.defaultServer());
-        rackBe.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_8)));
-        rackBe.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_8)));
+        // The largest NVMe drives of the Standard, the rack's era: its bays refuse the Advanced ones.
+        rackBe.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_2)));
+        rackBe.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_2)));
 
         /*
          * A large INSERT: far beyond one tick of the server's RAM-bounded write rate, so it is
