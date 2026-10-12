@@ -460,15 +460,19 @@ final class ComputerKindsPages {
                 .row(GuideCell.words("Rack UPS"), GuideCell.words("1 U"),
                         GuideCell.words("Takes the rack unit, and adds nothing to the heat budget"))
                 .row(GuideCell.words("Cooling Unit"), GuideCell.words("1 U"),
-                        GuideCell.words("Adds 1,500 W to the heat budget"))
+                        GuideCell.words("Adds to the heat budget, more in each newer era"))
                 .row(GuideCell.words("Fibre Optic Interface"), GuideCell.words("1 U"),
                         GuideCell.words("Lets the rack's back take the Fibre Optic Cable"))
                 .row(GuideCell.words("Advanced Fibre Optic Interface"), GuideCell.words("1 U"),
                         GuideCell.words("Lets the rack's back take the Fibre Optic Cable and the OM5 Fibre Cable"))
+                .paragraph("The KVM Switch, the Rack UPS and the Cooling Unit come in every era, from the Vintage to"
+                        + " the Advanced. A rack seats the units of its own era and of the earlier ones, as it does"
+                        + " servers: a Vintage KVM Switch goes in a Standard rack, a Standard one never in a Vintage"
+                        + " rack.")
                 .paragraph("The KVM Switch lets one monitor reach every machine in the rack, so you do not need a"
                         + " screen for each. A rack with two or more computers needs one to choose between them.")
-                .paragraph("The Cooling Unit raises the heat the rack can carry, as explained in"
-                        + " ([](jsc:rack_cooling_and_heat)).")
+                .paragraph("The Cooling Unit raises the heat the rack can carry, a newer era's more than an older"
+                        + " one's, as explained in ([](jsc:rack_cooling_and_heat)).")
                 .paragraph("From the Standard on, the backbone is fibre, and a rack takes it only through a Fibre Optic"
                         + " Interface. The Standard one takes the Fibre Optic Cable; the Advanced one, which only an"
                         + " Advanced rack seats, takes the OM5 Fibre Cable as well. One in any row of the rack is"
@@ -478,6 +482,8 @@ final class ComputerKindsPages {
                         + " them takes ([](jsc:raid_arrays)).")
                 .ifSomethingGoesWrong("A rack with several computers has no way to pick one on the monitor.",
                         "Mount a KVM Switch in the rack. It takes one rack unit.",
+                        "A unit does not go in, and the rack says it belongs in a newer rack.",
+                        "The unit is of a newer era than the rack. Use the rack's own era's unit or an older one.",
                         "The OM5 Fibre Cable does not join the rack.",
                         "The rack holds the Standard Fibre Optic Interface, which takes only the Fibre Optic Cable."
                                 + " Mount the Advanced one, in an Advanced rack.",
@@ -492,8 +498,9 @@ final class ComputerKindsPages {
                 .paragraph("When you fill a rack, it can carry only so much heat before its machines slow down. Every"
                         + " Cooling Unit in the rack counts toward that limit, wherever it sits.")
                 .define("Heat budget", "The watts of heat that a rack can carry before its machines slow down.")
-                .paragraph("The heat budget is 1,000 W plus 1,500 W for each Cooling Unit. The load is the power draw"
-                        + " of every machine whose bay is on: its processors and cards, added up.")
+                .paragraph("The heat budget is 1,000 W plus what each Cooling Unit adds, by its era. The load is the"
+                        + " power draw of every machine whose bay is on: its processors and cards, added up.")
+                .tableFrom(RackFacts.COOLING_UNITS, "Cooling Units", "Unit", "Era", "Adds to the heat budget")
                 .paragraph("When the load is over the heat budget, every machine slows down by the same share. The"
                         + " share is 100 times the budget, divided by the load, as a percent, and it never falls below"
                         + " 25%. A hot rack slows down; it does not stop.")
@@ -503,7 +510,7 @@ final class ComputerKindsPages {
                 .row(GuideCell.words("4,000 W"), GuideCell.words("1,000 W"), GuideCell.words("25%"))
                 .row(GuideCell.words("8,000 W"), GuideCell.words("1,000 W"),
                         GuideCell.words("25%, the lowest share"))
-                .row(GuideCell.words("5,000 W"), GuideCell.words("2,500 W, with one Cooling Unit"),
+                .row(GuideCell.words("5,000 W"), GuideCell.words("2,500 W, with one Standard Cooling Unit"),
                         GuideCell.words("50%"))
                 .paragraph("The rack screen shows THROTTLED and the share while the rack is over its budget. The"
                         + " slowdown cuts the capacity of each server, including the bonus from its graphics cards.")
@@ -791,9 +798,9 @@ final class ComputerKindsPages {
         entry.balloon(2, GuideBlock.ScenePart.of(15, 2, 16).box(6, 4, 14, 16, 8, 16), "KVM Switch",
                 "It lets one monitor reach every machine in the rack.");
         entry.balloon(3, GuideBlock.ScenePart.of(15, 1, 16).box(6, 4, 14, 16, 13, 16), "Storage Server",
-                "It takes two rack units, and its eight drive bays hold the disks.");
+                "It takes two rack units, and its ten drive bays hold the disks.");
         entry.balloon(4, GuideBlock.ScenePart.of(15, 0, 16).box(6, 8, 14, 16, 13, 16), "Cooling Unit",
-                "It adds 1,500 W to the heat the rack can carry.");
+                "This Standard one adds 1,500 W to the heat the rack can carry.");
         entry.balloon(5, GuideBlock.ScenePart.of(15, 0, 16).box(6, 3, 14, 16, 7, 16), "Rack UPS");
     }
 

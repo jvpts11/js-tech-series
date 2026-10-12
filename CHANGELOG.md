@@ -670,6 +670,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Optical Network Card, from the Standard. The backbone's fibre enters a Mainframe or a Cluster Management
   Computer only while the machine holds one; without one the machine takes the copper of its backbone alone. It fits
   a PCIe slot and is drawn inside the computers that seat it. A server never seats it.
+- A KVM Switch, a Rack UPS and a Cooling Unit for every era, from the Vintage to the Advanced, each in its era's
+  faceplate; the ones there were are the Standard's. A rack seats the units of its own era and of the earlier ones,
+  as it does servers, and says so when a unit is too new for it. A Cooling Unit adds its era's watts to the rack's
+  heat budget: 300 W for the Vintage one, 600 W, 1,000 W and 1,500 W up to the Standard, 2,500 W for the Advanced.
 - The Fibre Optic Interface and the Advanced Fibre Optic Interface, 1U rack units: a server rack takes the fibre
   backbone only through one mounted in any of its rows. The Standard one takes the Fibre Optic Cable; the Advanced
   one, which only an Advanced rack seats, takes the OM5 Fibre Cable as well.

@@ -82,8 +82,11 @@ the rack, and room for processors and expansion cards:
   drives of the server it sits in (RAID 0 with at least 2 drives: a quarter faster, nothing kept if one fails;
   RAID 1 with at least 2: every drive a copy; RAID 5 with at least 3: survives losing one), and the **Vaultis
   Cache** cuts how long a read waits, from 10% on the ISA card to 30% on the PCI-e 4.0 one.
-- **Rack units**: the **KVM Switch** lets one monitor reach several machines; the **Rack UPS** and the **Cooling
-  Unit** fill the cabinet's other bays; the **Fibre Optic Interface** is how a rack takes the fibre backbone: the
+- **Rack units**: the **KVM Switch** lets one monitor reach several machines; the **Rack UPS** carries the cabinet
+  through an outage; the **Cooling Unit** adds to the heat the cabinet can carry, 300 W for the Vintage one, 600 W
+  for the Legacy, 1,000 W for the Transition, 1,500 W for the Standard and 2,500 W for the Advanced. Each of the three
+  comes in every era, and a rack seats the units of its era and the earlier ones, as it does servers. The **Fibre
+  Optic Interface** is how a rack takes the fibre backbone: the
   Standard's takes the Fibre Optic Cable, the Advanced's, in an Advanced rack, the OM5 Fibre Cable as well.
 - A **supercomputer** is every Supercomputer Rack tied together by the high compute cable, meeting the network at
   one **HBW Interface**.

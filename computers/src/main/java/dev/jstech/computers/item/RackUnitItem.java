@@ -9,6 +9,7 @@ package dev.jstech.computers.item;
 
 import dev.jstech.computers.block.FibreReach;
 import dev.jstech.computers.rack.IMountableRackUnit;
+import dev.jstech.computers.rack.RackThermals;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -61,8 +62,7 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
     }
 
     private final Kind kind;
-    /** The era of the unit, which a rack seats from its own era on; null for a unit every rack seats. */
-    @Nullable
+    /** The era of the unit: a rack seats the units of its own era and of the earlier ones. */
     private final HardwareEra era;
 
     private static final TextKey KVM_TOOLTIP = TextKey.of("item.jsc.kvm_switch.tooltip",
@@ -71,6 +71,8 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
             "Carries the whole rack through a power outage");
     private static final TextKey COOLING_TOOLTIP = TextKey.of("item.jsc.cooling_unit.tooltip",
             "Active cooling: raises the rack's thermal budget");
+    private static final TextKey COOLING_WATTS = TextKey.of("item.jsc.cooling_unit.watts",
+            "+%s W to the rack's heat budget");
     private static final TextKey FIBRE_TOOLTIP = TextKey.of("item.jsc.fibre_interface.tooltip",
             "Lets the rack's back take the fibre backbone");
     private static final TextKey FIBRE_STANDARD = TextKey.of("item.jsc.fibre_interface.standard",
@@ -80,7 +82,7 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
     private static final TextKey EQUIPMENT = TextKey.of("item.jsc.rack_unit.equipment",
             "%sU - rack equipment, not a computer");
 
-    public RackUnitItem(final Properties properties, final Kind kind, @Nullable final HardwareEra era) {
+    public RackUnitItem(final Properties properties, final Kind kind, final HardwareEra era) {
         super(properties.stacksTo(1));
         this.kind = kind;
         this.era = era;
@@ -90,15 +92,19 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
         return kind;
     }
 
-    /** The era of the unit, or null when every rack seats it. */
-    @Nullable
     public HardwareEra era() {
         return era;
     }
 
     /** Whether a rack of {@code rackEra} seats the unit: one of its own era or an earlier one. */
     public boolean fitsRackOf(final HardwareEra rackEra) {
-        return era == null || era.isAtMost(rackEra);
+        return era.isAtMost(rackEra);
+    }
+
+    /** What the Cooling Unit in {@code stack} adds to its rack's heat budget: nothing for any other unit. */
+    public static int coolingWattsOf(final ItemStack stack) {
+        return stack.getItem() instanceof RackUnitItem unit && unit.kind == Kind.COOLING_UNIT
+                ? RackThermals.coolingUnitWatts(unit.era) : 0;
     }
 
     /** How much of the fibre the unit in {@code stack} lets into its rack: none for anything but a fibre interface. */
@@ -137,9 +143,11 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
             final TextKey takes = fibreReachOf(stack) == FibreReach.ADVANCED ? FIBRE_ADVANCED : FIBRE_STANDARD;
             tooltip.add(GameText.component(takes).withStyle(ChatFormatting.DARK_GRAY));
         }
-        tooltip.add(GameText.component(EQUIPMENT.with(kind.heightU())).withStyle(ChatFormatting.DARK_GRAY));
-        if (era != null) {
-            HardwareTooltip.appendEra(tooltip, era);
+        if (kind == Kind.COOLING_UNIT) {
+            tooltip.add(GameText.component(COOLING_WATTS.with(RackThermals.coolingUnitWatts(era)))
+                    .withStyle(ChatFormatting.DARK_GRAY));
         }
+        tooltip.add(GameText.component(EQUIPMENT.with(kind.heightU())).withStyle(ChatFormatting.DARK_GRAY));
+        HardwareTooltip.appendEra(tooltip, era);
     }
 }

@@ -9,9 +9,11 @@ package dev.jstech.computers.guide;
 
 import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.StorageCardSpec;
+import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.item.StorageCardItem;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.rack.RackThermals;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.text.TextHolder;
@@ -22,8 +24,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 
 /**
- * The manual's tables of the servers and of the storage cards, read from the items themselves as the book is opened,
- * so a chassis given another drive bay, or a card another era, is what the book prints and no number is written twice.
+ * The manual's tables of the servers, the storage cards and the Cooling Units, read from the items themselves as the
+ * book is opened, so a chassis given another drive bay, or a card another era, is what the book prints and no number
+ * is written twice.
  */
 @TextHolder
 public final class RackFacts {
@@ -32,6 +35,8 @@ public final class RackFacts {
     public static final String SERVERS = "jsc:servers";
     /** Each storage card: what it is, the slot it takes, its era and how much of the read latency it takes away. */
     public static final String STORAGE_CARDS = "jsc:storage_cards";
+    /** Each Cooling Unit: its era and what it adds to its rack's heat budget. */
+    public static final String COOLING_UNITS = "jsc:cooling_units";
 
     private static final TextKey NO_LIMIT = TextKey.of("jsc.guide.facts.no_limit", "no limit");
     private static final TextKey ARRAY = TextKey.of("jsc.guide.facts.storage_card.array", "RAID controller");
@@ -44,6 +49,7 @@ public final class RackFacts {
     public static void declare() {
         GuideFacts.rows(SERVERS, RackFacts::serverRows);
         GuideFacts.rows(STORAGE_CARDS, RackFacts::storageCardRows);
+        GuideFacts.rows(COOLING_UNITS, RackFacts::coolingUnitRows);
     }
 
     /* A row for each server, in the order the mod declares them. */
@@ -82,6 +88,21 @@ public final class RackFacts {
                     new GuideBlock.GuideValue.Said(spec.era().named()),
                     array ? new GuideBlock.GuideValue.Words(CableFacts.NONE.key())
                             : new GuideBlock.GuideValue.Amount(spec.readCutPercent(), "%"))));
+        }
+        return rows;
+    }
+
+    /* A row for each Cooling Unit, in the order the mod declares them. */
+    private static List<GuideBlock.TableRow> coolingUnitRows() {
+        final List<GuideBlock.TableRow> rows = new ArrayList<>();
+        for (final Item item : BuiltInRegistries.ITEM) {
+            if (!(item instanceof RackUnitItem unit) || unit.kind() != RackUnitItem.Kind.COOLING_UNIT) {
+                continue;
+            }
+            rows.add(new GuideBlock.TableRow(List.of(
+                    new GuideBlock.GuideValue.Words(item.getDescriptionId()),
+                    new GuideBlock.GuideValue.Said(unit.era().named()),
+                    new GuideBlock.GuideValue.Amount(RackThermals.coolingUnitWatts(unit.era()), "W"))));
         }
         return rows;
     }

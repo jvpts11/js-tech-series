@@ -87,6 +87,10 @@
       "text": "jsc.guide.rack_equipment.text5"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text6"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -104,6 +108,10 @@
         {
           "fix": "jsc.guide.rack_equipment.fix3",
           "problem": "jsc.guide.rack_equipment.problem3"
+        },
+        {
+          "fix": "jsc.guide.rack_equipment.fix4",
+          "problem": "jsc.guide.rack_equipment.problem4"
         }
       ]
     },
@@ -118,9 +126,21 @@
   "icon": "jsc:kvm_switch",
   "id": "jsc:rack_equipment",
   "items": [
+    "jsc:vintage_kvm_switch",
+    "jsc:legacy_kvm_switch",
+    "jsc:transition_kvm_switch",
     "jsc:kvm_switch",
+    "jsc:advanced_kvm_switch",
+    "jsc:vintage_rack_ups",
+    "jsc:legacy_rack_ups",
+    "jsc:transition_rack_ups",
     "jsc:rack_ups",
+    "jsc:advanced_rack_ups",
+    "jsc:vintage_cooling_unit",
+    "jsc:legacy_cooling_unit",
+    "jsc:transition_cooling_unit",
     "jsc:cooling_unit",
+    "jsc:advanced_cooling_unit",
     "jsc:fibre_optic_interface",
     "jsc:advanced_fibre_optic_interface"
   ],

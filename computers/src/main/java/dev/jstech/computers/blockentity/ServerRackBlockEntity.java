@@ -151,13 +151,23 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public static final int UNIT_COOLING_UNIT = 12;
     public static final int UNIT_FIBRE_STANDARD = 13;
     public static final int UNIT_FIBRE_ADVANCED = 14;
+    /*
+     * The KVM Switches, UPSes and Cooling Units of the other eras, each kind's four in a row from the Vintage's to the
+     * Advanced's, skipping the Standard's, which keeps the code above.
+     */
+    public static final int UNIT_KVM_SWITCH_VINTAGE = 15;
+    public static final int UNIT_RACK_UPS_VINTAGE = 19;
+    public static final int UNIT_COOLING_UNIT_VINTAGE = 23;
     /** The codes up to this one are computers; the ones after are the units that serve them. */
     public static final int LAST_COMPUTER_UNIT = UNIT_NODE_2U_ADVANCED;
 
     /** The model bone names, indexed by unit code. */
     public static final String[] UNIT_BONES = {"", "server_1u_standard", "server_1u_legacy", "server_1u_vintage",
             "storage_2u", "compute_2u", "node_2u", "server_1u_transition", "server_1u_advanced", "node_2u_advanced",
-            "kvm_switch", "rack_ups", "cooling_unit", "fibre_interface_standard", "fibre_interface_advanced"};
+            "kvm_switch", "rack_ups", "cooling_unit", "fibre_interface_standard", "fibre_interface_advanced",
+            "kvm_switch_vintage", "kvm_switch_legacy", "kvm_switch_transition", "kvm_switch_advanced",
+            "rack_ups_vintage", "rack_ups_legacy", "rack_ups_transition", "rack_ups_advanced",
+            "cooling_unit_vintage", "cooling_unit_legacy", "cooling_unit_transition", "cooling_unit_advanced"};
 
     private static final RawAnimation FANS =
             RawAnimation.begin().thenLoop("animation.rack.fans");
@@ -223,14 +233,13 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 case ADVANCED_SUPERCOMPUTER_NODE -> UNIT_NODE_2U_ADVANCED;
             };
         }
-        final RackUnitItem.Kind kind = RackUnitItem.kindOf(stack);
-        if (kind == null) {
+        if (!(stack.getItem() instanceof RackUnitItem unit)) {
             return UNIT_NONE;
         }
-        return switch (kind) {
-            case KVM_SWITCH -> UNIT_KVM_SWITCH;
-            case RACK_UPS -> UNIT_RACK_UPS;
-            case COOLING_UNIT -> UNIT_COOLING_UNIT;
+        return switch (unit.kind()) {
+            case KVM_SWITCH -> eraUnit(UNIT_KVM_SWITCH, UNIT_KVM_SWITCH_VINTAGE, unit.era());
+            case RACK_UPS -> eraUnit(UNIT_RACK_UPS, UNIT_RACK_UPS_VINTAGE, unit.era());
+            case COOLING_UNIT -> eraUnit(UNIT_COOLING_UNIT, UNIT_COOLING_UNIT_VINTAGE, unit.era());
             case FIBRE_INTERFACE -> RackUnitItem.fibreReachOf(stack) == FibreReach.ADVANCED
                     ? UNIT_FIBRE_ADVANCED : UNIT_FIBRE_STANDARD;
         };
@@ -743,6 +752,14 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             }
         }
         block.setFibre(level, worldPosition, reach);
+    }
+
+    /* The code of a unit of {@code era}: the Standard's own, or its era's among the other four kept in a row. */
+    private static int eraUnit(final int standard, final int vintage, final HardwareEra era) {
+        if (era == HardwareEra.STANDARD) {
+            return standard;
+        }
+        return vintage + (era.isAtMost(HardwareEra.TRANSITION) ? era.level() : HardwareEra.STANDARD.level());
     }
 
     private void updateBayVisuals() {
@@ -1330,13 +1347,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return watts;
     }
 
-    /** The heat this cabinet can shed: its own dissipation plus every Cooling Unit mounted. */
+    /** The heat this cabinet can shed: its own dissipation plus what every Cooling Unit mounted sheds, by its era. */
     public int thermalBudgetWatts() {
         int cooling = 0;
         for (int i = 0; i < CAPACITY_U; i++) {
-            if (RackUnitItem.is(servers.getStackInSlot(i), RackUnitItem.Kind.COOLING_UNIT)) {
-                cooling++;
-            }
+            cooling += RackUnitItem.coolingWattsOf(servers.getStackInSlot(i));
         }
         return RackThermals.budgetWatts(cooling);
     }

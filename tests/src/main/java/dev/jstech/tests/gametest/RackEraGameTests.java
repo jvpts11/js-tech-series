@@ -17,9 +17,12 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackLayout;
+import dev.jstech.computers.rack.RackThermals;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
@@ -162,8 +165,62 @@ public final class RackEraGameTests {
                             "a Vintage rack refuses a Legacy server");
                     helper.assertFalse(rows.isItemValid(2, stack(ComputingModule.SERVER.get())),
                             "a Vintage rack refuses a Standard server");
-                    helper.assertTrue(rows.isItemValid(3, stack(ComputingModule.KVM_SWITCH.get())),
-                            "rack equipment has no era and still fits");
+                    helper.assertTrue(rows.isItemValid(3, stack(ComputingModule.VINTAGE_KVM_SWITCH.get())),
+                            "a Vintage rack seats the Vintage KVM Switch");
+                    helper.assertFalse(rows.isItemValid(4, stack(ComputingModule.KVM_SWITCH.get())),
+                            "but not the Standard one");
+                })
+                .thenSucceed();
+    }
+
+    /** Rack equipment follows the servers' rule: a rack seats its own era's units and the earlier eras'. */
+    @GameTest(template = ARENA)
+    public static void rackUnits_seatInARackOfTheirEraOrNewer(final GameTestHelper helper) {
+        final ServerRackBlockEntity legacy = placeRack(helper, new BlockPos(1, 2, 2),
+                ComputingModule.LEGACY_SERVER_RACK.get());
+        final ServerRackBlockEntity advanced = placeRack(helper, new BlockPos(5, 2, 2),
+                ComputingModule.ADVANCED_SERVER_RACK.get());
+        final ItemStack transitionKvm = stack(ComputingModule.TRANSITION_KVM_SWITCH.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ItemStackHandler rows = legacy.getServers();
+                    helper.assertTrue(rows.isItemValid(0, stack(ComputingModule.VINTAGE_RACK_UPS.get())),
+                            "a Legacy rack seats a Vintage UPS");
+                    helper.assertTrue(rows.isItemValid(1, stack(ComputingModule.LEGACY_COOLING_UNIT.get())),
+                            "and its own era's Cooling Unit");
+                    helper.assertFalse(rows.isItemValid(2, transitionKvm), "but not a Transition KVM Switch");
+                    helper.assertTrue(legacy.rowRefusal(2, transitionKvm) == ServerRackBlock.WRONG_UNIT,
+                            "and says the unit belongs in a newer rack");
+                    for (final Item unit : List.of(ComputingModule.VINTAGE_KVM_SWITCH.get(),
+                            ComputingModule.LEGACY_RACK_UPS.get(), ComputingModule.TRANSITION_COOLING_UNIT.get(),
+                            ComputingModule.KVM_SWITCH.get(), ComputingModule.ADVANCED_RACK_UPS.get())) {
+                        helper.assertTrue(advanced.getServers().isItemValid(0, stack(unit)),
+                                "an Advanced rack seats " + BuiltInRegistries.ITEM.getKey(unit));
+                    }
+                })
+                .thenSucceed();
+    }
+
+    /** Each Cooling Unit adds its own era's watts, and each era's unit wears its own face in the cabinet. */
+    @GameTest(template = ARENA)
+    public static void coolingUnits_addTheirErasWattsToTheBudget(final GameTestHelper helper) {
+        final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2),
+                ComputingModule.ADVANCED_SERVER_RACK.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ItemStackHandler rows = rack.getServers();
+                    rows.setStackInSlot(0, stack(ComputingModule.VINTAGE_COOLING_UNIT.get()));
+                    rows.setStackInSlot(1, stack(ComputingModule.ADVANCED_COOLING_UNIT.get()));
+                    rows.setStackInSlot(2, stack(ComputingModule.LEGACY_KVM_SWITCH.get()));
+                    helper.assertTrue(rack.thermalBudgetWatts() == RackThermals.PASSIVE_BUDGET_W + 300 + 2_500,
+                            "a Vintage and an Advanced Cooling Unit add 300 W and 2,500 W; the budget is "
+                                    + rack.thermalBudgetWatts() + " W");
+                    helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[rack.unitCodeAt(0)],
+                            "cooling_unit_vintage", "the Vintage unit's face");
+                    helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[rack.unitCodeAt(1)],
+                            "cooling_unit_advanced", "the Advanced unit's face");
+                    helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[rack.unitCodeAt(2)],
+                            "kvm_switch_legacy", "the Legacy KVM Switch's face");
                 })
                 .thenSucceed();
     }

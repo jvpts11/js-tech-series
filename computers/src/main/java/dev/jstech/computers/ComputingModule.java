@@ -830,12 +830,37 @@ public final class ComputingModule {
 
     // Rack equipment: rack units spend the cabinet's unit budget.
 
-    public static final ItemEntry<RackUnitItem> KVM_SWITCH =
-            rackUnit("kvm_switch", RackUnitItem.Kind.KVM_SWITCH, null).named("KVM Switch").register();
-    public static final ItemEntry<RackUnitItem> RACK_UPS =
-            rackUnit("rack_ups", RackUnitItem.Kind.RACK_UPS, null).named("Rack UPS").register();
-    public static final ItemEntry<RackUnitItem> COOLING_UNIT =
-            rackUnit("cooling_unit", RackUnitItem.Kind.COOLING_UNIT, null).named("Cooling Unit").register();
+    // Each era has its own KVM Switch, Rack UPS and Cooling Unit, and a rack seats its era's and the earlier ones.
+    public static final ItemEntry<RackUnitItem> VINTAGE_KVM_SWITCH = rackUnit("vintage_kvm_switch",
+            RackUnitItem.Kind.KVM_SWITCH, HardwareEra.VINTAGE).named("Vintage KVM Switch").register();
+    public static final ItemEntry<RackUnitItem> LEGACY_KVM_SWITCH = rackUnit("legacy_kvm_switch",
+            RackUnitItem.Kind.KVM_SWITCH, HardwareEra.LEGACY).named("Legacy KVM Switch").register();
+    public static final ItemEntry<RackUnitItem> TRANSITION_KVM_SWITCH = rackUnit("transition_kvm_switch",
+            RackUnitItem.Kind.KVM_SWITCH, HardwareEra.TRANSITION).named("Transition KVM Switch").register();
+    public static final ItemEntry<RackUnitItem> KVM_SWITCH = rackUnit("kvm_switch",
+            RackUnitItem.Kind.KVM_SWITCH, HardwareEra.STANDARD).named("KVM Switch").register();
+    public static final ItemEntry<RackUnitItem> ADVANCED_KVM_SWITCH = rackUnit("advanced_kvm_switch",
+            RackUnitItem.Kind.KVM_SWITCH, HardwareEra.ADVANCED).named("Advanced KVM Switch").register();
+    public static final ItemEntry<RackUnitItem> VINTAGE_RACK_UPS = rackUnit("vintage_rack_ups",
+            RackUnitItem.Kind.RACK_UPS, HardwareEra.VINTAGE).named("Vintage Rack UPS").register();
+    public static final ItemEntry<RackUnitItem> LEGACY_RACK_UPS = rackUnit("legacy_rack_ups",
+            RackUnitItem.Kind.RACK_UPS, HardwareEra.LEGACY).named("Legacy Rack UPS").register();
+    public static final ItemEntry<RackUnitItem> TRANSITION_RACK_UPS = rackUnit("transition_rack_ups",
+            RackUnitItem.Kind.RACK_UPS, HardwareEra.TRANSITION).named("Transition Rack UPS").register();
+    public static final ItemEntry<RackUnitItem> RACK_UPS = rackUnit("rack_ups",
+            RackUnitItem.Kind.RACK_UPS, HardwareEra.STANDARD).named("Rack UPS").register();
+    public static final ItemEntry<RackUnitItem> ADVANCED_RACK_UPS = rackUnit("advanced_rack_ups",
+            RackUnitItem.Kind.RACK_UPS, HardwareEra.ADVANCED).named("Advanced Rack UPS").register();
+    public static final ItemEntry<RackUnitItem> VINTAGE_COOLING_UNIT = rackUnit("vintage_cooling_unit",
+            RackUnitItem.Kind.COOLING_UNIT, HardwareEra.VINTAGE).named("Vintage Cooling Unit").register();
+    public static final ItemEntry<RackUnitItem> LEGACY_COOLING_UNIT = rackUnit("legacy_cooling_unit",
+            RackUnitItem.Kind.COOLING_UNIT, HardwareEra.LEGACY).named("Legacy Cooling Unit").register();
+    public static final ItemEntry<RackUnitItem> TRANSITION_COOLING_UNIT = rackUnit("transition_cooling_unit",
+            RackUnitItem.Kind.COOLING_UNIT, HardwareEra.TRANSITION).named("Transition Cooling Unit").register();
+    public static final ItemEntry<RackUnitItem> COOLING_UNIT = rackUnit("cooling_unit",
+            RackUnitItem.Kind.COOLING_UNIT, HardwareEra.STANDARD).named("Cooling Unit").register();
+    public static final ItemEntry<RackUnitItem> ADVANCED_COOLING_UNIT = rackUnit("advanced_cooling_unit",
+            RackUnitItem.Kind.COOLING_UNIT, HardwareEra.ADVANCED).named("Advanced Cooling Unit").register();
     // A server rack takes the fibre backbone through one of these: the Standard's opens it to the Fibre Optic Cable,
     // the Advanced's to the OM5 Fibre Cable as well.
     public static final ItemEntry<RackUnitItem> FIBRE_OPTIC_INTERFACE = rackUnit("fibre_optic_interface",
@@ -1374,7 +1399,7 @@ public final class ComputingModule {
     }
 
     private static ItemBuilder<RackUnitItem> rackUnit(final String id, final RackUnitItem.Kind kind,
-                                                      @Nullable final HardwareEra era) {
+                                                      final HardwareEra era) {
         return CONTENT.item(id, properties -> new RackUnitItem(properties, kind, era)).tab(shelf(Shelf.RACK_BAYS, era));
     }
 
