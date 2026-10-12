@@ -206,9 +206,25 @@ Controller bay gadget ([Servers and racks](servers-and-racks.md)).
 
 - **The Dock Station only takes disks of its era or older** in its trays ([Eras](eras.md)). Today it takes disks of any
   era.
-- **Decided for Carbon, and designed when Carbon opens:** a vinyl record reader and a vinyl record writer, to copy the
-  game's music discs and record them; and a book scanner, enchanted books included, with enchanted books printed in
-  bulk.
+- **Copying music, media and books, decided for Carbon:**
+  - **The Vinyl RW Drive**, one per era, reads and cuts vinyl. Soundfoundry records any disc a jukebox plays, the
+    game's or another mod's, into an audio file, in the song's own time. With a blank vinyl record in the drive, it
+    cuts the recording onto it, again in the song's time, and the cut is the original disc itself: music discs are
+    rare, and they are the one thing a copy may make. Only a song that came from a disc goes onto a vinyl.
+  - **Easy Disc Creator**, by Roxa, a Legacy program on a CD, copies a medium onto a blank one of the same format or a
+    larger one, at the medium's write speed: floppy disks, CDs, DVDs, Blu-ray discs, USB sticks, and vinyl through
+    the Vinyl RW Drive. Install discs copy like any other. Items never do: it refuses the disks that hold the
+    network's storage and the .dat files.
+  - **The Extended CD Drive** is a duplicator tower, one reading tray and seven writing trays, from the Legacy, with a
+    DVD version from the Transition and a Blu-ray one from the Advanced.
+  - **The scanner**, a flatbed per era on the peripheral cable like the printer, reads a written book or a book and
+    quill into a .book file, an enchanted book into a .ench file and a map into a .map file, and the Printed Paper.
+  - **Printing the copies**: the printer copies a map onto an empty map. Books are printed by the **Large Scale
+    Printer** alone, a multiblock 4 wide, 3 tall and 3 deep, from the Legacy. Paper goes in by hand, an import bus or
+    a hopper; a book costs 3 paper and nothing else, and an enchanted book comes out with every enchantment at the
+    level it was scanned with. What it prints goes straight into the network or into a chest beside it, and one of
+    its blocks takes a peripheral cable, through which a computer sends it what to print. A server setting turns the
+    printing of enchanted books off.
 - **Cards still to build**, each designed with its system and existing per era:
   - the Wi-Fi cards ([Wireless](wireless.md));
   - the WAN Interface Cards and the Network Anchor Card ([The network](network.md));
