@@ -78,6 +78,7 @@ import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.network.DataLink;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
@@ -94,6 +95,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -376,6 +378,37 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     /**
+     * Why {@code stack} stays out of {@code slot}, for the player holding it there: the rule of
+     * {@link #isValidForSlot} it breaks, read in the order that method reads them; null when it goes in.
+     */
+    @Nullable
+    public TextKey refusal(final int slot, final ItemStack stack) {
+        if (stack.isEmpty() || isValidForSlot(slot, stack)) {
+            return null;
+        }
+        final Item item = stack.getItem();
+        if (slot == layout().motherboardSlot()) {
+            return item instanceof MotherboardItem ? PartRefusals.BOARD : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (layout().isCpu(slot)) {
+            return item instanceof CpuItem ? PartRefusals.CPU : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (layout().isRam(slot)) {
+            return item instanceof RamItem ? PartRefusals.RAM : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (layout().isPcie(slot)) {
+            return cardRefusal(stack, slot);
+        }
+        if (layout().isDisk(slot)) {
+            return item instanceof DiskItem ? PartRefusals.DISK_TOO_NEW : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (layout().isBay(slot)) {
+            return item instanceof BayDriveItem ? PartRefusals.NO_BAY : PartRefusals.NOT_THIS_SLOT;
+        }
+        return PartRefusals.NOT_THIS_SLOT;
+    }
+
+    /**
      * Whether a disk fits this computer, in one of its disk slots or in a hot-swap bay on its front: a disk of the
      * computer's era or of an older one. A disk made for a later machine has no way into an earlier one (an NVMe made
      * for the Standard age has nothing to plug into in an AT tower), while an old disk still goes into a newer machine,
@@ -418,6 +451,28 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             }
         }
         return false;
+    }
+
+    /* Which rule keeps a card out of an expansion slot, read in the order isValidPcieCard and the sound rule read. */
+    private TextKey cardRefusal(final ItemStack stack, final int slot) {
+        if (!(stack.getItem() instanceof IExpansionCardItem card)) {
+            return PartRefusals.NOT_THIS_SLOT;
+        }
+        if (card.cardSpec() instanceof WorkshopCardSpec && !takesWorkshopCards()) {
+            return PartRefusals.WORKSHOP_CARD;
+        }
+        if (card.cardSpec() instanceof PhiCoprocessorSpec) {
+            return PartRefusals.PHI;
+        }
+        final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
+        if (card.cardSpec() instanceof SoundCardSpec sound && boardStack.getItem() instanceof MotherboardItem board
+                && sound.era() != board.spec().era()) {
+            return PartRefusals.SOUND_ERA;
+        }
+        if (isValidPcieCard(stack) && isSoundCard(stack) && anotherSoundCardSeated(slot)) {
+            return PartRefusals.ONE_SOUND_CARD;
+        }
+        return PartRefusals.CARD_BUS;
     }
 
     /** Where this computer's slots are: which one takes the board, which ones take disks, and how many. */

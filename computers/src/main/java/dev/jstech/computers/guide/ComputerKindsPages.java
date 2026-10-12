@@ -436,7 +436,7 @@ final class ComputerKindsPages {
                         + " and a percentage. The rack also marks an array DEGRADED or FAILED.")
                 .ifSomethingGoesWrong("The bay refuses the item.",
                         "A drive bay takes only a disk of the rack's era or an older one, and a gadget bay only a"
-                                + " gadget.",
+                                + " gadget. Hold the item over the bay to read which rule keeps it out.",
                         "The array lost everything.",
                         "A RAID 0 array keeps no copy, so it loses everything when a drive is lost. Use RAID 1 or"
                                 + " RAID 5 for a copy"

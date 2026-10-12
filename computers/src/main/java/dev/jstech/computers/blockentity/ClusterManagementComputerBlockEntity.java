@@ -135,6 +135,15 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
         return super.isValidForSlot(slot, stack);
     }
 
+    @Override
+    @Nullable
+    public TextKey refusal(final int slot, final ItemStack stack) {
+        final TextKey why = super.refusal(slot, stack);
+        // The card itself fits; what keeps it out is the one already seated.
+        return why == PartRefusals.CARD_BUS && stack.getItem() instanceof ClusterInterfaceCardItem
+                && isValidPcieCard(stack) ? PartRefusals.ONE_CLUSTER_CARD : why;
+    }
+
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
                                   final ClusterManagementComputerBlockEntity be) {
         if (level instanceof ServerLevel serverLevel) {

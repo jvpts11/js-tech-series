@@ -7,17 +7,21 @@
  */
 package dev.jstech.computers.item;
 
+import dev.jstech.computers.blockentity.PartRefusals;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.core.text.TextKey;
 import java.util.Set;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An item-handler view over the hardware of the Server item held in a player's hand, used by the Server assembly GUI.
@@ -158,6 +162,36 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
                     && (board == null || card.cardSpec().fits(board.pcieGeneration()));
         }
         return false;
+    }
+
+    /**
+     * Why {@code stack} stays out of {@code slot}, for the player holding it there: the rule of {@link #isItemValid}
+     * it breaks, read in the order that method reads them; null when it goes in.
+     */
+    @Nullable
+    public TextKey refusal(final int slot, final ItemStack stack) {
+        if (stack.isEmpty() || isItemValid(slot, stack)) {
+            return null;
+        }
+        final Item item = stack.getItem();
+        if (slot == MOBO) {
+            return item instanceof MotherboardItem ? PartRefusals.BOARD : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (slot >= CPU_START && slot < CPU_START + CPU) {
+            return item instanceof CpuItem ? PartRefusals.CPU : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (slot >= RAM_START && slot < RAM_START + RAM) {
+            return item instanceof RamItem ? PartRefusals.RAM : PartRefusals.NOT_THIS_SLOT;
+        }
+        if (slot >= GPU_START && slot < GPU_START + GPU) {
+            if (item instanceof PhiCoprocessorItem) {
+                final RackChassis chassis = ServerItem.chassisOf(held());
+                return chassis != null && chassis.isSupercomputerNode() ? PartRefusals.ONE_PHI : PartRefusals.PHI;
+            }
+            return item instanceof GpuItem || item instanceof NetworkCardItem
+                    ? PartRefusals.CARD_BUS : PartRefusals.SERVER_CARD;
+        }
+        return PartRefusals.NOT_THIS_SLOT;
     }
 
     /**

@@ -8,10 +8,13 @@
 package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PartRefusals;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.ClusterManagementComputerScreen;
 import dev.jstech.computers.client.CraftingComputerScreen;
@@ -35,9 +38,11 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -60,6 +65,8 @@ public final class AssemblyScreensClientTests {
     private static final int RUNS_WITHIN = 100;
     /** The towers stand in a row facing south, two blocks apart. */
     private static final int TOWER_Z = 4;
+    /* A tower's menu lays its board, its power supply and then its processor slot first. */
+    private static final int CPU_MENU_SLOT = 2;
     /** Low on a tower's front, in sixty-fourths from its top left: plain on every case, clear of what a click works. */
     private static final double PLAIN_X = 32;
     private static final double PLAIN_Y = 56;
@@ -134,6 +141,46 @@ public final class AssemblyScreensClientTests {
         for (int i = 0; i < TOWERS.size(); i++) {
             open(ctx, towerAt(i), TOWERS.get(i).screen(), TOWERS.get(i).name());
         }
+    }
+
+    /**
+     * A part held over a slot that keeps it out says which rule does: a processor of another socket over a board's
+     * processor slot names the socket, where the slot used to refuse it in silence.
+     */
+    @ClientTest(timeoutTicks = 900)
+    public static void assembly_saysWhyAPartHeldOverASlotStaysOut(final ClientTestContext ctx) {
+        final BlockPos at = towerAt(0);
+        final ItemStack otherSocket = new ItemStack(HardwareItems.CPU_VELOCION_EPIC_7251.get());
+        ctx.thenGive(0).thenBuild(0, world -> {
+                    world.setBlock(at, ComputingModule.PERSONAL_COMPUTER.get().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+                    world.blockEntity(at, AbstractSmallComputerBlockEntity.class).getHardware().setStackInSlot(
+                            PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
+                            new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
+                })
+                .thenTeleport(SETTLE, at.south(2), Direction.NORTH)
+                .thenRightClickFront(SETTLE, at, PLAIN_X, PLAIN_Y)
+                .thenAwaitScreen(PersonalComputerScreen.class, SCREEN_WAIT)
+                .thenServer(SETTLE, level -> {
+                    ctx.serverPlayer().containerMenu.setCarried(otherSocket.copy());
+                    ctx.serverPlayer().containerMenu.broadcastChanges();
+                })
+                .thenWaitUntil(() -> !ctx.player().containerMenu.getCarried().isEmpty(), SCREEN_WAIT,
+                        "the processor to be held in the cursor")
+                .then(0, () -> {
+                    final PersonalComputerScreen screen = ctx.screen(PersonalComputerScreen.class);
+                    final Slot cpu = screen.getMenu().slots.get(CPU_MENU_SLOT);
+                    ctx.pointAt(screen.getGuiLeft() + cpu.x + 8, screen.getGuiTop() + cpu.y + 8);
+                })
+                .thenScreenshot(SETTLE, "refusal-over-the-processor-slot")
+                .thenAssert(0, () -> {
+                    final PersonalComputerScreen screen = ctx.screen(PersonalComputerScreen.class);
+                    final Component why = screen.getMenu().refusal(screen.getMenu().slots.get(CPU_MENU_SLOT),
+                            ctx.player().containerMenu.getCarried());
+                    return why != null && why.getString().equals(PartRefusals.CPU.english());
+                }, "the processor slot says the processor needs a board of its socket and era")
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(SCREEN_WAIT);
     }
 
     @ClientTest(timeoutTicks = 900)

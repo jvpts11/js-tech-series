@@ -1958,6 +1958,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Paper clicked into a printer whose tray is full says the tray is full; nothing happened and nothing was said.
 - The Legacy's PCI Crafting Card seats in the Legacy's own boards, AGP and PCI-e, as the personal-use cards do, and
   in the later ones: it fitted only a Vintage PCI board, so no Legacy Crafting Computer could take it.
+- A part held over a slot that keeps it out says which rule does, on the assembly screens of the computers, the
+  Mainframe and the servers, and on a rack's rows and bays: the board's socket, a generation of memory, a card's
+  bus, a disk of a later era, a socket the board does not have, the cabinet a chassis belongs in. The slots refused
+  in silence, and the manual's table of parts that stay out was the only place to look.
 - A shift in Σ and Σ# takes only the low bits of its count, as C# does, five for an int and six for a long, and is
   of the kind of its left side: 1 << 32 was 0, and an int shifted by a long count came out a long.
 - try, catch, throw, goto and const written as C# writes them are refused with what to write instead (S2014),

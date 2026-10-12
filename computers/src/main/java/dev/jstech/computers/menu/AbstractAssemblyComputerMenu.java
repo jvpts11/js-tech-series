@@ -20,9 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntSupplier;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,6 +89,12 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
     /** How many of the menu's first slots are the machine's parts, before the player's inventory. */
     public int hardwareSlots() {
         return hardwareSlots;
+    }
+
+    /** Why {@code stack} stays out of {@code slot}, when it is one of the machine's part slots; null otherwise. */
+    @Nullable
+    public Component refusal(final Slot slot, final ItemStack stack) {
+        return PartSlots.refusal(slot, computer.getHardware(), stack, computer::refusal);
     }
 
     /** Where the block entity this menu assembles stands. */

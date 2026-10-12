@@ -343,8 +343,9 @@ final class BuildingPages {
                         GuideCell.words("Use a power supply with more watts. On a rack server, the DRAW readout"
                                 + " shows the total."))
                 .paragraph("The numbers in each line change to match your build.")
-                .subheading("Parts that stay out without a line")
-                .paragraph("Some parts never go into a slot, and the window gives no line for them.")
+                .subheading("Parts that stay out of their slot")
+                .paragraph("Some parts never go into a slot. Hold one over the slot, and the window says which rule"
+                        + " keeps it out, as the table below lists them.")
                 .table("Parts that stay out", "Part", "Why it stays out")
                 .row(GuideCell.words("A board of another form factor or era"),
                         GuideCell.words("The case takes only its own form factors, and boards of its own era."))
@@ -366,7 +367,7 @@ final class BuildingPages {
                 .paragraph("A board the case refuses leaves the computer with no build at all. The same happens with no"
                         + " power supply in place.")
                 .ifSomethingGoesWrong("A part does not go into its slot.",
-                        "Find its line in the tables above and fix the rule it breaks.",
+                        "Hold it over the slot to read the rule it breaks, and find that rule in the tables above.",
                         "The server says \"Insert a motherboard and PSU to begin\".",
                         "Put in a board the case takes, and a power supply.")
                 .register();

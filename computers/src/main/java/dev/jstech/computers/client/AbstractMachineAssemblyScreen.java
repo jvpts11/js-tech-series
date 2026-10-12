@@ -28,6 +28,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -102,6 +103,15 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
+        // A part held over a slot that keeps it out says which rule does, rather than the slot refusing in silence.
+        final ItemStack carried = menu.getCarried();
+        if (!carried.isEmpty() && hoveredSlot != null && !hoveredSlot.mayPlace(carried)) {
+            final Component why = refusal(hoveredSlot, carried);
+            if (why != null) {
+                g.renderComponentTooltip(font, List.of(why), mouseX, mouseY);
+            }
+            return;
+        }
         final AssemblyGeometry geo = geometry();
         final Box power = geo.power();
         if (hover(mouseX, mouseY, power.x(), power.y(), power.w(), power.h())) {
@@ -298,6 +308,12 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
 
     /** The power button's lamp. */
     protected abstract int powerLamp();
+
+    /** Why {@code carried} stays out of {@code slot}, said over the slot; null when the machine names no rule. */
+    @Nullable
+    protected Component refusal(final Slot slot, final ItemStack carried) {
+        return null;
+    }
 
     /** What the power button says when the mouse rests on it. */
     protected List<Component> powerTooltip() {

@@ -22,8 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,6 +106,12 @@ public class MainframeMenu extends CoreMenu {
 
     public BlockPos blockPos() {
         return blockEntity.getBlockPos();
+    }
+
+    /** Why {@code stack} stays out of {@code slot}, when it is one of the Mainframe's part slots; null otherwise. */
+    @Nullable
+    public Component refusal(final Slot slot, final ItemStack stack) {
+        return PartSlots.refusal(slot, blockEntity.getHardware(), stack, blockEntity::refusal);
     }
 
     public int boardCpuSlots() {

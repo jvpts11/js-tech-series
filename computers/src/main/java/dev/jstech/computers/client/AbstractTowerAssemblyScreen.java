@@ -17,6 +17,8 @@ import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
@@ -86,6 +88,11 @@ public abstract class AbstractTowerAssemblyScreen<M extends AbstractAssemblyComp
     @Override
     protected int powerLamp() {
         return menu.isRunning() ? JsTechTheme.green() : JsTechTheme.red();
+    }
+
+    @Override
+    protected Component refusal(final Slot slot, final ItemStack carried) {
+        return menu.refusal(slot, carried);
     }
 
     @Override

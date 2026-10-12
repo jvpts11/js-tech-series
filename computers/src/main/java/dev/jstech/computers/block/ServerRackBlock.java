@@ -85,9 +85,9 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
     public static final IntegerProperty BAYS =
             IntegerProperty.create("bays", 0, 3);
 
-    private static final TextKey WRONG_CHASSIS =
+    public static final TextKey WRONG_CHASSIS =
             TextKey.of("block.jsc.rack.wrong_chassis", "This chassis belongs in a different rack");
-    private static final TextKey ROW_TAKEN =
+    public static final TextKey ROW_TAKEN =
             TextKey.of("block.jsc.rack.row_taken", "That rack unit is taken or too small for this");
 
     public ServerRackBlock(final Properties properties, final HardwareEra era) {

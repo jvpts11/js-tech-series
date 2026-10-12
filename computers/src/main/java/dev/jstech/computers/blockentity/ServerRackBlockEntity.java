@@ -74,6 +74,7 @@ import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
 import dev.jstech.core.peripheral.PeripheralPorts;
 import dev.jstech.core.peripheral.PeripheralReconciler;
 import dev.jstech.core.peripheral.PortKind;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -1365,6 +1366,34 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
          */
         return chassis == null
                 || (chassis.rackType() == rackType() && chassis.era().isAtMost(rackEra()));
+    }
+
+    /** Why {@code stack} stays out of rack row {@code slot}, for the player holding it there; null when it goes in. */
+    @Nullable
+    public TextKey rowRefusal(final int slot, final ItemStack stack) {
+        if (stack.isEmpty() || servers.isItemValid(slot, stack)) {
+            return null;
+        }
+        if (IMountableRackUnit.of(stack) == null) {
+            return PartRefusals.NOT_THIS_SLOT;
+        }
+        return acceptsChassis(stack) ? ServerRackBlock.ROW_TAKEN : ServerRackBlock.WRONG_CHASSIS;
+    }
+
+    /**
+     * Why {@code stack} stays out of front bay {@code slot}, for the player holding it there; null when it goes in or
+     * when the bay is blocked, which the screen says in its own words.
+     */
+    @Nullable
+    public TextKey bayRefusal(final int slot, final ItemStack stack) {
+        if (stack.isEmpty() || frontSlots.isItemValid(slot, stack)) {
+            return null;
+        }
+        return switch (roleOfFrontSlot(slot)) {
+            case DRIVE -> stack.getItem() instanceof DiskItem ? PartRefusals.DISK_TOO_NEW : PartRefusals.DRIVE_BAY;
+            case GADGET -> PartRefusals.GADGET_BAY;
+            case BLOCKED_NO_UNIT, BLOCKED_BUDGET -> null;
+        };
     }
 
     /** The rows holding computers, in rack order, the channels a KVM switch can address. */

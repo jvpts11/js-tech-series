@@ -28,6 +28,7 @@ import dev.jstech.core.menu.MenuOpening;
 import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.menu.PlayerSlots;
 import dev.jstech.core.menu.SlotGroup;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -37,6 +38,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
@@ -150,6 +152,20 @@ public class ServerRackMenu extends CoreMenu {
     public RackLayout.SlotRole frontSlotRole(final int index) {
         return LAYOUT.roleAt(index / RackLayout.SLOTS_PER_U, index % RackLayout.SLOTS_PER_U,
                 mountedUnits());
+    }
+
+    /**
+     * Why {@code stack} stays out of {@code slot}, when it is one of the rack's rows or front bays; null otherwise,
+     * and for a blocked bay, which the screen says in its own words.
+     */
+    @Nullable
+    public Component refusal(final Slot slot, final ItemStack stack) {
+        if (stack.isEmpty() || slot.mayPlace(stack) || !(slot instanceof SlotItemHandler part)) {
+            return null;
+        }
+        final TextKey why = part.getItemHandler() == rack.getServers() ? rack.rowRefusal(part.getSlotIndex(), stack)
+                : part.getItemHandler() == rack.getFrontSlots() ? rack.bayRefusal(part.getSlotIndex(), stack) : null;
+        return why == null ? null : GameText.component(why);
     }
 
     /**

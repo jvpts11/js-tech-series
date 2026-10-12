@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -82,6 +83,12 @@ public class ServerAssemblyMenu extends CoreMenu {
     private MotherboardSpec boardSpec() {
         return hw.getStackInSlot(ServerHardwareHandler.MOBO).getItem() instanceof MotherboardItem board
                 ? board.spec() : null;
+    }
+
+    /** Why {@code stack} stays out of {@code slot}, when it is one of the server's part slots; null otherwise. */
+    @Nullable
+    public Component refusal(final Slot slot, final ItemStack stack) {
+        return PartSlots.refusal(slot, hw, stack, hw::refusal);
     }
 
     /** The chassis of the server in the hand, which its screen is titled by. */

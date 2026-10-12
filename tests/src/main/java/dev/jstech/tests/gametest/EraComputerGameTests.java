@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.PartRefusals;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
@@ -213,6 +214,26 @@ public final class EraComputerGameTests {
         helper.assertTrue(agp.isValidForSlot(card, pci), "the PCI card fits the Legacy AGP board");
         helper.assertTrue(pcie.isValidForSlot(card, pci), "and the Legacy PCI-e board");
         helper.assertFalse(agp.isValidForSlot(card, isa), "while the ISA card stays out of a board with no ISA");
+        helper.succeed();
+    }
+
+    /**
+     * A part kept out of a slot is kept out by a rule the computer can name, so the screen tells the player which:
+     * the board's socket, a node's co-processor, a disk of a later era, or a part of another kind.
+     */
+    @GameTest(template = ARENA)
+    public static void refusal_namesTheRuleThatKeepsAPartOut(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity standard = withBoard(helper, new BlockPos(1, 2, 1),
+                ComputingModule.PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get());
+        final ItemStack otherSocket = new ItemStack(HardwareItems.CPU_VELOCION_EPIC_7251.get());
+        helper.assertTrue(standard.refusal(PersonalComputerBlockEntity.CPU_SLOT, otherSocket) == PartRefusals.CPU,
+                "a processor of another socket is kept out for the socket");
+        helper.assertTrue(standard.refusal(PersonalComputerBlockEntity.GPU_SLOTS_START,
+                new ItemStack(ComputingModule.PHI_5100.get())) == PartRefusals.PHI, "a Phi is kept out for nodes");
+        helper.assertTrue(standard.refusal(PersonalComputerBlockEntity.MOTHERBOARD_SLOT, otherSocket)
+                == PartRefusals.NOT_THIS_SLOT, "a processor in the board's slot is a part of another kind");
+        helper.assertTrue(standard.refusal(PersonalComputerBlockEntity.GPU_SLOTS_START,
+                new ItemStack(ComputingModule.OPTICAL_NETWORK_CARD.get())) == null, "and a part that fits has none");
         helper.succeed();
     }
 

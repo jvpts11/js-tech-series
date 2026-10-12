@@ -24,6 +24,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * The Mainframe's assembly screen: its cabinet with its cards in two I/O cages and its disks at the front, the
@@ -150,6 +151,11 @@ public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu
     @Override
     protected int powerLamp() {
         return menu.isRunning() ? JsTechTheme.green() : JsTechTheme.red();
+    }
+
+    @Override
+    protected Component refusal(final Slot slot, final ItemStack carried) {
+        return menu.refusal(slot, carried);
     }
 
     @Override

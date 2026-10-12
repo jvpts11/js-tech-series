@@ -39,6 +39,16 @@ final class BoardSlot extends SlotItemHandler {
 
     @Override
     public boolean mayPlace(final ItemStack stack) {
-        return relativeIndex < boardLimit.getAsInt() && super.mayPlace(stack);
+        return onTheBoard() && super.mayPlace(stack);
+    }
+
+    /** Whether the board seated has this slot: a board with fewer slots leaves the ones past its count unwired. */
+    boolean onTheBoard() {
+        return relativeIndex < boardLimit.getAsInt();
+    }
+
+    /** Whether no slot of this kind is open at all, as before any board is seated. */
+    boolean noneOpen() {
+        return boardLimit.getAsInt() == 0;
     }
 }

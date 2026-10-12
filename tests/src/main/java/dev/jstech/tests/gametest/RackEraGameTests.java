@@ -10,10 +10,13 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
+import dev.jstech.computers.blockentity.PartRefusals;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
@@ -90,6 +93,42 @@ public final class RackEraGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> helper.assertTrue(rack.displayEra() == HardwareEra.ADVANCED,
                         "an empty Advanced server reads as Advanced: " + rack.displayEra()))
+                .thenSucceed();
+    }
+
+    /**
+     * A server's slots and a rack's rows and bays name the rule that keeps a part out, so their screens tell the
+     * player which: a board's socket, the cabinet a chassis belongs in, a disk of a later era, what a bay takes.
+     */
+    @GameTest(template = ARENA)
+    public static void refusal_namesTheRuleOfServerSlotsRowsAndBays(final GameTestHelper helper) {
+        final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, ServerStacks.cpulessServer());
+        final ServerHardwareHandler slots = new ServerHardwareHandler(player, InteractionHand.MAIN_HAND);
+        helper.assertTrue(slots.refusal(ServerHardwareHandler.CPU_START,
+                stack(HardwareItems.CPU_VELOCION_EPIC_7251.get())) == PartRefusals.CPU, "the server names the socket");
+        helper.assertTrue(slots.refusal(ServerHardwareHandler.GPU_START,
+                stack(ComputingModule.CRAFTING_CARD_T2.get())) == PartRefusals.SERVER_CARD,
+                "and what its expansion slots take");
+        final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2),
+                ComputingModule.LEGACY_SERVER_RACK.get());
+        rack.getServers().setStackInSlot(0, stack(ComputingModule.LEGACY_SERVER.get()));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(rack.rowRefusal(4, stack(ComputingModule.SERVER.get()))
+                            == ServerRackBlock.WRONG_CHASSIS, "a Legacy rack says a Standard server belongs elsewhere");
+                    int drive = -1;
+                    for (int i = 0; i < rack.getFrontSlots().getSlots() && drive < 0; i++) {
+                        if (rack.roleOfFrontSlot(i) == RackLayout.SlotRole.DRIVE) {
+                            drive = i;
+                        }
+                    }
+                    helper.assertTrue(drive >= 0, "the Legacy server cables a drive bay");
+                    helper.assertTrue(rack.bayRefusal(drive, stack(HardwareItems.DISK_LINK_SATA_SSD_64G.get()))
+                            == PartRefusals.DISK_TOO_NEW, "the bay names a disk of a later era");
+                    helper.assertTrue(rack.bayRefusal(drive, stack(HardwareItems.CPU_VELOCION_EPIC_7251.get()))
+                            == PartRefusals.DRIVE_BAY, "and says a drive bay takes a disk");
+                })
                 .thenSucceed();
     }
 

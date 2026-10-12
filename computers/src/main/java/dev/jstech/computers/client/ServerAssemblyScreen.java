@@ -28,6 +28,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,6 +150,11 @@ public class ServerAssemblyScreen extends AbstractMachineAssemblyScreen<ServerAs
     @Override
     protected int powerLamp() {
         return stateColour();
+    }
+
+    @Override
+    protected Component refusal(final Slot slot, final ItemStack carried) {
+        return menu.refusal(slot, carried);
     }
 
     @Override
