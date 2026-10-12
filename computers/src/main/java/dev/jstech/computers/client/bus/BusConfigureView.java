@@ -141,6 +141,39 @@ final class BusConfigureView {
         bar.release();
     }
 
+    /*
+     * The middle of the cell that takes what the bus moves, from the window's corner as a click is measured: the
+     * Vintage bus's one kind, the first cell of the filter, or the first item's; null when the window shows none,
+     * as an item list with nothing added yet.
+     */
+    @Nullable
+    int[] firstCellPoint() {
+        for (final BusLayout.Row row : rows) {
+            final int cellX = switch (row.kind()) {
+                case NOW, FILTER -> BusLayout.CONTROL_X;
+                case ITEM -> row.index() == 0 ? BusLayout.ITEM_CELL_X : -1;
+                default -> -1;
+            };
+            if (cellX >= 0) {
+                return new int[] {cellX + BusLayout.CELL / 2,
+                        BusLayout.CONFIGURE_VIEW_Y + row.y() - scroll + 1 + BusLayout.CELL / 2};
+            }
+        }
+        return null;
+    }
+
+    /* The middle of the bar that adds an item to the list, measured as above; null when the list takes no more. */
+    @Nullable
+    int[] addItemPoint() {
+        for (final BusLayout.Row row : rows) {
+            if (row.kind() == BusLayout.Kind.ADD_ITEM) {
+                return new int[] {BusLayout.LABEL_X + 10, BusLayout.CONFIGURE_VIEW_Y + row.y() - scroll
+                        + row.height() / 2};
+            }
+        }
+        return null;
+    }
+
     boolean click(final double mx, final double my, final int left, final int top) {
         final int viewTop = top + BusLayout.CONFIGURE_VIEW_Y;
         if (!BusDraw.inside(mx, my, left + BusLayout.LABEL_X, viewTop, BusLayout.ROW_W, viewHeight())) {

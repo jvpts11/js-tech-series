@@ -196,6 +196,28 @@ public enum EraKit {
         };
     }
 
+    /** The era's Import Bus, which pulls an inventory into the network. */
+    public Item importBus() {
+        return switch (this) {
+            case VINTAGE -> ComputingModule.VINTAGE_IMPORT_BUS_ITEM.get();
+            case LEGACY -> ComputingModule.LEGACY_IMPORT_BUS_ITEM.get();
+            case TRANSITION -> ComputingModule.TRANSITION_IMPORT_BUS_ITEM.get();
+            case STANDARD -> ComputingModule.IMPORT_BUS_ITEM.get();
+            case ADVANCED -> ComputingModule.ADVANCED_IMPORT_BUS_ITEM.get();
+        };
+    }
+
+    /** The era's Export Bus, which fills an inventory from the network. */
+    public Item exportBus() {
+        return switch (this) {
+            case VINTAGE -> ComputingModule.VINTAGE_EXPORT_BUS_ITEM.get();
+            case LEGACY -> ComputingModule.LEGACY_EXPORT_BUS_ITEM.get();
+            case TRANSITION -> ComputingModule.TRANSITION_EXPORT_BUS_ITEM.get();
+            case STANDARD -> ComputingModule.EXPORT_BUS_ITEM.get();
+            case ADVANCED -> ComputingModule.ADVANCED_EXPORT_BUS_ITEM.get();
+        };
+    }
+
     /** The Vaultis Array of the era's slot: the RAID controller card. */
     public Item array() {
         return switch (this) {

@@ -68,6 +68,21 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
         return tab;
     }
 
+    /**
+     * Where, from the window's corner, the Configure tab's cell that takes what the bus moves is: the Vintage bus's
+     * one kind, the first filter cell, or the first item's; null when it shows none yet.
+     */
+    @Nullable
+    public int[] firstCellPoint() {
+        return configure.firstCellPoint();
+    }
+
+    /** Where, from the window's corner, the Configure tab's bar that adds an item is; null when it has none. */
+    @Nullable
+    public int[] addItemPoint() {
+        return configure.addItemPoint();
+    }
+
     /** Shows {@code shown}, as a click on its tab does. */
     public void showTab(final int shown) {
         tab = shown;
