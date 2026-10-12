@@ -8,7 +8,7 @@
 package dev.jstech.core.api.client;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.pipeline.TextureTarget;
+import dev.jstech.core.client.live.RenderTargets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.AbstractTexture;
@@ -59,9 +59,10 @@ public final class GpuSurface implements ISurface {
     /** The render target to draw into, made the first time it is asked for. */
     public RenderTarget target() {
         if (this.target == null) {
-            this.target = new TextureTarget(this.width, this.height, true, Minecraft.ON_OSX);
+            // Made while a screen draws, so the framebuffer it was drawing into is bound again after.
+            this.target = RenderTargets.make(this.width, this.height);
             this.target.setClearColor(0, 0, 0, 1);
-            this.target.clear(Minecraft.ON_OSX);
+            RenderTargets.clear(this.target);
         }
         return this.target;
     }
@@ -84,7 +85,7 @@ public final class GpuSurface implements ISurface {
             this.location = null;
         }
         if (this.target != null) {
-            this.target.destroyBuffers();
+            RenderTargets.release(this.target);
             this.target = null;
         }
     }

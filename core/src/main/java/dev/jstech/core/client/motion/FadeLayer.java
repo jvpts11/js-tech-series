@@ -17,6 +17,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.jstech.core.client.live.LiveGraphics;
+import dev.jstech.core.client.live.RenderTargets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
@@ -102,9 +103,9 @@ public final class FadeLayer {
             return held;
         }
         if (held != null) {
-            held.destroyBuffers();
+            RenderTargets.release(held);
         }
-        final TextureTarget made = new TextureTarget(width, height, true, Minecraft.ON_OSX);
+        final TextureTarget made = RenderTargets.make(width, height);
         made.setFilterMode(GL11.GL_NEAREST);
         layer = made;
         return made;

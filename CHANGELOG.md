@@ -1935,6 +1935,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- The whole picture no longer goes wrong for one frame, the world seeming to flash, in menus or out of them: a
+  screen in the world that nobody had looked at for a few seconds, and a surface a manual's scene or a program's
+  window draws on, left the rest of the frame drawn into the window rather than the game's own target as they were
+  let go or made.
 - A server takes the Optical Network Card in an expansion slot, so a Server Rack holding one takes the fibre backbone
   of the Standard and the Advanced eras; every server refused the card, which left no rack able to join a fibre
   network.

@@ -141,11 +141,11 @@ public final class LiveScreen {
     void close() {
         Minecraft.getInstance().getTextureManager().release(texture);
         if (picture != null) {
-            picture.destroyBuffers();
+            RenderTargets.release(picture);
             picture = null;
         }
         if (shown != null) {
-            shown.destroyBuffers();
+            RenderTargets.release(shown);
             shown = null;
         }
     }
@@ -174,9 +174,9 @@ public final class LiveScreen {
             return target;
         }
         if (target != null) {
-            target.destroyBuffers();
+            RenderTargets.release(target);
         }
-        final TextureTarget made = new TextureTarget(pw, ph, true, Minecraft.ON_OSX);
+        final TextureTarget made = RenderTargets.make(pw, ph);
         made.setFilterMode(GL11.GL_LINEAR);
         return made;
     }
