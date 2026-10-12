@@ -184,6 +184,29 @@ class SubsetLevelTest {
                 () -> "the foreach after it went unseen: " + String.join("\n", result.lines()));
     }
 
+    /** What a field starts as is code like any other, so what the subset lacks is refused there too. */
+    @Test
+    void subset_readsWhatAFieldStartsAs() {
+        assertOnlyInTheFullLanguage("class Box { string label = $\"box {1}\"; } class M { static void Main() { } }");
+    }
+
+    /** And so is what a constructor hands to the one it calls first. */
+    @Test
+    void subset_readsWhatAConstructorHandsOn() {
+        assertOnlyInTheFullLanguage("class Base { public Base(string s) { } } "
+                + "class Below : Base { public Below() : base($\"n is {1}\") { } } "
+                + "class M { static void Main() { } }");
+    }
+
+    /** And what an enum's names are numbered with. */
+    @Test
+    void subset_readsWhatAnEnumIsNumberedWith() {
+        final SigmaSemantics.Result result = subset(
+                "enum Size { Small = System.Utils.Random.Next(4) } class M { static void Main() { } }");
+        assertTrue(result.diagnostics().stream().anyMatch(d -> "S3052".equals(d.code())),
+                () -> "it went through: " + String.join("\n", result.lines()));
+    }
+
     /** One using opens the whole of the subset's library, and the same line opens it in the full language too. */
     @Test
     void subset_reachesItsLibraryWithTheOneUsing() {

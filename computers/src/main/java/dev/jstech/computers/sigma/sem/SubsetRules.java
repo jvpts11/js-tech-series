@@ -201,7 +201,12 @@ public final class SubsetRules {
         switch (declaration) {
             case IDecl.InterfaceDecl face -> this.refuse(face, INTERFACES.text(), INTERFACES_INSTEAD);
             case IDecl.DelegateDecl delegate -> this.refuse(delegate, DELEGATES.text(), DELEGATES_INSTEAD);
-            case IDecl.EnumDecl ignored -> { } // an enum is a name for a number, which those machines had
+            case IDecl.EnumDecl numbers -> {
+                // An enum is a name for a number, which those machines had; what each number is written as is code.
+                for (final IDecl.EnumConstant constant : numbers.constants()) {
+                    this.expression(constant.value());
+                }
+            }
             case IDecl.ClassDecl klass -> this.classDecl(klass);
         }
     }
@@ -223,11 +228,17 @@ public final class SubsetRules {
         switch (member) {
             case IDecl.EventDecl event -> this.refuse(event, EVENTS.text(), EVENTS_INSTEAD);
             case IDecl.PropertyDecl property -> this.refuse(property, PROPERTIES.text(), PROPERTIES_INSTEAD);
-            case IDecl.FieldDecl field -> this.typeRef(field.type());
+            case IDecl.FieldDecl field -> {
+                this.typeRef(field.type());
+                this.expression(field.initializer());
+            }
             case IDecl.MethodDecl method -> this.method(method);
             case IDecl.ConstructorDecl constructor -> {
                 for (final IDecl.Parameter parameter : constructor.parameters()) {
                     this.typeRef(parameter.type());
+                }
+                if (constructor.chained() != null) {
+                    this.arguments(constructor.chained().arguments());
                 }
                 this.block(constructor.body());
             }

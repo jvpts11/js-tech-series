@@ -17,6 +17,9 @@ import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -58,8 +61,13 @@ class UiWidgetsTest {
             + "namespace Tests; ";
 
     private static ProgramImage load(final String source) {
+        return loadAsWritten(PRELUDE + source);
+    }
+
+    /** Compiles a whole file, its usings and namespace included. */
+    private static ProgramImage loadAsWritten(final String file) {
         final SigmaCompiler.Result built =
-                SigmaCompiler.compile(List.of(new SourceFile("Panel.sgs", PRELUDE + source)));
+                SigmaCompiler.compile(List.of(new SourceFile("Panel.sgs", file)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
         final AsmReader reader = new AsmReader(built.assembly());
         final AsmProgram program = reader.read();
@@ -124,6 +132,21 @@ class UiWidgetsTest {
             }
             """;
 
+    /** The first block of code under a heading of the language's public description, as a reader would copy it. */
+    private static String docExample(final String heading) throws IOException {
+        final List<String> lines = Files.readAllLines(Path.of("docs", "SIGMA.md"));
+        int at = lines.indexOf(heading);
+        assertTrue(at >= 0, () -> "no heading " + heading);
+        while (!lines.get(at).equals("```")) {
+            at++;
+        }
+        final StringBuilder code = new StringBuilder();
+        for (at++; !lines.get(at).equals("```"); at++) {
+            code.append(lines.get(at)).append('\n');
+        }
+        return code.toString();
+    }
+
     private static Values.Obj widgetOf(final Process process, final String type) {
         for (final Values.Obj widget : UiWidgets.inside(process.windows().getFirst())) {
             if (type.equals(widget.type())) {
@@ -146,6 +169,16 @@ class UiWidgetsTest {
         // The column, its two rows and the five widgets in them.
         assertEquals(8, UiWidgets.inside(window).size());
         assertEquals("812 K", widgetOf(process, UiWidgets.LABEL).get(UiWidgets.TEXT));
+    }
+
+    /** The window the language's description shows is a whole program that compiles and opens as described. */
+    @Test
+    void show_opensTheWindowTheLanguagesDescriptionShows() throws IOException {
+        final Process process = start(loadAsWritten(docExample("## Windows of its own: `System.UI`")),
+                desktop(true));
+        assertEquals(1, process.windows().size(), () -> String.valueOf(process.message()));
+        assertEquals("Reactor", process.windows().getFirst().get(UiWidgets.TITLE));
+        assertEquals("holding at 900", widgetOf(process, UiWidgets.LABEL).get(UiWidgets.TEXT));
     }
 
     @Test

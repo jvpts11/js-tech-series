@@ -1968,6 +1968,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A Server Rack's drive bays take a disk of the rack's era or an older one, as a computer's disk slots do; they
   took a disk of any era. The manual's page on disks said the rule the wrong way round: a disk fits a computer of
   its own era or a later one.
+- Σ, the smaller language, refuses what it does not have wherever it is written: in what a field starts as, in what
+  a constructor hands to the one it calls first and in what an enum's names are numbered with, which it let through.
+- The window example in the description of Σ# is a whole program, a script that stays up to hear its button,
+  rather than lines with nothing round them; it is compiled as written by the tests.
 - A big screen of monitors running west or north is drawn whenever any of it is in view; the box the game checks
   its view against lost a monitor at each end.
 - A USB stick in the Dock Station's port and in the Advanced Pattern Encoder's lies across as the port does; it

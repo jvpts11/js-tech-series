@@ -463,19 +463,43 @@ runs on, and the machine's own system draws it, so the same program looks like a
 Frames 95 machine and like a KDE one on Linux.
 
 ```
-Window made = new Window("Reactor", 240, 150);
-Label heat = new Label("holding at 900");
-Button scram = new Button("Scram");
-scram.OnClick += Scram;
-Row top = new Row();
-top.Add(heat, 1);
-top.Add(scram);
-Column page = new Column();
-page.Add(top);
-page.Add(new ProgressBar(0, 100), 1);
-made.Content = page;
-made.Show();
+using System.*;
+using System.UI.*;
+namespace Plant;
+
+class Reactor : IScript {
+    Window made;
+    Label heat;
+
+    public void OnInit() {
+        made = new Window("Reactor", 240, 150);
+        heat = new Label("holding at 900");
+        Button scram = new Button("Scram");
+        scram.OnClick += Scram;
+        Row top = new Row();
+        top.Add(heat, 1);
+        top.Add(scram);
+        Column page = new Column();
+        page.Add(top);
+        page.Add(new ProgressBar(0, 100), 1);
+        made.Content = page;
+        made.Show();
+    }
+
+    void Scram() {
+        heat.Text = "cold";
+    }
+
+    public void OnTick() { }
+
+    public void OnDestroy() {
+        made.Close();
+    }
+}
 ```
+
+It is a script so that it stays up to hear the click: a script runs until it is stopped, while a `Main` program
+ends when its last line has run.
 
 Every widget is an object the program holds, on the program's own heap, and is saved with it: a machine
 that is loaded back opens the same windows with the same words in them. The first version has `Window`,
