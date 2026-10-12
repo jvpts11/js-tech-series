@@ -204,6 +204,10 @@
         {
           "fix": "jsc.guide.first_computer.fix7",
           "problem": "jsc.guide.first_computer.problem7"
+        },
+        {
+          "fix": "jsc.guide.first_computer.fix8",
+          "problem": "jsc.guide.first_computer.problem8"
         }
       ]
     },

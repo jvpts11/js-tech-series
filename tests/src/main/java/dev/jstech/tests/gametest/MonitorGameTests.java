@@ -25,6 +25,8 @@ import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import io.netty.buffer.Unpooled;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -33,7 +35,10 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -63,6 +68,31 @@ public final class MonitorGameTests {
     private static final ResourceLocation MC_DOS = ResourceLocation.fromNamespaceAndPath("jsc", "mc_dos");
 
     private MonitorGameTests() {
+    }
+
+    /**
+     * A computer switched on with parts that do not make a computer only beeps, and its monitor says so rather than
+     * calling it powered off, which left a player who had pressed the switch thinking it had not taken.
+     */
+    @GameTest(template = ARENA)
+    public static void monitor_ofAComputerOnWithPartsMissingSaysSo(final GameTestHelper helper) {
+        helper.setBlock(PC, ComputingModule.PERSONAL_COMPUTER.get());
+        if (!(helper.getBlockEntity(PC) instanceof PersonalComputerBlockEntity computer)) {
+            throw new IllegalStateException("no personal computer at " + PC);
+        }
+        computer.togglePower();
+        final List<Component> said = new ArrayList<>();
+        final ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(),
+                new GameProfile(UUID.randomUUID(), "tester"), ClientInformation.createDefault()) {
+            @Override
+            public void displayClientMessage(final Component message, final boolean actionBar) {
+                said.add(message);
+            }
+        };
+        MonitorBlock.openSession(player, helper.getLevel(), helper.absolutePos(PC.east()), helper.absolutePos(PC));
+        helper.assertTrue(said.size() == 1 && said.getFirst().getContents() instanceof TranslatableContents line
+                && "block.jsc.monitor.build_incomplete".equals(line.getKey()), "the monitor says the parts: " + said);
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

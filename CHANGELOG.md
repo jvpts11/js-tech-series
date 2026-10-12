@@ -1952,6 +1952,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   beside the block, or that every face of the cable there is taken. The click did nothing and said nothing.
 - An Integra Phi stays out of a computer's card slots, as the manual says: only a supercomputer node seats one. A
   Personal Computer or a Mainframe took it, where it added nothing.
+- A monitor on a computer switched on with parts that do not make a computer says so, and that its assembly screen
+  lists why; it said the computer was powered off, so a player who had pressed the switch thought it had not taken.
+  The manual's first computer and monitor pages list it among their problems.
 - A room of many monitors draws each one's picture in turn: past a few, the same pictures were drawn every frame and
   the rest never, staying dark; and past eight in sight, a monitor's face was built anew at every picture, asking its
   machine again each time.

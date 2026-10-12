@@ -362,6 +362,10 @@
         {
           "fix": "jsc.guide.monitors.fix11",
           "problem": "jsc.guide.monitors.problem11"
+        },
+        {
+          "fix": "jsc.guide.monitors.fix12",
+          "problem": "jsc.guide.monitors.problem12"
         }
       ]
     },

@@ -144,6 +144,9 @@ final class PeripheralPages {
                                 + " screen.",
                         "No signal - the computer is powered off",
                         "Switch the computer on at its case.",
+                        "No signal - the computer is on, but its parts do not make a computer: its assembly screen"
+                                + " lists why",
+                        "Open the computer and fix what its CHECKS list names ([](jsc:build_refusals)).",
                         "No signal - the computer has disabled this monitor",
                         "Enable the monitor again ([](jsc:disable_device)).",
                         "The monitor is off",

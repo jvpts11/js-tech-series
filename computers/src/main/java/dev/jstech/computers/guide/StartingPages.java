@@ -210,6 +210,9 @@ final class StartingPages {
                                 + " ([](jsc:graphics_cards)).",
                         "The monitor says \"No signal - the computer is powered off\".",
                         "Press the power button on the front of the case ([](jsc:case_front)).",
+                        "The computer beeps, and the monitor says that its parts do not make a computer.",
+                        "A part is missing or does not fit. Open the computer: its CHECKS list names what to fix"
+                                + " ([](jsc:build_refusals)).",
                         "A processor or a memory module does not go into its slot.",
                         "Check the board: the socket, the era and the memory generation must match"
                                 + " ([](jsc:motherboards)).",

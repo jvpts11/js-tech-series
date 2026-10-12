@@ -15,6 +15,7 @@ import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.JscTriggers;
 import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.audio.SoundHardwareTexts;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.HardwareTooltip;
@@ -51,6 +52,7 @@ import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.peripheral.PortKind;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
@@ -359,7 +361,7 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
         if (level.getBlockEntity(owner) instanceof IOsHost computer) {
             switch (entryFor(computer)) {
                 case NO_POWER -> {
-                    player.displayClientMessage(GameText.component(MonitorTexts.NO_POWER), true);
+                    player.displayClientMessage(GameText.component(stoppedLine(computer)), true);
                     return;
                 }
                 case POST -> {
@@ -521,7 +523,7 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
          */
         if (ownerBe instanceof IOsHost gate) {
             if (!gate.isRunning()) {
-                player.displayClientMessage(GameText.component(MonitorTexts.NO_POWER), true);
+                player.displayClientMessage(GameText.component(stoppedLine(gate)), true);
                 return;
             }
             /*
@@ -789,5 +791,14 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
             }
         }
         return GameText.component(MonitorTexts.UNLINKED);
+    }
+
+    /*
+     * Why a stopped machine shows nothing: powered off, or switched on with parts that do not make a computer, which
+     * only beeps; telling those apart keeps a player who did press the switch from thinking it did not take.
+     */
+    private static TextKey stoppedLine(final IOsHost computer) {
+        return computer instanceof AbstractComputerBlockEntity machine && machine.isManualOn()
+                ? MonitorTexts.BUILD_INCOMPLETE : MonitorTexts.NO_POWER;
     }
 }
