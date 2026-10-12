@@ -21,6 +21,12 @@ The same, and more, is in the game: the **Guide to Operations**, the mod's own m
 programs), and the J's Computers chapter of the series' **Technical Reference**. Hold the manual key (**M**) over
 any item of the mod to open its page.
 
+## For modpack makers
+
+| Page | What it covers |
+| --- | --- |
+| [Recipes and loot](MODPACKS.md) | Giving J's Computers recipes and chest loot with a datapack or KubeJS: ids, tags, installers. |
+
 ## For addon authors
 
 | Page | What it covers |

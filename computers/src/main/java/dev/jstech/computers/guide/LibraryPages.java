@@ -412,7 +412,8 @@ final class LibraryPages {
                 .paragraph("A manual is one of these seven books, read as pages in the game. You turn its pages and"
                         + " find its chapters the same way you read this Guide.")
                 .paragraph("You get the books from the creative tab J's Computers, among the programs, beside this"
-                        + " Guide. J's Computers has no crafting recipes, so the creative tab is where you take one.")
+                        + " Guide. J's Computers has no crafting recipes of its own, so the creative tab is where you"
+                        + " take one, unless your modpack gave the books a recipe; the recipe viewer shows it if so.")
                 .paragraph("When you open a computer's help, the system opens its own book first, and the other books"
                         + " follow in their order. The help of MC-NET opens the Guide to Operations.")
                 .table("The first book of each system", "System", "Book it opens first", "Installed by")

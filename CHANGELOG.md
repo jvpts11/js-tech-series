@@ -97,7 +97,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   and `JsComputers.programInstaller(...)` give an installer with its software written on it, which no plain item id
   can name, `JsComputers.readyDisk(...)` a disk with a system already on it, and `JsComputers.systems('legacy')`,
   `JsComputers.programs(...)` and `JsComputers.eras()` list what there is. With the item tags below, a modpack can give
-  J's Computers recipes and chest loot of its own. KubeJS stays optional: without it, nothing of it loads.
+  J's Computers recipes and chest loot of its own. KubeJS stays optional: without it, nothing of it loads. The page
+  Recipes and loot (`computers/docs/MODPACKS.md`) shows how, with a datapack or with KubeJS, and the Guide's first
+  page and its page on the books say a modpack can give the mod recipes, which the recipe viewer then shows.
 - A mod built on J's Core can hand a scripting mod's scripts a class of its own under a name, declared once with the
   rest of its content; J's Core's plugin gives KubeJS every one.
 - Item tags for J's Computers, so a datapack or a script can ask for a whole group of its things: `#jsc:era/vintage`,

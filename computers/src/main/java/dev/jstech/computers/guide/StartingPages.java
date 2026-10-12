@@ -69,9 +69,11 @@ final class StartingPages {
                         + " (RAM) and a power supply (PSU). A disk holds the system, and a graphics card (GPU) gives"
                         + " the monitor a picture. Each part has its own entry, and [Building your first"
                         + " computer](jsc:first_computer) puts them together.")
-                .paragraph("Every part of this mod comes from the creative tabs: there are no crafting recipes for"
-                        + " them. J's Computers holds what every era shares, and there is one tab for each era, from"
-                        + " J's Computers - Vintage to J's Computers - Advanced ([](jsc:eras)).")
+                .paragraph("Every part of this mod comes from the creative tabs: J's Computers has no crafting recipes"
+                        + " of its own. J's Computers holds what every era shares, and there is one tab for each era,"
+                        + " from J's Computers - Vintage to J's Computers - Advanced ([](jsc:eras)). A modpack can"
+                        + " give the mod recipes, with KubeJS or a datapack; then the recipe viewer, JEI or EMI,"
+                        + " shows how each thing is made.")
                 .subheading("How to read this manual")
                 .paragraph("Every entry starts on a page of its own. The row of items under an entry's title, the"
                         + " plate, is clickable: click an item to go to its own page. A number in brackets is a link"

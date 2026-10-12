@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {"item": "minecraft:paper"},
+    {"item": "jsc:cd_rom"}
+  ],
+  "result": {
+    "id": "jsc:cd_rom",
+    "count": 1,
+    "components": {
+      "jsc:media_kind": "os_install",
+      "jsc:media_payload": "jsc:frames_95"
+    }
+  }
+}

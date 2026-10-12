@@ -37,6 +37,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 public final class ScriptBindingGameTests {
 
     private static final String ARENA = "empty";
+    private static final ResourceLocation PLAIN_RECIPE = ResourceLocation.fromNamespaceAndPath("jstests",
+            "vintage_personal_computer");
     private static final ResourceLocation INSTALLER_RECIPE = ResourceLocation.fromNamespaceAndPath("jstests",
             "frames_95_installer");
     private static final ResourceLocation VINTAGE_RECIPE = ResourceLocation.fromNamespaceAndPath("jstests",
@@ -71,6 +73,8 @@ public final class ScriptBindingGameTests {
                 InstallerStacks.forSystem(frames95)), "and the same with it");
         helper.assertTrue(JsComputersScripts.installer("no_such_system").isEmpty(), "an unknown system gives nothing");
         helper.assertTrue(!JsComputersScripts.readyDisk("frames_95").isEmpty(), "Frames 95 comes on a ready disk");
+        helper.assertFalse(JsComputersScripts.programInstaller("isms").isEmpty(),
+                "the ISMS, the page's example, is a program a player installs");
         helper.assertTrue(JsComputersScripts.eras().equals(List.of("vintage", "legacy", "transition", "standard",
                 "advanced")), "the eras with things in the game, oldest first; got " + JsComputersScripts.eras());
         helper.assertTrue(JsComputersScripts.systems("legacy").contains(frames95.toString()),
@@ -94,6 +98,21 @@ public final class ScriptBindingGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void scriptRecipe_makesAPlainItemByItsId(final GameTestHelper helper) {
+        final Optional<RecipeHolder<?>> recipe = helper.getLevel().getRecipeManager().byKey(PLAIN_RECIPE);
+        if (!kubeJsAsked()) {
+            helper.assertTrue(recipe.isEmpty(), "without KubeJS no script made a recipe");
+            helper.succeed();
+            return;
+        }
+        helper.assertTrue(recipe.isPresent(), "the test script's plain recipe exists");
+        final ItemStack made = recipe.get().value().getResultItem(helper.getLevel().registryAccess());
+        helper.assertTrue(made.is(ComputingModule.VINTAGE_PERSONAL_COMPUTER.get().asItem()),
+                "it makes a Vintage Personal Computer; got " + made);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
     public static void scriptRecipe_makesTheInstallerItNames(final GameTestHelper helper) {
         final Optional<RecipeHolder<?>> recipe = helper.getLevel().getRecipeManager().byKey(INSTALLER_RECIPE);
         if (!kubeJsAsked()) {
@@ -106,6 +125,25 @@ public final class ScriptBindingGameTests {
         helper.assertTrue(ItemStack.isSameItemSameComponents(made, InstallerStacks.forSystem(
                         ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_95"))),
                 "it makes Frames 95's installer, written on its CD; got " + made);
+        helper.succeed();
+    }
+
+    /** The test script goes through the Vintage systems, as the page shows, giving each an installer recipe. */
+    @GameTest(template = ARENA)
+    public static void scriptLoop_givesEverySystemOfAnEraAnInstallerRecipe(final GameTestHelper helper) {
+        if (!kubeJsAsked()) {
+            helper.succeed();
+            return;
+        }
+        final List<String> systems = JsComputersScripts.systems("vintage");
+        helper.assertFalse(systems.isEmpty(), "the Vintage era has systems");
+        for (final String system : systems) {
+            final ItemStack installer = JsComputersScripts.installer(system);
+            final boolean made = helper.getLevel().getRecipeManager().getRecipes().stream().anyMatch(recipe ->
+                    ItemStack.isSameItemSameComponents(recipe.value().getResultItem(helper.getLevel()
+                            .registryAccess()), installer));
+            helper.assertTrue(made, system + " has an installer recipe from the script's loop");
+        }
         helper.succeed();
     }
 
