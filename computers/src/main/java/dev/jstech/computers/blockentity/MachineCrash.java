@@ -79,7 +79,8 @@ final class MachineCrash {
     /** What the machine knows of itself at the moment it goes down, for the kernels to print. */
     static CrashPages.Facts facts(final AbstractComputerBlockEntity machine, final long upFor,
                                   final CrashPages.Moment moment) {
-        final OsDef system = machine.installedOs();
+        // The system that came up, which a pulled disk no longer shows but which is still the one going down.
+        final OsDef system = machine.runningOs();
         final ComputerHardwareLayout layout = machine.layout();
         final ItemStack board = machine.getHardware().getStackInSlot(layout.motherboardSlot());
         final ItemStack cpu = machine.getHardware().getStackInSlot(layout.cpuStart());

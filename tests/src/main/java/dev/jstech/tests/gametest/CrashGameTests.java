@@ -100,8 +100,8 @@ public final class CrashGameTests {
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
                 .thenExecute(() -> {
-                    pc.memoryShort("Calculator");
-                    helper.assertTrue(pc.crashPage() != null, "the window that did not fit brings it down");
+                    helper.assertTrue(!pc.memoryShort("Calculator", 0) && pc.crashPage() != null,
+                            "the window that did not fit brings it down");
                 })
                 .thenSucceed();
     }

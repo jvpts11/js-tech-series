@@ -16,6 +16,8 @@ import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.operation.payload.program.ProgramKeyboard;
+import dev.jstech.computers.operation.payload.program.TerminalTools;
+import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.vm.program.Numbers;
 import dev.jstech.computers.vm.program.UiWidgets;
@@ -73,6 +75,8 @@ final class ClientReplication {
      * wait for ever.
      */
     private static final int MOST_BYTES_A_TICK = 8192;
+    /** What a shell says of the program in front of it that was killed: the signal's own name. */
+    private static final String KILLED = "Killed";
 
     ClientReplication(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
@@ -329,6 +333,46 @@ final class ClientReplication {
         } else {
             say(viewers, wire, "", true, ProgramKeyboard.onDesktop(one.process()),
                     ProgramKeyboard.atTerminal(one.process()));
+        }
+    }
+
+    /**
+     * Prints what the kernel logged on the consoles watching the machine, as a kernel prints on its own console. A
+     * terminal window on a desktop is not the console and shows nothing of it, as on any real one; the keyboard stays
+     * with whatever had it.
+     */
+    void kernelSays(final ServerLevel level, final List<String> lines) {
+        if (lines.isEmpty()) {
+            return;
+        }
+        final List<WireLine> wire = new ArrayList<>(lines.size());
+        for (final String line : lines) {
+            wire.add(new WireLine(Text.literal(line), CliStyle.PLAIN.id()));
+        }
+        final MachinePrograms programs = this.machine.programs();
+        final var held = programs.byId(programs.held());
+        final ComputerConsoleState console = this.machine.console();
+        final TerminalKeyboard keyboard = held != null ? ProgramKeyboard.atTerminal(held.process())
+                : console != null && console.foreground().running() ? TerminalTools.keyboardOf(console)
+                : TerminalKeyboard.PROMPT;
+        final CommandOutputPayload said = new CommandOutputPayload("", wire, keyboard);
+        for (final ServerPlayer viewer : this.machine.consoleViewers(level)) {
+            if (!(viewer.containerMenu instanceof DesktopMenu)) {
+                PacketDistributor.sendToPlayer(viewer, said);
+            }
+        }
+    }
+
+    /**
+     * The program in front of the terminal was ended from outside it: the shell says so in its own word, as a shell
+     * says it of a program killed under it, and gives the prompt back.
+     */
+    void frontKilled(final ServerLevel level) {
+        this.asked = null;
+        final List<ServerPlayer> viewers = this.machine.consoleViewers(level);
+        if (!viewers.isEmpty()) {
+            say(viewers, List.of(new WireLine(Text.literal(KILLED), CliStyle.PLAIN.id())),
+                    this.machine.shellPrompt(), false, TerminalKeyboard.PROMPT, TerminalKeyboard.PROMPT);
         }
     }
 

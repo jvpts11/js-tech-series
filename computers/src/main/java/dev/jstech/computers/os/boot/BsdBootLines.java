@@ -16,6 +16,8 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -38,26 +40,35 @@ final class BsdBootLines {
     private BsdBootLines() {
     }
 
-    /** The kernel naming the machine, then the startup scripts bringing the system up. */
-    static BootSequence up(final IOsHost machine, final OsDef system, @Nullable final ServerLevel level) {
+    /** What the kernel itself prints as it comes up: itself, the processor, the memory, each disk, and its root. */
+    static List<String> kernel(final IOsHost machine, final OsDef system) {
         final HardwareEra era = machine.installedEra() != null ? machine.installedEra() : HardwareEra.STANDARD;
         final String arch = KernelNames.architecture(Platform.FREEBSD, machine.processorBits());
-        // The loader's, the kernel's and the startup scripts' lines are logs, which are data in every language.
-        final BootSequence.Builder out = new BootSequence.Builder()
-                .title(Text.literal("Loading kernel..."))
-                .subtitle(Text.literal("Booting..."));
-        out.line(Text.literal(Branding.systemCopyright(system.displayName(), era)));
-        out.line(Text.literal("FreeBSD " + KernelNames.FREEBSD_RELEASE + " GENERIC " + arch));
-        out.line(Text.literal("CPU: " + BootLines.cpuName(machine)));
-        out.line(Text.literal("real memory  = " + machine.ramTotalMb() + " MB"));
+        final List<String> out = new ArrayList<>();
+        out.add(Branding.systemCopyright(system.displayName(), era));
+        out.add("FreeBSD " + KernelNames.FREEBSD_RELEASE + " GENERIC " + arch);
+        out.add("CPU: " + BootLines.cpuName(machine));
+        out.add("real memory  = " + machine.ramTotalMb() + " MB");
         int drive = 0;
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack disk = machine.diskInSlot(slot);
             if (disk.getItem() instanceof DiskItem) {
-                out.line(Text.literal(Installers.adaLabel(drive++) + ": <" + disk.getHoverName().getString() + ">"));
+                out.add(Installers.adaLabel(drive++) + ": <" + disk.getHoverName().getString() + ">");
             }
         }
-        out.line(Text.literal("Trying to mount root from ufs:/dev/ada0p2 [rw]..."));
+        out.add("Trying to mount root from ufs:/dev/ada0p2 [rw]...");
+        return out;
+    }
+
+    /** The kernel naming the machine, then the startup scripts bringing the system up. */
+    static BootSequence up(final IOsHost machine, final OsDef system, @Nullable final ServerLevel level) {
+        // The loader's, the kernel's and the startup scripts' lines are logs, which are data in every language.
+        final BootSequence.Builder out = new BootSequence.Builder()
+                .title(Text.literal("Loading kernel..."))
+                .subtitle(Text.literal("Booting..."));
+        for (final String line : kernel(machine, system)) {
+            out.line(Text.literal(line));
+        }
         out.line(Text.literal("Setting hostname: " + Installers.hostName(machine) + "."));
         if (machine.networkAttached()) {
             out.line(Text.literal("Starting Network: lo0 em0."));

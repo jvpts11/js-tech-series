@@ -33,6 +33,12 @@ final class DesktopTexts {
             "This computer is running low on memory. Close some programs before you open more: %s.");
     /** One program in that list, with what it holds. */
     static final TextKey LOW_MEMORY_HOLDS = TextKey.of("jsc.desktop.low_memory_holds", "%s (%s MB)");
+    /* What a desktop says when the kernel under it ended its windows to make room. */
+    static final TextKey OUT_OF_MEMORY = TextKey.of("jsc.desktop.out_of_memory", "Out of memory");
+    static final TextKey OUT_OF_MEMORY_CLOSED = TextKey.of("jsc.desktop.out_of_memory_closed",
+            "The system ran out of memory and closed %s, the program holding the most.");
+    static final TextKey OUT_OF_MEMORY_CLOSED_MANY = TextKey.of("jsc.desktop.out_of_memory_closed_many",
+            "The system ran out of memory and closed %s, the programs holding the most.");
     static final TextKey LOW_VIDEO_MEMORY = TextKey.of("jsc.desktop.low_video_memory", "Not enough video memory");
     static final TextKey LOW_VIDEO_MEMORY_BODY = TextKey.of("jsc.desktop.low_video_memory_body",
             "%s needs %s of video memory, and %s are free. Turn off a monitor or close a graphics program.");

@@ -92,6 +92,7 @@ public final class ClientTestSuite {
             MenuSwapCursorClientTests.class,
             MediaDriveClientTests.class,
             MemoryCrashClientTests.class,
+            OutOfMemoryClientTests.class,
             MonitorClientTests.class,
             MsdClientTests.class,
             MultipartModelClientTests.class,

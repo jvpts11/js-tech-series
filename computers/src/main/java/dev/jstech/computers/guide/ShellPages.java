@@ -374,6 +374,11 @@ final class ShellPages {
                         + " jobs, and you stop one with kill %1, where 1 is its number in that list.")
                 .command(CommandGuidePages.id(Platform.LINUX, "ps"))
                 .command(CommandGuidePages.id(Platform.LINUX, "kill"))
+                .paragraph("When the computer runs out of memory, the kernel, the core of the system, ends the"
+                        + " process that holds the most, then the next, until everything left fits. The dmesg command"
+                        + " prints what the kernel has logged since the computer started: what it found as it came up,"
+                        + " and a line for each process it ended.")
+                .command(CommandGuidePages.id(Platform.LINUX, "dmesg"))
                 .command(CommandGuidePages.id(Platform.LINUX, "jobs"))
                 .paragraph("The crontab command sets a line that the machine runs by itself, at an hour you choose,"
                         + " every day or on named days. Such a line is a schedule.")

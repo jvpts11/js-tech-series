@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.crash;
 
 import dev.jstech.computers.block.ICrashScreenOpener;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -17,7 +18,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-/** The payloads of a system that crashed: its page on the glass, a key on its console, and the window that did it. */
+/**
+ * The payloads of a system short of memory or crashed: its page on the glass, a key on its console, the window that
+ * did it, and the windows its kernel ended to make room.
+ */
 public final class CrashPayloads {
 
     private CrashPayloads() {
@@ -34,6 +38,10 @@ public final class CrashPayloads {
         // Only from that machine's own desktop: nobody brings a machine down from anywhere but its keyboard.
         ComputerAccess.accept(registrar, MemoryShortPayload.TYPE, MemoryShortPayload.STREAM_CODEC,
                 ComputerAccess.machine(MemoryShortPayload::host), CrashPayloads::handleMemoryShort);
+        // The windows a kernel ended for their memory: the desktop showing that machine closes them.
+        registrar.playToClient(MemoryKilledPayload.TYPE, MemoryKilledPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread((payload, player) ->
+                        ActiveDesktop.memoryKilled(payload.host(), payload.windows())));
     }
 
     private static void handleKey(final CrashKeyPayload payload, final ServerPlayer player, final ServerLevel level) {
@@ -45,7 +53,7 @@ public final class CrashPayloads {
     private static void handleMemoryShort(final MemoryShortPayload payload, final ServerPlayer player,
                                           final ServerLevel level) {
         if (level.getBlockEntity(payload.host()) instanceof AbstractComputerBlockEntity machine) {
-            machine.memoryShort(payload.program());
+            machine.memoryShort(payload.program(), 0);
         }
     }
 }

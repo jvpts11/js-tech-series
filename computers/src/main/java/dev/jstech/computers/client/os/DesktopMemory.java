@@ -17,6 +17,7 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.SchedulerKind;
 import dev.jstech.computers.os.VramLedger;
+import dev.jstech.computers.os.crash.OomKiller;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
@@ -33,8 +34,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 /**
  * The machine's memory as its desktop sees it: the system, its desktop and its services hold their share (reserved,
  * from the server), and every open window holds its program's weight under the running system, by the same rule the
- * server applies. A window that does not fit is refused by a preemptive kernel, which says so in a balloon, and
- * brings a cooperative one (Frames 95's) down: the machine is told, and it crashes onto its page and starts over.
+ * server applies. A window that does not fit brings a Frames machine down (the machine is told, and it crashes onto its
+ * page and starts over), opens on a Unix one whose kernel then ends what holds the most, and is refused by the earliest
+ * systems, which say so in a balloon.
  */
 final class DesktopMemory {
 
@@ -94,8 +96,9 @@ final class DesktopMemory {
 
     /**
      * Whether a window of {@code key} may open now, that is whether its program's weight still fits in the free
-     * memory. One that does not brings every edition of Frames down, and the others refuse it with the figures. A
-     * preemptive Frames that a window takes past nine tenths of its memory says so first, naming what holds the most.
+     * memory. One that does not brings every edition of Frames down, a Unix kernel lets it open and ends what holds the
+     * most once the machine hears of it, and the earliest systems refuse it with the figures. A preemptive Frames that
+     * a window takes past nine tenths of its memory says so first, naming what holds the most.
      */
     boolean allowOpen(final String key) {
         if (!videoMemoryAllows(key)) {
@@ -105,6 +108,9 @@ final class DesktopMemory {
         final int free = totalMb - usedMb();
         if (need <= free) {
             warnIfLow(key, need);
+            return true;
+        }
+        if (killsForMemory()) {
             return true;
         }
         if (frames()) {
@@ -192,6 +198,12 @@ final class DesktopMemory {
     private boolean frames() {
         final OsDef os = OsRegistry.getOs(osId);
         return os != null && os.platform() == Platform.FRAMES;
+    }
+
+    /** Whether the system's kernel ends programs for their memory, and so lets every window open first. */
+    private boolean killsForMemory() {
+        final OsDef os = OsRegistry.getOs(osId);
+        return os != null && OomKiller.runsOn(os.platform());
     }
 
     /** A cooperative kernel (Frames 95's) has no memory protection, and no warning before it goes down. */

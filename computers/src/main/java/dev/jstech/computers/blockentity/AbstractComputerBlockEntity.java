@@ -35,6 +35,7 @@ import dev.jstech.computers.item.IExpansionCardItem;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
+import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
@@ -43,12 +44,14 @@ import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
+import dev.jstech.computers.operation.payload.crash.MemoryKilledPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.boot.BootIdentity;
@@ -62,6 +65,7 @@ import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.crash.CrashStyle;
+import dev.jstech.computers.os.crash.OomKiller;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
@@ -136,6 +140,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession);
     /** The page the system crashed onto, while it stands. */
     private final MachineCrash crash = new MachineCrash();
+    /** What its kernel ended for want of memory in this run, and what it logged of it. */
+    private final MachineOom oom = new MachineOom();
     /**
      * The system that came up and is running, which is not always what the disks say now: a system disk taken out
      * from under it leaves the machine still running that system, on its way to crashing.
@@ -221,6 +227,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
                 (tag, registries) -> power.load(tag))).save();
         fields().part("Session", IFieldPart.of((tag, registries) -> session.save(tag),
                 (tag, registries) -> session.load(tag))).save();
+        fields().part("OutOfMemory", IFieldPart.of((tag, registries) -> oom.save(tag),
+                (tag, registries) -> oom.load(tag))).save();
         this.computerName = fields().value("ComputerName", Codec.STRING, "").save().toClient();
         fields().part("Attachment", new AttachmentPart()).save().toClient();
         fields().part("Peripherals", IFieldPart.of((tag, registries) -> peripherals.save(tag),
@@ -681,6 +689,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private void endSession() {
         session.drop();
         runningSystem = null;
+        oom.reset();
         // A run that ends takes what it was running with it: a restart closes every program, as on any machine.
         if (!programs().isEmpty()) {
             programs().stopAll();
@@ -796,27 +805,24 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     /**
      * Once a second, what the machine's system holds is weighed against what it has: a service installed, a server
      * with more listeners, anything that took memory without asking first. A system that holds more than there is
-     * answers as it does to any program it has no room for.
+     * answers as it does to any program it has no room for. Asked again at once when a desktop hands the machine its
+     * windows, for a kernel that lets every window open and makes the room after.
      */
-    private void weighMemory() {
-        if (!isRunning() || goingDown() || needsPost() || booting() || atBootMenu()) {
+    public void weighMemory() {
+        if (!isRunning() || goingDown() || needsPost() || booting() || atBootMenu() || crashPage() != null) {
             return;
         }
         // A machine that was already up when it was loaded never saw its system come up, so it learns it here.
         if (runningSystem == null) {
             runningSystem = installedOs();
         }
-        final OsDef system = runningSystem;
-        if (system == null || system.platform() != Platform.FRAMES) {
-            return;
-        }
         final RamLedger ledger = ramLedger();
-        if (ledger.usedMb() <= ledger.totalMb()) {
+        if (runningSystem == null || ledger.usedMb() <= ledger.totalMb()) {
             return;
         }
-        // What tipped it over is whatever came last; the page names no program, so the newest entry stands for it.
+        // What tipped it over is whatever came last, so the newest entry stands for the program that asked.
         final List<RamLedger.Entry> entries = ledger.entries();
-        memoryShort(entries.isEmpty() ? "" : entries.getLast().name());
+        memoryShort(entries.isEmpty() ? "" : entries.getLast().name(), 0);
     }
 
     /** Whether the machine is stopped at its boot menu. */
@@ -898,7 +904,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
                 || needsPost() || haltedAtPost() || atBootMenu() || booting()) {
             return false;
         }
-        final OsDef system = runningSystem != null ? runningSystem : installedOs();
+        final OsDef system = runningOs();
         final CrashStyle style = system == null ? null : CrashPages.styleFor(system.platform(), system.familyRank());
         if (style == null) {
             return false;
@@ -923,18 +929,81 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     /**
      * A program asked this machine for memory it no longer has: a window opened on its desktop, a program started at
-     * its prompt, a service. A system of the Frames family does not refuse it: it goes down on its blue page.
+     * its prompt, a service. A system of the Frames family does not refuse it: it goes down on its blue page. A Unix
+     * kernel ends what holds the most until it fits, and panics only once nothing is left to end. MC-DOS and MC-NET
+     * refuse it.
+     *
+     * @param needMb what the program asks for on top of what the machine holds, or zero when it holds it already
+     * @return whether there is room for it now
      */
-    public void memoryShort(final String program) {
-        final OsDef system = installedOs();
-        if (system != null && system.platform() == Platform.FRAMES) {
-            crash(CrashCause.MEMORY, CrashPages.Moment.memory(program, 0, List.of()));
+    public boolean memoryShort(final String program, final int needMb) {
+        final OsDef system = runningOs();
+        if (system == null || !(level instanceof ServerLevel server)) {
+            return false;
         }
+        return switch (system.platform()) {
+            case FRAMES -> {
+                crash(CrashCause.MEMORY, CrashPages.Moment.memory(program, 0, List.of()));
+                yield false;
+            }
+            case LINUX, FREEBSD, UNIX -> oom.makeRoom(this, server, system, program, needMb,
+                    power.upFor(server.getGameTime()));
+            case MC_DOS, MC_NET -> false;
+        };
+    }
+
+    /** Whether this machine's system ends programs for their memory, and so lets every window open first. */
+    public boolean killsForMemory() {
+        final OsDef system = runningOs();
+        return system != null && OomKiller.runsOn(system.platform());
+    }
+
+    /** What the kernel logged about its memory in this run, oldest first, which {@code dmesg} prints. */
+    public List<String> memoryLog() {
+        return oom.logged();
+    }
+
+    /** A service the kernel ended for its memory is down until the machine starts over. */
+    @Override
+    public boolean serviceRunning(final ProgramSpec service) {
+        return !stoppedForMemory(service.id()) && IOsHost.super.serviceRunning(service);
+    }
+
+    /** Whether the kernel ended that service for its memory in this run. */
+    public boolean stoppedForMemory(final ResourceLocation service) {
+        return oom.stopped(service);
     }
 
     @Override
     public void systemCameUp() {
         runningSystem = installedOs();
+    }
+
+    /** The system that is running: the one that came up, or what the disks hold for a machine that never saw it. */
+    @Nullable
+    OsDef runningOs() {
+        return runningSystem != null ? runningSystem : installedOs();
+    }
+
+    /**
+     * The kernel ended things for their memory: the lines it logged go to the consoles watching, a program ended in
+     * front of a terminal gives the prompt back with the shell's word for it, and the desktops showing the machine
+     * close the windows that went.
+     */
+    void memoryFreed(final ServerLevel level, final List<String> lines, final List<String> windows,
+                     final boolean frontKilled) {
+        replication.kernelSays(level, lines);
+        if (frontKilled) {
+            replication.frontKilled(level);
+        }
+        if (windows.isEmpty()) {
+            return;
+        }
+        for (final ServerPlayer viewer : consoleViewers(level)) {
+            if (viewer.containerMenu instanceof DesktopMenu) {
+                PacketDistributor.sendToPlayer(viewer, new MemoryKilledPayload(worldPosition, windows));
+            }
+        }
     }
 
     /**

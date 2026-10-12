@@ -142,6 +142,18 @@ public final class CrashPages {
         return "NOTICE: out of memory: process " + victim.pid() + " (" + victim.name() + ") killed";
     }
 
+    /**
+     * The line a kernel of {@code platform} logs for a process its out-of-memory killer took, {@code uptimeTicks} after
+     * it came up: Linux stamps it with the time, FreeBSD and System V print it as it is.
+     */
+    public static String killLine(final Platform platform, final long uptimeTicks, final Victim victim) {
+        return switch (platform) {
+            case FREEBSD -> freeBsdKill(victim);
+            case UNIX -> systemVKill(victim);
+            default -> new Clock(uptimeTicks).stamp(linuxKill(victim));
+        };
+    }
+
     private static CrashPage frames95(final CrashCause cause) {
         return switch (cause) {
             case HARDWARE -> new CrashPage(CrashStyle.FRAMES_95, cause, "12", "0028:C0001F12 in VXD VMM(01) + 00001F12",

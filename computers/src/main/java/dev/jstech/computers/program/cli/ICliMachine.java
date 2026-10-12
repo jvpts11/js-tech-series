@@ -168,6 +168,14 @@ public interface ICliMachine {
     }
 
     /**
+     * What the kernel of this machine's system has logged in this run, oldest first: what it said of itself as it
+     * came up, then what it ended for want of memory. Nothing for a machine whose system keeps no such log.
+     */
+    default List<String> kernelLog() {
+        return List.of();
+    }
+
+    /**
      * The names the shell knows on this machine, by name in upper case.
      *
      * <p>They belong to the machine and not to a prompt, so a name set at a monitor stays there in a

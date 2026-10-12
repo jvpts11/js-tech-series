@@ -105,6 +105,8 @@ class HardcodedTextTest {
     private static final String BUILD_LOG = "a data generator's name, for the build log";
     private static final String PRODUCTS = "names of fictional products, systems and makers";
     private static final String FILES = "folder names and the contents of files on a virtual disk";
+    private static final String KERNEL_LOG = "what a kernel logs of itself as it comes up, which dmesg prints back:"
+            + " no kernel ever logged in anything but its own words";
     private static final String SIGNATURES = "signatures of the programming language's own calls";
     private static final String SAVE_TAG = "the tag a machine's parts are saved under";
     private static final String SETTINGS_FILE = "a settings file's own comments, English like every comment in it";
@@ -167,6 +169,9 @@ class HardcodedTextTest {
             data(COMPUTERS + "machine/PortsTree.java", 2, FILES),
             data(COMPUTERS + "machine/SourceChains.java", 14, "build flags, as a source build prints and reads them"),
             data(COMPUTERS + "os/Branding.java", 2, PRODUCTS),
+            data(COMPUTERS + "os/boot/BootLines.java", 2, KERNEL_LOG),
+            data(COMPUTERS + "os/boot/BsdBootLines.java", 2, KERNEL_LOG),
+            data(COMPUTERS + "os/boot/SysVBootLines.java", 3, KERNEL_LOG),
             data(COMPUTERS + "os/crash/CrashPages.java", 67, "what a kernel prints as it panics, and where a"
                     + " crashed system says it failed: no kernel ever printed them in anything but its own words"),
             data(COMPUTERS + "os/KernelNames.java", 4, "kernel names as a system reports them"),

@@ -1581,6 +1581,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   empty session. Frames 95's crash was a picture on the player's own desktop only: the keyboard still reached the
   program behind it, and a player who left the monitor during it came back to every window open before the crash.
   Linux, FreeBSD and UNIX have their own crash pages too, their kernels' panics on the console.
+- Linux, FreeBSD and UNIX no longer refuse a program they have no memory left for: as the real kernels do, they let
+  it start and then end what holds the most, a window, a program or a service, until everything fits. Each one is
+  logged in the kernel's own words (`Out of memory: Killed process 1234 (calc)` on Linux, `pid 1234 (calc), jid 0,
+  uid 0, was killed: out of swap space` on FreeBSD) and printed on the console, and the new `dmesg` lists those lines
+  after what the kernel found as it came up. A desktop closes the window that went and says why in a balloon; a
+  program ended in front of a terminal leaves the shell's `Killed` and gives the prompt back; a service ended stays
+  down until the machine starts over, a Mainframe's network engine, Automation Engine and Mirror included. Only when
+  nothing is left to end does the kernel panic, on its own page, and the machine starts over: a machine whose system
+  and desktop alone hold more than it has panics as soon as it is up.
 - A server's RAID controller and read cache are expansion cards now, not gadgets in the rack's front bays: Vaultis
   makes an Array and a Cache for each era's slot, from ISA to PCI-e 4.0. The Array joins the drives of the server it
   sits in and keeps the array's mode on itself, so a server pulled from its rack takes its array with it; the Cache

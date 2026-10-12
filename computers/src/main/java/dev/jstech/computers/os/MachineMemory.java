@@ -63,7 +63,7 @@ public final class MachineMemory {
                         && (console.isInstalled(spec.id().toString()) || host.cameWith(spec))
                         && host.serviceRunning(spec)) {
                     ledger.add(spec.displayName(), spec.ramMbOn(os, builtHere(console, spec))
-                            + host.serviceLoadMb(spec), RamLedger.Kind.SERVICE);
+                            + host.serviceLoadMb(spec), RamLedger.Kind.SERVICE, spec.id().toString());
                 }
             }
         }
@@ -79,7 +79,7 @@ public final class MachineMemory {
         }
         for (final OpenWindow window : host.openWindows()) {
             ledger.add(window.key(), windowRamMb(window.key(), os, spec -> builtHere(console, spec)),
-                    RamLedger.Kind.WINDOW);
+                    RamLedger.Kind.WINDOW, window.key());
         }
         return ledger;
     }

@@ -129,6 +129,16 @@ class CrashPagesTest {
         assertEquals("line " + (CrashPage.MOST_LINES + 4), page.lines().getLast());
     }
 
+    @Test
+    void killLine_isEachKernelsOwnLineForWhatItEnded() {
+        final CrashPages.Victim victim = new CrashPages.Victim(1234, "calc", 64);
+        final String linux = CrashPages.killLine(Platform.LINUX, UP, victim);
+        assertTrue(linux.startsWith("[ 4323.338190] Out of memory: Killed process 1234 (calc) total-vm:"), linux);
+        assertEquals("pid 1234 (calc), jid 0, uid 0, was killed: out of swap space",
+                CrashPages.killLine(Platform.FREEBSD, UP, victim));
+        assertEquals("NOTICE: out of memory: process 1234 (calc) killed", CrashPages.killLine(Platform.UNIX, UP, victim));
+    }
+
     private static CrashPage page(final CrashStyle style, final Platform platform, final CrashCause cause,
                                   final CrashPages.Moment moment) {
         return CrashPages.of(style, platform, cause, CrashPages.Facts.of("box", "Debian",

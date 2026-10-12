@@ -26,12 +26,20 @@
       "command": "jsc:command/linux/kill"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.processes_and_jobs.text4"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/dmesg"
+    },
+    {
       "type": "command",
       "command": "jsc:command/linux/jobs"
     },
     {
       "type": "text",
-      "text": "jsc.guide.processes_and_jobs.text4"
+      "text": "jsc.guide.processes_and_jobs.text5"
     },
     {
       "type": "define",

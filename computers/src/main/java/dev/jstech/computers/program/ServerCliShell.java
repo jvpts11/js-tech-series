@@ -40,6 +40,7 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.UnixTree;
+import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.devices.DeviceMap;
 import dev.jstech.computers.os.devices.DeviceMaps;
 import dev.jstech.computers.program.cli.ICliComputer;
@@ -56,6 +57,8 @@ import dev.jstech.core.util.Loaded;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -349,6 +352,16 @@ abstract class ServerCliShell implements ICliComputer {
         }
         final RamLedger ledger = computer.ramLedger();
         return new MemoryUse(ledger.totalMb(), ledger.usedMb(), ledger.heldBytes());
+    }
+
+    @Override
+    public List<String> kernelLog() {
+        if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {
+            return List.of();
+        }
+        final List<String> log = new ArrayList<>(BootLines.kernelLog(computer));
+        log.addAll(computer.memoryLog());
+        return log;
     }
 
     @Override

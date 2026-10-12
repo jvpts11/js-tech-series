@@ -75,12 +75,13 @@ public final class RamLedger {
      * holds all of what it was given, so for those the two are the same number.
      *
      * <p>Only a script process has a number: two of them can be started from the same file, so the name
-     * alone cannot say which is which when one of them is to be ended.
+     * alone cannot say which is which when one of them is to be ended. A service and a window have a key instead, the
+     * program a service is and the key a window goes by, which is what ends one of them.
      */
-    public record Entry(String name, int mb, long heldBytes, Kind kind, int id) {
+    public record Entry(String name, int mb, long heldBytes, Kind kind, int id, String key) {
 
         public Entry(final String name, final int mb, final Kind kind) {
-            this(name, mb, mb * BYTES_PER_MB, kind, 0);
+            this(name, mb, mb * BYTES_PER_MB, kind, 0, "");
         }
     }
 
@@ -101,13 +102,21 @@ public final class RamLedger {
         return add(name, mb, Math.max(0, mb) * BYTES_PER_MB, kind, id);
     }
 
+    /** The same, for a service or a window, which answers to the key of the program or of the window. */
+    public RamLedger add(final String name, final int mb, final Kind kind, final String key) {
+        if (mb > 0) {
+            entries.add(new Entry(name, mb, mb * BYTES_PER_MB, kind, 0, key));
+        }
+        return this;
+    }
+
     /**
      * The same, for a running program, which was given {@code mb} and is holding {@code heldBytes} of them this
      * moment. It is listed by the room it was given, since that is what the machine promised it.
      */
     public RamLedger add(final String name, final int mb, final long heldBytes, final Kind kind, final int id) {
         if (mb > 0) {
-            entries.add(new Entry(name, mb, Math.max(0, heldBytes), kind, id));
+            entries.add(new Entry(name, mb, Math.max(0, heldBytes), kind, id, ""));
         }
         return this;
     }

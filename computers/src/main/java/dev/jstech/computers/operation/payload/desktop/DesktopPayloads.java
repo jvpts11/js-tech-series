@@ -200,7 +200,13 @@ public final class DesktopPayloads {
              */
             // Nor does a system that has crashed: its session went down with it.
             if (!computer.needsPost() && computer.crashPage() == null) {
-                computer.setOpenWindows(computer.windowsWithinBudget(payload.toOpenWindows()));
+                if (computer instanceof AbstractComputerBlockEntity machine && machine.killsForMemory()) {
+                    // A kernel that ends programs for their memory lets every window open and makes the room after.
+                    machine.setOpenWindows(payload.toOpenWindows());
+                    machine.weighMemory();
+                } else {
+                    computer.setOpenWindows(computer.windowsWithinBudget(payload.toOpenWindows()));
+                }
                 // Which workspace was up is part of the layout left behind, so it is kept with the windows.
                 computer.setDesktopWorkspace(payload.workspace());
             }

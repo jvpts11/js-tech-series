@@ -12,6 +12,7 @@ import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.core.text.Text;
+import java.util.List;
 
 /**
  * What UNIX System V says on its way up and on its way down.
@@ -34,20 +35,27 @@ final class SysVBootLines {
 
     /** The banner, the memory, the root filesystem checked, and the word that it is ready. */
     static BootSequence up(final IOsHost machine, final OsDef system) {
-        final long total = machine.ramTotalMb() * BYTES_PER_MB;
         // The kernel's and init's console lines, which this system never printed in any language but its own.
         final BootSequence.Builder out = new BootSequence.Builder()
                 .title(Text.literal("Booting the UNIX System..."))
                 .subtitle(Text.EMPTY);
-        out.line(Text.literal(system.displayName() + " Release " + KernelNames.SYSTEM_V_RELEASE));
-        out.line(Text.literal("Copyright (c) 1984, 1986, 1987 " + system.house().name()));
-        out.line(Text.literal("All Rights Reserved"));
-        out.line(Text.literal("Total real memory     = " + total));
-        out.line(Text.literal("Available memory      = " + Math.max(0L, total - KEPT_BYTES)));
+        for (final String line : kernel(machine, system)) {
+            out.line(Text.literal(line));
+        }
         out.line(Text.literal("The system is coming up.  Please wait."));
         out.line(Text.literal("/dev/root: clean"));
         out.line(Text.literal("The system is ready."));
         return out.build();
+    }
+
+    /** What the kernel itself prints as it comes up: its banner and the memory it found. */
+    static List<String> kernel(final IOsHost machine, final OsDef system) {
+        final long total = machine.ramTotalMb() * BYTES_PER_MB;
+        return List.of(system.displayName() + " Release " + KernelNames.SYSTEM_V_RELEASE,
+                "Copyright (c) 1984, 1986, 1987 " + system.house().name(),
+                "All Rights Reserved",
+                "Total real memory     = " + total,
+                "Available memory      = " + Math.max(0L, total - KEPT_BYTES));
     }
 
     /**

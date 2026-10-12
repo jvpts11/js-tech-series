@@ -39,7 +39,7 @@ final class MachineToolCommands {
     }
 
     static List<ICliCommand> posix() {
-        return List.of(new Ps(), new Kill(), new Which(), new Du(), new Date());
+        return List.of(new Ps(), new Kill(), new Dmesg(), new Which(), new Du(), new Date());
     }
 
     static List<ICliCommand> dos() {
@@ -147,6 +147,45 @@ final class MachineToolCommands {
                 return;
             }
             MachineFacts.stopProcess(ctx, ctx.arg(0), ShellFamily.POSIX);
+        }
+    }
+
+    @TextHolder
+    static final class Dmesg implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.tool.dmesg.summary", "print the kernel's messages");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.tool.dmesg.about", "Prints what the kernel has"
+                + " said since the machine came up: what it found as it started, and every program it ended when the"
+                + " memory ran out.");
+
+        @Override public CommandScope scope() {
+            return CommandScope.on(CommandScope.UNIX_SYSTEMS);
+        }
+
+        @Override public String name() {
+            return "dmesg";
+        }
+
+        @Override public CommandGroup group() {
+            return CommandGroup.MACHINE;
+        }
+
+        @Override public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override public List<Text> description() {
+            return List.of(ABOUT.text());
+        }
+
+        @Override public List<String> seeAlso() {
+            return List.of("ps", "kill");
+        }
+
+        @Override public void run(final CliContext ctx) {
+            for (final String line : ctx.computer().kernelLog()) {
+                ctx.out().line(line);
+            }
         }
     }
 

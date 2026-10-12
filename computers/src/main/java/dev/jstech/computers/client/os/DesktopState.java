@@ -1018,6 +1018,32 @@ final class DesktopState {
         layouts.apply(payload);
     }
 
+    /**
+     * Closes the windows the machine's kernel ended for their memory, the latest of each key once for each time it is
+     * named, and says so in a balloon naming the programs that went. A window already closed here is passed over.
+     */
+    void memoryKilled(final List<String> keys) {
+        final List<String> names = new ArrayList<>();
+        for (final String key : keys) {
+            final List<DesktopWindow> all = wm.all();
+            for (int i = all.size() - 1; i >= 0; i--) {
+                final DesktopWindow w = all.get(i);
+                if (!w.dialog() && w.appKey().equals(key)) {
+                    wm.close(w);
+                    if (!names.contains(nameOf(key))) {
+                        names.add(nameOf(key));
+                    }
+                    break;
+                }
+            }
+        }
+        if (!names.isEmpty()) {
+            notices.showBalloon(GameText.resolve(DesktopTexts.OUT_OF_MEMORY), GameText.resolve(
+                    (names.size() == 1 ? DesktopTexts.OUT_OF_MEMORY_CLOSED : DesktopTexts.OUT_OF_MEMORY_CLOSED_MANY)
+                            .with(String.join(", ", names))));
+        }
+    }
+
     /** Shows the windows the machine has open, as a monitor's face does, telling the machine nothing back. */
     void mirrorWindows(final List<OpenWindow> windows, final int workspace) {
         layouts.mirror(windows, workspace);

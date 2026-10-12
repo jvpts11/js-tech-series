@@ -279,6 +279,17 @@ public final class ActiveDesktop {
         }
     }
 
+    /**
+     * The machine's kernel ended those windows for their memory: the desktop looking at it closes them and says why,
+     * naming the programs in the order they went.
+     */
+    public static void memoryKilled(final BlockPos host, final List<String> windows) {
+        final DesktopState desktop = DesktopScreen.current();
+        if (desktop != null && desktop.host().equals(host)) {
+            desktop.memoryKilled(windows);
+        }
+    }
+
     /** Restores the windows the machine has open, when the server hands them over. */
     public static void applyWindows(final DesktopWindowsPayload payload) {
         final DesktopState desktop = DesktopScreen.current();

@@ -8,7 +8,6 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramPriority;
@@ -84,11 +83,12 @@ public final class ProgramLauncher {
             return new Launch(0, name, Refusal.UNREADABLE, file.message(), 0, 0);
         }
         final int room = heapMb <= 0 ? MachinePrograms.DEFAULT_HEAP_MB : Math.min(heapMb, MachinePrograms.MAX_HEAP_MB);
-        final RamLedger ledger = machine.ramLedger();
-        if (!ledger.fits(room)) {
-            // A system that goes down rather than refuse a program does so here; the others refuse it.
-            machine.memoryShort(name);
-            return new Launch(0, name, Refusal.NO_MEMORY, Text.EMPTY, room, ledger.freeMb());
+        /*
+         * A system that goes down rather than refuse a program does so here, and a Unix kernel ends what holds the most
+         * until the program fits; the earliest systems refuse it.
+         */
+        if (!machine.ramLedger().fits(room) && !machine.memoryShort(name, room)) {
+            return new Launch(0, name, Refusal.NO_MEMORY, Text.EMPTY, room, machine.ramLedger().freeMb());
         }
         final MachinePrograms.Started started =
                 machine.programs().start(name, file.message().english(), room, machine, args, parent, priority);

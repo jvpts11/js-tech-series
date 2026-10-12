@@ -32,6 +32,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -134,6 +136,31 @@ public final class BootLines {
             TextKey.of("jsc.boot.boot_lines.net_starting_terminal", "Starting the network terminal ...");
 
     private BootLines() {
+    }
+
+    /**
+     * What the kernel of the machine's system logged of itself as it came up, as {@code dmesg} prints it: Linux's
+     * stamped lines naming the kernel, the processor, the memory and the disks, FreeBSD's naming the same in its own
+     * words up to mounting its root, System V's banner and memory. Nothing for a system that keeps no such log.
+     */
+    public static List<String> kernelLog(final IOsHost machine) {
+        final OsDef system = machine.installedOs();
+        if (system == null) {
+            return List.of();
+        }
+        return switch (system.platform()) {
+            case LINUX -> {
+                final List<String> kernel = linuxKernel(machine);
+                final List<String> out = new ArrayList<>(kernel.size());
+                for (int at = 0; at < kernel.size(); at++) {
+                    out.add(stamp(at) + " " + kernel.get(at));
+                }
+                yield out;
+            }
+            case FREEBSD -> BsdBootLines.kernel(machine, system);
+            case UNIX -> SysVBootLines.kernel(machine, system);
+            case FRAMES, MC_DOS, MC_NET -> List.of();
+        };
     }
 
     /** The sequence this machine's system shows while it comes up. */
@@ -402,18 +429,9 @@ public final class BootLines {
         final BootSequence.Builder out = new BootSequence.Builder()
                 .title(LOADING_LINUX.with(KERNEL_VERSION))
                 .subtitle(LOADING_RAMDISK.text());
-        int at = 0;
-        out.marked(stamp(at++), Text.literal("Linux version " + KERNEL_VERSION + " (" + kernelArch(machine) + ")"),
-                false);
-        out.marked(stamp(at++), Text.literal("CPU: " + cpuName(machine)), false);
-        out.marked(stamp(at++), Text.literal("Memory: " + machine.ramTotalMb() + " MB available"), false);
-        int drive = 0;
-        for (int slot = 0; slot < machine.diskSlots(); slot++) {
-            final ItemStack disk = machine.diskInSlot(slot);
-            if (disk.getItem() instanceof DiskItem) {
-                out.marked(stamp(at++), Text.literal("sd" + (char) ('a' + drive++) + ": "
-                        + disk.getHoverName().getString()), false);
-            }
+        final List<String> kernel = linuxKernel(machine);
+        for (int at = 0; at < kernel.size(); at++) {
+            out.marked(stamp(at), Text.literal(kernel.get(at)), false);
         }
         out.marked(MARK_OK, Text.literal("Started Journal Service."), true);
         out.marked(MARK_OK, Text.literal("Reached target Local File Systems."), true);
@@ -439,6 +457,22 @@ public final class BootLines {
             out.marked(MARK_OK, Text.literal("Started " + desktop + " Display Manager."), true);
         }
         return out.build();
+    }
+
+    /* What the Linux kernel prints as it comes up: itself, the processor, the memory and each disk. */
+    private static List<String> linuxKernel(final IOsHost machine) {
+        final List<String> out = new ArrayList<>();
+        out.add("Linux version " + KERNEL_VERSION + " (" + kernelArch(machine) + ")");
+        out.add("CPU: " + cpuName(machine));
+        out.add("Memory: " + machine.ramTotalMb() + " MB available");
+        int drive = 0;
+        for (int slot = 0; slot < machine.diskSlots(); slot++) {
+            final ItemStack disk = machine.diskInSlot(slot);
+            if (disk.getItem() instanceof DiskItem) {
+                out.add("sd" + (char) ('a' + drive++) + ": " + disk.getHoverName().getString());
+            }
+        }
+        return out;
     }
 
     /** The other init: a star for every service it brings up, and its own column saying each one is up. */
