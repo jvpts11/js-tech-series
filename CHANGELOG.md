@@ -670,6 +670,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Optical Network Card, from the Standard. The backbone's fibre enters a Mainframe or a Cluster Management
   Computer only while the machine holds one; without one the machine takes the copper of its backbone alone. It fits
   a PCIe slot and is drawn inside the computers that seat it. A server never seats it.
+- A Storage Server and a Compute Server, with their cases, for the Vintage, the Legacy, the Transition and the
+  Advanced, 2U each and drawn in their era's faceplate. A storage server has 5 drive bays in the Vintage, 7 in the
+  Legacy, 8 in the Transition and 10 in the Advanced; a compute server 1, 2, 2 and 3, with up to 2, 2, 4 and 4
+  processors and 1, 2, 2 and any number of cards. Each takes its era's server boards and seats in a rack of its era
+  or a later one.
 - A KVM Switch, a Rack UPS and a Cooling Unit for every era, from the Vintage to the Advanced, each in its era's
   faceplate; the ones there were are the Standard's. A rack seats the units of its own era and of the earlier ones,
   as it does servers, and says so when a unit is too new for it. A Cooling Unit adds its era's watts to the rack's

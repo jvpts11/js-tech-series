@@ -67,6 +67,25 @@ public final class RackEraGameTests {
         return handler.insertItem(slot, stack(part), false).isEmpty();
     }
 
+    /* Mounts each server two rows apart and checks how many of its rows' front slots it cables as drive bays. */
+    private static void assertBays(final GameTestHelper helper, final ServerRackBlockEntity rack,
+                                   final List<Item> servers, final List<Integer> bays) {
+        final ItemStackHandler rows = rack.getServers();
+        for (int i = 0; i < servers.size(); i++) {
+            rows.setStackInSlot(2 * i, stack(servers.get(i)));
+        }
+        for (int i = 0; i < servers.size(); i++) {
+            int drives = 0;
+            for (int slot = 2 * i * RackLayout.SLOTS_PER_U; slot < (2 * i + 2) * RackLayout.SLOTS_PER_U; slot++) {
+                if (rack.roleOfFrontSlot(slot) == RackLayout.SlotRole.DRIVE) {
+                    drives++;
+                }
+            }
+            helper.assertTrue(drives == bays.get(i), BuiltInRegistries.ITEM.getKey(servers.get(i)) + " cables "
+                    + bays.get(i) + " drive bays; got " + drives);
+        }
+    }
+
     /**
      * A server's slots take only what its board takes, as a computer's do: the board's socket and era for a processor,
      * its memory, and its bus for a card. A part that cannot go in stays out of its slot.
@@ -199,6 +218,80 @@ public final class RackEraGameTests {
                     }
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * Each era's storage and compute servers seat in a rack of their era or a newer one, wear their own era's face in
+     * the cabinet and count as computers there.
+     */
+    @GameTest(template = ARENA)
+    public static void eraServers_seatInRacksOfTheirEraAndWearTheirFaces(final GameTestHelper helper) {
+        final ServerRackBlockEntity vintage = placeRack(helper, new BlockPos(1, 2, 2),
+                ComputingModule.VINTAGE_SERVER_RACK.get());
+        final ServerRackBlockEntity advanced = placeRack(helper, new BlockPos(5, 2, 2),
+                ComputingModule.ADVANCED_SERVER_RACK.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ItemStackHandler rows = vintage.getServers();
+                    helper.assertTrue(rows.insertItem(0, stack(ComputingModule.VINTAGE_STORAGE_SERVER.get()), false)
+                            .isEmpty(), "a Vintage rack seats the Vintage Storage Server");
+                    helper.assertTrue(rows.insertItem(2, stack(ComputingModule.VINTAGE_COMPUTE_SERVER.get()), false)
+                            .isEmpty(), "and the Vintage Compute Server");
+                    helper.assertFalse(rows.isItemValid(4, stack(ComputingModule.LEGACY_STORAGE_SERVER.get())),
+                            "but not a Legacy one");
+                    helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[vintage.unitCodeAt(0)],
+                            "storage_2u_vintage", "the Vintage storage server's face");
+                    helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[vintage.unitCodeAt(2)],
+                            "compute_2u_vintage", "the Vintage compute server's face");
+                    helper.assertTrue(vintage.computerSlots().size() == 2 && vintage.anyComputerSeated(),
+                            "both are computers");
+                    final ItemStackHandler newer = advanced.getServers();
+                    newer.setStackInSlot(0, stack(ComputingModule.LEGACY_COMPUTE_SERVER.get()));
+                    newer.setStackInSlot(2, stack(ComputingModule.TRANSITION_STORAGE_SERVER.get()));
+                    newer.setStackInSlot(4, stack(ComputingModule.ADVANCED_STORAGE_SERVER.get()));
+                    newer.setStackInSlot(6, stack(ComputingModule.ADVANCED_COMPUTE_SERVER.get()));
+                    helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[advanced.unitCodeAt(0)],
+                            "compute_2u_legacy", "an Advanced rack draws an older server in that server's own shape");
+                    helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[advanced.unitCodeAt(2)],
+                            "storage_2u_transition", "the Transition storage server's face");
+                    helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[advanced.unitCodeAt(4)],
+                            "storage_2u_advanced", "the Advanced storage server's face");
+                    helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[advanced.unitCodeAt(6)],
+                            "compute_2u_advanced", "the Advanced compute server's face");
+                })
+                .thenSucceed();
+    }
+
+    /** Each era's storage server cables more drive bays than the last, and each compute server its own few. */
+    @GameTest(template = ARENA)
+    public static void eraServers_cableTheirErasDriveBays(final GameTestHelper helper) {
+        final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2),
+                ComputingModule.ADVANCED_SERVER_RACK.get());
+        final List<Item> storage = List.of(ComputingModule.VINTAGE_STORAGE_SERVER.get(),
+                ComputingModule.LEGACY_STORAGE_SERVER.get(), ComputingModule.TRANSITION_STORAGE_SERVER.get(),
+                ComputingModule.ADVANCED_STORAGE_SERVER.get());
+        final List<Item> compute = List.of(ComputingModule.VINTAGE_COMPUTE_SERVER.get(),
+                ComputingModule.LEGACY_COMPUTE_SERVER.get(), ComputingModule.TRANSITION_COMPUTE_SERVER.get(),
+                ComputingModule.ADVANCED_COMPUTE_SERVER.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    assertBays(helper, rack, storage, List.of(5, 7, 8, 10));
+                    assertBays(helper, rack, compute, List.of(1, 2, 2, 3));
+                })
+                .thenSucceed();
+    }
+
+    /** A Legacy compute server's case takes a Legacy server board and refuses a Standard one. */
+    @GameTest(template = ARENA)
+    public static void eraServers_takeTheirErasBoards(final GameTestHelper helper) {
+        final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack(ComputingModule.LEGACY_COMPUTE_SERVER.get()));
+        final ServerHardwareHandler slots = new ServerHardwareHandler(player, InteractionHand.MAIN_HAND);
+        helper.assertFalse(fits(slots, ServerHardwareHandler.MOBO, ComputingModule.MOTHERBOARD_EEB_S_2011.get()),
+                "the Legacy compute server refuses a Standard board");
+        helper.assertTrue(fits(slots, ServerHardwareHandler.MOBO, HardwareItems.MOTHERBOARD_EATX_LEGACY_604.get()),
+                "and takes the era's server board");
+        helper.succeed();
     }
 
     /** Each Cooling Unit adds its own era's watts, and each era's unit wears its own face in the cabinet. */

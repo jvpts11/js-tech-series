@@ -37,7 +37,27 @@ public enum RackChassis {
      * The Advanced 2U node: four accelerator sleds (the Phi and three GPUs) and three NVMe carriers, seated only in a
      * Supercomputer Rack of its era.
      */
-    ADVANCED_SUPERCOMPUTER_NODE(2, 3, 2, 4, RackType.SUPERCOMPUTER, HardwareEra.ADVANCED);
+    ADVANCED_SUPERCOMPUTER_NODE(2, 3, 2, 4, RackType.SUPERCOMPUTER, HardwareEra.ADVANCED),
+    /*
+     * The storage and compute servers of the other eras, 2U like the Standard's: each age's storage server fills
+     * more of its front with drives, and each age's compute server takes more processors and cards.
+     */
+    /** The Vintage 2U storage server: five full-height drives, one socket, one expansion slot. */
+    VINTAGE_STORAGE_SERVER(2, 5, 1, 1, RackType.SERVER, HardwareEra.VINTAGE),
+    /** The Legacy 2U storage server: seven drives, one socket, one expansion slot. */
+    LEGACY_STORAGE_SERVER(2, 7, 1, 1, RackType.SERVER, HardwareEra.LEGACY),
+    /** The Transition 2U storage server: eight drives, one socket, one expansion slot. */
+    TRANSITION_STORAGE_SERVER(2, 8, 1, 1, RackType.SERVER, HardwareEra.TRANSITION),
+    /** The Advanced 2U storage server: ten NVMe carriers, one socket, one expansion slot. */
+    ADVANCED_STORAGE_SERVER(2, 10, 1, 1, RackType.SERVER, HardwareEra.ADVANCED),
+    /** The Vintage 2U compute server: two sockets, one drive, one expansion slot. */
+    VINTAGE_COMPUTE_SERVER(2, 1, 2, 1, RackType.SERVER, HardwareEra.VINTAGE),
+    /** The Legacy 2U compute server: two sockets, two drives, two expansion slots. */
+    LEGACY_COMPUTE_SERVER(2, 2, 2, 2, RackType.SERVER, HardwareEra.LEGACY),
+    /** The Transition 2U compute server: four sockets, two drives, two expansion slots. */
+    TRANSITION_COMPUTE_SERVER(2, 2, 4, 2, RackType.SERVER, HardwareEra.TRANSITION),
+    /** The Advanced 2U compute server: four sockets, three drives, as many cards as its board takes. */
+    ADVANCED_COMPUTE_SERVER(2, 3, 4, Integer.MAX_VALUE, RackType.SERVER, HardwareEra.ADVANCED);
 
     /** The kind of cabinet a chassis seats in. */
     public enum RackType {

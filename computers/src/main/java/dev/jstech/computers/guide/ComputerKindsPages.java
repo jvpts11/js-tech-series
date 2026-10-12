@@ -354,6 +354,9 @@ final class ComputerKindsPages {
                         + " how many processors and expansion slots it has. When you pick a server, this table tells"
                         + " you what you get. Every server and server case comes from the creative tabs of J's"
                         + " Computers.")
+                .paragraph("Every era has three: a 1U server, a 2U Storage Server with the most drive bays and a 2U"
+                        + " Compute Server with the most processors. A newer era's has more of what it is built for."
+                        + " A server still runs only as many processors as its board has sockets.")
                 .tableFrom(RackFacts.SERVERS, "Servers", "Server", "Height", "Drive bays", "Processors",
                         "Expansion slots", "Era")
                 .paragraph("A server fits a rack of its own era or a newer one. A Vintage Server seats in a Standard"

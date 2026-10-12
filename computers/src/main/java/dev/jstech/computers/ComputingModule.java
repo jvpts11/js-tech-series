@@ -813,14 +813,55 @@ public final class ComputingModule {
             serverCase("advanced_server_case", RackChassis.ADVANCED_SERVER).named("Advanced Server Case").register();
     public static final ItemEntry<ServerItem> ADVANCED_SERVER =
             server("advanced_server", RackChassis.ADVANCED_SERVER).named("Advanced Server").register();
+    // Every era has a 2U storage server and a 2U compute server, with their cases.
+    public static final ItemEntry<ServerCaseItem> VINTAGE_STORAGE_SERVER_CASE = serverCase(
+            "vintage_storage_server_case", RackChassis.VINTAGE_STORAGE_SERVER).named("Vintage Storage Server Case")
+            .register();
+    public static final ItemEntry<ServerItem> VINTAGE_STORAGE_SERVER = server("vintage_storage_server",
+            RackChassis.VINTAGE_STORAGE_SERVER).named("Vintage Storage Server").register();
+    public static final ItemEntry<ServerCaseItem> LEGACY_STORAGE_SERVER_CASE = serverCase(
+            "legacy_storage_server_case", RackChassis.LEGACY_STORAGE_SERVER).named("Legacy Storage Server Case")
+            .register();
+    public static final ItemEntry<ServerItem> LEGACY_STORAGE_SERVER = server("legacy_storage_server",
+            RackChassis.LEGACY_STORAGE_SERVER).named("Legacy Storage Server").register();
+    public static final ItemEntry<ServerCaseItem> TRANSITION_STORAGE_SERVER_CASE = serverCase(
+            "transition_storage_server_case", RackChassis.TRANSITION_STORAGE_SERVER)
+            .named("Transition Storage Server Case").register();
+    public static final ItemEntry<ServerItem> TRANSITION_STORAGE_SERVER = server("transition_storage_server",
+            RackChassis.TRANSITION_STORAGE_SERVER).named("Transition Storage Server").register();
     public static final ItemEntry<ServerCaseItem> STORAGE_SERVER_CASE =
             serverCase("storage_server_case", RackChassis.STORAGE_SERVER).named("Storage Server Case").register();
     public static final ItemEntry<ServerItem> STORAGE_SERVER =
             server("storage_server", RackChassis.STORAGE_SERVER).named("Storage Server").register();
+    public static final ItemEntry<ServerCaseItem> ADVANCED_STORAGE_SERVER_CASE = serverCase(
+            "advanced_storage_server_case", RackChassis.ADVANCED_STORAGE_SERVER).named("Advanced Storage Server Case")
+            .register();
+    public static final ItemEntry<ServerItem> ADVANCED_STORAGE_SERVER = server("advanced_storage_server",
+            RackChassis.ADVANCED_STORAGE_SERVER).named("Advanced Storage Server").register();
+    public static final ItemEntry<ServerCaseItem> VINTAGE_COMPUTE_SERVER_CASE = serverCase(
+            "vintage_compute_server_case", RackChassis.VINTAGE_COMPUTE_SERVER).named("Vintage Compute Server Case")
+            .register();
+    public static final ItemEntry<ServerItem> VINTAGE_COMPUTE_SERVER = server("vintage_compute_server",
+            RackChassis.VINTAGE_COMPUTE_SERVER).named("Vintage Compute Server").register();
+    public static final ItemEntry<ServerCaseItem> LEGACY_COMPUTE_SERVER_CASE = serverCase(
+            "legacy_compute_server_case", RackChassis.LEGACY_COMPUTE_SERVER).named("Legacy Compute Server Case")
+            .register();
+    public static final ItemEntry<ServerItem> LEGACY_COMPUTE_SERVER = server("legacy_compute_server",
+            RackChassis.LEGACY_COMPUTE_SERVER).named("Legacy Compute Server").register();
+    public static final ItemEntry<ServerCaseItem> TRANSITION_COMPUTE_SERVER_CASE = serverCase(
+            "transition_compute_server_case", RackChassis.TRANSITION_COMPUTE_SERVER)
+            .named("Transition Compute Server Case").register();
+    public static final ItemEntry<ServerItem> TRANSITION_COMPUTE_SERVER = server("transition_compute_server",
+            RackChassis.TRANSITION_COMPUTE_SERVER).named("Transition Compute Server").register();
     public static final ItemEntry<ServerCaseItem> COMPUTE_SERVER_CASE =
             serverCase("compute_server_case", RackChassis.COMPUTE_SERVER).named("Compute Server Case").register();
     public static final ItemEntry<ServerItem> COMPUTE_SERVER =
             server("compute_server", RackChassis.COMPUTE_SERVER).named("Compute Server").register();
+    public static final ItemEntry<ServerCaseItem> ADVANCED_COMPUTE_SERVER_CASE = serverCase(
+            "advanced_compute_server_case", RackChassis.ADVANCED_COMPUTE_SERVER).named("Advanced Compute Server Case")
+            .register();
+    public static final ItemEntry<ServerItem> ADVANCED_COMPUTE_SERVER = server("advanced_compute_server",
+            RackChassis.ADVANCED_COMPUTE_SERVER).named("Advanced Compute Server").register();
     // The supercomputer's nodes are rack computers too, shown with the racks that seat them.
     public static final ItemEntry<ServerItem> SUPERCOMPUTER_NODE =
             server("supercomputer_node", RackChassis.SUPERCOMPUTER_NODE).named("Supercomputer Node").register();

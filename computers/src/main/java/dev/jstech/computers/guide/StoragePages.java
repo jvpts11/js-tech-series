@@ -59,7 +59,8 @@ final class StoragePages {
                 .paragraph("The network's room for items is on disks, and the disks sit in servers. A server lives in"
                         + " a Server Rack, a cabinet with slots called rack units (U), and each rack unit is one"
                         + " slot of height. A storage server is the server built for disks: it is 2 rack units"
-                        + " tall and has more disk bays than any other server.")
+                        + " tall and has more disk bays than any other server of its era. Every era has one, from the"
+                        + " Vintage's five bays to the Standard's and the Advanced's ten.")
                 .define("Storage server", "A server built for disks, with the most disk bays in 2 rack units (U)."
                         + " Its disks give the network room for items.")
                 .define("Rack unit (U)", "One slot of height in a Server Rack. A server takes one or more of"

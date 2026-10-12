@@ -5,6 +5,10 @@
       "text": "jsc.guide.server_types.text1"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.server_types.text2"
+    },
+    {
       "type": "table",
       "caption": "jsc.guide.server_types.table1",
       "heads": [
@@ -19,15 +23,15 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.server_types.text2"
-    },
-    {
-      "type": "text",
       "text": "jsc.guide.server_types.text3"
     },
     {
       "type": "text",
       "text": "jsc.guide.server_types.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.server_types.text5"
     },
     {
       "type": "heading",
