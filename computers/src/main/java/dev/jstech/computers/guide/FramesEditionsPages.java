@@ -337,6 +337,7 @@ final class FramesEditionsPages {
                 .paragraph("Its look is Modern: a dark taskbar, centred along the bottom of the screen, and a Start"
                         + " menu"
                         + " that floats above it, with a search box and a pinned grid of programs.")
+                .paragraph("The file program is called File Explorer, as on Frames 10.")
                 .paragraph("Its Device Manager has the flat modern form. The visual effects are under Personalize >"
                         + " Visual effects, with one switch, \"Animation effects\". Its note reads \"Windows open,"
                         + " close and minimize with motion, flyouts slide\".")

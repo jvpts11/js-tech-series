@@ -61,6 +61,14 @@ final class FilesTexts {
     static final TextKey CUT = TextKey.of("jsc.files.cut", "Cut");
     static final TextKey COPY = TextKey.of("jsc.files.copy", "Copy");
     static final TextKey PASTE = TextKey.of("jsc.files.paste", "Paste");
+    /* What a cut pasted onto a name already taken asks: Yes replaces, No skips and leaves the file where it was. */
+    static final TextKey REPLACE_TITLE = TextKey.of("jsc.files.replace_title", "Replace or Skip Files");
+    static final TextKey REPLACE_ONE = TextKey.of("jsc.files.replace_one",
+            "The destination already has a file named %s. Replace it with the one being moved? No skips it and"
+                    + " leaves it where it was.");
+    static final TextKey REPLACE_MANY = TextKey.of("jsc.files.replace_many",
+            "The destination already has %s files with the same names. Replace them with the ones being moved? No"
+                    + " skips them and leaves them where they were.");
     static final TextKey RENAME = TextKey.of("jsc.files.rename", "Rename");
     static final TextKey DELETE = TextKey.of("jsc.files.delete", "Delete");
     static final TextKey NEW = TextKey.of("jsc.files.new", "New");

@@ -45,13 +45,14 @@ public final class DesktopMenuClientTests {
     /** A point on the wallpaper, well clear of the icon column on the left and of the taskbar. */
     private static final int[] WALLPAPER = {300, 60};
 
+    /* By the program's own key, which every edition shares whatever it calls the file manager. */
     private static FilesApp files(final ClientTestContext ctx) {
-        return DesktopSteps.app(ctx, "Files", FilesApp.class);
+        return DesktopSteps.app(ctx, "jsc:files", FilesApp.class);
     }
 
     /** The explorer windows, the front-most last. */
     private static List<DesktopWindow> explorers(final ClientTestContext ctx) {
-        return ctx.screen(DesktopScreen.class).windowsFor("Files");
+        return ctx.screen(DesktopScreen.class).windowsFor("jsc:files");
     }
 
     /*

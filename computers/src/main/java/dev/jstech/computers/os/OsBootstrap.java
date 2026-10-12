@@ -271,10 +271,11 @@ public final class OsBootstrap {
                     rl("help_viewer"), DesktopNames.FRAMES_7_HELP), SoftwareHouse.MIDSOFT),
             // Frames 10 named its file manager after what it explores, and the machine This PC, as 11 still does.
             new DesktopEnvironmentDef(rl("frames_10"), "Frames 10", PanelStyle.FRAMES_10, FRAMES_APPS, Map.of(
-                    rl("files"), DesktopNames.FRAMES_10_FILE_EXPLORER, rl("help_viewer"), DesktopNames.GET_HELP),
+                    rl("files"), DesktopNames.FILE_EXPLORER, rl("help_viewer"), DesktopNames.GET_HELP),
                     SoftwareHouse.MIDSOFT),
             new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, FRAMES_APPS, Map.of(
-                    rl("help_viewer"), DesktopNames.GET_HELP), SoftwareHouse.MIDSOFT),
+                    rl("files"), DesktopNames.FILE_EXPLORER, rl("help_viewer"), DesktopNames.GET_HELP),
+                    SoftwareHouse.MIDSOFT),
             new DesktopEnvironmentDef(rl("kde_plasma"), "KDE Plasma", PanelStyle.KDE, BUILTIN_APPS, Map.of(
                     rl("files"), DesktopNames.KDE_FILES, rl("editor"), DesktopNames.KDE_EDITOR,
                     rl("command_prompt"), DesktopNames.KDE_TERMINAL, rl("calculator"), DesktopNames.KDE_CALCULATOR,

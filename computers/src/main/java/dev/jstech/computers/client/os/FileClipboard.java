@@ -9,7 +9,10 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.CopyFilePayload;
 import dev.jstech.computers.operation.payload.MoveFilePayload;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -60,20 +63,45 @@ final class FileClipboard {
      * empties afterwards, because what was cut is now somewhere else; a copy stays, so it can be put in
      * several places.
      */
-    void pasteInto(final BlockPos host, final String dir) {
+    void pasteInto(final BlockPos host, final String dir, final Collection<String> here) {
         if (paths.isEmpty()) {
             return;
         }
-        for (final String src : paths) {
-            if (cut) {
-                PacketDistributor.sendToServer(new MoveFilePayload(host, src, dir));
-            } else {
+        if (!cut) {
+            for (final String src : paths) {
                 PacketDistributor.sendToServer(new CopyFilePayload(host, src, dir));
             }
+            FilesApps.diskChanged();
+            return;
         }
-        if (cut) {
-            paths.clear();
+        /*
+         * A file moved onto a name already taken here is held back and the player asked, as every desktop asks:
+         * moved over, the other file would be lost, and refused without a word, the cut was. The rest go at once.
+         */
+        final List<String> clashing = new ArrayList<>();
+        for (final String src : paths) {
+            final int slash = src.lastIndexOf('/');
+            final String parent = slash >= 0 ? src.substring(0, slash) : "";
+            if (!parent.equals(dir) && here.contains(src.substring(slash + 1))) {
+                clashing.add(src);
+            } else {
+                PacketDistributor.sendToServer(new MoveFilePayload(host, src, dir));
+            }
         }
+        paths.clear();
         FilesApps.diskChanged();
+        if (clashing.isEmpty()) {
+            return;
+        }
+        final String first = clashing.getFirst();
+        final Text question = clashing.size() == 1
+                ? FilesTexts.REPLACE_ONE.with(first.substring(first.lastIndexOf('/') + 1))
+                : FilesTexts.REPLACE_MANY.with(clashing.size());
+        ActiveDesktop.ask(GameText.resolve(FilesTexts.REPLACE_TITLE), GameText.resolve(question), () -> {
+            for (final String src : clashing) {
+                PacketDistributor.sendToServer(new MoveFilePayload(host, src, dir, true));
+            }
+            FilesApps.diskChanged();
+        });
     }
 }

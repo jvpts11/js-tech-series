@@ -44,6 +44,8 @@ public final class TaskbarClientTests {
     private static final ResourceLocation FRAMES_XP = jsc("frames_xp");
     private static final String CALCULATOR = "Calculator";
     private static final String FILES = "Files";
+    /** What Frames 10 and 11 call the file manager. */
+    private static final String FILE_EXPLORER = "File Explorer";
 
     private static ResourceLocation jsc(final String path) {
         return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
@@ -107,9 +109,10 @@ public final class TaskbarClientTests {
         final DesktopWindow[] back = new DesktopWindow[1];
         atTheDesktop(ctx, FRAMES_11)
                 // A fresh machine pins its file explorer: on the bar with nothing open.
-                .thenWaitUntil(() -> desktop(ctx).pinnedLabels().contains(FILES), SCREEN_WAIT,
+                .thenWaitUntil(() -> desktop(ctx).pinnedLabels().contains(FILE_EXPLORER), SCREEN_WAIT,
                         "the machine to say the explorer is pinned")
-                .thenAssert(0, () -> desktop(ctx).taskEntryLabels().contains(FILES) && desktop(ctx).windowFor(FILES) == null,
+                .thenAssert(0, () -> desktop(ctx).taskEntryLabels().contains(FILE_EXPLORER)
+                                && desktop(ctx).windowFor(FILE_EXPLORER) == null,
                         "the pinned explorer is on the bar with no window")
                 .then(0, () -> DesktopScreen.requestOpen(CALCULATOR))
                 .thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == 1, SCREEN_WAIT, "the first Calculator")

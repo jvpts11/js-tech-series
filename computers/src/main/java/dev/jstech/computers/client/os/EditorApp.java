@@ -279,11 +279,12 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
 
     private void save() {
         final Tab tab = current();
-        final String target = tab.path.isEmpty() ? tab.name.trim() : tab.path;
-        if (target.isEmpty()) {
-            this.status = GameText.resolve(EditorTexts.SAVE_AS_FIRST);
+        // A page never saved has no file yet: Save asks where and under what name, as Save As does.
+        if (tab.path.isEmpty()) {
+            chooseSaveAs();
             return;
         }
+        final String target = tab.path;
         // A .dat is a read-only projection of stored items; it can never be created or written by hand.
         if (FileType.of(FileOpeners.extensionOf(target)) == FileType.DAT) {
             this.status = GameText.resolve(EditorTexts.CANNOT_SAVE_DAT);
@@ -371,11 +372,6 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     /** The system's file window this editor opens over itself to open a file or save one under a name. */
     public FileDialog fileDialog() {
         return dialog;
-    }
-
-    /** The desktop point in the middle of the Save As button, from the last frame drawn. */
-    public int[] saveAsPoint() {
-        return new int[] {saveAsButton.x() + saveAsButton.width() / 2, saveAsButton.y() + saveAsButton.height() / 2};
     }
 
     @Override

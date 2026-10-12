@@ -1575,6 +1575,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the Advanced; the Storage Server 10, the Compute Server 2, the Supercomputer Node 2 and the Advanced one 3.
 - The Legacy 1U server takes two expansion cards rather than one: its board has no video of its own, so one slot
   goes to the graphics card a monitor needs and the other is free for a storage card.
+- Frames 11 calls its file manager File Explorer, as Frames 10 does, rather than Files.
+- Save in the Editor, or Ctrl+S, on a page never saved opens Save As to ask where and under what name, rather than
+  writing untitled.txt without a word.
 - The manual key is held over an item for a second and a half before its page opens, rather than under half a second,
   so a key pressed in passing opens nothing.
 - J's Computers makes an installer, a blank medium with a system or a program written on it, in one place, which the
@@ -1981,6 +1984,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- A file cut and pasted where a file of its name already is makes the desktop ask whether to replace it: Yes moves it
+  over the other, No leaves it where it was. The paste did nothing and said nothing, and the cut was gone with it.
 - The system's Save As window opens on the kind of the name the program offers, or on every file when none of its
   kinds is that one. It always opened on the first kind listed, so a note the Editor offered as untitled.txt and the
   player named journey.txt was saved as journey.txt.sgs, the first language's sources.

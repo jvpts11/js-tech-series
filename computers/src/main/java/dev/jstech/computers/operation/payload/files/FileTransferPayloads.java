@@ -139,26 +139,36 @@ public final class FileTransferPayloads {
      */
     private static void handleMoveFile(final MoveFilePayload payload, final ServerPlayer player,
                                        final ServerLevel level) {
-        move(level, player, payload.hostPos(), payload.srcPath(), payload.destDir());
+        move(level, player, payload.hostPos(), payload.srcPath(), payload.destDir(), payload.replace());
     }
 
     /** Moves a file on the computer at {@code host}, for {@code player}, as a cut and paste in its window does. */
     public static void move(final ServerLevel level, final ServerPlayer player, final BlockPos host,
                             final String src, final String destDir) {
+        move(level, player, host, src, destDir, false);
+    }
+
+    /**
+     * The same, where {@code replace} says whether a file of the same name already in {@code destDir} gives way to
+     * the one moved: the player was asked and chose to replace it. Without it a name taken there leaves the file
+     * where it was.
+     */
+    public static void move(final ServerLevel level, final ServerPlayer player, final BlockPos host,
+                            final String src, final String destDir, final boolean replace) {
         if (!(level.getBlockEntity(host) instanceof IOsHost computer)) {
             return;
         }
         if (volumeKey(src).equals(volumeKey(destDir)) || src.startsWith(NET_ROOT) || destDir.startsWith(NET_ROOT)) {
-            moveNow(level, host, src, destDir);
+            moveNow(level, host, src, destDir, replace);
             return;
         }
         final FileCopyJobs.Copy move = CopyPlans.plan(level, computer, CopyProgressPayload.MOVE, src, destDir);
         FileCopyJobs.start(level, host, player, move, CopyTiming.ticks(move.sizeMb(), move.mbPerSecond()),
-                () -> moveNow(level, host, src, destDir));
+                () -> moveNow(level, host, src, destDir, replace));
     }
 
     private static void moveNow(final ServerLevel level, final BlockPos host, final String src,
-                                final String destDir) {
+                                final String destDir, final boolean replace) {
         if (!(level.getBlockEntity(host) instanceof IOsHost computer)) {
             return;
         }
@@ -173,8 +183,14 @@ public final class FileTransferPayloads {
                 return;
             }
             final boolean srcMedia = src.startsWith("media:");
-            if (DiskFilesystem.move(srcVol, srcMedia ? mediaSubPath(src) : src,
-                    destDir.startsWith("media:") ? mediaSubPath(destDir) : destDir, kindOf(computer, src))) {
+            final String realSrc = srcMedia ? mediaSubPath(src) : src;
+            final String realDir = destDir.startsWith("media:") ? mediaSubPath(destDir) : destDir;
+            final String target = joined(realDir, realSrc.substring(realSrc.lastIndexOf('/') + 1));
+            // A file put back where it already is takes nothing's place, least of all its own.
+            if (replace && !target.equals(realSrc)) {
+                DiskFilesystem.delete(srcVol, target);
+            }
+            if (DiskFilesystem.move(srcVol, realSrc, realDir, kindOf(computer, src))) {
                 if (srcMedia) {
                     commitMedia(level, computer, src);
                 } else {
@@ -186,9 +202,14 @@ public final class FileTransferPayloads {
         /*
          * Cross-volume (disk <-> media): copy the file then delete the source. Directories are
          * not copied across volumes here. A name already taken at the destination is not moved over, because the
-         * source is deleted after the write and the file written over would be lost.
+         * source is deleted after the write and the file written over would be lost; when the player chose to
+         * replace it, it is set aside first and put back if the write does not go through.
          */
+        final Displaced displaced = replace ? displace(level, computer, src, destDir) : null;
         if (transfer(level, computer, src, destDir, false) == null) {
+            if (displaced != null) {
+                displaced.restore(level, computer, destDir);
+            }
             return;
         }
         final boolean srcMedia = src.startsWith("media:");
@@ -344,6 +365,54 @@ public final class FileTransferPayloads {
             commitMedia(level, computer, key);
         } else {
             computer.setChanged();
+        }
+    }
+
+    /*
+     * Clears the file of the moved one's name out of the destination for a move the player chose to let replace it,
+     * holding what it was so it can be written back if the move does not go through; null when there was nothing to
+     * clear or it could not be taken away.
+     */
+    @Nullable
+    private static Displaced displace(final ServerLevel level, final IOsHost computer, final String src,
+                                      final String destDir) {
+        final ItemStack volume = volumeOf(level, computer, destDir);
+        if (volume.isEmpty()) {
+            return null;
+        }
+        final String realSrc = src.startsWith("media:") ? mediaSubPath(src) : src;
+        final String path = joined(destDir.startsWith("media:") ? mediaSubPath(destDir) : destDir,
+                realSrc.substring(realSrc.lastIndexOf('/') + 1));
+        final Optional<String> content = DiskFilesystem.read(volume, path);
+        if (content.isEmpty() || !DiskFilesystem.delete(volume, path)) {
+            return null;
+        }
+        saved(level, computer, destDir);
+        return new Displaced(path, content.get());
+    }
+
+    /* Saves the volume a path lives on after its files changed: a medium in its drive, else the machine. */
+    private static void saved(final ServerLevel level, final IOsHost computer, final String path) {
+        if (path.startsWith("media:")) {
+            commitMedia(level, computer, path);
+        } else {
+            computer.setChanged();
+        }
+    }
+
+    /** A file a replacing move cleared out of its way, and where it stood. */
+    private record Displaced(String path, String content) {
+
+        /** Writes the file back where it stood, the move it gave way to having failed. */
+        void restore(final ServerLevel level, final IOsHost computer, final String destDir) {
+            final ItemStack volume = volumeOf(level, computer, destDir);
+            if (volume.isEmpty()) {
+                return;
+            }
+            final long free = destDir.startsWith("media:") ? mediaFreeWeight(volume) : computer.systemDiskFreeWeight();
+            DiskFilesystem.write(volume, path, FileType.ofPath(path), content, free, kindOf(computer, destDir),
+                    level.getGameTime());
+            saved(level, computer, destDir);
         }
     }
 }

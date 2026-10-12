@@ -30,7 +30,8 @@ import org.lwjgl.glfw.GLFW;
 /**
  * Each era's everyday programs in a player's hands, at the era's Personal Computer on its own network: a sum on the
  * Calculator; a note written in the Editor and saved under a name; a folder and a file made in the file manager, the
- * file copied into the folder, moved there and deleted into the bin; and a move in each of the three games.
+ * file moved into the folder, copied back out, moved over its namesake and deleted into the bin; and a move in each of
+ * the three games.
  */
 public final class EraEverydayClientTests {
 
@@ -111,9 +112,10 @@ public final class EraEverydayClientTests {
                 .then(EraJourney.SETTLE, () -> ctx.type(NOTE))
                 .thenWaitUntil(() -> app(ctx, label, EditorApp.class).text().contains(NOTE), WAIT,
                         "the note to be in the Editor")
-                .then(EraJourney.SETTLE, () -> ctx.clickDesktop(app(ctx, label, EditorApp.class).saveAsPoint()))
+                // Ctrl+S on a page never saved asks where and under what name, as Save As does.
+                .then(EraJourney.SETTLE, () -> ctx.key(GLFW.GLFW_KEY_S, GLFW.GLFW_MOD_CONTROL))
                 .thenWaitUntil(() -> app(ctx, label, EditorApp.class).fileDialog().isOpen(), WAIT,
-                        "Save As to open the system's file window")
+                        "Ctrl+S on a new page to open the system's file window")
                 // The field offers untitled.txt with the cursor before the extension: the player types the name over.
                 .then(EraJourney.SETTLE, () -> {
                     for (int i = 0; i < "untitled".length(); i++) {
@@ -138,8 +140,9 @@ public final class EraEverydayClientTests {
 
     /*
      * A folder and a text file made from the folder's own menu; the file cut with Ctrl+X and pasted into the folder
-     * with Ctrl+V; copied back out from its menu and pasted from the folder's menu; and the copy deleted into the bin
-     * with the Delete key.
+     * with Ctrl+V; copied back out from its menu and pasted from the folder's menu; the one in the folder cut and
+     * pasted over its namesake, Yes answering the question that asks; and the file deleted into the bin with the
+     * Delete key.
      */
     private static void files(final ClientTestContext ctx, final EraKit kit) {
         final String label = filesLabel(kit);
@@ -183,7 +186,27 @@ public final class EraEverydayClientTests {
         ctx.thenWaitUntilServer(level -> exists(ctx, level, join(home[0], FOLDER, FILE))
                         && exists(ctx, level, join(home[0], FILE)), WAIT,
                 "the file to be on the disk both in the folder and beside it", level -> "home=" + home[0]);
-        // The copy deleted with the Delete key goes into the bin, not away for good.
+        // The one in the folder cut and pasted over its namesake: the desktop asks, and Yes replaces it.
+        ctx.then(EraJourney.SETTLE, () -> ctx.assertTrue(files(ctx, label).open(FOLDER),
+                        "the folder opens as a double click opens it"))
+                .thenWaitUntil(() -> files(ctx, label).currentDir().endsWith(FOLDER)
+                        && files(ctx, label).rowPoint(FILE) != null, WAIT, "the file manager to go into the folder")
+                .then(EraJourney.SETTLE, () -> ctx.clickDesktop(files(ctx, label).rowPoint(FILE)))
+                .then(EraJourney.SETTLE, () -> ctx.key(GLFW.GLFW_KEY_X, GLFW.GLFW_MOD_CONTROL))
+                .then(EraJourney.SETTLE, () -> ctx.key(GLFW.GLFW_KEY_BACKSPACE))
+                .thenWaitUntil(() -> home[0].equals(files(ctx, label).currentDir())
+                        && files(ctx, label).rowPoint(FILE) != null, WAIT, "Backspace to go back up out of the folder")
+                .then(EraJourney.SETTLE, () -> ctx.key(GLFW.GLFW_KEY_V, GLFW.GLFW_MOD_CONTROL))
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).question() != null
+                        && ctx.screen(DesktopScreen.class).question().asks(), WAIT,
+                        "pasting onto a name already taken to ask whether to replace it")
+                .thenScreenshot(EraJourney.SETTLE, shot(kit, "replace-question"))
+                .then(EraJourney.SETTLE, () -> ctx.clickDesktop(
+                        ctx.screen(DesktopScreen.class).question().firstButtonCentre()));
+        ctx.thenWaitUntilServer(level -> !exists(ctx, level, join(home[0], FOLDER, FILE))
+                        && exists(ctx, level, join(home[0], FILE)), WAIT,
+                "Yes to move the file over its namesake", level -> "home=" + home[0]);
+        // The file deleted with the Delete key goes into the bin, not away for good.
         ctx.then(EraJourney.SETTLE, () -> ctx.clickDesktop(files(ctx, label).rowPoint(FILE)))
                 .then(EraJourney.SETTLE, () -> ctx.key(GLFW.GLFW_KEY_DELETE))
                 .thenWaitUntil(() -> !files(ctx, label).names().contains(FILE)
@@ -288,9 +311,9 @@ public final class EraEverydayClientTests {
         return app(ctx, label, FilesApp.class);
     }
 
-    /** What the era's desktop calls its file manager: Frames 10 names it File Explorer, the others Files. */
+    /** What the era's desktop calls its file manager: Frames 10 named it File Explorer, and 11 kept the name. */
     private static String filesLabel(final EraKit kit) {
-        return kit == EraKit.STANDARD ? "File Explorer" : "Files";
+        return kit.era().isAtLeast(EraKit.STANDARD.era()) ? "File Explorer" : "Files";
     }
 
     private static String join(final String... parts) {

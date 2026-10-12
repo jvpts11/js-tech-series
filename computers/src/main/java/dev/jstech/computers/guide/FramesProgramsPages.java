@@ -38,7 +38,7 @@ final class FramesProgramsPages {
                 .paragraph("Most of what you need is built in, but not all of it: Virtual Studio is"
                         + " installable.")
                 .paragraph("Some editions give the same program a name of their own. The Files window is called"
-                        + " File Explorer on Frames 10, and the This PC window is called Computer on Frames 7."
+                        + " File Explorer on Frames 10 and 11, and the This PC window is called Computer on Frames 7."
                         + " The table shows how the names of Files, This PC and Help change from edition to edition.")
                 .table("Program names by edition", "Edition", "Files", "This PC", "Help")
                 .row(GuideCell.words("Frames 95"), GuideCell.words("Files"), GuideCell.words("This PC"),
@@ -49,7 +49,7 @@ final class FramesProgramsPages {
                         GuideCell.words("Help and Support"))
                 .row(GuideCell.words("Frames 10"), GuideCell.words("File Explorer"), GuideCell.words("This PC"),
                         GuideCell.words("Get Help"))
-                .row(GuideCell.words("Frames 11"), GuideCell.words("Files"), GuideCell.words("This PC"),
+                .row(GuideCell.words("Frames 11"), GuideCell.words("File Explorer"), GuideCell.words("This PC"),
                         GuideCell.words("Get Help"))
                 .table("Program names by edition, continued", "Edition", "Device Manager", "Command Prompt")
                 .row(GuideCell.words("Frames 95"), GuideCell.words("System, in System Properties"),

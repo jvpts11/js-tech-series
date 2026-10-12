@@ -2364,7 +2364,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         if (readOnlyVolume()) {
             return;
         }
-        clipboard.pasteInto(host, dir);
+        clipboard.pasteInto(host, dir, names());
     }
 
     private void startRenameAt(final int index) {

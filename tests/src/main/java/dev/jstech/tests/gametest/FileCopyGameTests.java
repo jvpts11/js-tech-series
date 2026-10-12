@@ -115,6 +115,61 @@ public final class FileCopyGameTests {
                 .thenSucceed();
     }
 
+    /** The same move, the player having chosen to replace: the moved file takes the floppy's file's place. */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void move_ontoANameTakenWithReplaceTakesItsPlace(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = withFloppy(helper);
+        DiskFilesystem.write(computer.systemDisk(), "note.txt", FileType.TXT, "from the disk", Long.MAX_VALUE,
+                FilesystemKind.HIERARCHICAL);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(computer.enabledEndpoints().contains(drive(helper)),
+                        "the floppy drive links to the computer"))
+                .thenExecute(() -> {
+                    final ItemStack floppy = ((MediaReaderBlockEntity) helper.getBlockEntity(DRIVE)).mediaSlot()
+                            .getStackInSlot(0);
+                    DiskFilesystem.write(floppy, "note.txt", FileType.TXT, "from the floppy", Long.MAX_VALUE,
+                            FilesystemKind.HIERARCHICAL);
+                    FileTransferPayloads.move(helper.getLevel(), player(helper), helper.absolutePos(PC), "note.txt",
+                            floppy(helper), true);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(
+                        FileCopyJobs.runningOn(helper.getLevel(), helper.absolutePos(PC)) == 0, "the move settles"))
+                .thenExecute(() -> {
+                    final ItemStack floppy = ((MediaReaderBlockEntity) helper.getBlockEntity(DRIVE)).mediaSlot()
+                            .getStackInSlot(0);
+                    helper.assertTrue(DiskFilesystem.read(floppy, "note.txt").orElse("").equals("from the disk"),
+                            "the floppy now holds the moved file: "
+                                    + DiskFilesystem.read(floppy, "note.txt").orElse("nothing"));
+                    helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "note.txt").isEmpty(),
+                            "and the disk no longer does, the file having moved");
+                })
+                .thenSucceed();
+    }
+
+    /** Within one disk too: the file cut and pasted into a folder replaces the one of its name there. */
+    @GameTest(template = ARENA)
+    public static void move_withinADiskWithReplaceTakesThePlaceOfTheFileOfItsName(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = withFloppy(helper);
+        final ItemStack disk = computer.systemDisk();
+        DiskFilesystem.write(disk, "notes/note.txt", FileType.TXT, "the old one", Long.MAX_VALUE,
+                FilesystemKind.HIERARCHICAL);
+        DiskFilesystem.write(disk, "note.txt", FileType.TXT, "the new one", Long.MAX_VALUE,
+                FilesystemKind.HIERARCHICAL);
+        FileTransferPayloads.move(helper.getLevel(), player(helper), helper.absolutePos(PC), "note.txt", "notes",
+                false);
+        helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "notes/note.txt").orElse("").equals("the old one")
+                        && DiskFilesystem.read(computer.systemDisk(), "note.txt").isPresent(),
+                "without replace the name taken leaves both files alone");
+        FileTransferPayloads.move(helper.getLevel(), player(helper), helper.absolutePos(PC), "note.txt", "notes",
+                true);
+        helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "notes/note.txt").orElse("").equals("the new one"),
+                "with replace the moved file is the one in the folder: "
+                        + DiskFilesystem.read(computer.systemDisk(), "notes/note.txt").orElse("nothing"));
+        helper.assertTrue(DiskFilesystem.read(computer.systemDisk(), "note.txt").isEmpty(),
+                "and it has left where it was");
+        helper.succeed();
+    }
+
     /** When every numbered name up to 99 is taken, the copy is refused instead of writing over the last one. */
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void copy_withEveryCopyNameTakenWritesNothing(final GameTestHelper helper) {

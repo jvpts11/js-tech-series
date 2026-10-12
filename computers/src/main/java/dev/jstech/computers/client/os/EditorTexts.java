@@ -33,7 +33,6 @@ final class EditorTexts {
     static final TextKey ONLY_SO_MANY = TextKey.of("jsc.editor.only_so_many", "Only %s files at once");
     static final TextKey UNSAVED =
             TextKey.of("jsc.editor.unsaved", "Unsaved changes in %s - close again to discard");
-    static final TextKey SAVE_AS_FIRST = TextKey.of("jsc.editor.save_as_first", "Save As first");
     static final TextKey CANNOT_SAVE_DAT = TextKey.of("jsc.editor.cannot_save_dat", "Cannot save a .dat file");
     static final TextKey TOO_LONG = TextKey.of("jsc.editor.too_long", "Too long to save: %s of %s characters");
     static final TextKey PATH_TOO_LONG =

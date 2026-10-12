@@ -22,7 +22,7 @@ final class DesktopNames {
     static final TextKey FRAMES_95_SYSTEM = TextKey.of("jsc.desktop.frames_95.device_manager", "System");
     static final TextKey FRAMES_7_COMPUTER = TextKey.of("jsc.desktop.frames_7.this_pc", "Computer");
     static final TextKey FRAMES_7_CONTROL_PANEL = TextKey.of("jsc.desktop.frames_7.settings", "Control Panel");
-    static final TextKey FRAMES_10_FILE_EXPLORER = TextKey.of("jsc.desktop.frames_10.files", "File Explorer");
+    static final TextKey FILE_EXPLORER = TextKey.of("jsc.desktop.frames_10.files", "File Explorer");
     static final TextKey FRAMES_95_HELP = TextKey.of("jsc.desktop.frames_95.help_viewer", "Help");
     static final TextKey FRAMES_XP_HELP = TextKey.of("jsc.desktop.frames_xp.help_viewer", "Help and Support");
     static final TextKey FRAMES_7_HELP = TextKey.of("jsc.desktop.frames_7.help_viewer", "Help and Support");

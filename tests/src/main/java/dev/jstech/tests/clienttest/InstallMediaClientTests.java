@@ -52,6 +52,8 @@ public final class InstallMediaClientTests {
     private static final BlockPos DRIVE = new BlockPos(5, 2, 3);
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
     private static final BlockPos PLAYER_AT_MONITOR = new BlockPos(8, 2, 2);
+    /** The file manager's window by the program's own key, which every edition shares whatever it calls it. */
+    private static final String FILES = "jsc:files";
 
     private static ResourceLocation jsc(final String path) {
         return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
@@ -181,7 +183,7 @@ public final class InstallMediaClientTests {
                 .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
                 .then(SETTLE, () -> DesktopScreen.requestOpenFiles(mediaDir(ctx)))
                 .thenWaitUntil(() -> {
-                            final FilesApp files = app(ctx, "Files", FilesApp.class);
+                            final FilesApp files = app(ctx, FILES, FilesApp.class);
                             return files != null && files.names().contains(disc.readme());
                         }, SCREEN_WAIT, "the explorer to list the disc's readme")
                 .thenScreenshot(2, "disc-listed")
@@ -226,10 +228,10 @@ public final class InstallMediaClientTests {
                 .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
                 .then(SETTLE, () -> DesktopScreen.requestOpenFiles(mediaDir(ctx)))
                 .thenWaitUntil(() -> {
-                            final FilesApp files = app(ctx, "Files", FilesApp.class);
+                            final FilesApp files = app(ctx, FILES, FilesApp.class);
                             return files != null && files.names().contains(setup);
                         }, SCREEN_WAIT, "the explorer to list the disc's setup program")
-                .then(SETTLE, () -> ctx.assertTrue(app(ctx, "Files", FilesApp.class).open(setup),
+                .then(SETTLE, () -> ctx.assertTrue(app(ctx, FILES, FilesApp.class).open(setup),
                         "the explorer opens the setup program the way a double click does"))
                 .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor(WindowKeys.SETUP) != null,
                         SCREEN_WAIT, "the Setup window to open from the explorer")

@@ -87,12 +87,16 @@
       "text": "jsc.guide.frames_11.text6"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.frames_11.text7"
+    },
+    {
       "type": "heading",
       "text": "jsc.guide.frames_11.heading2"
     },
     {
       "type": "text",
-      "text": "jsc.guide.frames_11.text7"
+      "text": "jsc.guide.frames_11.text8"
     },
     {
       "type": "define",
@@ -101,7 +105,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.frames_11.text8"
+      "text": "jsc.guide.frames_11.text9"
     },
     {
       "type": "heading",
@@ -109,7 +113,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.frames_11.text9"
+      "text": "jsc.guide.frames_11.text10"
     },
     {
       "type": "define",
@@ -123,7 +127,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.frames_11.text10"
+      "text": "jsc.guide.frames_11.text11"
     },
     {
       "type": "table",
@@ -169,11 +173,11 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.frames_11.text11"
+      "text": "jsc.guide.frames_11.text12"
     },
     {
       "type": "text",
-      "text": "jsc.guide.frames_11.text12"
+      "text": "jsc.guide.frames_11.text13"
     },
     {
       "type": "heading",
@@ -198,7 +202,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.frames_11.text13"
+      "text": "jsc.guide.frames_11.text14"
     },
     {
       "type": "define",
@@ -281,15 +285,15 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.frames_11.text14"
-    },
-    {
-      "type": "text",
       "text": "jsc.guide.frames_11.text15"
     },
     {
       "type": "text",
       "text": "jsc.guide.frames_11.text16"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_11.text17"
     },
     {
       "type": "table",
@@ -390,7 +394,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.frames_11.text17"
+      "text": "jsc.guide.frames_11.text18"
     },
     {
       "type": "heading",
