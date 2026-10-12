@@ -230,6 +230,17 @@
           {
             "words": "jsc.guide.sigma_syntax_errors.table2_12_3"
           }
+        ],
+        [
+          {
+            "literal": "S2014"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_13_2"
+          },
+          {
+            "words": "jsc.guide.sigma_syntax_errors.table2_13_3"
+          }
         ]
       ]
     },

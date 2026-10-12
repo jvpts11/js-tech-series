@@ -41,6 +41,7 @@ final class DeclarationParser {
     private final TypeParser types;
     private final StatementParser statements;
     private final ExpressionParser expressions;
+    private final LanguageGaps gaps;
 
     /** Each word that can stand before a declaration, with the modifier it stands for. */
     private static final Map<TokenKind, IDecl.Modifier> MODIFIERS = new EnumMap<>(Map.of(
@@ -64,6 +65,7 @@ final class DeclarationParser {
         this.types = types;
         this.statements = statements;
         this.expressions = expressions;
+        this.gaps = new LanguageGaps(cursor, diagnostics, types);
     }
 
     IDecl.ITypeDecl parseTypeDeclaration() {
@@ -375,6 +377,7 @@ final class DeclarationParser {
      */
     private IDecl.IMemberDecl parseMember(final String className) {
         final Set<IDecl.Modifier> modifiers = this.parseModifiers();
+        this.gaps.passesConst(true);
         final Token start = this.cursor.peek();
 
         // A type inside a type: named through the one around it, and read exactly as one at the top is.
@@ -487,15 +490,29 @@ final class DeclarationParser {
 
     private Set<IDecl.Modifier> parseModifiers() {
         final Set<IDecl.Modifier> modifiers = EnumSet.noneOf(IDecl.Modifier.class);
-        while (MODIFIERS.containsKey(this.cursor.peek().kind())) {
+        while (MODIFIERS.containsKey(this.cursor.peek().kind()) || this.internalAhead()) {
             final Token word = this.cursor.advance();
-            final IDecl.Modifier modifier = MODIFIERS.get(word.kind());
+            final IDecl.Modifier modifier = MODIFIERS.getOrDefault(word.kind(), IDecl.Modifier.INTERNAL);
             if (!modifiers.add(modifier)) {
                 this.diagnostics.error(word.line(), word.column(),
                         SigmaError.DUPLICATE_MODIFIER, modifier.text());
             }
         }
         return modifiers;
+    }
+
+    /*
+     * C#'s internal, taken as the other words of access are. It is not a word of the language, so it is read as one
+     * only where a declaration goes on after it, and stays a name anywhere else.
+     */
+    private boolean internalAhead() {
+        final Token word = this.cursor.peek();
+        if (word.kind() != TokenKind.IDENTIFIER || !"internal".equals(word.text())) {
+            return false;
+        }
+        final TokenKind next = this.cursor.kindAhead(1);
+        return next == TokenKind.IDENTIFIER || next == TokenKind.VOID || this.types.isBuiltIn(next)
+                || MODIFIERS.containsKey(next) || TYPE_DECLARATION_STARTS.contains(next);
     }
 
     private List<IDecl.Parameter> parseParameters() {

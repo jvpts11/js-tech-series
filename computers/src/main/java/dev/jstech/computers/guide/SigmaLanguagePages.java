@@ -280,6 +280,9 @@ final class SigmaLanguagePages {
                         + " value, and the form before the name gives the new one.")
                 .paragraph("The compound forms join an operator to an assignment. total += 5; does the same as"
                         + " total = total + 5;, and the same goes for the other compound forms.")
+                .paragraph("A shift moves the bits of the number on its left by the count on its right, and gives a"
+                        + " number of the kind on its left. It takes only the low bits of the count, as C# does: five"
+                        + " for an int and six for a long. So 1 << 32 is 1, and 1 << 33 is 2.")
                 .listing("Operators.sg",
                         "int x = 3;",
                         "int y = x * 2 + 1;        // 7",
@@ -515,6 +518,9 @@ final class SigmaLanguagePages {
                         + " value. The keyword this means the current object, and base means the base class. A field"
                         + " marked readonly can be written only where it is declared or in a constructor. There is no"
                         + " const keyword.")
+                .paragraph("The words public, private, protected and internal say who a member is meant for, as in"
+                        + " C#. The compiler reads them but does not hold one class back from another's members: every"
+                        + " member of a program can be reached from all of it. Write them for whoever reads the code.")
                 .paragraph("Sigma# has interfaces, records and delegates as well, which are explained in"
                         + " [Interfaces and records](jsc:sigma_interfaces_records) and"
                         + " [Properties, events, delegates and lambdas](jsc:sigma_delegates_events).")

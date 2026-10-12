@@ -31,6 +31,7 @@ final class StatementParser {
     private final DiagnosticBag diagnostics;
     private final TypeParser types;
     private final ExpressionParser expressions;
+    private final LanguageGaps gaps;
 
     StatementParser(final TokenCursor cursor, final DiagnosticBag diagnostics, final TypeParser types,
                     final ExpressionParser expressions) {
@@ -38,6 +39,7 @@ final class StatementParser {
         this.diagnostics = diagnostics;
         this.types = types;
         this.expressions = expressions;
+        this.gaps = new LanguageGaps(cursor, diagnostics, types);
     }
 
     IStmt.Block parseBlock() {
@@ -107,6 +109,11 @@ final class StatementParser {
             case LOCK:
                 return this.parseLock();
             default:
+                // A try, a throw or a goto as C# writes them is reported and passed over; a const, then declared.
+                if (this.gaps.passesStatement(this)) {
+                    return null;
+                }
+                this.gaps.passesConst(false);
                 return this.parseDeclarationOrExpressionStatement();
         }
     }

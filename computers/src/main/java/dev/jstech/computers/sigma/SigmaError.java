@@ -56,6 +56,7 @@ public enum SigmaError {
     NESTING_TOO_DEEP(TextKey.of("jsc.sigma.error.s2013",
             "this is nested more than %s levels deep, which is more than the compiler reads; the rest of the file"
                     + " was not read")),
+    NOT_IN_THE_LANGUAGE(TextKey.of("jsc.sigma.error.s2014", "the language has no %s; %s")),
 
     UNKNOWN_NAME(TextKey.of("jsc.sigma.error.s3001", "'%s' does not name anything here")),
     DUPLICATE_DECLARATION(TextKey.of("jsc.sigma.error.s3002", "'%s' is already declared here")),

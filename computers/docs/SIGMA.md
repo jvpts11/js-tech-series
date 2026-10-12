@@ -231,7 +231,20 @@ There are no exceptions. A mistake (dividing by zero, reaching into nothing, usi
 running out of memory, asking for what is not there, calls going more than 1,024 deep) halts the
 program where it stands, and the message is what the console shows. Calls that can fail for ordinary
 reasons answer instead of halting: `File.Write` returns false on a full disk, `Convert.TryInt` says
-whether the text was a number.
+whether the text was a number. A whole number divided by zero halts too, while the smallest `int`
+divided by -1 comes round to itself rather than halting.
+
+Written as C# writes them, `try`, `catch`, `throw`, `goto` and `const` are refused with what to write
+instead (S2014); they are not words of the language, so a program may still use them as names.
+
+## Access and shifts
+
+`public`, `private`, `protected` and `internal` are read as in C#, but the compiler does not hold one
+class back from another's members: every member of a program can be reached from all of it. They are
+written for whoever reads the code.
+
+A shift is of the kind of its left side, and takes only the low bits of its count, as C# does: five
+for an `int` and six for a `long`. `1 << 32` is 1 and `1 << 33` is 2.
 
 ## Namespaces
 

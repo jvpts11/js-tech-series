@@ -24,6 +24,7 @@ public sealed interface IDecl extends INode {
         PUBLIC("public"),
         PRIVATE("private"),
         PROTECTED("protected"),
+        INTERNAL("internal"),
         STATIC("static"),
         READONLY("readonly"),
         VIRTUAL("virtual"),

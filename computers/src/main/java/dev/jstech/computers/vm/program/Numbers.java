@@ -33,6 +33,9 @@ public final class Numbers {
 
     /** Applies a two-sided operation. */
     public static Object apply(final Opcode opcode, final Object left, final Object right, final int line) {
+        if (opcode == Opcode.SHL || opcode == Opcode.SHR) {
+            return shift(opcode, left, right);
+        }
         if (left instanceof Boolean first && right instanceof Boolean second) {
             return switch (opcode) {
                 case AND -> first && second;
@@ -76,6 +79,22 @@ public final class Numbers {
             case SHL -> left << right;
             default -> left >> right;
         };
+    }
+
+    /*
+     * A shift is of the kind of its left side alone, whatever kind of number says how far, and it takes only the low
+     * bits of that count, as C# does: five of them for an int, six for a long. So 1 << 32 is 1 rather than 0, and an
+     * int shifted by a long is still an int.
+     */
+    private static Object shift(final Opcode opcode, final Object left, final Object right) {
+        final long by = toLong(right);
+        if (left instanceof Long value) {
+            final int count = (int) (by & 63);
+            return opcode == Opcode.SHL ? value << count : value >> count;
+        }
+        final int value = (int) toLong(left);
+        final int count = (int) (by & 31);
+        return opcode == Opcode.SHL ? value << count : value >> count;
     }
 
     private static double divide(final double left, final double right, final int line) {

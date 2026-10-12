@@ -204,6 +204,12 @@ final class SigmaErrorsPages {
                                 + " reads; the rest of the file was not read"),
                         GuideCell.words("There are too many blocks inside blocks. Split the deep part into smaller"
                                 + " parts."))
+                .row(GuideCell.code("S2014"),
+                        GuideCell.words("the language has no <feature>; <alternative>"),
+                        GuideCell.words("The file writes try, catch, throw, goto or const as C# does, and neither"
+                                + " Sigma nor Sigma# has them. Use the alternative the message names: there are no"
+                                + " exceptions, so a mistake halts the program and a call that can fail answers"
+                                + " instead."))
                 .ifSomethingGoesWrong("It says \"expected ';' but found '}'\".",
                         "The line before the brace does not end with a semicolon. Add the semicolon at its end.",
                         "It says \"only a call, an assignment, an increment, a decrement or a new object can be used"

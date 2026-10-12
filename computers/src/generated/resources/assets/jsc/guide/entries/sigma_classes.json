@@ -137,6 +137,10 @@
       "text": "jsc.guide.sigma_classes.text5"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.sigma_classes.text6"
+    },
+    {
       "type": "define",
       "definition": "jsc.guide.sigma_classes.definition1",
       "term": "jsc.guide.sigma_classes.term1"

@@ -1958,6 +1958,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Paper clicked into a printer whose tray is full says the tray is full; nothing happened and nothing was said.
 - The Legacy's PCI Crafting Card seats in the Legacy's own boards, AGP and PCI-e, as the personal-use cards do, and
   in the later ones: it fitted only a Vintage PCI board, so no Legacy Crafting Computer could take it.
+- A shift in Σ and Σ# takes only the low bits of its count, as C# does, five for an int and six for a long, and is
+  of the kind of its left side: 1 << 32 was 0, and an int shifted by a long count came out a long.
+- try, catch, throw, goto and const written as C# writes them are refused with what to write instead (S2014),
+  rather than failing as names with a message about something else; they still work as names. internal is taken
+  as the other words of access are. The Book of Σ and the description of Σ# say that the words of access are read
+  but not enforced, and how shifts work.
 - A room of many monitors draws each one's picture in turn: past a few, the same pictures were drawn every frame and
   the rest never, staying dark; and past eight in sight, a monitor's face was built anew at every picture, asking its
   machine again each time.
