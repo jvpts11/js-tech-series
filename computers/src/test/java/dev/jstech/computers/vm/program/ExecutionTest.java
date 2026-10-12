@@ -141,6 +141,29 @@ class ExecutionTest {
         assertEquals(List.of("2 second"), process.console(), () -> String.valueOf(process.message()));
     }
 
+    /**
+     * A switch section does not stop by itself: without a break or a return at its end the program goes on into the
+     * next section, as the manual says, and a break stops it there.
+     */
+    @Test
+    void switch_goesOnIntoTheNextSectionUntilABreak() {
+        final Process process = start(load("", """
+                int n = 1;
+                switch (n) {
+                    case 1:
+                        Console.PrintLine("one");
+                    case 2:
+                        Console.PrintLine("two");
+                        break;
+                    case 3:
+                        Console.PrintLine("three");
+                        break;
+                }
+                """), IHost.still());
+        process.step(PLENTY);
+        assertEquals(List.of("one", "two"), process.console(), () -> String.valueOf(process.message()));
+    }
+
     @Test
     void current_isTheProgramAsTheMachineListsIt() {
         final Process process = start(load("", """
