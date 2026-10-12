@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.connect.Connection;
@@ -184,6 +185,36 @@ public final class NetworkIndexGameTests {
                     helper.assertTrue(index.activeLockCount() == 0, "no locks idle; got " + index.activeLockCount());
                     helper.assertTrue(mainframe.indexedTypes() == 2 && mainframe.indexedServers() == 1,
                             "the host exposes the same stats to the terminal");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * The Predictive Cache on a server takes 15% off the read latency the index records for what that server holds:
+     * a query pays the staged read, not the drive's.
+     */
+    @GameTest(template = ARENA)
+    public static void predictiveCache_cutsItsServersReadLatencyByFifteenPercent(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = storageNetwork(helper);
+        final int[] drive = new int[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> seededRack(helper).getServerStorage(0)
+                        .insert(Items.COBBLESTONE, 40))
+                .thenExecuteAfter(2, () -> {
+                    final var rows = mainframe.networkIndex().locations(StorageKey.of(Items.COBBLESTONE));
+                    helper.assertTrue(rows.size() == 1, "one server holds the stone; got " + rows);
+                    drive[0] = rows.getFirst().latencyTicks();
+                    helper.assertTrue(drive[0] == rows.getFirst().tier().latencyTicks(),
+                            "without a cache the index records the drive's own latency; got " + drive[0]);
+                    seededRack(helper).consoleOf(0).install(Programs.PREDICTIVE_CACHE.toString());
+                    mainframe.networkIndex().rebuild(helper.getLevel(), mainframe.networkUuid());
+                })
+                .thenExecuteAfter(2, () -> {
+                    final int cached = mainframe.networkIndex().locations(StorageKey.of(Items.COBBLESTONE)).getFirst()
+                            .latencyTicks();
+                    final int expected = Math.max(1, drive[0] * 85 / 100);
+                    helper.assertTrue(cached == expected, "the Predictive Cache takes 15% off the server's reads: "
+                            + drive[0] + " ticks become " + expected + "; got " + cached);
                 })
                 .thenSucceed();
     }

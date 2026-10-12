@@ -22,6 +22,10 @@ import dev.jstech.computers.client.os.MessengerApp;
 import dev.jstech.computers.client.os.RemoteControlApp;
 import dev.jstech.computers.client.os.SoundfoundryApp;
 import dev.jstech.computers.client.os.SoundfoundryStandardApp;
+import dev.jstech.computers.client.os.StorageInsightsApp;
+import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.StorageInsightsPayload;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.gui.layout.SoundfoundryLayout;
 import dev.jstech.computers.gui.layout.SoundfoundryLayout.Rect;
 import dev.jstech.computers.gui.layout.SoundfoundryStandardLayout;
@@ -46,6 +50,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -69,6 +74,8 @@ public final class EraNetworkedProgramsClientTests {
     private static final String MESSENGER = "Midsoft Messenger";
     private static final String KNOT = "Knot";
     private static final String REMOTE_CONTROL = "Remote Control";
+    /** How much stone the network is given for Storage Insights to count. */
+    private static final int STONE = 40;
 
     private EraNetworkedProgramsClientTests() {
     }
@@ -107,7 +114,7 @@ public final class EraNetworkedProgramsClientTests {
                         keep(level, ctx.abs(EraNetwork.COMPUTER), "Copper Rain.wav");
                         return;
                     }
-                    for (final String program : List.of("messenger", "knot", "remote_control")) {
+                    for (final String program : List.of("messenger", "knot", "remote_control", "storage_insights")) {
                         computer.console().install("jsc:" + program);
                     }
                     computer(ctx, level, EraNetwork.SECOND_COMPUTER).console().install("jsc:messenger");
@@ -138,7 +145,23 @@ public final class EraNetworkedProgramsClientTests {
         messenger(ctx, kit);
         knot(ctx, kit);
         mirror(ctx, kit);
+        storageInsights(ctx, kit);
         remoteControl(ctx, kit);
+    }
+
+    /* Stone put in the network's storage, and Storage Insights showing the total and the stone among the most held. */
+    private static void storageInsights(final ClientTestContext ctx, final EraKit kit) {
+        final String label = "Storage Insights";
+        ctx.thenServer(EraJourney.SETTLE, level -> NetworkStorage.of(level, mainframe(ctx, level).networkUuid())
+                .insert(StorageKey.of(Items.COBBLESTONE), STONE));
+        open(ctx, kit, label)
+                .thenWaitUntil(() -> {
+                    final StorageInsightsPayload shown = app(ctx, label, StorageInsightsApp.class).shown();
+                    return shown != null && shown.totalItems() >= STONE && shown.topItems().stream()
+                            .anyMatch(entry -> entry.key().equals(StorageKey.of(Items.COBBLESTONE)));
+                }, WAIT, "Storage Insights to show the stone among what the network holds")
+                .thenScreenshot(EraJourney.SETTLE, shot(kit, "storage-insights"));
+        shut(ctx, label);
     }
 
     /* The song kept on the computer played with the player's Play button, heard out of the machine. */

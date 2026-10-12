@@ -212,6 +212,12 @@ public final class StorageInsightsApp implements IDesktopApp {
         }
     }
 
+    /** What the dashboard is showing: the network's totals, its biggest and smallest stocks and its servers. */
+    @Nullable
+    public StorageInsightsPayload shown() {
+        return data;
+    }
+
     private void request() {
         PacketDistributor.sendToServer(new RequestStorageInsightsPayload(host, monitorPos));
     }
