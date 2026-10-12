@@ -208,6 +208,7 @@
   "block.jsc.legacy_printer": "Pakard DeskJot 940",
   "block.jsc.transition_printer": "Pakard FotoSmart C4280",
   "block.jsc.printer": "Pakard LaserJot 1102",
+  "block.jsc.printer.tray_full": "A bandeja de papel está cheia",
   "block.jsc.advanced_printer": "Epsilon EcoTonk ET-2720",
   "block.jsc.advanced_optical_router": "Roteador Óptico Advanced",
   "block.jsc.advanced_repeater": "Repetidor Advanced",

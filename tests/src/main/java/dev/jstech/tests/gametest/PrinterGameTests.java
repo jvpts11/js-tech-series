@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest;
 
+import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
@@ -25,14 +26,25 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -53,6 +65,29 @@ public final class PrinterGameTests {
     private static final String NOTES = "notes.txt";
 
     private PrinterGameTests() {
+    }
+
+    /** Paper clicked into a full tray stays in hand, and the player is told the tray is full. */
+    @GameTest(template = ARENA)
+    public static void paper_clickedIntoAFullTraySaysSo(final GameTestHelper helper) {
+        final PrinterBlockEntity printer = printer(helper, ComputingModule.PRINTER.get());
+        printer.paper().setStackInSlot(0, new ItemStack(Items.PAPER, 64));
+        final List<Component> said = new ArrayList<>();
+        final ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(),
+                new GameProfile(UUID.randomUUID(), "tester"), ClientInformation.createDefault()) {
+            @Override
+            public void displayClientMessage(final Component message, final boolean actionBar) {
+                said.add(message);
+            }
+        };
+        final ItemStack held = new ItemStack(Items.PAPER, 8);
+        final BlockPos at = helper.absolutePos(PRINTER);
+        helper.getLevel().getBlockState(at).useItemOn(held, helper.getLevel(), player, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(at), Direction.UP, at, false));
+        helper.assertTrue(held.getCount() == 8, "the paper stays in hand; " + held.getCount() + " left");
+        helper.assertTrue(said.size() == 1 && said.getFirst().getContents() instanceof TranslatableContents line
+                && "block.jsc.printer.tray_full".equals(line.getKey()), "the printer says its tray is full: " + said);
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

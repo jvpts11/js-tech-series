@@ -1955,6 +1955,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A monitor on a computer switched on with parts that do not make a computer says so, and that its assembly screen
   lists why; it said the computer was powered off, so a player who had pressed the switch thought it had not taken.
   The manual's first computer and monitor pages list it among their problems.
+- Paper clicked into a printer whose tray is full says the tray is full; nothing happened and nothing was said.
 - A room of many monitors draws each one's picture in turn: past a few, the same pictures were drawn every frame and
   the rest never, staying dark; and past eight in sight, a monitor's face was built anew at every picture, asking its
   machine again each time.

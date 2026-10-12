@@ -19,6 +19,8 @@ import dev.jstech.core.content.Device;
 import dev.jstech.core.content.DeviceBlock;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.List;
 import net.minecraft.ChatFormatting;
@@ -46,6 +48,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * its tray; a plain click opens its window, with the tray, the job printing, the queue and the sheets that came out.
  * It links to a computer as a drive does, against it or on a peripheral cable into the port of its era on its back.
  */
+@TextHolder
 public class PrinterBlock extends DeviceBlock implements IFaceConnector, IEraChassisBlock {
 
     private final HardwareEra era;
@@ -60,6 +63,7 @@ public class PrinterBlock extends DeviceBlock implements IFaceConnector, IEraCha
     private static final Device<PrinterBlockEntity> DEVICE = Device.of(() -> ComputingModule.PRINTER_BE.get())
             .ticks(PrinterBlockEntity::serverTick)
             .opensMenu(PrinterMenu::new);
+    private static final TextKey TRAY_FULL = TextKey.of("block.jsc.printer.tray_full", "The paper tray is full");
 
     public PrinterBlock(final Properties properties, final HardwareEra era) {
         super(properties, DEVICE);
@@ -126,6 +130,10 @@ public class PrinterBlock extends DeviceBlock implements IFaceConnector, IEraCha
         }
         if (level.getBlockEntity(pos) instanceof PrinterBlockEntity printer) {
             final ItemStack left = printer.paper().insertItem(0, heldStack.copy(), false);
+            if (left.getCount() == heldStack.getCount()) {
+                // Nothing went in, so the click would otherwise look like it did nothing at all.
+                player.displayClientMessage(GameText.component(TRAY_FULL), true);
+            }
             heldStack.setCount(left.getCount());
         }
         return ItemInteractionResult.SUCCESS;

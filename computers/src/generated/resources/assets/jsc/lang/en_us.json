@@ -217,6 +217,7 @@
   "block.jsc.personal_computer": "Personal Computer",
   "block.jsc.personal_router": "Personal Router",
   "block.jsc.printer": "Pakard LaserJot 1102",
+  "block.jsc.printer.tray_full": "The paper tray is full",
   "block.jsc.rack.row_taken": "That rack unit is taken or too small for this",
   "block.jsc.rack.wrong_chassis": "This chassis belongs in a different rack",
   "block.jsc.server_rack": "Server Rack",
