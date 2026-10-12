@@ -1954,6 +1954,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- A computer, a Mainframe or a rack taken by anything but a player, an explosion, a command or another mod's machine,
+  gives back what it holds: its parts, its servers and drives, and a Mainframe or a rack its own cabinet too. Only a
+  player's break in survival gave them back; anything else lost them, and a creeper took a whole Mainframe. A player
+  in creative still takes the machine and leaves nothing.
 - A screen in the world stays lit as far as the game draws it, 64 blocks, drawn again once a second past 32; past 32
   blocks it was not drawn at all, so a lit screen stood dark, and a big screen fell apart into its monitors, each in
   its own bezel. The server sends what a screen shows as far.

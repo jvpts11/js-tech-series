@@ -27,11 +27,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The shared lifecycle of a multiblock controller: when placed it raises its part blocks and binds them to itself, and
- * when broken it takes the whole structure down again and (on a survival player break) spills its contents. Every
- * controller has the identical skeleton and differs only in its footprint geometry, the per-part state it stamps, and
- * what it spills; those vary points are abstract hooks so the skeleton lives in exactly one place. A part block reaches
- * back into its controller through the public {@link #dissolve} / {@link #dropContentsExternally} entry points, so
- * breaking any cell of the structure tears down the whole thing the same way.
+ * when broken it takes the whole structure down again and gives back its contents and its own item, however it goes:
+ * broken by a player in survival, blown up, or taken by whatever removes blocks without a player. A player in
+ * creative takes it and nothing falls. Every controller has the identical skeleton and differs only in its footprint
+ * geometry, the per-part state it stamps, and what it gives back; those vary points are abstract hooks so the skeleton
+ * lives in exactly one place. A part block reaches back into its controller through the public {@link #dissolve} /
+ * {@link #brokenBy} entry points, so breaking any cell of the structure tears down the whole thing the same way.
  */
 public abstract class AbstractMultiblockControllerBlock
         extends HorizontalDirectionalBlock
@@ -42,6 +43,12 @@ public abstract class AbstractMultiblockControllerBlock
      * without this the teardown would recurse into itself; the controller position keys the in-flight teardown.
      */
     private final Set<BlockPos> dissolving = ConcurrentHashMap.newKeySet();
+    /*
+     * The controllers a player is breaking right now, whose contents fell as the player broke them, or were forgone by
+     * a player in creative: the removal that follows gives nothing back a second time. A removal with no player first
+     * finds its controller missing here and gives everything back then.
+     */
+    private final Set<BlockPos> settled = ConcurrentHashMap.newKeySet();
 
     protected AbstractMultiblockControllerBlock(final Properties properties) {
         super(properties);
@@ -62,7 +69,7 @@ public abstract class AbstractMultiblockControllerBlock
     protected abstract BlockState partStateFor(
             BlockPos controller, Direction facing, BlockPos part, BlockState controllerState);
 
-    /** Spill the controller's contents and pop the controller item (survival break only). */
+    /** Spill the controller's contents and pop the controller item; called once for each time the structure goes. */
     protected abstract void dropContents(ServerLevel level, BlockPos controller);
 
     /** Notify the controller block entity it is being torn down. No-op by default. */
@@ -97,9 +104,8 @@ public abstract class AbstractMultiblockControllerBlock
     @Override
     public BlockState playerWillDestroy(final Level level, final BlockPos pos, final BlockState state,
                                         final Player player) {
-        // Drops happen here (not in dissolve) so creative mode never spills items.
-        if (level instanceof ServerLevel serverLevel && !player.getAbilities().instabuild) {
-            dropContents(serverLevel, pos);
+        if (level instanceof ServerLevel serverLevel) {
+            brokenBy(serverLevel, pos, player);
         }
         return super.playerWillDestroy(level, pos, state, player);
     }
@@ -108,6 +114,9 @@ public abstract class AbstractMultiblockControllerBlock
     protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
                             final BlockState newState, final boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel) {
+            if (!settled.remove(pos)) {
+                dropContents(serverLevel, pos);
+            }
             onControllerBroken(serverLevel, pos);
             dissolve(serverLevel, pos, state.getValue(FACING));
         }
@@ -133,8 +142,14 @@ public abstract class AbstractMultiblockControllerBlock
         }
     }
 
-    /** Survival-safe drop entry point callable from a part block on a player break. */
-    public void dropContentsExternally(final ServerLevel level, final BlockPos controllerPos) {
-        dropContents(level, controllerPos);
+    /**
+     * A player is breaking the structure, at its controller or at one of its parts: its contents and its own item fall
+     * now, unless the player is in creative, who takes the machine and leaves nothing. Either way the removal that
+     * follows gives nothing back a second time.
+     */
+    public void brokenBy(final ServerLevel level, final BlockPos controllerPos, final Player player) {
+        if (settled.add(controllerPos.immutable()) && !player.getAbilities().instabuild) {
+            dropContents(level, controllerPos);
+        }
     }
 }

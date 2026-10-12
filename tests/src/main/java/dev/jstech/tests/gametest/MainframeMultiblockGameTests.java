@@ -21,8 +21,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -139,16 +142,25 @@ public final class MainframeMultiblockGameTests {
                 .thenSucceed();
     }
 
+    /** A player in creative breaking any block of the Mainframe takes the whole of it, and nothing falls. */
     @GameTest(template = ARENA)
-    public static void mainframe_teardownDropsNothing(final GameTestHelper helper) {
+    public static void mainframe_partBrokenInCreative_dropsNothing(final GameTestHelper helper) {
         final BlockPos controller = new BlockPos(4, 2, 4);
         final Direction facing = Direction.NORTH;
         formRunningMainframe(helper, controller, facing); // installs a full hardware build
         helper.startSequence()
-                .thenExecuteAfter(2, () -> helper.setBlock(
-                        MainframeStructure.partPositions(controller, facing).get(0), Blocks.AIR))
+                .thenExecuteAfter(2, () -> {
+                    final Player player = helper.makeMockPlayer(GameType.CREATIVE);
+                    GameType.CREATIVE.updatePlayerAbilities(player.getAbilities());
+                    final BlockPos part = helper.absolutePos(MainframeStructure.partPositions(controller, facing)
+                            .get(0));
+                    final BlockState state = helper.getLevel().getBlockState(part);
+                    state.getBlock().playerWillDestroy(helper.getLevel(), part, state, player)
+                            .onDestroyedByPlayer(helper.getLevel(), part, player, true,
+                                    helper.getLevel().getFluidState(part));
+                })
                 .thenExecuteAfter(2, () -> helper.assertTrue(droppedItems(helper, controller) == 0,
-                        "dissolving the multiblock must not drop items (creative-safe teardown)"))
+                        "a player in creative takes the Mainframe and nothing falls"))
                 .thenSucceed();
     }
 

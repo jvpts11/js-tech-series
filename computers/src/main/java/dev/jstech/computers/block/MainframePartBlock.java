@@ -136,13 +136,13 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
     @Override
     public BlockState playerWillDestroy(final Level level, final BlockPos pos, final BlockState state,
                                         final Player player) {
-        // Drops happen here (not in dissolve) so creative mode never spills items.
-        if (level instanceof ServerLevel serverLevel && !player.getAbilities().instabuild
+        // The whole Mainframe goes with any of its blocks, so a player's break here is a break of the Mainframe.
+        if (level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof MainframePartBlockEntity part
                 && part.controllerPos() != null
                 && level.getBlockState(part.controllerPos()).getBlock()
                         instanceof AbstractMultiblockControllerBlock controller) {
-            controller.dropContentsExternally(serverLevel, part.controllerPos());
+            controller.brokenBy(serverLevel, part.controllerPos(), player);
         }
         return super.playerWillDestroy(level, pos, state, player);
     }

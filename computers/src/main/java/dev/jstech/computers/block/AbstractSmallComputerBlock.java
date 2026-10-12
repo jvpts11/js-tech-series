@@ -19,6 +19,8 @@ import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -53,8 +55,8 @@ import org.jetbrains.annotations.Nullable;
  * What the three small computers (Personal, Crafting and Cluster Management) share as blocks: a case that faces the
  * player, the power button and the other {@link CaseFrontClicks parts of its front} a click works, the side panel
  * that comes off when sneaking, the hardware menu a click anywhere else on the case opens, and handing the hardware
- * back when the block goes. Each one brings its block entity, its menu and its ports; a rule about how any of them is clicked,
- * broken or ticked is written once, here.
+ * back when the block goes, however it goes. Each one brings its block entity, its menu and its ports; a rule about how
+ * any of them is clicked, broken or ticked is written once, here.
  *
  * @param <E> the block entity the block holds
  */
@@ -69,6 +71,12 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
     private final Class<E> entityClass;
     private final Supplier<BlockEntityType<E>> entityType;
     private final BlockEntityTicker<E> serverTicker;
+    /*
+     * The computers a player is breaking right now, whose hardware fell as the player broke them, or was forgone by a
+     * player in creative: the removal that follows gives nothing back a second time. A removal with no player first
+     * finds its computer missing here and gives the hardware back then.
+     */
+    private final Set<BlockPos> settled = ConcurrentHashMap.newKeySet();
 
     protected AbstractSmallComputerBlock(final Properties properties, final HardwareEra era,
                                          final CaseStyle caseStyle, final FacePorts ports,
@@ -121,11 +129,11 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
     @Override
     public BlockState playerWillDestroy(final Level level, final BlockPos pos, final BlockState state,
                                         final Player player) {
-        // Spill the installed hardware so a broken computer never destroys its components, nor what its front holds.
+        // A player in creative takes the computer and leaves nothing; any other player gets its hardware back now.
         final E computer = computerAt(level, pos);
-        if (level instanceof ServerLevel serverLevel && !player.getAbilities().instabuild && computer != null) {
-            computer.spillFront(serverLevel, pos);
-            BlockDrops.spill(serverLevel, pos, computer.getHardware());
+        if (level instanceof ServerLevel serverLevel && computer != null && settled.add(pos.immutable())
+                && !player.getAbilities().instabuild) {
+            spillHardware(serverLevel, pos, computer);
         }
         return super.playerWillDestroy(level, pos, state, player);
     }
@@ -217,6 +225,10 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
                             final BlockState newState, final boolean movedByPiston) {
         final E computer = computerAt(level, pos);
         if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel && computer != null) {
+            // Taken without a player (an explosion, a command, another mod's machine), it gives its hardware back here.
+            if (!settled.remove(pos)) {
+                spillHardware(serverLevel, pos, computer);
+            }
             // Drops this computer's network-node registration.
             computer.onBroken(serverLevel);
             dropWhenRemoved(serverLevel, pos, computer);
@@ -232,6 +244,12 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
 
     /** Whatever else the computer lets fall when it goes, besides its hardware; nothing unless a computer says. */
     protected void dropWhenRemoved(final ServerLevel level, final BlockPos pos, final E computer) {
+    }
+
+    /* What the case holds falls on the ground: the installed hardware, and what its front's bays and ports hold. */
+    private void spillHardware(final ServerLevel level, final BlockPos pos, final E computer) {
+        computer.spillFront(level, pos);
+        BlockDrops.spill(level, pos, computer.getHardware());
     }
 
     @Nullable
