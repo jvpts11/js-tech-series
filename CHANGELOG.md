@@ -1984,6 +1984,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- Frames 95's crash page, when a window no longer fits in memory, keeps the keyboard from everything behind it until
+  the machine reboots, as it kept the mouse; keys typed at it reached the program in front. A player who leaves the
+  monitor while it is up comes back to the empty session the reboot leaves, where every window open before the crash
+  came back as if nothing had happened.
 - A file cut and pasted where a file of its name already is makes the desktop ask whether to replace it: Yes moves it
   over the other, No leaves it where it was. The paste did nothing and said nothing, and the cut was gone with it.
 - The system's Save As window opens on the kind of the name the program offers, or on every file when none of its

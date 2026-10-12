@@ -181,7 +181,7 @@ final class DesktopInput {
 
     /** A character typed; returns whether the desktop took it. */
     boolean typed(final char c) {
-        if (desktop.notices().popupUp()) {
+        if (desktop.notices().popupUp() || desktop.memory().crashing()) {
             return true;
         }
         final DeskFiles files = desktop.fileActions();
@@ -203,6 +203,10 @@ final class DesktopInput {
      * a key stays whoever's it was, which is what keeps a recipe viewer's keys working on the items a window shows.
      */
     boolean keyFirst(final int key, final int scanCode, final int modifiers) {
+        // The crash page keeps the keyboard from everything behind it; Escape still leaves the desk.
+        if (desktop.memory().crashing()) {
+            return key != 256;
+        }
         final DesktopNotices notices = desktop.notices();
         final PowerDialog power = desktop.power();
         // Motif's keys for a window's menu come before the window's own program, as a window manager's do.
@@ -220,6 +224,10 @@ final class DesktopInput {
 
     /** A key pressed. */
     Click key(final int key, final int scanCode, final int modifiers) {
+        // The crash page takes the keyboard as it takes the mouse, until the reboot; Escape still leaves the desk.
+        if (desktop.memory().crashing()) {
+            return key == 256 ? Click.CONTAINER : Click.TAKEN;
+        }
         // A modal dialog swallows every key; Enter or Escape dismisses it, and nothing leaks behind it.
         if (desktop.notices().keyPopup(key, scanCode, modifiers)) {
             return Click.TAKEN;
@@ -276,13 +284,16 @@ final class DesktopInput {
 
     /** A key let go goes to the window with the focus, for a program that tells a press from a release. */
     boolean keyReleased(final int key, final int scanCode, final int modifiers) {
+        if (desktop.memory().crashing()) {
+            return true;
+        }
         final DesktopWindow w = desktop.wm().focused();
         return !desktop.notices().popupUp() && w != null && w.app().keyReleased(key, scanCode, modifiers);
     }
 
     /** The wheel turned at a point on the game's screen; returns whether the desktop took it. */
     boolean scrolled(final double absX, final double absY, final double dy) {
-        if (desktop.notices().popupUp()) {
+        if (desktop.notices().popupUp() || desktop.memory().crashing()) {
             return true;
         }
         // The wheel over the speaker, or over its open control, turns the volume a step a notch.

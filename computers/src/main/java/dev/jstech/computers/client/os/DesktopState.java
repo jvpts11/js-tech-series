@@ -282,6 +282,10 @@ final class DesktopState {
      * this desktop is restored. The layout goes back to the machine, and the programs' insides stay in this client.
      */
     void putAway() {
+        // A system that crashed reboots whether anybody stays to watch or not: the session it lost does not come back.
+        if (memory.crashing()) {
+            reboot();
+        }
         // A window still shrinking away is gone for good the moment nobody is looking.
         wm.settleClosing(Double.MAX_VALUE);
         FilesApps.forgetAll();
