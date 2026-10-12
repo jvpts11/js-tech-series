@@ -90,9 +90,14 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         return computer;
     }
 
-    /** The era's 1U server, built with its board, processor, memory and supply. */
+    /**
+     * The era's 1U server, built with its board, processor, memory and supply, and with a graphics card when the board
+     * has no video of its own, so a monitor beside the rack can show it.
+     */
     public static ItemStack server(final EraKit kit) {
-        return built(kit.server(), kit.serverBoard());
+        final Item board = kit.serverBoard();
+        return hasOwnVideo(board) ? built(kit.server(), board)
+                : built(kit.server(), board, EraParts.cardFor(board, GpuItem.class));
     }
 
     /**
@@ -101,7 +106,7 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
      */
     public static ItemStack storageServer(final EraKit kit) {
         final Item board = kit.serverBoard();
-        if (EraParts.board(board).formFactor() == FormFactor.EEB) {
+        if (hasOwnVideo(board)) {
             return built(kit.storageServer(), board, kit.array());
         }
         return built(kit.storageServer(), board, kit.array(), EraParts.cardFor(board, GpuItem.class));
@@ -188,6 +193,11 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         }
         computer.togglePower();
         return computer;
+    }
+
+    /* Whether a server board drives a screen with no card: an EEB board's management controller has an output. */
+    private static boolean hasOwnVideo(final Item board) {
+        return EraParts.board(board).formFactor() == FormFactor.EEB;
     }
 
     /* Sets a multiblock's controller and forms it, as a player placing it does. */
