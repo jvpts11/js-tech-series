@@ -113,8 +113,8 @@ public final class CrashGameTests {
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
                 .thenExecute(() -> {
-                    // Calculators that leave it 4 of its 128 MB: the program asks for more than that.
-                    pc.setOpenWindows(calculators(27));
+                    // Frames 95 holds 32 of its 128 MB and six Calculators of 16 the rest: the program finds none.
+                    pc.setOpenWindows(calculators(6));
                     final ProgramLauncher.Launch launch = ProgramLauncher.launch(pc, "C:\\progs\\counter.sgs",
                             asked -> ICliComputer.FsResult.ok(COUNTER), List.of(), IProgramParent.NONE,
                             ProgramPriority.MEDIUM, 16);
@@ -133,7 +133,7 @@ public final class CrashGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
                 .thenExecute(() -> pc.setOpenWindows(calculators(OpenWindow.MAX)))
                 .thenExecuteAfter(25, () -> helper.assertTrue(pc.crashPage() != null,
-                        "holding 144 of its 128 MB, the machine goes down"))
+                        "holding more than its 128 MB, the machine goes down"))
                 .thenSucceed();
     }
 
@@ -141,6 +141,7 @@ public final class CrashGameTests {
     @GameTest(template = ARENA, timeoutTicks = 1200)
     public static void partTaken_theOnlyMemoryPutsTheRedPageUpThenTheMachineIsDark(final GameTestHelper helper) {
         final PersonalComputerBlockEntity pc = upWith(helper, "frames_10");
+        keepSticks(pc, 1);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
                 .thenExecute(() -> {
@@ -159,8 +160,7 @@ public final class CrashGameTests {
     @GameTest(template = ARENA, timeoutTicks = 1500)
     public static void partTaken_oneOfTwoSticksStartsTheMachineOverOnTheOther(final GameTestHelper helper) {
         final PersonalComputerBlockEntity pc = upWith(helper, "frames_10");
-        pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START + 1,
-                pc.getHardware().getStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START).copy());
+        keepSticks(pc, 2);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
                 .thenExecute(() -> {
@@ -322,6 +322,13 @@ public final class CrashGameTests {
             windows.add(new OpenWindow("jsc:calculator", 10 + i, 10 + i, 120, 140, false, false, "", 1));
         }
         return windows;
+    }
+
+    /* Leaves the computer only its first {@code count} sticks of memory, before it has come up. */
+    private static void keepSticks(final PersonalComputerBlockEntity pc, final int count) {
+        for (int i = count; i < pc.boardRamSlots(); i++) {
+            pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START + i, ItemStack.EMPTY);
+        }
     }
 
     private static PersonalComputerBlockEntity upWith(final GameTestHelper helper, final String system) {

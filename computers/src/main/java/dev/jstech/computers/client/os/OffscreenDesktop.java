@@ -10,11 +10,14 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.core.client.gui.component.Grounds;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -39,7 +42,8 @@ public final class OffscreenDesktop implements DesktopSurface {
 
     public OffscreenDesktop(final BlockPos host, final BlockPos monitorPos, final ResourceLocation osId,
                             final ResourceLocation desktopId, final int ramTotalMb, final int ramReservedMb) {
-        this.state = new DesktopState(this, host, monitorPos, osId, desktopId, ramTotalMb, ramReservedMb);
+        this.state = new DesktopState(this, host, monitorPos, osId, desktopId, ramTotalMb, ramReservedMb,
+                eraOf(host));
         state.prepare();
     }
 
@@ -157,5 +161,13 @@ public final class OffscreenDesktop implements DesktopSurface {
     @Override
     public boolean moves() {
         return false;
+    }
+
+    /* The era of the machine at {@code host}, as this game has it, which says what each window it shows holds. */
+    @Nullable
+    private static HardwareEra eraOf(final BlockPos host) {
+        final Minecraft minecraft = Minecraft.getInstance();
+        return minecraft.level != null && minecraft.level.getBlockEntity(host) instanceof IOsHost machine
+                ? machine.displayEra() : null;
     }
 }

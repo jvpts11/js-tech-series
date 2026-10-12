@@ -164,7 +164,8 @@ stable 1
 1 dev.jstech.computers.os.ProgramSpec  String titleKey()
 2 dev.jstech.computers.os.ProgramSpec  TextKey name()
 1 dev.jstech.computers.os.ProgramSpec  boolean installable()
-1 dev.jstech.computers.os.ProgramSpec  int ramMbOn(OsDef)
-2 dev.jstech.computers.os.ProgramSpec  int ramMbOn(OsDef, boolean)
+7 dev.jstech.computers.os.ProgramSpec  int legacyMb()
+7 dev.jstech.computers.os.ProgramSpec  int ramMbOn(HardwareEra)
+7 dev.jstech.computers.os.ProgramSpec  int ramMbOn(HardwareEra, boolean)
 2 dev.jstech.computers.os.ProgramSpec  static ProgramSpec of(ResourceLocation, String, boolean, Set<Platform>, int, ProgramKind, int, HostScope)
 1 dev.jstech.computers.os.ProgramSpec  static final Codec<ProgramSpec> CODEC

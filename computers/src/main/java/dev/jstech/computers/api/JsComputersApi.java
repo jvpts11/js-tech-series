@@ -48,7 +48,7 @@ public final class JsComputersApi {
      * <p>How settled it is, and how long something lives once it is marked as going, are the series'
      * answers rather than this mod's: see the Core's.
      */
-    public static final int VERSION = 6;
+    public static final int VERSION = 7;
 
     private JsComputersApi() {
     }

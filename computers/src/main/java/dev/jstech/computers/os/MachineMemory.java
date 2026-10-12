@@ -10,6 +10,7 @@ package dev.jstech.computers.os;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.List;
 import java.util.function.Predicate;
 import net.minecraft.resources.ResourceLocation;
@@ -26,6 +27,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class MachineMemory {
 
+    /** What a window no program owns (a system's welcome) holds on a Legacy machine: a tool the system ships. */
+    private static final int OWNERLESS_WINDOW_MB = 16;
+
     private MachineMemory() {
     }
 
@@ -37,6 +41,8 @@ public final class MachineMemory {
             return ledger;
         }
         ledger.add(os.displayName(), os.ramMb(), RamLedger.Kind.SYSTEM);
+        // Every program holds what it holds on a machine of this one's era.
+        final HardwareEra era = host.displayEra();
         final ComputerConsoleState console = host.console();
         final ResourceLocation desktopId = host.bootedDesktopId();
         final DesktopEnvironmentDef desktop = desktopId != null ? OsRegistry.getDesktop(desktopId) : null;
@@ -45,7 +51,7 @@ public final class MachineMemory {
             final ProgramSpec pack = OsRegistry.getProgram(desktopId);
             if (pack != null) {
                 ledger.add(desktop != null ? desktop.displayName() : pack.displayName(),
-                        pack.ramMbOn(os, builtHere(console, pack)), RamLedger.Kind.DESKTOP);
+                        pack.ramMbOn(era, builtHere(console, pack)), RamLedger.Kind.DESKTOP);
             }
         }
         if (console != null) {
@@ -62,7 +68,7 @@ public final class MachineMemory {
                 if (spec.kind().runsInBackground()
                         && (console.isInstalled(spec.id().toString()) || host.cameWith(spec))
                         && host.serviceRunning(spec)) {
-                    ledger.add(spec.displayName(), spec.ramMbOn(os, builtHere(console, spec))
+                    ledger.add(spec.displayName(), spec.ramMbOn(era, builtHere(console, spec))
                             + host.serviceLoadMb(spec), RamLedger.Kind.SERVICE, spec.id().toString());
                 }
             }
@@ -78,7 +84,7 @@ public final class MachineMemory {
             ledger.add("graphics", VideoMemory.sharedHeldMb(level, host), RamLedger.Kind.GRAPHICS);
         }
         for (final OpenWindow window : host.openWindows()) {
-            ledger.add(window.key(), windowRamMb(window.key(), os, spec -> builtHere(console, spec)),
+            ledger.add(window.key(), windowRamMb(window.key(), era, spec -> builtHere(console, spec)),
                     RamLedger.Kind.WINDOW, window.key());
         }
         return ledger;
@@ -95,25 +101,27 @@ public final class MachineMemory {
      * first past the budget and everything after it are dropped, so the oldest windows survive.
      */
     public static List<OpenWindow> withinBudget(final IOsHost host, final List<OpenWindow> windows) {
-        final OsDef os = host.installedOs();
-        if (os == null) {
+        if (host.installedOs() == null) {
             return windows;
         }
+        final HardwareEra era = host.displayEra();
         final ComputerConsoleState console = host.console();
         return RamLedger.withinBudget(windows,
-                window -> windowRamMb(window.key(), os, spec -> builtHere(console, spec)),
+                window -> windowRamMb(window.key(), era, spec -> builtHere(console, spec)),
                 host.ramTotalMb() - host.ramReservedMb());
     }
 
     /**
-     * The megabytes a window opened under {@code key} holds: the weight under {@code os} of the program the key
-     * names ({@link WindowKeys}); a window no program owns weighs what a bundled program of that system does.
+     * The megabytes a window opened under {@code key} holds on a machine of {@code era}: the weight there of the
+     * program the key names ({@link WindowKeys}); a window no program owns weighs what a tool that ships with the
+     * system does.
      *
      * @param builtHere which programs the machine built from source, which hold a little less
      */
-    public static int windowRamMb(final String key, final OsDef os, final Predicate<ProgramSpec> builtHere) {
+    public static int windowRamMb(final String key, @Nullable final HardwareEra era,
+                                  final Predicate<ProgramSpec> builtHere) {
         final ProgramSpec spec = WindowKeys.program(key);
-        return spec != null ? spec.ramMbOn(os, builtHere.test(spec)) : RamLedger.bundledWeightMb(os.ramMb());
+        return spec != null ? spec.ramMbOn(era, builtHere.test(spec)) : EraMemory.scaled(OWNERLESS_WINDOW_MB, era);
     }
 
     /** Whether the machine whose console that is built that program from source; nothing is, with no console. */

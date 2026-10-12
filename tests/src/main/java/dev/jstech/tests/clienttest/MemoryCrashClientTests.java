@@ -42,7 +42,7 @@ public final class MemoryCrashClientTests {
     private static final int SCREEN_WAIT = 80;
     /** Long enough for a cold start's self-test and the system's start on a mechanical disk with tight memory. */
     private static final int BOOT_WAIT = 2_400;
-    /** More Calculators than 128 MB can hold beside the system: a quarter of its 16 MB each. */
+    /** More Calculators than 128 MB can hold beside the system, at 16 MB each on a Legacy machine. */
     private static final int MOST_WINDOWS = 40;
     private static final BlockPos COMPUTER = new BlockPos(5, 2, 2);
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
@@ -94,7 +94,7 @@ public final class MemoryCrashClientTests {
      */
     @ClientTest(timeoutTicks = 7000)
     public static void framesXp_warnsPastNineTenthsAndThenGoesDown(final ClientTestContext ctx) {
-        atTheDesk(ctx, FRAMES_XP);
+        atTheDesk(ctx, FRAMES_XP, HardwareItems.RAM_SDRAM_256.get());
         // Whatever the system opened on its own start goes first, so only the Calculators hold memory.
         ctx.then(SETTLE, () -> {
             for (final String open : List.copyOf(desktop(ctx).openWindowLabels())) {
@@ -104,26 +104,30 @@ public final class MemoryCrashClientTests {
                 }
             }
         }).thenWaitUntil(() -> desktop(ctx).openWindowLabels().isEmpty(), SCREEN_WAIT, "the desktop to be bare");
-        // 64 MB of 128 are the system's and each Calculator holds 16: three of them leave it under nine tenths.
-        for (int i = 0; i < 3; i++) {
+        // 128 MB of 256 are the system's and each Calculator holds 16: six of them leave it under nine tenths.
+        for (int i = 0; i < 6; i++) {
             ctx.then(SETTLE, () -> DesktopSteps.launch(ctx, CALCULATOR));
         }
-        ctx.thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == 3, SCREEN_WAIT,
-                        "three Calculators to open")
+        ctx.thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == 6, SCREEN_WAIT,
+                        "six Calculators to open")
                 .thenAssert(SETTLE, () -> desktop(ctx).balloonTitle().isEmpty(), "no warning under nine tenths")
                 .then(SETTLE, () -> DesktopSteps.launch(ctx, CALCULATOR))
-                .thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == 4
+                .thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == 7
                         && desktop(ctx).balloonTitle().equals("Low on memory"), SCREEN_WAIT,
-                        "the fourth, which takes it past nine tenths, to open with the warning")
+                        "the seventh, which takes it past nine tenths, to open with the warning")
                 // A program is named once with all its windows hold, as the real warning listed programs.
-                .then(0, () -> ctx.assertTrue(desktop(ctx).balloonBody().contains("Calculator (64 MB)"),
+                .then(0, () -> ctx.assertTrue(desktop(ctx).balloonBody().contains("Calculator (112 MB)"),
                         "the warning should name what holds the most; it says: " + desktop(ctx).balloonBody()))
                 .thenScreenshot(SETTLE, "xp-warning")
+                // The eighth fills the memory to the last megabyte, and the ninth does not fit.
+                .then(SETTLE, () -> DesktopSteps.launch(ctx, CALCULATOR))
+                .thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == 8, SCREEN_WAIT,
+                        "the eighth to open")
                 .then(SETTLE, () -> DesktopSteps.launch(ctx, CALCULATOR))
                 .thenAwaitScreen(CrashScreen.class, SCREEN_WAIT)
                 .thenAssert(0, () -> crash(ctx).page().style() == CrashStyle.FRAMES_XP && !crash(ctx).page().red()
                                 && crash(ctx).page().stopCode().equals("MEMORY_MANAGEMENT"),
-                        "the fifth should bring it down on XP's own page")
+                        "the ninth should bring it down on XP's own page")
                 .thenScreenshot(SETTLE, "xp-crash");
     }
 
@@ -171,6 +175,11 @@ public final class MemoryCrashClientTests {
 
     /* The Legacy computer built, running that system, with the player seated at its monitor. */
     private static void atTheDesk(final ClientTestContext ctx, final ResourceLocation system) {
+        atTheDesk(ctx, system, HardwareItems.RAM_SDRAM_128.get());
+    }
+
+    /* The same, with one stick of that memory. */
+    private static void atTheDesk(final ClientTestContext ctx, final ResourceLocation system, final Item memory) {
         ctx.thenBuild(0, world -> {
                     world.setBlock(COMPUTER, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
                     final PersonalComputerBlockEntity computer = world.blockEntity(COMPUTER,
@@ -180,9 +189,7 @@ public final class MemoryCrashClientTests {
                     hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(board));
                     hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
                             new ItemStack(EraParts.cpuFor(board)));
-                    // The least memory the board takes: one stick of 128 MB.
-                    hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                            new ItemStack(HardwareItems.RAM_SDRAM_128.get()));
+                    hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START, new ItemStack(memory));
                     hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                             new ItemStack(EraParts.psuFor(HardwareEra.LEGACY)));
                     hardware.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,

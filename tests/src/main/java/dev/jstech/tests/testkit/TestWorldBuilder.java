@@ -8,6 +8,7 @@
 package dev.jstech.tests.testkit;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
@@ -60,6 +61,12 @@ public final class TestWorldBuilder extends ScenarioBuilder {
 
     /** The system a Standard machine's installer offers, for the tests that hold a machine to its own age. */
     public static final ResourceLocation STANDARD_OS = ResourceLocation.fromNamespaceAndPath("jsc", "frames_10");
+
+    /**
+     * What a Legacy desktop machine runs: the newest Frames of its own age, since a later one holds more memory of
+     * itself than a machine of that age has.
+     */
+    public static final ResourceLocation LEGACY_DESKTOP_OS = ResourceLocation.fromNamespaceAndPath("jsc", "frames_xp");
 
     private TestWorldBuilder(final ServerLevel level, final UnaryOperator<BlockPos> toAbsolute) {
         super(level, toAbsolute);
@@ -175,8 +182,7 @@ public final class TestWorldBuilder extends ScenarioBuilder {
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
                 new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
-        hw.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
+        fillRam(be, PersonalComputerBlockEntity.RAM_SLOTS_START, ComputingModule.RAM_DDR3_8192.get());
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                 new ItemStack(ComputingModule.PSU_650G.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
@@ -226,7 +232,7 @@ public final class TestWorldBuilder extends ScenarioBuilder {
         return placeRunningCrafting(relative, new CraftingParts(ComputingModule.LEGACY_CRAFTING_COMPUTER.get(),
                 HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get(), HardwareItems.CPU_INTEGRA_PENTIX_4_560.get(),
                 HardwareItems.RAM_DDR_1024.get(), HardwareItems.GPU_VERTEX_6600_GT.get(),
-                HardwareItems.PSU_500B.get(), StorageTier.SSD), DESKTOP_OS);
+                HardwareItems.PSU_500B.get(), StorageTier.SSD), LEGACY_DESKTOP_OS);
     }
 
     /**
@@ -318,8 +324,7 @@ public final class TestWorldBuilder extends ScenarioBuilder {
                 new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
                 new ItemStack(HardwareItems.CPU_INTEGRA_CENTRO_C7_4790K.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
-                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
+        fillRam(be, CraftingComputerBlockEntity.RAM_SLOTS_START, ComputingModule.RAM_DDR3_8192.get());
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
@@ -400,7 +405,7 @@ public final class TestWorldBuilder extends ScenarioBuilder {
         final ItemStackHandler hw = be.getHardware();
         hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(parts.board()));
         hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT, new ItemStack(parts.cpu()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START, new ItemStack(parts.ram()));
+        fillRam(be, CraftingComputerBlockEntity.RAM_SLOTS_START, parts.ram());
         hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
                 new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START + 1, new ItemStack(parts.gpu()));
@@ -410,6 +415,16 @@ public final class TestWorldBuilder extends ScenarioBuilder {
         be.installOs(os);
         be.togglePower();
         return be;
+    }
+
+    /*
+     * Fills every memory slot the computer's board offers with {@code ram}, from {@code start}: the memory a player
+     * running a system of the board's own age puts in, so its programs have the room they have on a real one.
+     */
+    private static void fillRam(final AbstractComputerBlockEntity be, final int start, final ItemLike ram) {
+        for (int i = 0; i < be.boardRamSlots(); i++) {
+            be.getHardware().setStackInSlot(start + i, new ItemStack(ram));
+        }
     }
 
     /* What one crafting computer is built from, apart from the Crafting Card every one of them carries. */

@@ -13,6 +13,7 @@ import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.gui.layout.NetworkInteractorLayout;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -21,6 +22,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
@@ -43,6 +45,8 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
     public static final int INVENTORY_SLOTS = 36;
     /** How far the desktop's screen reaches, at the monitor showing the host. */
     private static final double REACH = 8.0;
+    /** What the open buffer says for a machine with no era. */
+    private static final int NO_ERA = -1;
 
     /** The vanilla inventory index for a menu slot: menu slots 0-26 are main (inv 9-35), 27-35 the hotbar (inv 0-8). */
     private static int inventoryIndexFor(final int menuSlot) {
@@ -57,6 +61,9 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
     /** The host computer's RAM in megabytes, and what its system, desktop and services already hold of it. */
     private final int ramTotalMb;
     private final int ramReservedMb;
+    /** The host's era, which says what each window it opens holds; null when the machine has none to tell. */
+    @Nullable
+    private final HardwareEra era;
 
     /** Whether the 36 inventory slots are live this frame (true only while a Network Interactor window is focused). */
     private boolean slotsActive;
@@ -78,6 +85,15 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
     public DesktopMenu(final int containerId, final Inventory playerInventory, final BlockPos monitorPos,
                        final BlockPos hostPos, final ResourceLocation osId, final ResourceLocation desktopId,
                        final String name, final int ramTotalMb, final int ramReservedMb) {
+        this(containerId, playerInventory, monitorPos, hostPos, osId, desktopId, name, ramTotalMb, ramReservedMb,
+                null);
+    }
+
+    /** The same, on a machine of {@code era}, whose programs hold what programs hold on a machine of that age. */
+    public DesktopMenu(final int containerId, final Inventory playerInventory, final BlockPos monitorPos,
+                       final BlockPos hostPos, final ResourceLocation osId, final ResourceLocation desktopId,
+                       final String name, final int ramTotalMb, final int ramReservedMb,
+                       @Nullable final HardwareEra era) {
         super(ComputingMenus.DESKTOP_MENU.get(), containerId, playerInventory,
                 validity(playerInventory.player.level(), monitorPos, hostPos));
         this.playerInventory = playerInventory;
@@ -88,6 +104,7 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
         this.name = name;
         this.ramTotalMb = ramTotalMb;
         this.ramReservedMb = ramReservedMb;
+        this.era = era;
         /*
          * The player's 36 inventory slots in vanilla order: 27 main (indices 9-35) then 9 hotbar (0-8). The
          * x/y are placeholders, and the client recreates them with real positions when a window shows them
@@ -179,22 +196,20 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
         final String machineName = buf.readUtf();
         final int ramTotalMb = buf.readVarInt();
         final int ramReservedMb = buf.readVarInt();
+        final HardwareEra era = HardwareEra.find(buf.readVarInt());
         return new DesktopMenu(containerId, playerInventory, monitor, host, os, desktop, machineName,
-                ramTotalMb, ramReservedMb);
+                ramTotalMb, ramReservedMb, era);
     }
 
-    /** Writes the open buffer the client reconstructs from: the positions, the OS id, the name, and the RAM. */
-    public static void writeOpenBuffer(final RegistryFriendlyByteBuf buf, final BlockPos monitorPos,
-                                       final BlockPos hostPos, final ResourceLocation osId, final String name,
-                                       final int ramTotalMb, final int ramReservedMb) {
-        writeOpenBuffer(buf, monitorPos, hostPos, osId, osId, name, ramTotalMb, ramReservedMb);
-    }
-
-    /** The full open buffer: positions, OS id, desktop environment id, name, the RAM and what is already held. */
+    /**
+     * The full open buffer: positions, OS id, desktop environment id, name, the RAM, what is already held of it, and
+     * the machine's era, which says what each window holds.
+     */
     public static void writeOpenBuffer(final RegistryFriendlyByteBuf buf, final BlockPos monitorPos,
                                        final BlockPos hostPos, final ResourceLocation osId,
                                        final ResourceLocation desktopId, final String name,
-                                       final int ramTotalMb, final int ramReservedMb) {
+                                       final int ramTotalMb, final int ramReservedMb,
+                                       @Nullable final HardwareEra era) {
         buf.writeBlockPos(monitorPos);
         buf.writeBlockPos(hostPos);
         buf.writeResourceLocation(osId);
@@ -202,6 +217,7 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
         buf.writeUtf(name);
         buf.writeVarInt(ramTotalMb);
         buf.writeVarInt(ramReservedMb);
+        buf.writeVarInt(era == null ? NO_ERA : era.id());
     }
 
     /** The desktop environment the screen draws (equals the OS id for the Frames editions). */
@@ -217,6 +233,12 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
     /** What the system, its desktop and its services held when the desktop opened, in megabytes. */
     public int ramReservedMb() {
         return ramReservedMb;
+    }
+
+    /** The host's era, which says what each window it opens holds; null when the machine has none to tell. */
+    @Nullable
+    public HardwareEra era() {
+        return era;
     }
 
     @Override

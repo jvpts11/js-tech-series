@@ -17,7 +17,6 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.OpenWindow;
-import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
@@ -91,11 +90,11 @@ public final class OsMemoryGameTests {
                             "two DDR-1024 modules are 2048 MB; got " + mainframe.ramTotalMb());
                     // The engine the Mainframe ships with is stopped first, so the system is seen alone.
                     mainframe.setEngineRunning(false);
-                    helper.assertTrue(mainframe.ramReservedMb() == 64,
-                            "Frames XP holds 64 MB for itself; got " + mainframe.ramReservedMb());
+                    helper.assertTrue(mainframe.ramReservedMb() == 128,
+                            "Frames XP holds 128 MB for itself; got " + mainframe.ramReservedMb());
 
                     mainframe.setEngineRunning(true);
-                    helper.assertTrue(mainframe.ramReservedMb() == 88,
+                    helper.assertTrue(mainframe.ramReservedMb() == 152,
                             "a running service holds its share on top of the system; got "
                                     + mainframe.ramReservedMb());
 
@@ -104,10 +103,10 @@ public final class OsMemoryGameTests {
                             new OpenWindow("jsc:editor", 60, 50, 180, 120, true, false)));
                     final RamLedger ledger = mainframe.ramLedger();
                     helper.assertTrue(ledger.usedMb(RamLedger.Kind.WINDOW) == 32,
-                            "two bundled windows weigh 16 MB each under XP; got "
+                            "two bundled windows weigh 16 MB each on a Legacy machine; got "
                                     + ledger.usedMb(RamLedger.Kind.WINDOW));
-                    helper.assertTrue(ledger.usedMb() == 120, "the ledger adds up; got " + ledger.usedMb());
-                    helper.assertTrue(mainframe.ramReservedMb() == 88,
+                    helper.assertTrue(ledger.usedMb() == 184, "the ledger adds up; got " + ledger.usedMb());
+                    helper.assertTrue(mainframe.ramReservedMb() == 152,
                             "windows are not part of the reserve; got " + mainframe.ramReservedMb());
                 })
                 .thenSucceed();
@@ -124,11 +123,11 @@ public final class OsMemoryGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     mainframe.setNeedsPost(false);
                     // The engine the Mainframe ships with, running.
-                    helper.assertTrue(mainframe.ramReservedMb() == 88,
+                    helper.assertTrue(mainframe.ramReservedMb() == 152,
                             "the Engine holds its 24 MB while it runs; got " + mainframe.ramReservedMb());
 
                     mainframe.setEngineRunning(false);
-                    helper.assertTrue(mainframe.ramReservedMb() == 64,
+                    helper.assertTrue(mainframe.ramReservedMb() == 128,
                             "a service that is stopped holds nothing, though it is still installed; got "
                                     + mainframe.ramReservedMb());
                     helper.assertTrue(mainframe.installedEngines().containsKey(
@@ -136,7 +135,7 @@ public final class OsMemoryGameTests {
                             "and stopping it did not uninstall it");
 
                     mainframe.setEngineRunning(true);
-                    helper.assertTrue(mainframe.ramReservedMb() == 88,
+                    helper.assertTrue(mainframe.ramReservedMb() == 152,
                             "starting it again takes the memory back; got " + mainframe.ramReservedMb());
                 })
                 .thenSucceed();
@@ -149,19 +148,19 @@ public final class OsMemoryGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     mainframe.setNeedsPost(false);
                     /*
-                     * 2048 MB minus the system's 64 and the 24 of the engine it ships with leaves 1960: fifteen 128 MB
-                     * studios fit, the sixteenth does not.
+                     * 2048 MB minus the system's 128 and the 24 of the engine it ships with leaves 1896: fourteen
+                     * 128 MB studios fit, the fifteenth does not.
                      */
                     final List<OpenWindow> asked = new ArrayList<>();
                     for (int i = 0; i < 20; i++) {
                         asked.add(new OpenWindow("jsc:isms", 10 + i, 10, 200, 140, false, false));
                     }
                     final List<OpenWindow> kept = mainframe.windowsWithinBudget(asked);
-                    helper.assertTrue(kept.size() == 15, "fifteen studios fit in 1960 MB; kept " + kept.size());
-                    helper.assertTrue(kept.equals(asked.subList(0, 15)), "the oldest windows are the ones kept");
+                    helper.assertTrue(kept.size() == 14, "fourteen studios fit in 1896 MB; kept " + kept.size());
+                    helper.assertTrue(kept.equals(asked.subList(0, 14)), "the oldest windows are the ones kept");
 
                     mainframe.setOpenWindows(kept);
-                    helper.assertTrue(mainframe.ramLedger().usedMb() == 64 + 24 + 15 * 128,
+                    helper.assertTrue(mainframe.ramLedger().usedMb() == 128 + 24 + 14 * 128,
                             "the kept layout fills the RAM; got " + mainframe.ramLedger().usedMb());
                     helper.assertTrue(mainframe.windowsWithinBudget(asked.subList(0, 3)).size() == 3,
                             "a layout that fits comes back whole");
@@ -209,26 +208,26 @@ public final class OsMemoryGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void ramMbOn_weighsBundledProgramsBySystemAndTheRestByEra(final GameTestHelper helper) {
+    public static void ramMbOn_weighsEveryProgramByTheEraOfTheMachineItRunsOn(final GameTestHelper helper) {
         final ProgramSpec files = OsRegistry.getProgram(id("files"));
-        final OsDef frames95 = OsRegistry.getOs(id("frames_95"));
-        final OsDef framesXp = OsRegistry.getOs(id("frames_xp"));
-        final OsDef frames11 = OsRegistry.getOs(id("frames_11"));
-        helper.assertTrue(files != null && frames95 != null && framesXp != null && frames11 != null,
-                "the built-in programs and systems are registered");
-        helper.assertTrue(files.ramMbOn(frames95) == 4, "Files is 4 MB on Frames 95; got " + files.ramMbOn(frames95));
-        helper.assertTrue(files.ramMbOn(framesXp) == 16, "Files is 16 MB on Frames XP; got " + files.ramMbOn(framesXp));
-        helper.assertTrue(files.ramMbOn(frames11) == 192, "Files is 192 MB on Frames 11; got " + files.ramMbOn(frames11));
+        helper.assertTrue(files != null, "the built-in programs are registered");
+        helper.assertTrue(files.ramMbOn(HardwareEra.VINTAGE) == 1 && files.ramMbOn(HardwareEra.LEGACY) == 16
+                        && files.ramMbOn(HardwareEra.ADVANCED) == 2_048,
+                "a tool the system ships holds 16 MB on a Legacy machine, grown with the era; got "
+                        + files.ramMbOn(HardwareEra.VINTAGE) + ", " + files.ramMbOn(HardwareEra.LEGACY) + ", "
+                        + files.ramMbOn(HardwareEra.ADVANCED));
 
         final ProgramSpec isms = OsRegistry.getProgram(id("isms"));
-        helper.assertTrue(isms != null && isms.ramMbOn(framesXp) == 128,
-                "an installable weighs what it declared wherever it runs");
+        helper.assertTrue(isms != null && isms.ramMbOn(HardwareEra.LEGACY) == 128
+                        && isms.ramMbOn(HardwareEra.STANDARD) == 4_096,
+                "an installable declares what it holds on a Legacy machine, grown with the era");
 
         final ProgramSpec unstated = ProgramSpec.of(id("addon_tool"), "tool", false,
                         Set.of(Platform.FRAMES), 8, ProgramKind.APP, 0, HostScope.ANY)
                 .named("Addon Tool").withEra(HardwareEra.STANDARD);
-        helper.assertTrue(unstated.ramMbOn(framesXp) == 96,
-                "an installable that said nothing weighs by its generation; got " + unstated.ramMbOn(framesXp));
+        helper.assertTrue(unstated.ramMbOn(HardwareEra.LEGACY) == 48,
+                "an installable that said nothing holds what the average program does; got "
+                        + unstated.ramMbOn(HardwareEra.LEGACY));
         helper.succeed();
     }
 
@@ -245,9 +244,10 @@ public final class OsMemoryGameTests {
                     mainframe.console().install("jsc:kde_plasma");
                     mainframe.setBootedDesktopId(id("kde_plasma"));
                     final RamLedger ledger = mainframe.ramLedger();
-                    helper.assertTrue(ledger.usedMb(RamLedger.Kind.DESKTOP) == 224,
-                            "Plasma holds 224 MB once booted; got " + ledger.usedMb(RamLedger.Kind.DESKTOP));
-                    helper.assertTrue(mainframe.ramReservedMb() == 272,
+                    helper.assertTrue(ledger.usedMb(RamLedger.Kind.DESKTOP) == 80,
+                            "Plasma holds 80 MB once booted on a Legacy machine; got "
+                                    + ledger.usedMb(RamLedger.Kind.DESKTOP));
+                    helper.assertTrue(mainframe.ramReservedMb() == 128,
                             "the desktop weighs on top of the system; got " + mainframe.ramReservedMb());
                 })
                 .thenSucceed();

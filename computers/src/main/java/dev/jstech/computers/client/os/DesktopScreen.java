@@ -75,7 +75,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
     public DesktopScreen(final DesktopMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
         this.state = new DesktopState(this, menu.hostPos(), menu.monitorPos(), menu.osId(), menu.desktopId(),
-                menu.ramTotalMb(), menu.ramReservedMb());
+                menu.ramTotalMb(), menu.ramReservedMb(), menu.era());
         this.input = new DesktopInput(this, state);
     }
 

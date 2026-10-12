@@ -120,22 +120,23 @@ public final class OsBootstrap {
              * are the one family here with an order to it: each says where it sits (withRank), so a program can
              * ask for XP or newer without anything but these lines knowing which is newer than which. Each comes
              * from the age it was made for: 95 and XP from Legacy, 7 from Transition, 10 from Standard and 11 from
-             * Advanced, and each runs on every machine after its own.
+             * Advanced, and each runs on every machine after its own. What each holds of itself grew with its age:
+             * on a typical machine of its era (two sticks of the middle size) it leaves room for about eight programs.
              */
             OsDef.mediaInstalled(rl("frames_95"), OsCapability.FULL_DESKTOP, HardwareEra.LEGACY, rl("win9x"), 48,
-                    Platform.FRAMES, "Frames 95", Optional.of(rl("frames_95")), SoftwareHouse.MIDSOFT).withRam(16)
+                    Platform.FRAMES, "Frames 95", Optional.of(rl("frames_95")), SoftwareHouse.MIDSOFT).withRam(32)
                     .withInstaller(InstallerStyle.FRAMES_95).withRank(1),
             OsDef.mediaInstalled(rl("frames_xp"), OsCapability.FULL_DESKTOP, HardwareEra.LEGACY, rl("nt"), 1_536,
-                    Platform.FRAMES, "Frames XP", Optional.of(rl("frames_xp")), SoftwareHouse.MIDSOFT).withRam(64)
+                    Platform.FRAMES, "Frames XP", Optional.of(rl("frames_xp")), SoftwareHouse.MIDSOFT).withRam(128)
                     .withInstaller(InstallerStyle.FRAMES_XP).withRank(2),
             OsDef.mediaInstalled(rl("frames_7"), OsCapability.FULL_DESKTOP, HardwareEra.TRANSITION, rl("nt"),
                     16_384, Platform.FRAMES, "Frames 7", Optional.of(rl("frames_7")), SoftwareHouse.MIDSOFT)
-                    .withRam(384).withInstaller(InstallerStyle.FRAMES_7).withRank(3),
+                    .withRam(1_024).withInstaller(InstallerStyle.FRAMES_7).withRank(3),
             OsDef.mediaInstalled(rl("frames_10"), OsCapability.FULL_DESKTOP, HardwareEra.STANDARD, rl("nt"),
                     16_384, Platform.FRAMES, "Frames 10", Optional.of(rl("frames_10")), SoftwareHouse.MIDSOFT)
-                    .withRam(512).withInstaller(InstallerStyle.FRAMES_10).withRank(4),
+                    .withRam(3_072).withInstaller(InstallerStyle.FRAMES_10).withRank(4),
             OsDef.mediaInstalled(rl("frames_11"), OsCapability.FULL_DESKTOP, HardwareEra.ADVANCED, rl("nt"), 20_480,
-                    Platform.FRAMES, "Frames 11", Optional.of(rl("frames_11")), SoftwareHouse.MIDSOFT).withRam(768)
+                    Platform.FRAMES, "Frames 11", Optional.of(rl("frames_11")), SoftwareHouse.MIDSOFT).withRam(8_192)
                     .withInstaller(InstallerStyle.FRAMES_11).withRank(5),
 
             /*
@@ -772,7 +773,8 @@ public final class OsBootstrap {
             /*
              * The Linux desktop environments: packages that turn a TTY distribution into a graphical desktop.
              * Footprints are balancing estimates (Plasma is the heaviest, Cinnamon the lightest), and so is
-             * the RAM each holds once it is up, on top of the distribution's own share.
+             * the RAM each holds once it is up, on top of the distribution's own share: on a Legacy machine a little
+             * more than one program, grown on the later eras as every program's is.
              * Each one requires the hardware generation it belongs to. KDE and GNOME are old enough to
              * run on Legacy machines; Cinnamon is a much later desktop and needs Standard hardware. A
              * Vintage computer therefore has no graphical desktop at all and lives at the TTY.
@@ -780,15 +782,15 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("kde_plasma"), "kde-plasma", false, LINUX_AND_FREEBSD, 256,
                             ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
                     .named("KDE Plasma").described("The KDE Plasma desktop environment.")
-                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.KDE_GUILD).withRam(224),
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.KDE_GUILD).withRam(80),
             ProgramSpec.of(rl("gnome"), "gnome", false, LINUX_AND_FREEBSD, 192, ProgramKind.DESKTOP_ENVIRONMENT, 0,
                             HostScope.ANY)
                     .named("GNOME").described("The GNOME desktop environment.")
-                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.GNOME_TRUST).withRam(256),
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.GNOME_TRUST).withRam(72),
             ProgramSpec.of(rl("cinnamon"), "cinnamon", false, LINUX_AND_FREEBSD, 160, ProgramKind.DESKTOP_ENVIRONMENT,
                             0, HostScope.ANY)
                     .named("Cinnamon").described("The Cinnamon desktop environment.")
-                    .withMinEra(STANDARD).withEra(STANDARD).withHouse(SoftwareHouse.SPEARMINT).withRam(160),
+                    .withMinEra(STANDARD).withEra(STANDARD).withHouse(SoftwareHouse.SPEARMINT).withRam(56),
             /*
              * CDE: the desktop of the Unix workstations, and the only one UNIX has. A fraction of what the
              * later desktops weigh, which is how a Legacy machine with a few megabytes to spare runs one. UNIX
@@ -797,7 +799,7 @@ public final class OsBootstrap {
              */
             ProgramSpec.of(rl("cde"), "cde", false, CDE_SYSTEMS, 32, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
                     .named("CDE").described("The Common Desktop Environment.")
-                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM).withRam(16),
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM).withRam(8),
             /*
              * The operating space MC-NET ships with, and what makes the machine more than a prompt. It goes on
              * with the system rather than being bought from the Mirror, but it is a package like any other, so

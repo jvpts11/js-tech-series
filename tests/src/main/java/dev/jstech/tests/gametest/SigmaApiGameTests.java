@@ -273,15 +273,15 @@ public final class SigmaApiGameTests {
                     final List<String> said = computer.programs().byId(started.id()).process().console();
                     /*
                      * The socket holds a four-core Centro c7 4790K at 4000 on a Standard board, with 8 GB
-                     * in the slot and Frames XP on the disk: what the machine reports has to be that.
+                     * in each of its four slots and Frames XP on the disk: what the machine reports has to be that.
                      */
                     helper.assertTrue(said.size() == 3, "it says its three lines; got " + said);
                     helper.assertTrue(said.get(0).equals("4 at 4000 standard"),
                             "the processor is the one in the socket; got " + said.get(0));
                     helper.assertTrue(said.get(1).equals("os Frames XP"),
                             "the system is the one on the disk; got " + said.get(1));
-                    helper.assertTrue(said.get(2).equals("ram 8192"),
-                            "the memory is what is in the slot; got " + said.get(2));
+                    helper.assertTrue(said.get(2).equals("ram 32768"),
+                            "the memory is what is in the slots; got " + said.get(2));
                 })
                 .thenSucceed();
     }

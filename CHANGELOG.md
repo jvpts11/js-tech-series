@@ -7,7 +7,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### API
-- J's Core's API is at version 4 and J's Computers' at version 6. Everything this release adds to either, or
+- J's Core's API is at version 4 and J's Computers' at version 7. Everything this release adds to either, or
   changes, carries `@ApiStatus.Experimental`: it keeps the mark through this release and loses it when the next
   cycle begins. Each mod's API is now kept line by line, every type and member a mod can reach with the version
   that brought it, and the tests fail when the code and that list disagree; `docs/API.md` says how.
@@ -33,6 +33,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   `PlanCandidate` of `PlanStep`s, whose cost a rule or a hint may change or which it may set aside, saying why. They
   are registered with `ComputersRegisterEvent.plannerRule`, `plannerOperator`, `plannerStatistic` and `explainNode`
   (or the `JsComputersApi.register...` methods of the same names).
+- Changed: what a program declares with `ProgramSpec.withRam` is what it holds on a machine of the Legacy era, grown
+  on the later eras and shrunk on the Vintage; `ProgramSpec.legacyMb()` says it, with what a program of its kind
+  holds when it declared nothing, and `ProgramSpec.ramMbOn(HardwareEra)` and `ramMbOn(HardwareEra, boolean)` say
+  what it holds on a machine of that era. The forms of `ramMbOn` that took the system an `OsDef` names are gone.
 - Added: `ProgramRequirement` and `ProgramSpec.requires`, with `requiring`: a program says what it needs of the
   network's engine (the engine it is written for and the oldest version of it, or the capabilities it uses), which
   is checked when it is opened rather than when it is installed.
@@ -1589,6 +1593,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   empty session. Frames 95's crash was a picture on the player's own desktop only: the keyboard still reached the
   program behind it, and a player who left the monitor during it came back to every window open before the crash.
   Linux, FreeBSD and UNIX have their own crash pages too, their kernels' panics on the console.
+- What a program holds in memory grows with the era of the machine it runs on, as software grew with the machines it
+  was written for: each program holds what it declares on a Legacy machine, a sixteenth of that on a Vintage one,
+  eight times on a Transition, thirty-two on a Standard and a hundred and twenty-eight on an Advanced, the tools a
+  system ships included (16 MB on a Legacy machine). Each edition of Frames holds more of itself, Frames 95 32 MB,
+  XP 128 MB, 7 1 GB, 10 3 GB and 11 8 GB, so the typical machine of each era, two sticks of its middle size, holds
+  its system and about eight programs, and filling the board pays. The Linux distributions, FreeBSD and UNIX stay
+  light, and a Linux desktop holds a little more than one program: KDE Plasma 80 MB on a Legacy machine, GNOME 72,
+  Cinnamon 56 and CDE 8.
 - Linux, FreeBSD and UNIX no longer refuse a program they have no memory left for: as the real kernels do, they let
   it start and then end what holds the most, a window, a program or a service, until everything fits. Each one is
   logged in the kernel's own words (`Out of memory: Killed process 1234 (calc)` on Linux, `pid 1234 (calc), jid 0,

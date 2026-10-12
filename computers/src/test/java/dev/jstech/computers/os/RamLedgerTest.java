@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.jstech.core.tier.HardwareEra;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -70,29 +69,6 @@ class RamLedgerTest {
 
         assertEquals(0, ledger.freeMb());
         assertFalse(ledger.fits(1));
-    }
-
-    @Test
-    void eraWeightMb_growsWithTheEra() {
-        assertEquals(1, RamLedger.eraWeightMb(HardwareEra.VINTAGE, ProgramKind.APP));
-        assertEquals(16, RamLedger.eraWeightMb(HardwareEra.LEGACY, ProgramKind.APP));
-        assertEquals(96, RamLedger.eraWeightMb(HardwareEra.STANDARD, ProgramKind.APP));
-        assertTrue(RamLedger.eraWeightMb(HardwareEra.SINGULARITY, ProgramKind.APP)
-                > RamLedger.eraWeightMb(HardwareEra.EXA, ProgramKind.APP));
-    }
-
-    @Test
-    void eraWeightMb_halvesAServiceAndDoublesADesktop() {
-        assertEquals(8, RamLedger.eraWeightMb(HardwareEra.LEGACY, ProgramKind.SERVICE));
-        assertEquals(1, RamLedger.eraWeightMb(HardwareEra.VINTAGE, ProgramKind.SERVICE));
-        assertEquals(32, RamLedger.eraWeightMb(HardwareEra.LEGACY, ProgramKind.DESKTOP_ENVIRONMENT));
-    }
-
-    @Test
-    void bundledWeightMb_isAQuarterOfTheSystemAndAtLeastOne() {
-        assertEquals(16, RamLedger.bundledWeightMb(64));
-        assertEquals(192, RamLedger.bundledWeightMb(768));
-        assertEquals(1, RamLedger.bundledWeightMb(2));
     }
 
     @Test

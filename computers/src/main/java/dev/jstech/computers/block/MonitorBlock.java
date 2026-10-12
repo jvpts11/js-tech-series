@@ -632,11 +632,14 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
              */
             final ResourceLocation desktopId =
                     c.bootedDesktopId() != null ? c.bootedDesktopId() : osId;
+            // The machine's era, which says what each window it opens holds.
+            final HardwareEra era = c.displayEra();
             player.openMenu(new SimpleMenuProvider(
                     (id, inv, p) -> new DesktopMenu(
-                            id, inv, monitorPos, owner, osId, desktopId, name, ramTotalMb, ramReservedMb), title),
+                            id, inv, monitorPos, owner, osId, desktopId, name, ramTotalMb, ramReservedMb, era),
+                    title),
                     buf -> DesktopMenu.writeOpenBuffer(
-                            buf, monitorPos, owner, osId, desktopId, name, ramTotalMb, ramReservedMb));
+                            buf, monitorPos, owner, osId, desktopId, name, ramTotalMb, ramReservedMb, era));
         }
     }
 

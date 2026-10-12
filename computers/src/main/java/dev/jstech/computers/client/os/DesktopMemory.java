@@ -30,6 +30,7 @@ import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The machine's memory as its desktop sees it: the system, its desktop and its services hold their share (reserved,
@@ -42,6 +43,9 @@ final class DesktopMemory {
 
     private final DesktopState desktop;
     private final ResourceLocation osId;
+    /** The machine's era, which says what each window holds; null when it has none to tell. */
+    @Nullable
+    private final HardwareEra era;
     /** The desktop's windows, read to weigh what is open. */
     private final List<DesktopWindow> windows;
     private final int totalMb;
@@ -51,10 +55,11 @@ final class DesktopMemory {
     /** Whether the warning of a memory past nine tenths has been raised since it last dropped back under. */
     private boolean warned;
 
-    DesktopMemory(final DesktopState desktop, final ResourceLocation osId, final List<DesktopWindow> windows,
-                  final int totalMb, final int reservedMb) {
+    DesktopMemory(final DesktopState desktop, final ResourceLocation osId, @Nullable final HardwareEra era,
+                  final List<DesktopWindow> windows, final int totalMb, final int reservedMb) {
         this.desktop = desktop;
         this.osId = osId;
+        this.era = era;
         this.windows = windows;
         this.totalMb = totalMb;
         this.reservedMb = reservedMb;
@@ -66,11 +71,9 @@ final class DesktopMemory {
         sourceBuilt.addAll(ids);
     }
 
-    /** The megabytes a window opened under {@code key} holds: its program's weight under the running system. */
+    /** The megabytes a window opened under {@code key} holds: its program's weight on a machine of this one's era. */
     int windowRamMb(final String key) {
-        final OsDef os = OsRegistry.getOs(osId);
-        return os == null ? 0
-                : MachineMemory.windowRamMb(key, os, spec -> sourceBuilt.contains(spec.id().getPath()));
+        return MachineMemory.windowRamMb(key, era, spec -> sourceBuilt.contains(spec.id().getPath()));
     }
 
     /** Everything held right now: the system's share, its desktop and services, and the open windows. */

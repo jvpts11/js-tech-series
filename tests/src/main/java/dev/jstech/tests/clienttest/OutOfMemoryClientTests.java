@@ -119,7 +119,7 @@ public final class OutOfMemoryClientTests {
                 .thenServer(SETTLE, level -> {
                     final PersonalComputerBlockEntity computer = computer(ctx, level);
                     // Calculators up to a little past what is left beside the counter: the counter holds the most.
-                    final int each = MachineMemory.windowRamMb(CALCULATOR_KEY, computer.installedOs(), spec -> false);
+                    final int each = MachineMemory.windowRamMb(CALCULATOR_KEY, computer.displayEra(), spec -> false);
                     computer.setOpenWindows(calculators(computer.ramLedger().freeMb() / each + 1));
                     computer.weighMemory();
                     ctx.assertTrue(computer.programs().byId(counter[0]) == null, "the counter should be ended");

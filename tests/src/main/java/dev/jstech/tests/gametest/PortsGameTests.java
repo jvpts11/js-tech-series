@@ -10,12 +10,12 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.os.MachineMemory;
-import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.SourceAdvantage;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TerminalAt;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -191,15 +191,16 @@ public final class PortsGameTests {
     @GameTest(template = ARENA)
     public static void builtHere_holdsLessMemoryThanThePackage(final GameTestHelper helper) {
         final MainframeBlockEntity machine = freebsd(helper, WHERE);
-        final OsDef os = machine.installedOs();
+        final HardwareEra era = machine.displayEra();
         final ProgramSpec kde = OsRegistry.getProgram(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
                 "kde_plasma"));
-        helper.assertTrue(os != null && kde != null, "the test machine runs a system and KDE is registered");
-        final int asPackage = kde.ramMbOn(os);
-        helper.assertTrue(kde.ramMbOn(os, true) == SourceAdvantage.of(asPackage) && kde.ramMbOn(os, true) < asPackage,
-                "built here it holds a tenth less; package " + asPackage + ", built " + kde.ramMbOn(os, true));
-        final int window = MachineMemory.windowRamMb("jsc:isms", os, spec -> false);
-        final int builtWindow = MachineMemory.windowRamMb("jsc:isms", os, spec -> true);
+        helper.assertTrue(era != null && kde != null, "the test machine has an era and KDE is registered");
+        final int asPackage = kde.ramMbOn(era);
+        helper.assertTrue(kde.ramMbOn(era, true) == SourceAdvantage.of(asPackage)
+                        && kde.ramMbOn(era, true) < asPackage,
+                "built here it holds a tenth less; package " + asPackage + ", built " + kde.ramMbOn(era, true));
+        final int window = MachineMemory.windowRamMb("jsc:isms", era, spec -> false);
+        final int builtWindow = MachineMemory.windowRamMb("jsc:isms", era, spec -> true);
         helper.assertTrue(builtWindow < window, "and so does its window; " + window + " against " + builtWindow);
         helper.succeed();
     }

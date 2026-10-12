@@ -9,7 +9,6 @@ package dev.jstech.computers.os;
 
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
-import dev.jstech.core.tier.HardwareEra;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -180,36 +179,6 @@ public final class RamLedger {
         }
         final long tenths = bytes * 10L / BYTES_PER_MB;
         return tenths / 10L + "." + tenths % 10L + " MB";
-    }
-
-    /**
-     * The megabytes a program of {@code kind} written in {@code era} holds when it declared no size of its own.
-     * Newer software is heavier: a Vintage tool is a megabyte, a Standard one nearly a hundred. A service is
-     * half of an application of its generation; a desktop environment twice one.
-     */
-    public static int eraWeightMb(final HardwareEra era, final ProgramKind kind) {
-        final int base = switch (era) {
-            case VINTAGE -> 1;
-            case LEGACY -> 16;
-            case TRANSITION -> 48;
-            case STANDARD -> 96;
-            case ADVANCED -> 256;
-            case EXA -> 512;
-            case SINGULARITY -> 1024;
-        };
-        return switch (kind) {
-            case SERVICE, NETWORK_ENGINE -> Math.max(1, base / 2);
-            case DESKTOP_ENVIRONMENT -> base * 2;
-            default -> base;
-        };
-    }
-
-    /**
-     * The megabytes a program bundled with a system holds: a quarter of the system's own share, never less
-     * than one. The same Files is a few megabytes on a nineties system and a couple of hundred on a modern one.
-     */
-    public static int bundledWeightMb(final int systemRamMb) {
-        return Math.max(1, systemRamMb / 4);
     }
 
     /**

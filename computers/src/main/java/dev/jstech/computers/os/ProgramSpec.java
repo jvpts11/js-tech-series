@@ -19,6 +19,7 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 import java.util.Set;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The single descriptor for a program known to the mod: its identity and CLI metadata, the OS platforms
@@ -54,9 +55,8 @@ import org.jetbrains.annotations.ApiStatus;
  *                     banner, never a gate; a 2010s tool can still run on 2000s hardware if minEra allows
  * @param house        who wrote it, or {@link SoftwareHouse#BUNDLED} for a program credited to whichever
  *                     system or desktop ships it
- * @param ramMb        megabytes the program holds while it runs; 0 means "derive it": a bundled program
- *                     weighs a share of the system that ships it, anything else weighs by its generation
- *                     ({@link RamLedger#eraWeightMb})
+ * @param ramMb        megabytes the program holds while it runs on a Legacy machine, grown on later eras
+ *                     ({@link EraMemory}); 0 means what a program of its kind holds ({@link #legacyMb()})
  * @param requires     what it needs of the network's engine, checked when it is opened
  */
 @ApiStatus.Experimental
@@ -117,6 +117,16 @@ public record ProgramSpec(
                    minOsRank, hostScope, iconId, minEra, era, house, needs) -> new ProgramSpec(id, commandName,
             names.getFirst(), names.getSecond(), preinstalled, platforms, minCpuMhz, minVramMb, minDiskMb, kind,
             minOsRank, hostScope, iconId, minEra, era, house, needs.getFirst(), needs.getSecond())));
+
+    /*
+     * What a program that declares no memory holds on a Legacy machine, by what it is: a program installed on top is
+     * the average one (about eight of them and the system fill a typical machine), a tool that ships with the system a
+     * third of that, a service half, and a whole desktop a little more than one program.
+     */
+    private static final int UNDECLARED_APP_MB = 48;
+    private static final int UNDECLARED_BUNDLED_MB = 16;
+    private static final int UNDECLARED_SERVICE_MB = 24;
+    private static final int UNDECLARED_DESKTOP_MB = 64;
 
     /**
      * Compact constructor: fills sensible defaults from the id (command name and display name from the
@@ -235,7 +245,10 @@ public record ProgramSpec(
                 minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, maker, ramMb, requires);
     }
 
-    /** The same program, holding {@code megabytes} of RAM while it runs. */
+    /**
+     * The same program, holding {@code megabytes} of RAM while it runs on a machine of the Legacy era; on the other
+     * eras it holds that much more or less, as {@link EraMemory} says.
+     */
     public ProgramSpec withRam(final int megabytes) {
         return new ProgramSpec(id, commandName, displayName, description, preinstalled, platforms, minCpuMhz,
                 minVramMb, minDiskMb, kind, minOsRank, hostScope, iconId, minEra, era, house, megabytes, requires);
@@ -252,23 +265,32 @@ public record ProgramSpec(
     }
 
     /**
-     * The megabytes this program holds while it runs under {@code system}: its declared size, else a share of
-     * the system's own when it ships with the system, else the weight of its generation. A bundled Files is
-     * a few megabytes on a nineties system and far more on a modern one; an installed tool weighs what it is.
+     * The megabytes this program holds on a machine of the Legacy era: what it declared, or for one that declared
+     * nothing what a program of its kind holds, a tool that ships with the system less than one installed on top.
      */
-    public int ramMbOn(final OsDef system) {
-        if (preinstalled) {
-            return RamLedger.bundledWeightMb(system.ramMb());
-        }
+    public int legacyMb() {
         if (ramMb > 0) {
             return ramMb;
         }
-        return RamLedger.eraWeightMb(era, kind);
+        return switch (kind) {
+            case SERVICE, NETWORK_ENGINE -> UNDECLARED_SERVICE_MB;
+            case DESKTOP_ENVIRONMENT -> UNDECLARED_DESKTOP_MB;
+            default -> preinstalled ? UNDECLARED_BUNDLED_MB : UNDECLARED_APP_MB;
+        };
+    }
+
+    /**
+     * The megabytes this program holds while it runs on a machine of {@code era}: what it holds on a Legacy machine,
+     * grown or shrunk by how much more memory that era's machines have. The same Files is a few megabytes on a
+     * Vintage machine and gigabytes on an Advanced one, whichever system it ships with.
+     */
+    public int ramMbOn(@Nullable final HardwareEra era) {
+        return EraMemory.scaled(legacyMb(), era);
     }
 
     /** The same, for a copy the machine may have built from source, which holds a little less (SourceAdvantage). */
-    public int ramMbOn(final OsDef system, final boolean builtHere) {
-        return SourceAdvantage.of(this.ramMbOn(system), builtHere);
+    public int ramMbOn(@Nullable final HardwareEra era, final boolean builtHere) {
+        return SourceAdvantage.of(this.ramMbOn(era), builtHere);
     }
 
     /** Who to credit where the program is shown: its own house, or {@code shipper} when it is bundled. */

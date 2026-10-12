@@ -39,6 +39,7 @@ import dev.jstech.core.motion.MotionKinds;
 import dev.jstech.core.motion.MotionScope;
 import dev.jstech.core.motion.Rhythm;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -186,13 +187,13 @@ final class DesktopState {
 
     DesktopState(final DesktopSurface surface, final BlockPos host, final BlockPos monitorPos,
                  final ResourceLocation osId, final ResourceLocation desktopId, final int ramTotalMb,
-                 final int ramReservedMb) {
+                 final int ramReservedMb, @Nullable final HardwareEra era) {
         this.surface = surface;
         this.host = host;
         this.monitorPos = monitorPos;
         this.osId = osId;
         this.desktopId = desktopId;
-        this.memory = new DesktopMemory(this, osId, windows, ramTotalMb, ramReservedMb);
+        this.memory = new DesktopMemory(this, osId, era, windows, ramTotalMb, ramReservedMb);
         this.layouts = new WindowLayouts(this, host);
         this.opener = new ProgramOpener(this, host, monitorPos, desktopId);
         this.chrome = OsRegistry.getDesktop(desktopId);
