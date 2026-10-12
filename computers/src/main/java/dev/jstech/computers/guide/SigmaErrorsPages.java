@@ -205,11 +205,12 @@ final class SigmaErrorsPages {
                         GuideCell.words("There are too many blocks inside blocks. Split the deep part into smaller"
                                 + " parts."))
                 .row(GuideCell.code("S2014"),
-                        GuideCell.words("the language has no <feature>; <alternative>"),
-                        GuideCell.words("The file writes try, catch, throw, goto or const as C# does, and neither"
-                                + " Sigma nor Sigma# has them. Use the alternative the message names: there are no"
-                                + " exceptions, so a mistake halts the program and a call that can fail answers"
-                                + " instead."))
+                        GuideCell.words("'<word>' is kept for a later version of the language; for now,"
+                                + " <alternative>"),
+                        GuideCell.words("The file writes try, catch, finally, throw, goto or const. A later version"
+                                + " of the language brings them, so they are kept already, and no name can be one"
+                                + " of them. Until then, write what the message says: there are no exceptions, so"
+                                + " a mistake halts the program and a call that can fail answers instead."))
                 .ifSomethingGoesWrong("It says \"expected ';' but found '}'\".",
                         "The line before the brace does not end with a semicolon. Add the semicolon at its end.",
                         "It says \"only a call, an assignment, an increment, a decrement or a new object can be used"
@@ -255,6 +256,12 @@ final class SigmaErrorsPages {
                                 + " of it"),
                         GuideCell.words("Two types each name the other as their base, in a circle. Remove the base"
                                 + " that closes the circle."))
+                .row(GuideCell.code("S3060"),
+                        GuideCell.words("'<name>' is <private or protected> to '<type>', so it cannot be reached"
+                                + " from here"),
+                        GuideCell.words("The member is private to its type, which is what a member written with no"
+                                + " word of access is, or protected to it and the types that stand on it. Mark it"
+                                + " public, or reach it from inside its type."))
                 .row(GuideCell.code("S3031"),
                         GuideCell.words("only a class or an interface can stand behind the colon, and '<name>' is"
                                 + " neither"),

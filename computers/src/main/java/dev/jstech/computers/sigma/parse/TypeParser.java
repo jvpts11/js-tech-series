@@ -109,7 +109,9 @@ final class TypeParser {
     /** Whether a type is written at the cursor and a name follows it: what a declaration or a typed parameter is. */
     boolean typedNameAhead() {
         final int after = this.scanType(this.cursor.at());
-        return after > this.cursor.at() && this.cursor.kindAt(after) == TokenKind.IDENTIFIER;
+        // A word kept for a later version where the name goes is still a declaration, refused at that word.
+        return after > this.cursor.at() && (this.cursor.kindAt(after) == TokenKind.IDENTIFIER
+                || LanguageGaps.reserved(this.cursor.kindAt(after)));
     }
 
     /*

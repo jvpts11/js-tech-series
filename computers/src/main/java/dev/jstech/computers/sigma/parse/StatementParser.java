@@ -39,7 +39,7 @@ final class StatementParser {
         this.diagnostics = diagnostics;
         this.types = types;
         this.expressions = expressions;
-        this.gaps = new LanguageGaps(cursor, diagnostics, types);
+        this.gaps = new LanguageGaps(cursor, diagnostics);
     }
 
     IStmt.Block parseBlock() {
@@ -109,7 +109,7 @@ final class StatementParser {
             case LOCK:
                 return this.parseLock();
             default:
-                // A try, a throw or a goto as C# writes them is reported and passed over; a const, then declared.
+                // A try, a catch, a throw or a goto is reported and passed over; a const, and its variable declared.
                 if (this.gaps.passesStatement(this)) {
                     return null;
                 }

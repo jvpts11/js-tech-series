@@ -8,6 +8,7 @@
 package dev.jstech.computers.sigma.sem;
 
 import dev.jstech.computers.sigma.SigmaError;
+import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.INode;
 import java.util.ArrayList;
@@ -67,11 +68,23 @@ final class CallChecker {
     void callConstructor(final NamedType named, final ITypeSymbol type, final List<IExpr> arguments,
                          final INode at) {
         final List<IMemberSymbol.MethodSymbol> candidates = new ArrayList<>();
+        boolean hidden = false;
         for (final IMemberSymbol member : named.members()) {
             if (member instanceof IMemberSymbol.ConstructorSymbol constructor) {
-                candidates.add(new IMemberSymbol.MethodSymbol(named, named.name(), type,
-                        constructor.parameters(), constructor.modifiers()));
+                if (this.members.visible(constructor)) {
+                    candidates.add(new IMemberSymbol.MethodSymbol(named, named.name(), type,
+                            constructor.parameters(), constructor.modifiers()));
+                } else {
+                    hidden = true;
+                }
             }
+        }
+        if (candidates.isEmpty() && hidden) {
+            // Every constructor is private or protected to the type, so it cannot be made from here.
+            this.checkArguments(arguments);
+            this.scope.report(at.line(), at.column(), SigmaError.NOT_ACCESSIBLE, named.name(),
+                    IDecl.Modifier.PRIVATE.text(), named.name());
+            return;
         }
         if (candidates.isEmpty()) {
             this.checkArguments(arguments);
@@ -161,8 +174,11 @@ final class CallChecker {
     }
 
     private ITypeSymbol callMembers(final IExpr.Call call, final IExpr callee, final ITypeSymbol receiver,
-                                    final List<IMemberSymbol> found, final String name,
+                                    final List<IMemberSymbol> all, final String name,
                                     final BodyScope.Access access) {
+        // Only the overloads that can be reached from here are chosen among, as C# chooses.
+        final List<IMemberSymbol> reachable = all.stream().filter(this.members::visible).toList();
+        final List<IMemberSymbol> found = reachable.isEmpty() ? all : reachable;
         if (!this.members.checkAccess(callee, found.getFirst(), access)) {
             this.checkArguments(call.arguments());
             return ITypeSymbol.Special.ERROR;

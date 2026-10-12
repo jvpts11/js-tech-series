@@ -163,7 +163,10 @@ they gained, the rest of `printf`'s holes, `int Main` and `Main(string[] args)`,
 `Standard`, and the widgets of `System.UI` listed below as the second version's, `GenericComponent` and
 `ComponentAction` among them. A version only ever adds: whatever
 version 1 takes, version 2 takes too and compiles to the same listing, so a newer compiler never breaks an
-older program.
+older program. The one exception came with version 2 itself, before it shipped: the words of access hold as
+C# holds them, and `try`, `catch`, `finally`, `throw`, `goto` and `const` are kept for a later version. A
+version 1 program that reached a member written with no word of access, or named something with one of those
+words, needs `public` on the member or another name.
 
 The version a machine builds is its compiler's. The package `sgsc` 2.0 is Σ# 2 and `scc` 2.0 is Σ 2, and a
 machine whose compiler is older builds the older version until an upgrade brings it up: `pckmgr upgrade`, the
@@ -234,14 +237,16 @@ reasons answer instead of halting: `File.Write` returns false on a full disk, `C
 whether the text was a number. A whole number divided by zero halts too, while the smallest `int`
 divided by -1 comes round to itself rather than halting.
 
-Written as C# writes them, `try`, `catch`, `throw`, `goto` and `const` are refused with what to write
-instead (S2014); they are not words of the language, so a program may still use them as names.
+`try`, `catch`, `finally`, `throw`, `goto` and `const` are kept for a later version of the language,
+which brings them. They are reserved already, so none of them can be a name, and a program that writes
+one is told what to write until then (S2014).
 
 ## Access and shifts
 
-`public`, `private`, `protected` and `internal` are read as in C#, but the compiler does not hold one
-class back from another's members: every member of a program can be reached from all of it. They are
-written for whoever reads the code.
+`public`, `private`, `protected` and `internal` hold as in C#. A public or an internal member is
+reached from anywhere in the program; a private one only from inside its own type and the types nested
+in it, and a member written with no word of access is private; a protected one from its own type and
+the types that stand on it. Reaching one from where its word does not let you is S3060.
 
 A shift is of the kind of its left side, and takes only the low bits of its count, as C# does: five
 for an `int` and six for a `long`. `1 << 32` is 1 and `1 << 33` is 2.

@@ -79,7 +79,7 @@
         ],
         [
           {
-            "literal": "S3031"
+            "literal": "S3060"
           },
           {
             "words": "jsc.guide.sigma_semantic_errors.table1_6_2"
@@ -90,7 +90,7 @@
         ],
         [
           {
-            "literal": "S3041"
+            "literal": "S3031"
           },
           {
             "words": "jsc.guide.sigma_semantic_errors.table1_7_2"
@@ -101,7 +101,7 @@
         ],
         [
           {
-            "literal": "S3015"
+            "literal": "S3041"
           },
           {
             "words": "jsc.guide.sigma_semantic_errors.table1_8_2"
@@ -112,7 +112,7 @@
         ],
         [
           {
-            "literal": "S3057"
+            "literal": "S3015"
           },
           {
             "words": "jsc.guide.sigma_semantic_errors.table1_9_2"
@@ -123,13 +123,24 @@
         ],
         [
           {
-            "literal": "S3028"
+            "literal": "S3057"
           },
           {
             "words": "jsc.guide.sigma_semantic_errors.table1_10_2"
           },
           {
             "words": "jsc.guide.sigma_semantic_errors.table1_10_3"
+          }
+        ],
+        [
+          {
+            "literal": "S3028"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_11_2"
+          },
+          {
+            "words": "jsc.guide.sigma_semantic_errors.table1_11_3"
           }
         ]
       ]

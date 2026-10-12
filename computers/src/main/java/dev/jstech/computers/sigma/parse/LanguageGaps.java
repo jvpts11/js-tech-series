@@ -14,23 +14,24 @@ import dev.jstech.computers.sigma.lex.TokenKind;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.EnumSet;
+import java.util.Set;
 
 /**
- * What C# has and the language has not, said for what it is when a program writes it as C# does.
+ * The words C# has that a later version of the language brings: try, catch, finally, throw, goto and const.
  *
- * <p>try, throw, goto and const are not words of the language, so a program may still use them as names. Written
- * the way C# writes them, though, they read as names and fail with a message about something else entirely. These
- * shapes cannot be names at work, so they are told apart by what follows the word, and each refusal says what to
- * write instead, as the smaller language's refusals do.
+ * <p>They are reserved now, so no program takes them as names, and a program that writes them is told so at the word,
+ * with what to write until then, rather than failing on whatever the parser makes of them. Each statement they begin
+ * is passed over whole, so the rest of the method is still read.
  */
 @TextHolder
 final class LanguageGaps {
 
     private final TokenCursor cursor;
     private final DiagnosticBag diagnostics;
-    private final TypeParser types;
 
-    private static final TextKey EXCEPTIONS = TextKey.of("jsc.sigma.language_gaps.exceptions", "exceptions");
+    private static final Set<TokenKind> LATER = EnumSet.of(TokenKind.TRY, TokenKind.CATCH, TokenKind.FINALLY,
+            TokenKind.THROW, TokenKind.GOTO, TokenKind.CONST);
     private static final TextKey EXCEPTIONS_INSTEAD = TextKey.of("jsc.sigma.language_gaps.exceptions_instead",
             "a mistake halts the program, and a call that can fail answers instead");
     private static final TextKey GOTO_INSTEAD = TextKey.of("jsc.sigma.language_gaps.goto_instead",
@@ -39,31 +40,43 @@ final class LanguageGaps {
             "write a plain variable");
     private static final TextKey CONST_FIELD_INSTEAD = TextKey.of("jsc.sigma.language_gaps.const_field_instead",
             "write a static readonly field");
+    private static final TextKey NAME_INSTEAD = TextKey.of("jsc.sigma.language_gaps.name_instead",
+            "give the name another word");
 
-    LanguageGaps(final TokenCursor cursor, final DiagnosticBag diagnostics, final TypeParser types) {
+    LanguageGaps(final TokenCursor cursor, final DiagnosticBag diagnostics) {
         this.cursor = cursor;
         this.diagnostics = diagnostics;
-        this.types = types;
+    }
+
+    /** Whether the word is reserved for the later version, and so no name. */
+    static boolean reserved(final TokenKind kind) {
+        return LATER.contains(kind);
+    }
+
+    /** Reports a reserved word written where a name goes. */
+    static void refuseAsName(final DiagnosticBag diagnostics, final Token word) {
+        refuse(diagnostics, word, NAME_INSTEAD);
     }
 
     /** Whether the word being read is a const before a declaration, which it then reports and passes over. */
     boolean passesConst(final boolean member) {
-        if (!this.wordIs("const") || !this.types.isTypeStart(this.cursor.kindAhead(1))) {
+        if (!this.cursor.check(TokenKind.CONST)) {
             return false;
         }
-        this.refuse(this.cursor.advance(), Text.literal("const"), member ? CONST_FIELD_INSTEAD : CONST_INSTEAD);
+        refuse(this.diagnostics, this.cursor.advance(), member ? CONST_FIELD_INSTEAD : CONST_INSTEAD);
         return true;
     }
 
     /**
-     * Whether the statement being read is a try, a throw or a goto as C# writes it, which it then reports and passes
-     * over whole, so the rest of the method is still read.
+     * Whether the statement being read begins with a try, a catch, a finally, a throw or a goto, which it then reports
+     * and passes over whole, blocks and all.
      */
     boolean passesStatement(final StatementParser statements) {
-        if ((this.wordIs("try") || this.wordIs("finally")) && this.cursor.kindAhead(1) == TokenKind.LEFT_BRACE) {
-            this.refuse(this.cursor.advance(), EXCEPTIONS.text(), EXCEPTIONS_INSTEAD);
-            statements.parseBlock();
-            while (this.wordIs("catch") || this.wordIs("finally")) {
+        final TokenKind kind = this.cursor.peek().kind();
+        if (kind == TokenKind.TRY || kind == TokenKind.CATCH || kind == TokenKind.FINALLY) {
+            refuse(this.diagnostics, this.cursor.peek(), EXCEPTIONS_INSTEAD);
+            while (this.cursor.check(TokenKind.TRY) || this.cursor.check(TokenKind.CATCH)
+                    || this.cursor.check(TokenKind.FINALLY)) {
                 this.cursor.advance();
                 if (this.cursor.check(TokenKind.LEFT_PAREN)) {
                     this.skipPast(TokenKind.RIGHT_PAREN);
@@ -74,32 +87,18 @@ final class LanguageGaps {
             }
             return true;
         }
-        if (this.wordIs("throw") && this.ends(TokenKind.NEW, TokenKind.SEMICOLON)) {
-            this.refuse(this.cursor.advance(), EXCEPTIONS.text(), EXCEPTIONS_INSTEAD);
-            this.skipPast(TokenKind.SEMICOLON);
-            return true;
-        }
-        if (this.wordIs("goto") && this.ends(TokenKind.CASE, TokenKind.DEFAULT)) {
-            this.refuse(this.cursor.advance(), Text.literal("goto"), GOTO_INSTEAD);
+        if (kind == TokenKind.THROW || kind == TokenKind.GOTO) {
+            refuse(this.diagnostics, this.cursor.advance(), kind == TokenKind.THROW ? EXCEPTIONS_INSTEAD
+                    : GOTO_INSTEAD);
             this.skipPast(TokenKind.SEMICOLON);
             return true;
         }
         return false;
     }
 
-    private boolean wordIs(final String word) {
-        final Token token = this.cursor.peek();
-        return token.kind() == TokenKind.IDENTIFIER && word.equals(token.text());
-    }
-
-    /*
-     * Whether what follows the word can only be the C# statement: one of these words, or a name and then the end of
-     * the statement, as in throw failure; or goto again;, which as a declaration would name a type no program has.
-     */
-    private boolean ends(final TokenKind first, final TokenKind second) {
-        final TokenKind next = this.cursor.kindAhead(1);
-        return next == first || next == second
-                || next == TokenKind.IDENTIFIER && this.cursor.kindAhead(2) == TokenKind.SEMICOLON;
+    private static void refuse(final DiagnosticBag diagnostics, final Token at, final TextKey instead) {
+        diagnostics.error(at.line(), at.column(), SigmaError.NOT_IN_THE_LANGUAGE, Text.literal(at.text()),
+                instead.text());
     }
 
     /*
@@ -123,9 +122,5 @@ final class LanguageGaps {
                 return;
             }
         }
-    }
-
-    private void refuse(final Token at, final Text what, final TextKey instead) {
-        this.diagnostics.error(at.line(), at.column(), SigmaError.NOT_IN_THE_LANGUAGE, what, instead.text());
     }
 }

@@ -1967,10 +1967,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   in silence, and the manual's table of parts that stay out was the only place to look.
 - A shift in Σ and Σ# takes only the low bits of its count, as C# does, five for an int and six for a long, and is
   of the kind of its left side: 1 << 32 was 0, and an int shifted by a long count came out a long.
-- try, catch, throw, goto and const written as C# writes them are refused with what to write instead (S2014),
-  rather than failing as names with a message about something else; they still work as names. internal is taken
-  as the other words of access are. The Book of Σ and the description of Σ# say that the words of access are read
-  but not enforced, and how shifts work.
+- try, catch, finally, throw, goto and const are kept for a later version of Σ and Σ#: written as C# writes them,
+  or as a name, each is refused at the word with what to write until then (S2014), where it failed with a message
+  about something else.
+- The words of access hold in Σ and Σ# as in C#: a private member, which is what a member with no word is, is
+  reached only from its own type and the types nested in it, a protected one also from the types built on it, and
+  reaching one from anywhere else is the error S3060. They were read and ignored. internal is taken as public is.
+  The Book of Σ and the description of Σ# say so, and how shifts work.
 - A room of many monitors draws each one's picture in turn: past a few, the same pictures were drawn every frame and
   the rest never, staying dark; and past eight in sight, a monitor's face was built anew at every picture, asking its
   machine again each time.

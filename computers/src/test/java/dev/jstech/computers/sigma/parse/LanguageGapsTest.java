@@ -17,8 +17,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * What C# has and the language has not, written as C# writes it, is told for what it is; the same words used as
- * names stay names.
+ * The words C# has that a later version of the language brings, try, catch, finally, throw, goto and const, are
+ * reserved now: wherever one is written, the program is told so at the word, with what to write until then.
  */
 class LanguageGapsTest {
 
@@ -63,10 +63,12 @@ class LanguageGapsTest {
                 codes("class Box { public const int Most = 5; } class M { static void Main() { } }"));
     }
 
-    /** The words are not the language's own, so they still name things where C# would not have them. */
+    /** The words are kept for the later version that brings them, so no program takes one as a name. */
     @Test
-    void theWords_stayNamesElsewhere() {
-        assertEquals(List.of(), codes(inMain("int try = 1; try = try + 1; int goto = try; int const = goto;")));
+    void theWords_areNoNames() {
+        assertEquals(List.of(NOT_IN_THE_LANGUAGE), codes(inMain("int try = 1;")));
+        assertEquals(List.of(NOT_IN_THE_LANGUAGE), codes("class Box { public int goto; } "
+                + "class M { static void Main() { } }"));
     }
 
     /** C#'s internal is taken as the other words of access are, before a type and before a member. */

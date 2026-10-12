@@ -61,13 +61,16 @@ final class SigmaLanguagePages {
                         GuideCell.code("namespace using class interface enum struct record delegate event"))
                 .row(GuideCell.words("Modifiers and actions"),
                         GuideCell.code("new dispose this base static virtual override abstract public private"
-                                + " protected readonly"))
+                                + " protected internal readonly"))
                 .row(GuideCell.words("Statements"),
                         GuideCell.code("if else while for foreach do switch case default break continue return"
                                 + " lock in out"))
                 .row(GuideCell.words("Values and tests"), GuideCell.code("true false null is as"))
+                .row(GuideCell.words("Kept for a later version"), GuideCell.code("try catch finally throw goto const"))
                 .paragraph("Sigma refuses some of these words, even though the language knows them. The table"
-                        + " \"What Sigma has, and what Sigma# adds\" shows which features each language has.")
+                        + " \"What Sigma has, and what Sigma# adds\" shows which features each language has. The"
+                        + " words kept for a later version are refused in both languages until that version brings"
+                        + " them, and none of them can be a name.")
                 .paragraph("A literal is a value written out in the program, such as the number 42, the number 0.5,"
                         + " true, or a text in double quotes. Each literal has a type, and the table shows which one."
                         + " Numbers are written in plain decimal digits. A number with an exponent, such as 1e5, or"
@@ -516,11 +519,15 @@ final class SigmaLanguagePages {
                 .paragraph("You reach a member with a dot. An object's member is written with the object's name, as"
                         + " till.Total(). A static member is written with the type's name, as Level.Mid for an enum"
                         + " value. The keyword this means the current object, and base means the base class. A field"
-                        + " marked readonly can be written only where it is declared or in a constructor. There is no"
-                        + " const keyword.")
-                .paragraph("The words public, private, protected and internal say who a member is meant for, as in"
-                        + " C#. The compiler reads them but does not hold one class back from another's members: every"
-                        + " member of a program can be reached from all of it. Write them for whoever reads the code.")
+                        + " marked readonly can be written only where it is declared or in a constructor. The word"
+                        + " const is kept for a later version of the language: for now, write a static readonly"
+                        + " field.")
+                .paragraph("The words public, private, protected and internal say who may reach a member, as in C#."
+                        + " A public or an internal member is reached from anywhere in the program. A private one is"
+                        + " reached only from inside its own type and the types nested in it, and a member written"
+                        + " with no word of access is private. A protected one is reached from its own type and from"
+                        + " the types that stand on it. Reaching a member from where its word does not let you is the"
+                        + " error S3060.")
                 .paragraph("Sigma# has interfaces, records and delegates as well, which are explained in"
                         + " [Interfaces and records](jsc:sigma_interfaces_records) and"
                         + " [Properties, events, delegates and lambdas](jsc:sigma_delegates_events).")

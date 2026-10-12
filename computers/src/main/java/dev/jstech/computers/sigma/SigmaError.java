@@ -56,7 +56,8 @@ public enum SigmaError {
     NESTING_TOO_DEEP(TextKey.of("jsc.sigma.error.s2013",
             "this is nested more than %s levels deep, which is more than the compiler reads; the rest of the file"
                     + " was not read")),
-    NOT_IN_THE_LANGUAGE(TextKey.of("jsc.sigma.error.s2014", "the language has no %s; %s")),
+    NOT_IN_THE_LANGUAGE(TextKey.of("jsc.sigma.error.s2014",
+            "'%s' is kept for a later version of the language; for now, %s")),
 
     UNKNOWN_NAME(TextKey.of("jsc.sigma.error.s3001", "'%s' does not name anything here")),
     DUPLICATE_DECLARATION(TextKey.of("jsc.sigma.error.s3002", "'%s' is already declared here")),
@@ -141,6 +142,7 @@ public enum SigmaError {
             "'ref' is written only for strcat, which joins onto the text '%s' holds; a method fills in with out")),
     CIRCULAR_BASE(TextKey.of("jsc.sigma.error.s3059",
             "'%s' already stands behind '%s', so it cannot also stand in front of it")),
+    NOT_ACCESSIBLE(TextKey.of("jsc.sigma.error.s3060", "'%s' is %s to '%s', so it cannot be reached from here")),
 
     // A4001 to A4010 are the listing's own problems, reported by reading one back (ListingError).
     NOT_YET_BUILT(TextKey.of("jsc.sigma.error.s4011", "%s is not built yet")),

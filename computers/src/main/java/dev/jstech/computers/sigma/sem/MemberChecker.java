@@ -8,9 +8,11 @@
 package dev.jstech.computers.sigma.sem;
 
 import dev.jstech.computers.sigma.SigmaError;
+import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.INode;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Reaching something that belongs to a type, and deciding whether it may be reached that way.
@@ -121,6 +123,11 @@ final class MemberChecker {
     }
 
     boolean checkAccess(final IExpr expression, final IMemberSymbol member, final BodyScope.Access access) {
+        if (!this.visible(member)) {
+            this.scope.report(expression.line(), expression.column(), SigmaError.NOT_ACCESSIBLE, member.name(),
+                    accessWord(member), member.owner().name());
+            return false;
+        }
         switch (access) {
             case TYPE:
                 if (!member.isStatic()) {
@@ -144,6 +151,29 @@ final class MemberChecker {
                 }
                 return true;
         }
+    }
+
+    /**
+     * Whether the code being checked may reach {@code member}, as C# decides it. A public or an internal member is
+     * reached from anywhere in the program; a private one, which is what a member written with no word of access is,
+     * only from inside the type that declares it and the types nested in it; a protected one from there and from the
+     * types that stand on it. The library's members, an interface's and an enum's are public.
+     */
+    boolean visible(final IMemberSymbol member) {
+        final NamedType owner = member.owner();
+        final Set<IDecl.Modifier> words = member.modifiers();
+        if (owner == null || owner.isBuiltIn() || owner.kind() == NamedType.Kind.INTERFACE
+                || owner.kind() == NamedType.Kind.ENUM || words.contains(IDecl.Modifier.PUBLIC)
+                || words.contains(IDecl.Modifier.INTERNAL)) {
+            return true;
+        }
+        // The type being checked and the types it is nested in all see what each of them sees.
+        for (NamedType from = this.scope.currentType(); from != null; from = this.scope.declarations().outerOf(from)) {
+            if (from == owner || words.contains(IDecl.Modifier.PROTECTED) && from.isOrDescendsFrom(owner)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /*
@@ -193,6 +223,12 @@ final class MemberChecker {
             }
             default -> null;
         };
+    }
+
+    /* The word of access that keeps a member from where it was reached, as the program wrote it or as it falls. */
+    private static String accessWord(final IMemberSymbol member) {
+        return member.modifiers().contains(IDecl.Modifier.PROTECTED) ? IDecl.Modifier.PROTECTED.text()
+                : IDecl.Modifier.PRIVATE.text();
     }
 
     private ITypeSymbol methodGroupType(final IExpr expression, final ITypeSymbol receiver,

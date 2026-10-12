@@ -41,7 +41,7 @@
             "words": "jsc.guide.sigma_comments_names_literals.table1_3_1"
           },
           {
-            "literal": "new dispose this base static virtual override abstract public private protected readonly"
+            "literal": "new dispose this base static virtual override abstract public private protected internal readonly"
           }
         ],
         [
@@ -58,6 +58,14 @@
           },
           {
             "literal": "true false null is as"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table1_6_1"
+          },
+          {
+            "literal": "try catch finally throw goto const"
           }
         ]
       ]

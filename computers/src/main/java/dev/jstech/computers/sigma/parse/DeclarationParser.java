@@ -48,6 +48,7 @@ final class DeclarationParser {
             TokenKind.PUBLIC, IDecl.Modifier.PUBLIC,
             TokenKind.PRIVATE, IDecl.Modifier.PRIVATE,
             TokenKind.PROTECTED, IDecl.Modifier.PROTECTED,
+            TokenKind.INTERNAL, IDecl.Modifier.INTERNAL,
             TokenKind.STATIC, IDecl.Modifier.STATIC,
             TokenKind.READONLY, IDecl.Modifier.READONLY,
             TokenKind.VIRTUAL, IDecl.Modifier.VIRTUAL,
@@ -65,7 +66,7 @@ final class DeclarationParser {
         this.types = types;
         this.statements = statements;
         this.expressions = expressions;
-        this.gaps = new LanguageGaps(cursor, diagnostics, types);
+        this.gaps = new LanguageGaps(cursor, diagnostics);
     }
 
     IDecl.ITypeDecl parseTypeDeclaration() {
@@ -490,29 +491,15 @@ final class DeclarationParser {
 
     private Set<IDecl.Modifier> parseModifiers() {
         final Set<IDecl.Modifier> modifiers = EnumSet.noneOf(IDecl.Modifier.class);
-        while (MODIFIERS.containsKey(this.cursor.peek().kind()) || this.internalAhead()) {
+        while (MODIFIERS.containsKey(this.cursor.peek().kind())) {
             final Token word = this.cursor.advance();
-            final IDecl.Modifier modifier = MODIFIERS.getOrDefault(word.kind(), IDecl.Modifier.INTERNAL);
+            final IDecl.Modifier modifier = MODIFIERS.get(word.kind());
             if (!modifiers.add(modifier)) {
                 this.diagnostics.error(word.line(), word.column(),
                         SigmaError.DUPLICATE_MODIFIER, modifier.text());
             }
         }
         return modifiers;
-    }
-
-    /*
-     * C#'s internal, taken as the other words of access are. It is not a word of the language, so it is read as one
-     * only where a declaration goes on after it, and stays a name anywhere else.
-     */
-    private boolean internalAhead() {
-        final Token word = this.cursor.peek();
-        if (word.kind() != TokenKind.IDENTIFIER || !"internal".equals(word.text())) {
-            return false;
-        }
-        final TokenKind next = this.cursor.kindAhead(1);
-        return next == TokenKind.IDENTIFIER || next == TokenKind.VOID || this.types.isBuiltIn(next)
-                || MODIFIERS.containsKey(next) || TYPE_DECLARATION_STARTS.contains(next);
     }
 
     private List<IDecl.Parameter> parseParameters() {

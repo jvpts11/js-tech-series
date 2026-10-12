@@ -165,6 +165,11 @@ final class TokenCursor {
             return this.advance().text();
         }
         final Token found = this.peek();
+        // A word kept for a later version, written as a name: said for what it is, and read as the name meant.
+        if (LanguageGaps.reserved(found.kind())) {
+            LanguageGaps.refuseAsName(this.diagnostics, found);
+            return this.advance().text();
+        }
         if (!this.refused) {
             this.diagnostics.error(found.line(), found.column(),
                     SigmaError.EXPECTED_TOKEN, TokenKind.IDENTIFIER.describe(), found.describe());
