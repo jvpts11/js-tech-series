@@ -309,6 +309,22 @@ public final class MonitorClientTests {
         fromTheSide(ctx, "apart-");
     }
 
+    /** The same with two Advanced panels, one on the other, which join into one screen of their machine. */
+    @ClientTest(timeoutTicks = 2400)
+    public static void faces_stayLitSeenFromTheSideOnAdvancedPanels(final ClientTestContext ctx) {
+        final PersonalComputerBlockEntity[] pc = new PersonalComputerBlockEntity[1];
+        ctx.thenBuild(0, world -> {
+                    pc[0] = world.placeRunningPersonalComputer(COMPUTER);
+                    world.placeMonitor(SCREEN, Direction.WEST, ComputingModule.COLOR_MONITOR.get());
+                    world.placeMonitor(SCREEN.above(), Direction.WEST, ComputingModule.COLOR_MONITOR.get());
+                })
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .thenWaitUntilServer(level -> !pc[0].needsPost() && !pc[0].booting(), BOOT_WAIT,
+                        "the machine to come up", level -> "still starting")
+                .thenScreenshot(LIGHT_WAIT / 4, "advanced-0-front");
+        fromTheSide(ctx, "advanced-");
+    }
+
     /** The same with two picture tubes of two machines, one on the other, whose glass sits back in its bezel. */
     @ClientTest(timeoutTicks = 2400)
     public static void faces_stayLitSeenFromTheSideOnPictureTubes(final ClientTestContext ctx) {
