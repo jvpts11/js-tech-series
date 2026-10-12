@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.registry.ComputingComponents;
@@ -75,14 +76,32 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         return built(kit.server(), kit.serverBoard());
     }
 
-    /** {@code server}, built on {@code board} with the processor, memory and supply that go with it. */
-    public static ItemStack built(final Item server, final Item board) {
+    /**
+     * The era's storage server, built on the era's server board with its Vaultis Array, and with a graphics card
+     * beside it when the board has no video of its own (the Legacy's), so a monitor can show its firmware.
+     */
+    public static ItemStack storageServer(final EraKit kit) {
+        final Item board = kit.serverBoard();
+        if (EraParts.board(board).formFactor() == FormFactor.EEB) {
+            return built(kit.storageServer(), board, kit.array());
+        }
+        return built(kit.storageServer(), board, kit.array(), EraParts.cardFor(board, GpuItem.class));
+    }
+
+    /**
+     * {@code server}, built on {@code board} with the processor, memory and supply that go with it, and
+     * {@code cards} in its expansion slots from the first on.
+     */
+    public static ItemStack built(final Item server, final Item board, final Item... cards) {
         final ItemStack stack = new ItemStack(server);
         final NonNullList<ItemStack> hardware = NonNullList.withSize(ServerHardwareHandler.SLOTS, ItemStack.EMPTY);
         hardware.set(ServerHardwareHandler.MOBO, new ItemStack(board));
         hardware.set(ServerHardwareHandler.CPU_START, new ItemStack(EraParts.cpuFor(board)));
         hardware.set(ServerHardwareHandler.RAM_START, new ItemStack(EraParts.ramFor(board)));
         hardware.set(ServerHardwareHandler.PSU, new ItemStack(EraParts.psuFor(EraParts.board(board).era())));
+        for (int card = 0; card < cards.length; card++) {
+            hardware.set(ServerHardwareHandler.GPU_START + card, new ItemStack(cards[card]));
+        }
         stack.set(ComputingComponents.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(hardware));
         return stack;
     }

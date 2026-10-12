@@ -173,4 +173,48 @@ public enum EraKit {
     public ResourceLocation desktopOs() {
         return desktopOs;
     }
+
+    /** The era's 2U storage server. */
+    public Item storageServer() {
+        return switch (this) {
+            case VINTAGE -> ComputingModule.VINTAGE_STORAGE_SERVER.get();
+            case LEGACY -> ComputingModule.LEGACY_STORAGE_SERVER.get();
+            case TRANSITION -> ComputingModule.TRANSITION_STORAGE_SERVER.get();
+            case STANDARD -> ComputingModule.STORAGE_SERVER.get();
+            case ADVANCED -> ComputingModule.ADVANCED_STORAGE_SERVER.get();
+        };
+    }
+
+    /** The era's 2U compute server. */
+    public Item computeServer() {
+        return switch (this) {
+            case VINTAGE -> ComputingModule.VINTAGE_COMPUTE_SERVER.get();
+            case LEGACY -> ComputingModule.LEGACY_COMPUTE_SERVER.get();
+            case TRANSITION -> ComputingModule.TRANSITION_COMPUTE_SERVER.get();
+            case STANDARD -> ComputingModule.COMPUTE_SERVER.get();
+            case ADVANCED -> ComputingModule.ADVANCED_COMPUTE_SERVER.get();
+        };
+    }
+
+    /** The Vaultis Array of the era's slot: the RAID controller card. */
+    public Item array() {
+        return switch (this) {
+            case VINTAGE -> ComputingModule.VAULTIS_ARRAY_ISA.get();
+            case LEGACY -> ComputingModule.VAULTIS_ARRAY_PCI.get();
+            case TRANSITION -> ComputingModule.VAULTIS_ARRAY_PCIE2.get();
+            case STANDARD -> ComputingModule.VAULTIS_ARRAY_PCIE3.get();
+            case ADVANCED -> ComputingModule.VAULTIS_ARRAY_PCIE4.get();
+        };
+    }
+
+    /** The Vaultis Cache of the era's slot: the read cache card. */
+    public Item cache() {
+        return switch (this) {
+            case VINTAGE -> ComputingModule.VAULTIS_CACHE_ISA.get();
+            case LEGACY -> ComputingModule.VAULTIS_CACHE_PCI.get();
+            case TRANSITION -> ComputingModule.VAULTIS_CACHE_PCIE2.get();
+            case STANDARD -> ComputingModule.VAULTIS_CACHE_PCIE3.get();
+            case ADVANCED -> ComputingModule.VAULTIS_CACHE_PCIE4.get();
+        };
+    }
 }

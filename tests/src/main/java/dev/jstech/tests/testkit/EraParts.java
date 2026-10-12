@@ -80,7 +80,7 @@ public final class EraParts {
                                final Predicate<Item> also) {
         final MotherboardSpec spec = board(board);
         final Optional<Item> card = items().filter(item -> kind.isInstance(item) && also.test(item)
-                && inEra(item, spec.era()) && ((IExpansionCardItem) item).cardSpec().fits(spec.pcieGeneration()))
+                && inEra(item, spec.era()) && spec.takes(((IExpansionCardItem) item).cardSpec()))
                 .findFirst();
         return card.orElseThrow(() -> new IllegalStateException("no " + kind.getSimpleName() + " fits "
                 + name(board)));
@@ -96,6 +96,13 @@ public final class EraParts {
     public static Item diskFor(final HardwareEra era) {
         return best(item -> item instanceof DiskItem disk && disk.spec().era() == era,
                 item -> ((DiskItem) item).spec().capacityItems(), "a disk of the " + era.serializedName() + " era");
+    }
+
+    /** The smallest disk made for {@code era}: the quickest an array of them is rebuilt on. */
+    public static Item smallestDiskFor(final HardwareEra era) {
+        return items().filter(item -> item instanceof DiskItem disk && disk.spec().era() == era)
+                .min(Comparator.comparingLong(item -> ((DiskItem) item).spec().capacityItems()))
+                .orElseThrow(() -> new IllegalStateException("no disk of the " + era.serializedName() + " era"));
     }
 
     /** A stack of one of {@code item}. */
