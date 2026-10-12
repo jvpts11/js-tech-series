@@ -628,8 +628,12 @@ interface DesktopInspection {
         if (style == PanelStyle.FRAMES_10) {
             return desktop().view().screenX(MetroTaskbar.START_W / 2);
         }
-        final boolean modern = style == PanelStyle.FRAMES_11;
-        return desktop().view().screenX(modern ? 4 + DesktopScreen.WIN11_SLOT / 2 : 30);
+        if (style == PanelStyle.FRAMES_11) {
+            // Start moves with the centred group of the taskbar, as the taskbar itself places it.
+            final DesktopViewport view = desktop().view();
+            return view.screenX(desktop().taskbar().modernStartLeft(view.width()) + DesktopScreen.WIN11_SLOT / 2);
+        }
+        return desktop().view().screenX(30);
     }
 
     /** Screen coordinates of a part of Frames 10's taskbar: {@code search}, {@code view} or {@code action}. */

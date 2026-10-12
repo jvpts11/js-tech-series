@@ -501,6 +501,7 @@ final class StartMenus {
         }
         return switch (desktop.panelStyle()) {
             case FRAMES_7 -> aero.pointOf(all.get(index), tbY);
+            case FRAMES_11 -> frames.point11(all.get(index), tbY);
             case FRAMES_10 -> {
                 final int[] row = metro.listPoint(all.get(index));
                 yield row != null ? row : metro.tilePoint(all.get(index).programId().getPath());

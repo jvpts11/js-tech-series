@@ -46,4 +46,29 @@ final class EraJourney {
     static Class<? extends Screen> systemScreen(final EraKit kit) {
         return kit == EraKit.VINTAGE ? CommandPromptScreen.class : DesktopScreen.class;
     }
+
+    /** What the era's desktop calls its terminal, on the Start menu and on the window: Frames 11 has Megashell. */
+    static String terminal(final EraKit kit) {
+        return kit == EraKit.ADVANCED ? "Megashell" : "Command Prompt";
+    }
+
+    /**
+     * Opens {@code label} from the Start menu: the menu first, then, once it has finished opening (Frames 11 slides
+     * it up), the entry.
+     */
+    static ClientTestContext launch(final ClientTestContext ctx, final String label) {
+        return ctx.thenWaitUntil(() -> ctx.screen(DesktopScreen.class).launcherLabels().contains(label),
+                        SCREEN_WAIT, label + " to be on the Start menu")
+                .then(0, () -> {
+                    final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
+                    ctx.click(desktop.startButtonX(), desktop.startButtonY());
+                })
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).isStartOpen(), SCREEN_WAIT,
+                        "the Start menu to open")
+                .then(SETTLE * 3, () -> {
+                    final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
+                    final int item = desktop.launcherLabels().indexOf(label);
+                    ctx.click(desktop.startMenuItemX(item), desktop.startMenuItemY(item));
+                });
+    }
 }

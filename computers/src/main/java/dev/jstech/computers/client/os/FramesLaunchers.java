@@ -16,6 +16,7 @@ import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -291,6 +292,24 @@ final class FramesLaunchers {
             drawW11Results(g, x, w, contentTop, filtered, panelDim, panelText, panelHover);
         }
         drawW11Footer(g, x, y, w, h, panelEdge, panelText, panelHover);
+    }
+
+    /**
+     * The middle of {@code target}'s tile on Frames 11's Start, laid as {@link #click11} reads it: the pinned grid
+     * under the search box. Null when the menu is filtered by a search or does not hold it.
+     */
+    @Nullable
+    int[] point11(final Launcher target, final int tbY) {
+        final List<Launcher> filtered = desktop.start().filtered();
+        final int index = filtered.indexOf(target);
+        if (index < 0 || !desktop.start().searchText().isEmpty()) {
+            return null;
+        }
+        final int x = desktop.start().left();
+        final int gridTop = desktop.start().top(tbY) + 6 + W11_SEARCH_H + 5 + 9;
+        final int gridX = x + (W11_MENU_W - W11_COLS * W11_TILE_W) / 2;
+        return new int[] {gridX + (index % W11_COLS) * W11_TILE_W + W11_TILE_W / 2,
+                gridTop + (index / W11_COLS) * W11_TILE_H + W11_TILE_H / 2};
     }
 
     boolean click11(final int mx, final int my, final int tbY) {
