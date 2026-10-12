@@ -280,6 +280,8 @@
   "item.jsc.bd_rom": "BD-ROM",
   "item.jsc.bus.on_crafting_cables": "As peças de fabricação se instalam em cabos de fabricação",
   "item.jsc.bus.on_data_cables": "Barramentos de armazenamento se instalam em cabos de acesso e de backbone da sua era ou de uma anterior",
+  "item.jsc.bus.needs_a_cable": "As peças se instalam num cabo: coloque um ao lado do bloco e depois clique no cabo ou no bloco",
+  "item.jsc.bus.faces_taken": "Todas as faces do cabo ali já têm uma peça ou um fio atravessando",
   "item.jsc.cache_card": "Placa de Cache",
   "item.jsc.cache_card.cut": "-%s%% de latência de leitura em seu compartimento",
   "item.jsc.cache_card.tooltip": "Acessório de compartimento: reduz a latência de leitura das unidades do compartimento",

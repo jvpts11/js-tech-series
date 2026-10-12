@@ -265,6 +265,8 @@
   "item.jsc.bd_re": "BD-RE",
   "item.jsc.bd_rom": "BD-ROM",
   "item.jsc.book_of_sigma": "The Book of Sigma",
+  "item.jsc.bus.faces_taken": "Every face of the cable there already holds a part or has a wire crossing it",
+  "item.jsc.bus.needs_a_cable": "Parts mount on a cable: lay one beside the block, then click the cable or the block",
   "item.jsc.bus.on_crafting_cables": "Crafting parts mount on crafting cables",
   "item.jsc.bus.on_data_cables": "Storage buses mount on access and backbone cables of their era or an earlier one",
   "item.jsc.cache_card": "Cache Card",

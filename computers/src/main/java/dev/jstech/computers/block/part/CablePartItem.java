@@ -68,6 +68,10 @@ public class CablePartItem extends Item {
             "Crafting parts mount on crafting cables");
     private static final TextKey ON_DATA_CABLES = TextKey.of("item.jsc.bus.on_data_cables",
             "Storage buses mount on access and backbone cables of their era or an earlier one");
+    private static final TextKey NEEDS_A_CABLE = TextKey.of("item.jsc.bus.needs_a_cable",
+            "Parts mount on a cable: lay one beside the block, then click the cable or the block");
+    private static final TextKey FACES_TAKEN = TextKey.of("item.jsc.bus.faces_taken",
+            "Every face of the cable there already holds a part or has a wire crossing it");
 
     public CablePartItem(final Properties properties, final Supplier<? extends PartType<?>> type) {
         super(properties);
@@ -125,15 +129,18 @@ public class CablePartItem extends Item {
         if (viaBehind != InteractionResult.PASS) {
             return viaBehind;
         }
+        boolean cableBeside = level.getBlockEntity(clicked.relative(behind)) instanceof CableBlockEntity;
         for (final Direction direction : Direction.values()) {
             if (direction != behind) {
                 final InteractionResult result = tryAdjacentCable(context, clicked, direction);
                 if (result != InteractionResult.PASS) {
                     return result;
                 }
+                cableBeside |= level.getBlockEntity(clicked.relative(direction)) instanceof CableBlockEntity;
             }
         }
-        return InteractionResult.PASS;
+        // The click did nothing, so the player is told why rather than left to guess.
+        return refuse(context, cableBeside ? FACES_TAKEN : NEEDS_A_CABLE);
     }
 
     private InteractionResult tryAdjacentCable(final UseOnContext context, final BlockPos clicked,
@@ -149,11 +156,8 @@ public class CablePartItem extends Item {
 
     private InteractionResult place(final UseOnContext context, final CableBlockEntity cable,
                                     @Nullable final Direction face) {
-        if (face == null) {
-            return InteractionResult.PASS; // every candidate face is taken
-        }
-        if (cable.hasPart(face) || !cable.wiresThrough(face).isEmpty() && !cutsOwnCable(cable, face)) {
-            return InteractionResult.PASS;
+        if (face == null || cable.hasPart(face) || !cable.wiresThrough(face).isEmpty() && !cutsOwnCable(cable, face)) {
+            return refuse(context, FACES_TAKEN);
         }
         final Level level = context.getLevel();
         /*
@@ -261,6 +265,14 @@ public class CablePartItem extends Item {
             return new ExternalDataPort(null, null);
         }
         return ExternalDataPort.at(server, cable.getBlockPos().relative(face), face.getOpposite());
+    }
+
+    /* Tells the player on the action bar why a click mounted nothing, and ends the click there. */
+    private static InteractionResult refuse(final UseOnContext context, final TextKey why) {
+        if (!context.getLevel().isClientSide() && context.getPlayer() != null) {
+            context.getPlayer().displayClientMessage(GameText.component(why), true);
+        }
+        return InteractionResult.FAIL;
     }
 
     /* An Import Bus and an Export Bus on one network: items now come in and go out on their own. */

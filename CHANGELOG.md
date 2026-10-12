@@ -1948,6 +1948,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   a Vintage Mainframe took an Advanced peripheral cable on any of its other blocks.
 - A Server Rack's blocks take the cables of the rack's era and the earlier ones, as its base block does, and a
   Supercomputer Rack's blocks only its fabric: any of their other blocks took every era's peripheral cable.
+- A bus or a crafting part clicked where it cannot go says why on the action bar: that it mounts on a cable laid
+  beside the block, or that every face of the cable there is taken. The click did nothing and said nothing.
 - A room of many monitors draws each one's picture in turn: past a few, the same pictures were drawn every frame and
   the rest never, staying dark; and past eight in sight, a monitor's face was built anew at every picture, asking its
   machine again each time.

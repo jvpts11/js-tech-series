@@ -33,6 +33,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -106,6 +107,23 @@ public final class BusEraGameTests {
                 .thenExecute(() -> helper.assertTrue(bus.busy(), "the bus is busy as it moves"))
                 .thenWaitUntil(() -> helper.assertFalse(bus.busy(), "the bus goes idle once it has nothing to move"))
                 .thenSucceed();
+    }
+
+    /**
+     * A bus clicked on a block with no cable beside it mounts nothing and ends the click there, with a line telling the
+     * player to lay a cable first, rather than passing the click on as if nothing were in hand.
+     */
+    @GameTest(template = ARENA)
+    public static void bus_clickedWhereNoCableIsEndsTheClick(final GameTestHelper helper) {
+        final BlockPos stone = new BlockPos(2, 2, 4);
+        helper.setBlock(stone, Blocks.STONE);
+        final Item bus = ComputingModule.LEGACY_IMPORT_BUS_ITEM.get();
+        final BlockPos abs = helper.absolutePos(stone);
+        final BlockHitResult where = new BlockHitResult(Vec3.atCenterOf(abs), Direction.UP, abs, false);
+        final InteractionResult result = bus.useOn(new UseOnContext(helper.getLevel(),
+                helper.makeMockPlayer(GameType.CREATIVE), InteractionHand.MAIN_HAND, new ItemStack(bus), where));
+        helper.assertTrue(result == InteractionResult.FAIL, "the click ends there, with its line; got " + result);
+        helper.succeed();
     }
 
     /** A bus never moves faster than its cable carries: the Advanced bus on the Legacy's Ethernet moves at 16. */
