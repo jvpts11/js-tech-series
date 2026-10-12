@@ -453,6 +453,16 @@ public final class SolitaireApp implements IDesktopApp {
         this.dragSuit = null;
     }
 
+    /** The deal as it stands, for a look at what a click on the table did. */
+    public SolitaireGame game() {
+        return game;
+    }
+
+    /** The desktop point in the middle of the stock, from the last frame drawn. */
+    public int[] stockPoint() {
+        return new int[] {columnX(0) + W / 2, tableY + H / 2};
+    }
+
     private void drop(final int cx, final int cy) {
         final int column = columnAt(cx);
         if (column < 0) {

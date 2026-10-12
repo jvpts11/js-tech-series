@@ -324,6 +324,11 @@ public final class SnakeApp implements IDesktopApp {
         root.mouseClicked(mouseX, mouseY, button);
     }
 
+    /** The game as it stands, for a look at where the keys have taken the snake. */
+    public SnakeGame game() {
+        return game;
+    }
+
     @Override
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY,
                               final int button) {

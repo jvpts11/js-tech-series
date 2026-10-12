@@ -300,6 +300,11 @@ public final class CalculatorApp implements IDesktopApp {
         }
     }
 
+    /** The answer the display shows once = has been pressed, empty before. */
+    public String result() {
+        return result;
+    }
+
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {

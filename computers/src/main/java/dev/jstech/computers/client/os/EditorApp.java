@@ -368,6 +368,16 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         return current().path;
     }
 
+    /** The system's file window this editor opens over itself to open a file or save one under a name. */
+    public FileDialog fileDialog() {
+        return dialog;
+    }
+
+    /** The desktop point in the middle of the Save As button, from the last frame drawn. */
+    public int[] saveAsPoint() {
+        return new int[] {saveAsButton.x() + saveAsButton.width() / 2, saveAsButton.y() + saveAsButton.height() / 2};
+    }
+
     @Override
     public int defaultWidth() {
         return 300;

@@ -355,6 +355,16 @@ public final class MinesweeperApp implements IDesktopApp {
         root.mouseClicked(mouseX, mouseY, button);
     }
 
+    /** The game as it stands, for a look at what a click on the board did. */
+    public MinesweeperGame game() {
+        return game;
+    }
+
+    /** The desktop point in the middle of the cell at {@code row} and {@code col}, from the last frame drawn. */
+    public int[] cellPoint(final int row, final int col) {
+        return new int[] {board.x() + col * board.cell + board.cell / 2, board.y() + row * board.cell + board.cell / 2};
+    }
+
     @Override
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         root.mouseReleased(mouseX, mouseY, button);

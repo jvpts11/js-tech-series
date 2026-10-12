@@ -1708,6 +1708,22 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         return index < 0 ? null : context.itemCenter(index);
     }
 
+    /** The middle of the entry with that label in the menu open beside the right-button one, or null. */
+    @Nullable
+    public int[] submenuPoint(final String label) {
+        final ContextMenu beside = context.openSubmenu();
+        if (beside == null) {
+            return null;
+        }
+        final List<ContextMenu.Item> entries = beside.items();
+        for (int i = 0; i < entries.size(); i++) {
+            if (entries.get(i).label().equals(label)) {
+                return beside.itemCenter(i);
+            }
+        }
+        return null;
+    }
+
     /** What the New entry offers: a folder first, then a file of every kind the machine can create. */
     private List<ContextMenu.Item> newItems(final boolean readOnly) {
         final List<ContextMenu.Item> out = new ArrayList<>();
