@@ -169,6 +169,36 @@ public final class TaskManagerApp implements IDesktopApp {
         return gpu().present();
     }
 
+    /** What the list of the page in front reads, top to bottom: the windows, programs and services it shows. */
+    public List<String> rowLabels() {
+        final List<String> out = new ArrayList<>();
+        for (final RamUse use : rows()) {
+            out.add(shownName(use));
+        }
+        return out;
+    }
+
+    /**
+     * The desktop-local point on the row of that name as the last frame drew it, the place a player clicks to pick
+     * it; null when the page has no list, nothing listed has that name, or it is scrolled out of sight.
+     */
+    @Nullable
+    public int[] rowPoint(final String label) {
+        final int[] list = cw <= 0 ? null : listRect(cx, cy, cw, ch);
+        final int index = rowLabels().indexOf(label) - scroll;
+        if (list == null || index < 0 || (index + 1) * ROW_H > list[3]) {
+            return null;
+        }
+        return new int[] {list[0] + 20, list[1] + index * ROW_H + ROW_H / 2};
+    }
+
+    /** The desktop-local centre of the End button of the page in front, or null when it has none. */
+    @Nullable
+    public int[] endPoint() {
+        final int[] end = cw <= 0 ? null : endButtonRect(cx, cy, cw, ch);
+        return end == null ? null : new int[] {end[0] + end[2] / 2, end[1] + end[3] / 2};
+    }
+
     // the machine, as this window reads it
 
     private List<RamUse> processes() {
@@ -1034,33 +1064,40 @@ public final class TaskManagerApp implements IDesktopApp {
         return Minecraft.getInstance().font;
     }
 
-    /** Where the End button sits on the page in front, or null when this page has none. */
+    /** Whether a click at the point lands on the End button of the page in front. */
     private boolean endButtonHit(final double mx, final double my, final int x, final int y,
                                  final int w, final int h) {
+        final int[] end = endButtonRect(x, y, w, h);
+        return end != null && mx >= end[0] && mx < end[0] + end[2] && my >= end[1] && my < end[1] + end[3];
+    }
+
+    /*
+     * Where the End button of the page in front answers a click, as x, y, width and height, or null when the page
+     * has none: the one place both the click and a test read it from, so they never disagree.
+     */
+    @Nullable
+    private int[] endButtonRect(final int x, final int y, final int w, final int h) {
         return switch (form) {
             case CLOSE_BOX -> {
                 final int btnH = 13;
                 final int bw = (w - 12 - 8) / 3;
-                final int by = y + h - 6 - btnH;
-                yield my >= by && my < by + btnH && mx >= x + 6 && mx < x + 6 + bw;
+                yield new int[] {x + 6, y + h - 6 - btnH, bw, btnH};
             }
             case LUNA -> {
                 if (page > 1) {
-                    yield false;
+                    yield null;
                 }
                 final int py = y + MENU_H + 14;
                 final int ph = y + h - STATUS_H - py - 4;
                 final int by = py + ph - 17 + 3;
-                if (my < by || my >= by + 13) {
-                    yield false;
-                }
                 final int pw = w - 10;
-                yield page == 1 ? mx >= x + 5 + pw - 60
-                        : mx >= x + 5 + pw - 3 * ((pw - 8) / 3) - 8 && mx < x + 5 + pw - 2 * ((pw - 8) / 3) - 4;
+                final int bw = (pw - 8) / 3;
+                yield page == 1 ? new int[] {x + 5 + pw - 60, by, 60, 13}
+                        : new int[] {x + 5 + pw - 3 * bw - 8, by, bw + 4, 13};
             }
-            case MODERN -> page == 0 && my >= y + 3 && my < y + 15 && mx >= x + w - 48;
-            case PLASMA -> my >= y + (page == 0 ? 29 : 3) && my < y + (page == 0 ? 40 : 14) && mx >= x + w - 46;
-            case GNOME -> page == 0 && my >= y + 2 && my < y + 13 && mx >= x + w - 42;
+            case MODERN -> page == 0 ? new int[] {x + w - 48, y + 3, 48, 12} : null;
+            case PLASMA -> new int[] {x + w - 46, y + (page == 0 ? 29 : 3), 46, 11};
+            case GNOME -> page == 0 ? new int[] {x + w - 42, y + 2, 42, 11} : null;
         };
     }
 
