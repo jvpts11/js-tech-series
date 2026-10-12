@@ -1981,6 +1981,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- The system's Save As window opens on the kind of the name the program offers, or on every file when none of its
+  kinds is that one. It always opened on the first kind listed, so a note the Editor offered as untitled.txt and the
+  player named journey.txt was saved as journey.txt.sgs, the first language's sources.
 - The help command's manual page gives first a line that works on every system that has help, help on help itself;
   its only example was help dir, a command of the DOS family alone, which answered with an error on every Unix.
 - A computer, a Mainframe or a rack taken by anything but a player, an explosion, a command or another mod's machine,

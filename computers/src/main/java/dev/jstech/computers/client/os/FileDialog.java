@@ -250,7 +250,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         this.mode = what;
         this.title = windowTitle;
         this.filters = kinds == null || kinds.isEmpty() ? List.of(Filter.ALL) : List.copyOf(kinds);
-        this.filter = 0;
+        this.filter = filterFor(initialName);
         this.onPick = pick;
         this.message = Text.EMPTY;
         this.replacing = "";
@@ -853,6 +853,30 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     private void finish(final String path) {
         close();
         this.onPick.accept(path);
+    }
+
+    /*
+     * The kind the window starts on: the first that shows the kind of the name the program offers, else every file,
+     * as a save window opens on the type of the document it saves. Starting on the first kind regardless saved the
+     * Editor's untitled.txt as untitled.txt.sgs, the first language's sources being the first kind listed.
+     */
+    private int filterFor(final String offered) {
+        final int dot = offered == null ? -1 : offered.lastIndexOf('.');
+        if (dot <= 0) {
+            return 0;
+        }
+        final String kind = offered.substring(dot + 1);
+        for (int i = 0; i < this.filters.size(); i++) {
+            if (!this.filters.get(i).extensions().isEmpty() && this.filters.get(i).admits(kind)) {
+                return i;
+            }
+        }
+        for (int i = 0; i < this.filters.size(); i++) {
+            if (this.filters.get(i).extensions().isEmpty()) {
+                return i;
+            }
+        }
+        return 0;
     }
 
     /*
