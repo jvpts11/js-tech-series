@@ -12,7 +12,6 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.AbstractMachineAssemblyScreen;
 import dev.jstech.computers.client.BootSequenceScreen;
@@ -39,9 +38,6 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
-import dev.jstech.computers.os.media.DiscTray;
-import dev.jstech.computers.os.media.EjectButton;
-import dev.jstech.computers.os.media.ITrayBlock;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
@@ -55,14 +51,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * The whole player journey, with nothing built by API: every block placed from the hand, every component
@@ -325,11 +318,11 @@ public final class FullJourneyClientTests {
                 .thenPlace(1, CC_CD_DRIVE)
                 .then(2, () -> ctx.selectHotbar(2));
         // A disc lies on the drive's tray: the tray comes out, takes the disc and goes back in with it.
-        openTray(ctx, CC_CD_DRIVE)
+        DiscSteps.openTray(ctx,CC_CD_DRIVE)
                 .thenRightClick(SETTLE, CC_CD_DRIVE)
                 .thenWaitUntilServer(level -> !reader(ctx, level, CC_CD_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
                         SCREEN_WAIT, "the Frames disc to lie on the CD drive's tray", level -> "");
-        closeTray(ctx, CC_CD_DRIVE)
+        DiscSteps.closeTray(ctx,CC_CD_DRIVE)
                 .thenTeleport(SETTLE, new BlockPos(10, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(1))
                 .thenPlace(1, CC_MONITOR)
@@ -383,7 +376,7 @@ public final class FullJourneyClientTests {
         ctx.thenGive(0, ItemStack.EMPTY)
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(0));
-        openTray(ctx, CC_CD_DRIVE)
+        DiscSteps.openTray(ctx,CC_CD_DRIVE)
                 .thenSneakClick(1, CC_CD_DRIVE, Direction.UP)
                 .thenWaitUntilServer(level -> reader(ctx, level, CC_CD_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
                         SCREEN_WAIT, "sneak-clicking the CD drive to lift the disc off its tray",
@@ -393,7 +386,7 @@ public final class FullJourneyClientTests {
                 .thenRightClick(1, CC_CD_DRIVE)
                 .thenWaitUntilServer(level -> !reader(ctx, level, CC_CD_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
                         SCREEN_WAIT, "the installer disc to sit in the CD drive", level -> "");
-        closeTray(ctx, CC_CD_DRIVE)
+        DiscSteps.closeTray(ctx,CC_CD_DRIVE)
                 .thenTeleport(SETTLE, new BlockPos(10, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, CC_MONITOR)
@@ -419,7 +412,7 @@ public final class FullJourneyClientTests {
         ctx.thenGive(0, ItemStack.EMPTY)
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(0));
-        openTray(ctx, CC_CD_DRIVE)
+        DiscSteps.openTray(ctx,CC_CD_DRIVE)
                 .thenSneakClick(1, CC_CD_DRIVE, Direction.UP)
                 .thenWaitUntilServer(level -> reader(ctx, level, CC_CD_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
                         SCREEN_WAIT, "sneak-clicking the CD drive to lift the Crafting Manager disc off its tray",
@@ -429,7 +422,7 @@ public final class FullJourneyClientTests {
                 .thenRightClick(1, CC_CD_DRIVE)
                 .thenWaitUntilServer(level -> !reader(ctx, level, CC_CD_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
                         SCREEN_WAIT, "the Studio installer disc to sit in the CD drive", level -> "");
-        closeTray(ctx, CC_CD_DRIVE)
+        DiscSteps.closeTray(ctx,CC_CD_DRIVE)
                 .thenTeleport(SETTLE, new BlockPos(10, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, CC_MONITOR)
@@ -520,11 +513,11 @@ public final class FullJourneyClientTests {
                         level -> "encoder=" + level.getBlockState(abs(ctx, ENCODER)))
                 .then(2, () -> ctx.selectHotbar(1));
         // The burner's tray takes the disc the way a drive's does, and the encoder writes only once it is back in.
-        openTray(ctx, ENCODER)
+        DiscSteps.openTray(ctx,ENCODER)
                 .thenRightClick(1, ENCODER)
                 .thenWaitUntilServer(level -> encoder(ctx, level).hasMedia(), SCREEN_WAIT,
                         "the DVD-RW to lie on the encoder's tray", level -> "");
-        closeTray(ctx, ENCODER)
+        DiscSteps.closeTray(ctx,ENCODER)
                 .thenTeleport(SETTLE, new BlockPos(10, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(8))
                 .thenRightClick(1, CC_MONITOR)
@@ -596,17 +589,17 @@ public final class FullJourneyClientTests {
                 .thenGive(0, ItemStack.EMPTY)
                 .thenTeleport(SETTLE, new BlockPos(9, 2, 2), Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(8));
-        openTray(ctx, ENCODER)
+        DiscSteps.openTray(ctx,ENCODER)
                 .thenSneakClick(1, ENCODER, Direction.EAST)
                 .thenWaitUntilServer(level -> !encoder(ctx, level).hasMedia(), SCREEN_WAIT,
                         "sneak-clicking the encoder to lift the disc off its tray", level -> "")
                 .thenTeleport(SETTLE, new BlockPos(7, 2, -1), Direction.SOUTH)
                 .then(SETTLE, () -> ctx.selectHotbar(0));
-        openTray(ctx, CC_FLOPPY_DRIVE)
+        DiscSteps.openTray(ctx,CC_FLOPPY_DRIVE)
                 .thenRightClick(SETTLE, CC_FLOPPY_DRIVE)
                 .thenWaitUntilServer(level -> !reader(ctx, level, CC_FLOPPY_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
                         SCREEN_WAIT, "the patterns disc to lie on the DVD drive's tray", level -> "");
-        closeTray(ctx, CC_FLOPPY_DRIVE)
+        DiscSteps.closeTray(ctx,CC_FLOPPY_DRIVE)
                 .thenWaitUntilServer(level -> reader(ctx, level, CC_FLOPPY_DRIVE).ownerPos() != null
                                 && !reader(ctx, level, CC_FLOPPY_DRIVE).mediaSlot().getStackInSlot(0).isEmpty(),
                         SCREEN_WAIT, "the floppy with the patterns to sit in a drive linked to the Crafting Computer",
@@ -730,37 +723,6 @@ public final class FullJourneyClientTests {
         final AssemblyGeometry geo = ctx.screen(screen).geometry();
         final AssemblyGeometry.Seat seat = geo.seats(kind).get(index);
         slotFromHotbar(ctx, slot, geo.inventoryY() + 58 + 8, seat.x() + 8, seat.y() + 8);
-    }
-
-    /** Presses the eject button of the disc device at {@code relative} and waits for its tray to be out. */
-    private static ClientTestContext openTray(final ClientTestContext ctx, final BlockPos relative) {
-        return ctx.then(SETTLE, () -> pressEject(ctx, relative))
-                .thenWaitUntilServer(level -> trayOf(ctx, level, relative).isOpen(), SCREEN_WAIT,
-                        "the tray of the device at " + relative + " to come out", level -> "");
-    }
-
-    /** Presses it again and waits for the tray to be back in. */
-    private static ClientTestContext closeTray(final ClientTestContext ctx, final BlockPos relative) {
-        return ctx.then(SETTLE, () -> pressEject(ctx, relative))
-                .thenWaitUntilServer(level -> !trayOf(ctx, level, relative).isOpen(), SCREEN_WAIT,
-                        "the tray of the device at " + relative + " to go back in", level -> "");
-    }
-
-    /* The player's click on the middle of the eject button of the disc device at relative, whichever way it faces. */
-    private static void pressEject(final ClientTestContext ctx, final BlockPos relative) {
-        final BlockState state = Objects.requireNonNull(ctx.mc().level, "no level").getBlockState(ctx.abs(relative));
-        final EjectButton button = Objects.requireNonNull(((ITrayBlock) state.getBlock()).ejectButton(),
-                "a device with a tray at " + relative);
-        ctx.rightClickFront(relative, (button.left() + button.right()) / 2.0, (button.top() + button.bottom()) / 2.0,
-                button.depth());
-    }
-
-    private static DiscTray trayOf(final ClientTestContext ctx, final ServerLevel level, final BlockPos relative) {
-        final BlockEntity device = level.getBlockEntity(abs(ctx, relative));
-        if (device instanceof MediaReaderBlockEntity drive) {
-            return drive.tray();
-        }
-        return ((PatternEncoderBlockEntity) device).tray();
     }
 
     /** Presses the power button of the open assembly screen, as the player does. */
