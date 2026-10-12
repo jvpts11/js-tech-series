@@ -208,6 +208,36 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
         return printDialog;
     }
 
+    /** The system's file window Paint opens over itself to open a picture or save one under a name. */
+    public FileDialog fileDialog() {
+        return dialog;
+    }
+
+    /** The picture on the canvas, for a look at what a stroke put on it. */
+    public PixImage image() {
+        return image;
+    }
+
+    /** The desktop point in the middle of the picture's pixel at {@code px} and {@code py}, from the last frame. */
+    public int[] canvasPoint(final int px, final int py) {
+        return new int[] {canvasX + px * zoom + zoom / 2, canvasY + py * zoom + zoom / 2};
+    }
+
+    /** The desktop point in the middle of the toolbar's New button. */
+    public int[] newPoint() {
+        return newButton.center();
+    }
+
+    /** The desktop point in the middle of the toolbar's Open button. */
+    public int[] openPoint() {
+        return openButton.center();
+    }
+
+    /** The desktop point in the middle of the toolbar's Save button. */
+    public int[] savePoint() {
+        return saveButton.center();
+    }
+
     @Override
     public void openFile(final String target) {
         if (target == null || target.isEmpty()) {

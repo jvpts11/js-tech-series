@@ -575,6 +575,22 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
         return root.charTyped(c);
     }
 
+    /** What the cell at {@code row} and {@code column} shows: its value, worked out from its formula. */
+    public String shown(final int row, final int column) {
+        return sheet.display(row, column);
+    }
+
+    /** The desktop point in the middle of the cell at {@code row} and {@code column}, from the last frame drawn. */
+    public int[] cellPoint(final int row, final int column) {
+        return new int[] {gridX + ROW_HEAD_W + (column - scrollColumn) * COL_W + COL_W / 2,
+                gridY + HEAD_H + (row - scrollRow) * ROW_H + ROW_H / 2};
+    }
+
+    /** The system's file window the sheet opens over itself to open a sheet or save one under a name. */
+    public FileDialog fileDialog() {
+        return dialog;
+    }
+
     /** Writes what is in the bar into the cell it belongs to, which is what leaving that cell does. */
     private void commit() {
         final String typed = formula.edit();
