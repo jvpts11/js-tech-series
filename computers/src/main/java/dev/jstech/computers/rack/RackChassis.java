@@ -19,8 +19,11 @@ import dev.jstech.core.tier.HardwareEra;
 public enum RackChassis {
     /** The Standard 1U server. */
     SERVER(1, 4, 2, Integer.MAX_VALUE, RackType.SERVER, HardwareEra.STANDARD),
-    /** The Legacy 1U server: fewer drives, one expansion slot (the card that lets a player sit at it). */
-    LEGACY_SERVER(1, 3, 2, 1, RackType.SERVER, HardwareEra.LEGACY),
+    /**
+     * The Legacy 1U server: fewer drives, two expansion slots, one for a graphics card, since its board has no video
+     * of its own, and one for a storage card.
+     */
+    LEGACY_SERVER(1, 3, 2, 2, RackType.SERVER, HardwareEra.LEGACY),
     /** The Vintage 1U server: a single drive, one socket, one expansion slot. */
     VINTAGE_SERVER(1, 1, 1, 1, RackType.SERVER, HardwareEra.VINTAGE),
     /** 2U, ten drive bays, storage first. */

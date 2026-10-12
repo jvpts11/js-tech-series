@@ -286,7 +286,8 @@ public final class RackEraGameTests {
 
     /**
      * The Vintage and Legacy server boards carry the older bus beside their own, as the boards of their time did: the
-     * era's storage cards (ISA on the Vintage, PCI on the Legacy) seat in them beside a card of the board's own bus.
+     * era's storage cards (ISA on the Vintage, PCI on the Legacy) seat in them beside a card of the board's own bus,
+     * and the Legacy servers keep a second slot for the graphics card their board lacks.
      */
     @GameTest(template = ARENA)
     public static void serverBoardsOfTwoBuses_seatTheirErasStorageCards(final GameTestHelper helper) {
@@ -308,6 +309,16 @@ public final class RackEraGameTests {
                 "and a graphics card of the board's own bus in its second slot, for its monitor");
         helper.assertTrue(RackChassis.LEGACY_STORAGE_SERVER.maxPcie() == 2,
                 "the Legacy storage server has the two slots, its board having no video of its own");
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack(ComputingModule.LEGACY_SERVER.get()));
+        final ServerHardwareHandler legacyServer = new ServerHardwareHandler(player, InteractionHand.MAIN_HAND);
+        helper.assertTrue(fits(legacyServer, ServerHardwareHandler.MOBO,
+                        HardwareItems.MOTHERBOARD_EATX_LEGACY_604.get()),
+                "the Legacy 1U server takes the era's server board");
+        helper.assertTrue(fits(legacyServer, ServerHardwareHandler.GPU_START, ComputingModule.VAULTIS_CACHE_PCI.get()),
+                "its PCI read cache in a slot of the older bus");
+        helper.assertTrue(fits(legacyServer, ServerHardwareHandler.GPU_START + 1,
+                        EraParts.cardFor(HardwareItems.MOTHERBOARD_EATX_LEGACY_604.get(), GpuItem.class)),
+                "and a graphics card beside it, the 1U server having two slots for the same reason");
         helper.succeed();
     }
 

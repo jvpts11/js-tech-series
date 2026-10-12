@@ -1573,6 +1573,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   ones. In any other computer a storage card sits in its slot and does nothing. The front bays that took gadgets take
   drives: a 1U server has 1 drive bay in the Vintage, 3 in the Legacy, 5 in the Transition, 4 in the Standard and 5 in
   the Advanced; the Storage Server 10, the Compute Server 2, the Supercomputer Node 2 and the Advanced one 3.
+- The Legacy 1U server takes two expansion cards rather than one: its board has no video of its own, so one slot
+  goes to the graphics card a monitor needs and the other is free for a storage card.
 - The manual key is held over an item for a second and a half before its page opens, rather than under half a second,
   so a key pressed in passing opens nothing.
 - J's Computers makes an installer, a blank medium with a system or a program written on it, in one place, which the

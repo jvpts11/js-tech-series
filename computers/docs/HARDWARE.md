@@ -69,7 +69,7 @@ the rack, and room for processors and expansion cards:
 | Server | U | Drives | Most CPUs | Most cards |
 | --- | --- | --- | --- | --- |
 | Vintage Server | 1 | 1 | 1 | 1 |
-| Legacy Server | 1 | 3 | 2 | 1 |
+| Legacy Server | 1 | 3 | 2 | 2 |
 | Transition Server | 1 | 5 | 2 | 2 |
 | Server (Standard) | 1 | 4 | 2 | any |
 | Advanced Server | 1 | 5 | 2 | any |
