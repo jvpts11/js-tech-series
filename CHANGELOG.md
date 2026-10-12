@@ -93,6 +93,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   are J's Core's processing recipes.
 
 ### Added
+- With KubeJS installed, a modpack's scripts reach J's Computers as `JsComputers`: `JsComputers.installer('frames_95')`
+  and `JsComputers.programInstaller(...)` give an installer with its software written on it, which no plain item id
+  can name, `JsComputers.readyDisk(...)` a disk with a system already on it, and `JsComputers.systems('legacy')`,
+  `JsComputers.programs(...)` and `JsComputers.eras()` list what there is. With the item tags below, a modpack can give
+  J's Computers recipes and chest loot of its own. KubeJS stays optional: without it, nothing of it loads.
+- A mod built on J's Core can hand a scripting mod's scripts a class of its own under a name, declared once with the
+  rest of its content; J's Core's plugin gives KubeJS every one.
 - Item tags for J's Computers, so a datapack or a script can ask for a whole group of its things: `#jsc:era/vintage`,
   `#jsc:era/legacy`, `#jsc:era/transition`, `#jsc:era/standard` and `#jsc:era/advanced` hold everything of an era,
   and one tag per shelf of the creative tabs holds that shelf in every era: `#jsc:personal_computers`,

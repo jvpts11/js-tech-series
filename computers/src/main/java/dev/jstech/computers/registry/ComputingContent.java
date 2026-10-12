@@ -15,8 +15,10 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ReadyDisks;
 import dev.jstech.computers.os.media.InstallerStacks;
+import dev.jstech.computers.scripting.JsComputersScripts;
 import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.ModContent;
+import dev.jstech.core.content.ScriptBinding;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.EnumMap;
 import java.util.Map;
@@ -50,6 +52,9 @@ public final class ComputingContent {
 
     private static final Map<Shelf, ContentTab.Section> SHARED = shelves(SHARED_TAB, null);
     private static final Map<HardwareEra, Map<Shelf, ContentTab.Section>> BY_ERA = eraShelves();
+
+    /** What a modpack's scripts reach as {@code JsComputers}: installers, ready disks and the lists of each era. */
+    public static final ScriptBinding SCRIPTS = CONTENT.scriptBinding("JsComputers", JsComputersScripts.class);
 
     private ComputingContent() {
     }

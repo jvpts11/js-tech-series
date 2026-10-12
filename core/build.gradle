@@ -54,6 +54,9 @@ dependencies {
     // Only its own classes: what Accessories brings with it is nothing the Core's adapter names.
     compileOnly("io.wispforest:accessories-neoforge:${accessories_version}") { transitive = false }
     compileOnly "maven.modrinth:jade:${jade_version}"
+    // KubeJS finds the Core's plugin through its plugin file; Rhino is its script engine, a mod of its own.
+    compileOnly("dev.latvian.mods:kubejs-neoforge:${kubejs_version}") { transitive = false }
+    compileOnly("dev.latvian.mods:rhino:${rhino_version}") { transitive = false }
 }
 
 // The notices of the third-party work this mod carries, beside its own licence, and the licences they come under.

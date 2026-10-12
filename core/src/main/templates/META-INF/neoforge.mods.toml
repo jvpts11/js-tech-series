@@ -56,3 +56,11 @@ type = "optional"
 versionRange = "*"
 ordering = "AFTER"
 side = "BOTH"
+
+# KubeJS is optional: when it is present, its scripts reach what the series' mods hand them, by the names they gave.
+[[dependencies.${mod_id}]]
+modId = "kubejs"
+type = "optional"
+versionRange = "[2101.7.2,)"
+ordering = "NONE"
+side = "BOTH"

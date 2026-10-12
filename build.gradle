@@ -95,6 +95,12 @@ subprojects {
             url = 'https://maven.wispforest.io/releases'
             content { includeGroup 'io.wispforest' }
         }
+        // KubeJS and Rhino: the scripting mod a modpack writes its recipes and loot in, with what the mods hand it.
+        maven {
+            name = 'LatvianDev'
+            url = 'https://maven.latvian.dev/releases'
+            content { includeGroup 'dev.latvian.mods' }
+        }
         // Jade, through Modrinth's Maven: the block tooltip the Core's probe lines show in.
         maven {
             name = 'Modrinth'

@@ -49,6 +49,11 @@ def withFtbTeams = providers.gradleProperty('withFtbTeams').isPresent()
 def withEmi = providers.gradleProperty('withEmi').isPresent()
 // -PwithJade runs the development mods with Jade, to see the lines the Core's bridge gives its tooltip.
 def withJade = providers.gradleProperty('withJade').isPresent()
+/*
+ * -PwithKubeJs runs the development mods with KubeJS and the test scripts in src/kubejs, copied into the run's kubejs
+ * folder, to prove a modpack's scripts reach what the mods hand them; every other run proves the mods stand without it.
+ */
+def withKubeJs = providers.gradleProperty('withKubeJs').isPresent()
 if (withoutComputerCraft) {
     sourceSets.main.java {
         exclude '**/gametest/ComputerCraftGameTests.java'
@@ -114,6 +119,7 @@ neoForge {
             // -PgtOnly=<TestClass or word>[,...] runs only those GameTests (see GameTestSelection).
             systemProperty 'jsc.gametests.only', (providers.gradleProperty('gtOnly').getOrElse(''))
             systemProperty 'jsc.gametests.ftbteams', withFtbTeams ? 'present' : 'absent'
+            systemProperty 'jsc.gametests.kubejs', withKubeJs ? 'present' : 'absent'
             // -Pjfr records the run with Java Flight Recorder, for profiling the scale benchmark. Deep stacks,
             // because what is being chased sits well below the tick. Off unless asked for.
             if (providers.gradleProperty('jfr').present) {
@@ -195,6 +201,21 @@ dependencies {
     }
     if (withJade) {
         localRuntime "maven.modrinth:jade:${jade_version}"
+    }
+    if (withKubeJs) {
+        localRuntime("dev.latvian.mods:kubejs-neoforge:${kubejs_version}") { transitive = false }
+        localRuntime("dev.latvian.mods:rhino:${rhino_version}") { transitive = false }
+    }
+}
+
+// The test scripts go where KubeJS reads them, the kubejs folder of the run, before a run that has KubeJS.
+var copyKubeJsScripts = tasks.register('copyKubeJsScripts', Copy) {
+    from 'src/kubejs'
+    into rootProject.file('run/kubejs')
+}
+tasks.matching { it.name in ['runGameTestServer', 'runServer', 'runClient'] }.configureEach {
+    if (withKubeJs) {
+        dependsOn copyKubeJsScripts
     }
 }
 

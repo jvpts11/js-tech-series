@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
@@ -103,6 +104,10 @@ public final class ModContent {
     private @Nullable DeferredRegister<EntityType<?>> entityTypes;
     private final List<EntityEntry<?>> declaredEntities = new ArrayList<>();
     private final Map<String, ModGuide> guides = new LinkedHashMap<>();
+    private final List<ScriptBinding> declaredScriptBindings = new ArrayList<>();
+
+    /* What a script's name may be: an identifier in the scripts' own language. */
+    private static final Pattern SCRIPT_NAME = Pattern.compile("[A-Za-z_$][A-Za-z0-9_$]*");
 
     /* Every mod's content, by mod id, in the order the mods made theirs. */
     private static final Map<String, ModContent> BY_MOD = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -297,6 +302,36 @@ public final class ModContent {
     /** The kinds of processing machine declared so far, in declaration order. */
     public List<ProcessingKind> declaredProcessing() {
         return Collections.unmodifiableList(declaredProcessing);
+    }
+
+    /**
+     * Declares a class whose public static methods the scripts of a scripting mod call under {@code name}, when one is
+     * installed: with KubeJS, {@code MyMod.installer('mymod:thing')} in a script calls {@code installer(String)} on the
+     * class declared as {@code MyMod}. The class must name nothing of the scripting mod, so it loads without it; the
+     * Core hands it over only when the scripting mod asks for its bindings.
+     *
+     * @throws IllegalArgumentException when the name is not a plain identifier
+     * @throws IllegalStateException    when a mod already declared a binding of that name
+     */
+    public ScriptBinding scriptBinding(final String name, final Class<?> statics) {
+        if (!SCRIPT_NAME.matcher(name).matches()) {
+            throw new IllegalArgumentException("a script binding's name is a plain identifier, not '" + name + "'");
+        }
+        for (final ModContent content : all()) {
+            for (final ScriptBinding declared : content.declaredScriptBindings) {
+                if (declared.name().equals(name)) {
+                    throw new IllegalStateException(content.modid + " already gives scripts a binding named " + name);
+                }
+            }
+        }
+        final ScriptBinding binding = new ScriptBinding(name, statics);
+        declaredScriptBindings.add(binding);
+        return binding;
+    }
+
+    /** The script bindings declared so far, in declaration order. */
+    public List<ScriptBinding> declaredScriptBindings() {
+        return Collections.unmodifiableList(declaredScriptBindings);
     }
 
     /** Starts declaring a kind of entity, made by {@code factory} and counted under {@code category}. */

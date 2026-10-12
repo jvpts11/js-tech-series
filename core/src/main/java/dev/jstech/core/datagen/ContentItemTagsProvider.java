@@ -45,11 +45,6 @@ public final class ContentItemTagsProvider extends IntrinsicHolderTagsProvider<I
     }
 
     @Override
-    public String getName() {
-        return "Creative tab item tags for " + content.modid();
-    }
-
-    @Override
     protected void addTags(final HolderLookup.Provider provider) {
         for (final ContentTab tab : content.declaredTabs()) {
             for (final ContentTab.Section section : tab.sections()) {
