@@ -46,6 +46,7 @@ import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.RamLedger;
@@ -135,6 +136,12 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession);
     /** The page the system crashed onto, while it stands. */
     private final MachineCrash crash = new MachineCrash();
+    /**
+     * The system that came up and is running, which is not always what the disks say now: a system disk taken out
+     * from under it leaves the machine still running that system, on its way to crashing.
+     */
+    @Nullable
+    private OsDef runningSystem;
     /** Where this computer stands on the data network: its node, its network, and the cable it reads. */
     private final NetworkAttachment attachment = new NetworkAttachment(this);
     /** What is on the far end of its peripheral cables. */
@@ -673,6 +680,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     private void endSession() {
         session.drop();
+        runningSystem = null;
         // A run that ends takes what it was running with it: a restart closes every program, as on any machine.
         if (!programs().isEmpty()) {
             programs().stopAll();
@@ -791,9 +799,15 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      * answers as it does to any program it has no room for.
      */
     private void weighMemory() {
-        final OsDef system = installedOs();
-        if (system == null || system.platform() != Platform.FRAMES || !isRunning() || goingDown() || needsPost()
-                || booting()) {
+        if (!isRunning() || goingDown() || needsPost() || booting() || atBootMenu()) {
+            return;
+        }
+        // A machine that was already up when it was loaded never saw its system come up, so it learns it here.
+        if (runningSystem == null) {
+            runningSystem = installedOs();
+        }
+        final OsDef system = runningSystem;
+        if (system == null || system.platform() != Platform.FRAMES) {
             return;
         }
         final RamLedger ledger = ramLedger();
@@ -884,7 +898,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
                 || needsPost() || haltedAtPost() || atBootMenu() || booting()) {
             return false;
         }
-        final OsDef system = installedOs();
+        final OsDef system = runningSystem != null ? runningSystem : installedOs();
         final CrashStyle style = system == null ? null : CrashPages.styleFor(system.platform(), system.familyRank());
         if (style == null) {
             return false;
@@ -915,6 +929,26 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         final OsDef system = installedOs();
         if (system != null && system.platform() == Platform.FRAMES) {
             crash(CrashCause.MEMORY, CrashPages.Moment.memory(program, 0, List.of()));
+        }
+    }
+
+    @Override
+    public void systemCameUp() {
+        runningSystem = installedOs();
+    }
+
+    /**
+     * A part came out of this machine while it ran: a stick of its memory, a card or the disk its system runs from
+     * leaves the system nothing to stand on, and it goes down on its red page. The rest (the processor, the board,
+     * the supply) take the machine with them at once, with no page, as a power cut does; a disk the system does not
+     * run from is only a disk gone, and a hot-swap bay is made to be emptied.
+     */
+    void partTaken(final int slot, final ItemStack part) {
+        final ComputerHardwareLayout layout = layout();
+        final boolean systemDisk = layout.isDisk(slot) && runningSystem != null
+                && OsDisks.systemsOn(part).has(runningSystem.id());
+        if (layout.isRam(slot) || layout.isPcie(slot) || systemDisk) {
+            crash(CrashCause.HARDWARE, CrashPages.Moment.hardware(part.getHoverName().getString()));
         }
     }
 

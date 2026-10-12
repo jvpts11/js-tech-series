@@ -248,8 +248,11 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
                 y += CrashLayout.ROW;
             }
         }
-        TextWall.centered(g, font, GameText.resolve(CrashTexts.F95_RESTARTING), W / 2,
-                y + CrashLayout.F95_RESTART_GAP, c.ink());
+        // A machine left with no computer has nothing to restart, so the page does not promise it.
+        if (!this.endsDark) {
+            TextWall.centered(g, font, GameText.resolve(CrashTexts.F95_RESTARTING), W / 2,
+                    y + CrashLayout.F95_RESTART_GAP, c.ink());
+        }
     }
 
     /* Frames XP and 7: the Stop error screen, top to bottom, and the dump of the memory at its foot. */

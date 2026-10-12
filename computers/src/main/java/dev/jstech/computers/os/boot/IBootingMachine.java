@@ -77,6 +77,10 @@ public interface IBootingMachine {
         return null;
     }
 
+    /** The system has finished coming up: what is running now is what the disk booted. */
+    default void systemCameUp() {
+    }
+
     /** The ticks the crash page still stands, so a monitor opened part way through joins it where it is. */
     default int crashRemaining() {
         return 0;

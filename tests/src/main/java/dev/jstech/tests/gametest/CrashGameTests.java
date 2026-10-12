@@ -137,6 +137,89 @@ public final class CrashGameTests {
                 .thenSucceed();
     }
 
+    /** Its only stick of memory taken out, a running Frames goes down on its red page, and the monitor then goes dark. */
+    @GameTest(template = ARENA, timeoutTicks = 1200)
+    public static void partTaken_theOnlyMemoryPutsTheRedPageUpThenTheMachineIsDark(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = upWith(helper, "frames_10");
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
+                .thenExecute(() -> {
+                    pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START, ItemStack.EMPTY);
+                    final CrashPage page = pc.crashPage();
+                    helper.assertTrue(page != null && page.red() && !page.failedPart().isEmpty(),
+                            "the red page, naming the stick; got " + page);
+                    helper.assertTrue(pc.crashEndsDark() && !pc.isRunning(), "with no computer left behind it");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(pc.crashPage() == null && !pc.isRunning(),
+                        "the page stands its time and the machine stays dark"))
+                .thenSucceed();
+    }
+
+    /** One of two sticks taken out, the machine goes down on its red page and starts over on the other. */
+    @GameTest(template = ARENA, timeoutTicks = 1500)
+    public static void partTaken_oneOfTwoSticksStartsTheMachineOverOnTheOther(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = upWith(helper, "frames_10");
+        pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START + 1,
+                pc.getHardware().getStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START).copy());
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
+                .thenExecute(() -> {
+                    pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START + 1, ItemStack.EMPTY);
+                    helper.assertTrue(pc.crashPage() != null && pc.crashPage().red() && !pc.crashEndsDark(),
+                            "the red page, with a computer still behind it");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(pc.crashPage() == null && pc.isRunning()
+                        && (pc.needsPost() || pc.booting() || up(pc)), "it starts over on the stick it has left"))
+                .thenSucceed();
+    }
+
+    /** The disk the system runs from taken out brings it down; a disk it does not run from is only a disk gone. */
+    @GameTest(template = ARENA, timeoutTicks = 1200)
+    public static void partTaken_onlyTheSystemsOwnDiskBringsItDown(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = upWith(helper, "frames_10");
+        pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START + 1,
+                new ItemStack(EraParts.smallestDiskFor(HardwareEra.STANDARD)));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
+                .thenExecute(() -> {
+                    pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START + 1, ItemStack.EMPTY);
+                    helper.assertTrue(pc.crashPage() == null && up(pc), "a disk it does not run from is only gone");
+                    pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START, ItemStack.EMPTY);
+                    helper.assertTrue(pc.crashPage() != null && pc.crashPage().red(),
+                            "the disk its system runs from brings it down on the red page");
+                })
+                .thenSucceed();
+    }
+
+    /** The processor taken out takes the machine with it at once, with no page, as a power cut does. */
+    @GameTest(template = ARENA, timeoutTicks = 1200)
+    public static void partTaken_theProcessorTakesTheMachineWithNoPage(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = upWith(helper, "frames_10");
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
+                .thenExecute(() -> {
+                    pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT, ItemStack.EMPTY);
+                    helper.assertTrue(pc.crashPage() == null && !pc.isRunning(), "dark at once, with no page");
+                })
+                .thenSucceed();
+    }
+
+    /** Linux has no red page: its memory taken out from under it, it panics on a machine check. */
+    @GameTest(template = ARENA, timeoutTicks = 1200)
+    public static void partTaken_linuxPanicsOnAMachineCheck(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = upWith(helper, "debian");
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
+                .thenExecute(() -> {
+                    pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START, ItemStack.EMPTY);
+                    final CrashPage page = pc.crashPage();
+                    helper.assertTrue(page != null && !page.red() && page.lines().stream()
+                                    .anyMatch(line -> line.endsWith("Kernel panic - not syncing: Fatal machine check")),
+                            "the kernel's own panic on a machine check; got " + page);
+                })
+                .thenSucceed();
+    }
+
     /** The red page of a fault of the hardware, with the part's name on the newer editions' page. */
     @GameTest(template = ARENA, timeoutTicks = 1200)
     public static void crash_hardwarePutsTheRedPageUpNamingThePart(final GameTestHelper helper) {

@@ -1564,6 +1564,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every era's creative tab has, after its installers, a disk with each of its systems already on it, the way a
   computer comes from the shop: put in a machine of that era, it comes up at once as "My Computer". Each is the era's
   biggest disk, so the most room is left once the system is on it.
+- A part taken out of a running computer brings its system down: a stick of memory, an expansion card or the disk
+  the system runs from puts Frames on its red page, naming the part on Frames 10 and 11; Linux and FreeBSD panic on
+  a machine check, and UNIX on a memory parity error. A machine left with what it needs (the other stick of two) starts over once the page has
+  stood its time; one left with no computer goes dark. The processor, the board or the power supply taken out switch
+  the machine off at once, with no page, and a disk the system does not run from or a drive in a hot-swap bay is only
+  a disk gone.
 
 ### Changed
 - Every edition of Frames goes down when a program it has no memory left for is opened, a window, a program started

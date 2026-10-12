@@ -27,6 +27,7 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -50,14 +51,25 @@ final class ComputerHardware {
      */
     private boolean powered;
     private boolean dirty = true;
+    /** The part each slot held when it last changed, so the one that comes out can be named after it has gone. */
+    private final ItemStack[] seated;
 
     ComputerHardware(final AbstractComputerBlockEntity machine, final ComputerHardwareLayout layout) {
         this.machine = machine;
         this.layout = layout;
+        this.seated = new ItemStack[layout.totalSlots()];
+        Arrays.fill(this.seated, ItemStack.EMPTY);
         this.handler = new ItemStackHandler(layout.totalSlots()) {
             @Override
             protected void onContentsChanged(final int slot) {
                 ComputerHardware.this.dirty = true;
+                final ItemStack before = ComputerHardware.this.seated[slot];
+                final ItemStack now = getStackInSlot(slot);
+                ComputerHardware.this.seated[slot] = now.copy();
+                // A part out of its slot, or swapped for another, is a part taken out of the machine.
+                if (!before.isEmpty() && (now.isEmpty() || !ItemStack.isSameItem(before, now))) {
+                    ComputerHardware.this.machine.partTaken(slot, before);
+                }
                 ComputerHardware.this.machine.hardwareChanged();
             }
 
@@ -118,6 +130,9 @@ final class ComputerHardware {
             final CompoundTag saved = tag.getCompound(key).copy();
             saved.putInt("Size", this.layout.totalSlots());
             this.handler.deserializeNBT(registries, saved);
+            for (int slot = 0; slot < this.seated.length; slot++) {
+                this.seated[slot] = this.handler.getStackInSlot(slot).copy();
+            }
         }
     }
 

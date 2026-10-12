@@ -145,6 +145,25 @@ public final class MemoryCrashClientTests {
                                 + desktop(ctx).windowsFor(CALCULATOR).size() + " Calculators")));
     }
 
+    /**
+     * Its only stick of memory taken out from under a running Frames 95, the machine goes down on the red page of a
+     * fault of the hardware before the player's eyes, and with no computer left behind it the monitor then goes dark.
+     */
+    @ClientTest(timeoutTicks = 4000)
+    public static void frames95_memoryTakenOutPutsTheRedPageUpThenTheMonitorIsDark(final ClientTestContext ctx) {
+        atTheDesk(ctx);
+        ctx.thenServer(SETTLE, level -> computer(ctx, level).getHardware()
+                        .setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START, ItemStack.EMPTY))
+                .thenAwaitScreen(CrashScreen.class, SCREEN_WAIT)
+                .thenAssert(0, () -> crash(ctx).page().style() == CrashStyle.FRAMES_95 && crash(ctx).page().red(),
+                        "the machine should go down on the red page of a fault of the hardware")
+                .thenScreenshot(SETTLE, "red-page")
+                .thenAwaitNoScreen(SCREEN_WAIT * 4)
+                .thenServer(0, level -> ctx.assertTrue(!computer(ctx, level).isRunning()
+                                && computer(ctx, level).crashPage() == null,
+                        "the machine should be dark once its page has stood its time"));
+    }
+
     /* The Legacy computer built, running Frames 95, with the player seated at its monitor. */
     private static void atTheDesk(final ClientTestContext ctx) {
         atTheDesk(ctx, FRAMES_95);

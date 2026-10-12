@@ -342,6 +342,7 @@ public final class BootRunner {
         }
         phases.endBoot();
         phases.systemUp(now);
+        machine.systemCameUp();
         machine.systemSound(level, SystemSound.STARTUP);
         final boolean balloon = greet(machine);
         if (machine.onScreen()) {
