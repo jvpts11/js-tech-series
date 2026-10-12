@@ -1946,6 +1946,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   server opens on what the server's own system has: the rack never told its players which system its server boots.
 - A Mainframe's cabinet takes on its parts only the cables of its own era and the earlier ones, as its front does:
   a Vintage Mainframe took an Advanced peripheral cable on any of its other blocks.
+- A Server Rack's blocks take the cables of the rack's era and the earlier ones, as its base block does, and a
+  Supercomputer Rack's blocks only its fabric: any of their other blocks took every era's peripheral cable.
 - A room of many monitors draws each one's picture in turn: past a few, the same pictures were drawn every frame and
   the rest never, staying dark; and past eight in sight, a monitor's face was built anew at every picture, asking its
   machine again each time.

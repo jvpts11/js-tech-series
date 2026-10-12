@@ -21,6 +21,8 @@ import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.EnumMap;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -43,6 +45,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
@@ -68,14 +71,24 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
             BlockStateProperties.HORIZONTAL_FACING;
 
     /*
-     * The backbone and the compute fabric on the back, every era's: a part does not know its cabinet's age, so the
-     * cabinet's own block is where the age is held to. A rack is on the backbone; the access line is for the small
-     * computers, which reach it through a router.
+     * The era of the cabinet the part belongs to, as the era's level(), stamped by the controller as it raises the
+     * part: the parts are one shared block, and the cabinet's age is what sets the cables they take.
+     */
+    public static final IntegerProperty ERA = IntegerProperty.create(
+            "era", HardwareEra.VINTAGE.level(), HardwareEra.ADVANCED.level());
+
+    /*
+     * The backbone and the compute fabric on the back, and the peripheral line on every face, every era's: what any
+     * part may take, which accepts() narrows to its own cabinet's. A rack is on the backbone; the access line is for
+     * the small computers, which reach it through a router.
      */
     private static final FacePorts PORTS = FacePorts.builder()
             .port(FaceRule.BACK, DataLines.upTo(HardwareEra.ADVANCED, DataLine.BACKBONE, DataLine.HPC))
             .port(FaceRule.EVERY, PeripheralLine.of(HardwareEra.ADVANCED))
             .build();
+    /* What a part takes, as its cabinet does: a server cabinet's of each era, and a compute cabinet's. */
+    private static final Map<HardwareEra, FacePorts> SERVER_PORTS = byEra(false);
+    private static final Map<HardwareEra, FacePorts> COMPUTE_PORTS = byEra(true);
 
     public ServerRackPartBlock(final Properties properties) {
         super(properties);
@@ -84,6 +97,7 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
                 .setValue(FRONT, false)
                 .setValue(COMPUTE, false)
                 .setValue(FACING, Direction.NORTH)
+                .setValue(ERA, HardwareEra.STANDARD.level())
                 .setValue(ServerRackBlock.BAYS, 0)
                 .setValue(OpticalPort.OPTICAL, false));
     }
@@ -105,21 +119,22 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
     }
 
     /*
-     * A compute cabinet is on the high-compute fabric only; a server cabinet takes every data tier but that one, and
-     * both only through the cabinet's back, where the cabinet links its cables. The cable's rendered nub and the
-     * cabinet's own link follow this same rule, so a data cable on a supercomputer cabinet neither shows a
-     * connection nor makes one. The fibre only when a server in the cabinet holds an Optical Network Card.
+     * A compute cabinet is on the high-compute fabric only; a server cabinet takes the backbone and the peripheral
+     * line, and both only the cables of their cabinet's era and the earlier ones, through the back for the data
+     * lines, as the cabinet's own block does. The cable's rendered nub and the cabinet's own link follow this same
+     * rule, so a data cable on a supercomputer cabinet neither shows a connection nor makes one. The fibre only when
+     * a server in the cabinet holds an Optical Network Card.
      */
     @Override
     public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
-        return IFaceConnector.super.accepts(state, face, offered)
-                && state.getValue(COMPUTE) == (DataLines.of(offered.line()) == DataLine.HPC)
+        final HardwareEra era = HardwareEra.fromLevel(state.getValue(ERA));
+        return (state.getValue(COMPUTE) ? COMPUTE_PORTS : SERVER_PORTS).get(era).accepts(state, face, offered)
                 && OpticalPort.admits(state, offered);
     }
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(TOP, FRONT, COMPUTE, FACING, ServerRackBlock.BAYS, OpticalPort.OPTICAL);
+        builder.add(TOP, FRONT, COMPUTE, FACING, ERA, ServerRackBlock.BAYS, OpticalPort.OPTICAL);
     }
 
     @Override
@@ -211,5 +226,19 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
     @Nullable
     public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
         return new ServerRackPartBlockEntity(pos, state);
+    }
+
+    private static Map<HardwareEra, FacePorts> byEra(final boolean compute) {
+        final Map<HardwareEra, FacePorts> ports = new EnumMap<>(HardwareEra.class);
+        for (int level = HardwareEra.VINTAGE.level(); level <= HardwareEra.ADVANCED.level(); level++) {
+            final HardwareEra era = HardwareEra.fromLevel(level);
+            ports.put(era, compute
+                    ? FacePorts.builder().port(FaceRule.BACK, DataLines.upTo(era, DataLine.HPC)).build()
+                    : FacePorts.builder()
+                            .port(FaceRule.BACK, DataLines.upTo(era, DataLine.BACKBONE))
+                            .port(FaceRule.EVERY, PeripheralLine.of(era))
+                            .build());
+        }
+        return Map.copyOf(ports);
     }
 }

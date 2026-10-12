@@ -11,6 +11,8 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframePartBlock;
 import dev.jstech.computers.block.OpticalPort;
+import dev.jstech.computers.block.ServerRackBlock;
+import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.guide.CableFacts;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableType;
@@ -37,6 +39,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.Blocks;
@@ -106,6 +109,40 @@ public final class CableLineGameTests {
                 "and takes its own era's");
         helper.assertFalse(block.accepts(part, Direction.NORTH, DataLines.of(new DataLink(DataLine.BACKBONE,
                 HardwareEra.STANDARD))), "and refuses a newer era's backbone");
+        helper.succeed();
+    }
+
+    /**
+     * A Server Rack's parts take the cables of their cabinet's era and the earlier ones, as the cabinet does, and a
+     * Supercomputer Rack's parts only its fabric: every part took an Advanced peripheral cable, whatever its cabinet.
+     */
+    @GameTest(template = ARENA)
+    public static void rackParts_takeOnlyTheCablesOfTheirCabinet(final GameTestHelper helper) {
+        final BlockPos at = new BlockPos(2, 2, 2);
+        final ServerRackBlock rack = (ServerRackBlock) ComputingModule.VINTAGE_SERVER_RACK.get();
+        helper.setBlock(at, rack);
+        final BlockState controller = helper.getBlockState(at);
+        rack.setPlacedBy(helper.getLevel(), helper.absolutePos(at), controller, null, ItemStack.EMPTY);
+        final Direction facing = controller.getValue(ServerRackBlock.FACING);
+        BlockState part = null;
+        for (final BlockPos placed : rack.footprint(helper.absolutePos(at), facing)) {
+            final BlockState there = helper.getLevel().getBlockState(placed);
+            if (there.getBlock() instanceof ServerRackPartBlock) {
+                part = there;
+            }
+        }
+        helper.assertTrue(part != null, "the cabinet raised its parts");
+        helper.assertTrue(part.getValue(ServerRackPartBlock.ERA) == HardwareEra.VINTAGE.level(),
+                "the cabinet stamps its era on its parts");
+        final IFaceConnector block = (IFaceConnector) part.getBlock();
+        helper.assertFalse(block.accepts(part, Direction.NORTH, PeripheralLine.of(HardwareEra.ADVANCED)),
+                "a Vintage rack's part refuses the Advanced peripheral cable");
+        helper.assertTrue(block.accepts(part, Direction.NORTH, PeripheralLine.of(HardwareEra.VINTAGE)),
+                "and takes its own era's");
+        final BlockState compute = part.setValue(ServerRackPartBlock.COMPUTE, true)
+                .setValue(ServerRackPartBlock.ERA, HardwareEra.STANDARD.level());
+        helper.assertFalse(block.accepts(compute, Direction.NORTH, PeripheralLine.of(HardwareEra.STANDARD)),
+                "a Supercomputer Rack's part takes no peripheral cable, as its cabinet takes none");
         helper.succeed();
     }
 

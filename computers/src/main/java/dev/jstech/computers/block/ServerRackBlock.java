@@ -186,6 +186,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         return ComputingModule.SERVER_RACK_PART.get().defaultBlockState()
                 .setValue(ServerRackPartBlock.TOP, ServerRackStructure.isTopLayer(controller, part))
                 .setValue(ServerRackPartBlock.FACING, facing)
+                .setValue(ServerRackPartBlock.ERA, era().level())
                 .setValue(ServerRackPartBlock.COMPUTE,
                         rackType() == RackChassis.RackType.SUPERCOMPUTER)
                 .setValue(ServerRackPartBlock.FRONT,
