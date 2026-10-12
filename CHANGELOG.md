@@ -1950,6 +1950,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Supercomputer Rack's blocks only its fabric: any of their other blocks took every era's peripheral cable.
 - A bus or a crafting part clicked where it cannot go says why on the action bar: that it mounts on a cable laid
   beside the block, or that every face of the cable there is taken. The click did nothing and said nothing.
+- An Integra Phi stays out of a computer's card slots, as the manual says: only a supercomputer node seats one. A
+  Personal Computer or a Mainframe took it, where it added nothing.
 - A room of many monitors draws each one's picture in turn: past a few, the same pictures were drawn every frame and
   the rest never, staying dark; and past eight in sight, a monitor's face was built anew at every picture, asking its
   machine again each time.

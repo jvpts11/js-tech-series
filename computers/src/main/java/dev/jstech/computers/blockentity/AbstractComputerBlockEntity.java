@@ -25,6 +25,7 @@ import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.MachinePorts;
+import dev.jstech.computers.hardware.PhiCoprocessorSpec;
 import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.BayDriveItem;
@@ -322,6 +323,10 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             return false;
         }
         if (card.cardSpec() instanceof WorkshopCardSpec && !takesWorkshopCards()) {
+            return false;
+        }
+        if (card.cardSpec() instanceof PhiCoprocessorSpec) {
+            // A co-processor adds crafts to a supercomputer's nodes alone, so only a node's server seats one.
             return false;
         }
         final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());

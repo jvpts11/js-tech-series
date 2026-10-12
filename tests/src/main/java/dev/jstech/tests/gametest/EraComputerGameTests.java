@@ -196,6 +196,19 @@ public final class EraComputerGameTests {
         helper.succeed();
     }
 
+    /** A Phi co-processor seats only in a supercomputer node's server, so a computer refuses it on any board. */
+    @GameTest(template = ARENA)
+    public static void phi_staysOutOfAComputer(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity standard = withBoard(helper, new BlockPos(1, 2, 1),
+                ComputingModule.PERSONAL_COMPUTER.get(), HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get());
+        final int card = PersonalComputerBlockEntity.GPU_SLOTS_START;
+        helper.assertFalse(standard.isValidForSlot(card, new ItemStack(ComputingModule.PHI_5100.get())),
+                "a Personal Computer refuses the Phi, though its PCIe bus would fit");
+        helper.assertTrue(standard.isValidForSlot(card, new ItemStack(ComputingModule.OPTICAL_NETWORK_CARD.get())),
+                "and still takes another card of that bus");
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void motherboardSlot_takesTheWorkstationBoardFromTheTransitionOn(final GameTestHelper helper) {
         final PersonalComputerBlockEntity legacy = withBoard(helper, new BlockPos(1, 2, 1),
