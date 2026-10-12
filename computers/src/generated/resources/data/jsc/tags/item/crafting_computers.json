@@ -1,0 +1,13 @@
+{
+  "values": [
+    "jsc:vintage_crafting_computer",
+    "jsc:legacy_crafting_computer",
+    "jsc:transition_crafting_computer",
+    "jsc:crafting_computer",
+    "jsc:high_performance_crafting_computer",
+    "jsc:aesthetic_crafting_computer",
+    "jsc:advanced_crafting_computer",
+    "jsc:advanced_high_performance_crafting_computer",
+    "jsc:advanced_aesthetic_crafting_computer"
+  ]
+}

@@ -62,28 +62,48 @@ public final class ComputingContent {
     /**
      * The shelves of a tab, in the order the tab shows them: the computers by kind, the racks and what they carry, the
      * devices at a desk, the network, the parts, then the media and what is written on them.
+     *
+     * <p>Each shelf is also an item tag of the mod, holding what that shelf holds in every tab, so a datapack or a
+     * script can ask for any part ({@code #jsc:components}) the way the era tags ({@code #jsc:era/vintage}) give
+     * anything of one era.
      */
     public enum Shelf {
         /** Personal Computers, in every case of their era. */
-        PERSONAL_COMPUTERS,
+        PERSONAL_COMPUTERS("personal_computers"),
         /** Crafting Computers. */
-        CRAFTING_COMPUTERS,
+        CRAFTING_COMPUTERS("crafting_computers"),
         /** Cluster Management Computers. */
-        CLUSTER_MANAGEMENT_COMPUTERS,
+        CLUSTER_MANAGEMENT_COMPUTERS("cluster_management_computers"),
         /** The Mainframes, which run a network. */
-        MAINFRAMES,
+        MAINFRAMES("mainframes"),
         /** Server racks and supercomputer racks, the server cases, the servers and the nodes. */
-        SERVER_RACK,
+        SERVER_RACK("racks_and_servers"),
         /** What a rack carries in its bays besides servers: bay gadgets and rack units. */
-        RACK_BAYS,
+        RACK_BAYS("rack_bays"),
         /** The devices at a desk: monitors, drives, encoders, printers, speakers, hubs and the peripheral cables. */
-        PERIPHERALS,
+        PERIPHERALS("peripherals"),
         /** The data network: its cables, routers, repeaters and interfaces, and the buses that mount on a cable. */
-        NETWORK,
+        NETWORK("network"),
         /** The parts a machine is built from: boards, processors, memory, cards, supplies and disks. */
-        COMPONENTS,
+        COMPONENTS("components"),
         /** Blank media, then an installer of every system and every installable program. */
-        PROGRAMS
+        PROGRAMS("programs");
+
+        private final String tag;
+
+        Shelf(final String tag) {
+            this.tag = tag;
+        }
+
+        /** The path of the shelf's item tag in the mod's namespace. */
+        public String tag() {
+            return tag;
+        }
+    }
+
+    /** The path of the item tag holding everything of {@code era}, in the mod's namespace. */
+    public static String eraTag(final HardwareEra era) {
+        return "era/" + era.serializedName();
     }
 
     /**
@@ -119,6 +139,7 @@ public final class ComputingContent {
                 () -> HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150));
         tabs.put(HardwareEra.ADVANCED, CONTENT.tab("computing_advanced", "J's Computers - Advanced",
                 () -> HardwareItems.GPU_VERTEX_RTX_5090));
+        tabs.forEach((era, tab) -> tab.tagging(eraTag(era)));
         return tabs;
     }
 
@@ -139,7 +160,7 @@ public final class ComputingContent {
     private static Map<Shelf, ContentTab.Section> shelves(final ContentTab tab, @Nullable final HardwareEra era) {
         final Map<Shelf, ContentTab.Section> shelves = new EnumMap<>(Shelf.class);
         for (final Shelf shelf : Shelf.values()) {
-            final ContentTab.Section section = tab.section();
+            final ContentTab.Section section = tab.section().tagging(shelf.tag());
             if (shelf == Shelf.COMPONENTS) {
                 section.sortedBy((one, other) -> HardwareItems.CREATIVE_ORDER.compare(one, other));
             }

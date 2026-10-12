@@ -93,6 +93,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   are J's Core's processing recipes.
 
 ### Added
+- Item tags for J's Computers, so a datapack or a script can ask for a whole group of its things: `#jsc:era/vintage`,
+  `#jsc:era/legacy`, `#jsc:era/transition`, `#jsc:era/standard` and `#jsc:era/advanced` hold everything of an era,
+  and one tag per shelf of the creative tabs holds that shelf in every era: `#jsc:personal_computers`,
+  `#jsc:crafting_computers`, `#jsc:cluster_management_computers`, `#jsc:mainframes`, `#jsc:racks_and_servers`,
+  `#jsc:rack_bays`, `#jsc:peripherals`, `#jsc:network`, `#jsc:components` and `#jsc:programs`. J's Core writes them
+  from the tabs, which a mod's tab or shelf asks for when it is declared.
 - The front of a computer's case: the Personal, Crafting and Cluster Management Computers have the 5.25-inch bays of
   their era's case, one on the Vintage and Standard cases, two on the Legacy and Transition ones, none on the
   Advanced. Four parts go in them, each in its era's tab: the Hot-Swap Drive Bay (Vintage), the Internal CD Drive

@@ -1,0 +1,27 @@
+{
+  "values": [
+    "jsc:vintage_server_rack",
+    "jsc:vintage_server_case",
+    "jsc:vintage_server",
+    "jsc:legacy_server_rack",
+    "jsc:legacy_server_case",
+    "jsc:legacy_server",
+    "jsc:transition_server_rack",
+    "jsc:transition_server_case",
+    "jsc:transition_server",
+    "jsc:server_rack",
+    "jsc:supercomputer_rack",
+    "jsc:server_case",
+    "jsc:server",
+    "jsc:storage_server_case",
+    "jsc:storage_server",
+    "jsc:compute_server_case",
+    "jsc:compute_server",
+    "jsc:supercomputer_node",
+    "jsc:advanced_server_rack",
+    "jsc:advanced_supercomputer_rack",
+    "jsc:advanced_server_case",
+    "jsc:advanced_server",
+    "jsc:advanced_supercomputer_node"
+  ]
+}

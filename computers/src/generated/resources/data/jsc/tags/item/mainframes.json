@@ -1,0 +1,9 @@
+{
+  "values": [
+    "jsc:vintage_mainframe",
+    "jsc:legacy_mainframe",
+    "jsc:transition_mainframe",
+    "jsc:mainframe",
+    "jsc:advanced_mainframe"
+  ]
+}

@@ -20,7 +20,8 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 /**
  * A mod's data generation, started from its declared content: {@link #gather} adds everything the declarations
- * already say (block states, models, the English, palettes, sounds, fonts, loot, block tags, recipe machines), and
+ * already say (block states, models, the English, palettes, sounds, fonts, loot, block tags, the item tags its tabs
+ * name, recipe machines), and
  * the mod adds only what is its own on top.
  *
  * <pre>{@code
@@ -58,6 +59,9 @@ public final class ContentData {
         }
         data.server(new ContentLootProvider(output, data.lookup(), content));
         data.server(new ContentBlockTagsProvider(output, data.lookup(), content, data.existingFiles()));
+        if (ContentItemTagsProvider.hasTags(content)) {
+            data.server(new ContentItemTagsProvider(output, data.lookup(), content, data.existingFiles()));
+        }
         if (!content.declaredFluids().isEmpty()) {
             data.server(new ContentFluidTagsProvider(output, data.lookup(), content, data.existingFiles()));
         }
