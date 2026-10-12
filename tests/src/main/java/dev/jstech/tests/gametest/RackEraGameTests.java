@@ -14,6 +14,7 @@ import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -58,6 +59,38 @@ public final class RackEraGameTests {
 
     private static boolean fits(final ServerHardwareHandler handler, final int slot, final Item part) {
         return handler.insertItem(slot, stack(part), false).isEmpty();
+    }
+
+    /**
+     * A server's slots take only what its board takes, as a computer's do: the board's socket and era for a processor,
+     * its memory, and its bus for a card. A part that cannot go in stays out of its slot.
+     */
+    @GameTest(template = ARENA)
+    public static void serverSlots_takeOnlyWhatTheirBoardTakes(final GameTestHelper helper) {
+        final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, ServerStacks.cpulessServer());
+        final ServerHardwareHandler slots = new ServerHardwareHandler(player, InteractionHand.MAIN_HAND);
+        helper.assertFalse(slots.isItemValid(ServerHardwareHandler.CPU_START,
+                stack(HardwareItems.CPU_VELOCION_EPIC_7251.get())), "a processor of another socket and era stays out");
+        helper.assertTrue(slots.isItemValid(ServerHardwareHandler.CPU_START,
+                stack(ComputingModule.CPU_SERVO_2620.get())), "the board's own processor goes in");
+        helper.assertFalse(slots.isItemValid(ServerHardwareHandler.RAM_START + 1,
+                stack(HardwareItems.RAM_DDR4_16384.get())), "memory of another generation stays out");
+        helper.assertTrue(slots.isItemValid(ServerHardwareHandler.GPU_START,
+                stack(ComputingModule.OPTICAL_NETWORK_CARD.get())), "a card of the board's bus goes in");
+        helper.succeed();
+    }
+
+    /** A server with no board yet is drawn in its chassis's era on its rack's screens, not in the Standard one. */
+    @GameTest(template = ARENA)
+    public static void rackEra_aServerWithNoBoardWearsItsChassissEra(final GameTestHelper helper) {
+        final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2),
+                ComputingModule.ADVANCED_SERVER_RACK.get());
+        rack.getServers().setStackInSlot(0, stack(ComputingModule.ADVANCED_SERVER.get()));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> helper.assertTrue(rack.displayEra() == HardwareEra.ADVANCED,
+                        "an empty Advanced server reads as Advanced: " + rack.displayEra()))
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA)

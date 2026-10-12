@@ -81,6 +81,9 @@ public final class SoundfoundryShareLayout {
     public static final Rect STATUS = new Rect(6, 286, 420, 12);
     public static final int STATUS_TEXT_Y = 288;
 
+    /** The cable a song's speed is measured against, as its download is: the Ethernet. */
+    private static final DataLink ETHERNET = new DataLink(DataLine.ACCESS, HardwareEra.LEGACY);
+
     private SoundfoundryShareLayout() {
     }
 
@@ -104,10 +107,22 @@ public final class SoundfoundryShareLayout {
         if (link == null) {
             return 0;
         }
-        if (link.line() == DataLine.BACKBONE && link.era() == HardwareEra.LEGACY) {
-            return 4;
+        /*
+         * A song comes as much faster than over the Ethernet as the cable carries more: half its speed or less lights
+         * one bar, its speed two, and each doubling one more, up to all five at eight times its speed, in every era.
+         */
+        final long speed = link.throughput();
+        final long ethernet = ETHERNET.throughput();
+        if (speed * 2 <= ethernet) {
+            return 1;
         }
-        return link.line() == DataLine.HPC && link.era() == HardwareEra.STANDARD ? 5 : 2;
+        if (speed < ethernet * 2) {
+            return 2;
+        }
+        if (speed < ethernet * 4) {
+            return 3;
+        }
+        return speed < ethernet * 8 ? 4 : 5;
     }
 
     /** Which found song a point is on, or -1. */

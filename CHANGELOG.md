@@ -1939,6 +1939,18 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   screen in the world that nobody had looked at for a few seconds, and a surface a manual's scene or a program's
   window draws on, left the rest of the frame drawn into the window rather than the game's own target as they were
   let go or made.
+- A server's slots take only the parts its board takes, as a computer's do: a processor of the board's socket and
+  era, memory of its generation and a card of its bus. They took any processor, memory or card, and the server then
+  failed to start.
+- A server in a rack is drawn in its chassis's era while it has no board, and a help program or the Files on a
+  server opens on what the server's own system has: the rack never told its players which system its server boots.
+- A Mainframe's cabinet takes on its parts only the cables of its own era and the earlier ones, as its front does:
+  a Vintage Mainframe took an Advanced peripheral cable on any of its other blocks.
+- A room of many monitors draws each one's picture in turn: past a few, the same pictures were drawn every frame and
+  the rest never, staying dark; and past eight in sight, a monitor's face was built anew at every picture, asking its
+  machine again each time.
+- Soundfoundry's signal bars follow how fast a song really comes over the way's slowest cable, in every era; only two
+  cables lit more than two bars.
 - A server takes the Optical Network Card in an expansion slot, so a Server Rack holding one takes the fibre backbone
   of the Standard and the Advanced eras; every server refused the card, which left no rack able to join a fibre
   network.

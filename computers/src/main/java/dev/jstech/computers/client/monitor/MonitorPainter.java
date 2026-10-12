@@ -67,8 +67,12 @@ public final class MonitorPainter {
     /* What a monitor's glass keeps clear round itself, which an area for the desktop leaves for it. */
     private static final int GLASS_SIDES = MonitorGlass.BESIDE;
     private static final int GLASS_ENDS = MonitorGlass.ABOVE_AND_BELOW;
-    /* The desktops drawn for faces, by the monitor showing them: a few at once, the least recently seen let go. */
-    private static final int DESKTOPS_KEPT = 8;
+    /*
+     * The desktops drawn for faces, by the monitor showing them, the least recently seen let go: as many as a room of
+     * screens shows at once, since a face let go while still in sight was built again at every picture, asking its
+     * machine what its desktop holds each time.
+     */
+    private static final int DESKTOPS_KEPT = 48;
     /* How often a face asks again what its desktop holds, in ticks: every five seconds. */
     private static final long LISTING_EVERY = 100L;
     private static final Map<BlockPos, Shown> DESKTOPS = new LinkedHashMap<>(16, 0.75F, true) {

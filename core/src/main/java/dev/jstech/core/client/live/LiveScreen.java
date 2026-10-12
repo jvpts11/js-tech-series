@@ -88,6 +88,11 @@ public final class LiveScreen {
         return painter != null && LiveRate.due(paintedAt, now, framesPerSecond);
     }
 
+    /** When it was last drawn, or {@link LiveRate#NEVER}: the longest waiting is drawn first. */
+    long paintedAt() {
+        return paintedAt;
+    }
+
     boolean forgotten(final long now, final long after) {
         return now - askedAt > after;
     }

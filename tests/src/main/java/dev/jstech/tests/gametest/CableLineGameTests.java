@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.MainframeBlock;
+import dev.jstech.computers.block.MainframePartBlock;
 import dev.jstech.computers.block.OpticalPort;
 import dev.jstech.computers.guide.CableFacts;
 import dev.jstech.core.cable.CableEntry;
@@ -22,6 +23,7 @@ import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataLink;
+import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
@@ -87,6 +89,24 @@ public final class CableLineGameTests {
             ComputingModule.OM5_CABLE);
 
     private CableLineGameTests() {
+    }
+
+    /**
+     * A Mainframe's parts take the cables of their Mainframe's era and the earlier ones, as its controller does: a
+     * Vintage Mainframe's cabinet took an Advanced peripheral cable on any of its parts.
+     */
+    @GameTest(template = ARENA)
+    public static void mainframeParts_takeOnlyTheCablesOfTheirMainframesEra(final GameTestHelper helper) {
+        final BlockState part = ComputingModule.MAINFRAME_PART.get().defaultBlockState()
+                .setValue(MainframePartBlock.ERA, HardwareEra.VINTAGE.level());
+        final IFaceConnector block = (IFaceConnector) part.getBlock();
+        helper.assertFalse(block.accepts(part, Direction.NORTH, PeripheralLine.of(HardwareEra.ADVANCED)),
+                "a Vintage Mainframe's part refuses the Advanced peripheral cable");
+        helper.assertTrue(block.accepts(part, Direction.NORTH, PeripheralLine.of(HardwareEra.VINTAGE)),
+                "and takes its own era's");
+        helper.assertFalse(block.accepts(part, Direction.NORTH, DataLines.of(new DataLink(DataLine.BACKBONE,
+                HardwareEra.STANDARD))), "and refuses a newer era's backbone");
+        helper.succeed();
     }
 
     /**

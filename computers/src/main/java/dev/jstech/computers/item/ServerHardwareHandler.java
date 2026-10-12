@@ -9,6 +9,7 @@ package dev.jstech.computers.item;
 
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.rack.RackChassis;
 import java.util.Set;
 import net.minecraft.core.NonNullList;
@@ -126,11 +127,20 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
         if (slot == PSU) {
             return stack.getItem() instanceof PsuItem;
         }
+        /*
+         * A processor, memory or a card takes the board's socket, memory and bus, as in every other computer: a part
+         * that cannot go in the board stays out of its slot rather than going in only to keep the server from
+         * starting. With no board yet, anything of the kind is staged.
+         */
+        final MotherboardSpec board = getStackInSlot(MOBO).getItem() instanceof MotherboardItem seated
+                ? seated.spec() : null;
         if (slot >= CPU_START && slot < CPU_START + CPU) {
-            return stack.getItem() instanceof CpuItem;
+            return stack.getItem() instanceof CpuItem cpu && (board == null
+                    || cpu.spec().socket().equals(board.socket()) && cpu.spec().era() == board.era());
         }
         if (slot >= RAM_START && slot < RAM_START + RAM) {
-            return stack.getItem() instanceof RamItem;
+            return stack.getItem() instanceof RamItem ram && (board == null
+                    || board.acceptedRam().contains(ram.spec().generation()) && ram.spec().era() == board.era());
         }
         if (slot >= GPU_START && slot < GPU_START + GPU) {
             /*
@@ -143,7 +153,9 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
                 final RackChassis chassis = ServerItem.chassisOf(held());
                 return chassis != null && chassis.isSupercomputerNode() && !holdsCoprocessorOutside(slot);
             }
-            return stack.getItem() instanceof GpuItem || stack.getItem() instanceof NetworkCardItem;
+            return (stack.getItem() instanceof GpuItem || stack.getItem() instanceof NetworkCardItem)
+                    && stack.getItem() instanceof IExpansionCardItem card
+                    && (board == null || card.cardSpec().fits(board.pcieGeneration()));
         }
         return false;
     }

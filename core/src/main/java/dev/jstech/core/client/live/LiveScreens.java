@@ -12,8 +12,11 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.gui.Tube;
 import dev.jstech.core.live.LiveRate;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -92,17 +95,26 @@ public final class LiveScreens {
         final Minecraft minecraft = Minecraft.getInstance();
         final long now = Util.getNanos();
         final float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
-        int painted = 0;
+        final List<LiveScreen> due = new ArrayList<>();
         final Iterator<LiveScreen> each = SCREENS.values().iterator();
         while (each.hasNext()) {
             final LiveScreen screen = each.next();
             if (screen.forgotten(now, FORGET_NANOS)) {
                 screen.close();
                 each.remove();
-            } else if (painted < PAINTS_PER_FRAME && screen.due(now)) {
-                screen.paint(minecraft, partialTick, now);
-                painted++;
+            } else if (screen.due(now)) {
+                due.add(screen);
             }
+        }
+        /*
+         * More pictures due than a frame draws: the ones waiting longest go first, those never drawn before all, so
+         * a room of many screens draws each in turn rather than the same few every frame and some never at all.
+         */
+        if (due.size() > PAINTS_PER_FRAME) {
+            due.sort(Comparator.comparingLong(LiveScreen::paintedAt));
+        }
+        for (int i = 0; i < Math.min(PAINTS_PER_FRAME, due.size()); i++) {
+            due.get(i).paint(minecraft, partialTick, now);
         }
     }
 

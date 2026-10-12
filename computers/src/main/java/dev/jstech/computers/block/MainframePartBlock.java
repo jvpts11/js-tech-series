@@ -20,6 +20,8 @@ import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.peripheral.PeripheralLine;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.EnumMap;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -56,6 +58,8 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
     private static final FacePorts PORTS =
             FacePorts.everyFace(DataLines.upTo(HardwareEra.ADVANCED, DataLine.BACKBONE),
                     PeripheralLine.of(HardwareEra.ADVANCED));
+    /* What a part of each era's Mainframe takes: that era's backbone and peripheral cables, and the earlier ones. */
+    private static final Map<HardwareEra, FacePorts> BY_ERA = byEra();
 
     public static final BooleanProperty CORE = BooleanProperty.create("core");
 
@@ -88,10 +92,14 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
         return PORTS;
     }
 
-    /* The fibre only when the Mainframe holds an Optical Network Card, which its controller stamps on every part. */
+    /*
+     * The cables of the Mainframe's own era and the earlier ones, read from the era its controller stamps on every
+     * part, as its controller takes them; and the fibre only while the Mainframe holds an Optical Network Card.
+     */
     @Override
     public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
-        return IFaceConnector.super.accepts(state, face, offered) && OpticalPort.admits(state, offered);
+        return BY_ERA.get(HardwareEra.fromLevel(state.getValue(ERA))).accepts(state, face, offered)
+                && OpticalPort.admits(state, offered);
     }
 
     @Override
@@ -175,5 +183,14 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
     @Nullable
     public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
         return new MainframePartBlockEntity(pos, state);
+    }
+
+    private static Map<HardwareEra, FacePorts> byEra() {
+        final Map<HardwareEra, FacePorts> ports = new EnumMap<>(HardwareEra.class);
+        for (int level = HardwareEra.VINTAGE.level(); level <= HardwareEra.ADVANCED.level(); level++) {
+            final HardwareEra era = HardwareEra.fromLevel(level);
+            ports.put(era, FacePorts.everyFace(DataLines.upTo(era, DataLine.BACKBONE), PeripheralLine.of(era)));
+        }
+        return Map.copyOf(ports);
     }
 }

@@ -51,8 +51,11 @@ import org.jetbrains.annotations.Nullable;
 @EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class SessionFaces {
 
-    /** The faces drawn by screens at once, the least recently seen let go past that. */
-    private static final int KEPT = 8;
+    /**
+     * The faces drawn by screens at once, the least recently seen let go past that: as many as a room of screens shows,
+     * since a face let go while still in sight was built anew at every picture.
+     */
+    private static final int KEPT = 48;
     /* What a monitor's glass keeps clear round itself, which a screen drawing a face is laid out with. */
     private static final int AROUND_X = MonitorGlass.BESIDE;
     private static final int AROUND_Y = MonitorGlass.ABOVE_AND_BELOW;

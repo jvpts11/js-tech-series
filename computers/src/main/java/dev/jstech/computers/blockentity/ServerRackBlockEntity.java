@@ -1940,6 +1940,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     @Override
     @Nullable
     public ResourceLocation installedOsId() {
+        // The client copy holds no mounted servers: it answers from what the server last sent.
+        if (level != null && level.isClientSide()) {
+            return clientOs;
+        }
         final ItemStack disk = systemDisk();
         return OsDisks.systemOn(disk);
     }
@@ -2105,7 +2109,13 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         if (level != null && level.isClientSide()) {
             return clientEra;
         }
-        return installedEra();
+        // A server with no board yet is dressed in its chassis's era, as a computer is in its case's.
+        final HardwareEra board = installedEra();
+        if (board != null) {
+            return board;
+        }
+        final RackChassis chassis = ServerItem.chassisOf(soleServerStack());
+        return chassis == null ? null : chassis.era();
     }
 
     // IComputerTerminalHost: the physical terminal's monitoring surface over the same machine.
@@ -2354,6 +2364,13 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     @Nullable
     private HardwareEra clientEra;
 
+    /*
+     * The system the machine the monitor is showing boots, as last received from the server: a help program on it
+     * opens the book written for that system, and its files find the system's own desktop folder.
+     */
+    @Nullable
+    private ResourceLocation clientOs;
+
     /** The client's copy of whether the rack is on a network; the server answers from its registered nodes. */
     private boolean clientNetworked;
 
@@ -2387,8 +2404,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
              * Only the active channel's era travels. Sending the mounted stacks would put every server's
              * full build on the wire on every block update, for one enum the screens need.
              */
-            final HardwareEra era = installedEra();
+            final HardwareEra era = displayEra();
             tag.putInt("DisplayEra", era == null ? -1 : era.id());
+            final ResourceLocation os = installedOsId();
+            tag.putString("ClientOs", os == null ? "" : os.toString());
             /*
              * The cabinet model: one byte per row says what is seated there, the mask says which bays are
              * off, and the panel flag whether the supercomputer's livery is on. Enough to draw it all.
@@ -2408,6 +2427,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         @Override
         public void readClient(final CompoundTag tag, final HolderLookup.Provider registries) {
             clientEra = HardwareEra.find(tag.getInt("DisplayEra"));
+            final String os = tag.getString("ClientOs");
+            clientOs = os.isEmpty() ? null : ResourceLocation.tryParse(os);
             final byte[] units = tag.getByteArray("Units");
             Arrays.fill(clientUnits, (byte) UNIT_NONE);
             System.arraycopy(units, 0, clientUnits, 0, Math.min(units.length, clientUnits.length));

@@ -32,6 +32,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -279,6 +280,25 @@ public final class RackUnitGameTests {
                                     .targetForComputer(rack)
                                     != dev.jstech.computers.os.boot.BootController.BootTarget.FIRMWARE,
                             "with a system installed the host boots past the firmware");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * What the rack sends the players who see it names the system its server boots: the client copy holds no
+     * mounted servers, and a help program on the server opened on the wrong book without it.
+     */
+    @GameTest(template = ARENA)
+    public static void rackHost_tellsItsPlayersTheSystemItBoots(final GameTestHelper helper) {
+        final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
+        rack.insertDrive(0, nvmeDrive());
+        final ResourceLocation mcNet = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(rack.installOs(mcNet), "the OS must install onto the bay drive");
+                    helper.assertTrue(rack.getUpdateTag(helper.getLevel().registryAccess()).toString()
+                            .contains(mcNet.toString()), "the update the players are sent names " + mcNet);
                 })
                 .thenSucceed();
     }

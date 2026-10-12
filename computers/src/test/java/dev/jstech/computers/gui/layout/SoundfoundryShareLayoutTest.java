@@ -31,10 +31,14 @@ class SoundfoundryShareLayoutTest {
         assertEquals(2, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.ACCESS, HardwareEra.LEGACY)));
         assertEquals(4, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.BACKBONE, HardwareEra.LEGACY)));
         assertEquals(5, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.HPC, HardwareEra.STANDARD)));
-        assertEquals(2, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.CRAFTING, HardwareEra.VINTAGE)),
-                "a cable songs go over at Ethernet's speed shows as Ethernet");
-        assertEquals(2, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.BACKBONE, HardwareEra.STANDARD)),
-                "and so does a new cable with no song speed of its own");
+        assertEquals(3, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.CRAFTING, HardwareEra.VINTAGE)),
+                "a cable twice as fast as the Ethernet brings a song twice as fast, one bar more");
+        assertEquals(5, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.BACKBONE, HardwareEra.STANDARD)),
+                "a Standard backbone brings songs as fast as its speed says, in every era");
+        assertEquals(5, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.HPC, HardwareEra.ADVANCED)),
+                "the fastest cable lights them all");
+        assertEquals(1, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.ACCESS, HardwareEra.VINTAGE)),
+                "a cable far slower than the Ethernet lights one");
     }
 
     @Test

@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.OpticalPort;
+import dev.jstech.computers.block.ServerRackStructure;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -22,10 +23,12 @@ import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -95,6 +98,48 @@ public final class OpticalCardGameTests {
         helper.succeed();
     }
 
+    /**
+     * The whole way a player goes, in an Advanced cabinet: the cabinet placed and formed, the card put into a server
+     * through the server's own slots, the server mounted through the rack's, and the fibre laid behind the cabinet's
+     * back, where a player can lay it.
+     */
+    @GameTest(template = ARENA)
+    public static void formedRack_takesTheFibreAtItsBackWithACardThePlayerSeated(final GameTestHelper helper) {
+        final BlockPos at = new BlockPos(2, 2, 2);
+        final BlockState state = ComputingModule.ADVANCED_SERVER_RACK.get().defaultBlockState()
+                .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH);
+        helper.setBlock(at, state);
+        state.getBlock().setPlacedBy(helper.getLevel(), helper.absolutePos(at), state, null, ItemStack.EMPTY);
+        final List<BlockPos> cabinet = ServerRackStructure.allPositions(helper.absolutePos(at), Direction.NORTH);
+        // The cabinet is two blocks deep behind its front: the first free place behind it is two blocks back.
+        final BlockPos fibre = at.relative(Direction.SOUTH, 2);
+        TestCables.lay(helper, fibre, ComputingModule.FIBRE_CABLE);
+        final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ComputingModule.ADVANCED_SERVER.get()));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertFalse(crosses(helper, fibre, Direction.NORTH), "no card in any server, no fibre");
+                    // The server built part by part, as its screen builds it.
+                    final ServerHardwareHandler slots = new ServerHardwareHandler(player, InteractionHand.MAIN_HAND);
+                    seat(helper, slots, ServerHardwareHandler.MOBO, HardwareItems.MOTHERBOARD_EEB_A_SP3.get());
+                    seat(helper, slots, ServerHardwareHandler.CPU_START, HardwareItems.CPU_VELOCION_EPIC_7251.get());
+                    seat(helper, slots, ServerHardwareHandler.RAM_START, HardwareItems.RAM_DDR4_16384.get());
+                    seat(helper, slots, ServerHardwareHandler.PSU, HardwareItems.PSU_1200P.get());
+                    seat(helper, slots, ServerHardwareHandler.GPU_START, ComputingModule.OPTICAL_NETWORK_CARD.get());
+                    final ItemStack server = player.getItemInHand(InteractionHand.MAIN_HAND).copy();
+                    helper.assertTrue(cabinet(helper, at).getServers().insertItem(0, server, false).isEmpty(),
+                            "the rack takes the server");
+                })
+                .thenExecuteAfter(SETTLE, () -> {
+                    for (final BlockPos block : cabinet) {
+                        helper.assertTrue(helper.getLevel().getBlockState(block).getValue(OpticalPort.OPTICAL),
+                                "every block of the cabinet knows of the card, " + block.toShortString() + " too");
+                    }
+                    helper.assertTrue(crosses(helper, fibre, Direction.NORTH), "and the fibre goes into its back");
+                })
+                .thenSucceed();
+    }
+
     /** A Server Rack takes the fibre while a server seated in it holds the card. */
     @GameTest(template = ARENA)
     public static void rack_takesTheFibreWithACardInAServer(final GameTestHelper helper) {
@@ -148,6 +193,13 @@ public final class OpticalCardGameTests {
                 .thenExecuteAfter(SETTLE, () -> helper.assertTrue(crosses(helper, back, Direction.NORTH),
                         "assembled with the card, it takes the fibre"))
                 .thenSucceed();
+    }
+
+    /* Puts a part into a server's slot the way its screen does, failing the test when the slot refuses it. */
+    private static void seat(final GameTestHelper helper, final ServerHardwareHandler slots, final int slot,
+                             final Item part) {
+        helper.assertTrue(slots.insertItem(slot, new ItemStack(part), false).isEmpty(),
+                "the server's slot " + slot + " takes " + BuiltInRegistries.ITEM.getKey(part));
     }
 
     private static boolean crosses(final GameTestHelper helper, final BlockPos cable, final Direction face) {
