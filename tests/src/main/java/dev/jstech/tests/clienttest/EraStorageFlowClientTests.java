@@ -21,7 +21,6 @@ import dev.jstech.tests.testkit.EraKit;
 import dev.jstech.tests.testkit.EraNetwork;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.Locale;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -194,7 +193,7 @@ public final class EraStorageFlowClientTests {
                  * The cable answers the part the player looks at: the bus sits on its top under the chest, so the eyes
                  * go to its edge facing the player, and the turn reaches the server before the click does.
                  */
-                .then(EraJourney.SETTLE, () -> lookAt(ctx, Vec3.atLowerCornerOf(ctx.abs(ACCESS_CABLE))
+                .then(EraJourney.SETTLE, () -> ctx.lookAt(Vec3.atLowerCornerOf(ctx.abs(ACCESS_CABLE))
                         .add(0.5, 0.94, 0.9)))
                 .then(EraJourney.SETTLE, () -> ctx.rightClick(ACCESS_CABLE, Direction.UP))
                 .thenAwaitScreen(AbstractBusScreen.class, WAIT)
@@ -233,14 +232,6 @@ public final class EraStorageFlowClientTests {
             }
         }
         throw new ClientTestFailure("the bus window shows no slot for the item in hand");
-    }
-
-    /* Turns the player's head to a point of the world, so the crosshair rests on it. */
-    private static void lookAt(final ClientTestContext ctx, final Vec3 point) {
-        final LocalPlayer player = ctx.mc().player;
-        final Vec3 look = point.subtract(player.getEyePosition());
-        player.setYRot((float) Math.toDegrees(Math.atan2(-look.x, look.z)));
-        player.setXRot((float) -Math.toDegrees(Math.atan2(look.y, Math.sqrt(look.x * look.x + look.z * look.z))));
     }
 
     private static AbstractBusScreen<?> bus(final ClientTestContext ctx) {

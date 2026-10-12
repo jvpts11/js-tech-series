@@ -83,6 +83,11 @@ public abstract class AbstractBusScreen<T extends AbstractBusMenu> extends Abstr
         return configure.addItemPoint();
     }
 
+    /** Where, from the window's corner, the Configure tab's name field is: a click there types the bus's name. */
+    public int[] namePoint() {
+        return new int[] {BusLayout.NAME_X + BusLayout.NAME_W / 2, BusLayout.NAME_Y + BusLayout.NAME_H / 2};
+    }
+
     /** Shows {@code shown}, as a click on its tab does. */
     public void showTab(final int shown) {
         tab = shown;

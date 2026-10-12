@@ -486,8 +486,12 @@ public final class ClientTestContext {
     public void lookAtFront(final BlockPos relative, final double x, final double y, final double out) {
         final BlockPos at = abs(relative);
         final Vec3 normal = Vec3.atLowerCornerOf(facingOf(at).getNormal());
-        final Vec3 look = frontPoint(at, x, y).add(normal.scale(out / EjectButton.FRONT))
-                .subtract(player().getEyePosition());
+        lookAt(frontPoint(at, x, y).add(normal.scale(out / EjectButton.FRONT)));
+    }
+
+    /** Client-side: turns the player's head to the world point {@code point}, so the crosshair rests on it. */
+    public void lookAt(final Vec3 point) {
+        final Vec3 look = point.subtract(player().getEyePosition());
         player().setYRot((float) Math.toDegrees(Math.atan2(-look.x, look.z)));
         player().setXRot((float) -Math.toDegrees(Math.atan2(look.y, Math.sqrt(look.x * look.x + look.z * look.z))));
     }
