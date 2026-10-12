@@ -14,13 +14,17 @@ import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.MachineMemory;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.SchedulerKind;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
@@ -42,6 +46,8 @@ final class DesktopMemory {
     private final int reservedMb;
     /** The installed programs the machine built from source, by id path, whose windows hold a little less. */
     private final Set<String> sourceBuilt = new HashSet<>();
+    /** Whether the warning of a memory past nine tenths has been raised since it last dropped back under. */
+    private boolean warned;
 
     DesktopMemory(final DesktopState desktop, final ResourceLocation osId, final List<DesktopWindow> windows,
                   final int totalMb, final int reservedMb) {
@@ -88,7 +94,8 @@ final class DesktopMemory {
 
     /**
      * Whether a window of {@code key} may open now, that is whether its program's weight still fits in the free
-     * memory; otherwise a preemptive system refuses with the figures and a cooperative one crashes.
+     * memory. One that does not brings every edition of Frames down, and the others refuse it with the figures. A
+     * preemptive Frames that a window takes past nine tenths of its memory says so first, naming what holds the most.
      */
     boolean allowOpen(final String key) {
         if (!videoMemoryAllows(key)) {
@@ -97,10 +104,11 @@ final class DesktopMemory {
         final int need = windowRamMb(key);
         final int free = totalMb - usedMb();
         if (need <= free) {
+            warnIfLow(key, need);
             return true;
         }
-        if (cooperative()) {
-            // A system with no memory protection does not refuse: it goes down, and the machine puts its page up.
+        if (frames()) {
+            // Frames does not refuse a program it has no room for: it goes down, and the machine puts its page up.
             PacketDistributor.sendToServer(new MemoryShortPayload(desktop.host(), desktop.nameOf(key)));
         } else {
             /*
@@ -146,7 +154,47 @@ final class DesktopMemory {
         return false;
     }
 
-    /** A cooperative kernel (Frames 95's) has no memory protection: overloading it crashes the whole machine. */
+    /**
+     * Past nine tenths of the memory, a preemptive Frames warns once, naming the three programs that hold the most and
+     * what each holds, the warning the real ones raised before they ran out. Frames 95's cooperative kernel has no
+     * such warning: it goes down without one. The warning comes again only after the memory has dropped back under.
+     */
+    private void warnIfLow(final String key, final int need) {
+        final int after = usedMb() + need;
+        if (after * 10L < totalMb * 9L) {
+            this.warned = false;
+            return;
+        }
+        if (this.warned || !frames() || cooperative()) {
+            return;
+        }
+        this.warned = true;
+        final Map<String, Integer> held = new HashMap<>();
+        for (final DesktopWindow w : windows) {
+            if (!w.dialog()) {
+                held.merge(w.appKey(), windowRamMb(w.appKey()), Integer::sum);
+            }
+        }
+        held.merge(key, need, Integer::sum);
+        final List<Map.Entry<String, Integer>> byWeight = new ArrayList<>(held.entrySet());
+        byWeight.sort(Map.Entry.<String, Integer>comparingByValue().reversed()
+                .thenComparing(Map.Entry.comparingByKey()));
+        final List<String> heaviest = new ArrayList<>();
+        for (final Map.Entry<String, Integer> one : byWeight.subList(0, Math.min(3, byWeight.size()))) {
+            heaviest.add(GameText.resolve(DesktopTexts.LOW_MEMORY_HOLDS.with(desktop.nameOf(one.getKey()),
+                    one.getValue())));
+        }
+        desktop.notices().showBalloon(GameText.resolve(DesktopTexts.LOW_MEMORY),
+                GameText.resolve(DesktopTexts.LOW_MEMORY_WARNING.with(String.join(", ", heaviest))));
+    }
+
+    /** Whether the system is an edition of Frames, which goes down rather than refuse a program. */
+    private boolean frames() {
+        final OsDef os = OsRegistry.getOs(osId);
+        return os != null && os.platform() == Platform.FRAMES;
+    }
+
+    /** A cooperative kernel (Frames 95's) has no memory protection, and no warning before it goes down. */
     private boolean cooperative() {
         final OsDef os = OsRegistry.getOs(osId);
         final KernelDef kernel = os == null ? null : OsRegistry.getKernel(os.kernelId());

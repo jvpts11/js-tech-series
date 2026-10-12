@@ -2617,6 +2617,8 @@
   "jsc.desktop.local_account": "Local account",
   "jsc.desktop.low_memory": "Low on memory",
   "jsc.desktop.low_memory_body": "This computer is running out of RAM for programs. %s needs %s MB and only %s MB are free.",
+  "jsc.desktop.low_memory_holds": "%s (%s MB)",
+  "jsc.desktop.low_memory_warning": "This computer is running low on memory. Close some programs before you open more: %s.",
   "jsc.desktop.low_video_memory": "Not enough video memory",
   "jsc.desktop.low_video_memory_body": "%s needs %s of video memory, and %s are free. Turn off a monitor or close a graphics program.",
   "jsc.desktop.new": "New",

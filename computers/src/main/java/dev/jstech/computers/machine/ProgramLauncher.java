@@ -86,6 +86,8 @@ public final class ProgramLauncher {
         final int room = heapMb <= 0 ? MachinePrograms.DEFAULT_HEAP_MB : Math.min(heapMb, MachinePrograms.MAX_HEAP_MB);
         final RamLedger ledger = machine.ramLedger();
         if (!ledger.fits(room)) {
+            // A system that goes down rather than refuse a program does so here; the others refuse it.
+            machine.memoryShort(name);
             return new Launch(0, name, Refusal.NO_MEMORY, Text.EMPTY, room, ledger.freeMb());
         }
         final MachinePrograms.Started started =

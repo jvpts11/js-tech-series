@@ -12,11 +12,13 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.client.CrashScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.os.crash.CrashStyle;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.testkit.EraParts;
 import dev.jstech.tests.testkit.TestWorldBuilder;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -32,7 +34,7 @@ import org.lwjgl.glfw.GLFW;
  * Calculator again and again until a window no longer fits, and the machine goes down on its blue page. Nothing the
  * player types reaches anything while it stands; then the machine starts over from its self-test and comes back to an
  * empty session, which opens programs again. A player who walks away from the page finds the machine started over
- * all the same.
+ * all the same. Frames XP, preemptive, warns first, past nine tenths, and then goes down on its own page.
  */
 public final class MemoryCrashClientTests {
 
@@ -49,6 +51,7 @@ public final class MemoryCrashClientTests {
     /** The key the Calculator's windows go by, as the machine keeps its open windows. */
     private static final String CALCULATOR_KEY = "jsc:calculator";
     private static final ResourceLocation FRAMES_95 = ResourceLocation.fromNamespaceAndPath("jsc", "frames_95");
+    private static final ResourceLocation FRAMES_XP = ResourceLocation.fromNamespaceAndPath("jsc", "frames_xp");
 
     private MemoryCrashClientTests() {
     }
@@ -85,6 +88,45 @@ public final class MemoryCrashClientTests {
                         "the desktop to open a program again"));
     }
 
+    /**
+     * Frames XP, preemptive, warns first: the window that takes the memory past nine tenths opens with a balloon
+     * naming what holds the most, and the next one, which does not fit, brings the machine down on XP's own page.
+     */
+    @ClientTest(timeoutTicks = 7000)
+    public static void framesXp_warnsPastNineTenthsAndThenGoesDown(final ClientTestContext ctx) {
+        atTheDesk(ctx, FRAMES_XP);
+        // Whatever the system opened on its own start goes first, so only the Calculators hold memory.
+        ctx.then(SETTLE, () -> {
+            for (final String open : List.copyOf(desktop(ctx).openWindowLabels())) {
+                final DesktopWindow window = desktop(ctx).windowFor(open);
+                if (window != null) {
+                    ctx.clickDesktop(window.buttonCentre(DesktopWindow.BUTTON_CLOSE));
+                }
+            }
+        }).thenWaitUntil(() -> desktop(ctx).openWindowLabels().isEmpty(), SCREEN_WAIT, "the desktop to be bare");
+        // 64 MB of 128 are the system's and each Calculator holds 16: three of them leave it under nine tenths.
+        for (int i = 0; i < 3; i++) {
+            ctx.then(SETTLE, () -> DesktopSteps.launch(ctx, CALCULATOR));
+        }
+        ctx.thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == 3, SCREEN_WAIT,
+                        "three Calculators to open")
+                .thenAssert(SETTLE, () -> desktop(ctx).balloonTitle().isEmpty(), "no warning under nine tenths")
+                .then(SETTLE, () -> DesktopSteps.launch(ctx, CALCULATOR))
+                .thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == 4
+                        && desktop(ctx).balloonTitle().equals("Low on memory"), SCREEN_WAIT,
+                        "the fourth, which takes it past nine tenths, to open with the warning")
+                // A program is named once with all its windows hold, as the real warning listed programs.
+                .then(0, () -> ctx.assertTrue(desktop(ctx).balloonBody().contains("Calculator (64 MB)"),
+                        "the warning should name what holds the most; it says: " + desktop(ctx).balloonBody()))
+                .thenScreenshot(SETTLE, "xp-warning")
+                .then(SETTLE, () -> DesktopSteps.launch(ctx, CALCULATOR))
+                .thenAwaitScreen(CrashScreen.class, SCREEN_WAIT)
+                .thenAssert(0, () -> crash(ctx).page().style() == CrashStyle.FRAMES_XP && !crash(ctx).page().red()
+                                && crash(ctx).page().stopCode().equals("MEMORY_MANAGEMENT"),
+                        "the fifth should bring it down on XP's own page")
+                .thenScreenshot(SETTLE, "xp-crash");
+    }
+
     @ClientTest(timeoutTicks = 7000)
     public static void frames95_walkingAwayFromTheCrashDoesNotSkipTheReboot(final ClientTestContext ctx) {
         atTheDesk(ctx);
@@ -105,6 +147,11 @@ public final class MemoryCrashClientTests {
 
     /* The Legacy computer built, running Frames 95, with the player seated at its monitor. */
     private static void atTheDesk(final ClientTestContext ctx) {
+        atTheDesk(ctx, FRAMES_95);
+    }
+
+    /* The Legacy computer built, running that system, with the player seated at its monitor. */
+    private static void atTheDesk(final ClientTestContext ctx, final ResourceLocation system) {
         ctx.thenBuild(0, world -> {
                     world.setBlock(COMPUTER, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
                     final PersonalComputerBlockEntity computer = world.blockEntity(COMPUTER,
@@ -123,8 +170,8 @@ public final class MemoryCrashClientTests {
                             new ItemStack(EraParts.cardFor(board, GpuItem.class)));
                     hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                             new ItemStack(EraParts.diskFor(HardwareEra.LEGACY)));
-                    if (!computer.installOs(FRAMES_95)) {
-                        throw new IllegalStateException("could not install Frames 95 on the Legacy computer");
+                    if (!computer.installOs(system)) {
+                        throw new IllegalStateException("could not install " + system + " on the Legacy computer");
                     }
                     computer.togglePower();
                     world.placeMonitor(MONITOR, Direction.EAST, ComputingModule.LEGACY_MONITOR.get());

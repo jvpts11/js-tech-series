@@ -7973,6 +7973,8 @@
   "jsc.crash.xp.contact": "Contate o administrador do sistema ou o grupo de suporte técnico para obter mais assistência.",
   "jsc.crash.xp.dump_begin": "Início do despejo da memória física",
   "jsc.crash.xp.dump_done": "Despejo da memória física concluído.",
+  "jsc.desktop.low_memory_holds": "%s (%s MB)",
+  "jsc.desktop.low_memory_warning": "Este computador está com pouca memória. Feche alguns programas antes de abrir outros: %s.",
   "jsc.files.replace_many": "O destino já tem %s arquivos com os mesmos nomes. Substituir pelos que estão sendo movidos? Não pula e os deixa onde estavam.",
   "jsc.files.replace_one": "O destino já tem um arquivo chamado %s. Substituir pelo que está sendo movido? Não pula e o deixa onde estava.",
   "jsc.files.replace_title": "Substituir ou Pular Arquivos",

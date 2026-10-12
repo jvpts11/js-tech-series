@@ -1566,13 +1566,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   biggest disk, so the most room is left once the system is on it.
 
 ### Changed
-- Frames 95's crash, when a window no longer fits in memory, brings the machine itself down: its blue page, in the
-  style of the real one, is on the monitor for everyone looking at it, in the world too, and nothing typed or clicked
-  at it reaches anything. The programs the machine was running die with it, its session ends, and once the page has
-  stood its time the machine starts over from its self-test into an empty session. It was a picture on the player's
-  own desktop only: the keyboard still reached the program behind it, and a player who left the monitor during it
-  came back to every window open before the crash. Every edition of Frames, Linux, FreeBSD and UNIX have their own
-  crash page now, ready for what brings each of them down.
+- Every edition of Frames goes down when a program it has no memory left for is opened, a window, a program started
+  at its prompt or a service, instead of refusing it: Frames 95 at once, and Frames XP, 7, 10 and 11 after a balloon
+  that warns, once the memory passes nine tenths, naming the programs that hold the most. The crash brings the machine
+  itself down: its blue page, in the style of each edition's real one, is on the monitor for everyone looking at it,
+  in the world too, and nothing typed or clicked at it reaches anything. The programs the machine was running die
+  with it, its session ends, and once the page has stood its time the machine starts over from its self-test into an
+  empty session. Frames 95's crash was a picture on the player's own desktop only: the keyboard still reached the
+  program behind it, and a player who left the monitor during it came back to every window open before the crash.
+  Linux, FreeBSD and UNIX have their own crash pages too, their kernels' panics on the console.
 - A server's RAID controller and read cache are expansion cards now, not gadgets in the rack's front bays: Vaultis
   makes an Array and a Cache for each era's slot, from ISA to PCI-e 4.0. The Array joins the drives of the server it
   sits in and keeps the array's mode on itself, so a server pulled from its rack takes its array with it; the Cache

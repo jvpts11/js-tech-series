@@ -48,18 +48,19 @@ import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootRunner;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.boot.BootSplash;
+import dev.jstech.computers.os.boot.BootTiming;
+import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.crash.CrashStyle;
-import dev.jstech.computers.os.boot.BootSplash;
-import dev.jstech.computers.os.boot.BootTiming;
-import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
@@ -779,6 +780,29 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      */
     protected void tickBootPhases(final ServerLevel level) {
         BootRunner.tick(this, power.phases(), level, worldPosition);
+        if (level.getGameTime() % OS_CHECK_TICKS == 0) {
+            weighMemory();
+        }
+    }
+
+    /**
+     * Once a second, what the machine's system holds is weighed against what it has: a service installed, a server
+     * with more listeners, anything that took memory without asking first. A system that holds more than there is
+     * answers as it does to any program it has no room for.
+     */
+    private void weighMemory() {
+        final OsDef system = installedOs();
+        if (system == null || system.platform() != Platform.FRAMES || !isRunning() || goingDown() || needsPost()
+                || booting()) {
+            return;
+        }
+        final RamLedger ledger = ramLedger();
+        if (ledger.usedMb() <= ledger.totalMb()) {
+            return;
+        }
+        // What tipped it over is whatever came last; the page names no program, so the newest entry stands for it.
+        final List<RamLedger.Entry> entries = ledger.entries();
+        memoryShort(entries.isEmpty() ? "" : entries.getLast().name());
     }
 
     /** Whether the machine is stopped at its boot menu. */
@@ -884,8 +908,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     /**
-     * A window the player opened on this machine's desktop did not fit in what is left of its memory: a system of the
-     * Frames family goes down on its blue page for it.
+     * A program asked this machine for memory it no longer has: a window opened on its desktop, a program started at
+     * its prompt, a service. A system of the Frames family does not refuse it: it goes down on its blue page.
      */
     public void memoryShort(final String program) {
         final OsDef system = installedOs();

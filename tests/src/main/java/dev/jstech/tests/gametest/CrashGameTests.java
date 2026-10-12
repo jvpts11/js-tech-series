@@ -7,21 +7,35 @@
  */
 package dev.jstech.tests.gametest;
 
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.ProgramLauncher;
+import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.crash.CrashStyle;
+import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.vm.program.IProgramParent;
+import dev.jstech.computers.vm.program.ProgramPriority;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.EraParts;
 import dev.jstech.tests.testkit.TestWorldBuilder;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * GameTests for a system crashing as the machine's own state: the page it goes down on, what dies with it, and how
@@ -89,6 +103,37 @@ public final class CrashGameTests {
                     pc.memoryShort("Calculator");
                     helper.assertTrue(pc.crashPage() != null, "the window that did not fit brings it down");
                 })
+                .thenSucceed();
+    }
+
+    /** A program started at the prompt of a Frames with no room left for it brings the machine down. */
+    @GameTest(template = ARENA, timeoutTicks = 2400)
+    public static void programLaunch_onAFullFramesBringsItDown(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = legacyFrames95(helper);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
+                .thenExecute(() -> {
+                    // Calculators that leave it 4 of its 128 MB: the program asks for more than that.
+                    pc.setOpenWindows(calculators(27));
+                    final ProgramLauncher.Launch launch = ProgramLauncher.launch(pc, "C:\\progs\\counter.sgs",
+                            asked -> ICliComputer.FsResult.ok(COUNTER), List.of(), IProgramParent.NONE,
+                            ProgramPriority.MEDIUM, 16);
+                    helper.assertTrue(launch.refusal() == ProgramLauncher.Refusal.NO_MEMORY,
+                            "the program does not fit; got " + launch.refusal());
+                    helper.assertTrue(pc.crashPage() != null, "and Frames goes down rather than refuse it");
+                })
+                .thenSucceed();
+    }
+
+    /** A Frames that came to hold more than it has, whatever took the memory, goes down within a second. */
+    @GameTest(template = ARENA, timeoutTicks = 2400)
+    public static void overcommit_bringsAFramesMachineDownWithinASecond(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = legacyFrames95(helper);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
+                .thenExecute(() -> pc.setOpenWindows(calculators(OpenWindow.MAX)))
+                .thenExecuteAfter(25, () -> helper.assertTrue(pc.crashPage() != null,
+                        "holding 144 of its 128 MB, the machine goes down"))
                 .thenSucceed();
     }
 
@@ -160,6 +205,39 @@ public final class CrashGameTests {
                 .thenExecuteAfter(2, () -> helper.assertTrue(pc.needsPost() && !pc.crash(CrashCause.MEMORY,
                         CrashPages.Moment.memory("Paint", 0, List.of())), "no system is up to crash"))
                 .thenSucceed();
+    }
+
+    /* A Legacy computer with the least memory its board takes, 128 MB, running Frames 95. */
+    private static PersonalComputerBlockEntity legacyFrames95(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        world.setBlock(PC, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
+        final PersonalComputerBlockEntity pc = world.blockEntity(PC, PersonalComputerBlockEntity.class);
+        final ItemStackHandler hardware = pc.getHardware();
+        final Item board = HardwareItems.MOTHERBOARD_ATX_LEGACY_S370.get();
+        hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(board));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT, new ItemStack(EraParts.cpuFor(board)));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
+                new ItemStack(HardwareItems.RAM_SDRAM_128.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
+                new ItemStack(EraParts.psuFor(HardwareEra.LEGACY)));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
+                new ItemStack(EraParts.cardFor(board, GpuItem.class)));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
+                new ItemStack(EraParts.diskFor(HardwareEra.LEGACY)));
+        if (!pc.installOs(ResourceLocation.fromNamespaceAndPath("jsc", "frames_95"))) {
+            throw new IllegalStateException("could not install Frames 95 on the Legacy computer");
+        }
+        pc.togglePower();
+        return pc;
+    }
+
+    /* That many Calculator windows, as a desktop leaves them open on the machine. */
+    private static List<OpenWindow> calculators(final int count) {
+        final List<OpenWindow> windows = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            windows.add(new OpenWindow("jsc:calculator", 10 + i, 10 + i, 120, 140, false, false, "", 1));
+        }
+        return windows;
     }
 
     private static PersonalComputerBlockEntity upWith(final GameTestHelper helper, final String system) {
