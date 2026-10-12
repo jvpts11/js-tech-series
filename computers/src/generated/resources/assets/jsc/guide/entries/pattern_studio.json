@@ -13,6 +13,10 @@
       "text": "jsc.guide.pattern_studio.text3"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.pattern_studio.text4"
+    },
+    {
       "type": "table",
       "caption": "jsc.guide.pattern_studio.table1",
       "heads": [
@@ -48,7 +52,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.pattern_studio.text4"
+      "text": "jsc.guide.pattern_studio.text5"
     },
     {
       "type": "heading",
@@ -120,10 +124,6 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.pattern_studio.text5"
-    },
-    {
-      "type": "text",
       "text": "jsc.guide.pattern_studio.text6"
     },
     {
@@ -137,6 +137,10 @@
     {
       "type": "text",
       "text": "jsc.guide.pattern_studio.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.pattern_studio.text10"
     },
     {
       "type": "heading",

@@ -140,22 +140,37 @@ final class NetworkPages {
                         "Run it from the computer to the router.")
                 .balloon(5, GuideBlock.ScenePart.of(6, 0, 2), "The Personal Computer",
                         "Plug the access cable into its back.")
-                .steps("Build a Mainframe and give it its parts: an MTX motherboard, a power supply, processors and"
-                                + " memory ([](jsc:mainframes)).",
+                .steps("Build a Mainframe and give it its parts: an MTX motherboard, a power supply, processors,"
+                                + " memory, a disk and a graphics card ([](jsc:mainframes)).",
+                        "Install a system on the Mainframe, such as MC-NET, as on any computer: a monitor on its"
+                                + " graphics card, and the install medium in a drive joined to it ([](jsc:installing))."
+                                + " A Mainframe without a system runs nothing.",
                         "Build a Server Rack and put servers with disks in its bays ([](jsc:server_racks)).",
                         "Join the Mainframe and the rack with the backbone cable of their era: HBW in the Legacy,"
-                                + " Fibre Optic in the Standard.",
+                                + " Fibre Optic in the Standard. Fibre goes into the Mainframe only while it holds an"
+                                + " Optical Network Card, and into the rack only while one of its servers holds one"
+                                + " ([](jsc:expansion_cards)).",
                         "Place a router, and join your Personal Computer to it with the access cable, Ethernet or"
                                 + " Gigabit ([](jsc:routers)). Run the backbone from the router to the Mainframe.",
                         "At the computer, open the Network program ([](jsc:network_interactor)). Put items in, and"
                                 + " they are stored on the servers' disks; ask for them back, and they come out.")
                 .paragraph("The Mainframe joins every data cable that touches any side of its footprint, so a backbone"
-                        + " can meet it on whichever side is nearest.")
+                        + " can meet it on whichever side is nearest. Fibre is the one cable it takes only with the"
+                        + " card.")
                 .paragraph("That is it. From here everything else is more of the same: more racks for more storage,"
                         + " more computers on the access line, a Crafting Computer for autocrafting.")
                 .ifSomethingGoesWrong("A computer is not on the network.",
                         "Its cable is longer than its range, or of another era than the router. Add a repeater, or"
-                                + " a router of the newer era.")
+                                + " a router of the newer era.",
+                        "The Network program says \"○ Mainframe offline\".",
+                        "No Mainframe is on the computer's network. Follow the cables from the computer to the"
+                                + " Mainframe ([](jsc:data_cables)).",
+                        "Nothing goes into storage, and every Operation stays queued.",
+                        "The Mainframe has no system, so it holds every Operation until one is installed"
+                                + " ([](jsc:installing)).",
+                        "The fibre does not join the Mainframe or the rack.",
+                        "Put an Optical Network Card in the Mainframe's card slots, or in a server of the rack"
+                                + " ([](jsc:expansion_cards)).")
                 .register();
         guide.page("data_cables", section).titled("Data cables").icon(() -> ComputingModule.ETHERNET_CABLE)
                 .coversAll(cablesOn(GridKind.DATA, ComputingModule.CRAFTING_CABLE))
@@ -197,6 +212,9 @@ final class NetworkPages {
                 .paragraph("Two rules govern two of the lines. From the Standard on, the backbone's fibre runs only"
                         + " straight, so it turns at an optical router ([](jsc:routers)). And the long distance line"
                         + " runs between exactly two ends and holds its block alone.")
+                .paragraph("Fibre also goes into a Mainframe, a Server Rack or a Cluster Management Computer only"
+                        + " while that machine holds an Optical Network Card: the rack in one of its servers"
+                        + " ([](jsc:expansion_cards)).")
                 .ifSomethingGoesWrong("Fibre will not turn a corner.",
                         "From the Standard on, fibre runs only straight. Turn it at an optical router.",
                         "A run carries nothing beyond its range.",

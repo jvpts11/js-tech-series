@@ -1960,6 +1960,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   for a player who never sat at the machine; it showed an empty window.
 - Every cable's tooltip says how many cables one run of it reaches, read from the cable, and what starts a new run
   (a Repeater, a Router or a Hub); the manual's tables of reaches and speeds are read from the cables too.
+- The Guide to Operations tells a new player what their first network needs and never said: a Mainframe runs nothing
+  until a system such as MC-NET is installed on it, so it needs a disk and a graphics card too; fibre goes into a
+  Mainframe, a Server Rack or a Cluster Management Computer only while it holds an Optical Network Card; and the
+  Pattern Studio and the Crafting Manager come with no system, but are installed from their CDs or the Mirror. Its
+  problems now cover a Mainframe shown offline, Operations that stay queued and fibre that will not join.
 - A big screen of monitors running west or north is drawn whenever any of it is in view; the box the game checks
   its view against lost a monitor at each end.
 - A USB stick in the Dock Station's port and in the Advanced Pattern Encoder's lies across as the port does; it

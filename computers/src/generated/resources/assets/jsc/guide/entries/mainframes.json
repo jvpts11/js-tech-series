@@ -18,6 +18,10 @@
       "text": "jsc.guide.mainframes.text3"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.mainframes.text4"
+    },
+    {
       "type": "table",
       "caption": "jsc.guide.mainframes.table1",
       "rows": [
@@ -81,7 +85,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.mainframes.text4"
+      "text": "jsc.guide.mainframes.text5"
     },
     {
       "type": "define",
@@ -95,11 +99,11 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.mainframes.text5"
+      "text": "jsc.guide.mainframes.text6"
     },
     {
       "type": "text",
-      "text": "jsc.guide.mainframes.text6"
+      "text": "jsc.guide.mainframes.text7"
     },
     {
       "type": "table",
@@ -177,7 +181,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.mainframes.text7"
+      "text": "jsc.guide.mainframes.text8"
     },
     {
       "type": "scene",
@@ -387,11 +391,11 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.mainframes.text8"
+      "text": "jsc.guide.mainframes.text9"
     },
     {
       "type": "text",
-      "text": "jsc.guide.mainframes.text9"
+      "text": "jsc.guide.mainframes.text10"
     },
     {
       "type": "define",
@@ -405,11 +409,11 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.mainframes.text10"
+      "text": "jsc.guide.mainframes.text11"
     },
     {
       "type": "text",
-      "text": "jsc.guide.mainframes.text11"
+      "text": "jsc.guide.mainframes.text12"
     },
     {
       "type": "heading",
@@ -433,6 +437,14 @@
         {
           "fix": "jsc.guide.mainframes.fix4",
           "problem": "jsc.guide.mainframes.problem4"
+        },
+        {
+          "fix": "jsc.guide.mainframes.fix5",
+          "problem": "jsc.guide.mainframes.problem5"
+        },
+        {
+          "fix": "jsc.guide.mainframes.fix6",
+          "problem": "jsc.guide.mainframes.problem6"
         }
       ]
     },

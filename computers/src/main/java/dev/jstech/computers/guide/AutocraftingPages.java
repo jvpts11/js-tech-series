@@ -117,7 +117,9 @@ final class AutocraftingPages {
                 .paragraph("The parts are a Crafting Computer that runs the crafts ([](jsc:crafting_computers)), the"
                         + " Crafting Cable that joins it to the machines, and on that cable the parts that feed each"
                         + " machine. A Crafting Card in the computer is what lets it craft at all"
-                        + " ([](jsc:crafting_cards)).")
+                        + " ([](jsc:crafting_cards)). Two programs you install yourself write the patterns and load"
+                        + " them: the Pattern Studio and the Crafting Manager ([](jsc:pattern_studio),"
+                        + " [](jsc:crafting_manager)).")
                 .scene("The whole line: a Crafting Computer, the Crafting Cable, and a furnace with the parts that feed"
                         + " it and take back what it makes. Drag it to see the back.", 130)
                 .place(0, 0, 1, () -> ComputingModule.CRAFTING_COMPUTER.get(), "facing=south", COMPUTER_DATA)
@@ -317,6 +319,9 @@ final class AutocraftingPages {
                         + " drafts on the computer, one for each tab: \"Bench\", \"Machine\" and \"Multi-stage\". A"
                         + " draft is not a recipe until it is complete, so you can leave one half written and come"
                         + " back to it.")
+                .paragraph("The Studio does not come with any system. Install it from its CD, or on a Linux"
+                        + " desktop from the Mirror, on a system with windows: Frames XP or newer, or a Linux,"
+                        + " FreeBSD or UNIX desktop ([](jsc:programs)).")
                 .paragraph("Nothing is used up in the Studio. A click on a cell of the editor records a copy of what"
                         + " your cursor holds, and your inventory sits in a band under the editor.")
                 .paragraph("The Load button works only on a Crafting Computer, because only that computer loads"
@@ -626,8 +631,10 @@ final class AutocraftingPages {
     private static void craftingManager(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("crafting_manager", section).titled("The Crafting Manager")
                 .paragraph("The Crafting Manager is the program that loads recipes into the cards and the interfaces of"
-                        + " a Crafting Computer, and that shows what its crafting parts are doing. It runs on a"
-                        + " Crafting Computer.")
+                        + " a Crafting Computer, and that shows what its crafting parts are doing. It runs only on a"
+                        + " Crafting Computer, and it does not come with any system. Install it from its CD, or on a"
+                        + " Linux desktop from the Mirror, on a system with windows: Frames XP or newer, or a Linux,"
+                        + " FreeBSD or UNIX desktop ([](jsc:programs)).")
                 .paragraph("You need a Crafting Card to manage recipes, and only a Crafting Computer loads them"
                         + " ([](jsc:crafting_computers)).")
                 .paragraph("The Crafting Manager has two tabs, \"Recipes\" and \"Interfaces\".")

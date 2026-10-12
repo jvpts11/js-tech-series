@@ -241,6 +241,10 @@
         {
           "fix": "jsc.guide.server_racks.fix3",
           "problem": "jsc.guide.server_racks.problem3"
+        },
+        {
+          "fix": "jsc.guide.server_racks.fix4",
+          "problem": "jsc.guide.server_racks.problem4"
         }
       ]
     },

@@ -110,7 +110,8 @@
         "jsc.guide.first_network.step2",
         "jsc.guide.first_network.step3",
         "jsc.guide.first_network.step4",
-        "jsc.guide.first_network.step5"
+        "jsc.guide.first_network.step5",
+        "jsc.guide.first_network.step6"
       ]
     },
     {
@@ -131,6 +132,18 @@
         {
           "fix": "jsc.guide.first_network.fix1",
           "problem": "jsc.guide.first_network.problem1"
+        },
+        {
+          "fix": "jsc.guide.first_network.fix2",
+          "problem": "jsc.guide.first_network.problem2"
+        },
+        {
+          "fix": "jsc.guide.first_network.fix3",
+          "problem": "jsc.guide.first_network.problem3"
+        },
+        {
+          "fix": "jsc.guide.first_network.fix4",
+          "problem": "jsc.guide.first_network.problem4"
         }
       ]
     }

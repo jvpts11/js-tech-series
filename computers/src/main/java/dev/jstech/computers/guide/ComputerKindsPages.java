@@ -219,6 +219,11 @@ final class ComputerKindsPages {
                 .paragraph("The Mainframe takes an MTX motherboard of its own era. There is one Mainframe for each"
                         + " era: the Mainframe (Standard), and the Vintage, Legacy, Transition and Advanced"
                         + " Mainframes.")
+                .paragraph("A Mainframe runs the network only with a system on one of its disks, such as MC-NET"
+                        + " ([](jsc:mc_net)). Install it as on any computer ([](jsc:installing)); until then the"
+                        + " Mainframe holds every Operation it is given. From the Standard on, the backbone is fibre,"
+                        + " and the Mainframe takes fibre only while an Optical Network Card sits in one of its card"
+                        + " slots ([](jsc:expansion_cards)).")
                 .table("What a Mainframe holds")
                 .fixed("Motherboard", "1 MTX")
                 .fixed("Processors", "up to 4")
@@ -278,6 +283,10 @@ final class ComputerKindsPages {
                         + " not deleted, so its storage survives ([](jsc:network_identity)).")
                 .ifSomethingGoesWrong("The Mainframe does not form.",
                         "Clear the whole 3 by 2 by 2 space, then place it again. The blocked spaces show particles.",
+                        "Every Operation stays queued.",
+                        "The Mainframe has no system. Install one on it ([](jsc:installing)).",
+                        "The fibre does not join the Mainframe.",
+                        "Put an Optical Network Card in one of its card slots ([](jsc:expansion_cards)).",
                         "The screen shows CONFLICT.",
                         "Two owners share one segment. Take one of them off the segment, or switch FAILOVER on for"
                                 + " one.",
@@ -322,8 +331,13 @@ final class ComputerKindsPages {
                         + " self-test and stops at its boot menu.")
                 .paragraph("The disks in the bays are the storage. A server item carries no disks of its own: its"
                         + " drives are the disks you put in its bays. Join the rack's back port to the backbone"
-                        + " cable, which the rack takes up to its era ([](jsc:data_cables)).")
-                .ifSomethingGoesWrong("A server does not go in.",
+                        + " cable, which the rack takes up to its era ([](jsc:data_cables)). From the Standard on, the"
+                        + " backbone is fibre, and the rack takes it only while one of its servers holds an Optical"
+                        + " Network Card in an expansion slot ([](jsc:expansion_cards)).")
+                .ifSomethingGoesWrong("The fibre does not join the rack.",
+                        "Put an Optical Network Card in an expansion slot of one of its servers, through the"
+                                + " server's own screen ([](jsc:expansion_cards)).",
+                        "A server does not go in.",
                         "It is from a newer era than the rack, or the rows it needs are taken or too small for it."
                                 + " Use a rack of its era or a newer one, or free those rows.",
                         "The message names another kind of rack, such as \"This chassis belongs in a Server"

@@ -191,6 +191,10 @@
       "text": "jsc.guide.data_cables.text5"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.data_cables.text6"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
