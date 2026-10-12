@@ -1543,6 +1543,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ### Changed
 - The manual key is held over an item for a second and a half before its page opens, rather than under half a second,
   so a key pressed in passing opens nothing.
+- J's Computers makes an installer, a blank medium with a system or a program written on it, in one place, which the
+  creative tabs share with anything else that hands one out.
 - A printed picture shows each printer's own hand at the resolution a real one prints at, drawn smoothed as paper is
   seen, rather than as a lattice of little squares: the Epsilon FX-80 in the round dots of its ribbon, the Pakard
   DeskJot 940 in grainy dots of four inks with paler rows from its head's passes, the FotoSmart C4280 in dots of ink

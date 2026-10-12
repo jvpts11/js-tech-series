@@ -22,6 +22,7 @@ import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.media.InstallMedia;
 import dev.jstech.computers.os.media.InstallerProjection;
+import dev.jstech.computers.os.media.InstallerStacks;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
@@ -263,6 +264,37 @@ public final class InstallMediaGameTests {
             helper.assertTrue("My Computer".equals(console.computerName()),
                     os.id() + "'s machine is called My Computer; got " + console.computerName());
         }
+        helper.succeed();
+    }
+
+    /**
+     * An installer asked for by the id of its system or program, as a modpack's recipe asks for one, is the stack the
+     * creative tab shows: the blank medium of its generation with the software written on it. A program every
+     * computer ships with, and an id nothing is registered under, have none.
+     */
+    @GameTest(template = ARENA)
+    public static void installersById_areTheStacksTheTabShows(final GameTestHelper helper) {
+        for (final OsDef os : OsBootstrap.builtinOses()) {
+            final ItemStack made = InstallerStacks.forSystem(os.id());
+            helper.assertTrue(made.is(InstallerStacks.blank(InstallMedia.forSystem(os.minEra())))
+                            && MediaItem.kind(made) == MediaKind.OS_INSTALL && os.id().equals(MediaItem.payload(made)),
+                    os.id() + "'s installer is its era's medium with the system on it; got " + made);
+        }
+        for (final ProgramSpec program : OsBootstrap.builtinPrograms()) {
+            final ItemStack made = InstallerStacks.forProgram(program.id());
+            if (program.installable()) {
+                helper.assertTrue(made.is(InstallerStacks.blank(InstallMedia.forProgram(program.era(), program.kind())))
+                                && MediaItem.kind(made) == MediaKind.PROGRAM_INSTALL
+                                && program.id().equals(MediaItem.payload(made)),
+                        program.id() + "'s installer is its medium with the program on it; got " + made);
+            } else {
+                helper.assertTrue(made.isEmpty(), program.id() + " ships with every computer and has no installer");
+            }
+        }
+        helper.assertTrue(InstallerStacks.forSystem(rl("no_such_system")).isEmpty(),
+                "an id no system is registered under has no installer");
+        helper.assertTrue(InstallerStacks.forProgram(rl("no_such_program")).isEmpty(),
+                "nor one no program is registered under");
         helper.succeed();
     }
 }

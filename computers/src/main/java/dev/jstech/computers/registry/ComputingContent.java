@@ -14,18 +14,13 @@ import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ReadyDisks;
-import dev.jstech.computers.os.media.InstallMedia;
-import dev.jstech.computers.os.media.MediaFormat;
-import dev.jstech.computers.os.media.MediaItem;
-import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.InstallerStacks;
 import dev.jstech.core.content.ContentTab;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.EnumMap;
 import java.util.Map;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -181,7 +176,7 @@ public final class ComputingContent {
     private static void installers(final CreativeModeTab.Output output, final HardwareEra era) {
         for (final OsDef os : OsBootstrap.builtinOses()) {
             if (os.minEra() == era) {
-                output.accept(stamped(InstallMedia.forSystem(os.minEra()), MediaKind.OS_INSTALL, os.id()));
+                output.accept(InstallerStacks.forSystem(os));
             }
         }
         // Then each of those systems already on a disk of the era, for a machine that should simply come up.
@@ -195,27 +190,8 @@ public final class ComputingContent {
         }
         for (final ProgramSpec program : OsBootstrap.builtinPrograms()) {
             if (program.installable() && program.era() == era) {
-                output.accept(stamped(InstallMedia.forProgram(program.era(), program.kind()),
-                        MediaKind.PROGRAM_INSTALL, program.id()));
+                output.accept(InstallerStacks.forProgram(program));
             }
         }
-    }
-
-    private static ItemStack stamped(final MediaFormat format, final MediaKind kind, final ResourceLocation payload) {
-        final ItemStack disc = new ItemStack(mediumFor(format));
-        MediaItem.setKind(disc, kind);
-        MediaItem.setPayload(disc, payload);
-        return disc;
-    }
-
-    /** The blank medium item of a physical format, to stamp an installer onto. */
-    private static Item mediumFor(final MediaFormat format) {
-        return switch (format) {
-            case FLOPPY -> ComputingModule.FLOPPY_DISK.get();
-            case CD -> ComputingModule.CD_ROM.get();
-            case DVD -> ComputingModule.DVD_ROM.get();
-            case USB -> ComputingModule.USB_FLASH_DRIVE.get();
-            case BLU_RAY -> ComputingModule.BD_ROM.get();
-        };
     }
 }
