@@ -21,7 +21,6 @@ import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.MotherboardItem;
-import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
@@ -122,7 +121,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * a taller chassis blocks the rows it covers).
  *
  * <p>The front-panel hotswap slots belong to the RACK, five per rack unit: a mounted chassis
- * cables the slots of the rows it occupies up to its drive and gadget budgets, and drives stay in
+ * cables the slots of the rows it occupies up to its drive budget, and drives stay in
  * their slots when the server itself is pulled, and the next chassis mounted over those rows inherits
  * them. All server-side storage is therefore held by the bay drives (each drive's own disk
  * components), never by the Server item.
@@ -689,14 +688,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     private final ItemStackHandler frontSlots = new ItemStackHandler(CAPACITY_U * RackLayout.SLOTS_PER_U) {
         @Override
         public boolean isItemValid(final int slot, final ItemStack stack) {
-            /*
-             * Each front slot takes only what its role cables: drives in a drive bay, bay gadgets
-             * (RAID controller, cache card) in a gadget bay, nothing in a blocked one.
-             */
+            // Each front slot takes only what its role cables: a drive in a drive bay, nothing in a blocked one.
             return switch (roleOfFrontSlot(slot)) {
                 case DRIVE -> fitsBay(stack);
-                case GADGET -> stack.getItem()
-                        instanceof RackGadgetItem;
                 case BLOCKED_NO_UNIT, BLOCKED_BUDGET -> false;
             };
         }
@@ -1022,14 +1016,14 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     // RAID: the bay's drives as one logical volume
 
-    /** The front-slot index holding the unit's RAID Controller, or -1 when it has none. */
-    public int raidControllerSlot(final int serverSlot) {
-        return arrays.controllerSlot(serverSlot);
+    /** Whether the server at {@code serverSlot} has a RAID controller card seated, which its firmware sets up. */
+    public boolean hasRaidController(final int serverSlot) {
+        return serverSlot >= 0 && serverSlot < servers.getSlots() && !arrays.controller(serverSlot).isEmpty();
     }
 
-    /** Whether the unit at {@code serverSlot} has a Cache Card in one of its gadget bays. */
-    public boolean hasCacheCard(final int serverSlot) {
-        return arrays.hasCacheCard(serverSlot);
+    /** How much of its drives' read latency the server at {@code serverSlot}'s read cache takes away, or 0. */
+    public int cacheCutPercent(final int serverSlot) {
+        return serverSlot >= 0 && serverSlot < servers.getSlots() ? arrays.cacheCutPercent(serverSlot) : 0;
     }
 
     /** The RAID mode the unit at {@code serverSlot} runs, or {@link RaidMode#NONE}. */
@@ -1391,7 +1385,6 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
         return switch (roleOfFrontSlot(slot)) {
             case DRIVE -> stack.getItem() instanceof DiskItem ? PartRefusals.DISK_TOO_NEW : PartRefusals.DRIVE_BAY;
-            case GADGET -> PartRefusals.GADGET_BAY;
             case BLOCKED_NO_UNIT, BLOCKED_BUDGET -> null;
         };
     }

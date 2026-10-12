@@ -56,17 +56,14 @@ final class ServerRackTexts {
     static final TextKey NEWER_THAN_RACK =
             TextKey.of("jsc.rack.newer_than_rack", "This chassis is of a later era than this rack");
     static final TextKey ARRAY_MEMBER = TextKey.of("jsc.rack.array_member", "Array member slot - %s");
-    static final TextKey GADGET_CONFIGURED = TextKey.of("jsc.rack.gadget_configured",
-            "Gadget bay - a RAID Controller is configured in the machine's firmware (STORAGE)");
     static final TextKey DRIVE_BAY = TextKey.of("jsc.rack.drive_bay", "Drive bay - hotswap a disk here");
-    static final TextKey GADGET_BAY = TextKey.of("jsc.rack.gadget_bay", "Gadget bay - RAID controller or cache card");
     static final TextKey BLOCKED_NO_UNIT =
             TextKey.of("jsc.rack.blocked_no_unit", "Blocked - no unit in this row cables these slots");
     static final TextKey BLOCKED_BUDGET =
             TextKey.of("jsc.rack.blocked_budget", "Blocked - the chassis does not cable this slot");
     static final TextKey NODE = TextKey.of("jsc.rack.node", "Node %s");
     static final TextKey UNASSIGNED_NODE = TextKey.of("jsc.rack.unassigned_node", "Unassigned node");
-    static final TextKey CHASSIS = TextKey.of("jsc.rack.chassis", "%sU - %s drive + %s gadget bays");
+    static final TextKey CHASSIS = TextKey.of("jsc.rack.chassis", "%sU - %s drive bays");
     static final TextKey NEEDS_BOARD = TextKey.of("jsc.rack.needs_board", "Incomplete - needs a board + PSU");
     static final TextKey NOT_ON_NETWORK = TextKey.of("jsc.rack.not_on_network", "Rack cable not on a network");
 

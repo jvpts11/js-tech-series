@@ -14,7 +14,7 @@ package dev.jstech.computers.hardware;
  */
 public sealed interface IExpansionCardSpec
         permits GpuSpec, CraftingCardSpec, PhiCoprocessorSpec, ClusterInterfaceCardSpec, SoundCardSpec,
-        NetworkCardSpec, WorkshopCardSpec {
+        NetworkCardSpec, WorkshopCardSpec, StorageCardSpec {
 
     PcieGeneration bus();
 

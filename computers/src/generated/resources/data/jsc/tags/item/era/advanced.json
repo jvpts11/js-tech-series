@@ -37,6 +37,8 @@
     "jsc:advanced_crafting_interface",
     "jsc:crafting_card_t4",
     "jsc:fabric_dpu",
+    "jsc:vaultis_array_pcie4",
+    "jsc:vaultis_cache_pcie4",
     "jsc:disk_hdd_12t",
     "jsc:disk_hdd_16t",
     "jsc:disk_hdd_20t",

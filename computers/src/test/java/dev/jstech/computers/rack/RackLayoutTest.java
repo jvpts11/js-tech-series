@@ -27,7 +27,7 @@ class RackLayoutTest {
     }
 
     private static RackLayout.Unit of(final RackChassis chassis, final int topU) {
-        return new RackLayout.Unit(topU, chassis.heightU(), chassis.driveSlots(), chassis.gadgetSlots());
+        return new RackLayout.Unit(topU, chassis.heightU(), chassis.driveSlots());
     }
 
     @Test
@@ -61,34 +61,30 @@ class RackLayoutTest {
     }
 
     @Test
-    void roleAt_serverChassisWiresThreeDrivesOneGadgetOneBlocked() {
+    void roleAt_serverChassisWiresFourDrivesOneBlocked() {
         final List<RackLayout.Unit> mounted = List.of(of(RackChassis.SERVER, 3));
-        assertEquals(RackLayout.SlotRole.DRIVE, rack.roleAt(3, 0, mounted));
-        assertEquals(RackLayout.SlotRole.DRIVE, rack.roleAt(3, 1, mounted));
-        assertEquals(RackLayout.SlotRole.DRIVE, rack.roleAt(3, 2, mounted));
-        assertEquals(RackLayout.SlotRole.GADGET, rack.roleAt(3, 3, mounted));
+        for (int index = 0; index < 4; index++) {
+            assertEquals(RackLayout.SlotRole.DRIVE, rack.roleAt(3, index, mounted));
+        }
         assertEquals(RackLayout.SlotRole.BLOCKED_BUDGET, rack.roleAt(3, 4, mounted));
     }
 
     @Test
-    void roleAt_storageChassisFillsItsTenSlotsExactly() {
+    void roleAt_storageChassisFillsItsTenSlotsWithDrives() {
         final List<RackLayout.Unit> mounted = List.of(of(RackChassis.STORAGE_SERVER, 0));
-        for (int index = 0; index < RackLayout.SLOTS_PER_U; index++) {
-            assertEquals(RackLayout.SlotRole.DRIVE, rack.roleAt(0, index, mounted),
-                    "first row is all drives");
+        for (int row = 0; row < 2; row++) {
+            for (int index = 0; index < RackLayout.SLOTS_PER_U; index++) {
+                assertEquals(RackLayout.SlotRole.DRIVE, rack.roleAt(row, index, mounted),
+                        "both rows are drives, the two slots that held gadgets among them");
+            }
         }
-        assertEquals(RackLayout.SlotRole.DRIVE, rack.roleAt(1, 0, mounted));
-        assertEquals(RackLayout.SlotRole.DRIVE, rack.roleAt(1, 1, mounted));
-        assertEquals(RackLayout.SlotRole.DRIVE, rack.roleAt(1, 2, mounted));
-        assertEquals(RackLayout.SlotRole.GADGET, rack.roleAt(1, 3, mounted));
-        assertEquals(RackLayout.SlotRole.GADGET, rack.roleAt(1, 4, mounted));
     }
 
     @Test
     void roleAt_computeChassisBlocksEverythingPastItsTwoSlots() {
         final List<RackLayout.Unit> mounted = List.of(of(RackChassis.COMPUTE_SERVER, 6));
         assertEquals(RackLayout.SlotRole.DRIVE, rack.roleAt(6, 0, mounted));
-        assertEquals(RackLayout.SlotRole.GADGET, rack.roleAt(6, 1, mounted));
+        assertEquals(RackLayout.SlotRole.DRIVE, rack.roleAt(6, 1, mounted));
         for (int index = 2; index < RackLayout.SLOTS_PER_U; index++) {
             assertEquals(RackLayout.SlotRole.BLOCKED_BUDGET, rack.roleAt(6, index, mounted));
         }

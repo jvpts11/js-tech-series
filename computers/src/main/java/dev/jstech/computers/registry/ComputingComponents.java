@@ -74,7 +74,7 @@ public final class ComputingComponents {
                     .networkSynchronized(UUIDUtil.STREAM_CODEC));
 
     /*
-     * A RAID Controller carries its array configuration: the mode it runs and how many member
+     * A RAID controller card carries its array configuration: the mode it runs and how many member
      * drives the array was formed with (so a missing member reads as degraded rather than smaller).
      */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>>
@@ -87,7 +87,7 @@ public final class ComputingComponents {
                     .persistent(Codec.INT)
                     .networkSynchronized(ByteBufCodecs.VAR_INT));
 
-    /* The size of the volume a RAID Controller's array was formed with, kept so a degraded array does not resize. */
+    /* The size of the volume a RAID controller's array was formed with, kept so a degraded array does not resize. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>>
             RAID_VOLUME = COMPONENTS.registerComponentType("raid_volume", b -> b
                     .persistent(Codec.LONG)

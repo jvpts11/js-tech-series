@@ -49,6 +49,8 @@
     "jsc:gpu_radiance_hd_7970",
     "jsc:crafting_card_pcie3",
     "jsc:fabric_host_adapter",
+    "jsc:vaultis_array_pcie3",
+    "jsc:vaultis_cache_pcie3",
     "jsc:optical_network_card",
     "jsc:phi_5100",
     "jsc:phi_7120",

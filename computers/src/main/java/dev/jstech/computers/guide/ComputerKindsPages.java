@@ -15,10 +15,10 @@ import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRouterBlock;
-import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerCaseItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.item.StorageCardItem;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideCell;
@@ -319,8 +319,7 @@ final class ComputerKindsPages {
                 .define("Supercomputer", "Many computers that work as one large machine, joined by high compute"
                         + " cable.")
                 .paragraph("A rack seats servers of its own era or older. Each server has drive bays, which show at"
-                        + " the front of the rack, and gadget bays for small parts. The"
-                        + " [server types](jsc:server_types) list how many of each a server has.")
+                        + " the front of the rack. The [server types](jsc:server_types) list how many a server has.")
                 .paragraph("To mount a server by hand, hold it and click the front of the cabinet. It goes into the"
                         + " row under the crosshair, counted from the top. Aim elsewhere, and it takes the first row"
                         + " that fits, from the top down. A rack unit mounts the same way.")
@@ -351,59 +350,26 @@ final class ComputerKindsPages {
 
     private static void serverTypes(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("server_types", section).titled("Server types")
-                .paragraph("Each server is a chassis of its own kind. The chassis sets its height, its drive bays and"
-                        + " gadget bays, and how many processors and PCI Express slots it has. When you pick a server,"
-                        + " these tables tell you what you get. Every server and server case comes from the creative"
-                        + " tabs of J's Computers.")
-                .table("Heights and bays", "Server", "Height", "Drive bays", "Gadget bays")
-                .row(GuideCell.words("Vintage Server"), GuideCell.words("1 U"), GuideCell.words("1"),
-                        GuideCell.words("0"))
-                .row(GuideCell.words("Legacy Server"), GuideCell.words("1 U"), GuideCell.words("2"),
-                        GuideCell.words("1"))
-                .row(GuideCell.words("Transition Server"), GuideCell.words("1 U"), GuideCell.words("4"),
-                        GuideCell.words("1"))
-                .row(GuideCell.words("Server"), GuideCell.words("1 U"), GuideCell.words("3"),
-                        GuideCell.words("1"))
-                .row(GuideCell.words("Advanced Server"), GuideCell.words("1 U"), GuideCell.words("4"),
-                        GuideCell.words("1"))
-                .row(GuideCell.words("Storage Server"), GuideCell.words("2 U"), GuideCell.words("8"),
-                        GuideCell.words("2"))
-                .row(GuideCell.words("Compute Server"), GuideCell.words("2 U"), GuideCell.words("1"),
-                        GuideCell.words("1"))
-                .row(GuideCell.words("Supercomputer Node"), GuideCell.words("2 U"), GuideCell.words("1"),
-                        GuideCell.words("1"))
-                .row(GuideCell.words("Advanced Supercomputer Node"), GuideCell.words("2 U"),
-                        GuideCell.words("2"), GuideCell.words("1"))
-                .table("Processors and slots", "Server", "Processors", "PCI Express slots", "Era")
-                .row(GuideCell.words("Vintage Server"), GuideCell.words("1"), GuideCell.words("1"),
-                        GuideCell.words("Vintage"))
-                .row(GuideCell.words("Legacy Server"), GuideCell.words("2"), GuideCell.words("1"),
-                        GuideCell.words("Legacy"))
-                .row(GuideCell.words("Transition Server"), GuideCell.words("2"), GuideCell.words("2"),
-                        GuideCell.words("Transition"))
-                .row(GuideCell.words("Server"), GuideCell.words("2"), GuideCell.words("no limit"),
-                        GuideCell.words("Standard"))
-                .row(GuideCell.words("Advanced Server"), GuideCell.words("2"), GuideCell.words("no limit"),
-                        GuideCell.words("Advanced"))
-                .row(GuideCell.words("Storage Server"), GuideCell.words("1"), GuideCell.words("1"),
-                        GuideCell.words("Standard"))
-                .row(GuideCell.words("Compute Server"), GuideCell.words("4"), GuideCell.words("no limit"),
-                        GuideCell.words("Standard"))
-                .row(GuideCell.words("Supercomputer Node"), GuideCell.words("2"), GuideCell.words("2"),
-                        GuideCell.words("Standard"))
-                .row(GuideCell.words("Advanced Supercomputer Node"), GuideCell.words("2"),
-                        GuideCell.words("4"), GuideCell.words("Advanced"))
+                .paragraph("Each server is a chassis of its own kind. The chassis sets its height, its drive bays, and"
+                        + " how many processors and expansion slots it has. When you pick a server, this table tells"
+                        + " you what you get. Every server and server case comes from the creative tabs of J's"
+                        + " Computers.")
+                .tableFrom(RackFacts.SERVERS, "Servers", "Server", "Height", "Drive bays", "Processors",
+                        "Expansion slots", "Era")
                 .paragraph("A server fits a rack of its own era or a newer one. A Vintage Server seats in a Standard"
                         + " Server Rack, but a Standard server never seats in a Vintage rack. Supercomputer Nodes go"
                         + " in a Supercomputer Rack, and the Advanced Supercomputer Node goes in an Advanced"
-                        + " Supercomputer Rack. A Vintage Server has no gadget bay, so no gadget fits in it.")
-                .paragraph("Each rack unit has five front slots. A machine fills the slots of its rows in order: drive"
-                        + " bays first, then gadget bays, and the rest are blocked. When a slot is"
-                        + " blocked, the screen says why, with one of two fixed messages.")
+                        + " Supercomputer Rack.")
+                .paragraph("A server's expansion slots take its cards, the storage cards among them: a RAID controller"
+                        + " that joins its drives into one volume and a read cache that answers them faster"
+                        + " ([](jsc:raid_arrays)).")
+                .paragraph("Each rack unit has five front slots. A machine fills the slots of its rows in order with"
+                        + " its drive bays, and the rest are blocked. When a slot is blocked, the screen says why,"
+                        + " with one of two fixed messages.")
                 .ifSomethingGoesWrong("A slot is blocked: \"Blocked - no unit in this row cables these slots\".",
                         "Mount a unit in that row that cables those slots, or pick a chassis that fits the row.",
                         "A slot is blocked: \"Blocked - the chassis does not cable this slot\".",
-                        "Use a chassis with more drive or gadget bays.")
+                        "Use a chassis with more drive bays.")
                 .seeAlso("jsc:server_racks", "jsc:rack_drive_bays")
                 .register();
     }
@@ -416,8 +382,7 @@ final class ComputerKindsPages {
                 .paragraph("The bays belong to the rack, not to the server. A drive stays in its bay when the server is"
                         + " pulled out, and the next server mounted over those rows inherits its drives.")
                 .paragraph("A drive bay takes only a disk of the rack's era or an older one, as a computer's disk slots"
-                        + " do ([](jsc:disks)). A gadget bay takes only a gadget, such as the Cache Card"
-                        + " ([](jsc:rack_equipment)).")
+                        + " do ([](jsc:disks)).")
                 .paragraph("Drives can join into one volume, called RAID. Depending on the mode, a RAID array keeps"
                         + " working when a drive is lost ([](jsc:raid_arrays)).")
                 .define("RAID", "A way of joining several drives into one volume, with or without a copy of the data.")
@@ -435,8 +400,8 @@ final class ComputerKindsPages {
                         + " 40 ticks, which is 2 seconds, or more than 3 minutes. While it runs, the rack shows REBUILD"
                         + " and a percentage. The rack also marks an array DEGRADED or FAILED.")
                 .ifSomethingGoesWrong("The bay refuses the item.",
-                        "A drive bay takes only a disk of the rack's era or an older one, and a gadget bay only a"
-                                + " gadget. Hold the item over the bay to read which rule keeps it out.",
+                        "A drive bay takes only a disk of the rack's era or an older one. Hold the item over the bay"
+                                + " to read which rule keeps it out.",
                         "The array lost everything.",
                         "A RAID 0 array keeps no copy, so it loses everything when a drive is lost. Use RAID 1 or"
                                 + " RAID 5 for a copy"
@@ -446,10 +411,14 @@ final class ComputerKindsPages {
     }
 
     private static void raidArrays(final ModGuide guide, final ModGuide.SectionRef section) {
-        guide.page("raid_arrays", section).titled("RAID modes")
-                .paragraph("A RAID Controller is a gadget for a server's gadget bay. It joins its bay's drives into"
-                        + " one array, and until a mode is set, the bay's drives stay separate. You set the array mode"
-                        + " in the server's firmware, on the storage page of the Setup ([](jsc:firmware)).")
+        guide.page("raid_arrays", section).titled("RAID modes").icon(ComputingModule.VAULTIS_ARRAY_PCIE3)
+                .coversAll(ComputersGuide.itemsOf(StorageCardItem.class))
+                .paragraph("A RAID controller is an expansion card: the Vaultis Array of each era, in a server's"
+                        + " expansion slot. It joins the server's drives into one array, and until a mode is set, the"
+                        + " drives stay separate. You set the array mode in the server's firmware, on the storage page"
+                        + " of the Setup ([](jsc:firmware)). The card keeps the mode, so it goes with the card.")
+                .tableFrom(RackFacts.STORAGE_CARDS, "Storage cards", "Card", "What it is", "Slot", "Era",
+                        "Read latency cut")
                 .table("Array modes", "Mode", "Drives needed", "Survives a lost drive", "Throughput")
                 .row(GuideCell.words("NONE"), GuideCell.words("1"), GuideCell.words("No"),
                         GuideCell.words("100%"))
@@ -466,21 +435,22 @@ final class ComputerKindsPages {
                 .steps("Open the Setup of the server and go to its storage page.",
                         "Press Up or Down until the mode you want shows under ARRAY MODE.",
                         "Press [[Enter]] to apply it.")
-                .paragraph("The Cache Card is a gadget that needs no RAID mode. It cuts the read latency of its bay's"
-                        + " drives by 25%: the screen says \"-25% read latency in its bay\".")
-                .ifSomethingGoesWrong("The drives in the bay do not join.",
-                        "No mode is set, so the bay's drives stay independent. Set a mode on the storage page.",
+                .paragraph("The read cache, the Vaultis Cache of each era, needs no mode. In a server's expansion slot"
+                        + " it cuts the read latency of the server's drives, by more in each newer era, as the table"
+                        + " shows. Outside a server, a storage card sits in its slot and does nothing.")
+                .ifSomethingGoesWrong("The server's drives do not join.",
+                        "No mode is set, so the drives stay independent. Set a mode on the storage page.",
                         "The firmware says \"No storage controller fitted.\"",
-                        "Mount a RAID Controller in this machine's gadget bay.",
+                        "Seat a Vaultis Array card in one of this machine's expansion slots.",
                         "The firmware says the mode needs more drives, such as \"needs 3 drives\".",
-                        "Add drives to the bay, or choose a mode that needs fewer.")
+                        "Add drives to the server's bays, or choose a mode that needs fewer.")
                 .seeAlso("jsc:rack_drive_bays", "jsc:firmware")
                 .register();
     }
 
     private static void rackEquipment(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("rack_equipment", section).titled("Rack equipment").icon(ComputingModule.KVM_SWITCH)
-                .coversAll(ComputersGuide.itemsOf(RackGadgetItem.class, RackUnitItem.class))
+                .coversAll(ComputersGuide.itemsOf(RackUnitItem.class))
                 .paragraph("Not everything in a rack computes. Some units serve the rack: the KVM Switch (keyboard,"
                         + " video, mouse), the Rack UPS (uninterruptible power supply) and the Cooling Unit take rack"
                         + " units, as a server does.")
@@ -495,14 +465,13 @@ final class ComputerKindsPages {
                         + " screen for each. A rack with two or more computers needs one to choose between them.")
                 .paragraph("The Cooling Unit raises the heat the rack can carry, as explained in"
                         + " ([](jsc:rack_cooling_and_heat)).")
-                .paragraph("Gadgets go in the gadget bays of a server ([](jsc:rack_drive_bays)). The RAID Controller"
-                        + " joins the drives of its bay into one array, and the Cache Card cuts the time each read from"
+                .paragraph("A server's storage cards go in its expansion slots, not in the rack: the RAID controller"
+                        + " joins the server's drives into one array, and the read cache cuts the time each read from"
                         + " them takes ([](jsc:raid_arrays)).")
                 .ifSomethingGoesWrong("A rack with several computers has no way to pick one on the monitor.",
                         "Mount a KVM Switch in the rack. It takes one rack unit.",
-                        "The RAID Controller does nothing.",
-                        "Its bay has no mode set, or the bay has fewer drives than the mode needs"
-                                + " ([](jsc:raid_arrays)).")
+                        "The RAID controller does nothing.",
+                        "Its server has no mode set, or fewer drives than the mode needs ([](jsc:raid_arrays)).")
                 .seeAlso("jsc:server_racks", "jsc:rack_cooling_and_heat")
                 .register();
     }

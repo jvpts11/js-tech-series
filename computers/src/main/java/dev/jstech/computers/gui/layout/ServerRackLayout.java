@@ -12,7 +12,7 @@ import dev.jstech.core.gui.layout.GuiLayout;
 /**
  * Pure layout of the Server Rack screen, drawn as the cabinet seen from the front: the rack-unit ruler down the left,
  * the two posts with the units between them (each mounted unit a faceplate with its own slot at the left end, its drive
- * caddies and gadget bays along it and its power button at the right end, an empty unit a blank panel), the card of the
+ * caddies along it and its power button at the right end, an empty unit a blank panel), the card of the
  * selected unit on the right, and the player inventory below. The menu places its slots from these constants and the
  * screen draws from the same ones, so a moved control is caught by the unit test before it reaches the game.
  *

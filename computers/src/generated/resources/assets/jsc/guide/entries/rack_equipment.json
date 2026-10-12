@@ -88,8 +88,6 @@
   "icon": "jsc:kvm_switch",
   "id": "jsc:rack_equipment",
   "items": [
-    "jsc:raid_controller",
-    "jsc:cache_card",
     "jsc:kvm_switch",
     "jsc:rack_ups",
     "jsc:cooling_unit"

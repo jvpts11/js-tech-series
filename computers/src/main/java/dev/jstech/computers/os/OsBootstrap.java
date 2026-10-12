@@ -632,7 +632,7 @@ public final class OsBootstrap {
                             HostScope.SERVER)
                     .named("Predictive Cache")
                     .described("Keeps this bay's most-wanted items staged in memory, cutting read latency by 15%."
-                            + " Stacks with a Cache Card.")
+                            + " Stacks with a read cache card.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.VAULTIS).withRam(128),
             // Load Balancer spreads writes across the bay's drives instead of filling them in order.
             ProgramSpec.of(rl("load_balancer"), "loadbal", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 0,

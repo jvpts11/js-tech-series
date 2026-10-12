@@ -168,7 +168,7 @@ public final class FirmwareScreenTexts {
     static final TextKey NO_CONTROLLER =
             TextKey.of("jsc.firmware.screen.no_controller", "No storage controller fitted.");
     static final TextKey MOUNT_CONTROLLER = TextKey.of("jsc.firmware.screen.mount_controller",
-            "Mount a RAID Controller in this machine's gadget bay.");
+            "Seat a Vaultis Array card in one of this machine's expansion slots.");
     static final TextKey UNCONFIGURED = TextKey.of("jsc.firmware.screen.unconfigured", "unconfigured");
     static final TextKey DEGRADED = TextKey.of("jsc.firmware.screen.degraded", "degraded");
     static final TextKey HEALTHY = TextKey.of("jsc.firmware.screen.healthy", "healthy");

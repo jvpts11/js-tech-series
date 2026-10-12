@@ -25,19 +25,19 @@ final class StoragePages {
 
     /*
      * The rack of the storage scene. The storage server sits in the top rack units (slot 0 holds the chassis, the
-     * second unit it spans stays empty), so its front slots are 0 to 7 for the eight drives and 8 and 9 for the
-     * gadgets. Units is what the renderer draws on a client (code 4 is the 2U storage chassis); the rest is what the
-     * rack saves.
+     * second unit it spans stays empty), so its front slots 0 to 9 are its ten drives, and the Vaultis Array in its
+     * first card slot (13) runs them as a RAID 5. Units is what the renderer draws on a client (code 4 is the 2U
+     * storage chassis); the rest is what the rack saves.
      */
     private static final String STORAGE_RACK_DATA = "{Servers:{Size:8,Items:[{Slot:0,id:\"jsc:storage_server\","
-            + "count:1}]},FrontSlots:{Size:40,Items:["
+            + "count:1,components:{\"jsc:server_hardware\":[{slot:13,item:{id:\"jsc:vaultis_array_pcie3\",count:1,"
+            + "components:{\"jsc:raid_mode\":\"raid5\",\"jsc:raid_members\":10}}}]}}]},FrontSlots:{Size:40,Items:["
             + "{Slot:0,id:\"jsc:disk_hdd_4t\",count:1},{Slot:1,id:\"jsc:disk_hdd_4t\",count:1},"
             + "{Slot:2,id:\"jsc:disk_hdd_4t\",count:1},{Slot:3,id:\"jsc:disk_hdd_4t\",count:1},"
             + "{Slot:4,id:\"jsc:disk_hdd_4t\",count:1},{Slot:5,id:\"jsc:disk_hdd_4t\",count:1},"
             + "{Slot:6,id:\"jsc:disk_hdd_4t\",count:1},{Slot:7,id:\"jsc:disk_hdd_4t\",count:1},"
-            + "{Slot:8,id:\"jsc:raid_controller\",count:1,components:"
-            + "{\"jsc:raid_mode\":\"raid5\",\"jsc:raid_members\":8}}]},BayPowerOff:0,ServicePanelOff:0b,"
-            + "ActiveChannel:0,DisplayEra:3,Units:[B;4b,0b,0b,0b,0b,0b,0b,0b]}";
+            + "{Slot:8,id:\"jsc:disk_hdd_4t\",count:1},{Slot:9,id:\"jsc:disk_hdd_4t\",count:1}]},BayPowerOff:0,"
+            + "ServicePanelOff:0b,ActiveChannel:0,DisplayEra:3,Units:[B;4b,0b,0b,0b,0b,0b,0b,0b]}";
 
     private StoragePages() {
     }
@@ -60,26 +60,20 @@ final class StoragePages {
                         + " a Server Rack, a cabinet with slots called rack units (U), and each rack unit is one"
                         + " slot of height. A storage server is the server built for disks: it is 2 rack units"
                         + " tall and has more disk bays than any other server.")
-                .define("Storage server", "A server built for disks, with 8 disk bays in 2 rack units (U). Its"
-                        + " disks give the network room for items.")
+                .define("Storage server", "A server built for disks, with the most disk bays in 2 rack units (U)."
+                        + " Its disks give the network room for items.")
                 .define("Rack unit (U)", "One slot of height in a Server Rack. A server takes one or more of"
                         + " them.")
                 .paragraph("Each disk goes into a drive bay on the front of the server. The bays are hot-swap:"
                         + " you can pull a disk out and push another in while the server runs.")
-                .table("The Storage Server")
-                .property("Height", "2 rack units (U)")
-                .property("Disk bays", "8 bays, each takes one disk")
-                .property("Gadget bays", "2 bays for a RAID Controller or a Cache Card")
-                .property("Processor sockets", "1 socket")
-                .property("Expansion slots", "1 slot")
-                .property("Era", "Standard")
+                .paragraph("Every server's bays, processors and slots are in [](jsc:server_types).")
                 .paragraph("RAID (redundant array of independent disks) joins the disks of one server into one"
-                        + " disk for the network. You put a RAID Controller in a gadget bay, and you choose the"
-                        + " mode on the STORAGE page of the server's Setup ([](jsc:setup_utility)). The modes and"
-                        + " their numbers are in [](jsc:raid_arrays).")
-                .scene("A Server Rack with a storage server in its top rack units: eight disks in the drive bays,"
-                        + " and a RAID Controller in a gadget bay set as a RAID 5 array. Drag it to see the rack"
-                        + " from the side.", 130)
+                        + " disk for the network. You seat a RAID controller card, the Vaultis Array of the era, in an"
+                        + " expansion slot of the server, and you choose the mode on the STORAGE page of the server's"
+                        + " Setup ([](jsc:setup_utility)). The modes and their numbers are in [](jsc:raid_arrays).")
+                .scene("A Server Rack with a storage server in its top rack units: ten disks in the drive bays,"
+                        + " joined as a RAID 5 array by the Vaultis Array card inside the server. Drag it to see the"
+                        + " rack from the side.", 130)
                 .place(16, 0, 16, () -> ComputingModule.SERVER_RACK.get(), "facing=south", STORAGE_RACK_DATA)
                 .place(16, 0, 15, () -> ComputingModule.SERVER_RACK_PART.get(),
                         "facing=south,top=false,front=false", "")
@@ -106,14 +100,14 @@ final class StoragePages {
                 .balloon(1, GuideBlock.ScenePart.of(16, 0, 16), "The Server Rack",
                         "Right-click its front to open the bays.")
                 .balloon(2, GuideBlock.ScenePart.of(16, 2, 16).box(0, 4, 14, 10, 14, 16), "The drive bays",
-                        "The storage server has 8 of them.")
+                        "The Standard storage server has 10 of them.")
                 .balloon(3, GuideBlock.ScenePart.of(15, 2, 16).box(6, 4, 14, 16, 14, 16), "The disks",
                         "Pull one out and push another in while the server runs.")
                 .paragraph("The network counts the room of every disk in every server of a rack. A server with no"
                         + " disks adds nothing to the network's room.")
                 .ifSomethingGoesWrong(
                         "A slot says \"Blocked - the chassis does not cable this slot\".",
-                        "That slot cannot hold a disk or a gadget. Use another slot.",
+                        "That slot cannot hold a disk. Use another slot.",
                         "A slot says \"Blocked - no unit in this row cables these slots\".",
                         "Use a slot that a unit in this row cables.")
                 .seeAlso("jsc:server_racks", "jsc:raid_arrays", "jsc:local_storage")
@@ -201,9 +195,9 @@ final class StoragePages {
                 .paragraph("A bus with a negative priority fills after the network's own storage, and a bus with a"
                         + " positive one fills before it.")
                 .subheading("Faster reads and writes")
-                .paragraph("A Cache Card in a gadget bay cuts the read latency of that bay's disks by 25%. The"
-                        + " Predictive Cache service cuts it by 15%. Their cuts add together"
-                        + " ([](jsc:rack_equipment)).")
+                .paragraph("A read cache card, the Vaultis Cache of the era, in a server's expansion slot cuts the read"
+                        + " latency of the server's disks, by more in each newer era ([](jsc:raid_arrays)). The"
+                        + " Predictive Cache service cuts it by 15%. Their cuts add together.")
                 .paragraph("Inside one server, the Load Balancer service changes the write order. New items go to"
                         + " the emptiest disk first, instead of filling the disks in turn"
                         + " ([](jsc:network_services)).")
@@ -322,7 +316,7 @@ final class StoragePages {
 
     private static void storageTrouble(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("storage_trouble", section).titled("When storage goes wrong")
-                .icon(ComputingModule.RAID_CONTROLLER)
+                .icon(ComputingModule.VAULTIS_ARRAY_PCIE3)
                 .paragraph("Storage goes wrong in a few known ways, and the game says which. An"
                         + " [Operation](jsc:what_operations_are) that does not finish its whole job shows its status"
                         + " in the Network Manager ([](jsc:network_manager)): \"partial\" when some of the job was"
@@ -371,7 +365,7 @@ final class StoragePages {
                         GuideCell.words("A replacement disk is copying the array's items back. The array serves again"
                                 + " when the copy is done."))
                 .row(GuideCell.words("\"Blocked - the chassis does not cable this slot\""),
-                        GuideCell.words("That slot cannot hold a disk or a gadget. Use another slot."))
+                        GuideCell.words("That slot cannot hold a disk. Use another slot."))
                 .warning("Pulling any disk out of a RAID 0 array erases the data on every disk of the array."
                         + " RAID 0 keeps no second copy.")
                 .paragraph("Pulling a disk out of a RAID 1 or RAID 5 array keeps its items on the other disks. The"

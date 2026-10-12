@@ -851,11 +851,10 @@ final class BuildingPages {
                 .row(GuideCell.words("Transition"), GuideCell.words("PCI-e 2.0"), GuideCell.amount(100, "W"))
                 .row(GuideCell.words("Standard"), GuideCell.words("PCI-e 3.0"), GuideCell.amount(110, "W"))
                 .row(GuideCell.words("Advanced"), GuideCell.words("PCI-e 4.0"), GuideCell.amount(125, "W"))
-                .subheading("Rack gadgets")
-                .paragraph("The RAID Controller and the Cache Card are not expansion cards. They go in the gadget"
-                        + " bay of a"
-                        + " server rack, and the racks explain them ([Rack equipment](jsc:rack_equipment) and"
-                        + " [RAID modes](jsc:raid_arrays)).")
+                .subheading("Storage cards")
+                .paragraph("Vaultis makes a RAID controller and a read cache for each era's slot. In a server they"
+                        + " join its drives into one volume and answer their reads faster; in another computer they"
+                        + " sit in their slot and do nothing ([RAID modes](jsc:raid_arrays)).")
                 .ifSomethingGoesWrong("The Workshop shows \"No fuel\" or \"No lapis\".",
                         "Give smelting its fuel, or give enchanting its lapis.",
                         "A Workshop card does not go into a computer.",

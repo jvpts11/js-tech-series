@@ -26,11 +26,6 @@ public interface IMountableRackUnit {
         return 0;
     }
 
-    /** How many of the rack's front slots it cables as gadget bays (zero for a non-computer unit). */
-    default int gadgetSlots() {
-        return 0;
-    }
-
     /** The mountable unit a stack represents, or null when the item cannot be racked. */
     @Nullable
     static IMountableRackUnit of(final ItemStack stack) {
@@ -42,6 +37,6 @@ public interface IMountableRackUnit {
     static RackLayout.Unit unitAt(final ItemStack stack, final int topU) {
         final IMountableRackUnit unit = of(stack);
         return unit == null ? null
-                : new RackLayout.Unit(topU, unit.heightU(), unit.driveSlots(), unit.gadgetSlots());
+                : new RackLayout.Unit(topU, unit.heightU(), unit.driveSlots());
     }
 }

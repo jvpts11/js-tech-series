@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * How a RAID Controller aggregates the drives of its bay into one logical volume. Pure arithmetic
+ * How a RAID controller card aggregates the drives of its server into one logical volume. Pure arithmetic
  * over drive capacities and counts, with no Minecraft types, so the capacity, redundancy and
  * throughput rules are unit tested on their own.
  *

@@ -73,6 +73,7 @@ import dev.jstech.computers.hardware.PhiCoprocessorSpec;
 import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.hardware.RamGeneration;
 import dev.jstech.computers.hardware.RamSpec;
+import dev.jstech.computers.hardware.StorageCardSpec;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.CabinetBlockItem;
@@ -87,11 +88,11 @@ import dev.jstech.computers.item.NetworkCardItem;
 import dev.jstech.computers.item.PhiCoprocessorItem;
 import dev.jstech.computers.item.PrintedPaperItem;
 import dev.jstech.computers.item.PsuItem;
-import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.item.ServerCaseItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.item.StorageCardItem;
 import dev.jstech.computers.item.WorkshopCardItem;
 import dev.jstech.computers.os.media.DockStationBlock;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
@@ -827,12 +828,8 @@ public final class ComputingModule {
             server("advanced_supercomputer_node", RackChassis.ADVANCED_SUPERCOMPUTER_NODE)
                     .named("Advanced Supercomputer Node").register();
 
-    // Rack equipment: bay gadgets serve the machine in their row; rack units spend the cabinet's unit budget.
+    // Rack equipment: rack units spend the cabinet's unit budget.
 
-    public static final ItemEntry<RackGadgetItem> RAID_CONTROLLER =
-            rackGadget("raid_controller", RackGadgetItem.Kind.RAID_CONTROLLER).named("RAID Controller").register();
-    public static final ItemEntry<RackGadgetItem> CACHE_CARD =
-            rackGadget("cache_card", RackGadgetItem.Kind.CACHE_CARD).named("Cache Card").register();
     public static final ItemEntry<RackUnitItem> KVM_SWITCH =
             rackUnit("kvm_switch", RackUnitItem.Kind.KVM_SWITCH).named("KVM Switch").register();
     public static final ItemEntry<RackUnitItem> RACK_UPS =
@@ -943,6 +940,38 @@ public final class ComputingModule {
                     HardwareEra.ADVANCED, IndustrialTier.T5, PcieGeneration.PCIE_4_0,
                     ClusterInterfaceCardSpec.Reach.ALL, 8, 75)))
             .named("Fabric DPU").register();
+    /*
+     * Vaultis's storage cards, a RAID controller and a read cache for each era's slot: in a server, the Array joins
+     * its drives into one volume and the Cache answers their reads faster. Draws and the cache's cut are estimates.
+     */
+    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_ISA = storageCard("vaultis_array_isa",
+            StorageCardSpec.array(HardwareEra.VINTAGE, PcieGeneration.ISA, 8)).named("Vaultis Array ISA").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_PCI = storageCard("vaultis_array_pci",
+            StorageCardSpec.array(HardwareEra.LEGACY, PcieGeneration.PCI, 10)).named("Vaultis Array PCI").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_PCIE2 = storageCard("vaultis_array_pcie2",
+            StorageCardSpec.array(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 15))
+            .named("Vaultis Array PCI-e 2.0").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_PCIE3 = storageCard("vaultis_array_pcie3",
+            StorageCardSpec.array(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 13))
+            .named("Vaultis Array PCI-e 3.0").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_ARRAY_PCIE4 = storageCard("vaultis_array_pcie4",
+            StorageCardSpec.array(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 18))
+            .named("Vaultis Array PCI-e 4.0").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_ISA = storageCard("vaultis_cache_isa",
+            StorageCardSpec.cache(HardwareEra.VINTAGE, PcieGeneration.ISA, 6, 10)).named("Vaultis Cache ISA")
+            .register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_PCI = storageCard("vaultis_cache_pci",
+            StorageCardSpec.cache(HardwareEra.LEGACY, PcieGeneration.PCI, 12, 15)).named("Vaultis Cache PCI")
+            .register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_PCIE2 = storageCard("vaultis_cache_pcie2",
+            StorageCardSpec.cache(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 25, 20))
+            .named("Vaultis Cache PCI-e 2.0").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_PCIE3 = storageCard("vaultis_cache_pcie3",
+            StorageCardSpec.cache(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 25, 25))
+            .named("Vaultis Cache PCI-e 3.0").register();
+    public static final ItemEntry<StorageCardItem> VAULTIS_CACHE_PCIE4 = storageCard("vaultis_cache_pcie4",
+            StorageCardSpec.cache(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 20, 30))
+            .named("Vaultis Cache PCI-e 4.0").register();
     /* The fibre backbone's adapter: a Mainframe, a rack (in any of its servers) or a CMC takes the fibre with one. */
     public static final ItemEntry<NetworkCardItem> OPTICAL_NETWORK_CARD = part("optical_network_card",
             HardwareEra.STANDARD, properties -> new NetworkCardItem(properties, new NetworkCardSpec(
@@ -1333,9 +1362,8 @@ public final class ComputingModule {
                 .tab(shelf(Shelf.SERVER_RACK, chassis.era()));
     }
 
-    private static ItemBuilder<RackGadgetItem> rackGadget(final String id, final RackGadgetItem.Kind kind) {
-        return CONTENT.item(id, properties -> new RackGadgetItem(properties, kind))
-                .tab(shelf(Shelf.RACK_BAYS, null));
+    private static ItemBuilder<StorageCardItem> storageCard(final String id, final StorageCardSpec spec) {
+        return part(id, spec.era(), properties -> new StorageCardItem(properties, spec));
     }
 
     private static ItemBuilder<RackUnitItem> rackUnit(final String id, final RackUnitItem.Kind kind) {

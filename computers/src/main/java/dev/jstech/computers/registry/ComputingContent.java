@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>A thing's era is the one it carries: a machine's is its chassis, a part's its specification, a cable's its
  * generation, a medium's its format, an installer's the system or program written on it. What works the same in every
- * era, such as the crafting cable or the rack's bay gadgets, goes to the shared tab.
+ * era, such as the crafting cable, goes to the shared tab.
  *
  * <p>Nothing here names a block or an item except lazily, so the catalogue classes that declare into these shelves
  * can load in any order.
@@ -78,7 +78,7 @@ public final class ComputingContent {
         MAINFRAMES("mainframes"),
         /** Server racks and supercomputer racks, the server cases, the servers and the nodes. */
         SERVER_RACK("racks_and_servers"),
-        /** What a rack carries in its bays besides servers: bay gadgets and rack units. */
+        /** What a rack carries in its bays besides servers: the rack units. */
         RACK_BAYS("rack_bays"),
         /** The devices at a desk: monitors, drives, encoders, printers, speakers, hubs and the peripheral cables. */
         PERIPHERALS("peripherals"),

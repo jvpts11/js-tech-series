@@ -64,23 +64,24 @@ AT board, a Legacy one an ATX board, and from the Transition on an ATX or EATX b
 *Added 2026-06-06.*
 
 A rack seats servers of its own era or older. Each server has a height in rack units, drive bays at the front of
-the rack, slots for gadgets, and room for processors and expansion cards:
+the rack, and room for processors and expansion cards:
 
-| Server | U | Drives | Gadgets | Most CPUs | Most cards |
-| --- | --- | --- | --- | --- | --- |
-| Vintage Server | 1 | 1 | 0 | 1 | 1 |
-| Legacy Server | 1 | 2 | 1 | 2 | 1 |
-| Transition Server | 1 | 4 | 1 | 2 | 2 |
-| Server (Standard) | 1 | 3 | 1 | 2 | any |
-| Advanced Server | 1 | 4 | 1 | 2 | any |
-| Storage Server | 2 | 8 | 2 | 1 | 1 |
-| Compute Server | 2 | 1 | 1 | 4 | any |
-| Supercomputer Node | 2 | 1 | 1 | 2 | 2 |
-| Advanced Supercomputer Node | 2 | 2 | 1 | 2 | 4 |
+| Server | U | Drives | Most CPUs | Most cards |
+| --- | --- | --- | --- | --- |
+| Vintage Server | 1 | 1 | 1 | 1 |
+| Legacy Server | 1 | 3 | 2 | 1 |
+| Transition Server | 1 | 5 | 2 | 2 |
+| Server (Standard) | 1 | 4 | 2 | any |
+| Advanced Server | 1 | 5 | 2 | any |
+| Storage Server | 2 | 10 | 1 | 1 |
+| Compute Server | 2 | 2 | 4 | any |
+| Supercomputer Node | 2 | 2 | 2 | 2 |
+| Advanced Supercomputer Node | 2 | 3 | 2 | 4 |
 
-- **Gadgets**: a **RAID Controller** joins a server's drives (RAID 0 with at least 2 drives: a quarter faster,
-  nothing kept if one fails; RAID 1 with at least 2: every drive a copy; RAID 5 with at least 3: survives losing
-  one), and a **Cache Card** cuts how long a read waits.
+- **Storage cards**: Vaultis makes two for each era's slot, from ISA to PCI-e 4.0. The **Vaultis Array** joins the
+  drives of the server it sits in (RAID 0 with at least 2 drives: a quarter faster, nothing kept if one fails;
+  RAID 1 with at least 2: every drive a copy; RAID 5 with at least 3: survives losing one), and the **Vaultis
+  Cache** cuts how long a read waits, from 10% on the ISA card to 30% on the PCI-e 4.0 one.
 - **Rack units**: the **KVM Switch** lets one monitor reach several machines; the **Rack UPS** and the **Cooling
   Unit** fill the cabinet's other bays.
 - A **supercomputer** is every Supercomputer Rack tied together by the high compute cable, meeting the network at

@@ -44,8 +44,8 @@ import net.minecraft.world.item.ItemStack;
 
 /**
  * Screen for the Server Rack, drawn as the cabinet seen from the front: the rack-unit ruler, the two posts with their
- * holes, and between them each mounted unit as its faceplate, with its own slot at the left end, its drive caddies and
- * gadget bays along it, vents over what its chassis does not use and, on a computer, its power button with its lamp at
+ * holes, and between them each mounted unit as its faceplate, with its own slot at the left end, its drive caddies
+ * along it, vents over what its chassis does not use and, on a computer, its power button with its lamp at
  * the right end; an empty unit is a blank panel. The card on the right is the unit picked by clicking its faceplate: its
  * name, its state, what it boots, how it is cabled and what a linked monitor shows. Physical only, by design: no console
  * and no terminal live here, software access always goes through a monitor cabled to the rack.
@@ -61,8 +61,6 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
     /** The post's holes, three to a rack unit, from the unit's top. */
     private static final int[] POST_HOLES = {3, 9, 15};
     private static final int GHOST_ALPHA = 110;
-    private static final int GADGET_GHOST_ALPHA = 120;
-    private static final int GADGET_SILL_ALPHA = 160;
 
     /**
      * The cabinet's metal and its units' faceplates, per era: the metal its posts and its back are made of, the colour
@@ -254,7 +252,7 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
     }
 
     /*
-     * One mounted unit's faceplate: its own slot, the drive caddies and gadget bays its chassis cables, the vents over
+     * One mounted unit's faceplate: its own slot, the drive caddies its chassis cables, the vents over
      * the rest, and on a computer the power button with the bay's lamp and, while its array rebuilds, the progress.
      */
     private void drawUnit(final GuiGraphics g, final int x, final int y, final int row, final int heightU,
@@ -270,7 +268,7 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
         final boolean computer = isComputer(row);
         final boolean on = computer && menu.bayPowerOn(row);
         // The vents across what the chassis does not cable, between its bays and its power button.
-        final int cabled = unit.driveSlots() + unit.gadgetSlots();
+        final int cabled = unit.driveSlots();
         final int ventLeft = x + ServerRackLayout.frontItemX(Math.min(ServerRackLayout.FRONT_SLOTS, cabled)) + 2;
         final int ventRight = x + ServerRackLayout.PWR_X - 2;
         if (ventLeft < ventRight - 4) {
@@ -304,8 +302,8 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
     }
 
     /*
-     * One front-panel bay of a unit: a drive caddy with its handle and its lamp, a gadget bay with its amber sill, the
-     * shape of what goes there while it is empty; a bay the chassis does not cable shows only while it still holds
+     * One front-panel bay of a unit: a drive caddy with its handle and its lamp, the shape of a drive while it is
+     * empty; a bay the chassis does not cable shows only while it still holds
      * something, with a red lamp.
      */
     private void drawBay(final GuiGraphics g, final int x, final int y, final int row, final int column,
@@ -324,13 +322,6 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                 final boolean lit = on && !stack.isEmpty();
                 g.fill(cx + 13, cy + 1, cx + 15, cy + 3,
                         lit ? JsTechTheme.green() : AssemblyPainter.mix(JsTechTheme.green(), JsTechTheme.screen(), 0.75f));
-            }
-            case GADGET -> {
-                JsTechTheme.slot(g, cx, cy);
-                if (stack.isEmpty()) {
-                    AssemblyPainter.drawGhost(g, cx, cy, SeatKind.CARD, JsTechTheme.amber(), GADGET_GHOST_ALPHA);
-                }
-                g.fill(cx, cy + 14, cx + 16, cy + 16, AssemblyPainter.withAlpha(JsTechTheme.amber(), GADGET_SILL_ALPHA));
             }
             case BLOCKED_NO_UNIT, BLOCKED_BUDGET -> {
                 if (!stack.isEmpty()) {
@@ -487,14 +478,6 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                 final Text raid = top < 0 ? null : menu.raidLabel(top);
                 g.renderTooltip(font, GameText.component(raid != null ? ServerRackTexts.ARRAY_MEMBER.with(raid)
                         : ServerRackTexts.DRIVE_BAY.text()), mouseX, mouseY);
-            } else if (role == RackLayout.SlotRole.GADGET) {
-                /*
-                 * Point at where a controller is actually configured, so the player is never left clicking a gadget
-                 * hoping something opens.
-                 */
-                g.renderComponentTooltip(font, List.of(GameText.component(ServerRackTexts.GADGET_BAY),
-                        GameText.component(ServerRackTexts.GADGET_CONFIGURED).withStyle(ChatFormatting.GRAY)),
-                        mouseX, mouseY);
             }
             return;
         }
@@ -511,8 +494,8 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                 : ServerRackTexts.UNASSIGNED_NODE.text()));
         final RackChassis chassis = ServerItem.chassisOf(server);
         if (chassis != null) {
-            lines.add(GameText.component(ServerRackTexts.CHASSIS.with(chassis.heightU(), chassis.driveSlots(),
-                    chassis.gadgetSlots())).withStyle(ChatFormatting.GRAY));
+            lines.add(GameText.component(ServerRackTexts.CHASSIS.with(chassis.heightU(), chassis.driveSlots()))
+                    .withStyle(ChatFormatting.GRAY));
         }
         if (ServerItem.build(server) == null) {
             lines.add(GameText.component(ServerRackTexts.NEEDS_BOARD).withStyle(ChatFormatting.RED));

@@ -1,7 +1,5 @@
 {
   "values": [
-    "jsc:raid_controller",
-    "jsc:cache_card",
     "jsc:kvm_switch",
     "jsc:rack_ups",
     "jsc:cooling_unit"

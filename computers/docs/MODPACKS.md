@@ -53,7 +53,7 @@ One tag per kind of thing, holding it in every era:
 | `#jsc:cluster_management_computers` | The Cluster Management Computers. |
 | `#jsc:mainframes` | The Mainframes, which run a network. |
 | `#jsc:racks_and_servers` | Server racks and supercomputer racks, the server cases, the servers and the nodes. |
-| `#jsc:rack_bays` | What a rack carries in its bays besides servers: bay gadgets and rack units. |
+| `#jsc:rack_bays` | What a rack carries in its bays besides servers: the rack units. |
 | `#jsc:peripherals` | The devices at a desk: monitors, drives, encoders, printers, speakers, hubs, peripheral cables. |
 | `#jsc:network` | The data network: its cables, routers, repeaters and interfaces, and the buses on a cable. |
 | `#jsc:components` | The parts a machine is built from: boards, processors, memory, cards, supplies and disks. |

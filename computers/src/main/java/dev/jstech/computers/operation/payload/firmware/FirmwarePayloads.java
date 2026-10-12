@@ -311,7 +311,7 @@ public final class FirmwarePayloads {
             return FirmwareStatePayload.RaidInfo.ABSENT;
         }
         final int slot = rack.soleComputerSlot();
-        if (slot < 0 || rack.raidControllerSlot(slot) < 0) {
+        if (slot < 0 || !rack.hasRaidController(slot)) {
             return FirmwareStatePayload.RaidInfo.ABSENT;
         }
         final List<Long> sizes = new ArrayList<>();

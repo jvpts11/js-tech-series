@@ -26,6 +26,8 @@
     "jsc:legacy_crafting_interface",
     "jsc:crafting_card_pci",
     "jsc:management_nic",
+    "jsc:vaultis_array_pci",
+    "jsc:vaultis_cache_pci",
     "jsc:cpu_integra_pentix_700",
     "jsc:cpu_integra_pentix_iii_s_1000",
     "jsc:cpu_integra_pentix_iii_s_1400",

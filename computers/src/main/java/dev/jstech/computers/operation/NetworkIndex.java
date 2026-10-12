@@ -13,7 +13,6 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.operation.index.Allocation;
 import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.operation.index.ItemLocation;
@@ -317,15 +316,12 @@ public final class NetworkIndex {
 
     /**
      * A server's read latency. Caching serves reads ahead of the drives, so the index records the latency
-     * the query actually pays rather than the raw disk's. The Cache Card is hardware in the bay's gadget
-     * slot; the Predictive Cache is software staging the hot items in RAM. They stack, because one shortens
-     * the fetch and the other avoids it.
+     * the query actually pays rather than the raw disk's. The read cache card is hardware in the server, its
+     * cut set by its era; the Predictive Cache is software staging the hot items in RAM. They stack, because one
+     * shortens the fetch and the other avoids it.
      */
     private static int latencyOf(final ServerRackBlockEntity rack, final int slot, final StorageTier tier) {
-        int cut = 0;
-        if (rack.hasCacheCard(slot)) {
-            cut += RackGadgetItem.CACHE_LATENCY_CUT_PERCENT;
-        }
+        int cut = rack.cacheCutPercent(slot);
         if (rack.hasService(slot, Programs.PREDICTIVE_CACHE)) {
             cut += PREDICTIVE_CACHE_CUT_PERCENT;
         }

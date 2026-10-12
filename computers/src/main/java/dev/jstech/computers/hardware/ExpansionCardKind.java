@@ -28,5 +28,11 @@ public enum ExpansionCardKind {
     NETWORK,
 
     /** A personal-use card: the crafting table, furnace, enchanting table or anvil the Workshop program works. */
-    WORKSHOP
+    WORKSHOP,
+
+    /** A RAID controller, the Vaultis Array: joins the drives of the server it sits in into one volume. */
+    RAID_CONTROLLER,
+
+    /** A read cache, the Vaultis Cache: answers the reads of the drives of the server it sits in faster. */
+    READ_CACHE
 }

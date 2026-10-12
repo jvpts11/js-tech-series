@@ -148,8 +148,8 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
         }
         if (slot >= GPU_START && slot < GPU_START + GPU) {
             /*
-             * The expansion slots take a GPU, or a network card, in any server: the optical network card in a
-             * server is what lets its rack take the fibre backbone. The crafting co-processor is the one card
+             * The expansion slots take a GPU, a storage card or a network card in any server: the optical network
+             * card in a server is what lets its rack take the fibre backbone. The crafting co-processor is the one card
              * reserved to a chassis: it goes only in a Supercomputer Node, whose single expansion slot
              * exists for it, and accepting GPUs alone here left that slot unable to seat anything.
              */
@@ -157,8 +157,7 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
                 final RackChassis chassis = ServerItem.chassisOf(held());
                 return chassis != null && chassis.isSupercomputerNode() && !holdsCoprocessorOutside(slot);
             }
-            return (stack.getItem() instanceof GpuItem || stack.getItem() instanceof NetworkCardItem)
-                    && stack.getItem() instanceof IExpansionCardItem card
+            return isServerCard(stack.getItem()) && stack.getItem() instanceof IExpansionCardItem card
                     && (board == null || card.cardSpec().fits(board.pcieGeneration()));
         }
         return false;
@@ -188,10 +187,14 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
                 final RackChassis chassis = ServerItem.chassisOf(held());
                 return chassis != null && chassis.isSupercomputerNode() ? PartRefusals.ONE_PHI : PartRefusals.PHI;
             }
-            return item instanceof GpuItem || item instanceof NetworkCardItem
-                    ? PartRefusals.CARD_BUS : PartRefusals.SERVER_CARD;
+            return isServerCard(item) ? PartRefusals.CARD_BUS : PartRefusals.SERVER_CARD;
         }
         return PartRefusals.NOT_THIS_SLOT;
+    }
+
+    /* The kinds of card a server's expansion slots take, a bus that fits the board aside. */
+    private static boolean isServerCard(final Item item) {
+        return item instanceof GpuItem || item instanceof StorageCardItem || item instanceof NetworkCardItem;
     }
 
     /**

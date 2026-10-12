@@ -15,8 +15,8 @@ import java.util.Objects;
 /**
  * One entry in a NetworkIndex query result: how much of an item a single server holds, on which
  * storage tier it lives, and the read latency the query actually pays for it. Latency is carried
- * separately from the tier because bay hardware can beat the raw disk, since a Cache Card in the bay's
- * gadget slot serves reads faster than the drives behind it. Its priority is which storage the network fills first:
+ * separately from the tier because a server's hardware can beat the raw disk, since a read cache card in it
+ * serves reads faster than the drives behind it. Its priority is which storage the network fills first:
  * the network's own is 0, and an External Storage Bus can be set above or below it.
  */
 public record ItemLocation(NodeUuid server, StorageTier tier, long quantity, int latencyTicks, int priority) {

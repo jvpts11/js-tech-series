@@ -1550,6 +1550,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   biggest disk, so the most room is left once the system is on it.
 
 ### Changed
+- A server's RAID controller and read cache are expansion cards now, not gadgets in the rack's front bays: Vaultis
+  makes an Array and a Cache for each era's slot, from ISA to PCI-e 4.0. The Array joins the drives of the server it
+  sits in and keeps the array's mode on itself, so a server pulled from its rack takes its array with it; the Cache
+  cuts the server's reads by 10% on the ISA card, 15% on the PCI one, 20%, 25% and 30% on the PCI-e 2.0, 3.0 and 4.0
+  ones. In any other computer a storage card sits in its slot and does nothing. The front bays that took gadgets take
+  drives: a 1U server has 1 drive bay in the Vintage, 3 in the Legacy, 5 in the Transition, 4 in the Standard and 5 in
+  the Advanced; the Storage Server 10, the Compute Server 2, the Supercomputer Node 2 and the Advanced one 3.
 - The manual key is held over an item for a second and a half before its page opens, rather than under half a second,
   so a key pressed in passing opens nothing.
 - J's Computers makes an installer, a blank medium with a system or a program written on it, in one place, which the
@@ -1945,6 +1952,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   System Monitor list each window by the name the desktop gives its program.
 
 ### Removed
+- The RAID Controller and the Cache Card, which went in a rack's gadget bays: the Vaultis storage cards take their
+  place in the server itself.
 - The unused hook for the Modonomicon guidebook: the series' manuals will be drawn by J's Core itself.
 - The Crafting Switch and the Crafting Input Bus. The Crafting Interface holds a machine's recipes and feeds it, and
   the Crafting Input Router puts each input in through its face.

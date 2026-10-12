@@ -27,7 +27,6 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
-import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.tier.HardwareEra;
@@ -77,8 +76,6 @@ public final class AssemblyScreensClientTests {
     private static final int STORAGE_ROW = 1;
     private static final int KVM_ROW = 3;
     private static final int UNBUILT_ROW = 4;
-    /** The storage chassis cables eight drive bays and then its two gadget bays: its first gadget bay is its ninth. */
-    private static final int STORAGE_CONTROLLER = STORAGE_ROW * RackLayout.SLOTS_PER_U + 8;
 
     /** One tower of each kind and age, built as a player would build it, and one empty. */
     private static final List<Tower> TOWERS = List.of(
@@ -253,13 +250,12 @@ public final class AssemblyScreensClientTests {
             rack.getServers().setStackInSlot(SERVER_ROW, server);
             rack.insertDrive(SERVER_ROW, nvme());
             rack.insertDrive(SERVER_ROW, nvme());
-            final ItemStack storage = ServerStacks.defaultStorageServer();
+            final ItemStack storage = ServerStacks.raidStorageServer();
             ServerItem.setCustomName(storage, "VAULT");
             rack.getServers().setStackInSlot(STORAGE_ROW, storage);
             for (int i = 0; i < 3; i++) {
                 rack.insertDrive(STORAGE_ROW, nvme());
             }
-            rack.getFrontSlots().setStackInSlot(STORAGE_CONTROLLER, new ItemStack(ComputingModule.RAID_CONTROLLER.get()));
             rack.setRaidMode(STORAGE_ROW, RaidMode.RAID5);
             rack.getServers().setStackInSlot(KVM_ROW, new ItemStack(ComputingModule.KVM_SWITCH.get()));
             rack.getServers().setStackInSlot(UNBUILT_ROW, ServerStacks.cpulessServer());

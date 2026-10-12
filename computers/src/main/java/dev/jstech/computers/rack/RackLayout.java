@@ -13,7 +13,7 @@ import java.util.List;
  * Pure geometry of a rack measured in rack units: which vertical spans are free, and what role each of
  * the rack's front-panel hotswap slots plays given what is mounted. The front slots belong to the RACK
  * (5 per rack unit); a mounted chassis claims the slots of the rows it occupies, row-major, up to its
- * drive and gadget budgets; every remaining slot is blocked, and each blocked slot knows why, so the
+ * drive budget; every remaining slot is blocked, and each blocked slot knows why, so the
  * GUI can always explain itself. Minecraft-free on purpose: the fitting and claiming rules are unit
  * tested here and consumed by both the block entity and the screen.
  */
@@ -22,8 +22,8 @@ public final class RackLayout {
     /** Front-panel hotswap slots per rack unit. */
     public static final int SLOTS_PER_U = 5;
 
-    /** A mounted unit's occupancy and front-slot budgets ({@code 0/0} for non-computer units). */
-    public record Unit(int topU, int heightU, int driveSlots, int gadgetSlots) {
+    /** A mounted unit's occupancy and front-slot budget ({@code 0} for non-computer units). */
+    public record Unit(int topU, int heightU, int driveSlots) {
 
         /** Whether this unit occupies the given rack-unit row. */
         public boolean occupies(final int uRow) {
@@ -35,8 +35,6 @@ public final class RackLayout {
     public enum SlotRole {
         /** Cabled as a drive bay by the chassis in this row. */
         DRIVE,
-        /** Cabled as a gadget bay (RAID controller, cache card, ...). */
-        GADGET,
         /** No unit occupies this row, so the slot has nothing to cable it. */
         BLOCKED_NO_UNIT,
         /** A unit occupies the row but its chassis does not cable this many slots. */
@@ -93,7 +91,7 @@ public final class RackLayout {
 
     /**
      * The role of the front slot at ({@code uRow}, {@code index}): the unit occupying the row claims its
-     * rows' slots row-major: drives first, then gadgets, the rest blocked by budget.
+     * rows' slots row-major for its drives, the rest blocked by budget.
      */
     public SlotRole roleAt(final int uRow, final int index, final List<Unit> mounted) {
         if (uRow < 0 || uRow >= capacityU || index < 0 || index >= SLOTS_PER_U) {
@@ -104,13 +102,7 @@ public final class RackLayout {
             return SlotRole.BLOCKED_NO_UNIT;
         }
         final int ordinal = (uRow - unit.topU()) * SLOTS_PER_U + index;
-        if (ordinal < unit.driveSlots()) {
-            return SlotRole.DRIVE;
-        }
-        if (ordinal < unit.driveSlots() + unit.gadgetSlots()) {
-            return SlotRole.GADGET;
-        }
-        return SlotRole.BLOCKED_BUDGET;
+        return ordinal < unit.driveSlots() ? SlotRole.DRIVE : SlotRole.BLOCKED_BUDGET;
     }
 
     /** How many rack units are currently occupied. */

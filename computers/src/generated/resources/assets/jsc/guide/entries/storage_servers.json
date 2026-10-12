@@ -19,62 +19,12 @@
       "text": "jsc.guide.storage_servers.text2"
     },
     {
-      "type": "table",
-      "caption": "jsc.guide.storage_servers.table1",
-      "rows": [
-        [
-          {
-            "words": "jsc.guide.storage_servers.table1_1"
-          },
-          {
-            "words": "jsc.guide.storage_servers.value1_1"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.storage_servers.table1_2"
-          },
-          {
-            "words": "jsc.guide.storage_servers.value1_2"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.storage_servers.table1_3"
-          },
-          {
-            "words": "jsc.guide.storage_servers.value1_3"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.storage_servers.table1_4"
-          },
-          {
-            "words": "jsc.guide.storage_servers.value1_4"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.storage_servers.table1_5"
-          },
-          {
-            "words": "jsc.guide.storage_servers.value1_5"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.storage_servers.table1_6"
-          },
-          {
-            "words": "jsc.guide.storage_servers.value1_6"
-          }
-        ]
-      ]
+      "type": "text",
+      "text": "jsc.guide.storage_servers.text3"
     },
     {
       "type": "text",
-      "text": "jsc.guide.storage_servers.text3"
+      "text": "jsc.guide.storage_servers.text4"
     },
     {
       "type": "scene",
@@ -128,7 +78,7 @@
       ],
       "blocks": [
         {
-          "data": "{Servers:{Size:8,Items:[{Slot:0,id:\"jsc:storage_server\",count:1}]},FrontSlots:{Size:40,Items:[{Slot:0,id:\"jsc:disk_hdd_4t\",count:1},{Slot:1,id:\"jsc:disk_hdd_4t\",count:1},{Slot:2,id:\"jsc:disk_hdd_4t\",count:1},{Slot:3,id:\"jsc:disk_hdd_4t\",count:1},{Slot:4,id:\"jsc:disk_hdd_4t\",count:1},{Slot:5,id:\"jsc:disk_hdd_4t\",count:1},{Slot:6,id:\"jsc:disk_hdd_4t\",count:1},{Slot:7,id:\"jsc:disk_hdd_4t\",count:1},{Slot:8,id:\"jsc:raid_controller\",count:1,components:{\"jsc:raid_mode\":\"raid5\",\"jsc:raid_members\":8}}]},BayPowerOff:0,ServicePanelOff:0b,ActiveChannel:0,DisplayEra:3,Units:[B;4b,0b,0b,0b,0b,0b,0b,0b]}",
+          "data": "{Servers:{Size:8,Items:[{Slot:0,id:\"jsc:storage_server\",count:1,components:{\"jsc:server_hardware\":[{slot:13,item:{id:\"jsc:vaultis_array_pcie3\",count:1,components:{\"jsc:raid_mode\":\"raid5\",\"jsc:raid_members\":10}}}]}}]},FrontSlots:{Size:40,Items:[{Slot:0,id:\"jsc:disk_hdd_4t\",count:1},{Slot:1,id:\"jsc:disk_hdd_4t\",count:1},{Slot:2,id:\"jsc:disk_hdd_4t\",count:1},{Slot:3,id:\"jsc:disk_hdd_4t\",count:1},{Slot:4,id:\"jsc:disk_hdd_4t\",count:1},{Slot:5,id:\"jsc:disk_hdd_4t\",count:1},{Slot:6,id:\"jsc:disk_hdd_4t\",count:1},{Slot:7,id:\"jsc:disk_hdd_4t\",count:1},{Slot:8,id:\"jsc:disk_hdd_4t\",count:1},{Slot:9,id:\"jsc:disk_hdd_4t\",count:1}]},BayPowerOff:0,ServicePanelOff:0b,ActiveChannel:0,DisplayEra:3,Units:[B;4b,0b,0b,0b,0b,0b,0b,0b]}",
           "state": "jsc:server_rack[facing=south]",
           "x": 16,
           "y": 0,
@@ -206,7 +156,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.storage_servers.text4"
+      "text": "jsc.guide.storage_servers.text5"
     },
     {
       "type": "heading",

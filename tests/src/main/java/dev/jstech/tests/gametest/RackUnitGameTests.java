@@ -12,11 +12,15 @@ import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PartRefusals;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.item.StorageCardItem;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
@@ -43,9 +47,11 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
+import java.util.List;
+
 /**
  * The rack-unit model of the Server Rack: front-panel hotswap slots belong to the rack, a mounted
- * chassis claims the drive and gadget slots of the rows it occupies, and server storage is the
+ * chassis claims the drive slots of the rows it occupies, and server storage is the
  * union of the claimed bay drives, so drives (and their data) stay in the rack when the server
  * itself is pulled.
  */
@@ -150,11 +156,11 @@ public final class RackUnitGameTests {
         rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    // The 1U server chassis cables 3 drive slots and 1 gadget slot in its row.
+                    // The Standard 1U server chassis cables 4 drive slots in its row.
                     helper.assertTrue(rack.getFrontSlots().insertItem(0, nvmeDrive(), false).isEmpty(),
                             "a drive slot of the occupied row must accept a drive");
-                    helper.assertTrue(!rack.getFrontSlots().insertItem(3, nvmeDrive(), false).isEmpty(),
-                            "the gadget slot must reject a drive");
+                    helper.assertTrue(rack.getFrontSlots().insertItem(3, nvmeDrive(), false).isEmpty(),
+                            "the fourth slot is a drive bay too");
                     helper.assertTrue(!rack.getFrontSlots().insertItem(4, nvmeDrive(), false).isEmpty(),
                             "a slot beyond the chassis budgets must reject a drive");
                     helper.assertTrue(!rack.getFrontSlots()
@@ -216,18 +222,16 @@ public final class RackUnitGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void storageChassis_claimsEightDrivesAcrossTwoRows(final GameTestHelper helper) {
+    public static void storageChassis_claimsTenDrivesAcrossTwoRows(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
         rack.getServers().setStackInSlot(0, new ItemStack(ComputingModule.STORAGE_SERVER.get()));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    // 8 drive slots row-major: all 5 of the first row, then the first 3 of the second.
-                    for (int slot = 0; slot < 8; slot++) {
+                    // 10 drive slots row-major: all 5 of the first row, then all 5 of the second.
+                    for (int slot = 0; slot < 2 * RackLayout.SLOTS_PER_U; slot++) {
                         helper.assertTrue(rack.getFrontSlots().insertItem(slot, nvmeDrive(), false).isEmpty(),
                                 "drive slot " + slot + " of the storage chassis must accept a drive");
                     }
-                    helper.assertTrue(!rack.getFrontSlots().insertItem(8, nvmeDrive(), false).isEmpty(),
-                            "slot 8 is a gadget bay and must reject a drive");
                     helper.assertTrue(!rack.getFrontSlots()
                                     .insertItem(RackLayout.SLOTS_PER_U * 2, nvmeDrive(), false).isEmpty(),
                             "the row below the chassis must reject a drive");
@@ -238,15 +242,15 @@ public final class RackUnitGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void computeChassis_wiresOneDriveOnly(final GameTestHelper helper) {
+    public static void computeChassis_wiresTwoDrivesOnly(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
         rack.getServers().setStackInSlot(0, new ItemStack(ComputingModule.COMPUTE_SERVER.get()));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(rack.getFrontSlots().insertItem(0, nvmeDrive(), false).isEmpty(),
-                            "the compute chassis cables exactly one drive bay");
-                    helper.assertTrue(!rack.getFrontSlots().insertItem(1, nvmeDrive(), false).isEmpty(),
-                            "slot 1 is the compute chassis' gadget bay and must reject a drive");
+                            "the compute chassis cables a first drive bay");
+                    helper.assertTrue(rack.getFrontSlots().insertItem(1, nvmeDrive(), false).isEmpty(),
+                            "and a second one");
                     helper.assertTrue(!rack.getFrontSlots().insertItem(2, nvmeDrive(), false).isEmpty(),
                             "slots beyond the compute chassis budgets must be blocked");
                 })
@@ -465,16 +469,14 @@ public final class RackUnitGameTests {
                 .thenSucceed();
     }
 
-    /** A storage chassis with {@code drives} NVMe members and a RAID Controller in its gadget bay. */
+    /** A storage server with {@code drives} NVMe members and a Vaultis Array card among its expansion cards. */
     private static ServerRackBlockEntity storageArray(final GameTestHelper helper, final BlockPos pos,
                                                       final int drives) {
         final ServerRackBlockEntity rack = placeRack(helper, pos);
-        rack.getServers().setStackInSlot(0, new ItemStack(ComputingModule.STORAGE_SERVER.get()));
+        rack.getServers().setStackInSlot(0, ServerStacks.raidStorageServer());
         for (int i = 0; i < drives; i++) {
             rack.insertDrive(0, nvmeDrive());
         }
-        // The storage chassis cables 8 drive slots then 2 gadget slots: index 8 is the first gadget.
-        rack.getFrontSlots().setStackInSlot(8, new ItemStack(ComputingModule.RAID_CONTROLLER.get()));
         return rack;
     }
 
@@ -484,8 +486,8 @@ public final class RackUnitGameTests {
         final long perDrive = ((DiskItem) nvmeDrive().getItem()).spec().capacityItems();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    helper.assertTrue(rack.raidControllerSlot(0) == 8,
-                            "the controller sits in the chassis' first gadget bay");
+                    helper.assertTrue(rack.hasRaidController(0),
+                            "the card seated in the storage server is its array controller");
                     helper.assertTrue(rack.getServerStorage(0).capacity() == perDrive * 3,
                             "without a mode the drives stay independent volumes");
 
@@ -500,6 +502,76 @@ public final class RackUnitGameTests {
                     helper.assertTrue(rack.setRaidMode(0, RaidMode.RAID0), "3 drives form a stripe");
                     helper.assertTrue(rack.getServerStorage(0).capacity() == perDrive * 3,
                             "a stripe presents the full sum");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void raid_settingsTravelWithTheServerOnItsCard(final GameTestHelper helper) {
+        final ServerRackBlockEntity rack = storageArray(helper, new BlockPos(2, 2, 2), 3);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(rack.setRaidMode(0, RaidMode.RAID5), "3 drives form a RAID 5");
+                    final ItemStack pulled = rack.getServers().getStackInSlot(0).copy();
+                    final ItemStack card = ServerItem.card(pulled, ExpansionCardKind.RAID_CONTROLLER);
+                    helper.assertTrue(StorageCardItem.raidMode(card) == RaidMode.RAID5,
+                            "the mode is kept on the card in the server, not in the rack");
+                    helper.assertTrue(card.getOrDefault(ComputingComponents.RAID_MEMBERS.get(), 0) == 3,
+                            "the card remembers how many drives its array was formed with");
+                })
+                .thenSucceed();
+    }
+
+    /** A player seats a storage card through the server's own slots, as its assembly screen does. */
+    @GameTest(template = ARENA)
+    public static void storageCard_seatsThroughTheServersOwnSlots(final GameTestHelper helper) {
+        final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, ServerStacks.defaultServer());
+        final ServerHardwareHandler slots = new ServerHardwareHandler(player, InteractionHand.MAIN_HAND);
+        final ItemStack isa = new ItemStack(ComputingModule.VAULTIS_ARRAY_ISA.get());
+        helper.assertFalse(slots.isItemValid(ServerHardwareHandler.GPU_START, isa),
+                "an ISA card does not fit a Standard board's slots");
+        helper.assertTrue(slots.refusal(ServerHardwareHandler.GPU_START, isa) == PartRefusals.CARD_BUS,
+                "and the server says it is the bus");
+        helper.assertTrue(slots.insertItem(ServerHardwareHandler.GPU_START,
+                        new ItemStack(ComputingModule.VAULTIS_ARRAY_PCIE3.get()), false).isEmpty(),
+                "the Standard Array goes in an expansion slot");
+        helper.assertTrue(slots.insertItem(ServerHardwareHandler.GPU_START + 1,
+                        new ItemStack(ComputingModule.VAULTIS_CACHE_PCIE3.get()), false).isEmpty(),
+                "and the Standard Cache in the next");
+        helper.assertTrue(StorageCardItem.kindOf(ServerItem.card(player.getItemInHand(InteractionHand.MAIN_HAND),
+                        ExpansionCardKind.RAID_CONTROLLER)) == ExpansionCardKind.RAID_CONTROLLER,
+                "the server carries the Array it was given");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void readCache_cutsItsOwnServersReadsByItsEra(final GameTestHelper helper) {
+        final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
+        rack.getServers().setStackInSlot(1, ServerStacks.withCard(ComputingModule.SERVER.get(),
+                ComputingModule.VAULTIS_CACHE_PCIE3.get()));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(rack.cacheCutPercent(0) == 0,
+                            "a server without a cache reads at its drives' own speed");
+                    helper.assertTrue(rack.cacheCutPercent(1) == 25,
+                            "the Standard cache takes a quarter off its server's reads; got "
+                                    + rack.cacheCutPercent(1));
+                    final List<ItemStack> caches = List.of(
+                            new ItemStack(ComputingModule.VAULTIS_CACHE_ISA.get()),
+                            new ItemStack(ComputingModule.VAULTIS_CACHE_PCI.get()),
+                            new ItemStack(ComputingModule.VAULTIS_CACHE_PCIE2.get()),
+                            new ItemStack(ComputingModule.VAULTIS_CACHE_PCIE3.get()),
+                            new ItemStack(ComputingModule.VAULTIS_CACHE_PCIE4.get()));
+                    for (int era = 0; era < caches.size(); era++) {
+                        final int expected = 10 + 5 * era;
+                        helper.assertTrue(StorageCardItem.readCutPercent(caches.get(era)) == expected,
+                                caches.get(era).getHoverName().getString() + " cuts " + expected + "%");
+                    }
+                    helper.assertTrue(StorageCardItem.readCutPercent(
+                                    new ItemStack(ComputingModule.VAULTIS_ARRAY_PCIE3.get())) == 0,
+                            "an array card caches nothing");
                 })
                 .thenSucceed();
     }
@@ -905,20 +977,26 @@ public final class RackUnitGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void bayGadgets_onlyFitGadgetSlots(final GameTestHelper helper) {
+    public static void storageCards_seatInTheServerNeverInItsBays(final GameTestHelper helper) {
         final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
         rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
+        rack.getServers().setStackInSlot(1, ServerStacks.withCard(ComputingModule.SERVER.get(),
+                ComputingModule.VAULTIS_ARRAY_PCIE3.get()));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final ItemStack controller = new ItemStack(ComputingModule.RAID_CONTROLLER.get());
-                    helper.assertTrue(!rack.getFrontSlots().insertItem(0, controller, false).isEmpty(),
-                            "a drive bay must reject a gadget");
-                    helper.assertTrue(rack.getFrontSlots().insertItem(3, controller, false).isEmpty(),
-                            "the server chassis' gadget bay takes the controller");
                     helper.assertTrue(!rack.getFrontSlots()
-                                    .insertItem(4, new ItemStack(ComputingModule.CACHE_CARD.get()), false).isEmpty(),
+                                    .insertItem(0, new ItemStack(ComputingModule.VAULTIS_ARRAY_PCIE3.get()), false)
+                                    .isEmpty(),
+                            "a drive bay must reject a storage card");
+                    helper.assertTrue(rack.roleOfFrontSlot(3) == RackLayout.SlotRole.DRIVE,
+                            "the server's fourth bay takes a drive");
+                    helper.assertTrue(!rack.getFrontSlots()
+                                    .insertItem(4, new ItemStack(ComputingModule.VAULTIS_CACHE_PCIE3.get()), false)
+                                    .isEmpty(),
                             "a blocked slot takes nothing");
-                    helper.assertTrue(rack.raidModeOf(0) == RaidMode.NONE,
+                    helper.assertTrue(!rack.hasRaidController(0), "a server without the card has no array");
+                    helper.assertTrue(rack.hasRaidController(1), "the card seated in the server is its controller");
+                    helper.assertTrue(rack.raidModeOf(1) == RaidMode.NONE,
                             "a fresh controller leaves the drives independent");
                 })
                 .thenSucceed();

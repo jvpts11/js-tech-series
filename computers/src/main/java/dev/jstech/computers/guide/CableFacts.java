@@ -40,7 +40,7 @@ public final class CableFacts {
     private static final TextKey HPC = TextKey.of("jsc.guide.facts.line.hpc", "High compute");
     private static final TextKey CRAFTING = TextKey.of("jsc.guide.facts.line.crafting", "Crafting");
     /** What a table says in an era a line does not exist in. */
-    private static final TextKey NONE = TextKey.of("jsc.guide.facts.none", "none");
+    static final TextKey NONE = TextKey.of("jsc.guide.facts.none", "none");
     /** The eras the tables run across, in the order of their columns. */
     private static final List<HardwareEra> ERAS = List.of(HardwareEra.VINTAGE, HardwareEra.LEGACY,
             HardwareEra.TRANSITION, HardwareEra.STANDARD, HardwareEra.ADVANCED);

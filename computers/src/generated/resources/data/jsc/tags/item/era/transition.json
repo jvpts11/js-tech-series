@@ -27,6 +27,8 @@
     "jsc:transition_crafting_interface",
     "jsc:crafting_card_t2",
     "jsc:crafting_card_t3",
+    "jsc:vaultis_array_pcie2",
+    "jsc:vaultis_cache_pcie2",
     "jsc:disk_hdd_500g",
     "jsc:disk_hdd_1t",
     "jsc:disk_hdd_2t",

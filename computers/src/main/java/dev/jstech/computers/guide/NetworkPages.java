@@ -499,7 +499,7 @@ final class NetworkPages {
                 .row(GuideCell.words("Soundfoundry Server"), GuideCell.words("Streams the music catalogue to every"
                         + " Soundfoundry on the network."), GuideCell.words("Standard"))
                 .paragraph("Predictive Cache cuts the read latency of its bay by 15%, and a read never takes less than"
-                        + " one tick. A Cache Card on the same bay adds its own cut on top of it.")
+                        + " one tick. A read cache card in the same server adds its own cut on top of it.")
                 .define("Predictive Cache", "A service of a server bay that keeps the bay's most-wanted items ready"
                         + " in memory, so you read them 15% sooner.")
                 .paragraph("Integrity Monitor matters when you pull a drive out of a running bay. Without it, the index"

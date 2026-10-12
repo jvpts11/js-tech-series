@@ -12,9 +12,10 @@ import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
+import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.item.DiskItem;
-import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.item.StorageCardItem;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
@@ -245,16 +246,14 @@ public class ServerRackMenu extends CoreMenu {
         return out;
     }
 
-    /** The RAID mode the unit topped at {@code topRow} runs. */
+    /** The RAID mode the unit topped at {@code topRow} runs, as its RAID controller card keeps it. */
     public RaidMode raidModeAt(final int topRow) {
-        for (final int index : claimedSlots(topRow, RackLayout.SlotRole.GADGET)) {
-            final ItemStack stack = frontSlotStack(index);
-            if (RackGadgetItem.kindOf(stack)
-                    == RackGadgetItem.Kind.RAID_CONTROLLER) {
-                return RackGadgetItem.raidMode(stack);
-            }
-        }
-        return RaidMode.NONE;
+        return StorageCardItem.raidMode(controllerAt(topRow));
+    }
+
+    /* A copy of the RAID controller card in the server topped at {@code topRow}, or an empty stack. */
+    private ItemStack controllerAt(final int topRow) {
+        return ServerItem.card(serverInBay(topRow), ExpansionCardKind.RAID_CONTROLLER);
     }
 
     /**
@@ -279,13 +278,8 @@ public class ServerRackMenu extends CoreMenu {
         if (mode == RaidMode.NONE) {
             return ArrayHealth.NONE;
         }
-        int members = 0;
-        for (final int index : claimedSlots(topRow, RackLayout.SlotRole.GADGET)) {
-            final Integer stored = frontSlotStack(index).get(ComputingComponents.RAID_MEMBERS.get());
-            if (stored != null) {
-                members = stored;
-            }
-        }
+        final Integer stored = controllerAt(topRow).get(ComputingComponents.RAID_MEMBERS.get());
+        final int members = stored == null ? 0 : stored;
         int present = 0;
         for (final int index : claimedSlots(topRow, RackLayout.SlotRole.DRIVE)) {
             if (frontSlotStack(index).getItem()
@@ -351,7 +345,7 @@ public class ServerRackMenu extends CoreMenu {
         @Override
         public boolean isActive() {
             final RackLayout.SlotRole role = frontSlotRole(getSlotIndex());
-            return hasItem() || role == RackLayout.SlotRole.DRIVE || role == RackLayout.SlotRole.GADGET;
+            return hasItem() || role == RackLayout.SlotRole.DRIVE;
         }
     }
 }

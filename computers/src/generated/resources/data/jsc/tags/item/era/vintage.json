@@ -28,6 +28,8 @@
     "jsc:vintage_crafting_interface",
     "jsc:crafting_card_isa",
     "jsc:serial_console_card",
+    "jsc:vaultis_array_isa",
+    "jsc:vaultis_cache_isa",
     "jsc:cpu_integra_486sx",
     "jsc:cpu_integra_486dx2",
     "jsc:cpu_integra_486dx4",

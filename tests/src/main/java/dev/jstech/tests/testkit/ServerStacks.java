@@ -37,6 +37,16 @@ public final class ServerStacks {
         return built(ComputingModule.STORAGE_SERVER.get(), true, false);
     }
 
+    /** The default build of {@code machine} with {@code card} in its first card slot. */
+    public static ItemStack withCard(final Item machine, final Item card) {
+        return built(machine, true, card);
+    }
+
+    /** The default storage server with a Vaultis Array PCI-e 3.0 in its first card slot, so its drives form arrays. */
+    public static ItemStack raidStorageServer() {
+        return withCard(ComputingModule.STORAGE_SERVER.get(), ComputingModule.VAULTIS_ARRAY_PCIE3.get());
+    }
+
     /** A server with everything but a processor, which cannot pass its self-test. */
     public static ItemStack cpulessServer() {
         return built(ComputingModule.SERVER.get(), false, false);
