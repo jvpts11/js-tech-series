@@ -14,6 +14,7 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
+import dev.jstech.computers.item.SoundCardItem;
 import dev.jstech.computers.registry.ComputingComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -53,6 +54,10 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
     public static final BlockPos MONITOR = new BlockPos(10, 2, 2);
     /** Where a player stands to use the computer: in front of its monitor, looking back at it. */
     public static final BlockPos AT_THE_DESK = new BlockPos(12, 2, 2);
+    /** A second Personal Computer, for what one computer does to or with another: south of the first. */
+    public static final BlockPos SECOND_COMPUTER = new BlockPos(9, 2, 6);
+    public static final BlockPos SECOND_MONITOR = new BlockPos(10, 2, 6);
+    public static final BlockPos AT_THE_SECOND_DESK = new BlockPos(12, 2, 6);
 
     /** Lays the era's network through {@code world} and switches every machine on. */
     public static EraNetwork lay(final TestWorldBuilder world, final EraKit kit) {
@@ -66,9 +71,23 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         world.setBlock(new BlockPos(5, 2, 3), kit.backbone());
         world.setBlock(new BlockPos(5, 2, 4), kit.backbone());
         final ServerRackBlockEntity rack = rack(world, kit);
-        final PersonalComputerBlockEntity computer = computer(world, kit);
+        final PersonalComputerBlockEntity computer = computer(world, kit, COMPUTER);
         world.placeMonitor(MONITOR, Direction.EAST, kit.monitor());
         return new EraNetwork(kit, mainframe, rack, computer);
+    }
+
+    /**
+     * A second Personal Computer built and switched on as the first, with its monitor: the access line runs on from
+     * the router's south side down to it, so it is on the same network. Laid after {@link #lay}.
+     */
+    public static PersonalComputerBlockEntity secondComputer(final TestWorldBuilder world, final EraKit kit) {
+        for (int z = ROUTER.getZ() + 1; z <= SECOND_COMPUTER.getZ(); z++) {
+            world.setBlock(new BlockPos(ROUTER.getX(), ROUTER.getY(), z), kit.access());
+        }
+        world.setBlock(new BlockPos(ROUTER.getX() + 1, ROUTER.getY(), SECOND_COMPUTER.getZ()), kit.access());
+        final PersonalComputerBlockEntity computer = computer(world, kit, SECOND_COMPUTER);
+        world.placeMonitor(SECOND_MONITOR, Direction.EAST, kit.monitor());
+        return computer;
     }
 
     /** The era's 1U server, built with its board, processor, memory and supply. */
@@ -144,10 +163,11 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         return rack;
     }
 
-    private static PersonalComputerBlockEntity computer(final TestWorldBuilder world, final EraKit kit) {
-        world.setBlock(COMPUTER, kit.computer());
-        world.faceRearTowardCable(COMPUTER);
-        final PersonalComputerBlockEntity computer = world.blockEntity(COMPUTER, PersonalComputerBlockEntity.class);
+    private static PersonalComputerBlockEntity computer(final TestWorldBuilder world, final EraKit kit,
+                                                        final BlockPos at) {
+        world.setBlock(at, kit.computer());
+        world.faceRearTowardCable(at);
+        final PersonalComputerBlockEntity computer = world.blockEntity(at, PersonalComputerBlockEntity.class);
         final ItemStackHandler hardware = computer.getHardware();
         final Item board = kit.computerBoard();
         hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(board));
@@ -156,6 +176,11 @@ public record EraNetwork(EraKit kit, MainframeBlockEntity mainframe, ServerRackB
         hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT, new ItemStack(EraParts.psuFor(kit.era())));
         hardware.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START,
                 new ItemStack(EraParts.cardFor(board, GpuItem.class)));
+        // Before the Transition a board had no sound of its own: the era's player put a sound card in beside it.
+        if (!EraParts.board(board).hasOnBoardAudio()) {
+            hardware.setStackInSlot(PersonalComputerBlockEntity.GPU_SLOTS_START + 1,
+                    new ItemStack(EraParts.cardFor(board, SoundCardItem.class)));
+        }
         hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(EraParts.diskFor(kit.era())));
         if (!computer.installOs(kit.desktopOs())) {

@@ -394,6 +394,26 @@ public final class KnotApp implements IDesktopApp {
         return picked;
     }
 
+    /** How many revisions of the file the history lists, for a test to read. */
+    public int revisionCount() {
+        return state.revisions().size();
+    }
+
+    /** Whether the network's KnotHub answered, which is what lets anything be pushed. */
+    public boolean online() {
+        return state.service().online();
+    }
+
+    /** The desktop point in the middle of the box the push's message is typed in, from the last frame drawn. */
+    public int[] messagePoint() {
+        return message.center();
+    }
+
+    /** The desktop point in the middle of the Push button, from the last frame drawn. */
+    public int[] pushPoint() {
+        return pushButton.center();
+    }
+
     /** Knot's colours, as the palette above names them. */
     private record Colours(int added, int addedInk, int removed, int removedInk, int offline) {
     }

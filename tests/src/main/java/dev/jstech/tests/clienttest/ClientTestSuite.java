@@ -71,6 +71,7 @@ public final class ClientTestSuite {
             EraEverydayClientTests.class,
             EraSystemProgramsClientTests.class,
             EraInstalledProgramsClientTests.class,
+            EraNetworkedProgramsClientTests.class,
             GatewayManagerClientTests.class,
             GpuClientTests.class,
             GridPainterClientTests.class,

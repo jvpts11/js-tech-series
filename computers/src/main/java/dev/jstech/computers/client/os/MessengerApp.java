@@ -432,6 +432,21 @@ public final class MessengerApp implements IDesktopApp {
         return new ArrayList<>(state.rooms());
     }
 
+    /** Whether the network's Messenger Service answered, which is what lets anything be said. */
+    public boolean online() {
+        return state.service().online();
+    }
+
+    /** The desktop point in the middle of the box a message is typed in, from the last frame drawn. */
+    public int[] composePoint() {
+        return compose.center();
+    }
+
+    /** The desktop point in the middle of the Send button, from the last frame drawn. */
+    public int[] sendPoint() {
+        return send.center();
+    }
+
     /** The Messenger's colours, as the palette above names them. */
     private record Colours(int online, int offline, int mine, int theirs, int nudge, int nudgeInk) {
     }

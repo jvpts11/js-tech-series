@@ -24,7 +24,9 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -164,6 +166,27 @@ public final class RemoteControlApp implements IDesktopApp {
     @Override
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         root.mouseClicked(mouseX, mouseY, button);
+    }
+
+    /** Where each machine the list shows stands, top to bottom, for a test to read. */
+    public List<Long> hostPositions() {
+        final List<Long> out = new ArrayList<>();
+        for (final RemoteHostsPayload.Entry entry : hosts) {
+            out.add(entry.pos());
+        }
+        return out;
+    }
+
+    /** The desktop point on the row of the machine standing at {@code pos}, or null when the list has none. */
+    @Nullable
+    public int[] rowPoint(final long pos) {
+        final int index = hostPositions().indexOf(pos);
+        return index < 0 ? null : hostList.rowCenter(index);
+    }
+
+    /** The desktop point in the middle of the Take over button, from the last frame drawn. */
+    public int[] takeOverPoint() {
+        return connect.center();
     }
 
     @Override
