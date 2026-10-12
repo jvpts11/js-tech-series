@@ -578,7 +578,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   hidden screws, finely perforated rear doors and a white line on the header. The Transition 1U server, after the HP
   DL360 G5 and the Dell PowerEdge 1950, has a brushed-silver face with four 2.5" drives, a slim DVD and a blue power
   light; the Advanced one, after the HPE DL360 Gen10 and the Dell R650, is black with slim NVMe carriers, a honeycomb
-  vent and a white light. Both take two processors, four drives and a gadget, the Transition's two cards and the
+  vent and a white light. Both take two processors and five drives, the Transition's two cards and the
   Advanced's any number; each seats in a rack of its age or later, and every rack draws every server it can seat in
   that server's own shape. Their items and their empty cases show the server's face.
 - A Server Rack's roof fans turn as fans: the housing stays still and only the rotor turns in it.
@@ -667,11 +667,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - An HBW Interface finds its nodes along any high compute cable of its era or an earlier one, in each Supercomputer
   Rack that takes that cable: the Transition's InfiniBand reaches the Standard's racks, and the OSFP only the
   Advanced's.
-- The Optical Network Card, from the Standard. The backbone's fibre enters a Mainframe, a Server Rack or a Cluster
-  Management Computer only while the machine holds one, a rack when any server seated in it does; without one the
-  machine takes the copper of its backbone alone. It fits a PCIe slot and is drawn inside the computers that seat it.
+- The Optical Network Card, from the Standard. The backbone's fibre enters a Mainframe or a Cluster Management
+  Computer only while the machine holds one; without one the machine takes the copper of its backbone alone. It fits
+  a PCIe slot and is drawn inside the computers that seat it. A server never seats it.
+- The Fibre Optic Interface and the Advanced Fibre Optic Interface, 1U rack units: a server rack takes the fibre
+  backbone only through one mounted in any of its rows. The Standard one takes the Fibre Optic Cable; the Advanced
+  one, which only an Advanced rack seats, takes the OM5 Fibre Cable as well.
 - The Network Manager shows how each node is linked. The Devices tab has a LINK column with the cable and its speed,
-  and a square for an Optical Network Card; a machine joined to the network that lost its link is listed as "no
+  and a square for a fibre port; a machine joined to the network that lost its link is listed as "no
   link", and the line under the list says why: its fibre bends where no Optical Router turns it, or a run is longer
   than its cable reaches. The Map draws each link by its line (the fibre thick and aqua, an earlier era's cable in
   dashes, a link down red), with its speed, the Optical Routers the fibre goes through and a legend; a node's card
@@ -1592,8 +1595,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   servers, the Crafting Computer's throughput and the Cluster Management Computer's RAM buffer and kinds of cluster
   show in their readouts' tooltips.
 - A server rack's screen shows the cabinet from the front: its posts, each mounted unit as its faceplate with its own
-  slot, its drive caddies and gadget bays, vents over what its chassis does not cable and, on a computer, its power
-  button with its lamp; an empty unit is a blank panel, and a KVM Switch, a UPS or a cooling unit is a unit too. A
+  slot, its drive caddies, vents over what its chassis does not cable and, on a computer, its power button with its
+  lamp; an empty unit is a blank panel, and a KVM Switch, a UPS, a cooling unit or a fibre interface is a unit too. A
   drive caddy's lamp is lit while its drive sits in a switched-on unit, and an array being rebuilt fills a bar across
   its unit. A click on a computer's faceplate puts it on the card beside the cabinet: its name, its state, the disk
   it boots from, its system, its network, its array and what a linked monitor shows. A front slot still holding a
@@ -2011,9 +2014,6 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   machine again each time.
 - Soundfoundry's signal bars follow how fast a song really comes over the way's slowest cable, in every era; only two
   cables lit more than two bars.
-- A server takes the Optical Network Card in an expansion slot, so a Server Rack holding one takes the fibre backbone
-  of the Standard and the Advanced eras; every server refused the card, which left no rack able to join a fibre
-  network.
 - A server's assembly screen is drawn in its chassis's era, as a computer's is in its case's: an Advanced server
   showed the Standard look until an Advanced board went in.
 - A new machine's welcome, such as Frames 11's Get Started, shows what it says on the monitor's face in the world
@@ -2022,7 +2022,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   (a Repeater, a Router or a Hub); the manual's tables of reaches and speeds are read from the cables too.
 - The Guide to Operations tells a new player what their first network needs and never said: a Mainframe runs nothing
   until a system such as MC-NET is installed on it, so it needs a disk and a graphics card too; fibre goes into a
-  Mainframe, a Server Rack or a Cluster Management Computer only while it holds an Optical Network Card; and the
+  Mainframe or a Cluster Management Computer only while it holds an Optical Network Card, and into a Server Rack
+  only through a Fibre Optic Interface; and the
   Pattern Studio and the Crafting Manager come with no system, but are installed from their CDs or the Mirror. Its
   problems now cover a Mainframe shown offline, Operations that stay queued and fibre that will not join.
 - A Server Rack's drive bays take a disk of the rack's era or an older one, as a computer's disk slots do; they

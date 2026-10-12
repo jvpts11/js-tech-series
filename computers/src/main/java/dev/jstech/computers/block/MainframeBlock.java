@@ -122,7 +122,7 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
         }
         final List<BlockPos> blocks = new ArrayList<>(geometry().partPositions(controller, state.getValue(FACING)));
         blocks.add(controller);
-        OpticalPort.set(level, blocks, optical);
+        OpticalPort.set(level, blocks, OpticalPort.OPTICAL, optical);
     }
 
     @Override

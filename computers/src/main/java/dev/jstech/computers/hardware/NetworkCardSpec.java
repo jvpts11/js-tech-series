@@ -12,8 +12,9 @@ import dev.jstech.core.tier.HardwareEra;
 import java.util.Objects;
 
 /**
- * A network adapter: the Optical Network Card, what a machine on the backbone needs to take the fibre. Without one the
- * machine takes the copper of its backbone and leaves the fibre out, as a machine with no fibre port would.
+ * A network adapter: the Optical Network Card, what a Mainframe or a Cluster Management Computer needs to take the
+ * fibre (a rack takes it through a Fibre Optic Interface instead). Without one the machine takes the copper of its
+ * backbone and leaves the fibre out, as a machine with no fibre port would.
  *
  * @param era      the age of machine it was made for
  * @param bus      the slot it takes

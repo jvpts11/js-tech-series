@@ -115,7 +115,7 @@ final class NetworkLinkDrawing {
         };
     }
 
-    /** The colour of the fibre, which marks an Optical Network Card and an optical router as well. */
+    /** The colour of the fibre, which marks a fibre port and an optical router as well. */
     static int fibre() {
         return colours().fibre();
     }
@@ -131,7 +131,7 @@ final class NetworkLinkDrawing {
         vertical(g, x2, Math.min(y1, y2), Math.max(y1, y2), style);
     }
 
-    /** The square that marks a node with an Optical Network Card, its corner at {@code x}, {@code y}. */
+    /** The square that marks a node with a fibre port, its corner at {@code x}, {@code y}. */
     static void cardSquare(final GuiGraphics g, final int x, final int y) {
         g.fill(x, y, x + NetworkLinksLayout.CARD_SQUARE, y + NetworkLinksLayout.CARD_SQUARE, colours().fibre());
     }
@@ -174,7 +174,7 @@ final class NetworkLinkDrawing {
         }
         lines.add(GameText.resolve(NetworkLinkTexts.SECTION));
         if (link.optical()) {
-            lines.add(GameText.resolve(NetworkLinkTexts.OPTICAL_CARD));
+            lines.add(GameText.resolve(NetworkLinkTexts.FIBRE_PORT));
         }
         if (cable == null) {
             return lines;
@@ -229,7 +229,7 @@ final class NetworkLinkDrawing {
         for (final String words : lines.keySet()) {
             widest = Math.max(widest, font.width(words));
         }
-        widest = Math.max(widest, Math.max(card ? font.width(GameText.resolve(NetworkLinkTexts.OPTICAL_CARD)) : 0,
+        widest = Math.max(widest, Math.max(card ? font.width(GameText.resolve(NetworkLinkTexts.FIBRE_PORT)) : 0,
                 router ? font.width(GameText.resolve(NetworkLinkTexts.OPTICAL_ROUTER)) : 0));
         return new Legend(lines, card, router, entries == 0 ? 0 : NetworkLinksLayout.legendW(widest),
                 entries == 0 ? 0 : NetworkLinksLayout.legendH(entries));
@@ -255,7 +255,7 @@ final class NetworkLinkDrawing {
         }
         if (legend.card()) {
             cardSquare(g, x + pad + 4, y + 2);
-            Draw.text(g, font, GameText.resolve(NetworkLinkTexts.OPTICAL_CARD), wordsX, y, text, ground);
+            Draw.text(g, font, GameText.resolve(NetworkLinkTexts.FIBRE_PORT), wordsX, y, text, ground);
             y += NetworkLinksLayout.LINE_H;
         }
         if (legend.router()) {

@@ -12,6 +12,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.rack.IMountableRackUnit;
@@ -87,6 +88,8 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
 
     public static final TextKey WRONG_CHASSIS =
             TextKey.of("block.jsc.rack.wrong_chassis", "This chassis belongs in a different rack");
+    public static final TextKey WRONG_UNIT =
+            TextKey.of("block.jsc.rack.wrong_unit", "This unit belongs in a newer rack, or in another kind of rack");
     public static final TextKey ROW_TAKEN =
             TextKey.of("block.jsc.rack.row_taken", "That rack unit is taken or too small for this");
 
@@ -103,7 +106,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         this.era = era;
         this.ports = ports;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(BAYS, 0)
-                .setValue(OpticalPort.OPTICAL, false));
+                .setValue(OpticalPort.FIBRE, FibreReach.NONE));
     }
 
     @Override
@@ -143,7 +146,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         return ports;
     }
 
-    /* The fibre only when a server seated in the cabinet holds an Optical Network Card. */
+    /* The fibre only as far as the Fibre Optic Interface mounted in the cabinet reaches. */
     @Override
     public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
         return IFaceConnector.super.accepts(state, face, offered) && OpticalPort.admits(state, offered);
@@ -151,18 +154,18 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, BAYS, OpticalPort.OPTICAL);
+        builder.add(FACING, BAYS, OpticalPort.FIBRE);
     }
 
-    /** Says on the cabinet and every part of it whether a server seated in it holds an Optical Network Card. */
-    public void setOptical(final Level level, final BlockPos controller, final boolean optical) {
+    /** Says on the cabinet and every part of it how much of the fibre its Fibre Optic Interface lets in. */
+    public void setFibre(final Level level, final BlockPos controller, final FibreReach reach) {
         final BlockState state = level.getBlockState(controller);
         if (!(state.getBlock() instanceof ServerRackBlock)) {
             return;
         }
         final List<BlockPos> blocks = new ArrayList<>(geometry().partPositions(controller, state.getValue(FACING)));
         blocks.add(controller);
-        OpticalPort.set(level, blocks, optical);
+        OpticalPort.set(level, blocks, OpticalPort.FIBRE, reach);
     }
 
     @Override
@@ -191,8 +194,8 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
                         rackType() == RackChassis.RackType.SUPERCOMPUTER)
                 .setValue(ServerRackPartBlock.FRONT,
                         ServerRackStructure.isFrontBayBlock(controller, facing, part))
-                .setValue(OpticalPort.OPTICAL, controllerState.hasProperty(OpticalPort.OPTICAL)
-                        && controllerState.getValue(OpticalPort.OPTICAL));
+                .setValue(OpticalPort.FIBRE, controllerState.hasProperty(OpticalPort.FIBRE)
+                        ? controllerState.getValue(OpticalPort.FIBRE) : FibreReach.NONE);
     }
 
     @Override
@@ -264,9 +267,9 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
         if (IMountableRackUnit.of(stack) == null) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        // A chassis that belongs in another cabinet is refused with the reason, not ignored.
+        // A chassis or a unit that belongs in another cabinet is refused with the reason, not ignored.
         if (!rack.acceptsChassis(stack)) {
-            tell(player, WRONG_CHASSIS);
+            tell(player, stack.getItem() instanceof RackUnitItem ? WRONG_UNIT : WRONG_CHASSIS);
             return ItemInteractionResult.sidedSuccess(false);
         }
         final ItemStackHandler servers = rack.getServers();

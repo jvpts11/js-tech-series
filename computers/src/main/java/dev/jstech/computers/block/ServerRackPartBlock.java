@@ -99,7 +99,7 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
                 .setValue(FACING, Direction.NORTH)
                 .setValue(ERA, HardwareEra.STANDARD.level())
                 .setValue(ServerRackBlock.BAYS, 0)
-                .setValue(OpticalPort.OPTICAL, false));
+                .setValue(OpticalPort.FIBRE, FibreReach.NONE));
     }
 
     /** A part is collision and a link back to the controller; the cabinet model is drawn from there. */
@@ -122,8 +122,8 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
      * A compute cabinet is on the high-compute fabric only; a server cabinet takes the backbone and the peripheral
      * line, and both only the cables of their cabinet's era and the earlier ones, through the back for the data
      * lines, as the cabinet's own block does. The cable's rendered nub and the cabinet's own link follow this same
-     * rule, so a data cable on a supercomputer cabinet neither shows a connection nor makes one. The fibre only when
-     * a server in the cabinet holds an Optical Network Card.
+     * rule, so a data cable on a supercomputer cabinet neither shows a connection nor makes one. The fibre only as far
+     * as the Fibre Optic Interface mounted in the cabinet reaches.
      */
     @Override
     public boolean accepts(final BlockState state, final Direction face, final Connection offered) {
@@ -134,7 +134,7 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(TOP, FRONT, COMPUTE, FACING, ERA, ServerRackBlock.BAYS, OpticalPort.OPTICAL);
+        builder.add(TOP, FRONT, COMPUTE, FACING, ERA, ServerRackBlock.BAYS, OpticalPort.FIBRE);
     }
 
     @Override

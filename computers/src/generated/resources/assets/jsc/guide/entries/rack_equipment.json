@@ -45,6 +45,28 @@
           {
             "words": "jsc.guide.rack_equipment.table1_3_3"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_5_3"
+          }
         ]
       ]
     },
@@ -61,6 +83,10 @@
       "text": "jsc.guide.rack_equipment.text4"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text5"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -74,6 +100,10 @@
         {
           "fix": "jsc.guide.rack_equipment.fix2",
           "problem": "jsc.guide.rack_equipment.problem2"
+        },
+        {
+          "fix": "jsc.guide.rack_equipment.fix3",
+          "problem": "jsc.guide.rack_equipment.problem3"
         }
       ]
     },
@@ -90,7 +120,9 @@
   "items": [
     "jsc:kvm_switch",
     "jsc:rack_ups",
-    "jsc:cooling_unit"
+    "jsc:cooling_unit",
+    "jsc:fibre_optic_interface",
+    "jsc:advanced_fibre_optic_interface"
   ],
   "order": 31,
   "section": "jsc:racks",

@@ -26,11 +26,11 @@ public final class NetworkLinksLayout {
     public static final int NAME_X = 10;
     /** The type: room for MAINFRAME and the like; a longer one is cut. */
     public static final int TYPE_W = 66;
-    /** The link: the square of an Optical Network Card, then the cable and its speed, or that its link is down. */
+    /** The link: the square of a fibre port, then the cable and its speed, or that its link is down. */
     public static final int LINK_W = 112;
     public static final int STATUS_W = 46;
     public static final int GAP = 6;
-    /** The square that marks a node with an Optical Network Card, and the room it takes before the link's words. */
+    /** The square that marks a node with a fibre port, and the room it takes before the link's words. */
     public static final int CARD_SQUARE = 4;
     public static final int CARD_ROOM = CARD_SQUARE + 3;
     /** The narrowest list that keeps the TYPE column. */

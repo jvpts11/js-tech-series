@@ -7,10 +7,12 @@
  */
 package dev.jstech.computers.item;
 
+import dev.jstech.computers.block.FibreReach;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -23,8 +25,9 @@ import java.util.List;
 /**
  * Equipment that serves the rack itself rather than being a computer: the KVM switch that lets one
  * monitor address several machines, the UPS that carries the whole cabinet through an outage, the
- * cooling that buys a dense rack its thermal headroom. Rack units spend the same rack-unit budget
- * the servers do, which is what makes filling a cabinet a set of real trade-offs.
+ * cooling that buys a dense rack its thermal headroom, the fibre interface that brings the fibre
+ * backbone into its back. Rack units spend the same rack-unit budget the servers do, which is what
+ * makes filling a cabinet a set of real trade-offs.
  */
 @TextHolder
 public class RackUnitItem extends Item implements IMountableRackUnit {
@@ -36,7 +39,9 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
         /** Carries every machine in the rack through a power outage. */
         RACK_UPS("rack_ups", 1),
         /** Active cooling: raises the cabinet's thermal budget. */
-        COOLING_UNIT("cooling_unit", 1);
+        COOLING_UNIT("cooling_unit", 1),
+        /** Brings the fibre backbone of its era, and the earlier fibre, into the cabinet's back. */
+        FIBRE_INTERFACE("fibre_interface", 1);
 
         private final String id;
         private final int heightU;
@@ -56,6 +61,9 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
     }
 
     private final Kind kind;
+    /** The era of the unit, which a rack seats from its own era on; null for a unit every rack seats. */
+    @Nullable
+    private final HardwareEra era;
 
     private static final TextKey KVM_TOOLTIP = TextKey.of("item.jsc.kvm_switch.tooltip",
             "Lets one monitor address every machine in the rack");
@@ -63,16 +71,40 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
             "Carries the whole rack through a power outage");
     private static final TextKey COOLING_TOOLTIP = TextKey.of("item.jsc.cooling_unit.tooltip",
             "Active cooling: raises the rack's thermal budget");
+    private static final TextKey FIBRE_TOOLTIP = TextKey.of("item.jsc.fibre_interface.tooltip",
+            "Lets the rack's back take the fibre backbone");
+    private static final TextKey FIBRE_STANDARD = TextKey.of("item.jsc.fibre_interface.standard",
+            "Takes the Fibre Optic Cable");
+    private static final TextKey FIBRE_ADVANCED = TextKey.of("item.jsc.fibre_interface.advanced",
+            "Takes the Fibre Optic Cable and the OM5 Fibre Cable");
     private static final TextKey EQUIPMENT = TextKey.of("item.jsc.rack_unit.equipment",
             "%sU - rack equipment, not a computer");
 
-    public RackUnitItem(final Properties properties, final Kind kind) {
+    public RackUnitItem(final Properties properties, final Kind kind, @Nullable final HardwareEra era) {
         super(properties.stacksTo(1));
         this.kind = kind;
+        this.era = era;
     }
 
     public Kind kind() {
         return kind;
+    }
+
+    /** The era of the unit, or null when every rack seats it. */
+    @Nullable
+    public HardwareEra era() {
+        return era;
+    }
+
+    /** Whether a rack of {@code rackEra} seats the unit: one of its own era or an earlier one. */
+    public boolean fitsRackOf(final HardwareEra rackEra) {
+        return era == null || era.isAtMost(rackEra);
+    }
+
+    /** How much of the fibre the unit in {@code stack} lets into its rack: none for anything but a fibre interface. */
+    public static FibreReach fibreReachOf(final ItemStack stack) {
+        return stack.getItem() instanceof RackUnitItem unit && unit.kind == Kind.FIBRE_INTERFACE
+                ? FibreReach.upTo(unit.era) : FibreReach.NONE;
     }
 
     @Override
@@ -98,8 +130,16 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
             case KVM_SWITCH -> KVM_TOOLTIP;
             case RACK_UPS -> UPS_TOOLTIP;
             case COOLING_UNIT -> COOLING_TOOLTIP;
+            case FIBRE_INTERFACE -> FIBRE_TOOLTIP;
         };
         tooltip.add(GameText.component(what).withStyle(ChatFormatting.GRAY));
+        if (kind == Kind.FIBRE_INTERFACE) {
+            final TextKey takes = fibreReachOf(stack) == FibreReach.ADVANCED ? FIBRE_ADVANCED : FIBRE_STANDARD;
+            tooltip.add(GameText.component(takes).withStyle(ChatFormatting.DARK_GRAY));
+        }
         tooltip.add(GameText.component(EQUIPMENT.with(kind.heightU())).withStyle(ChatFormatting.DARK_GRAY));
+        if (era != null) {
+            HardwareTooltip.appendEra(tooltip, era);
+        }
     }
 }

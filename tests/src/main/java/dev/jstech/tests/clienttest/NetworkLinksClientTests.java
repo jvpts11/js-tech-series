@@ -117,12 +117,13 @@ public final class NetworkLinksClientTests {
         world.placeRunningPersonalComputer(COMPUTER.south(4));
     }
 
-    /* A Server Rack at {@code at} facing {@code facing}, its back to the cable, with a server holding a card. */
+    /* A Server Rack at {@code at} facing {@code facing}, its back to the cable, with a server and a fibre interface. */
     private static void rack(final TestWorldBuilder world, final BlockPos at, final Direction facing) {
         world.setBlock(at, ComputingModule.SERVER_RACK.get().defaultBlockState()
                 .setValue(HorizontalDirectionalBlock.FACING, facing));
         final ServerRackBlockEntity rack = world.blockEntity(at, ServerRackBlockEntity.class);
-        rack.getServers().setStackInSlot(0, ServerStacks.opticalServer());
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
+        rack.getServers().setStackInSlot(1, new ItemStack(ComputingModule.FIBRE_OPTIC_INTERFACE.get()));
         rack.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1)));
     }
 

@@ -80,7 +80,7 @@ public final class RackEraGameTests {
         helper.assertFalse(slots.isItemValid(ServerHardwareHandler.RAM_START + 1,
                 stack(HardwareItems.RAM_DDR4_16384.get())), "memory of another generation stays out");
         helper.assertTrue(slots.isItemValid(ServerHardwareHandler.GPU_START,
-                stack(ComputingModule.OPTICAL_NETWORK_CARD.get())), "a card of the board's bus goes in");
+                stack(ComputingModule.VAULTIS_ARRAY_PCIE3.get())), "a card of the board's bus goes in");
         helper.succeed();
     }
 

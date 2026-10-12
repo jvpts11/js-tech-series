@@ -11,7 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.block.DataWires;
-import dev.jstech.computers.block.OpticalPort;
+import dev.jstech.computers.block.FibreReach;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.ServerRackStructure;
@@ -149,13 +149,15 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public static final int UNIT_KVM_SWITCH = 10;
     public static final int UNIT_RACK_UPS = 11;
     public static final int UNIT_COOLING_UNIT = 12;
+    public static final int UNIT_FIBRE_STANDARD = 13;
+    public static final int UNIT_FIBRE_ADVANCED = 14;
     /** The codes up to this one are computers; the ones after are the units that serve them. */
     public static final int LAST_COMPUTER_UNIT = UNIT_NODE_2U_ADVANCED;
 
     /** The model bone names, indexed by unit code. */
     public static final String[] UNIT_BONES = {"", "server_1u_standard", "server_1u_legacy", "server_1u_vintage",
             "storage_2u", "compute_2u", "node_2u", "server_1u_transition", "server_1u_advanced", "node_2u_advanced",
-            "kvm_switch", "rack_ups", "cooling_unit"};
+            "kvm_switch", "rack_ups", "cooling_unit", "fibre_interface_standard", "fibre_interface_advanced"};
 
     private static final RawAnimation FANS =
             RawAnimation.begin().thenLoop("animation.rack.fans");
@@ -221,17 +223,17 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 case ADVANCED_SUPERCOMPUTER_NODE -> UNIT_NODE_2U_ADVANCED;
             };
         }
-        for (final RackUnitItem.Kind kind
-                : RackUnitItem.Kind.values()) {
-            if (RackUnitItem.is(stack, kind)) {
-                return switch (kind) {
-                    case KVM_SWITCH -> UNIT_KVM_SWITCH;
-                    case RACK_UPS -> UNIT_RACK_UPS;
-                    case COOLING_UNIT -> UNIT_COOLING_UNIT;
-                };
-            }
+        final RackUnitItem.Kind kind = RackUnitItem.kindOf(stack);
+        if (kind == null) {
+            return UNIT_NONE;
         }
-        return UNIT_NONE;
+        return switch (kind) {
+            case KVM_SWITCH -> UNIT_KVM_SWITCH;
+            case RACK_UPS -> UNIT_RACK_UPS;
+            case COOLING_UNIT -> UNIT_COOLING_UNIT;
+            case FIBRE_INTERFACE -> RackUnitItem.fibreReachOf(stack) == FibreReach.ADVANCED
+                    ? UNIT_FIBRE_ADVANCED : UNIT_FIBRE_STANDARD;
+        };
     }
 
     /** Whether a unit code is a supercomputer node, of any era: the rows whose chassis bands light. */
@@ -399,7 +401,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             setChanged();
             updateBayVisuals();
             syncDisplayEra(); // a swapped machine can be of another era than the one it replaced
-            updateOpticalPort();
+            updateFibrePort();
         }
     };
 
@@ -725,16 +727,22 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
     };
 
-    /* An Optical Network Card in any server seated here opens the cabinet's fibre port; the last one out shuts it. */
-    private void updateOpticalPort() {
+    /*
+     * A Fibre Optic Interface mounted here opens the cabinet's back to the fibre, the newest one mounted as far as it
+     * reaches; the last one out shuts it.
+     */
+    private void updateFibrePort() {
         if (level == null || level.isClientSide() || !(getBlockState().getBlock() instanceof ServerRackBlock block)) {
             return;
         }
-        boolean optical = false;
-        for (int slot = 0; slot < servers.getSlots() && !optical; slot++) {
-            optical = OpticalPort.holdsCard(buildIn(slot));
+        FibreReach reach = FibreReach.NONE;
+        for (int slot = 0; slot < servers.getSlots(); slot++) {
+            final FibreReach unit = RackUnitItem.fibreReachOf(servers.getStackInSlot(slot));
+            if (unit.compareTo(reach) > 0) {
+                reach = unit;
+            }
         }
-        block.setOptical(level, worldPosition, optical);
+        block.setFibre(level, worldPosition, reach);
     }
 
     private void updateBayVisuals() {
@@ -1356,8 +1364,13 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         final RackChassis chassis = ServerItem.chassisOf(stack);
         /*
          * The cabinet type must match, and a cabinet seats its own era or earlier: a Vintage server
-         * still fits a Standard rack, a Standard server never fits a Vintage one.
+         * still fits a Standard rack, a Standard server never fits a Vintage one. Rack equipment of an
+         * era follows the same rule; a fibre interface serves only a cabinet on the backbone.
          */
+        if (stack.getItem() instanceof RackUnitItem unit) {
+            return unit.fitsRackOf(rackEra()) && (unit.kind() != RackUnitItem.Kind.FIBRE_INTERFACE
+                    || rackType() == RackChassis.RackType.SERVER);
+        }
         return chassis == null
                 || (chassis.rackType() == rackType() && chassis.era().isAtMost(rackEra()));
     }
@@ -1371,7 +1384,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         if (IMountableRackUnit.of(stack) == null) {
             return PartRefusals.NOT_THIS_SLOT;
         }
-        return acceptsChassis(stack) ? ServerRackBlock.ROW_TAKEN : ServerRackBlock.WRONG_CHASSIS;
+        if (acceptsChassis(stack)) {
+            return ServerRackBlock.ROW_TAKEN;
+        }
+        return stack.getItem() instanceof RackUnitItem ? ServerRackBlock.WRONG_UNIT : ServerRackBlock.WRONG_CHASSIS;
     }
 
     /**

@@ -32,7 +32,7 @@ public record NetworkManagerPayload(BlockPos hostPos, String networkId, List<Net
      * Network-wide hardware totals the Hardware tab shows: the orchestration capacity in items/tick, the
      * number of parallel dispatch queues, the RAM buffer in items, and the total addressable storage in items
      * (the one unit every disk shares, whatever era it was made for); then the network's links: how many nodes with
-     * an Optical Network Card have their link up and how many down, the Mainframe's own link (the backbone), and the
+     * a fibre port have their link up and how many down, the Mainframe's own link (the backbone), and the
      * slowest link a node on the network is plugged into, with that node's name. A link is a cable's serialized name,
      * empty for none.
      */

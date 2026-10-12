@@ -15,6 +15,7 @@
     "jsc:advanced_server_case",
     "jsc:advanced_server",
     "jsc:advanced_supercomputer_node",
+    "jsc:advanced_fibre_optic_interface",
     "jsc:advanced_peripheral_cable",
     "jsc:advanced_hub",
     "jsc:color_monitor",

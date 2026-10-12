@@ -83,7 +83,8 @@ the rack, and room for processors and expansion cards:
   RAID 1 with at least 2: every drive a copy; RAID 5 with at least 3: survives losing one), and the **Vaultis
   Cache** cuts how long a read waits, from 10% on the ISA card to 30% on the PCI-e 4.0 one.
 - **Rack units**: the **KVM Switch** lets one monitor reach several machines; the **Rack UPS** and the **Cooling
-  Unit** fill the cabinet's other bays.
+  Unit** fill the cabinet's other bays; the **Fibre Optic Interface** is how a rack takes the fibre backbone: the
+  Standard's takes the Fibre Optic Cable, the Advanced's, in an Advanced rack, the OM5 Fibre Cable as well.
 - A **supercomputer** is every Supercomputer Rack tied together by the high compute cable, meeting the network at
   one **HBW Interface**.
 
@@ -161,7 +162,8 @@ refuses to start. Some power supplies scale to what the computer draws and never
   craft, smelt, enchant and repair, and let the network change stored items the same way.
 - **Cluster Interface Cards** (Serial Console Card, Management NIC, Fabric Host Adapter): let a Cluster Management
   Computer reach racked machines; each newer one reaches more, and installs on several at once.
-- **Optical Network Card**: lets a machine take fibre on the backbone.
+- **Optical Network Card**: lets a Mainframe or a Cluster Management Computer take fibre on the backbone (a rack
+  takes it through a Fibre Optic Interface, and a server never seats the card).
 - **Integra Phi** coprocessors (four of them), for supercomputer nodes.
 
 ## What can go wrong

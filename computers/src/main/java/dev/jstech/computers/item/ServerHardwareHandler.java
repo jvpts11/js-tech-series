@@ -148,8 +148,8 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
         }
         if (slot >= GPU_START && slot < GPU_START + GPU) {
             /*
-             * The expansion slots take a GPU, a storage card or a network card in any server: the optical network
-             * card in a server is what lets its rack take the fibre backbone. The crafting co-processor is the one card
+             * The expansion slots take a GPU or a storage card in any server; the fibre comes into a rack through
+             * a Fibre Optic Interface, never a server's network card. The crafting co-processor is the one card
              * reserved to a chassis: it goes only in a Supercomputer Node, whose single expansion slot
              * exists for it, and accepting GPUs alone here left that slot unable to seat anything.
              */
@@ -194,7 +194,7 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
 
     /* The kinds of card a server's expansion slots take, a bus that fits the board aside. */
     private static boolean isServerCard(final Item item) {
-        return item instanceof GpuItem || item instanceof StorageCardItem || item instanceof NetworkCardItem;
+        return item instanceof GpuItem || item instanceof StorageCardItem;
     }
 
     /**

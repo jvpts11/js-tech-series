@@ -24,7 +24,7 @@ public enum ExpansionCardKind {
     /** A sound card: what a Vintage or Legacy computer plays its sound through, beyond the beeps of its case. */
     SOUND,
 
-    /** A network adapter: the Optical Network Card, what lets a machine on the backbone take the fibre. */
+    /** A network adapter: the Optical Network Card, what lets a Mainframe or a cluster manager take the fibre. */
     NETWORK,
 
     /** A personal-use card: the crafting table, furnace, enchanting table or anvil the Workshop program works. */

@@ -84,7 +84,10 @@ between them, and a new machine takes the old cable as it is.
   twice as far with a repeater halfway.
 
 A small computer (a Personal Computer, a Crafting Computer) reaches the network over its access line, through a
-router to the backbone. The Mainframe and the racks sit on the backbone.
+router to the backbone. The Mainframe and the racks sit on the backbone. The fibre goes into a Mainframe or a
+Cluster Management Computer only while it holds an Optical Network Card, and into a server rack only through a
+Fibre Optic Interface mounted in it: the Standard's takes the Fibre Optic Cable, the Advanced's the OM5 Fibre Cable
+as well.
 
 ## Parts on the cables
 

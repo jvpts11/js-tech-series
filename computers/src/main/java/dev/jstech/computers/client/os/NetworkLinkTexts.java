@@ -30,7 +30,7 @@ final class NetworkLinkTexts {
     static final TextKey MAP_BENDS = TextKey.of("jsc.network_links.map_bends", "bends at %s");
     static final TextKey LEGEND = TextKey.of("jsc.network_links.legend", "LINES");
     static final TextKey LEGEND_ENTRY = TextKey.of("jsc.network_links.legend_entry", "%s, %s");
-    static final TextKey OPTICAL_CARD = TextKey.of("jsc.network_links.optical_card", "Optical Network Card");
+    static final TextKey FIBRE_PORT = TextKey.of("jsc.network_links.fibre_port", "Fibre port");
     static final TextKey OPTICAL_ROUTER = TextKey.of("jsc.network_links.optical_router", "Optical Router");
     static final TextKey ACCESS = TextKey.of("jsc.network_links.access", "access");
     static final TextKey BACKBONE = TextKey.of("jsc.network_links.backbone", "backbone");

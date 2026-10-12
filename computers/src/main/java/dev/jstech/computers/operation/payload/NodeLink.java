@@ -14,13 +14,13 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * How a node of the network is joined to it, as the Network Manager shows it: the cable it is plugged into (its line
- * and era, by the cable's serialized name, empty when it is plugged into none the screen can tell), whether it holds an
- * Optical Network Card, whether its link is up, how many cables long its cable's run is, the optical router its fibre
+ * and era, by the cable's serialized name, empty when it is plugged into none the screen can tell), whether it has a
+ * fibre port, whether its link is up, how many cables long its cable's run is, the optical router its fibre
  * reaches the network through, and, for a node off the network, why: its fibre bends where no optical router turns it,
  * or a run on its way is longer than its cable reaches.
  *
  * @param link      the serialized name of its cable's link; for a node off the network, the cable that cut it off
- * @param optical   whether it holds an Optical Network Card
+ * @param optical   whether it has a fibre port: an Optical Network Card, or a rack's Fibre Optic Interface
  * @param up        whether its link is up
  * @param runLength how many cables long the run of {@code link} is
  * @param reason    why it is off the network: {@link #REASON_NONE}, {@link #REASON_BENDS} or {@link #REASON_TOO_LONG}

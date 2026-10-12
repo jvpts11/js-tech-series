@@ -1052,7 +1052,7 @@ public final class NetworkManagerApp implements IDesktopApp {
             Draw.outline(g, nx, ny, tw, 13, kindColor(n.kind()));
             Draw.text(g, font, label, nx + 4, ny + 3, ctx.skin().text());
             if (n.link().optical()) {
-                // The square of an Optical Network Card, on the box's corner.
+                // The square of a fibre port, on the box's corner.
                 NetworkLinkDrawing.cardSquare(g, nx + tw - 3, ny - 1);
             }
             mapNodes.add(new NodeRect(nx, ny, tw, 13, n));

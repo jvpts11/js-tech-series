@@ -44,7 +44,7 @@ public final class PartRefusals {
     public static final TextKey ONE_CLUSTER_CARD = TextKey.of("jsc.part_refusal.one_cluster_card",
             "The machine already has a cluster interface card");
     public static final TextKey SERVER_CARD = TextKey.of("jsc.part_refusal.server_card",
-            "A server's slots take a graphics card, a storage card or a network card");
+            "A server's slots take a graphics card or a storage card");
     public static final TextKey DISK_TOO_NEW = TextKey.of("jsc.part_refusal.disk_too_new",
             "This disk is of a later era than the machine");
     public static final TextKey NO_BAY = TextKey.of("jsc.part_refusal.no_bay",

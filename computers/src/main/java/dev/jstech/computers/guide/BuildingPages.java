@@ -819,11 +819,11 @@ final class BuildingPages {
                         + " below one.")
                 .paragraph("Only a Cluster Management Computer uses these cards.")
                 .subheading("Optical Network Card")
-                .paragraph("A network card with a fibre port. A computer with one shows its fibre port as"
-                        + " connected, so it"
-                        + " can join the fibre backbone of the network ([Data cables](jsc:data_cables)). It is a"
-                        + " Standard"
-                        + " card, on PCI-e 3.0, and it draws 15 W.")
+                .paragraph("A network card with a fibre port. A Mainframe or a Cluster Management Computer with one"
+                        + " shows its fibre port as connected, so it can join the fibre backbone of the network"
+                        + " ([Data cables](jsc:data_cables)). A server never takes it: a rack joins the fibre through"
+                        + " a Fibre Optic Interface ([](jsc:rack_equipment)). It is a Standard card, on PCI-e 3.0, and"
+                        + " it draws 15 W.")
                 .subheading("Integra Phi coprocessors")
                 .paragraph("Four Integra Phi coprocessors add computing power to the nodes of a supercomputer. Only a"
                         + " supercomputer node takes one, and only one per node. A rack server of another kind"

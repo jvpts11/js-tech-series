@@ -331,11 +331,11 @@ final class ComputerKindsPages {
                 .paragraph("The disks in the bays are the storage. A server item carries no disks of its own: its"
                         + " drives are the disks you put in its bays. Join the rack's back port to the backbone"
                         + " cable, which the rack takes up to its era ([](jsc:data_cables)). From the Standard on, the"
-                        + " backbone is fibre, and the rack takes it only while one of its servers holds an Optical"
-                        + " Network Card in an expansion slot ([](jsc:expansion_cards)).")
+                        + " backbone is fibre, and the rack takes it only through a Fibre Optic Interface mounted in"
+                        + " one of its rows ([](jsc:rack_equipment)).")
                 .ifSomethingGoesWrong("The fibre does not join the rack.",
-                        "Put an Optical Network Card in an expansion slot of one of its servers, through the"
-                                + " server's own screen ([](jsc:expansion_cards)).",
+                        "Mount a Fibre Optic Interface in the rack: the Standard one for the Fibre Optic Cable, the"
+                                + " Advanced one for the OM5 Fibre Cable too ([](jsc:rack_equipment)).",
                         "A server does not go in.",
                         "It is from a newer era than the rack, or the rows it needs are taken or too small for it."
                                 + " Use a rack of its era or a newer one, or free those rows.",
@@ -452,8 +452,8 @@ final class ComputerKindsPages {
         guide.page("rack_equipment", section).titled("Rack equipment").icon(ComputingModule.KVM_SWITCH)
                 .coversAll(ComputersGuide.itemsOf(RackUnitItem.class))
                 .paragraph("Not everything in a rack computes. Some units serve the rack: the KVM Switch (keyboard,"
-                        + " video, mouse), the Rack UPS (uninterruptible power supply) and the Cooling Unit take rack"
-                        + " units, as a server does.")
+                        + " video, mouse), the Rack UPS (uninterruptible power supply), the Cooling Unit and the Fibre"
+                        + " Optic Interface take rack units, as a server does.")
                 .table("Rack units that are not computers", "Unit", "Takes", "What it does")
                 .row(GuideCell.words("KVM Switch"), GuideCell.words("1 U"),
                         GuideCell.words("Lets one monitor reach every machine in the rack"))
@@ -461,15 +461,26 @@ final class ComputerKindsPages {
                         GuideCell.words("Takes the rack unit, and adds nothing to the heat budget"))
                 .row(GuideCell.words("Cooling Unit"), GuideCell.words("1 U"),
                         GuideCell.words("Adds 1,500 W to the heat budget"))
+                .row(GuideCell.words("Fibre Optic Interface"), GuideCell.words("1 U"),
+                        GuideCell.words("Lets the rack's back take the Fibre Optic Cable"))
+                .row(GuideCell.words("Advanced Fibre Optic Interface"), GuideCell.words("1 U"),
+                        GuideCell.words("Lets the rack's back take the Fibre Optic Cable and the OM5 Fibre Cable"))
                 .paragraph("The KVM Switch lets one monitor reach every machine in the rack, so you do not need a"
                         + " screen for each. A rack with two or more computers needs one to choose between them.")
                 .paragraph("The Cooling Unit raises the heat the rack can carry, as explained in"
                         + " ([](jsc:rack_cooling_and_heat)).")
+                .paragraph("From the Standard on, the backbone is fibre, and a rack takes it only through a Fibre Optic"
+                        + " Interface. The Standard one takes the Fibre Optic Cable; the Advanced one, which only an"
+                        + " Advanced rack seats, takes the OM5 Fibre Cable as well. One in any row of the rack is"
+                        + " enough, and the servers in it need no network card ([](jsc:data_cables)).")
                 .paragraph("A server's storage cards go in its expansion slots, not in the rack: the RAID controller"
                         + " joins the server's drives into one array, and the read cache cuts the time each read from"
                         + " them takes ([](jsc:raid_arrays)).")
                 .ifSomethingGoesWrong("A rack with several computers has no way to pick one on the monitor.",
                         "Mount a KVM Switch in the rack. It takes one rack unit.",
+                        "The OM5 Fibre Cable does not join the rack.",
+                        "The rack holds the Standard Fibre Optic Interface, which takes only the Fibre Optic Cable."
+                                + " Mount the Advanced one, in an Advanced rack.",
                         "The RAID controller does nothing.",
                         "Its server has no mode set, or fewer drives than the mode needs ([](jsc:raid_arrays)).")
                 .seeAlso("jsc:server_racks", "jsc:rack_cooling_and_heat")

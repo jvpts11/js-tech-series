@@ -2,6 +2,8 @@
   "values": [
     "jsc:kvm_switch",
     "jsc:rack_ups",
-    "jsc:cooling_unit"
+    "jsc:cooling_unit",
+    "jsc:fibre_optic_interface",
+    "jsc:advanced_fibre_optic_interface"
   ]
 }

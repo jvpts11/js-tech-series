@@ -148,8 +148,8 @@ final class NetworkPages {
                         "Build a Server Rack and put servers with disks in its bays ([](jsc:server_racks)).",
                         "Join the Mainframe and the rack with the backbone cable of their era: HBW in the Legacy,"
                                 + " Fibre Optic in the Standard. Fibre goes into the Mainframe only while it holds an"
-                                + " Optical Network Card, and into the rack only while one of its servers holds one"
-                                + " ([](jsc:expansion_cards)).",
+                                + " Optical Network Card ([](jsc:expansion_cards)), and into the rack only through a"
+                                + " Fibre Optic Interface mounted in it ([](jsc:rack_equipment)).",
                         "Place a router, and join your Personal Computer to it with the access cable, Ethernet or"
                                 + " Gigabit ([](jsc:routers)). Run the backbone from the router to the Mainframe.",
                         "At the computer, open the Network program ([](jsc:network_interactor)). Put items in, and"
@@ -169,8 +169,8 @@ final class NetworkPages {
                         "The Mainframe has no system, so it holds every Operation until one is installed"
                                 + " ([](jsc:installing)).",
                         "The fibre does not join the Mainframe or the rack.",
-                        "Put an Optical Network Card in the Mainframe's card slots, or in a server of the rack"
-                                + " ([](jsc:expansion_cards)).")
+                        "Put an Optical Network Card in the Mainframe's card slots ([](jsc:expansion_cards)), and"
+                                + " mount a Fibre Optic Interface in the rack ([](jsc:rack_equipment)).")
                 .register();
         guide.page("data_cables", section).titled("Data cables").icon(() -> ComputingModule.ETHERNET_CABLE)
                 .coversAll(cablesOn(GridKind.DATA, ComputingModule.CRAFTING_CABLE))
@@ -212,9 +212,9 @@ final class NetworkPages {
                 .paragraph("Two rules govern two of the lines. From the Standard on, the backbone's fibre runs only"
                         + " straight, so it turns at an optical router ([](jsc:routers)). And the long distance line"
                         + " runs between exactly two ends and holds its block alone.")
-                .paragraph("Fibre also goes into a Mainframe, a Server Rack or a Cluster Management Computer only"
-                        + " while that machine holds an Optical Network Card: the rack in one of its servers"
-                        + " ([](jsc:expansion_cards)).")
+                .paragraph("Fibre also goes into a Mainframe or a Cluster Management Computer only while that machine"
+                        + " holds an Optical Network Card ([](jsc:expansion_cards)), and into a Server Rack only"
+                        + " through a Fibre Optic Interface mounted in it ([](jsc:rack_equipment)).")
                 .ifSomethingGoesWrong("Fibre will not turn a corner.",
                         "From the Standard on, fibre runs only straight. Turn it at an optical router.",
                         "A run carries nothing beyond its range.",

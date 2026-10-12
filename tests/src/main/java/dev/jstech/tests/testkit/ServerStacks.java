@@ -74,11 +74,6 @@ public final class ServerStacks {
         return stack;
     }
 
-    /** The default server with an Optical Network Card in its first card slot, which puts its cabinet on the fibre. */
-    public static ItemStack opticalServer() {
-        return built(ComputingModule.SERVER.get(), true, ComputingModule.OPTICAL_NETWORK_CARD.get());
-    }
-
     private static ItemStack built(final Item machine, final boolean withCpu, final boolean withPhi) {
         return built(machine, withCpu, withPhi ? ComputingModule.PHI_5100.get() : null);
     }

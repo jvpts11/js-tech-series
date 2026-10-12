@@ -831,11 +831,18 @@ public final class ComputingModule {
     // Rack equipment: rack units spend the cabinet's unit budget.
 
     public static final ItemEntry<RackUnitItem> KVM_SWITCH =
-            rackUnit("kvm_switch", RackUnitItem.Kind.KVM_SWITCH).named("KVM Switch").register();
+            rackUnit("kvm_switch", RackUnitItem.Kind.KVM_SWITCH, null).named("KVM Switch").register();
     public static final ItemEntry<RackUnitItem> RACK_UPS =
-            rackUnit("rack_ups", RackUnitItem.Kind.RACK_UPS).named("Rack UPS").register();
+            rackUnit("rack_ups", RackUnitItem.Kind.RACK_UPS, null).named("Rack UPS").register();
     public static final ItemEntry<RackUnitItem> COOLING_UNIT =
-            rackUnit("cooling_unit", RackUnitItem.Kind.COOLING_UNIT).named("Cooling Unit").register();
+            rackUnit("cooling_unit", RackUnitItem.Kind.COOLING_UNIT, null).named("Cooling Unit").register();
+    // A server rack takes the fibre backbone through one of these: the Standard's opens it to the Fibre Optic Cable,
+    // the Advanced's to the OM5 Fibre Cable as well.
+    public static final ItemEntry<RackUnitItem> FIBRE_OPTIC_INTERFACE = rackUnit("fibre_optic_interface",
+            RackUnitItem.Kind.FIBRE_INTERFACE, HardwareEra.STANDARD).named("Fibre Optic Interface").register();
+    public static final ItemEntry<RackUnitItem> ADVANCED_FIBRE_OPTIC_INTERFACE = rackUnit(
+            "advanced_fibre_optic_interface", RackUnitItem.Kind.FIBRE_INTERFACE, HardwareEra.ADVANCED)
+            .named("Advanced Fibre Optic Interface").register();
 
     /*
      * The parts of the first machines, Standard era; the rest of every era is in HardwareItems. The Mainframe's
@@ -1366,8 +1373,9 @@ public final class ComputingModule {
         return part(id, spec.era(), properties -> new StorageCardItem(properties, spec));
     }
 
-    private static ItemBuilder<RackUnitItem> rackUnit(final String id, final RackUnitItem.Kind kind) {
-        return CONTENT.item(id, properties -> new RackUnitItem(properties, kind)).tab(shelf(Shelf.RACK_BAYS, null));
+    private static ItemBuilder<RackUnitItem> rackUnit(final String id, final RackUnitItem.Kind kind,
+                                                      @Nullable final HardwareEra era) {
+        return CONTENT.item(id, properties -> new RackUnitItem(properties, kind, era)).tab(shelf(Shelf.RACK_BAYS, era));
     }
 
     /* A part of {@code era}, or of every era for null, on the components shelf. */

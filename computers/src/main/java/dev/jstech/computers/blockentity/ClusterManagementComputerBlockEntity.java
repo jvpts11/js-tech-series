@@ -169,7 +169,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
     protected void partsChanged() {
         super.partsChanged();
         if (level != null && !level.isClientSide()) {
-            OpticalPort.set(level, List.of(worldPosition), OpticalPort.holdsCard(currentBuild()));
+            OpticalPort.set(level, List.of(worldPosition), OpticalPort.OPTICAL, OpticalPort.holdsCard(currentBuild()));
         }
     }
 

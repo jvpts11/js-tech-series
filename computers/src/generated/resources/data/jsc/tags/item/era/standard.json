@@ -19,6 +19,7 @@
     "jsc:compute_server_case",
     "jsc:compute_server",
     "jsc:supercomputer_node",
+    "jsc:fibre_optic_interface",
     "jsc:peripheral_cable",
     "jsc:standard_hub",
     "jsc:monitor",

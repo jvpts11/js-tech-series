@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.network;
 
 import dev.jstech.computers.block.DataWires;
+import dev.jstech.computers.block.FibreReach;
 import dev.jstech.computers.block.OpticalPort;
 import dev.jstech.computers.block.RouterBlock;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
@@ -90,12 +91,18 @@ final class NodeLinks {
                 best.straight() ? routerOf(bestCable) : NodeLink.NO_PLACE);
     }
 
-    /** Whether the machine at {@code pos} holds an Optical Network Card, which its block's state says. */
+    /**
+     * Whether the machine at {@code pos} takes the fibre, which its block's state says: a Mainframe or a Cluster
+     * Management Computer holding an Optical Network Card, a rack with a Fibre Optic Interface mounted.
+     */
     boolean optical(final BlockPos pos) {
         if (!level.isLoaded(pos)) {
             return false; // reading it would load the chunk
         }
         final BlockState state = level.getBlockState(pos);
+        if (state.hasProperty(OpticalPort.FIBRE)) {
+            return state.getValue(OpticalPort.FIBRE) != FibreReach.NONE;
+        }
         return state.hasProperty(OpticalPort.OPTICAL) && state.getValue(OpticalPort.OPTICAL);
     }
 

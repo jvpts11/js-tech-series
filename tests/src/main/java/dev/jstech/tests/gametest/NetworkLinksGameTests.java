@@ -89,7 +89,8 @@ public final class NetworkLinksGameTests {
             helper.fail("no Server Rack placed");
             return;
         }
-        rack.getServers().setStackInSlot(0, ServerStacks.opticalServer());
+        rack.getServers().setStackInSlot(0, ServerStacks.defaultServer());
+        rack.getServers().setStackInSlot(1, new ItemStack(ComputingModule.FIBRE_OPTIC_INTERFACE.get()));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final NetworkNodeInfo lost = lost(helper, collect(helper, mainframe));
@@ -97,7 +98,7 @@ public final class NetworkLinksGameTests {
                     helper.assertTrue(lost.link().reason() == NodeLink.REASON_BENDS, "because its fibre bends");
                     helper.assertTrue(lost.link().where() == helper.absolutePos(bend).asLong(),
                             "at the block where it would have to turn");
-                    helper.assertTrue(lost.link().optical(), "the rack holds a card all the same");
+                    helper.assertTrue(lost.link().optical(), "the rack has its fibre port all the same");
                 })
                 .thenSucceed();
     }
