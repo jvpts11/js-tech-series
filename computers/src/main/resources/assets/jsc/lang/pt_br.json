@@ -7948,6 +7948,7 @@
   "item.jsc.vintage_rack_ups": "Nobreak de Rack Vintage",
   "item.jsc.vintage_storage_server": "Servidor de Armazenamento Vintage",
   "item.jsc.vintage_storage_server_case": "Gabinete de Servidor de Armazenamento Vintage",
+  "jsc.cli.shell.help.example.self": "esta página: a ajuda do próprio help, em todo sistema que o tem",
   "jsc.part_refusal.board": "Este gabinete só aceita uma placa-mãe do seu tamanho e da sua era",
   "jsc.part_refusal.card_bus": "O barramento desta placa não serve nos slots da placa-mãe",
   "jsc.part_refusal.cpu": "Este processador precisa de uma placa-mãe do seu soquete e da sua era",

@@ -1943,6 +1943,7 @@
   "jsc.cli.shell.help.commands": "commands",
   "jsc.cli.shell.help.details": "'help <command>' for details",
   "jsc.cli.shell.help.example.dos": "MC-DOS's help, opened on the page of dir",
+  "jsc.cli.shell.help.example.self": "this page: help on help itself, on every system that has it",
   "jsc.cli.shell.help.keys": "In the full-screen help, Tab picks a button or a link and Enter follows it; Alt+C shows the contents, Alt+N the next topic, Alt+B the one before and Alt+I the index. Alt+S finds a word, F3 finds it again, and Escape leaves.",
   "jsc.cli.shell.help.no_such": "no such command: %s",
   "jsc.cli.shell.help.summary": "list commands, or show how one is used",

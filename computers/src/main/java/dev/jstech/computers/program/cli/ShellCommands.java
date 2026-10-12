@@ -41,6 +41,8 @@ final class ShellCommands {
                 + " picks a button or a link and Enter follows it; Alt+C shows the contents, Alt+N the next topic,"
                 + " Alt+B the one before and Alt+I the index. Alt+S finds a word, F3 finds it again, and Escape"
                 + " leaves.");
+        private static final TextKey SELF_EXAMPLE = TextKey.of("jsc.cli.shell.help.example.self",
+                "this page: help on help itself, on every system that has it");
         private static final TextKey DOS_EXAMPLE = TextKey.of("jsc.cli.shell.help.example.dos",
                 "MC-DOS's help, opened on the page of dir");
         private static final TextKey NO_SUCH = TextKey.of("jsc.cli.shell.help.no_such", "no such command: %s");
@@ -79,7 +81,8 @@ final class ShellCommands {
         }
 
         @Override public List<Example> examples() {
-            return List.of(new Example("help dir", DOS_EXAMPLE));
+            // The first works on every system help is on; dir is a command of the DOS family alone.
+            return List.of(new Example("help help", SELF_EXAMPLE), new Example("help dir", DOS_EXAMPLE));
         }
 
         /** The DOS family's two systems give the terminal to their full-screen help; the others print. */

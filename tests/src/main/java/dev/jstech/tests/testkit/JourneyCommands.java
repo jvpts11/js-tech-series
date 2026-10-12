@@ -10,6 +10,7 @@ package dev.jstech.tests.testkit;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.ICliCommand;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.os.ShellFamily;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -39,10 +40,12 @@ public final class JourneyCommands {
             "pckmgr", "needs a package mirror on the network: the programs area serves one");
 
     /*
-     * The sequence of the commands that work on something: each line leans on the lines before it, in this order,
-     * so the folder exists before a file goes in it and a file is copied before the copy is renamed and moved.
+     * The sequence of the commands that work on something, for each family of shell: each line leans on the lines
+     * before it, in this order, so the folder exists before a file goes in it and a file is copied before the copy is
+     * renamed and moved.
      */
-    private static final Map<String, String> SEQUENCE = sequence();
+    private static final Map<ShellFamily, Map<String, String>> SEQUENCES = Map.of(
+            ShellFamily.DOS, dos(), ShellFamily.POSIX, posix(), ShellFamily.NET, net());
 
     private JourneyCommands() {
     }
@@ -53,8 +56,9 @@ public final class JourneyCommands {
                 .sorted(Comparator.comparing(ICliCommand::name)).toList();
         final Set<String> offered = new HashSet<>();
         commands.forEach(command -> offered.add(command.name()));
+        final Map<String, String> sequence = SEQUENCES.get(computer.shellFamily());
         final List<String> lines = new ArrayList<>();
-        SEQUENCE.forEach((name, line) -> {
+        sequence.forEach((name, line) -> {
             if (!line.isEmpty() && offered.contains(name.split("#")[0])) {
                 lines.add(line);
             }
@@ -65,7 +69,7 @@ public final class JourneyCommands {
             lines.add("exit");
         }
         for (final ICliCommand command : commands) {
-            if (!ELSEWHERE.containsKey(command.name()) && SEQUENCE.keySet().stream()
+            if (!ELSEWHERE.containsKey(command.name()) && sequence.keySet().stream()
                     .noneMatch(key -> key.split("#")[0].equals(command.name()))) {
                 lines.add(command.examples().isEmpty() ? command.name() : command.examples().getFirst().line());
             }
@@ -73,7 +77,27 @@ public final class JourneyCommands {
         return lines;
     }
 
-    private static Map<String, String> sequence() {
+    private static Map<String, String> posix() {
+        final Map<String, String> lines = new LinkedHashMap<>();
+        lines.put("mkdir", "mkdir journey");
+        lines.put("echo", "echo hello from the journey > journey/note.txt");
+        lines.put("vi", "vi journey/note.txt");
+        lines.put("ee", "ee journey/note.txt");
+        lines.put("iql", "iql SELECT 1 Cobblestone");
+        lines.put("ssh", "");
+        lines.put("exit", "");
+        return lines;
+    }
+
+    private static Map<String, String> net() {
+        final Map<String, String> lines = new LinkedHashMap<>();
+        lines.put("iql", "iql SELECT 1 Cobblestone");
+        lines.put("ssh", "");
+        lines.put("exit", "");
+        return lines;
+    }
+
+    private static Map<String, String> dos() {
         final Map<String, String> lines = new LinkedHashMap<>();
         lines.put("mkdir", "mkdir journey");
         lines.put("mkdir#box", "mkdir journey\\box");
