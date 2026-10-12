@@ -230,10 +230,11 @@ public final class CableBlockGameTests {
         for (final BlockPos at : List.of(A, B, C)) {
             four.forEach(cable -> TestCables.lay(helper, at, cable));
         }
-        final FakePlayer player = player(helper);
         final BlockPos pos = helper.absolutePos(B);
         helper.startSequence()
                 .thenExecuteAfter(2, () -> {
+                    // The fake player is every test's at once: what comes back to it is counted in this same step.
+                    final FakePlayer player = player(helper);
                     // From above, along x: access top left (z 3), backbone above compute (z 8), crafting right (z 13).
                     breakLookingDown(helper, player, 3);
                     leaves(helper, ComputingModule.ETHERNET_CABLE, ComputingModule.HBW_CABLE,
@@ -243,11 +244,12 @@ public final class CableBlockGameTests {
                             ComputingModule.CRAFTING_CABLE);
                     breakLookingDown(helper, player, MIDDLE);
                     leaves(helper, ComputingModule.HPC_CABLE, ComputingModule.CRAFTING_CABLE);
-                })
-                .thenExecute(() -> {
                     helper.assertTrue(player.getInventory().countItem(ComputingModule.ETHERNET_CABLE.asItem()) == 1
                                     && player.getInventory().countItem(ComputingModule.HPC_CABLE.asItem()) == 1,
                             "each wire taken out comes back to the player");
+                })
+                .thenExecute(() -> {
+                    final FakePlayer player = player(helper);
                     // The last piece takes the block with it, as any block goes.
                     player.gameMode.destroyBlock(pos);
                     helper.assertBlockNotPresent(CoreCables.BLOCK.get(), B);
@@ -275,10 +277,14 @@ public final class CableBlockGameTests {
             TestCables.lay(helper, at, ComputingModule.ETHERNET_CABLE);
             TestCables.lay(helper, at, ComputingModule.HBW_CABLE);
         }
-        final FakePlayer player = player(helper);
-        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.RED_DYE, 4));
         helper.startSequence()
                 .thenExecuteAfter(2, () -> {
+                    /*
+                     * The fake player is every test's at once, and each one empties its hands as it sets up: armed in
+                     * the step that uses it, nothing set up in between can take the dye away.
+                     */
+                    final FakePlayer player = player(helper);
+                    player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.RED_DYE, 4));
                     final BlockPos pos = helper.absolutePos(B);
                     lookDown(player, pos, MIDDLE);
                     final BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false);
