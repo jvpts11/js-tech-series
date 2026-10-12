@@ -57,7 +57,7 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 public final class GuideClient {
 
     /** How long the key is held over an item before its page opens, so a stray press opens nothing. */
-    public static final long HOLD_MILLIS = 400L;
+    public static final long HOLD_MILLIS = 1500L;
 
     /** Where the bar stands out of every screen: below the crosshair. */
     private static final int BELOW_CROSSHAIR = 9;
