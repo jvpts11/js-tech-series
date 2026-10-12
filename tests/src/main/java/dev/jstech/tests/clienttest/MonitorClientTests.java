@@ -46,6 +46,7 @@ import dev.jstech.core.client.live.LiveScreens;
 import dev.jstech.core.gui.Tube;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.IntPredicate;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -75,13 +76,16 @@ public final class MonitorClientTests {
     private static final int SETTLE = 4;
     private static final int BOOT_WAIT = 1_200;
     private static final int LIGHT_WAIT = 400;
+    /* A lit desktop's pixels run well above this in their brightest channel; dark glass stays far below it. */
+    private static final int LIT_LEVEL = 90;
     private static final ResourceLocation MC_DOS = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_dos");
     private static final String MINESWEEPER = "Minesweeper";
     /* The eight monitors in a row along x, two blocks apart, their screens toward the player to the south. */
     private static final BlockPos ROW = new BlockPos(2, 2, 2);
     private static final BlockPos ROW_VIEW = new BlockPos(9, 2, 8);
     private static final int STANDARD_INDEX = 6;
-    private static final BlockPos FAR = new BlockPos(9, 2, 50);
+    /* Further than the game draws a monitor's face, past the 64 blocks a screen is still shown at. */
+    private static final BlockPos FAR = new BlockPos(9, 2, 74);
     /* A wall of flat monitors three wide and two tall, a computer behind its bottom-left corner. */
     private static final BlockPos WALL = new BlockPos(3, 2, 3);
     private static final BlockPos WALL_VIEW = new BlockPos(4, 2, 8);
@@ -121,7 +125,7 @@ public final class MonitorClientTests {
                         BOOT_WAIT, "the server to say the face shows the machine's desktop")
                 .thenWaitUntil(() -> LiveScreens.held() > 0, 100, "the face to be drawn")
                 .thenScreenshot(30, "live-desktop")
-                // From further than anybody could read it, only the light shows and the picture is let go.
+                // From further than the game draws the face at all, the picture is let go.
                 .thenTeleport(0, FAR, Direction.NORTH)
                 .thenWaitUntil(() -> LiveScreens.held() == 0, 300, "the picture to be let go far off");
     }
@@ -323,6 +327,76 @@ public final class MonitorClientTests {
                         "the machine to come up", level -> "still starting")
                 .thenScreenshot(LIGHT_WAIT / 4, "advanced-0-front");
         fromTheSide(ctx, "advanced-");
+    }
+
+    /** The same with four Advanced panels in a square, one screen two by two running north from its corner. */
+    @ClientTest(timeoutTicks = 2400)
+    public static void faces_stayLitSeenFromTheSideOnASquareOfFour(final ClientTestContext ctx) {
+        final PersonalComputerBlockEntity[] pc = new PersonalComputerBlockEntity[1];
+        ctx.thenBuild(0, world -> {
+                    pc[0] = world.placeRunningPersonalComputer(COMPUTER);
+                    for (final BlockPos at : List.of(SCREEN, SCREEN.above(), SCREEN.north(), SCREEN.north().above())) {
+                        world.placeMonitor(at, Direction.WEST, ComputingModule.COLOR_MONITOR.get());
+                    }
+                })
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .thenWaitUntilServer(level -> !pc[0].needsPost() && !pc[0].booting(), BOOT_WAIT,
+                        "the machine to come up", level -> "still starting")
+                .thenScreenshot(LIGHT_WAIT / 4, "square-0-front");
+        fromTheSide(ctx, "square-");
+    }
+
+    /**
+     * The square of four seen from ever further, straight on and from the side: lit at every distance the game draws
+     * it, where past 32 blocks it stood dark and fell apart into four monitors, each in its own bezel.
+     */
+    @ClientTest(timeoutTicks = 3000)
+    public static void faces_ofASquareOfFourStayLitFromAfar(final ClientTestContext ctx) {
+        final PersonalComputerBlockEntity[] pc = new PersonalComputerBlockEntity[1];
+        ctx.thenBuild(0, world -> {
+                    pc[0] = world.placeRunningPersonalComputer(COMPUTER);
+                    for (final BlockPos at : List.of(SCREEN, SCREEN.above(), SCREEN.north(), SCREEN.north().above())) {
+                        world.placeMonitor(at, Direction.WEST, ComputingModule.COLOR_MONITOR.get());
+                    }
+                })
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .thenWaitUntilServer(level -> !pc[0].needsPost() && !pc[0].booting(), BOOT_WAIT,
+                        "the machine to come up", level -> "still starting");
+        // Straight on at 12, 24, 40 and 56 blocks, then from the side at about 25 and 47.
+        final double[][] feet = {{12, 0}, {24, 0}, {40, 0}, {56, 0}, {20, 16}, {36, 30}};
+        for (int i = 0; i < feet.length; i++) {
+            final double[] foot = feet[i];
+            final boolean straight = foot[1] == 0;
+            ctx.thenServer(SETTLE, level -> {
+                        // The square's middle, where its four monitors meet, a block in front of its corner's glass.
+                        final Vec3 middle = Vec3.atLowerCornerOf(ctx.abs(SCREEN)).add(1.0, 1.0, 0.0);
+                        final Vec3 at = middle.add(foot[0], -1.0, foot[1]);
+                        final Vec3 look = middle.subtract(at.add(0.0, ctx.serverPlayer().getEyeHeight(), 0.0));
+                        final float yaw = (float) Math.toDegrees(Math.atan2(-look.x, look.z));
+                        final float pitch = (float) -Math.toDegrees(Math.atan2(look.y, look.horizontalDistance()));
+                        ctx.serverPlayer().teleportTo(ctx.serverLevel(), at.x, at.y, at.z, yaw, pitch);
+                    })
+                    .thenScreenshot(SETTLE * 8, "afar-" + (i + 1))
+                    .thenAssert(0, () -> !straight || litAtTheCrosshair(ctx),
+                            "the square is lit seen straight on from " + (int) foot[0] + " blocks");
+        }
+    }
+
+    /* Whether the pixels round the crosshair, just off its arms, show a lit picture rather than dark glass. */
+    private static boolean litAtTheCrosshair(final ClientTestContext ctx) {
+        final int x = ctx.mc().getWindow().getGuiScaledWidth() / 2;
+        final int y = ctx.mc().getWindow().getGuiScaledHeight() / 2;
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            int lit = 0;
+            for (final int[] off : new int[][] {{2, 2}, {-2, 2}, {2, -2}, {-2, -2}}) {
+                final int argb = frame.pixel(x + off[0], y + off[1]);
+                final int brightest = Math.max((argb >> 16) & 0xFF, Math.max((argb >> 8) & 0xFF, argb & 0xFF));
+                if (brightest > LIT_LEVEL) {
+                    lit++;
+                }
+            }
+            return lit >= 2;
+        }
     }
 
     /** The same with two picture tubes of two machines, one on the other, whose glass sits back in its bezel. */

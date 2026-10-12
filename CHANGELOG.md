@@ -1935,6 +1935,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- A screen in the world stays lit as far as the game draws it, 64 blocks, drawn again once a second past 32; past 32
+  blocks it was not drawn at all, so a lit screen stood dark, and a big screen fell apart into its monitors, each in
+  its own bezel. The server sends what a screen shows as far.
 - The whole picture no longer goes wrong for one frame, the world seeming to flash, in menus or out of them: a
   screen in the world that nobody had looked at for a few seconds, and a surface a manual's scene or a program's
   window draws on, left the rest of the frame drawn into the window rather than the game's own target as they were

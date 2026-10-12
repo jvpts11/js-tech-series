@@ -32,9 +32,9 @@ public final class LiveFeed<T> {
     private final Map<UUID, T> sent = new HashMap<>();
     private final double reachSquared;
 
-    /** A feed reaching {@link LiveRate#FAR} blocks, as far as a picture is drawn at all. */
+    /** A feed reaching {@link LiveRate#SEEN} blocks, as far as a picture is drawn at all. */
     public LiveFeed() {
-        this(LiveRate.FAR);
+        this(LiveRate.SEEN);
     }
 
     public LiveFeed(final double reach) {

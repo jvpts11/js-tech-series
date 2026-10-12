@@ -12,8 +12,8 @@ package dev.jstech.core.live;
  *
  * <p>A screen in the world is drawn into a texture of its own, and drawing it costs the viewer's graphics card, never
  * the server. Close up it is drawn often enough to read as moving; a little further it still changes, slowly; further
- * than that nobody could read it, and only the screen's light shows. What a frame of it cost is spent on the frames
- * that are not drawn.
+ * than that nobody could read it, but it still shows what it shows, drawn again once a second, as far as the game
+ * draws the block it stands on at all. What a frame of it cost is spent on the frames that are not drawn.
  *
  * <p>Pure maths, no rendering, so a unit test can pin the distances.
  */
@@ -21,10 +21,16 @@ public final class LiveRate {
 
     /** Up to this far, in blocks, the picture is drawn {@link #NEAR_FPS} times a second. */
     public static final int NEAR = 16;
-    /** Up to this far it is drawn {@link #FAR_FPS} times a second; further, not at all. */
+    /** Up to this far it is drawn {@link #FAR_FPS} times a second. */
     public static final int FAR = 32;
+    /**
+     * Up to this far it is drawn {@link #DISTANT_FPS} times a second; further, not at all. It is as far as the game
+     * draws what a block entity draws, so a screen lit in sight never stands dark for being far.
+     */
+    public static final int SEEN = 64;
     public static final int NEAR_FPS = 10;
     public static final int FAR_FPS = 2;
+    public static final int DISTANT_FPS = 1;
     /** What a picture never drawn yet counts as having been drawn at. */
     public static final long NEVER = Long.MIN_VALUE;
 
@@ -41,10 +47,13 @@ public final class LiveRate {
         if (distanceSquared <= (double) FAR * FAR) {
             return FAR_FPS;
         }
+        if (distanceSquared <= (double) SEEN * SEEN) {
+            return DISTANT_FPS;
+        }
         return 0;
     }
 
-    /** Whether a picture this far away is shown at all, rather than only the screen's light. */
+    /** Whether a picture this far away is shown at all. */
     public static boolean shows(final double distanceSquared) {
         return framesPerSecond(distanceSquared) > 0;
     }

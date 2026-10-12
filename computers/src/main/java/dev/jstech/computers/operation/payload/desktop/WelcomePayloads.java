@@ -44,7 +44,7 @@ public final class WelcomePayloads {
      * world: as far as a face is drawn, from a monitor as far off as a peripheral cable reaches. The welcome says only
      * what the face shows anybody in sight of it.
      */
-    private static final double FACE_REACH = LiveRate.FAR + PeripheralLine.range(HardwareEra.ADVANCED);
+    private static final double FACE_REACH = LiveRate.SEEN + PeripheralLine.range(HardwareEra.ADVANCED);
 
     private WelcomePayloads() {
     }

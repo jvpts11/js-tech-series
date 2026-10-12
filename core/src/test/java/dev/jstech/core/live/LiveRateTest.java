@@ -27,10 +27,18 @@ class LiveRateTest {
         assertEquals(2, LiveRate.framesPerSecond(32 * 32));
     }
 
+    /** A screen too far to read still shows what it shows, so a lit screen in sight never stands dark. */
+    @Test
+    void framesPerSecond_isOneUpToSixtyFourBlocks() {
+        assertEquals(1, LiveRate.framesPerSecond(32 * 32 + 0.01));
+        assertEquals(1, LiveRate.framesPerSecond(64 * 64));
+        assertTrue(LiveRate.shows(40 * 40));
+    }
+
     @Test
     void framesPerSecond_isNoneFurtherAway() {
-        assertEquals(0, LiveRate.framesPerSecond(32 * 32 + 0.01));
-        assertFalse(LiveRate.shows(40 * 40));
+        assertEquals(0, LiveRate.framesPerSecond(64 * 64 + 0.01));
+        assertFalse(LiveRate.shows(70 * 70));
         assertTrue(LiveRate.shows(20 * 20));
     }
 

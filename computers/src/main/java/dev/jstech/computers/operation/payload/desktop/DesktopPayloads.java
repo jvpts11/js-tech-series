@@ -69,7 +69,7 @@ public final class DesktopPayloads {
                 ClientPayloadHandlers.onMainThread(DesktopPayloads::handleDesktopFiles));
         // A face in the world asks for what its desktop holds; anybody near enough to see the face may.
         ComputerAccess.accept(registrar, RequestFaceListingPayload.TYPE, RequestFaceListingPayload.STREAM_CODEC,
-                ComputerAccess.inSightOf(RequestFaceListingPayload::monitor, LiveRate.FAR),
+                ComputerAccess.inSightOf(RequestFaceListingPayload::monitor, LiveRate.SEEN),
                 DesktopPayloads::handleRequestFaceListing);
         registrar.playToClient(FaceListingPayload.TYPE, FaceListingPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(DesktopPayloads::handleFaceListing));
