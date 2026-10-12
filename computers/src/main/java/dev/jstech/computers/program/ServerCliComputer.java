@@ -9,6 +9,7 @@ package dev.jstech.computers.program;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.ProgramTravels;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.PackageService;
 import dev.jstech.computers.machine.ProgramService;
@@ -18,9 +19,15 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.computers.os.SystemProcesses;
+import dev.jstech.computers.os.crash.CrashCause;
+import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.program.cli.CliTexts;
+import dev.jstech.computers.program.cli.CommandScope;
+import dev.jstech.computers.program.cli.SshTerminal;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliMachine;
 import dev.jstech.computers.program.cli.PosixPath;
@@ -29,6 +36,7 @@ import dev.jstech.computers.program.install.LiveTurn;
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.JsCore;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -59,6 +67,9 @@ public final class ServerCliComputer extends ServerCliNetwork {
     private static final TextKey FORGOTTEN =TextKey.of("jsc.cli.variable.forgotten", "%s is forgotten");
     private static final TextKey CANNOT_RUN =
             TextKey.of("jsc.cli.sigma.cannot_run", "this machine cannot run programs");
+    private static final TextKey SERVICE_ENDED = TextKey.of("jsc.cli.kill.service_ended", "stopped %s");
+    /** What a process list says of a process the system started for itself: it runs as long as the system does. */
+    private static final String RUNNING = "running";
 
     public ServerCliComputer(final IComputerTerminalHost host, final ServerLevel level) {
         this(host, level, null);
@@ -290,5 +301,83 @@ public final class ServerCliComputer extends ServerCliNetwork {
     public List<SigmaProcess> sigmaProcesses() {
         final ProgramService running = sigma();
         return running == null ? List.of() : running.processes();
+    }
+
+    /**
+     * A Unix machine's own processes: its init at number 1, holding the system's share, then each service it runs at
+     * the number that service keeps. A language's runtime is no process of its own: it is in each program it runs.
+     */
+    @Override
+    public List<SigmaProcess> systemProcesses() {
+        final AbstractComputerBlockEntity machine = unixMachine();
+        if (machine == null || !machine.isRunning()) {
+            return List.of();
+        }
+        final OsDef system = machine.installedOs();
+        final RamLedger ledger = machine.ramLedger();
+        final long systemBytes = ledger.usedMb(RamLedger.Kind.SYSTEM) * RamLedger.BYTES_PER_MB;
+        final List<SigmaProcess> out = new ArrayList<>();
+        out.add(new SigmaProcess(SystemProcesses.INIT_PID,
+                SystemProcesses.initName(system.platform(), system.packageManager()), RUNNING, systemBytes,
+                systemBytes, SystemProcesses.INIT_FILE));
+        for (final RamLedger.Entry entry : ledger.entries()) {
+            final ProgramSpec service = runningService(entry);
+            if (service != null) {
+                out.add(new SigmaProcess(SystemProcesses.servicePid(OsRegistry.serviceIndex(service.id())),
+                        service.commandName(), RUNNING, entry.heldBytes(), entry.mb() * RamLedger.BYTES_PER_MB,
+                        SystemProcesses.serviceFile(service.commandName())));
+            }
+        }
+        return out;
+    }
+
+    /**
+     * On a Unix machine, a signal to its first process takes the system down, as the kernel panics with no init left
+     * to run; one to a service's process ends the service until the machine starts over; the rest go to the programs.
+     */
+    @Override
+    public OpResult signal(final int pid, final int signal, final String typed) {
+        final AbstractComputerBlockEntity machine = unixMachine();
+        if (machine == null) {
+            return stopSigma(pid);
+        }
+        if (pid == SystemProcesses.INIT_PID) {
+            // The page keeps the line that did it as the console showed it, at the prompt it was typed at.
+            final String line = SshTerminal.prompt(this, this) + " " + typed;
+            machine.crash(CrashCause.INIT_KILLED, CrashPages.Moment.initKilled(line, signal));
+            return OpResult.ok("");
+        }
+        final ProgramSpec named = OsRegistry.serviceAt(SystemProcesses.serviceIndex(pid));
+        for (final RamLedger.Entry entry : machine.ramLedger().entries()) {
+            final ProgramSpec service = runningService(entry);
+            if (service != null && service == named) {
+                machine.endService(service.id());
+                return OpResult.ok(SERVICE_ENDED.with(pid));
+            }
+        }
+        return stopSigma(pid);
+    }
+
+    /* This machine, when it is a computer running a Unix system; null otherwise. */
+    @Nullable
+    private AbstractComputerBlockEntity unixMachine() {
+        if (!(hostBlock instanceof AbstractComputerBlockEntity machine)) {
+            return null;
+        }
+        final OsDef system = machine.installedOs();
+        return system != null && CommandScope.UNIX_SYSTEMS.contains(system.platform()) ? machine : null;
+    }
+
+    /* The service a ledger entry is the running process of, or null for anything else or a language's runtime. */
+    @Nullable
+    private static ProgramSpec runningService(final RamLedger.Entry entry) {
+        if (entry.kind() != RamLedger.Kind.SERVICE) {
+            return null;
+        }
+        final ResourceLocation id = ResourceLocation.tryParse(entry.key());
+        if (id == null || JsCore.languages().get(id) != null || OsRegistry.serviceIndex(id) < 0) {
+            return null;
+        }
+        return OsRegistry.getProgram(id);
     }
 }

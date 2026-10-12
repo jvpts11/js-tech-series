@@ -8,6 +8,7 @@
 package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.client.CommandPromptScreen;
 import dev.jstech.computers.client.CrashScreen;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPages;
@@ -72,6 +73,26 @@ public final class CrashPagesClientTests {
         }
     }
 
+    /** kill -9 1 typed at Debian's prompt ends its first process, and the kernel's panic takes the glass. */
+    @ClientTest(timeoutTicks = 4000)
+    public static void debian_killNineToTheFirstProcessAtThePromptPanicsIt(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    world.placeRunningPersonalComputer(computer(0), ResourceLocation.fromNamespaceAndPath("jsc",
+                            "debian"));
+                    world.placeMonitor(monitor(0), Direction.EAST);
+                })
+                .thenTeleport(SETTLE, desk(0), Direction.WEST)
+                .thenRightClick(SETTLE, monitor(0))
+                .thenAwaitScreen(CommandPromptScreen.class, BOOT_WAIT)
+                .then(SETTLE, () -> ctx.type("kill -9 1"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenAwaitScreen(CrashScreen.class, SCREEN_WAIT)
+                .thenAssert(0, () -> page(ctx).page().lines().stream().anyMatch(line -> line.endsWith(
+                                "Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000009")),
+                        "Linux should panic on its init killed with the signal it died of")
+                .thenScreenshot(SETTLE, "debian-init-killed");
+    }
+
     /* Brings the machine down, sits at it, and pictures its page; FreeBSD's is held and let go on top. */
     private static void pictured(final ClientTestContext ctx, final int i) {
         final Case one = CASES.get(i);
@@ -112,7 +133,8 @@ public final class CrashPagesClientTests {
             case MEMORY -> CrashPages.Moment.memory("soundfoundryd", 412,
                     List.of(new CrashPages.Victim(4211, "paint", 512)));
             case HARDWARE -> CrashPages.Moment.hardware("Stratix Layer DDR3-8192");
-            case INIT_KILLED -> CrashPages.Moment.initKilled("kill 1", 15);
+            case INIT_KILLED -> CrashPages.Moment.initKilled(one.system().equals("freebsd") ? "root@freebsd:~ # kill 1"
+                    : "# kill 1", 15);
         };
     }
 

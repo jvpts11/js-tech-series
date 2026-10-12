@@ -83,8 +83,8 @@ class CrashPagesTest {
     @Test
     void of_linuxKillingInitPanicsWithTheSignalItDiedOf() {
         final List<String> lines = page(CrashStyle.CONSOLE, Platform.LINUX, CrashCause.INIT_KILLED,
-                CrashPages.Moment.initKilled("kill -9 1", 9)).lines();
-        assertEquals("root@box:~# kill -9 1", lines.get(0));
+                CrashPages.Moment.initKilled("player@box:~$ kill -9 1", 9)).lines();
+        assertEquals("player@box:~$ kill -9 1", lines.get(0), "the line as the console showed it");
         assertTrue(lines.stream().anyMatch(l -> l.endsWith("Attempted to kill init! exitcode=0x00000009")));
         assertTrue(lines.stream().anyMatch(l -> l.contains("PID: 1 Comm: systemd")));
     }
@@ -92,7 +92,7 @@ class CrashPagesTest {
     @Test
     void of_freeBsdGoesNowhereWithoutItsInitAndOffersToHoldItsReboot() {
         final CrashPage page = page(CrashStyle.CONSOLE, Platform.FREEBSD, CrashCause.INIT_KILLED,
-                CrashPages.Moment.initKilled("kill 1", 15));
+                CrashPages.Moment.initKilled("root@box:~ # kill 1", 15));
         assertTrue(page.holdsOnKey());
         assertTrue(page.lines().contains("init died (signal 15, exit 0)"));
         assertTrue(page.lines().contains("panic: Going nowhere without my init!"));

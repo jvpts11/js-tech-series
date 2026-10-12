@@ -148,12 +148,13 @@ final class MainframeServices {
 
     /**
      * The engine planning the network's work now: chosen, started, not being replaced, on a Mainframe that is running,
-     * and not ended by its kernel for want of memory, which leaves it down until the Mainframe starts over.
+     * and not ended by its kernel for want of memory or by a signal to its process, which leaves it down until the
+     * Mainframe starts over.
      */
     @Nullable
     INetworkEngine runningEngine() {
         if (activeEngine == null || !engineRunning || replacement != null || !mainframe.isRunning()
-                || mainframe.stoppedForMemory(activeEngine)) {
+                || mainframe.serviceEnded(activeEngine)) {
             return null;
         }
         return NetworkEngines.get(activeEngine);
@@ -303,7 +304,7 @@ final class MainframeServices {
     /** Active when installed and the Mainframe is powered; lets the job agent fire, as the Engine does. */
     boolean automationEngineActive() {
         return automationEngineInstalled && mainframe.isRunning()
-                && !mainframe.stoppedForMemory(Programs.AUTOMATION_ENGINE);
+                && !mainframe.serviceEnded(Programs.AUTOMATION_ENGINE);
     }
 
     boolean installAutomationEngine() {
@@ -330,7 +331,7 @@ final class MainframeServices {
 
     /** Whether the Mirror serves packages: installed and the Mainframe is running. */
     boolean mirrorActive() {
-        return mirrorInstalled && mainframe.isRunning() && !mainframe.stoppedForMemory(Programs.MIRROR);
+        return mirrorInstalled && mainframe.isRunning() && !mainframe.serviceEnded(Programs.MIRROR);
     }
 
     boolean installMirror() {

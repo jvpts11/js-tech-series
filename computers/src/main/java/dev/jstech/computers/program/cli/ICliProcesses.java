@@ -44,6 +44,22 @@ public interface ICliProcesses {
         return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with("sigma", ProcessWords.NOT_INSTALLED));
     }
 
+    /**
+     * What the system runs of its own, as a Unix process list shows it before the programs: its first process and the
+     * services it is running, with their numbers. Nothing for a system that lists only the programs.
+     */
+    default List<ICliComputer.SigmaProcess> systemProcesses() {
+        return List.of();
+    }
+
+    /**
+     * Sends {@code signal} to the process numbered {@code pid}, as {@code typed} asked: a program stops, a service
+     * stops until the machine starts over, and the first process, ended, takes the whole system down with it.
+     */
+    default ICliComputer.OpResult signal(final int pid, final int signal, final String typed) {
+        return stopSigma(pid);
+    }
+
     /** What a computer with no Σ# runtime answers. */
     @TextHolder
     final class ProcessWords {

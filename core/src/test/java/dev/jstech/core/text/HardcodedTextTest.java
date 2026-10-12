@@ -192,7 +192,7 @@ class HardcodedTextTest {
             data(COMPUTERS + "program/cli/ICliFiles.java", 1, COMMANDS),
             data(COMPUTERS + "program/cli/ICliProcesses.java", 2, COMMANDS),
             data(COMPUTERS + "program/cli/ICliRemote.java", 2, COMMANDS),
-            data(COMPUTERS + "program/cli/MachineFacts.java", 3, COMMANDS),
+            data(COMPUTERS + "program/cli/MachineFacts.java", 4, COMMANDS),
             data(COMPUTERS + "program/cli/interac/InteracCommand.java", 2, COMMANDS),
             data(COMPUTERS + "program/cli/ScreenfetchLogos.java", 16, "logos drawn in characters"),
             data(COMPUTERS + "sigma/LanguageLevel.java", 1, PRODUCTS),

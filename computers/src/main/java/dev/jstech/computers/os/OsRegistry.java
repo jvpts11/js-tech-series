@@ -12,6 +12,7 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -288,5 +289,37 @@ public final class OsRegistry {
     /** Returns an unmodifiable view of all registered programs. */
     public static Collection<ProgramSpec> programs() {
         return Collections.unmodifiableCollection(PROGRAMS.values());
+    }
+
+    /**
+     * Where that program stands among the programs that run in the background, in the order they were registered, or
+     * -1 for one that does not run in the background: what a Unix machine numbers the service's process by.
+     */
+    public static int serviceIndex(final ResourceLocation id) {
+        int index = 0;
+        for (final ProgramSpec spec : PROGRAMS.values()) {
+            if (spec.kind().runsInBackground()) {
+                if (spec.id().equals(id)) {
+                    return index;
+                }
+                index++;
+            }
+        }
+        return -1;
+    }
+
+    /** The program that runs in the background at that place in the same order, or null. */
+    @Nullable
+    public static ProgramSpec serviceAt(final int index) {
+        int at = 0;
+        for (final ProgramSpec spec : PROGRAMS.values()) {
+            if (spec.kind().runsInBackground()) {
+                if (at == index) {
+                    return spec;
+                }
+                at++;
+            }
+        }
+        return null;
     }
 }

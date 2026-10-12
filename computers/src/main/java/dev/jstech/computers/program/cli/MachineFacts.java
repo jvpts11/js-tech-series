@@ -12,6 +12,7 @@ import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -60,7 +61,12 @@ final class MachineFacts {
 
     /** The processes a machine is running, with what each is holding. */
     static void printProcesses(final CliContext ctx, final ShellFamily family) {
-        final List<ICliComputer.SigmaProcess> running = ctx.computer().sigmaProcesses();
+        // A Unix lists what the system runs of its own first, its init and its services, then the programs.
+        final List<ICliComputer.SigmaProcess> running = new ArrayList<>();
+        if (family == ShellFamily.POSIX) {
+            running.addAll(ctx.computer().systemProcesses());
+        }
+        running.addAll(ctx.computer().sigmaProcesses());
         if (running.isEmpty()) {
             ctx.out().dim(switch (family) {
                 case DOS -> NO_TASKS;
@@ -105,6 +111,22 @@ final class MachineFacts {
         }
         final ICliComputer.OpResult result = ctx.computer().stopSigma(id);
         ctx.out().styled(result.message(), result.ok() ? CliStyle.OK : CliStyle.ERROR);
+    }
+
+    /**
+     * Sends {@code signal} to the process of that number from a Unix prompt, as {@code typed} asked: the system's own
+     * processes answer to it as well as the programs.
+     */
+    static void signalProcess(final CliContext ctx, final String number, final int signal, final String typed) {
+        final int id = whole(number);
+        if (id <= 0) {
+            ctx.out().error(CliTexts.SAID_BY.with("kill", BAD_PID));
+            return;
+        }
+        final ICliComputer.OpResult result = ctx.computer().signal(id, signal, typed);
+        if (!result.message().english().isEmpty()) {
+            ctx.out().styled(result.message(), result.ok() ? CliStyle.OK : CliStyle.ERROR);
+        }
     }
 
     /** Where a command lives, which for a machine like this is which package put it there. */

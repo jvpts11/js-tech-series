@@ -79,7 +79,10 @@ public final class CrashPages {
             return new Moment("", 0, List.of(), "", 0, part);
         }
 
-        /** {@code typed} sent {@code signal} to the first process, which died of it. */
+        /**
+         * {@code typed} sent {@code signal} to the first process, which died of it. The line is the whole of it as
+         * the console shows it, the prompt it was typed at included, which the page keeps at its top.
+         */
         public static Moment initKilled(final String typed, final int signal) {
             return new Moment("", 0, List.of(), typed, signal, "");
         }
@@ -207,7 +210,7 @@ public final class CrashPages {
                 trace = List.of();
             }
             case INIT_KILLED -> {
-                out.add("root@" + facts.hostName() + ":~# " + facts.typed());
+                out.add(facts.typed());
                 out.add("");
                 reason = "Attempted to kill init! exitcode=0x" + String.format(Locale.ROOT, "%08x", facts.signal());
                 out.add(clock.stamp("Kernel panic - not syncing: " + reason));
@@ -259,7 +262,7 @@ public final class CrashPages {
                 frames = List.of("0xffffffff810a4c71 at mca_intr+0x81", "0xffffffff8109c2f3 at trap+0x93");
             }
             case INIT_KILLED -> {
-                out.add("root@" + facts.hostName() + ":~ # " + facts.typed());
+                out.add(facts.typed());
                 out.add("init died (signal " + facts.signal() + ", exit 0)");
                 out.add("panic: Going nowhere without my init!");
                 frames = List.of("0xffffffff80b04e3a at exit1+0x5ba", "0xffffffff80b0b2c1 at sigexit+0x6a1");
@@ -298,7 +301,7 @@ public final class CrashPages {
                 trap = "Trap Type 00000002";
             }
             case INIT_KILLED -> {
-                out.add("# " + facts.typed());
+                out.add(facts.typed());
                 out.add("");
                 panic = "PANIC: init died";
                 trap = "";

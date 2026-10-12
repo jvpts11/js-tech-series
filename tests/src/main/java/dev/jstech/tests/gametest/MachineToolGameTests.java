@@ -90,8 +90,10 @@ public final class MachineToolGameTests {
                     helper.assertTrue(computer.programs().byId(id) == null,
                             "kill stopped it; the machine still lists " + computer.programs().view().size());
 
+                    // The system's own processes go on: only the program is gone from the list.
                     final List<String> none = shell(helper, computer, "ps");
-                    helper.assertTrue(says(none, "no processes"), "and nothing is running after; got " + none);
+                    helper.assertTrue(!says(none, "hold.sgs") && says(none, "systemd"),
+                            "and only the system's own processes are left; got " + none);
                 })
                 .thenSucceed();
     }

@@ -94,11 +94,16 @@ final class MachineToolCommands {
     static final class Kill implements ICliCommand {
 
         private static final TextKey SUMMARY = TextKey.of("jsc.cli.tool.kill.summary", "stop a running process");
-        private static final TextKey USAGE = TextKey.of("jsc.cli.tool.kill.usage", "<pid>");
+        private static final TextKey USAGE = TextKey.of("jsc.cli.tool.kill.usage", "[-signal] <pid>");
         private static final TextKey ABOUT = TextKey.of("jsc.cli.tool.kill.about", "Stops the process of that"
                 + " number. What it was doing stops where it stands, and what it had not finished stays not done.");
+        private static final TextKey ABOUT_SIGNALS = TextKey.of("jsc.cli.tool.kill.about_signals", "A signal before"
+                + " the number, as -9, -KILL or -s KILL, says how; without one it is TERM. kill -l lists them. Process"
+                + " 1 is the system's own first process: ended, it takes the whole system down with it.");
         private static final TextKey JOB_DONE = TextKey.of("jsc.cli.tool.kill.job_done", "[%s] done");
         private static final TextKey NO_SUCH_JOB = TextKey.of("jsc.cli.tool.kill.no_such_job", "no such job: %s");
+        private static final TextKey BAD_SIGNAL =
+                TextKey.of("jsc.cli.tool.kill.bad_signal", "%s: invalid signal specification");
 
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS);
@@ -121,32 +126,53 @@ final class MachineToolCommands {
         }
 
         @Override public List<Text> description() {
-            return List.of(ABOUT.text());
+            return List.of(ABOUT.text(), ABOUT_SIGNALS.text());
         }
 
         @Override public List<String> seeAlso() {
-            return List.of("ps");
+            return List.of("ps", "dmesg");
         }
 
         @Override public void run(final CliContext ctx) {
-            if (!ctx.hasArgs()) {
+            if (ctx.hasArgs() && ctx.arg(0).equals("-l")) {
+                ctx.out().line(Signals.listing());
+                return;
+            }
+            // The signal comes first when there is one: -9, -KILL, -SIGKILL, or -s and its name.
+            int signal = Signals.TERM;
+            int at = 0;
+            if (ctx.hasArgs() && ctx.arg(0).equals("-s") && ctx.argCount() > 1) {
+                signal = Signals.parse(ctx.arg(1));
+                at = 2;
+            } else if (ctx.hasArgs() && ctx.arg(0).startsWith("-")) {
+                signal = Signals.parse(ctx.arg(0));
+                at = 1;
+            }
+            if (signal < 0) {
+                ctx.out().error(CliTexts.SAID_BY.with(name(), BAD_SIGNAL.with(ctx.arg(at - 1))));
+                return;
+            }
+            if (at >= ctx.argCount()) {
                 ctx.out().error(CliTexts.USAGE.with(name(), usage()));
                 return;
             }
-            /*
-             * A number after a per-cent mark is a job of this machine's own list, not a process: that is what
-             * the mark has always meant at a shell, and it is how a background line is stopped.
-             */
-            if (ctx.arg(0).startsWith("%")) {
-                final int id = MachineFacts.whole(ctx.arg(0));
-                if (id > 0 && ctx.computer().stopJob(id)) {
-                    ctx.out().ok(JOB_DONE.with(id));
+            final String typed = name() + " " + String.join(" ", ctx.args());
+            for (int i = at; i < ctx.argCount(); i++) {
+                /*
+                 * A number after a per-cent mark is a job of this machine's own list, not a process: that is what
+                 * the mark has always meant at a shell, and it is how a background line is stopped.
+                 */
+                if (ctx.arg(i).startsWith("%")) {
+                    final int id = MachineFacts.whole(ctx.arg(i));
+                    if (id > 0 && ctx.computer().stopJob(id)) {
+                        ctx.out().ok(JOB_DONE.with(id));
+                    } else {
+                        ctx.out().error(NO_SUCH_JOB.with(ctx.arg(i)));
+                    }
                 } else {
-                    ctx.out().error(NO_SUCH_JOB.with(ctx.arg(0)));
+                    MachineFacts.signalProcess(ctx, ctx.arg(i), signal, typed);
                 }
-                return;
             }
-            MachineFacts.stopProcess(ctx, ctx.arg(0), ShellFamily.POSIX);
         }
     }
 

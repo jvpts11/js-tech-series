@@ -249,7 +249,8 @@ public final class CrashGameTests {
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
                 .thenExecute(() -> {
-                    helper.assertTrue(pc.crash(CrashCause.INIT_KILLED, CrashPages.Moment.initKilled("kill 1", 15)),
+                    helper.assertTrue(pc.crash(CrashCause.INIT_KILLED,
+                                    CrashPages.Moment.initKilled("root@freebsd:~ # kill 1", 15)),
                             "killing its first process brings it down");
                     final CrashPage page = pc.crashPage();
                     helper.assertTrue(page != null && page.holdsOnKey()

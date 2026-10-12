@@ -41,18 +41,32 @@ public final class ProgramTable<R extends IProgramRuntime> {
     /** Counts every change, so a walk that finds the table changed under it stops instead of going wrong. */
     private int changes;
     private final Collection<ProgramEntry<R>> running = new Running();
-    private int next = 1;
+    /** The lowest number a program is ever given; what is below it belongs to something else. */
+    private final int first;
+    private int next;
+
+    /** A table numbering its programs from one. */
+    public ProgramTable() {
+        this(1);
+    }
+
+    /** A table numbering its programs from {@code first}, the numbers below it being another's. */
+    public ProgramTable(final int first) {
+        this.first = Math.max(1, first);
+        this.next = this.first;
+    }
 
     /**
-     * Takes the number the next program is listed under. Numbers count up, wrap past the largest back to one, and pass
-     * over any number a program still running holds, so no two programs share one and none is ever below one.
+     * Takes the number the next program is listed under. Numbers count up, wrap past the largest back to the first, and
+     * pass over any number a program still running holds, so no two programs share one and none is ever below the
+     * first.
      */
     public int takeId() {
         int id = this.next;
         while (this.indexOf(id) >= 0) {
-            id = id == Integer.MAX_VALUE ? 1 : id + 1;
+            id = id == Integer.MAX_VALUE ? this.first : id + 1;
         }
-        this.next = id == Integer.MAX_VALUE ? 1 : id + 1;
+        this.next = id == Integer.MAX_VALUE ? this.first : id + 1;
         return id;
     }
 
@@ -160,13 +174,16 @@ public final class ProgramTable<R extends IProgramRuntime> {
         return this.next;
     }
 
-    /** Empties the table and numbers on from {@code next}, for a machine read back out of a save. */
+    /**
+     * Empties the table and numbers on from {@code next}, for a machine read back out of a save; a save from before the
+     * numbers began where they do now numbers on from the first.
+     */
     public void restart(final int next) {
         Arrays.fill(this.order, 0, this.size, null);
         Arrays.fill(this.sorted, 0, this.size, null);
         this.size = 0;
         this.changes++;
-        this.next = Math.max(1, next);
+        this.next = Math.max(this.first, next);
     }
 
     /** Where that number sits among the sorted numbers, or where it would go, as {@link Arrays#binarySearch} says. */

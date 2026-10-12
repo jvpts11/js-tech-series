@@ -963,15 +963,21 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return oom.logged();
     }
 
-    /** A service the kernel ended for its memory is down until the machine starts over. */
+    /** A service ended in this run, for its memory or by a signal, is down until the machine starts over. */
     @Override
     public boolean serviceRunning(final ProgramSpec service) {
-        return !stoppedForMemory(service.id()) && IOsHost.super.serviceRunning(service);
+        return !serviceEnded(service.id()) && IOsHost.super.serviceRunning(service);
     }
 
-    /** Whether the kernel ended that service for its memory in this run. */
-    public boolean stoppedForMemory(final ResourceLocation service) {
+    /** Whether that service was ended in this run, by the kernel for its memory or by a signal sent to its process. */
+    public boolean serviceEnded(final ResourceLocation service) {
         return oom.stopped(service);
+    }
+
+    /** Ends that service for the rest of this run, as a signal sent to its process does. */
+    public void endService(final ResourceLocation service) {
+        oom.stop(service);
+        setChanged();
     }
 
     @Override

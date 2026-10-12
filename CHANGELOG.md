@@ -1570,6 +1570,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   stood its time; one left with no computer goes dark. The processor, the board or the power supply taken out switch
   the machine off at once, with no page, and a disk the system does not run from or a drive in a hot-swap bay is only
   a disk gone.
+- `ps` on Linux, FreeBSD and UNIX lists the system's own processes before the programs: its first process at number
+  1, systemd on the distributions that start it and init on Gentoo, FreeBSD and UNIX, then each service it runs, at a
+  number that service keeps. The programs a player starts are numbered from 1000, after them, on every system. `kill`
+  takes a signal before the number (`-9`, `-KILL`, `-SIGKILL` or `-s KILL`, TERM when none is given) and `kill -l`
+  lists them. A signal to a service's process stops the service until the machine starts over, and one to process 1
+  ends the system's init: the kernel panics in its family's own words, `Attempted to kill init!` with the signal's
+  exit code on Linux, `Going nowhere without my init!` on FreeBSD, `init died` on UNIX, with the line that did it at
+  the top of the page, at the prompt it was typed at.
 
 ### Changed
 - Every edition of Frames goes down when a program it has no memory left for is opened, a window, a program started

@@ -12,6 +12,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.RamLedger;
+import dev.jstech.computers.os.SystemProcesses;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPages;
@@ -40,11 +41,7 @@ final class MachineOom {
 
     private final Set<ResourceLocation> stopped = new LinkedHashSet<>();
     private final List<String> logged = new ArrayList<>();
-    /** The number the next thing ended is given when it has none of its own (a window, a service). */
-    private int nextPid = FIRST_PID;
 
-    /** Where the numbers of the things a session started begin, past the system's own processes. */
-    private static final int FIRST_PID = 1200;
     /** The most lines kept; older ones fall off, as from a kernel's ring of messages. */
     private static final int MOST_LINES = 64;
     /** A kernel keeps fifteen characters of a process's name. */
@@ -52,11 +49,15 @@ final class MachineOom {
     private static final String KEY = "OutOfMemory";
     private static final String STOPPED = "Stopped";
     private static final String LOGGED = "Logged";
-    private static final String NEXT_PID = "NextPid";
 
-    /** Whether the killer ended that service in this run. */
+    /** Whether that service was ended in this run, by the killer or by a signal sent to its process. */
     boolean stopped(final ResourceLocation service) {
         return stopped.contains(service);
+    }
+
+    /** Ends that service for the rest of the run, as a signal sent to its process does. */
+    void stop(final ResourceLocation service) {
+        stopped.add(service);
     }
 
     /** What the kernel logged in this run about the memory, oldest first. */
@@ -68,7 +69,6 @@ final class MachineOom {
     void reset() {
         stopped.clear();
         logged.clear();
-        nextPid = FIRST_PID;
     }
 
     /**
@@ -92,8 +92,7 @@ final class MachineOom {
         final List<OpenWindow> open = new ArrayList<>(machine.openWindows());
         boolean front = false;
         for (final RamLedger.Entry entry : plan.victims()) {
-            final int pid = entry.kind() == RamLedger.Kind.PROCESS ? entry.id() : nextPid++;
-            final CrashPages.Victim victim = new CrashPages.Victim(pid, comm(entry), entry.mb());
+            final CrashPages.Victim victim = new CrashPages.Victim(pid(machine, entry), comm(entry), entry.mb());
             victims.add(victim);
             lines.add(CrashPages.killLine(system.platform(), upFor, victim));
             switch (entry.kind()) {
@@ -126,7 +125,7 @@ final class MachineOom {
         log(lines);
         machine.setChanged();
         if (!plan.fits()) {
-            machine.crash(CrashCause.MEMORY, CrashPages.Moment.memory(asking, nextPid, victims));
+            machine.crash(CrashCause.MEMORY, CrashPages.Moment.memory(asking, machine.programs().takePid(), victims));
             return false;
         }
         machine.memoryFreed(level, lines, windows, front);
@@ -146,7 +145,6 @@ final class MachineOom {
             lines.add(StringTag.valueOf(line));
         }
         own.put(LOGGED, lines);
-        own.putInt(NEXT_PID, nextPid);
         tag.put(KEY, own);
     }
 
@@ -162,9 +160,6 @@ final class MachineOom {
         for (final Tag one : own.getList(LOGGED, Tag.TAG_STRING)) {
             logged.add(one.getAsString());
         }
-        if (own.contains(NEXT_PID)) {
-            nextPid = Math.max(FIRST_PID, own.getInt(NEXT_PID));
-        }
     }
 
     private void log(final List<String> lines) {
@@ -172,6 +167,22 @@ final class MachineOom {
         while (logged.size() > MOST_LINES) {
             logged.removeFirst();
         }
+    }
+
+    /*
+     * The number of the process an entry stands for: a program's own, a service's as a process list shows it, and a
+     * window's taken from the programs' count when it goes, so no number a kernel prints names two things.
+     */
+    private static int pid(final AbstractComputerBlockEntity machine, final RamLedger.Entry entry) {
+        return switch (entry.kind()) {
+            case PROCESS -> entry.id();
+            case SERVICE -> {
+                final ResourceLocation id = ResourceLocation.tryParse(entry.key());
+                final int index = id == null ? -1 : OsRegistry.serviceIndex(id);
+                yield index < 0 ? machine.programs().takePid() : SystemProcesses.servicePid(index);
+            }
+            default -> machine.programs().takePid();
+        };
     }
 
     /*

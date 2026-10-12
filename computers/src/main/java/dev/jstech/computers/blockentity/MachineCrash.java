@@ -8,10 +8,10 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.SystemProcesses;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.crash.CrashPages;
-import java.util.Locale;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,10 +87,10 @@ final class MachineCrash {
         final String cpuName = cpu.isEmpty() ? "" : cpu.getHoverName().getString();
         // The processor's maker is the first word of its name, which is how this world names every one of them.
         final String vendor = cpuName.isEmpty() ? "Velocion" : cpuName.split(" ", 2)[0];
-        // Gentoo comes up under OpenRC, whose first process is plain init; the other distributions start systemd.
-        final boolean openRc = system != null && system.id().getPath().toLowerCase(Locale.ROOT).contains("gentoo");
+        final String init = system == null ? "init"
+                : SystemProcesses.initName(system.platform(), system.packageManager());
         return CrashPages.Facts.of(Installers.hostName(machine), system == null ? "" : system.displayName(),
-                board.isEmpty() ? "" : board.getHoverName().getString(), vendor, openRc ? "init" : "systemd", upFor,
+                board.isEmpty() ? "" : board.getHoverName().getString(), vendor, init, upFor,
                 machine.ramTotalMb() * 1_048_576L, moment);
     }
 }

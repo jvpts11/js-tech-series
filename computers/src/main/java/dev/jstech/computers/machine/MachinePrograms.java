@@ -77,6 +77,13 @@ public final class MachinePrograms {
     public static final int MAX_HEAP_MB = 64;
 
     /**
+     * The first number a program is given. The numbers below are the system's own: its first process and its
+     * services, as a process list shows them, so a program a player starts is numbered after everything the system
+     * started for itself and one number never names two things.
+     */
+    public static final int FIRST_PID = 1000;
+
+    /**
      * What every farewell on one machine may spend between them in one tick: the programs stopped in a tick share
      * it, and a program that has not finished its farewell by the end of its share is stopped anyway.
      */
@@ -108,7 +115,7 @@ public final class MachinePrograms {
         }
     }
 
-    private final ProgramTable<IMachineRuntime> table = new ProgramTable<>();
+    private final ProgramTable<IMachineRuntime> table = new ProgramTable<>(FIRST_PID);
     private final TerminalFocus focus = new TerminalFocus(this.table, this::stop);
     private final ProgramTicker ticker = new ProgramTicker(this.table, this.focus, this::ended);
     /** How the machine tells a program on another machine that one it started here has ended. */
@@ -155,6 +162,14 @@ public final class MachinePrograms {
     /** The program of that number, or null. */
     public ProgramEntry<IMachineRuntime> byId(final int id) {
         return this.table.byId(id);
+    }
+
+    /**
+     * Takes a number for something running here that is not one of these programs (a window a desktop opened), from
+     * the same count, so a number a kernel prints for it never names a program too.
+     */
+    public int takePid() {
+        return this.table.takeId();
     }
 
     /** Whether anything is running at all, which is what lets a machine skip the work entirely. */
