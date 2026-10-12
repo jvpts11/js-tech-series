@@ -33,6 +33,9 @@ public class MotherboardItem extends SpecItem<MotherboardSpec> {
     private static final TextKey SLOTS = TextKey.of("jsc.item.motherboard.slots", "%sx %s  |  %s RAM (%s)  |  %sx %s");
     private static final TextKey OWN_ERA =
             TextKey.of("jsc.item.motherboard.own_era", "Seats parts of its own era only");
+    /* A board of two buses: the older bus its slots also take. */
+    private static final TextKey OLDER_BUS =
+            TextKey.of("jsc.item.motherboard.older_bus", "Its slots take %s cards too");
 
     public MotherboardItem(final Properties properties, final MotherboardSpec spec) {
         super(properties, spec);
@@ -58,6 +61,9 @@ public class MotherboardItem extends SpecItem<MotherboardSpec> {
          */
         tooltip.add(GameText.component(SLOTS.with(spec.cpuSlots(), spec.socket().display(), spec.ramSlots(), ramTypes,
                 spec.pcieSlots(), spec.pcieGeneration().label())).withStyle(ChatFormatting.GRAY));
+        if (spec.olderBus() != null) {
+            tooltip.add(GameText.component(OLDER_BUS.with(spec.olderBus().label())).withStyle(ChatFormatting.GRAY));
+        }
         if (spec.hasOnBoardAudio()) {
             tooltip.add(GameText.component(SoundHardwareTexts.ON_BOARD_AUDIO).withStyle(ChatFormatting.GRAY));
         }

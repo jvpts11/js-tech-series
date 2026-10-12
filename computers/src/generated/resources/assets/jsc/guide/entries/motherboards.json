@@ -160,6 +160,10 @@
       "text": "jsc.guide.motherboards.text6"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.motherboards.text7"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },

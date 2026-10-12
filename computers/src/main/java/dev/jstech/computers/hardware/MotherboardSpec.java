@@ -11,11 +11,18 @@ import dev.jstech.core.tier.HardwareEra;
 
 import java.util.Objects;
 import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Immutable specification of a motherboard, the chassis that bounds an assembly: which CPU socket and how many of
- * them, how many RAM slots and which generations they accept, how many PCIe slots and their bus generation, and how
- * many disks. Its device ports come with its era, as {@link MachinePorts} counts them.
+ * them, how many RAM slots and which generations they accept, how many expansion slots and their bus generation, and
+ * how many disks. Its device ports come with its era, as {@link MachinePorts} counts them.
+ *
+ * <p>Some boards of a time when one bus was taking over from another carry slots of both, as a server board of the
+ * mid-1990s had ISA slots beside its PCI ones: {@code olderBus} is the bus of those, or null on a board of one bus. A
+ * card of either bus goes in one of its {@code pcieSlots}.
+ *
+ * @param olderBus the older bus the board also has slots of, or null when it has only {@code pcieGeneration}'s
  */
 public record MotherboardSpec(FormFactor formFactor,
                               HardwareEra era,
@@ -25,7 +32,15 @@ public record MotherboardSpec(FormFactor formFactor,
                               int ramSlots,
                               PcieGeneration pcieGeneration,
                               int pcieSlots,
-                              int diskSlots) {
+                              int diskSlots,
+                              @Nullable PcieGeneration olderBus) {
+
+    /** A board with slots of one bus. */
+    public MotherboardSpec(final FormFactor formFactor, final HardwareEra era, final CpuSocketId socket,
+                           final int cpuSlots, final Set<RamGeneration> acceptedRam, final int ramSlots,
+                           final PcieGeneration pcieGeneration, final int pcieSlots, final int diskSlots) {
+        this(formFactor, era, socket, cpuSlots, acceptedRam, ramSlots, pcieGeneration, pcieSlots, diskSlots, null);
+    }
 
     public MotherboardSpec {
         Objects.requireNonNull(formFactor, "formFactor must not be null");
@@ -56,5 +71,15 @@ public record MotherboardSpec(FormFactor formFactor,
      */
     public boolean hasOnBoardAudio() {
         return era.isAtLeast(HardwareEra.TRANSITION);
+    }
+
+    /** Whether {@code card} goes in one of the board's slots: of the board's own bus, or of the older one beside it. */
+    public boolean takes(final IExpansionCardSpec card) {
+        return card.fits(pcieGeneration) || olderBus != null && card.fits(olderBus);
+    }
+
+    /** The slot a card on {@code bus} sits in: one of the older bus when it is of that one, else of the board's own. */
+    public PcieGeneration slotFor(final PcieGeneration bus) {
+        return olderBus != null && bus.compatibleWith(olderBus) ? olderBus : pcieGeneration;
     }
 }

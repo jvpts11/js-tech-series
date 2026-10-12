@@ -74,7 +74,7 @@ the rack, and room for processors and expansion cards:
 | Server (Standard) | 1 | 4 | 2 | any |
 | Advanced Server | 1 | 5 | 2 | any |
 | Vintage Storage Server | 2 | 5 | 1 | 1 |
-| Legacy Storage Server | 2 | 7 | 1 | 1 |
+| Legacy Storage Server | 2 | 7 | 1 | 2 |
 | Transition Storage Server | 2 | 8 | 1 | 1 |
 | Storage Server (Standard) | 2 | 10 | 1 | 1 |
 | Advanced Storage Server | 2 | 10 | 1 | 1 |

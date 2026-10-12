@@ -213,12 +213,14 @@ public final class HardwareItems {
             .named("MF MTX-V Motherboard").register();
     /*
      * Dual-socket server board for vintage-era rack hardware, two Pentium Pros as on a 440FX board; more RAM slots
-     * and card slots than the desktop boards to match server-class density expectations of the era.
+     * and card slots than the desktop boards to match server-class density expectations of the era. Its slots are PCI
+     * and, as on the boards of the time, ISA beside them, which the era's own cards (its RAID controller among them)
+     * are made for.
      */
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_VINTAGE = board("motherboard_eeb_vintage",
             new MotherboardSpec(FormFactor.EEB, HardwareEra.VINTAGE,
                     CpuSocketId.SOCKET_8, 2, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16,
-                    PcieGeneration.PCI, 10, 8))
+                    PcieGeneration.PCI, 10, 8, PcieGeneration.ISA))
             .named("MF EEB-V Server Board").register();
 
     /*
@@ -481,15 +483,20 @@ public final class HardwareItems {
             board("motherboard_atx_legacy_939", new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
                     CpuSocketId.SOCKET_939, 1, Set.of(RamGeneration.DDR), 4, PcieGeneration.PCIE_1_0, 4, 4))
                     .named("MF ATX Legacy Motherboard (Socket 939)").register();
-    // The server boards: two Servos on Socket 604, two Opteras on Socket 940, four on the Mainframe's, all on DDR.
+    /*
+     * The server boards: two Servos on Socket 604, two Opteras on Socket 940, four on the Mainframe's, all on DDR. The
+     * two-socket ones have PCI slots beside their PCI Express, as a server board of the mid-2000s kept for its older
+     * cards.
+     */
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_LEGACY_604 =
             board("motherboard_eatx_legacy_604", new MotherboardSpec(FormFactor.EATX, HardwareEra.LEGACY,
-                    CpuSocketId.SOCKET_604, 2, Set.of(RamGeneration.DDR), 8, PcieGeneration.PCIE_1_0, 6, 6))
+                    CpuSocketId.SOCKET_604, 2, Set.of(RamGeneration.DDR), 8, PcieGeneration.PCIE_1_0, 6, 6,
+                    PcieGeneration.PCI))
                     .named("MF EATX Legacy Motherboard (2x Socket 604)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_LEGACY_S940 =
             board("motherboard_eatx_legacy_s940", new MotherboardSpec(FormFactor.EATX, HardwareEra.LEGACY,
                     CpuSocketId.SOCKET_940, 2, Set.of(RamGeneration.DDR), 8,
-                    PcieGeneration.PCIE_1_0, 6, 6))
+                    PcieGeneration.PCIE_1_0, 6, 6, PcieGeneration.PCI))
                     .named("MF EATX Legacy Motherboard (2x Socket 940)").register();
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_LEGACY = board("motherboard_mtx_legacy",
             new MotherboardSpec(FormFactor.MTX, HardwareEra.LEGACY,

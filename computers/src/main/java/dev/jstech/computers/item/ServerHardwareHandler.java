@@ -158,7 +158,7 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
                 return chassis != null && chassis.isSupercomputerNode() && !holdsCoprocessorOutside(slot);
             }
             return isServerCard(stack.getItem()) && stack.getItem() instanceof IExpansionCardItem card
-                    && (board == null || card.cardSpec().fits(board.pcieGeneration()));
+                    && (board == null || board.takes(card.cardSpec()));
         }
         return false;
     }

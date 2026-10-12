@@ -124,7 +124,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
     public int effectiveVramMb() {
         double sum = 0;
         for (final GpuSpec gpu : gpus()) {
-            sum += gpu.vramMb() * gpu.bus().bandwidthFactorIn(motherboard.pcieGeneration());
+            sum += gpu.vramMb() * gpu.bus().bandwidthFactorIn(motherboard.slotFor(gpu.bus()));
         }
         return (int) Math.round(sum);
     }
@@ -132,7 +132,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
     /** Whether any card is seated in a slot older than itself, and so held below its rated speed. */
     public boolean hasBandwidthLimitedCard() {
         for (final IExpansionCardSpec card : pcieCards) {
-            if (card.bus().bandwidthFactorIn(motherboard.pcieGeneration()) < 1.0) {
+            if (card.bus().bandwidthFactorIn(motherboard.slotFor(card.bus())) < 1.0) {
                 return true;
             }
         }
@@ -285,7 +285,7 @@ public record ComputerBuild(MotherboardSpec motherboard,
             problems.add(TOO_MANY_CARDS.with(pcieCards.size(), motherboard.pcieSlots()));
         }
         for (final IExpansionCardSpec card : pcieCards) {
-            if (!card.fits(motherboard.pcieGeneration())) {
+            if (!motherboard.takes(card)) {
                 problems.add(WRONG_BUS.with(card.bus().busFamily().label(),
                         motherboard.pcieGeneration().busFamily().label()));
             }

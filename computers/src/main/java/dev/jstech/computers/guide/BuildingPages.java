@@ -429,6 +429,9 @@ final class BuildingPages {
                 .paragraph("The expansion slots run on a bus. The buses, from the oldest to the newest, are ISA, PCI,"
                         + " AGP 2x, AGP 4x, AGP 8x, and PCI-e 1.0, 2.0, 3.0, 4.0, 5.0 and 6.0. A card needs a bus of"
                         + " its board's family ([the bus family](jsc:build_refusals)).")
+                .paragraph("A few server boards also take the cards of an older bus: the Vintage server board takes ISA"
+                        + " cards beside its PCI ones, and the Legacy server boards take PCI cards beside their PCI-e"
+                        + " ones. The board's tooltip names the older bus.")
                 .ifSomethingGoesWrong("It does not go into the case.",
                         "The case takes only some form factors, and only boards of its own era. Check the table above.",
                         "A part sits in the window but does nothing.",

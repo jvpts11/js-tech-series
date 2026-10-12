@@ -29,7 +29,7 @@ public final class QueueSpeeds {
         final long[] speeds = new long[1 + gpus.size()];
         speeds[0] = cpu;
         for (int i = 0; i < gpus.size(); i++) {
-            speeds[i + 1] = cardQueue(cpu, gpus.get(i), build.motherboard().pcieGeneration());
+            speeds[i + 1] = cardQueue(cpu, gpus.get(i), build.motherboard().slotFor(gpus.get(i).bus()));
         }
         return speeds;
     }

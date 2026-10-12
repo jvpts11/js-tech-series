@@ -212,7 +212,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
         }
         double factor = 1.0;
         if (getHardware().getStackInSlot(MOTHERBOARD_SLOT).getItem() instanceof MotherboardItem board) {
-            final PcieGeneration slot = board.spec().pcieGeneration();
+            final PcieGeneration slot = board.spec().slotFor(card.bus());
             factor = card.bus().bandwidthFactorIn(slot);
         }
         return Math.max(1, (int) Math.floor(card.parallelNodes() * factor));

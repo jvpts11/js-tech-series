@@ -674,7 +674,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Advanced, 2U each and drawn in their era's faceplate. A storage server has 5 drive bays in the Vintage, 7 in the
   Legacy, 8 in the Transition and 10 in the Advanced; a compute server 1, 2, 2 and 3, with up to 2, 2, 4 and 4
   processors and 1, 2, 2 and any number of cards. Each takes its era's server boards and seats in a rack of its era
-  or a later one.
+  or a later one. The Legacy storage server has two card slots, one for its RAID controller and one for a graphics
+  card, since its board has no video of its own and a monitor needs one to show the firmware.
+- The Vintage server board has ISA slots beside its PCI ones, and the Legacy server boards PCI slots beside their PCI
+  Express, as the boards of their time did, so the era's storage cards, the ISA and the PCI Vaultis, seat in the
+  servers they are for. A card in the older slot runs at that slot's own speed.
 - A KVM Switch, a Rack UPS and a Cooling Unit for every era, from the Vintage to the Advanced, each in its era's
   faceplate; the ones there were are the Standard's. A rack seats the units of its own era and of the earlier ones,
   as it does servers, and says so when a unit is too new for it. A Cooling Unit adds its era's watts to the rack's

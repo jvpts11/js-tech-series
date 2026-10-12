@@ -14,12 +14,15 @@ import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.PartRefusals;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RackThermals;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.EraParts;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -279,6 +282,33 @@ public final class RackEraGameTests {
                     assertBays(helper, rack, compute, List.of(1, 2, 2, 3));
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * The Vintage and Legacy server boards carry the older bus beside their own, as the boards of their time did: the
+     * era's storage cards (ISA on the Vintage, PCI on the Legacy) seat in them beside a card of the board's own bus.
+     */
+    @GameTest(template = ARENA)
+    public static void serverBoardsOfTwoBuses_seatTheirErasStorageCards(final GameTestHelper helper) {
+        final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack(ComputingModule.VINTAGE_STORAGE_SERVER.get()));
+        final ServerHardwareHandler vintage = new ServerHardwareHandler(player, InteractionHand.MAIN_HAND);
+        helper.assertTrue(fits(vintage, ServerHardwareHandler.MOBO, HardwareItems.MOTHERBOARD_EEB_VINTAGE.get()),
+                "the Vintage storage server takes the era's server board");
+        helper.assertTrue(fits(vintage, ServerHardwareHandler.GPU_START, ComputingModule.VAULTIS_ARRAY_ISA.get()),
+                "and its ISA RAID controller in a slot of the older bus");
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack(ComputingModule.LEGACY_STORAGE_SERVER.get()));
+        final ServerHardwareHandler legacy = new ServerHardwareHandler(player, InteractionHand.MAIN_HAND);
+        helper.assertTrue(fits(legacy, ServerHardwareHandler.MOBO, HardwareItems.MOTHERBOARD_EATX_LEGACY_604.get()),
+                "the Legacy storage server takes the era's server board");
+        helper.assertTrue(fits(legacy, ServerHardwareHandler.GPU_START, ComputingModule.VAULTIS_ARRAY_PCI.get()),
+                "its PCI RAID controller in a slot of the older bus");
+        helper.assertTrue(fits(legacy, ServerHardwareHandler.GPU_START + 1,
+                        EraParts.cardFor(HardwareItems.MOTHERBOARD_EATX_LEGACY_604.get(), GpuItem.class)),
+                "and a graphics card of the board's own bus in its second slot, for its monitor");
+        helper.assertTrue(RackChassis.LEGACY_STORAGE_SERVER.maxPcie() == 2,
+                "the Legacy storage server has the two slots, its board having no video of its own");
+        helper.succeed();
     }
 
     /** A Legacy compute server's case takes a Legacy server board and refuses a Standard one. */

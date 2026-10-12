@@ -343,7 +343,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             // A sound card sits only on a board of its own age; no Standard card exists, the boards have it built in.
             return false;
         }
-        return card.cardSpec().fits(motherboard.spec().pcieGeneration());
+        return motherboard.spec().takes(card.cardSpec());
     }
 
     /** Whether this computer seats the personal-use cards, which only a Personal Computer has a program for. */

@@ -44,8 +44,11 @@ public enum RackChassis {
      */
     /** The Vintage 2U storage server: five full-height drives, one socket, one expansion slot. */
     VINTAGE_STORAGE_SERVER(2, 5, 1, 1, RackType.SERVER, HardwareEra.VINTAGE),
-    /** The Legacy 2U storage server: seven drives, one socket, one expansion slot. */
-    LEGACY_STORAGE_SERVER(2, 7, 1, 1, RackType.SERVER, HardwareEra.LEGACY),
+    /**
+     * The Legacy 2U storage server: seven drives, one socket, two expansion slots, one for the RAID controller and
+     * one for a graphics card, since its board has no video of its own.
+     */
+    LEGACY_STORAGE_SERVER(2, 7, 1, 2, RackType.SERVER, HardwareEra.LEGACY),
     /** The Transition 2U storage server: eight drives, one socket, one expansion slot. */
     TRANSITION_STORAGE_SERVER(2, 8, 1, 1, RackType.SERVER, HardwareEra.TRANSITION),
     /** The Advanced 2U storage server: ten NVMe carriers, one socket, one expansion slot. */
