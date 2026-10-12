@@ -14,6 +14,7 @@ import dev.jstech.computers.block.OpticalPort;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.ServerStacks;
 import dev.jstech.tests.testkit.TestCables;
@@ -23,7 +24,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -72,6 +76,23 @@ public final class OpticalCardGameTests {
                 .thenExecuteAfter(SETTLE, () -> helper.assertFalse(crosses(helper, fibre, side.getOpposite()),
                         "the card taken out, the fibre is left out again"))
                 .thenSucceed();
+    }
+
+    /**
+     * The card goes into a server the way a player puts it there, through the server's own slots: the rack's fibre
+     * port waits on a server holding it, and a server refusing the card left every rack off the fibre backbone.
+     */
+    @GameTest(template = ARENA)
+    public static void server_takesTheCardInAnExpansionSlot(final GameTestHelper helper) {
+        final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, ServerStacks.defaultServer());
+        final ServerHardwareHandler slots = new ServerHardwareHandler(player, InteractionHand.MAIN_HAND);
+        final ItemStack card = new ItemStack(ComputingModule.OPTICAL_NETWORK_CARD.get());
+        helper.assertTrue(slots.isItemValid(ServerHardwareHandler.GPU_START, card),
+                "a server's expansion slot takes the optical network card");
+        helper.assertTrue(slots.insertItem(ServerHardwareHandler.GPU_START, card, false).isEmpty(),
+                "and the card goes in");
+        helper.succeed();
     }
 
     /** A Server Rack takes the fibre while a server seated in it holds the card. */

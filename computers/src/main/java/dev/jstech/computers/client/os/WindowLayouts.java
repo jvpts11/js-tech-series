@@ -11,6 +11,7 @@ import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.WorkspaceSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,11 @@ final class WindowLayouts {
                     return size() > MAX_SAVED_DESKTOPS;
                 }
             };
+    /*
+     * The welcome a machine's face in the world is drawn with while this client has no program of its own for it: one
+     * per machine, so a face shown again as its layout changes keeps the facts the machine already sent.
+     */
+    private static final Map<BlockPos, WelcomeApp> FACE_WELCOMES = new HashMap<>();
     /** Moves on each time the programs this client has for any machine change hands. */
     private static int generation;
 
@@ -69,6 +75,8 @@ final class WindowLayouts {
     /** Lets go of every machine's kept programs, as the player leaves a world. */
     static void forgetAll() {
         SAVED_APPS.clear();
+        FACE_WELCOMES.values().forEach(WelcomeApp::onClosed);
+        FACE_WELCOMES.clear();
         generation++;
     }
 
@@ -161,6 +169,10 @@ final class WindowLayouts {
      * left, is drawn by that very program, so the face shows what the player saw at the machine and not a stand-in.
      * Only a window this client never had a program for is drawn with none behind it ({@link MirroredWindowApp}), so a
      * face seen across the room asks the machine nothing and takes no reply meant for a program open on a screen.
+     *
+     * <p>The machine's own welcome is the one exception: it is the first thing a new machine shows, and it only reads
+     * facts the machine hands every welcome open at it, so the face draws a welcome of its own rather than an empty
+     * window; it is let go once the welcome is closed or a program of the player's draws it.
      */
     void mirror(final List<OpenWindow> windows, final int workspace) {
         mirroring = true;
@@ -170,12 +182,20 @@ final class WindowLayouts {
         wm.setWorkspace(desktop.hasWorkspaces() ? workspace : 0);
         final DesktopViewport view = desktop.view();
         final Map<String, IDesktopApp> programs = programsOf(host);
+        boolean welcomeOnFace = false;
         for (final OpenWindow ow : windows) {
             // A window no launcher or program names (the machine's own welcome) shows no title rather than its key.
             final String name = desktop.nameOf(ow.key());
             final IDesktopApp live = programs.get(ow.key());
-            final IDesktopApp app = live != null ? live
-                    : new MirroredWindowApp(name.equals(ow.key()) ? "" : name, ow.w(), ow.h());
+            final IDesktopApp app;
+            if (live != null) {
+                app = live;
+            } else if (WelcomeApp.KEY.equals(ow.key())) {
+                app = FACE_WELCOMES.computeIfAbsent(host, WelcomeApp::new);
+                welcomeOnFace = true;
+            } else {
+                app = new MirroredWindowApp(name.equals(ow.key()) ? "" : name, ow.w(), ow.h());
+            }
             app.applySkin(desktop.prefs().skin());
             final DesktopWindow w = new DesktopWindow(app, ow.key(), ow.x(), ow.y(), ow.w(), ow.h());
             w.moveTo(ow.x(), ow.y(), view.workAreaTop(), view.width(), view.workAreaBottom());
@@ -183,6 +203,12 @@ final class WindowLayouts {
             w.setMaximized(ow.maximized());
             w.setWorkspaces(desktop.hasWorkspaces() ? ow.workspaces() : WorkspaceSet.only(0));
             wm.all().add(w);
+        }
+        if (!welcomeOnFace) {
+            final WelcomeApp gone = FACE_WELCOMES.remove(host);
+            if (gone != null) {
+                gone.onClosed();
+            }
         }
     }
 

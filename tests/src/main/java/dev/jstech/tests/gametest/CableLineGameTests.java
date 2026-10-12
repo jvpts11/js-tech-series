@@ -10,25 +10,33 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.OpticalPort;
+import dev.jstech.computers.guide.CableFacts;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.Lane;
 import dev.jstech.core.connect.Connection;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.BlockEntry;
+import dev.jstech.core.guide.GuideBlock;
+import dev.jstech.core.guide.GuideFacts;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataLink;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -45,6 +53,8 @@ public final class CableLineGameTests {
 
     private static final String ARENA = "empty";
     private static final int SETTLE = 4;
+    /** The manual's table of reaches: the line, then one column for each era from the Vintage to the Advanced. */
+    private static final int REACH_COLUMNS = 6;
 
     /** Every data cable, with the line and era it is. */
     private static final List<Laid> CABLES = List.of(
@@ -77,6 +87,30 @@ public final class CableLineGameTests {
             ComputingModule.OM5_CABLE);
 
     private CableLineGameTests() {
+    }
+
+    /**
+     * Every data cable says on its item how far one run of it reaches, the reach the cable carries, and the manual's
+     * table of reaches reads the same number for its line in its era, so a player can plan where a run ends.
+     */
+    @GameTest(template = ARENA)
+    public static void cables_sayHowFarTheyReachOnTheirItemAndInTheManual(final GameTestHelper helper) {
+        final List<GuideBlock.TableRow> reaches = GuideFacts.rowsOf(CableFacts.LINE_REACH, REACH_COLUMNS);
+        for (final Laid laid : CABLES) {
+            final int reach = laid.cable().get().range();
+            final List<Component> tooltip = new ArrayList<>();
+            laid.cable().asItem().appendHoverText(laid.cable().stack(1), Item.TooltipContext.EMPTY, tooltip,
+                    TooltipFlag.NORMAL);
+            final String said = tooltip.stream().map(Component::getString).collect(Collectors.joining(" / "));
+            helper.assertTrue(reach > 0 && said.contains(String.valueOf(reach)),
+                    laid.cable().id() + " says it reaches " + reach + " cables: " + said);
+            // The table's rows are the lines in their order, its columns after the first the eras in theirs.
+            final GuideBlock.GuideValue cell = reaches.get(List.of(DataLine.values()).indexOf(laid.line())).cells()
+                    .get(1 + List.of(HardwareEra.values()).indexOf(laid.era()));
+            helper.assertTrue(cell.equals(new GuideBlock.GuideValue.Amount(reach, "")),
+                    "the manual's table reads " + reach + " for " + laid.cable().id() + ": " + cell);
+        }
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

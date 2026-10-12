@@ -51,6 +51,8 @@
   "jscore.cable.line.hpc": "Linha HPC: liga os nós de um supercomputador à interface dele",
   "jscore.cable.line.long_distance": "Linha de longa distância: liga duas redes, de gateway a gateway",
   "jscore.cable.line.peripheral": "Linha de periféricos: liga um computador às próprias telas, caixas de som e dispositivos",
+  "jscore.cable.reach": "Alcança %s cabos em um trecho",
+  "jscore.cable.any_length": "Alcança qualquer comprimento",
   "jscore.command.chunks.held": "%s mantém %s chunks carregados",
   "jscore.command.chunks.released": "Liberados os %s chunks que %s mantinha carregados",
   "jscore.command.dimension.exists": "Já existe uma dimensão chamada %s",

@@ -51,6 +51,8 @@ public final class MonitorScreenRenderer implements BlockEntityRenderer<MonitorB
             0xFF1C1E22, 0xFFA3A9B1, 0xFF1A1C20, 0xFF1A1C20, 0xFF141518, 0xFF181A1D, 0xFF07080A, 0xFF9699A0));
     /* How far in front of the face the picture is drawn, in blocks, so it never fights the face for the same depth. */
     private static final float LIFT = 0.003F;
+    /* How far past its blocks a screen's box reaches, to take in the picture lifted off the glass. */
+    private static final double BOX_MARGIN = 0.05;
     private static final float FRONT = MonitorKind.FRONT;
     /* The picture is drawn this many texture pixels to each unit it is laid out in, more on a big screen. */
     private static final int SCALE = 2;
@@ -116,14 +118,19 @@ public final class MonitorScreenRenderer implements BlockEntityRenderer<MonitorB
         return monitor.panel() != null;
     }
 
+    /*
+     * What the screen covers, for the game to tell whether it is in view: the blocks of the whole screen, whichever
+     * way it runs, and a little more for the picture drawn just in front of the glass. Built from the two corner
+     * blocks' boxes, since a screen running west or north has its far corner at the lower coordinates.
+     */
     @Override
     public AABB getRenderBoundingBox(final MonitorBlockEntity monitor) {
         final MonitorPanel panel = monitor.panel();
         if (panel == null || !panel.origin().equals(monitor.getBlockPos())) {
-            return new AABB(monitor.getBlockPos());
+            return new AABB(monitor.getBlockPos()).inflate(BOX_MARGIN);
         }
-        return new AABB(Vec3.atLowerCornerOf(panel.origin()), Vec3.atLowerCornerOf(panel.at(panel.width() - 1,
-                panel.height() - 1)).add(1.0, 1.0, 1.0));
+        return new AABB(panel.origin()).minmax(new AABB(panel.at(panel.width() - 1, panel.height() - 1)))
+                .inflate(BOX_MARGIN);
     }
 
     /**

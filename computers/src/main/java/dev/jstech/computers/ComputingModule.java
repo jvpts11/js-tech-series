@@ -12,6 +12,7 @@ import static dev.jstech.computers.registry.ComputingContent.shelf;
 import dev.jstech.computers.advancement.JscTriggers;
 import dev.jstech.computers.audio.ComputingAudioDevices;
 import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.block.CableRunTexts;
 import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.block.ClusterManagementComputerBlock;
 import dev.jstech.computers.block.CraftingComputerBlock;
@@ -127,6 +128,7 @@ import dev.jstech.core.multipart.PartType;
 import dev.jstech.core.network.DataLine;
 import dev.jstech.core.network.DataLines;
 import dev.jstech.core.network.DataLink;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.tier.IndustrialTier;
 import java.util.ArrayList;
@@ -1063,6 +1065,10 @@ public final class ComputingModule {
         if (link.straight()) {
             builder.runsStraight();
         }
+        final TextKey renewal = CableRunTexts.forLine(line);
+        if (renewal != null) {
+            builder.renewedBy(renewal);
+        }
         if (link.betweenTwoEnds()) {
             builder.alone().thickness(LONG_DISTANCE_PIXELS).joinsAtMost(DataLink.ENDS);
         } else {
@@ -1082,6 +1088,7 @@ public final class ComputingModule {
                 .grid(GridKind.PERIPHERAL)
                 .lane(Lane.LEFT)
                 .carries(0L, PeripheralLine.range(era))
+                .renewedBy(CableRunTexts.HUB)
                 .jacket(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/" + jacket))
                 .plug(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "block/cable/plug/" + devicePlug))
                 .plug(PortKind.VIDEO,

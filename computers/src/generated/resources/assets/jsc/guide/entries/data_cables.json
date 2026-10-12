@@ -163,186 +163,20 @@
         "jsc.guide.data_cables.table3_head5",
         "jsc.guide.data_cables.table3_head6"
       ],
-      "rows": [
-        [
-          {
-            "words": "jsc.guide.data_cables.table3_1_1"
-          },
-          {
-            "amount": 4,
-            "unit": "it/t"
-          },
-          {
-            "amount": 16,
-            "unit": "it/t"
-          },
-          {
-            "amount": 64,
-            "unit": "it/t"
-          },
-          {
-            "amount": 128,
-            "unit": "it/t"
-          },
-          {
-            "amount": 256,
-            "unit": "it/t"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.data_cables.table3_2_1"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_2_2"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_2_3"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_2_4"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_2_5"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_2_6"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.data_cables.table3_3_1"
-          },
-          {
-            "amount": 16,
-            "unit": "it/t"
-          },
-          {
-            "amount": 64,
-            "unit": "it/t"
-          },
-          {
-            "amount": 256,
-            "unit": "it/t"
-          },
-          {
-            "amount": 512,
-            "unit": "it/t"
-          },
-          {
-            "amount": 2048,
-            "unit": "it/t"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.data_cables.table3_4_1"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_4_2"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_4_3"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_4_4"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_4_5"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_4_6"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.data_cables.table3_5_1"
-          },
-          {
-            "amount": 1,
-            "unit": "it/t"
-          },
-          {
-            "amount": 8,
-            "unit": "it/t"
-          },
-          {
-            "amount": 24,
-            "unit": "it/t"
-          },
-          {
-            "amount": 64,
-            "unit": "it/t"
-          },
-          {
-            "amount": 256,
-            "unit": "it/t"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.data_cables.table3_6_1"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_6_2"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_6_3"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_6_4"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_6_5"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_6_6"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.data_cables.table3_7_1"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_7_2"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_7_3"
-          },
-          {
-            "amount": 1024,
-            "unit": "it/t"
-          },
-          {
-            "amount": 2048,
-            "unit": "it/t"
-          },
-          {
-            "amount": 8192,
-            "unit": "it/t"
-          }
-        ],
-        [
-          {
-            "words": "jsc.guide.data_cables.table3_8_1"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_8_2"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_8_3"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_8_4"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_8_5"
-          },
-          {
-            "words": "jsc.guide.data_cables.table3_8_6"
-          }
-        ]
-      ]
+      "source": "jsc:line_reach"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.data_cables.table4",
+      "heads": [
+        "jsc.guide.data_cables.table4_head1",
+        "jsc.guide.data_cables.table4_head2",
+        "jsc.guide.data_cables.table4_head3",
+        "jsc.guide.data_cables.table4_head4",
+        "jsc.guide.data_cables.table4_head5",
+        "jsc.guide.data_cables.table4_head6"
+      ],
+      "source": "jsc:line_speed"
     },
     {
       "type": "text",
@@ -355,10 +189,6 @@
     {
       "type": "text",
       "text": "jsc.guide.data_cables.text5"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.data_cables.text6"
     },
     {
       "type": "heading",

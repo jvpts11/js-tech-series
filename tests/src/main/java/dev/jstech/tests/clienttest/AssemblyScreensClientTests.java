@@ -27,6 +27,7 @@ import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.content.BlockEntry;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.testkit.ServerStacks;
 import java.util.List;
 import java.util.Objects;
@@ -231,6 +232,31 @@ public final class AssemblyScreensClientTests {
                         level -> "on=" + rack(ctx, level).bayPowerOn(SERVER_ROW))
                 .thenScreenshot(SETTLE, "rack-server-switched-off")
                 .thenAssert(0, () -> ctx.openScreen(ServerRackScreen.class) != null, "the rack's screen must stay open")
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(SCREEN_WAIT);
+    }
+
+    @ClientTest(timeoutTicks = 900)
+    public static void advancedRackAndServer_openInTheAdvancedLook(final ClientTestContext ctx) {
+        ctx.thenGive(0).thenBuild(0, world -> world.setBlock(RACK, ComputingModule.ADVANCED_SERVER_RACK.get()
+                .defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH)));
+        ctx.thenTeleport(SETTLE, RACK.south(2), Direction.NORTH)
+                .thenRightClick(SETTLE, RACK)
+                .thenAwaitScreen(ServerRackScreen.class, SCREEN_WAIT)
+                .thenAssert(SETTLE, () -> ctx.screen(ServerRackScreen.class).getMenu().rackEra()
+                        == HardwareEra.ADVANCED, "an Advanced rack's screen is drawn in the Advanced look")
+                .thenScreenshot(0, "rack-advanced")
+                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(SCREEN_WAIT);
+        // An Advanced server with no board in it yet still reads as Advanced: the look is its chassis's.
+        ctx.thenGive(0, new ItemStack(ComputingModule.ADVANCED_SERVER.get()))
+                .then(SETTLE, () -> ctx.selectHotbar(0))
+                .then(2, () -> Objects.requireNonNull(ctx.mc().gameMode, "no game mode")
+                        .useItem(ctx.player(), InteractionHand.MAIN_HAND))
+                .thenAwaitScreen(ServerAssemblyScreen.class, SCREEN_WAIT)
+                .thenAssert(SETTLE, () -> ctx.screen(ServerAssemblyScreen.class).getMenu().hardwareEra()
+                        == HardwareEra.ADVANCED, "an Advanced server's screen is drawn in the Advanced look")
+                .thenScreenshot(0, "server-advanced")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);
     }

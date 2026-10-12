@@ -87,6 +87,11 @@ public final class WelcomeApp implements IDesktopApp {
         }
     }
 
+    /** Whether the machine has answered, so the window shows what it says rather than that it is getting ready. */
+    public boolean ready() {
+        return this.facts != null;
+    }
+
     @Override
     public String title() {
         if (this.skin.flatForm()) {

@@ -59,6 +59,8 @@ public final class ComputersGuide {
 
     /** Declares the chapter, the manual and its style, before the data generation writes the mod's files. */
     public static void declare() {
+        // The tables the network's pages read from the cables themselves.
+        CableFacts.declare();
         final ModGuide guide = ComputingContent.CONTENT.guide();
         // Held over an item, the manual key lights blue blocks one after another, as Frames XP did while it loaded.
         guide.style("operations", CoreGuide.binder("jsc:guide/operations", true)

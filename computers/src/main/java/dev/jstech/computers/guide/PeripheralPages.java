@@ -212,17 +212,8 @@ final class PeripheralPages {
                         + " own era and of every earlier era, never a newer one.")
                 .define("Port", "A socket on a computer, a hub or a device. Each socket has a kind: device, video or"
                         + " audio.")
-                .table("How far each cable reaches", "Era", "Cable", "Reach")
-                .row(GuideCell.words("Vintage"), GuideCell.words("Vintage Peripheral Cable"),
-                        GuideCell.words("8 cables"))
-                .row(GuideCell.words("Legacy"), GuideCell.words("Legacy Peripheral Cable"),
-                        GuideCell.words("12 cables"))
-                .row(GuideCell.words("Transition"), GuideCell.words("Transition Peripheral Cable"),
-                        GuideCell.words("14 cables"))
-                .row(GuideCell.words("Standard"), GuideCell.words("Peripheral Cable"),
-                        GuideCell.words("16 cables"))
-                .row(GuideCell.words("Advanced"), GuideCell.words("Advanced Peripheral Cable"),
-                        GuideCell.words("20 cables"))
+                .tableFrom(CableFacts.PERIPHERAL_REACH, "How far each cable reaches, in cables", "Era", "Cable",
+                        "Reach")
                 .paragraph("Each kind of port takes its own kind of device. A drive, a printer, a Redstone Interface"
                         + " or a hub takes a device port. A monitor takes a video output of a graphics card. A speaker"
                         + " takes an audio output, and each audio output drives two speakers. The number of ports"

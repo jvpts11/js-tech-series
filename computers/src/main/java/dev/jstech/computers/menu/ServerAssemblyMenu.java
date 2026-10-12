@@ -122,10 +122,13 @@ public class ServerAssemblyMenu extends CoreMenu {
         return ServerItem.buildFrom(parts);
     }
 
+    /**
+     * The era the server's screen is drawn in: its chassis's, as a computer's screen takes its case's, so an
+     * Advanced server reads as Advanced before a board goes in, whatever board it holds.
+     */
     @Nullable
     public HardwareEra hardwareEra() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? null : build.motherboard().era();
+        return chassis().era();
     }
 
     @Nullable

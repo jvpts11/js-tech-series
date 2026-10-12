@@ -47,7 +47,11 @@ public final class CableItem extends Item {
         return this.type.get();
     }
 
-    /** What the cable is for, and the era it belongs to in that era's colour, as its declaration says them. */
+    /**
+     * What the cable is for, and the era it belongs to in that era's colour, as its declaration says them; then how
+     * far one run of it reaches, read from the cable, and what starts a new run, so a player knows where a run needs
+     * one before it goes dark.
+     */
     @Override
     public void appendHoverText(final ItemStack stack, final TooltipContext context, final List<Component> tooltip,
                                 final TooltipFlag flag) {
@@ -55,6 +59,10 @@ public final class CableItem extends Item {
         cable.what().ifPresent(what -> tooltip.add(GameText.component(what).withStyle(ChatFormatting.GRAY)));
         cable.era().ifPresent(era -> tooltip.add(GameText.component(era.named())
                 .withStyle(style -> style.withColor(era.screenColor()))));
+        tooltip.add(GameText.component(cable.range() > 0 ? CableTexts.REACH.with(cable.range())
+                : CableTexts.ANY_LENGTH.with()).withStyle(ChatFormatting.GRAY));
+        cable.renewal().ifPresent(renewal -> tooltip.add(GameText.component(renewal)
+                .withStyle(ChatFormatting.DARK_GRAY)));
     }
 
     /**

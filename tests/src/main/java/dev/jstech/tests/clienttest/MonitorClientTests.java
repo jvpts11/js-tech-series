@@ -28,6 +28,7 @@ import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.IDesktopApp;
 import dev.jstech.computers.client.os.OffscreenDesktop;
+import dev.jstech.computers.client.os.WelcomeApp;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.layout.PowerStripLayout;
 import dev.jstech.computers.hardware.DiskSize;
@@ -211,6 +212,59 @@ public final class MonitorClientTests {
                 })
                 .thenWaitUntilServer(level -> pc[0].goingDown() || !pc[0].isRunning(), 200,
                         "the Power button to shut the machine down", level -> "the machine is still up");
+    }
+
+    /**
+     * A new machine's welcome is the first thing its face shows, and a player who never sat at the machine sees it
+     * whole from across the room rather than an empty window.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void face_drawsTheWelcomeOfAMachineNeverSatAt(final ClientTestContext ctx) {
+        final PersonalComputerBlockEntity[] pc = new PersonalComputerBlockEntity[1];
+        ctx.thenBuild(0, world -> {
+                    pc[0] = world.placeRunningPersonalComputer(COMPUTER,
+                            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_11"));
+                    world.placeMonitor(SCREEN, Direction.WEST);
+                })
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .thenWaitUntilServer(level -> !pc[0].needsPost() && !pc[0].booting(), BOOT_WAIT,
+                        "the machine to come up", level -> "still starting")
+                .thenWaitUntil(() -> faceWelcome(ctx) != null && faceWelcome(ctx).ready(), LIGHT_WAIT,
+                        "the face to draw the machine's welcome, with what the machine says in it")
+                .thenScreenshot(SETTLE, "face-welcome");
+    }
+
+    /** Two lit monitors stacked, seen from in front and then ever more from the side, a picture at each place. */
+    @ClientTest(timeoutTicks = 2400)
+    public static void faces_stayLitSeenFromTheSide(final ClientTestContext ctx) {
+        final PersonalComputerBlockEntity[] pc = new PersonalComputerBlockEntity[1];
+        ctx.thenBuild(0, world -> {
+                    pc[0] = world.placeRunningPersonalComputer(COMPUTER);
+                    world.placeMonitor(SCREEN, Direction.WEST);
+                    world.placeMonitor(SCREEN.above(), Direction.WEST);
+                })
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .thenWaitUntilServer(level -> !pc[0].needsPost() && !pc[0].booting(), BOOT_WAIT,
+                        "the machine to come up", level -> "still starting")
+                .thenScreenshot(LIGHT_WAIT / 4, "side-0-front");
+        fromTheSide(ctx, "side-");
+    }
+
+    /** The same with two monitors of two machines, one on the other, each a screen of its own. */
+    @ClientTest(timeoutTicks = 2400)
+    public static void faces_stayLitSeenFromTheSideApart(final ClientTestContext ctx) {
+        final PersonalComputerBlockEntity[] pc = new PersonalComputerBlockEntity[2];
+        ctx.thenBuild(0, world -> {
+                    pc[0] = world.placeRunningPersonalComputer(COMPUTER);
+                    pc[1] = world.placeRunningPersonalComputer(COMPUTER.above());
+                    world.placeMonitor(SCREEN, Direction.WEST, ComputingModule.COLOR_MONITOR.get());
+                    world.placeMonitor(SCREEN.above(), Direction.WEST);
+                })
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .thenWaitUntilServer(level -> !pc[0].needsPost() && !pc[0].booting() && !pc[1].needsPost()
+                        && !pc[1].booting(), BOOT_WAIT, "the machines to come up", level -> "still starting")
+                .thenScreenshot(LIGHT_WAIT / 4, "apart-0-front");
+        fromTheSide(ctx, "apart-");
     }
 
     @ClientTest(timeoutTicks = 2400)
@@ -415,6 +469,25 @@ public final class MonitorClientTests {
                 .thenWaitUntil(() -> facePage(ctx, "NAME"), LIGHT_WAIT, "and the face to follow it there");
     }
 
+    /* Stands ever nearer the plane of the glass beside the stack, each time looking at its middle, and shoots it. */
+    private static void fromTheSide(final ClientTestContext ctx, final String label) {
+        // Where the player's feet stand, in blocks from the test's corner.
+        final double[][] feet = {{8.5, 0.0, 0.4}, {7.6, 0.0, 0.6}, {7.25, 0.0, 0.9}, {7.1, 1.0, 0.6}, {7.05, 0.0, 1.4},
+            {7.3, 0.0, 1.7}};
+        for (int i = 0; i < feet.length; i++) {
+            final double[] foot = feet[i];
+            ctx.thenServer(SETTLE, level -> {
+                        final Vec3 at = Vec3.atLowerCornerOf(ctx.origin()).add(foot[0], 2.0 + foot[1], foot[2]);
+                        final Vec3 look = Vec3.atLowerCornerOf(ctx.abs(SCREEN)).add(1.0, 1.0, 0.5)
+                                .subtract(at.add(0.0, ctx.serverPlayer().getEyeHeight(), 0.0));
+                        final float yaw = (float) Math.toDegrees(Math.atan2(-look.x, look.z));
+                        final float pitch = (float) -Math.toDegrees(Math.atan2(look.y, look.horizontalDistance()));
+                        ctx.serverPlayer().teleportTo(ctx.serverLevel(), at.x, at.y, at.z, yaw, pitch);
+                    })
+                    .thenScreenshot(SETTLE * 3, label + (i + 1));
+        }
+    }
+
     /*
      * The middle of the power button of the monitor at SCREEN, in the world: its front looks east, so across its
      * front runs toward the north, and the button stands on the face's plane.
@@ -448,6 +521,21 @@ public final class MonitorClientTests {
         final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
         final DesktopWindow window = desktop == null ? null : desktop.windowFor(title);
         return window == null ? null : window.app();
+    }
+
+    /* The welcome the face of the monitor draws, or null. */
+    @Nullable
+    private static WelcomeApp faceWelcome(final ClientTestContext ctx) {
+        final OffscreenDesktop face = MonitorPainter.desktopOf(ctx.abs(SCREEN));
+        if (face == null) {
+            return null;
+        }
+        for (final IDesktopApp drawn : face.windowPrograms()) {
+            if (drawn instanceof WelcomeApp welcome) {
+                return welcome;
+            }
+        }
+        return null;
     }
 
     /* Whether the face of the monitor draws a window by that very program. */

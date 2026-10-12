@@ -67,6 +67,7 @@ public final class CableType {
     private final int mostJoins;
     private final @Nullable TextKey what;
     private final @Nullable HardwareEra era;
+    private final @Nullable TextKey renewal;
 
     private CableType(final Builder builder, final Supplier<? extends Item> item) {
         this.line = Objects.requireNonNull(builder.line, "a cable carries a line");
@@ -93,11 +94,17 @@ public final class CableType {
         this.item = Objects.requireNonNull(item, "item");
         this.what = builder.what;
         this.era = builder.era;
+        this.renewal = builder.renewal;
     }
 
     /** What the cable is for, as its item's tooltip says it; empty for a cable that says nothing. */
     public Optional<TextKey> what() {
         return Optional.ofNullable(this.what);
+    }
+
+    /** What starts a new run of it when its reach is not enough, as its item's tooltip says it; empty for none. */
+    public Optional<TextKey> renewal() {
+        return Optional.ofNullable(this.renewal);
     }
 
     /** The era the cable belongs to, as its item's tooltip says it; empty for a cable of no era. */
@@ -233,6 +240,7 @@ public final class CableType {
         private int mostJoins;
         private @Nullable TextKey what;
         private @Nullable HardwareEra era;
+        private @Nullable TextKey renewal;
 
         /** How thick a cable is unless it says otherwise, in pixels. */
         private static final int STANDARD_THICKNESS = 4;
@@ -322,6 +330,16 @@ public final class CableType {
         public Builder describe(final TextKey job, @Nullable final HardwareEra ofEra) {
             this.what = Objects.requireNonNull(job, "job");
             this.era = ofEra;
+            return this;
+        }
+
+        /**
+         * What starts a new run of it, in a sentence its item's tooltip shows under its reach ("A Repeater starts a new
+         * run"): the device a player lays in a run that would be too long. The library names none, since the devices
+         * are the mods'.
+         */
+        public Builder renewedBy(final TextKey sentence) {
+            this.renewal = Objects.requireNonNull(sentence, "sentence");
             return this;
         }
 

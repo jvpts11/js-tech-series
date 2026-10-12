@@ -185,33 +185,13 @@ final class NetworkPages {
                         GuideCell.words("OSFP Cable"))
                 .paragraph("The crafting line has one cable for all eras, the Crafting Cable. It is the only line"
                         + " that is not split by era.")
-                .table("Speed and range of each line", "Line", "Vintage", "Legacy", "Transition", "Standard",
-                        "Advanced")
-                .row(GuideCell.words("Access, speed"), GuideCell.amount(4, "it/t"), GuideCell.amount(16, "it/t"),
-                        GuideCell.amount(64, "it/t"), GuideCell.amount(128, "it/t"),
-                        GuideCell.amount(256, "it/t"))
-                .row(GuideCell.words("Access, range"), GuideCell.words("32 cables"), GuideCell.words("48 cables"),
-                        GuideCell.words("64 cables"), GuideCell.words("80 cables"), GuideCell.words("96 cables"))
-                .row(GuideCell.words("Backbone, speed"), GuideCell.amount(16, "it/t"),
-                        GuideCell.amount(64, "it/t"), GuideCell.amount(256, "it/t"),
-                        GuideCell.amount(512, "it/t"), GuideCell.amount(2048, "it/t"))
-                .row(GuideCell.words("Backbone, range"), GuideCell.words("96 cables"),
-                        GuideCell.words("160 cables"), GuideCell.words("200 cables"),
-                        GuideCell.words("512 cables"), GuideCell.words("1,024 cables"))
-                .row(GuideCell.words("Long distance, speed"), GuideCell.amount(1, "it/t"),
-                        GuideCell.amount(8, "it/t"), GuideCell.amount(24, "it/t"), GuideCell.amount(64, "it/t"),
-                        GuideCell.amount(256, "it/t"))
-                .row(GuideCell.words("Long distance, range"), GuideCell.words("2,000 cables"),
-                        GuideCell.words("5,000 cables"), GuideCell.words("7,500 cables"),
-                        GuideCell.words("10,000 cables"), GuideCell.words("20,000 cables"))
-                .row(GuideCell.words("High compute, speed"), GuideCell.words("none"), GuideCell.words("none"),
-                        GuideCell.amount(1024, "it/t"), GuideCell.amount(2048, "it/t"),
-                        GuideCell.amount(8192, "it/t"))
-                .row(GuideCell.words("High compute, range"), GuideCell.words("none"), GuideCell.words("none"),
-                        GuideCell.words("24 cables"), GuideCell.words("32 cables"), GuideCell.words("48 cables"))
-                .paragraph("The Crafting Cable moves 32 items a tick over a range of 16 cables, in every era.")
+                .tableFrom(CableFacts.LINE_REACH, "How far a run of each line reaches, in cables", "Line",
+                        "Vintage", "Legacy", "Transition", "Standard", "Advanced")
+                .tableFrom(CableFacts.LINE_SPEED, "How many items a tick each line moves", "Line", "Vintage",
+                        "Legacy", "Transition", "Standard", "Advanced")
                 .paragraph("Every cable has a speed and a range, and both count. A run longer than its range carries"
-                        + " nothing, so whatever lies only beyond it is off the network.")
+                        + " nothing, so whatever lies only beyond it is off the network. A cable's tooltip says how far"
+                        + " one run of it reaches, and what starts a new run.")
                 .paragraph("When you lay a run, count it against the range of its cable, and count the repeaters and"
                         + " routers you put in it. Those are the places where the range starts again.")
                 .paragraph("Two rules govern two of the lines. From the Standard on, the backbone's fibre runs only"

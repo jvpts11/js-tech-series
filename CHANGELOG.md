@@ -1935,6 +1935,17 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- A server takes the Optical Network Card in an expansion slot, so a Server Rack holding one takes the fibre backbone
+  of the Standard and the Advanced eras; every server refused the card, which left no rack able to join a fibre
+  network.
+- A server's assembly screen is drawn in its chassis's era, as a computer's is in its case's: an Advanced server
+  showed the Standard look until an Advanced board went in.
+- A new machine's welcome, such as Frames 11's Get Started, shows what it says on the monitor's face in the world
+  for a player who never sat at the machine; it showed an empty window.
+- Every cable's tooltip says how many cables one run of it reaches, read from the cable, and what starts a new run
+  (a Repeater, a Router or a Hub); the manual's tables of reaches and speeds are read from the cables too.
+- A big screen of monitors running west or north is drawn whenever any of it is in view; the box the game checks
+  its view against lost a monitor at each end.
 - A USB stick in the Dock Station's port and in the Advanced Pattern Encoder's lies across as the port does; it
   stood upright in it.
 - A Pattern Encoder's stick taken out no longer shows a tiny stick in its port at the end of its way out.

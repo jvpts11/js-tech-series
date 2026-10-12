@@ -61,7 +61,8 @@ class HardcodedTextTest {
      */
     private static final Set<String> DECLARATIONS = Set.of("named", "described", "subtitle", "sectionNamed",
             "titled", "whatItIs", "whatItIsFor", "howToGetIt", "howToUseIt", "whatCanGoWrong", "ifSomethingGoesWrong",
-            "paragraph", "subheading", "figure", "picture", "drawing", "table", "property", "amount", "fixed",
+            "paragraph", "subheading", "figure", "picture", "drawing", "table", "tableFrom", "property", "amount",
+            "fixed",
             "warning", "define", "steps", "cover", "edition", "about", "note", "callout", "plan", "planPart",
             "planOptional", "scene", "balloon");
 
