@@ -672,6 +672,10 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     private void endSession() {
         session.drop();
+        // A run that ends takes what it was running with it: a restart closes every program, as on any machine.
+        if (!programs().isEmpty()) {
+            programs().stopAll();
+        }
         /*
          * The terminal's lines belong to the run of the machine that printed them, and this is where a run
          * ends: a restart, a power cut, a cold start. Counting the run up is what lets a terminal opened
@@ -864,7 +868,6 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         final long now = server.getGameTime();
         final CrashPage page = CrashPages.of(style, system.platform(), cause,
                 MachineCrash.facts(this, power.upFor(now), moment));
-        programs().stopAll();
         final boolean dark = !buildValid();
         crash.begin(page, now, dark);
         if (dark) {

@@ -1991,6 +1991,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   computer's disk.
 
 ### Fixed
+- A restart closes every program a computer was running, as on any machine. The programs a player started at a
+  prompt kept running through a reboot, as if the machine had never stopped; only switching it off ended them.
 - A file cut and pasted where a file of its name already is makes the desktop ask whether to replace it: Yes moves it
   over the other, No leaves it where it was. The paste did nothing and said nothing, and the cut was gone with it.
 - The system's Save As window opens on the kind of the name the program offers, or on every file when none of its

@@ -133,6 +133,21 @@ public final class ComputerBlockEntityGameTests {
                 .thenSucceed();
     }
 
+    /** A restart closes every program the machine was running, as on any machine: the next run starts with none. */
+    @GameTest(template = ARENA, timeoutTicks = 900)
+    public static void restart_closesEveryProgramTheMachineRan(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(!pc.needsPost() && !pc.booting(), "the machine comes up"))
+                .thenExecute(() -> {
+                    helper.assertTrue(pc.programs().start("counter.sgs", COUNTER, 1, pc).ok(), "the counter starts");
+                    pc.restart();
+                })
+                .thenWaitUntil(() -> helper.assertTrue(pc.programs().isEmpty(), "the restart closes the counter"))
+                .thenSucceed();
+    }
+
     /*
      * One name for the machine and its system, whichever side it is typed on: the assembly screen names the
      * machine's console, and the prompt's setting names the machine. Each used to keep a name of its own.
