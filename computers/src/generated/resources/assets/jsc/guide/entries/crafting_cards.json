@@ -201,6 +201,10 @@
       "text": "jsc.guide.crafting_cards.text7"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.crafting_cards.text8"
+    },
+    {
       "type": "table",
       "caption": "jsc.guide.crafting_cards.table3",
       "heads": [
@@ -260,7 +264,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.crafting_cards.text8"
+      "text": "jsc.guide.crafting_cards.text9"
     },
     {
       "type": "heading",

@@ -1956,6 +1956,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   lists why; it said the computer was powered off, so a player who had pressed the switch thought it had not taken.
   The manual's first computer and monitor pages list it among their problems.
 - Paper clicked into a printer whose tray is full says the tray is full; nothing happened and nothing was said.
+- The Legacy's PCI Crafting Card seats in the Legacy's own boards, AGP and PCI-e, as the personal-use cards do, and
+  in the later ones: it fitted only a Vintage PCI board, so no Legacy Crafting Computer could take it.
 - A room of many monitors draws each one's picture in turn: past a few, the same pictures were drawn every frame and
   the rest never, staying dark; and past eight in sight, a monitor's face was built anew at every picture, asking its
   machine again each time.

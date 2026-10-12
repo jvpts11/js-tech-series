@@ -222,6 +222,9 @@ final class AutocraftingPages {
                         GuideCell.words("0.15x CPU"), GuideCell.words("6"))
                 .row(GuideCell.words("Forge Logic Crafting Card T4"), GuideCell.words("Advanced"),
                         GuideCell.words("0.20x CPU"), GuideCell.words("8"))
+                .paragraph("A card goes into a slot of its own bus. The PCI card also goes into an AGP or a PCI-e"
+                        + " board, as the boards of its years had PCI slots beside the graphics slot: the Legacy"
+                        + " boards are AGP or PCI-e.")
                 .paragraph("Hover over a card to read its tooltip. Each line of the tooltip tells you one thing.")
                 .table("The tooltip of a card", "Line of the tooltip", "What it tells you")
                 .row(GuideCell.words("Crafting accelerator (FPGA)"), GuideCell.words("The kind of card: a crafting"

@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
@@ -196,6 +197,25 @@ public final class EraComputerGameTests {
         helper.succeed();
     }
 
+    /**
+     * The Legacy's PCI Crafting Card seats in the Legacy's own boards, AGP and PCI-e alike, as the boards of its years
+     * had PCI slots: held to PCI boards alone, it fitted no machine of its era. The ISA card keeps to ISA boards.
+     */
+    @GameTest(template = ARENA)
+    public static void pciCraftingCard_seatsInTheLegacysBoards(final GameTestHelper helper) {
+        final ItemStack pci = new ItemStack(ComputingModule.CRAFTING_CARD_PCI.get());
+        final ItemStack isa = new ItemStack(ComputingModule.CRAFTING_CARD_ISA.get());
+        final int card = CraftingComputerBlockEntity.PCIE_SLOTS_START;
+        final CraftingComputerBlockEntity agp = craftingWithBoard(helper, new BlockPos(1, 2, 1),
+                HardwareItems.MOTHERBOARD_ATX_LEGACY_478.get());
+        final CraftingComputerBlockEntity pcie = craftingWithBoard(helper, new BlockPos(3, 2, 1),
+                HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get());
+        helper.assertTrue(agp.isValidForSlot(card, pci), "the PCI card fits the Legacy AGP board");
+        helper.assertTrue(pcie.isValidForSlot(card, pci), "and the Legacy PCI-e board");
+        helper.assertFalse(agp.isValidForSlot(card, isa), "while the ISA card stays out of a board with no ISA");
+        helper.succeed();
+    }
+
     /** A Phi co-processor seats only in a supercomputer node's server, so a computer refuses it on any board. */
     @GameTest(template = ARENA)
     public static void phi_staysOutOfAComputer(final GameTestHelper helper) {
@@ -238,6 +258,16 @@ public final class EraComputerGameTests {
             throw new IllegalStateException("no personal computer at " + pos);
         }
         be.getHardware().setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(board));
+        return be;
+    }
+
+    private static CraftingComputerBlockEntity craftingWithBoard(final GameTestHelper helper, final BlockPos pos,
+                                                                 final Item board) {
+        helper.setBlock(pos, ComputingModule.LEGACY_CRAFTING_COMPUTER.get());
+        if (!(helper.getBlockEntity(pos) instanceof CraftingComputerBlockEntity be)) {
+            throw new IllegalStateException("no crafting computer at " + pos);
+        }
+        be.getHardware().setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(board));
         return be;
     }
 }

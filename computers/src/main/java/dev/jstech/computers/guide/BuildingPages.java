@@ -301,7 +301,8 @@ final class BuildingPages {
                 .define("Expansion slot", "A slot on the board for an expansion card. The bus standards are ISA, PCI,"
                         + " AGP (Accelerated Graphics Port) and PCI-e (PCI Express), from the oldest to the newest.")
                 .define("Bus family", "The family a bus belongs to: ISA, PCI, AGP or PCI-e. A card fits a board only"
-                        + " when the bus families match. ISA is also the name of the oldest bus.")
+                        + " when the bus families match, but for the PCI cards of the Workshop and the PCI Crafting"
+                        + " Card, which fit any board but an ISA one. ISA is also the name of the oldest bus.")
                 .table("The lines of the CHECKS list", "The line", "What it means", "The fix")
                 .row(GuideCell.code("no CPU installed"), GuideCell.words("The build has no processor."),
                         GuideCell.words("Put a processor in the socket the board names."))

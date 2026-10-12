@@ -43,6 +43,18 @@ public record CraftingCardSpec(HardwareEra era, IndustrialTier tier, PcieGenerat
         return ExpansionCardKind.CRAFTING;
     }
 
+    /*
+     * A PCI card seats in a PCI, AGP or PCI Express board alike, as the personal-use cards do: the boards of those
+     * years carried PCI slots beside their graphics slot, and the Legacy's own boards are AGP or PCI Express, so a
+     * PCI card held to PCI boards alone would fit no machine of the era it is made for. Every other card keeps to its
+     * own bus family.
+     */
+    @Override
+    public boolean fits(final PcieGeneration slot) {
+        return bus == PcieGeneration.PCI ? slot.busFamily() != ExpansionBus.ISA
+                : IExpansionCardSpec.super.fits(slot);
+    }
+
     /** How many Crafting Interfaces the card drives. */
     public int interfaces() {
         return CraftingEras.interfacesPerCard(era);
