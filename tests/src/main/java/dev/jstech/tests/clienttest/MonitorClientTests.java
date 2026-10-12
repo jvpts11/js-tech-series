@@ -309,6 +309,23 @@ public final class MonitorClientTests {
         fromTheSide(ctx, "apart-");
     }
 
+    /** The same with two picture tubes of two machines, one on the other, whose glass sits back in its bezel. */
+    @ClientTest(timeoutTicks = 2400)
+    public static void faces_stayLitSeenFromTheSideOnPictureTubes(final ClientTestContext ctx) {
+        final PersonalComputerBlockEntity[] pc = new PersonalComputerBlockEntity[2];
+        ctx.thenBuild(0, world -> {
+                    pc[0] = world.placeRunningPersonalComputer(COMPUTER);
+                    pc[1] = world.placeRunningPersonalComputer(COMPUTER.above());
+                    world.placeMonitor(SCREEN, Direction.WEST, ComputingModule.LEGACY_MONITOR.get());
+                    world.placeMonitor(SCREEN.above(), Direction.WEST, ComputingModule.VINTAGE_MONITOR.get());
+                })
+                .thenTeleport(SETTLE, AT_SCREEN, Direction.WEST)
+                .thenWaitUntilServer(level -> !pc[0].needsPost() && !pc[0].booting() && !pc[1].needsPost()
+                        && !pc[1].booting(), BOOT_WAIT, "the machines to come up", level -> "still starting")
+                .thenScreenshot(LIGHT_WAIT / 4, "tubes-0-front");
+        fromTheSide(ctx, "tubes-");
+    }
+
     @ClientTest(timeoutTicks = 2400)
     public static void face_showsTheMachineStartingByTheScreensAPlayerAtItSees(final ClientTestContext ctx) {
         final Set<Class<?>> seen = new HashSet<>();
