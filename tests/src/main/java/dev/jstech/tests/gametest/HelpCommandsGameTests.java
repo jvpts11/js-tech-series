@@ -14,6 +14,7 @@ import dev.jstech.computers.gui.help.HelpViews;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
@@ -109,8 +110,8 @@ public final class HelpCommandsGameTests {
 
     /**
      * man on UNIX and FreeBSD opens a manual's entry in the pager when no command and no topic has the name, by the
-     * last part of the entry's id or by its English title; a command's page still comes first, and Linux's man,
-     * whose system reads the manuals through info, does not find them.
+     * last part of the entry's id or by its English title; a command's own page still comes first, from the entry that
+     * writes it, and Linux's man, whose system reads the manuals through info, does not find them.
      */
     @GameTest(template = ARENA)
     public static void man_opensTheManualsEntriesOnUnixAndFreeBsd(final GameTestHelper helper) {
@@ -130,9 +131,12 @@ public final class HelpCommandsGameTests {
                                     && titled.handOver().path().equals(HelpViews.manual("jsc:mainframes")),
                             "UNIX finds an entry by its title; got " + titled.handOver());
 
+                    // A command's own page comes first: the manual's entry that writes ls's page, before any other.
                     final CliShell.Response command = run(helper, freeBsd, "man ls");
-                    helper.assertTrue(command.handOver() == null && text(command).contains("LS(1)"),
-                            "a command's page is still printed; got " + text(command));
+                    final Optional<String> lsPage = ManualEntries.commandEntry(Platform.FREEBSD, "ls");
+                    helper.assertTrue(lsPage.isPresent() && command.handOver() != null
+                                    && command.handOver().path().equals(HelpViews.manual(lsPage.get())),
+                            "man ls pages the entry that writes ls's page; got " + command.handOver());
 
                     final CliShell.Response onLinux = run(helper, linux, "man graphics-cards");
                     helper.assertTrue(onLinux.handOver() == null && text(onLinux).contains("No manual entry"),
@@ -146,7 +150,7 @@ public final class HelpCommandsGameTests {
     public static void manualEntries_findEveryModsEntriesByNameOrTitle(final GameTestHelper helper) {
         helper.assertTrue(ManualEntries.find("graphics_cards").equals(Optional.of("jsc:graphics_cards")),
                 "by its id's last part");
-        helper.assertTrue(ManualEntries.find("Graphics Cards (GPU)").equals(Optional.of("jsc:graphics_cards")),
+        helper.assertTrue(ManualEntries.find("Graphics cards").equals(Optional.of("jsc:graphics_cards")),
                 "by its title");
         helper.assertTrue(ManualEntries.find("coal-generator").equals(Optional.of("jsindustrial:coal_generator")),
                 "an Industrial entry too");
