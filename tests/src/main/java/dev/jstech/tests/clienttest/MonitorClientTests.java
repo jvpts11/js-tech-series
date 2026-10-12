@@ -23,6 +23,7 @@ import dev.jstech.computers.client.InstallerScreen;
 import dev.jstech.computers.client.SystemBootScreen;
 import dev.jstech.computers.client.monitor.MonitorPainter;
 import dev.jstech.computers.client.monitor.MonitorPictureCache;
+import dev.jstech.computers.client.monitor.MonitorScreenRenderer;
 import dev.jstech.computers.client.monitor.SessionFaces;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
@@ -54,6 +55,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.ClientHooks;
@@ -179,6 +181,46 @@ public final class MonitorClientTests {
                     final MonitorPanel panel = clientMonitor(ctx, WALL).panel();
                     return panel != null && panel.width() == 3 && panel.height() == 2;
                 }, "the player's game sees one screen three by two");
+    }
+
+    /**
+     * A big screen is drawn by one corner, and the game draws it only while the box that corner gives it is in view.
+     * The box covers every monitor of the screen whichever way the screen runs: running west or north it covered only
+     * the middle, so a screen seen from the side, with only an end in view, went dark while it was on.
+     */
+    @ClientTest(timeoutTicks = 600)
+    public static void bigScreens_coverEveryMonitorWhicheverWayTheyRun(final ClientTestContext ctx) {
+        final Direction[] facings = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+        final BlockPos[][] rows = new BlockPos[facings.length][3];
+        ctx.thenBuild(0, world -> {
+                    for (int f = 0; f < facings.length; f++) {
+                        final Direction right = facings[f].getClockWise();
+                        final BlockPos start = new BlockPos(2 + 6 * (f % 2), 2, 2 + 6 * (f / 2));
+                        for (int u = 0; u < rows[f].length; u++) {
+                            rows[f][u] = start.relative(right, u);
+                            world.placeMonitor(rows[f][u], facings[f], ComputingModule.TRANSITION_MONITOR.get());
+                        }
+                    }
+                })
+                .thenAssert(SETTLE, () -> {
+                    final MonitorScreenRenderer renderer = new MonitorScreenRenderer(null);
+                    for (int f = 0; f < facings.length; f++) {
+                        final MonitorPanel panel = clientMonitor(ctx, rows[f][0]).panel();
+                        if (panel == null || panel.width() != rows[f].length) {
+                            return false;
+                        }
+                        if (!(ctx.mc().level.getBlockEntity(panel.origin()) instanceof MonitorBlockEntity corner)) {
+                            return false;
+                        }
+                        final AABB box = renderer.getRenderBoundingBox(corner);
+                        for (final BlockPos member : rows[f]) {
+                            if (!box.contains(Vec3.atCenterOf(ctx.abs(member)))) {
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
+                }, "every big screen's box takes in each of its monitors, facing north, east, south and west");
     }
 
     @ClientTest(timeoutTicks = 2400)
