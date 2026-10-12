@@ -166,7 +166,10 @@ public class MonitorSessionMenu extends CoreMenu implements IMonitorMenu {
         INSTALL_PROGRESS(5),
 
         /** The switch that says which machine of a rack this monitor shows. */
-        KVM(6);
+        KVM(6),
+
+        /** The page a system crashed onto, standing until the machine starts over or the monitor goes dark. */
+        SYSTEM_CRASH(7);
 
         private static final StableIds<Phase> IDS = StableIds.of(Phase.class);
 

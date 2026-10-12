@@ -53,6 +53,10 @@ import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootRunner;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.crash.CrashCause;
+import dev.jstech.computers.os.crash.CrashPage;
+import dev.jstech.computers.os.crash.CrashPages;
+import dev.jstech.computers.os.crash.CrashStyle;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.boot.BootTiming;
 import dev.jstech.computers.os.boot.SystemWelcome;
@@ -128,6 +132,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private final ComputerHardware hardware;
     /** Whether it is on, whether it comes up by itself, and whether the next look at it shows the self-test. */
     private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession);
+    /** The page the system crashed onto, while it stands. */
+    private final MachineCrash crash = new MachineCrash();
     /** Where this computer stands on the data network: its node, its network, and the cable it reads. */
     private final NetworkAttachment attachment = new NetworkAttachment(this);
     /** What is on the far end of its peripheral cables. */
@@ -835,6 +841,97 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     @Override
     public int downRemaining() {
         return level == null ? 0 : power.downRemaining(level.getGameTime());
+    }
+
+    /**
+     * Brings the running system down on its crash page for {@code cause}: everything it was running dies where it
+     * stands, the session ends, and whoever is watching is shown the page. It stands its time, and then the machine
+     * starts over from its self-test; or, when what went was a part it cannot run without, the monitor goes dark.
+     *
+     * @return whether it went down: a machine that is off, testing itself, at its boot menu, still bringing its system
+     *         up or already on its way down, or whose system has no crash page (the earliest had none), stays as it is
+     */
+    public boolean crash(final CrashCause cause, final CrashPages.Moment moment) {
+        if (!(level instanceof ServerLevel server) || !power.on() || goingDown() || crashPage() != null
+                || needsPost() || haltedAtPost() || atBootMenu() || booting()) {
+            return false;
+        }
+        final OsDef system = installedOs();
+        final CrashStyle style = system == null ? null : CrashPages.styleFor(system.platform(), system.familyRank());
+        if (style == null) {
+            return false;
+        }
+        final long now = server.getGameTime();
+        final CrashPage page = CrashPages.of(style, system.platform(), cause,
+                MachineCrash.facts(this, power.upFor(now), moment));
+        programs().stopAll();
+        final boolean dark = !buildValid();
+        crash.begin(page, now, dark);
+        if (dark) {
+            // No computer is left to close down: the session ends now, and it owes a self-test once it is whole again.
+            setNeedsPost(true);
+        } else {
+            power.beginDown(now, page.totalTicks());
+        }
+        // Whatever each of them had up, a desktop, a prompt or a session of the monitor's own, the page takes it over.
+        ScreenSessions.eachAtMachine(server, worldPosition,
+                (player, monitor) -> MonitorBlock.openCrash(player, server, monitor, worldPosition, this));
+        setChanged();
+        return true;
+    }
+
+    /**
+     * A window the player opened on this machine's desktop did not fit in what is left of its memory: a system of the
+     * Frames family goes down on its blue page for it.
+     */
+    public void memoryShort(final String program) {
+        final OsDef system = installedOs();
+        if (system != null && system.platform() == Platform.FRAMES) {
+            crash(CrashCause.MEMORY, CrashPages.Moment.memory(program, 0, List.of()));
+        }
+    }
+
+    @Override
+    @Nullable
+    public CrashPage crashPage() {
+        return level == null ? null : crash.page(level.getGameTime());
+    }
+
+    @Override
+    public int crashRemaining() {
+        return level == null ? 0 : crash.remaining(level.getGameTime());
+    }
+
+    @Override
+    public boolean crashHeld() {
+        return crashPage() != null && crash.held();
+    }
+
+    @Override
+    public boolean crashEndsDark() {
+        return crash.endsDark();
+    }
+
+    /**
+     * A key on the console of a crashed system that offers to stop its automatic reboot: the first stops it and the
+     * machine waits, the next reboots it; whoever is watching is shown the page as it now stands.
+     */
+    @Override
+    public void crashKey() {
+        if (!(level instanceof ServerLevel server)) {
+            return;
+        }
+        final long now = server.getGameTime();
+        if (!crash.key(now)) {
+            return;
+        }
+        if (crash.held()) {
+            power.holdDown();
+        } else {
+            power.releaseDown(now);
+        }
+        ScreenSessions.eachWatcher(server, worldPosition,
+                (player, monitor) -> MonitorBlock.openCrash(player, server, monitor, worldPosition, this));
     }
 
     /** What this machine's system shows while it comes up. */

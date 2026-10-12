@@ -14,6 +14,7 @@ import dev.jstech.computers.client.BootSequenceScreen;
 import dev.jstech.computers.client.FirmwareScreen;
 import dev.jstech.computers.client.InstallerScreen;
 import dev.jstech.computers.client.OsInstallScreen;
+import dev.jstech.computers.client.CrashScreen;
 import dev.jstech.computers.client.SystemBootScreen;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
@@ -24,6 +25,7 @@ import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
+import dev.jstech.computers.operation.payload.crash.OpenCrashPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.core.client.live.LiveGraphics;
@@ -144,6 +146,12 @@ public final class SessionFaces {
                         boot.who());
                 yield AbstractComputerScreen.face(() -> new SystemBootScreen(
                         menu(inventory, monitor, boot.hostPos(), picture, MonitorSessionMenu.Phase.SYSTEM_BOOT),
+                        inventory, Component.empty()), AROUND_X, AROUND_Y);
+            }
+            case OpenCrashPayload crash -> {
+                CrashScreen.faceWith(crash, left);
+                yield AbstractComputerScreen.face(() -> new CrashScreen(
+                        menu(inventory, monitor, crash.hostPos(), picture, MonitorSessionMenu.Phase.SYSTEM_CRASH),
                         inventory, Component.empty()), AROUND_X, AROUND_Y);
             }
             case OpenInstallerPayload installer -> {

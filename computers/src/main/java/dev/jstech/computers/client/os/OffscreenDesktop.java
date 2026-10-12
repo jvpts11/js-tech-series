@@ -46,10 +46,9 @@ public final class OffscreenDesktop implements DesktopSurface {
     /**
      * Draws the desktop into an area of that size at the pose's origin, with the pointer at a point of it, the way the
      * monitor's screen draws it on a game window of that size: the monitor's frame, and the desktop inside its glass.
-     * Returns false while a cooperative kernel's crash screen is all there is to draw.
      */
-    public boolean paint(final GuiGraphics g, final int areaWidth, final int areaHeight, final int mouseX,
-                         final int mouseY, final float partialTick) {
+    public void paint(final GuiGraphics g, final int areaWidth, final int areaHeight, final int mouseX,
+                      final int mouseY, final float partialTick) {
         this.width = areaWidth;
         this.height = areaHeight;
         final DesktopViewport view = state.view();
@@ -61,7 +60,7 @@ public final class OffscreenDesktop implements DesktopSurface {
         Grounds.clear();
         drawingFace = true;
         try {
-            return state.paint(g, (int) Math.floor(view.localX(mouseX)), (int) Math.floor(view.localY(mouseY)),
+            state.paint(g, (int) Math.floor(view.localX(mouseX)), (int) Math.floor(view.localY(mouseY)),
                     partialTick);
         } finally {
             drawingFace = false;

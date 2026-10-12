@@ -241,12 +241,6 @@ final class WindowLayouts {
         powerCycling = true;
     }
 
-    /** Lets go of the programs kept for this machine, whose session a reboot has just ended. */
-    void forgetSession() {
-        SAVED_APPS.remove(host);
-        generation++;
-    }
-
     /**
      * Hands the layout back to the machine as the desktop closes, unless the machine is going down, and keeps the
      * programs' insides in this client. A question left unanswered is not kept, and neither is a window of one of

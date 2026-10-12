@@ -9,6 +9,8 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.menu.CommandPromptMenu;
+import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import java.util.ArrayList;
@@ -21,11 +23,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The computer screens the server opened for each player that are not container menus, and the desktop each
@@ -94,6 +98,27 @@ public final class ScreenSessions {
     }
 
     /**
+     * Each player at any screen of that machine on one of its monitors, with the monitor they are looking at: a
+     * session of the monitor's own, its desktop, its prompt or its terminal. What happens to the whole machine, as a
+     * crash does, is put in front of every one of them, whatever they had up.
+     */
+    public static void eachAtMachine(final ServerLevel level, final BlockPos host,
+                                     final BiConsumer<ServerPlayer, BlockPos> action) {
+        final List<ServerPlayer> watching = new ArrayList<>();
+        final List<BlockPos> monitors = new ArrayList<>();
+        for (final ServerPlayer player : level.players()) {
+            final BlockPos monitor = monitorOf(player.containerMenu, host);
+            if (monitor != null) {
+                watching.add(player);
+                monitors.add(monitor);
+            }
+        }
+        for (int at = 0; at < watching.size(); at++) {
+            action.accept(watching.get(at), monitors.get(at));
+        }
+    }
+
+    /**
      * Whether this player closed that machine's desktop a moment ago.
      *
      * <p>Reach is not asked: a desktop closes when its player walks away, and the windows it leaves open are
@@ -116,5 +141,17 @@ public final class ScreenSessions {
     @SubscribeEvent
     public static void onLoggedOut(final PlayerEvent.PlayerLoggedOutEvent event) {
         CLOSED_DESKTOPS.remove(event.getEntity().getUUID());
+    }
+
+    /* The monitor a player's open menu shows that machine on, or null when it shows another or none. */
+    @Nullable
+    private static BlockPos monitorOf(final AbstractContainerMenu menu, final BlockPos host) {
+        return switch (menu) {
+            case MonitorSessionMenu session when session.hostPos().equals(host) -> session.monitorPos();
+            case DesktopMenu desktop when desktop.hostPos().equals(host) -> desktop.monitorPos();
+            case CommandPromptMenu prompt when prompt.hostPos().equals(host) -> prompt.monitorPos();
+            case ComputerTerminalMenu terminal when terminal.hostPos().equals(host) -> terminal.monitorPos();
+            default -> null;
+        };
     }
 }

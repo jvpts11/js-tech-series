@@ -99,6 +99,25 @@ final class ComputerPower {
         return this.phases.downRemaining(now);
     }
 
+    /** Stops the closing-down's clock where it stands, until it is let go. */
+    void holdDown() {
+        this.phases.holdDown();
+    }
+
+    /** Lets a held closing-down go, ending it at once. */
+    void releaseDown(final long now) {
+        this.phases.releaseDown(now);
+    }
+
+    boolean downHeld() {
+        return this.phases.downHeld();
+    }
+
+    /** How long the system has been up, in ticks. */
+    long upFor(final long now) {
+        return this.phases.upFor(now);
+    }
+
     /**
      * The ticks the self-test still has to run, so a monitor opened halfway through shows the rest of it
      * rather than starting over. A machine that has not worked its length out yet answers nothing.

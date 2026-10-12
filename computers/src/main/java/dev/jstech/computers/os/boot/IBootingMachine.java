@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.os.boot;
 
+import dev.jstech.computers.os.crash.CrashPage;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * A machine on its way up or down: the self-test, the boot manager, the system coming up, and the closing down
  * before a restart.
@@ -61,6 +64,39 @@ public interface IBootingMachine {
     /** The ticks it still has to run, so a monitor opened part way through joins it where it is. */
     default int downRemaining() {
         return 0;
+    }
+
+    /**
+     * The page the system crashed onto, while it stands on the glass; null when it has not crashed.
+     *
+     * <p>Asked before whether the machine has power: a part taken out from under a running system leaves it without
+     * a computer at once, and the red page it went down on still stands its time before the monitor goes dark.
+     */
+    @Nullable
+    default CrashPage crashPage() {
+        return null;
+    }
+
+    /** The ticks the crash page still stands, so a monitor opened part way through joins it where it is. */
+    default int crashRemaining() {
+        return 0;
+    }
+
+    /** Whether a key on the console has stopped the automatic reboot of a kernel that offers to. */
+    default boolean crashHeld() {
+        return false;
+    }
+
+    /** Whether the monitor goes dark after the crash page rather than the machine starting over. */
+    default boolean crashEndsDark() {
+        return false;
+    }
+
+    /**
+     * A key was pressed on the console of a crashed system: a kernel that offers to stop its automatic reboot stops
+     * it, and once stopped the next key reboots.
+     */
+    default void crashKey() {
     }
 
     /**

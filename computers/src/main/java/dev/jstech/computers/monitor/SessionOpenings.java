@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
+import dev.jstech.computers.operation.payload.crash.OpenCrashPayload;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
@@ -23,6 +24,7 @@ import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.boot.SystemIntegrity;
+import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
@@ -86,6 +88,16 @@ public final class SessionOpenings {
         final boolean off = computer.poweringOff();
         return new OpenSystemBootPayload(owner, monitorPos, computer.downRemaining(), computer.downTotal(),
                 BootLines.shutdownFor(computer, !off), off, splashOf(computer), identityOf(computer).goingDown());
+    }
+
+    /**
+     * The page the machine's system crashed onto, at the point it has reached; null when it stands on none.
+     */
+    @Nullable
+    public static OpenCrashPayload crash(final BlockPos monitorPos, final BlockPos owner, final IOsHost computer) {
+        final CrashPage page = computer.crashPage();
+        return page == null ? null : new OpenCrashPayload(owner, monitorPos, page, computer.crashRemaining(),
+                computer.crashHeld(), computer.crashEndsDark());
     }
 
     /**

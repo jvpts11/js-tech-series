@@ -64,11 +64,8 @@ final class DesktopPainter {
         return hovered;
     }
 
-    /**
-     * Paints the desktop with the pointer at a desktop-local point. Returns false when a cooperative kernel's crash
-     * screen is all there is to draw, until the machine reboots.
-     */
-    boolean paint(final GuiGraphics g, final int lmx, final int lmy, final float partialTick) {
+    /** Paints the desktop with the pointer at a desktop-local point. */
+    void paint(final GuiGraphics g, final int lmx, final int lmy, final float partialTick) {
         final DesktopViewport view = desktop.view();
         final DesktopPrefs prefs = desktop.prefs();
         final int sw = view.width();
@@ -83,18 +80,6 @@ final class DesktopPainter {
         g.pose().scale((float) view.scale(), (float) view.scale(), 1);
         g.enableScissor(ox, oy, ox + view.glassWidth(), oy + view.glassHeight());
         renderWallpaper(g, sw, sh);
-        // A cooperative system that ran out of memory shows its crash screen, then reboots to an empty session.
-        final DesktopMemory memory = desktop.memory();
-        if (memory.crashing()) {
-            if (memory.crashOver()) {
-                desktop.reboot();
-            } else {
-                memory.renderCrash(g, sw, sh);
-                g.disableScissor();
-                g.pose().popPose();
-                return false;
-            }
-        }
         final boolean cde = desktop.panelStyle() == PanelStyle.CDE;
         final DesktopIcons grid = desktop.iconGrid();
         final int perCol = grid.perColumn();
@@ -129,7 +114,6 @@ final class DesktopPainter {
             g.disableScissor();
         }
         g.pose().popPose();
-        return true;
     }
 
     /** The boot picture's colour still giving way to the desktop it came up into, over all of it. */

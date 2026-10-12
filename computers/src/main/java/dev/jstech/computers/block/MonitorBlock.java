@@ -275,6 +275,8 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
         INSTALLER,
         /** The system is closing down before the machine starts over: the screen joins that. */
         GOING_DOWN,
+        /** The system crashed and its page is on the glass: the screen joins it where it stands. */
+        CRASHED,
         /** Hand over to whatever the boot target is (firmware, shell, desktop). */
         BOOT
     }
@@ -295,6 +297,13 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
      * machine from across the room must not change what happens when somebody sits down at it.
      */
     public static Entry entryFor(final IOsHost computer, final boolean settle) {
+        /*
+         * Before the power: a part taken out from under a running system leaves no computer at once, and the red
+         * page it went down on still stands its time on the glass before the monitor goes dark.
+         */
+        if (computer.crashPage() != null) {
+            return Entry.CRASHED;
+        }
         if (!computer.isRunning()) {
             return Entry.NO_POWER;
         }
@@ -384,6 +393,10 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
                     openSystemDown(player, level, monitorPos, owner, computer);
                     return;
                 }
+                case CRASHED -> {
+                    openCrash(player, level, monitorPos, owner, computer);
+                    return;
+                }
                 case INSTALLER -> {
                     openInstallerPrompt(player, level, monitorPos, owner, computer);
                     return;
@@ -426,6 +439,22 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
                                       final BlockPos owner, final IOsHost computer) {
         PacketDistributor.sendToPlayer(player, SessionOpenings.systemDown(monitorPos, owner, computer));
         openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_BOOT);
+    }
+
+    /**
+     * Sends the client the page this machine's system crashed onto, at the point it has reached, and puts it up.
+     *
+     * <p>The machine keeps the time here too, so a monitor opened half way through joins the page where it stands;
+     * a player already on it is sent the page again, which is how a key that stopped the reboot shows on the glass.
+     */
+    public static void openCrash(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+                                 final BlockPos owner, final IOsHost computer) {
+        final CustomPacketPayload page = SessionOpenings.crash(monitorPos, owner, computer);
+        if (page == null) {
+            return;
+        }
+        PacketDistributor.sendToPlayer(player, page);
+        openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_CRASH);
     }
 
     /**

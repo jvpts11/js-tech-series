@@ -13,16 +13,15 @@ import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 
 /**
- * The colours the desktop draws for itself, whatever system it wears: the crash of a system that shares its memory,
- * what is dragged across it, the panel's own menu in its dark and its light form, the tray's balloon, the shade
- * behind the power dialog and the mark on a hovered slot. They are {@code jsc:desktop/shell}.
+ * The colours the desktop draws for itself, whatever system it wears: what is dragged across it, the panel's own menu
+ * in its dark and its light form, the tray's balloon, the shade behind the power dialog and the mark on a hovered
+ * slot. They are {@code jsc:desktop/shell}.
  */
 @PaletteHolder
 final class DesktopShellPalette {
 
     static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/shell",
-            new Colours(0xFF0000AA, 0xFFAAAAAA, 0xFFFFFFFF,
-                    0xD0303848, 0xFFFFFFFF, 0x334C84F0, 0xCC4C84F0,
+            new Colours(0xD0303848, 0xFFFFFFFF, 0x334C84F0, 0xCC4C84F0,
                     0xFF262B36, 0xFFE7E9EF, 0xFF11151E, 0xFF3A4150,
                     0xFFE8E8EC, 0xFF1A2230, 0xFF000000, 0xFFFFFFFF, 0xFFB6BAC4, 0xFFFFFFFF,
                     0xFF000000, 0xFFFFFFE1, 0xFF1C53C9, 0xFFFFFFFF, 0xFF000000, 0xFF303030, 0xFFE8E8CA, 0xFF6A6A55,
@@ -39,9 +38,6 @@ final class DesktopShellPalette {
     /**
      * The desktop's own colours.
      *
-     * @param crashGround      the blue page a crashed system writes on
-     * @param crashBand        the grey band its heading sits on
-     * @param crashInk         its words
      * @param ghostFill        the label that follows a dragged icon
      * @param ghostInk         the words on it
      * @param bandFill         the inside of the band a drag selects with
@@ -68,8 +64,7 @@ final class DesktopShellPalette {
      * @param slotHover        the light over a hovered inventory slot
      * @param lunaProgress     the green a Frames XP progress bar fills with, and its blocks crossing a wait
      */
-    record Colours(int crashGround, int crashBand, int crashInk,
-                   int ghostFill, int ghostInk, int bandFill, int bandEdge,
+    record Colours(int ghostFill, int ghostInk, int bandFill, int bandEdge,
                    int darkMenuFill, int darkMenuInk, int darkMenuBorder, int darkMenuRule,
                    int lightMenuFill, int lightMenuInk, int lightMenuBorder, int lightMenuTop, int lightMenuRule,
                    int menuHoverInk,

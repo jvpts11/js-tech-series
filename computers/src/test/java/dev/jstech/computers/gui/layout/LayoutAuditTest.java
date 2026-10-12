@@ -54,7 +54,7 @@ class LayoutAuditTest {
             "RedstoneInterfaceLayout", "DeviceManagerLayout", "InfoCenterLayout", "PowerStripLayout",
             "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
             "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
-            "SystemBootLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
+            "SystemBootLayout", "CrashLayout", "CommandPromptLayout", "OsInstallLayout", "InstallerLayout",
             "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
             "NetworkServicesLayout", "NetworkLinksLayout", "PrinterLayout", "DockLayout", "PrintedPaperLayout",
             "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout",
@@ -147,6 +147,9 @@ class LayoutAuditTest {
         c.add(new AuditCase("KvmChannelLayout(0)", KvmChannelLayout.layout(0), true));
         c.add(new AuditCase("KvmChannelLayout(most)", KvmChannelLayout.layout(KvmChannelLayout.MOST_CHANNELS), true));
         c.add(AuditCase.onTheGlass("SystemBootLayout", SystemBootLayout.layout()));
+        // The newer Frames' crash page with its code at the size the line it carries makes, and Frames 95's title.
+        c.add(AuditCase.onTheGlass("CrashLayout(stop code)", CrashLayout.layout(29)));
+        c.add(AuditCase.onTheGlass("CrashLayout(Frames 95)", CrashLayout.frames95(60)));
         /*
          * The Command Prompt window is resizable, so audit it at the full glass size and at a compact one
          * that still leaves the console panel and the input strip room to draw; a bare terminal (MC-DOS, the

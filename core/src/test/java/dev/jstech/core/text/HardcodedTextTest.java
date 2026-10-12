@@ -120,6 +120,8 @@ class HardcodedTextTest {
             data(COMPUTERS + "operation/MoveLabels.java", 1, ORIGIN),
             data(COMPUTERS + "engine/prophet/ProphetEngine.java", 1, ORIGIN),
             data(COMPUTERS + "client/BootSplashArt.java", 5, LOGO),
+            data(COMPUTERS + "client/CrashScreen.java", 3, "a kernel's own words on its console, and the one line"
+                    + " the crash page's code carries, the same in every language"),
             data(COMPUTERS + "client/DesktopSplashArt.java", 2, LOGO),
             data(COMPUTERS + "client/os/CdeSplashArt.java", 1, LOGO),
             data(COMPUTERS + "client/MaintenanceTerminalTab.java", 3, QUERY),
@@ -165,6 +167,8 @@ class HardcodedTextTest {
             data(COMPUTERS + "machine/PortsTree.java", 2, FILES),
             data(COMPUTERS + "machine/SourceChains.java", 14, "build flags, as a source build prints and reads them"),
             data(COMPUTERS + "os/Branding.java", 2, PRODUCTS),
+            data(COMPUTERS + "os/crash/CrashPages.java", 67, "what a kernel prints as it panics, and where a"
+                    + " crashed system says it failed: no kernel ever printed them in anything but its own words"),
             data(COMPUTERS + "os/KernelNames.java", 4, "kernel names as a system reports them"),
             data(COMPUTERS + "os/OsBootstrap.java", 5, PRODUCTS),
             data(COMPUTERS + "os/OsRegistry.java", 2, "the kind of entry a registration names in the log"),

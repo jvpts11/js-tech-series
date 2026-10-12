@@ -222,9 +222,7 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         final double ly = view.localY(my);
         final int lmx = onGlass ? (int) Math.floor(lx) : OFF_GLASS;
         final int lmy = onGlass ? (int) Math.floor(ly) : OFF_GLASS;
-        if (!state.paint(g, lmx, lmy, lx, ly, partialTick)) {
-            return; // the crash screen is all there is until the machine reboots
-        }
+        state.paint(g, lmx, lmy, lx, ly, partialTick);
         hoveredSlot = state.hoveredSlot();
         // Over the glass the desktop draws the pointer itself, so the game's own is hidden there and only there.
         showOsPointer(!(ownPointer() && onGlass));

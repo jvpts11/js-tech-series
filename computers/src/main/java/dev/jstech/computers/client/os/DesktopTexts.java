@@ -11,9 +11,9 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 
 /**
- * What the desktop itself says, around the programs it runs: its errors and notices, the crash of a system that
- * ran out of memory, the menus of the wallpaper, of an icon and of a panel entry, and the power choices. File and
- * program names are data. Kept apart from the desktop so the language generator can read it on a server too.
+ * What the desktop itself says, around the programs it runs: its errors and notices, the menus of the wallpaper, of
+ * an icon and of a panel entry, and the power choices. File and program names are data. Kept apart from the desktop
+ * so the language generator can read it on a server too.
  */
 @TextHolder
 final class DesktopTexts {
@@ -39,14 +39,6 @@ final class DesktopTexts {
     static final TextKey CANNOT_OPEN = TextKey.of("jsc.desktop.cannot_open", "Cannot open");
     static final TextKey NO_PROGRAM_OPENS =
             TextKey.of("jsc.desktop.no_program_opens", "No program on this computer opens %s");
-
-    // The crash of a system that shares its memory with every program, one line of the screen to a line here.
-    static final TextKey CRASH_FATAL = TextKey.of("jsc.desktop.crash.fatal", "A fatal exception has occurred.");
-    static final TextKey CRASH_CAUSE = TextKey.of("jsc.desktop.crash.cause",
-            "This computer ran out of memory with too many\nprograms open, and the system became unstable.");
-    static final TextKey CRASH_NO_RECOVERY =
-            TextKey.of("jsc.desktop.crash.no_recovery", "The cooperative kernel cannot recover.");
-    static final TextKey REBOOTING = TextKey.of("jsc.desktop.crash.rebooting", "Rebooting...");
 
     // The panel's own menu.
     static final TextKey CASCADE = TextKey.of("jsc.desktop.panel.cascade", "Cascade Windows");

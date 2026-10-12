@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.operation.payload.crash.MemoryShortPayload;
 import dev.jstech.computers.os.GraphicsPrograms;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.MachineMemory;
@@ -15,24 +16,21 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.SchedulerKind;
 import dev.jstech.computers.os.VramLedger;
-import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.tier.HardwareEra;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * The machine's memory as its desktop sees it: the system, its desktop and its services hold their share (reserved,
  * from the server), and every open window holds its program's weight under the running system, by the same rule the
  * server applies. A window that does not fit is refused by a preemptive kernel, which says so in a balloon, and
- * brings a cooperative one (Frames 95's) down: the crash screen, then a reboot to an empty session.
+ * brings a cooperative one (Frames 95's) down: the machine is told, and it crashes onto its page and starts over.
  */
 final class DesktopMemory {
 
@@ -44,12 +42,6 @@ final class DesktopMemory {
     private final int reservedMb;
     /** The installed programs the machine built from source, by id path, whose windows hold a little less. */
     private final Set<String> sourceBuilt = new HashSet<>();
-    /** True while a cooperative kernel shows its crash screen, until the reboot. */
-    private boolean crashing;
-    private long crashUntil;
-
-    /** How long the crash screen stays up before the machine reboots, in milliseconds. */
-    private static final long CRASH_MS = 4200L;
 
     DesktopMemory(final DesktopState desktop, final ResourceLocation osId, final List<DesktopWindow> windows,
                   final int totalMb, final int reservedMb) {
@@ -99,7 +91,7 @@ final class DesktopMemory {
      * memory; otherwise a preemptive system refuses with the figures and a cooperative one crashes.
      */
     boolean allowOpen(final String key) {
-        if (crashing || !videoMemoryAllows(key)) {
+        if (!videoMemoryAllows(key)) {
             return false;
         }
         final int need = windowRamMb(key);
@@ -108,8 +100,8 @@ final class DesktopMemory {
             return true;
         }
         if (cooperative()) {
-            crashing = true;
-            crashUntil = System.currentTimeMillis() + CRASH_MS;
+            // A system with no memory protection does not refuse: it goes down, and the machine puts its page up.
+            PacketDistributor.sendToServer(new MemoryShortPayload(desktop.host(), desktop.nameOf(key)));
         } else {
             /*
              * A refusal the machine can simply report: the desktop is still there, so a balloon says it the way the
@@ -154,46 +146,7 @@ final class DesktopMemory {
         return false;
     }
 
-    /** Whether the crash screen is up. */
-    boolean crashing() {
-        return crashing;
-    }
-
-    /** Whether the crash screen has been up long enough for the machine to reboot. */
-    boolean crashOver() {
-        return crashing && System.currentTimeMillis() >= crashUntil;
-    }
-
-    /** Clears the crash once the machine has rebooted. */
-    void recover() {
-        crashing = false;
-    }
-
-    /** The cooperative kernel's crash screen: a classic blue fatal-error page, drawn in desktop-local coordinates. */
-    void renderCrash(final GuiGraphics g, final int sw, final int sh) {
-        final Font font = desktop.textFont();
-        final DesktopShellPalette.Colours c = DesktopShellPalette.get();
-        g.fill(0, 0, sw, sh, c.crashGround());
-        final int cy = sh / 3;
-        final String head = " Frames ";
-        final int hw = font.width(head) + 6;
-        g.fill((sw - hw) / 2, cy - 2, (sw + hw) / 2, cy + 10, c.crashBand());
-        Draw.text(g, font, head, (sw - font.width(head)) / 2, cy, c.crashGround());
-        final List<String> lines = new ArrayList<>();
-        lines.add(GameText.resolve(DesktopTexts.CRASH_FATAL));
-        // The cause is written over two lines of the screen, where the language breaks it.
-        lines.addAll(List.of(GameText.resolve(DesktopTexts.CRASH_CAUSE).split("\n")));
-        lines.add("");
-        lines.add(GameText.resolve(DesktopTexts.CRASH_NO_RECOVERY));
-        lines.add(GameText.resolve(DesktopTexts.REBOOTING));
-        int ly = cy + 20;
-        for (final String s : lines) {
-            Draw.text(g, font, s, (sw - font.width(s)) / 2, ly, c.crashInk());
-            ly += 11;
-        }
-    }
-
-    /** A cooperative kernel (Frames 95's) has no memory protection: overloading it crashes the whole desktop. */
+    /** A cooperative kernel (Frames 95's) has no memory protection: overloading it crashes the whole machine. */
     private boolean cooperative() {
         final OsDef os = OsRegistry.getOs(osId);
         final KernelDef kernel = os == null ? null : OsRegistry.getKernel(os.kernelId());

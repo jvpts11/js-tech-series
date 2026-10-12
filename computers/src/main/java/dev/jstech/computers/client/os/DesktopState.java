@@ -230,20 +230,17 @@ final class DesktopState {
         requestDesktop();
     }
 
-    /**
-     * Draws one frame of the desktop with the pointer at a desktop-local point. Returns false when a cooperative
-     * kernel's crash screen is all there is to draw, until the machine reboots.
-     */
-    boolean paint(final GuiGraphics g, final int lmx, final int lmy, final float partialTick) {
-        return paint(g, lmx, lmy, lmx, lmy, partialTick);
+    /** Draws one frame of the desktop with the pointer at a desktop-local point. */
+    void paint(final GuiGraphics g, final int lmx, final int lmy, final float partialTick) {
+        paint(g, lmx, lmy, lmx, lmy, partialTick);
     }
 
     /**
      * The same, with the pointer drawn at ({@code px}, {@code py}), the point to a fraction of a desktop pixel that
      * ({@code lmx}, {@code lmy}) rounds down, so the drawn pointer moves as finely as the mouse.
      */
-    boolean paint(final GuiGraphics g, final int lmx, final int lmy, final double px, final double py,
-                  final float partialTick) {
+    void paint(final GuiGraphics g, final int lmx, final int lmy, final double px, final double py,
+               final float partialTick) {
         this.pointerX = px;
         this.pointerY = py;
         layouts.pushIfChanged();
@@ -256,9 +253,7 @@ final class DesktopState {
         this.hoverX = lmx;
         this.hoverY = lmy;
         // Everything inside the windows (a progress bar, a terminal's cursor) moves the way this system moves.
-        final boolean[] painted = new boolean[1];
-        MotionScope.within(motion::ongoing, () -> painted[0] = painter.paint(g, lmx, lmy, partialTick));
-        return painted[0];
+        MotionScope.within(motion::ongoing, () -> painter.paint(g, lmx, lmy, partialTick));
     }
 
     /** The inventory slot under the pointer as the last frame found it, or null. */
@@ -282,10 +277,6 @@ final class DesktopState {
      * this desktop is restored. The layout goes back to the machine, and the programs' insides stay in this client.
      */
     void putAway() {
-        // A system that crashed reboots whether anybody stays to watch or not: the session it lost does not come back.
-        if (memory.crashing()) {
-            reboot();
-        }
         // A window still shrinking away is gone for good the moment nobody is looking.
         wm.settleClosing(Double.MAX_VALUE);
         FilesApps.forgetAll();
@@ -781,8 +772,7 @@ final class DesktopState {
      */
     boolean menuOrDialogOpen() {
         return start.isOpen() || panelMenu.isOpen() || taskbar.menu().isOpen() || cdeWindowMenu.isOpen()
-                || actionCenter.isOpen() || taskView.isOpen() || notices.popupUp() || power.isOpen()
-                || memory.crashing();
+                || actionCenter.isOpen() || taskView.isOpen() || notices.popupUp() || power.isOpen();
     }
 
     /** The program whose windows the panel's popup is showing, or null while none is up. */
@@ -854,16 +844,6 @@ final class DesktopState {
     /** A Linux desktop environment (bottom-panel KDE/Cinnamon or top-bar GNOME), as opposed to a Frames edition. */
     boolean linuxDesktop() {
         return is(PanelStyle.KDE) || is(PanelStyle.GNOME) || is(PanelStyle.CINNAMON);
-    }
-
-    /** Reboots after a crash: the session is lost (windows and their saved state), back to an empty desktop. */
-    void reboot() {
-        memory.recover();
-        notices.dismissBalloon();
-        windows.clear();
-        layouts.forgetSession();
-        start.close();
-        notices.dismissPopup();
     }
 
     /**

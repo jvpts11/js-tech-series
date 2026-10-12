@@ -59,7 +59,6 @@ public final class OffscreenDesktopClientTests {
                 .thenScreenshot(2, "offscreen-desktop")
                 .thenAssert(0, () -> ctx.mc().screen == canvas && !(ctx.mc().screen instanceof DesktopScreen),
                         "no desktop screen is open while the desktop draws")
-                .thenAssert(0, () -> canvas.painted, "the desktop draws itself rather than a crash screen")
                 .thenAssert(0, () -> !canvas.desktop.launcherLabels().isEmpty(),
                         "the desktop lists what Frames XP can start before the machine says anything")
                 .thenAssert(0, () -> rgb(ctx.pixel(1, 1)) == rgb(BACKDROP),
@@ -82,7 +81,6 @@ public final class OffscreenDesktopClientTests {
         @Nullable
         private OffscreenDesktop desktop;
         private int frames;
-        private boolean painted;
 
         Canvas() {
             super(Component.empty());
@@ -92,7 +90,7 @@ public final class OffscreenDesktopClientTests {
         public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
             g.fill(0, 0, width, height, BACKDROP);
             if (desktop != null) {
-                painted = desktop.paint(g, width, height, mouseX, mouseY, partialTick);
+                desktop.paint(g, width, height, mouseX, mouseY, partialTick);
                 frames++;
             }
         }

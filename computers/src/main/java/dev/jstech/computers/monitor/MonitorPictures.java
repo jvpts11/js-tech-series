@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.OpenBootMenuPayload;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
+import dev.jstech.computers.operation.payload.crash.OpenCrashPayload;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
@@ -55,7 +56,8 @@ public final class MonitorPictures {
             return IMonitorPicture.DARK;
         }
         final BlockEntity be = Loaded.blockEntity(level, owner);
-        if (!(be instanceof IOsHost host) || !host.isRunning()) {
+        // A system that crashed off its own parts has no power left, and its page still stands its time.
+        if (!(be instanceof IOsHost host) || !host.isRunning() && host.crashPage() == null) {
             return IMonitorPicture.DARK;
         }
         final BlockPos at = monitor.getBlockPos();
@@ -71,6 +73,7 @@ public final class MonitorPictures {
                         state(level, host, owner), post.halted() ? 0L : now + post.remainingTicks());
             }
             case GOING_DOWN -> booting(era, SessionOpenings.systemDown(at, owner, host), now);
+            case CRASHED -> crashed(era, SessionOpenings.crash(at, owner, host), now);
             case BOOTING -> booting(era, SessionOpenings.systemBoot(at, owner, host), now);
             case BOOT_MENU -> {
                 final OpenBootMenuPayload menu = SessionOpenings.bootMenu(at, owner, host);
@@ -94,6 +97,16 @@ public final class MonitorPictures {
         return new IMonitorPicture.Session(era,new OpenSystemBootPayload(boot.hostPos(), boot.monitorPos(), 0,
                 boot.totalTicks(), boot.sequence(), boot.endsDark(), boot.splash(), boot.who()), null,
                 now + boot.remainingTicks());
+    }
+
+    /* A crashed system's page, its clock stopped at nought and the time it ends beside it; dark when it stands none. */
+    private static IMonitorPicture crashed(@Nullable final HardwareEra era, @Nullable final OpenCrashPayload crash,
+                                           final long now) {
+        if (crash == null) {
+            return IMonitorPicture.DARK;
+        }
+        return new IMonitorPicture.Session(era, new OpenCrashPayload(crash.hostPos(), crash.monitorPos(), crash.page(),
+                0, crash.held(), crash.endsDark()), null, crash.held() ? 0L : now + crash.remainingTicks());
     }
 
     /* An install: an installer's page, as it is and with the parts it reads, or a copy with its clock stopped. */

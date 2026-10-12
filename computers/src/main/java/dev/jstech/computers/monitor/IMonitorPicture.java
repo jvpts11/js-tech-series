@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
+import dev.jstech.computers.operation.payload.crash.OpenCrashPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.Platform;
@@ -69,6 +70,7 @@ public sealed interface IMonitorPicture
     byte OPENING_COPY = 5;
     byte OPENING_INSTALLED = 6;
     byte OPENING_FIRMWARE = 7;
+    byte OPENING_CRASH = 8;
 
     StreamCodec<RegistryFriendlyByteBuf, IMonitorPicture> STREAM_CODEC =
             StreamCodec.of(IMonitorPicture::write, IMonitorPicture::read);
@@ -195,6 +197,10 @@ public sealed interface IMonitorPicture
                 buf.writeByte(OPENING_FIRMWARE);
                 OpenComputerUiPayload.STREAM_CODEC.encode(buf, firmware);
             }
+            case OpenCrashPayload crash -> {
+                buf.writeByte(OPENING_CRASH);
+                OpenCrashPayload.STREAM_CODEC.encode(buf, crash);
+            }
             default -> throw new IllegalArgumentException("no session opens with " + opening.type().id());
         }
     }
@@ -208,6 +214,7 @@ public sealed interface IMonitorPicture
             case OPENING_COPY -> OsInstallProgressPayload.STREAM_CODEC.decode(buf);
             case OPENING_INSTALLED -> OpenInstallDonePayload.STREAM_CODEC.decode(buf);
             case OPENING_FIRMWARE -> OpenComputerUiPayload.STREAM_CODEC.decode(buf);
+            case OPENING_CRASH -> OpenCrashPayload.STREAM_CODEC.decode(buf);
             default -> throw new IllegalArgumentException("unknown session opening");
         };
     }

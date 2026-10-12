@@ -536,11 +536,6 @@ interface DesktopInspection {
         return out;
     }
 
-    /** Whether a system with no memory protection is showing its crash page, until the machine reboots. */
-    default boolean crashing() {
-        return desktop().memory().crashing();
-    }
-
     /** The memory meter's "used/total MB": what the system and the open windows hold, of the machine's whole. */
     default String memoryMeter() {
         return desktop().memory().meterText();

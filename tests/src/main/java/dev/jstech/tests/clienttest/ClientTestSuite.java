@@ -41,6 +41,7 @@ public final class ClientTestSuite {
             CdeClientTests.class,
             ComputerCaseClientTests.class,
             CoreStateClientTests.class,
+            CrashPagesClientTests.class,
             CraftingChainClientTests.class,
             DesktopMenuClientTests.class,
             DeviceManagerClientTests.class,

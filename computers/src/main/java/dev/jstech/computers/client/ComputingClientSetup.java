@@ -16,6 +16,7 @@ import dev.jstech.computers.block.IInstallProgressScreenOpener;
 import dev.jstech.computers.block.IInstallerScreenOpener;
 import dev.jstech.computers.block.IKvmScreenOpener;
 import dev.jstech.computers.block.IPostScreenOpener;
+import dev.jstech.computers.block.ICrashScreenOpener;
 import dev.jstech.computers.block.ISystemBootScreenOpener;
 import dev.jstech.computers.api.client.IOperatingSpaceScreen;
 import dev.jstech.computers.api.client.OperatingSpaceScreens;
@@ -126,6 +127,7 @@ public final class ComputingClientSetup {
         ISystemBootScreenOpener.Holder.set(
                 (pos, monitorPos, sequence, remaining, total, endsDark, splash, who) ->
                         SystemBootScreen.expect(sequence, remaining, total, endsDark, splash, who));
+        ICrashScreenOpener.Holder.set(CrashScreen::expect);
         IInstallProgressScreenOpener.Holder.set(
                 (pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal) -> {
                     OsInstallScreen.expectWorking(kind, osName, targetLabel, ticksLeft, ticksTotal);
@@ -148,6 +150,7 @@ public final class ComputingClientSetup {
                             case INSTALLER -> new InstallerScreen(menu, inv, title);
                             case BOOT_MENU -> new BootMenuScreen(menu, inv, title);
                             case KVM -> new KvmChannelScreen(menu, inv, title);
+                            case SYSTEM_CRASH -> new CrashScreen(menu, inv, title);
                             default -> new SystemBootScreen(menu, inv, title);
                         });
         event.register(ComputingMenus.DESKTOP_MENU.get(), DesktopScreen::new);

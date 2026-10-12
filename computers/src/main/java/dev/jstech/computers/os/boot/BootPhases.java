@@ -56,12 +56,19 @@ public final class BootPhases {
     private int downTicksTotal;
     /** Whether the closing-down ends with the machine switched off rather than testing itself again. */
     private boolean poweringOff;
+    /**
+     * Whether a key has stopped the closing-down's clock: a kernel that offers to keep its panic on the console waits
+     * there, with no end in sight, until another key lets it go.
+     */
+    private boolean downHeld;
 
     /* The system coming up, after the self-test and before the desktop or the prompt. */
     private boolean booting;
     private long bootEndsAt;
     /** How long this coming-up takes in all, so a bar drawn half way through knows how far along it is. */
     private int bootTicksTotal;
+    /** The game time the system finished coming up, for how long it has been up; zero until it has. */
+    private long upSince;
 
     /** Whether the machine owes a power-on self-test or is in the middle of one. */
     public boolean needsPost() {
@@ -79,6 +86,7 @@ public final class BootPhases {
         this.postEndsAt = 0L;
         if (value) {
             this.halted = false;
+            this.upSince = 0L;
             endDown();
             endMenu();
             endBoot();
@@ -117,7 +125,33 @@ public final class BootPhases {
 
     /** Whether the machine has finished closing down and it is time to test itself again or to switch off. */
     public boolean downDone(final long now) {
-        return this.goingDown && now >= this.downEndsAt;
+        return this.goingDown && !this.downHeld && now >= this.downEndsAt;
+    }
+
+    /** Stops the closing-down's clock where it stands, until {@link #releaseDown} lets it go. */
+    public void holdDown() {
+        this.downHeld = this.goingDown;
+    }
+
+    /** Lets a held closing-down go, ending it at once. */
+    public void releaseDown(final long now) {
+        this.downHeld = false;
+        this.downEndsAt = now;
+    }
+
+    /** Whether a key has stopped the closing-down's clock. */
+    public boolean downHeld() {
+        return this.downHeld;
+    }
+
+    /** The system has finished coming up, now. */
+    public void systemUp(final long now) {
+        this.upSince = now;
+    }
+
+    /** How long the system has been up, in ticks; zero for one that has not come up since the power came on. */
+    public long upFor(final long now) {
+        return this.upSince == 0L ? 0L : Math.max(0L, now - this.upSince);
     }
 
     /** How long this closing-down takes in all, so a screen joining it knows how far along it is. */
@@ -134,6 +168,7 @@ public final class BootPhases {
     public void endDown() {
         this.goingDown = false;
         this.poweringOff = false;
+        this.downHeld = false;
         this.downEndsAt = 0L;
         this.downTicksTotal = 0;
     }
@@ -264,6 +299,7 @@ public final class BootPhases {
          * self-test that found it and could send a machine that was just switched on past its new one.
          */
         this.halted = false;
+        this.upSince = 0L;
         endDown();
         endMenu();
         endBoot();
