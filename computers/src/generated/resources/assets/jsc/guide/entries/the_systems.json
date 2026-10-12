@@ -78,7 +78,7 @@
             "unit": "MB"
           },
           {
-            "amount": 16,
+            "amount": 32,
             "unit": "MB"
           }
         ],
@@ -94,7 +94,7 @@
             "unit": "MB"
           },
           {
-            "amount": 64,
+            "amount": 128,
             "unit": "MB"
           }
         ],
@@ -110,7 +110,7 @@
             "unit": "MB"
           },
           {
-            "amount": 384,
+            "amount": 1024,
             "unit": "MB"
           }
         ],
@@ -126,7 +126,7 @@
             "unit": "MB"
           },
           {
-            "amount": 512,
+            "amount": 3072,
             "unit": "MB"
           }
         ],
@@ -142,7 +142,7 @@
             "unit": "MB"
           },
           {
-            "amount": 768,
+            "amount": 8192,
             "unit": "MB"
           }
         ],
@@ -257,6 +257,10 @@
       "text": "jsc.guide.the_systems.text5"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.the_systems.text6"
+    },
+    {
       "type": "table",
       "caption": "jsc.guide.the_systems.table2",
       "heads": [
@@ -308,7 +312,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.the_systems.text6"
+      "text": "jsc.guide.the_systems.text7"
     },
     {
       "type": "heading",

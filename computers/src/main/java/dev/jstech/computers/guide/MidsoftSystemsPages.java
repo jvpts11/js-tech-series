@@ -62,11 +62,11 @@ final class MidsoftSystemsPages {
                         + " are counted in megabytes (MB), and the table below gives them for each edition"
                         + " ([](jsc:frames_memory)).")
                 .table("Own RAM and footprint of each edition", "Edition", "Own RAM (MB)", "Footprint (MB)")
-                .row(GuideCell.words("Frames 95"), GuideCell.amount(16, "MB"), GuideCell.amount(48, "MB"))
-                .row(GuideCell.words("Frames XP"), GuideCell.amount(64, "MB"), GuideCell.amount(1536, "MB"))
-                .row(GuideCell.words("Frames 7"), GuideCell.amount(384, "MB"), GuideCell.amount(16384, "MB"))
-                .row(GuideCell.words("Frames 10"), GuideCell.amount(512, "MB"), GuideCell.amount(16384, "MB"))
-                .row(GuideCell.words("Frames 11"), GuideCell.amount(768, "MB"), GuideCell.amount(20480, "MB"))
+                .row(GuideCell.words("Frames 95"), GuideCell.amount(32, "MB"), GuideCell.amount(48, "MB"))
+                .row(GuideCell.words("Frames XP"), GuideCell.amount(128, "MB"), GuideCell.amount(1536, "MB"))
+                .row(GuideCell.words("Frames 7"), GuideCell.amount(1024, "MB"), GuideCell.amount(16384, "MB"))
+                .row(GuideCell.words("Frames 10"), GuideCell.amount(3072, "MB"), GuideCell.amount(16384, "MB"))
+                .row(GuideCell.words("Frames 11"), GuideCell.amount(8192, "MB"), GuideCell.amount(20480, "MB"))
                 .paragraph("A disk measures its room in items, and an item takes 1 MB on a Vintage disk, 16 MB on"
                         + " a Legacy disk and 256 MB on a disk of the Transition era or newer. So the same system"
                         + " takes fewer items on a newer disk. The footprint counts whole items, rounded up"
@@ -318,28 +318,44 @@ final class MidsoftSystemsPages {
                 .paragraph("Setup does not refuse a machine for having little memory. Its check page shows your"
                         + " Memory line, and a machine with little memory can still take a Frames install. It then"
                         + " runs tight and boots slowly, as the section on tight RAM explains below.")
-                .paragraph("The system keeps its own RAM first, before anything else: 16 MB for Frames 95, 64 MB for"
-                        + " XP, 384 MB for 7, 512 MB for 10 and 768 MB for Frames 11 ([](jsc:frames_which_machine))."
-                        + " Every"
-                        + " window you open takes memory too. A window holds its program's own RAM. A program that"
-                        + " comes with the system holds a quarter of the system's own RAM, and at least 1 MB.")
-                .paragraph("Free memory is the machine's total minus everything held. The kernel decides what happens"
-                        + " when a new window needs more than is free. Each edition's kernel is named in the table.")
-                .table("What a window that does not fit does", "Edition", "Kernel", "What happens")
-                .row(GuideCell.words("Frames 95"), GuideCell.words("Cooperative"), GuideCell.words("The desktop"
-                        + " crashes."))
+                .paragraph("The system keeps its own RAM first, before anything else: 32 MB for Frames 95, 128 MB for"
+                        + " XP, 1 GB for 7, 3 GB for 10 and 8 GB for Frames 11 ([](jsc:frames_which_machine)). Every"
+                        + " window you open takes memory too: its program's own RAM.")
+                .paragraph("What a program holds grows with the era of the machine it runs on, because software grew"
+                        + " with the machines it was written for. The figure a program gives is what it holds on a"
+                        + " Legacy machine. It holds a sixteenth of that on a Vintage machine, 8 times as much on a"
+                        + " Transition machine, 32 times on a Standard machine and 128 times on an Advanced machine. A"
+                        + " program that comes with the system holds 16 MB on a Legacy machine. A typical machine of"
+                        + " each era, with two memory sticks of the middle size, holds its system and about eight"
+                        + " programs.")
+                .paragraph("Free memory is the machine's total minus everything held. When a program needs more than"
+                        + " is free, every Frames edition crashes: it does not refuse the program. This is true for a"
+                        + " window, for a program started at the prompt and for a service. The newer editions warn"
+                        + " first, as the table shows.")
+                .table("What happens as the memory fills", "Edition", "Kernel", "What happens")
+                .row(GuideCell.words("Frames 95"), GuideCell.words("Cooperative"), GuideCell.words("The system"
+                        + " crashes, with no warning."))
                 .row(GuideCell.words("Frames XP, 7, 10 and 11"), GuideCell.words("Preemptive"),
-                        GuideCell.words("The window is refused, and a balloon says why."))
-                .subheading("The crash on Frames 95")
-                .paragraph("The desktop shows a crash page with \"A fatal exception has occurred.\", then"
-                        + " \"This computer ran out of memory with too many programs open, and the system became"
-                        + " unstable.\" and \"The cooperative kernel cannot recover.\"")
-                .paragraph("The page stays for 4.2 seconds, then the computer reboots into an empty session. Keys and"
-                        + " clicks do nothing until the reboot.")
-                .subheading("The refusal on the other editions")
-                .paragraph("The desktop stays up, and a balloon in the notification area says \"Low on memory\". Its"
-                        + " text starts \"This computer is running out of RAM for programs.\", and then names the"
-                        + " program, the megabytes it needs and the megabytes free.")
+                        GuideCell.words("A balloon warns once the memory passes nine tenths. Then the system"
+                                + " crashes on the program that does not fit."))
+                .subheading("The warning")
+                .paragraph("On Frames XP, 7, 10 and 11, the window that takes the memory past nine tenths opens with"
+                        + " a balloon that says \"Low on memory\". Its text asks you to close some programs, and names"
+                        + " the three that hold the most, with what each holds.")
+                .subheading("The crash")
+                .paragraph("Each edition goes down on its own page. Frames 95 shows \"A fatal exception has"
+                        + " occurred.\". XP and 7 show a stop error named MEMORY_MANAGEMENT. Frames 10 and 11 show a"
+                        + " sad face, a code you can scan, and the stop code MEMORY_MANAGEMENT.")
+                .paragraph("The page is on every monitor that shows the computer, and keys and clicks do nothing"
+                        + " while it stands. The programs the computer ran stop. The page stays for 4.2 seconds on"
+                        + " Frames 95, 6 seconds on XP, 8 seconds on 7 and 10 seconds on 10 and 11. Then the computer"
+                        + " starts over from its self-test, into an empty session.")
+                .subheading("The red page")
+                .paragraph("A part taken out of a running computer brings the system down too: a stick of memory, an"
+                        + " expansion card, or the disk the system runs from. Frames shows the same page in red, and"
+                        + " Frames 10 and 11 name the part. If the computer still has what it needs to run, it starts"
+                        + " over after the page. If it does not, the monitor goes dark. Taking out the processor, the"
+                        + " board or the power supply switches the computer off at once, with no page.")
                 .paragraph("Graphics programs also need video memory. When a window needs"
                         + " more than is free, the balloon says \"Not enough video memory\" and asks you to turn off a"
                         + " monitor or close a graphics program.")
@@ -348,11 +364,11 @@ final class MidsoftSystemsPages {
                         + " tight boot takes one and a half times as long. You can see the limit for each edition in"
                         + " the table.")
                 .table("Memory below which each edition is tight", "Edition", "Tight below")
-                .row(GuideCell.words("Frames 95"), GuideCell.amount(32, "MB"))
-                .row(GuideCell.words("Frames XP"), GuideCell.amount(128, "MB"))
-                .row(GuideCell.words("Frames 7"), GuideCell.amount(768, "MB"))
-                .row(GuideCell.words("Frames 10"), GuideCell.amount(1024, "MB"))
-                .row(GuideCell.words("Frames 11"), GuideCell.amount(1536, "MB"))
+                .row(GuideCell.words("Frames 95"), GuideCell.amount(64, "MB"))
+                .row(GuideCell.words("Frames XP"), GuideCell.amount(256, "MB"))
+                .row(GuideCell.words("Frames 7"), GuideCell.amount(2048, "MB"))
+                .row(GuideCell.words("Frames 10"), GuideCell.amount(6144, "MB"))
+                .row(GuideCell.words("Frames 11"), GuideCell.amount(16384, "MB"))
                 .paragraph("A boot takes about one second, plus the system's footprint in megabytes divided by (160"
                         + " times the disk's speed times the machine's era factor). The disk's speed is 1 for a hard"
                         + " disk, 4 for a solid-state drive (SSD) and 16 for an NVMe drive. The era factor is 2 for"
@@ -369,11 +385,15 @@ final class MidsoftSystemsPages {
                         + " hold the processor.")
                 .define("Balloon", "The small notice that appears in the notification area of the desktop.")
                 .define("Tight RAM", "The state of a machine that holds less than twice its system's own RAM.")
-                .ifSomethingGoesWrong("The computer reboots after a crash page on Frames 95.",
-                        "The new window needed more memory than was free. Close a program before you open another one,"
+                .ifSomethingGoesWrong("The computer reboots after a blue crash page.",
+                        "A program needed more memory than was free. Close a program before you open another one,"
                                 + " or add RAM ([](jsc:memory)).",
                         "A balloon says \"Low on memory\".",
-                        "Close a program, or add RAM to the computer ([](jsc:memory)).",
+                        "The memory is past nine tenths. Close a program, or add RAM to the computer"
+                                + " ([](jsc:memory)).",
+                        "The crash page is red.",
+                        "A part was taken out while the computer ran. Put it back, and switch the computer on again"
+                                + " if its monitor went dark.",
                         "A balloon says \"Not enough video memory\".",
                         "Turn off a monitor, or close a graphics program.",
                         "The computer takes a long time to start.",

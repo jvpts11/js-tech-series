@@ -70,17 +70,17 @@ same as Linux's at a prompt, and that is all they share: nothing made for one ru
 | MC-DOS | Vintage | `dos` | terminal | 4 | 1 | guided | media |
 | MC-NET | Vintage | `net_min` | Interactor | 8 | 2 | guided | media |
 | UNIX System V | Vintage | `unix` | terminal | 10 | 2 | guided | media |
-| Frames 95 | Legacy | `win9x` | desktop | 48 | 16 | guided | `pckmgr` |
-| Frames XP | Legacy | `nt` | desktop | 1,536 | 64 | guided | `pckmgr` |
+| Frames 95 | Legacy | `win9x` | desktop | 48 | 32 | guided | `pckmgr` |
+| Frames XP | Legacy | `nt` | desktop | 1,536 | 128 | guided | `pckmgr` |
 | FreeBSD | Legacy | `freebsd` | terminal | 2,048 | 16 | guided | `pkg` |
 | Debian | Legacy | `linux` | terminal | 4,096 | 24 | guided | `apt` |
 | Ubuntu | Legacy | `linux` | terminal | 8,192 | 48 | guided | `apt` |
 | Fedora | Legacy | `linux` | terminal | 8,192 | 48 | guided | `dnf` |
 | Arch Linux | Legacy | `linux` | terminal | 2,048 | 12 | by hand | `pacman` |
 | Gentoo | Legacy | `linux` | terminal | 4,096 | 12 | compiled | `emerge` |
-| Frames 7 | Transition | `nt` | desktop | 16,384 | 384 | guided | `pckmgr` |
-| Frames 10 | Standard | `nt` | desktop | 16,384 | 512 | guided | `pckmgr` |
-| Frames 11 | Advanced | `nt` | desktop | 20,480 | 768 | guided | `pckmgr` |
+| Frames 7 | Transition | `nt` | desktop | 16,384 | 1,024 | guided | `pckmgr` |
+| Frames 10 | Standard | `nt` | desktop | 16,384 | 3,072 | guided | `pckmgr` |
+| Frames 11 | Advanced | `nt` | desktop | 20,480 | 8,192 | guided | `pckmgr` |
 
 Disk and memory are in MB, as the box would print them; they are estimates. What a system costs in items depends on the
 disk it is on ([Storage devices](storage-devices.md)): MC-DOS fills a fifth of a 20 MB Vintage disk; Frames 11 takes 80
@@ -187,6 +187,46 @@ its system's form:
 A topic is called by the last part of its id or by its title; the search finds the entries with all the words, and the
 commands that have them in their name or summary.
 
+## Memory and crashes
+
+A program holds what it declares on a Legacy machine, a sixteenth of that on a Vintage one, 8 times on a Transition, 32
+on a Standard and 128 on an Advanced, each era four times the last past that: the ratio between the typical machines'
+memories, so the typical machine of each era (two modules of its middle size: 32 MB, 512 MB, 4 GB, 16 GB, 64 GB) holds
+its system and about eight average programs, and a full board five to ten times that. A program that declares nothing
+holds 48 MB on a Legacy machine, a tool the system ships 16, a service 24, a desktop 64. The numbers are estimates, to
+tune in play.
+
+When a program needs more than is free, each system answers as its real one did:
+
+- **Frames** goes down, whatever asked: a window, a program started at the prompt, a service. Frames 95, with no memory
+  protection, at once; XP, 7, 10 and 11 first warn with a balloon (*Low on memory*) once the memory passes nine tenths,
+  naming the three programs that hold the most, and go down on the program that doesn't fit. Each edition has its own
+  page: the fatal exception of 95, the STOP screen of XP and 7, the sad face of 10 and 11 with a real scannable code and
+  the stop code (`MEMORY_MANAGEMENT`).
+- **Linux, FreeBSD and UNIX** let the program in and their kernel's out-of-memory killer ends what holds the most (a
+  window, a program, a service; of equals, the latest), until everything fits, each logged in the kernel's own words
+  (`Out of memory: Killed process 1234 (calc)` on Linux, `pid 1234 (calc), jid 0, uid 0, was killed: out of swap space`
+  on FreeBSD, `NOTICE: out of memory: process 1234 (calc) killed` on UNIX), printed on the console and kept for
+  `dmesg`. A desktop closes the window that went with a balloon (*Out of memory*); a program ended in front of a terminal
+  leaves the shell's `Killed`; a service ended stays down until the machine starts over (a Mainframe's network engine,
+  Automation Engine and Mirror included). Only when nothing is left to end does the kernel panic.
+- **MC-DOS and MC-NET** refuse the program and say why.
+
+A crash is the machine's, not the screen's: the page is on every monitor showing the machine, nothing typed or clicked
+reaches anything, everything the machine ran dies, and once the page has stood its time the machine starts over from its
+self-test into an empty session (FreeBSD's countdown stops on a key, and the next key reboots). A **red page** is a fault
+of the hardware: a memory module, an expansion card or the system's disk taken out of a running machine (the hot-swap
+bays excepted, they are made for it); Linux and FreeBSD panic on a machine check and UNIX on a memory parity error. A
+machine left whole starts over; one left with no computer goes dark. The processor, the board or the power supply taken
+out switch it off at once, with no page.
+
+`ps` on a Unix lists the system's own processes before the programs: its first process at number 1 (systemd on the
+distributions that start it, init on Gentoo, FreeBSD and UNIX) and each running service at a number it keeps; the
+programs are numbered from 1000, on every system. `kill` takes a signal (`-9`, `-KILL`, `-s KILL`; TERM when none); a
+signal to a service stops it until the machine starts over, and one to process 1 ends init: the kernel panics
+(*Attempted to kill init!* on Linux, *Going nowhere without my init!* on FreeBSD, *init died* on UNIX). On a real Linux
+the kernel ignores a kill of init from the system; here it is what it would do if it didn't, by choice.
+
 ## Special cases
 
 - **The Mainframe needs a system** to orchestrate (above). The smallest systems (MC-DOS, MC-NET) are cheap and quick to
@@ -199,6 +239,9 @@ commands that have them in their name or summary.
 
 ## To build
 
+- **Crashes on rack servers:** a rack's machines follow their system's rule as every computer does (the crash pages, the
+  out-of-memory killer, the red page); today a rack server only refuses what does not fit. Later triggers of the red
+  page: a thermal trip, a failing power supply, unstable power ([Temperature](temperature.md), [Power](power.md)).
 - **Accounts and passwords:** every system has real user accounts and its `passwd`; with a directory on the network, the
   login is the network's ([Security](security.md)). Today they only exist as pages.
 - **The portable devices' mobile systems** ([Wireless](wireless.md)): real systems, from the factory, with no installer,

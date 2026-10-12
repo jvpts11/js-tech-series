@@ -1593,6 +1593,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   empty session. Frames 95's crash was a picture on the player's own desktop only: the keyboard still reached the
   program behind it, and a player who left the monitor during it came back to every window open before the crash.
   Linux, FreeBSD and UNIX have their own crash pages too, their kernels' panics on the console.
+- The manual's page on memory and the Frames editions is written for the whole family: every edition's crash, the
+  warning past nine tenths, the red page of a part taken out, and what programs hold on each era; the tables of what
+  each system keeps for itself give the new figures. The shell chapter's page on processes tells of the first process,
+  the signals `kill` sends, the out-of-memory killer, `dmesg` and the kernel's panic.
 - What a program holds in memory grows with the era of the machine it runs on, as software grew with the machines it
   was written for: each program holds what it declares on a Legacy machine, a sixteenth of that on a Vintage one,
   eight times on a Transition, thirty-two on a Standard and a hundred and twenty-eight on an Advanced, the tools a

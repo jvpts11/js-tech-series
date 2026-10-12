@@ -145,9 +145,10 @@ Memory has two jobs:
    maximum is 8 × 32,768 = 262,144 items.
 2. **Working memory.** Memory is also where the computer's own work lives. The operating system, the desktop, every
    service, every program running, every open window and every Σ# process takes megabytes, in a **memory ledger** per
-   computer, kept on the server. A computer's total memory is the sum of its modules. A program only opens if the memory
-   it *promises* to need fits beside what is already promised; the screens show what is really *held* at that moment,
-   which is usually less. Every system's Task Manager and System Monitor read the same ledger ([Programs](programs.md),
+   computer, kept on the server. A computer's total memory is the sum of its modules. What decides whether a program fits
+   is the memory it *promises* to need beside what is already promised, and what a program promises grows with the era of
+   the machine; one that doesn't fit is answered as the system does ([Operating systems](operating-systems.md)). The
+   screens show what is really *held* at that moment, which is usually less. Every system's Task Manager and System Monitor read the same ledger ([Programs](programs.md),
    [Operating systems](operating-systems.md)). Graphics on the die take their memory from here.
 
 Memory never stores items as storage. Fast reads of the most requested items are the job of the Predictive Cache and the

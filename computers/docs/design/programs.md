@@ -17,7 +17,9 @@ A program takes **no** orchestration capacity from Operations. What it spends:
 - **Video memory:** graphical windows and programs that draw (Paint).
 - **Instructions:** a Σ# program spends the machine's instruction credits ([Σ and Σ#](sigma.md)).
 
-A computer that hasn't the memory for a program refuses to open it and says why.
+What a program holds grows with the era of the machine it runs on, and a computer that hasn't the memory for it answers as
+its system does: Frames goes down, Linux, FreeBSD and UNIX end what holds the most, MC-DOS and MC-NET refuse it
+([Operating systems](operating-systems.md)).
 
 What decides whether a program installs on a machine:
 

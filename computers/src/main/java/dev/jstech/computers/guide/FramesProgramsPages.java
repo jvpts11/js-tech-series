@@ -434,9 +434,9 @@ final class FramesProgramsPages {
                         "It needs Frames XP or newer ([](jsc:frames_xp)).",
                         "The disk has less than 512 MB of free space when you install it.",
                         "Free up 512 MB of disk space, then install it.",
-                        "The window says \"Low on memory\".",
-                        "This computer is running out of RAM for programs. Close other programs, or add memory"
-                                + " ([](jsc:frames_memory)).",
+                        "A balloon says \"Low on memory\".",
+                        "The memory is past nine tenths. Close other programs, or add memory, before the system runs"
+                                + " out and goes down ([](jsc:frames_memory)).",
                         "The result says Build failed.",
                         "Fix the errors the build reports, then press [[Ctrl]]+[[Shift]]+[[B]] again.")
                 .seeAlso("jsc:book_of_sigma", "jsc:sigma_editors")

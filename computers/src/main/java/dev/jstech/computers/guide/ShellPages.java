@@ -365,11 +365,17 @@ final class ShellPages {
     private static void processesAndJobs(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("processes_and_jobs", section).titled("Processes, jobs and scheduling")
                 .paragraph("A process is a program that is running now. Each process has a number, its process ID"
-                        + " (PID), and the ps command lists them with it.")
+                        + " (PID), and the ps command lists them with it. It lists the system's own processes first."
+                        + " Number 1 is the first process, which starts every other one: systemd on most Linux"
+                        + " distributions, and init on Gentoo, FreeBSD and UNIX. Each service the system runs comes"
+                        + " next, and the programs you start are numbered from 1000.")
                 .define("Process", "A program that is running. Every running program has a number, which ps lists"
                         + " as its PID.")
                 .paragraph("The kill command stops a process by its number. The process stops where it stands, and any"
-                        + " work it had not finished stays not done.")
+                        + " work it had not finished stays not done. A signal can come before the number, such as -9"
+                        + " or -KILL, and kill -l lists the signals. A service you stop stays stopped until the"
+                        + " computer starts again. Stopping process 1 takes the whole system down: the kernel panics,"
+                        + " prints why on the screen, and the computer starts over by itself.")
                 .paragraph("A job is a background command you started with an ampersand. You list your jobs with"
                         + " jobs, and you stop one with kill %1, where 1 is its number in that list.")
                 .command(CommandGuidePages.id(Platform.LINUX, "ps"))
@@ -377,7 +383,10 @@ final class ShellPages {
                 .paragraph("When the computer runs out of memory, the kernel, the core of the system, ends the"
                         + " process that holds the most, then the next, until everything left fits. The dmesg command"
                         + " prints what the kernel has logged since the computer started: what it found as it came up,"
-                        + " and a line for each process it ended.")
+                        + " and a line for each process it ended. On a desktop, a window the kernel ends closes with"
+                        + " a balloon, \"Out of memory\", that names it. A program ended in front of the terminal"
+                        + " leaves the word Killed. Only when nothing is left to end does the kernel panic, and then"
+                        + " the computer starts over by itself.")
                 .command(CommandGuidePages.id(Platform.LINUX, "dmesg"))
                 .command(CommandGuidePages.id(Platform.LINUX, "jobs"))
                 .paragraph("The crontab command sets a line that the machine runs by itself, at an hour you choose,"

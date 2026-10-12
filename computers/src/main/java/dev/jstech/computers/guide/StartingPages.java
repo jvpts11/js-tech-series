@@ -509,15 +509,15 @@ final class StartingPages {
                 .row(GuideCell.words("UNIX System V"), GuideCell.words("Vintage"), GuideCell.amount(10, "MB"),
                         GuideCell.amount(2, "MB"))
                 .row(GuideCell.words("Frames 95"), GuideCell.words("Legacy"), GuideCell.amount(48, "MB"),
-                        GuideCell.amount(16, "MB"))
+                        GuideCell.amount(32, "MB"))
                 .row(GuideCell.words("Frames XP"), GuideCell.words("Legacy"), GuideCell.amount(1536, "MB"),
-                        GuideCell.amount(64, "MB"))
+                        GuideCell.amount(128, "MB"))
                 .row(GuideCell.words("Frames 7"), GuideCell.words("Transition"), GuideCell.amount(16384, "MB"),
-                        GuideCell.amount(384, "MB"))
+                        GuideCell.amount(1024, "MB"))
                 .row(GuideCell.words("Frames 10"), GuideCell.words("Standard"), GuideCell.amount(16384, "MB"),
-                        GuideCell.amount(512, "MB"))
+                        GuideCell.amount(3072, "MB"))
                 .row(GuideCell.words("Frames 11"), GuideCell.words("Advanced"), GuideCell.amount(20480, "MB"),
-                        GuideCell.amount(768, "MB"))
+                        GuideCell.amount(8192, "MB"))
                 .row(GuideCell.words("Ubuntu"), GuideCell.words("Legacy"), GuideCell.amount(8192, "MB"),
                         GuideCell.amount(48, "MB"))
                 .row(GuideCell.words("Debian"), GuideCell.words("Legacy"), GuideCell.amount(4096, "MB"),
@@ -533,6 +533,9 @@ final class StartingPages {
                 .paragraph("MC-DOS is a command prompt. UNIX System V is a shell, with no desktop of its own.")
                 .paragraph("Each Frames edition runs on its own era and every newer one. Frames 10 needs Standard"
                         + " hardware, and Frames 11 needs Advanced.")
+                .paragraph("The programs you open take memory on top of the system's. What a program takes grows with"
+                        + " the era of the computer: 8 times as much on a Transition computer as on a Legacy one, 32"
+                        + " times on a Standard one and 128 times on an Advanced one ([](jsc:frames_memory)).")
                 .paragraph("Arch Linux and Gentoo are installed by hand, step by step. The other systems have a guided"
                         + " installer ([](jsc:installing)).")
                 .table("The help book of each system", "System", "Help book")

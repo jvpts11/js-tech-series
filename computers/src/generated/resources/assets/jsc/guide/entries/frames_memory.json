@@ -13,6 +13,10 @@
       "text": "jsc.guide.frames_memory.text3"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text4"
+    },
+    {
       "type": "table",
       "caption": "jsc.guide.frames_memory.table1",
       "heads": [
@@ -51,10 +55,6 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.frames_memory.text4"
-    },
-    {
-      "type": "text",
       "text": "jsc.guide.frames_memory.text5"
     },
     {
@@ -78,6 +78,18 @@
       "text": "jsc.guide.frames_memory.text8"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text9"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.frames_memory.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.frames_memory.text10"
+    },
+    {
       "type": "table",
       "caption": "jsc.guide.frames_memory.table2",
       "heads": [
@@ -90,7 +102,7 @@
             "words": "jsc.guide.frames_memory.table2_1_1"
           },
           {
-            "amount": 32,
+            "amount": 64,
             "unit": "MB"
           }
         ],
@@ -99,7 +111,7 @@
             "words": "jsc.guide.frames_memory.table2_2_1"
           },
           {
-            "amount": 128,
+            "amount": 256,
             "unit": "MB"
           }
         ],
@@ -108,7 +120,7 @@
             "words": "jsc.guide.frames_memory.table2_3_1"
           },
           {
-            "amount": 768,
+            "amount": 2048,
             "unit": "MB"
           }
         ],
@@ -117,7 +129,7 @@
             "words": "jsc.guide.frames_memory.table2_4_1"
           },
           {
-            "amount": 1024,
+            "amount": 6144,
             "unit": "MB"
           }
         ],
@@ -126,7 +138,7 @@
             "words": "jsc.guide.frames_memory.table2_5_1"
           },
           {
-            "amount": 1536,
+            "amount": 16384,
             "unit": "MB"
           }
         ]
@@ -134,11 +146,11 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.frames_memory.text9"
+      "text": "jsc.guide.frames_memory.text11"
     },
     {
       "type": "text",
-      "text": "jsc.guide.frames_memory.text10"
+      "text": "jsc.guide.frames_memory.text12"
     },
     {
       "type": "define",
@@ -187,6 +199,10 @@
         {
           "fix": "jsc.guide.frames_memory.fix4",
           "problem": "jsc.guide.frames_memory.problem4"
+        },
+        {
+          "fix": "jsc.guide.frames_memory.fix5",
+          "problem": "jsc.guide.frames_memory.problem5"
         }
       ]
     },

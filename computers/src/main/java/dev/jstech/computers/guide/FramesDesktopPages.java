@@ -314,8 +314,9 @@ final class FramesDesktopPages {
                         + " some of the balloons you may see:")
                 .table("Some balloons", "Title", "What it tells you")
                 .row(GuideCell.words("Low on memory"),
-                        GuideCell.words("The computer is running out of RAM for programs. It names the program, how"
-                                + " much memory the program needs, and how much is free."))
+                        GuideCell.words("The memory has passed nine tenths. It names the three programs that hold"
+                                + " the most, and what each holds. A program that does not fit after that brings the"
+                                + " system down ([](jsc:frames_memory))."))
                 .row(GuideCell.words("Not enough video memory"),
                         GuideCell.words("A program needs more video memory than the graphics card has free."))
                 .row(GuideCell.words("Cannot open"),

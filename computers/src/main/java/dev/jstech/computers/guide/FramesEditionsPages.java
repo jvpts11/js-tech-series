@@ -62,15 +62,15 @@ final class FramesEditionsPages {
                         GuideCell.words("USB stick, in the Dock Station"))
                 .table("What each edition takes", "Edition", "Footprint", "Random-access memory (RAM) held",
                         "Items on its era's disk")
-                .row(GuideCell.words("Frames 95"), GuideCell.amount(48, "MB"), GuideCell.amount(16, "MB"),
+                .row(GuideCell.words("Frames 95"), GuideCell.amount(48, "MB"), GuideCell.amount(32, "MB"),
                         GuideCell.words("3 items on a Legacy disk"))
-                .row(GuideCell.words("Frames XP"), GuideCell.amount(1536, "MB"), GuideCell.amount(64, "MB"),
+                .row(GuideCell.words("Frames XP"), GuideCell.amount(1536, "MB"), GuideCell.amount(128, "MB"),
                         GuideCell.words("96 items on a Legacy disk"))
-                .row(GuideCell.words("Frames 7"), GuideCell.amount(16384, "MB"), GuideCell.amount(384, "MB"),
+                .row(GuideCell.words("Frames 7"), GuideCell.amount(16384, "MB"), GuideCell.amount(1024, "MB"),
                         GuideCell.words("64 items on a Transition disk"))
-                .row(GuideCell.words("Frames 10"), GuideCell.amount(16384, "MB"), GuideCell.amount(512, "MB"),
+                .row(GuideCell.words("Frames 10"), GuideCell.amount(16384, "MB"), GuideCell.amount(3072, "MB"),
                         GuideCell.words("64 items on a Standard disk"))
-                .row(GuideCell.words("Frames 11"), GuideCell.amount(20480, "MB"), GuideCell.amount(768, "MB"),
+                .row(GuideCell.words("Frames 11"), GuideCell.amount(20480, "MB"), GuideCell.amount(8192, "MB"),
                         GuideCell.words("80 items on an Advanced disk"))
                 .paragraph("The footprint is the room a system takes on a disk once it is installed. A disk counts"
                         + " its room in items, and an item is 1 MB on a Vintage disk, 16 MB on a Legacy disk and"
@@ -114,7 +114,7 @@ final class FramesEditionsPages {
                 .property("Minimum era", "Legacy")
                 .property("Install medium", "CD, in the CD Drive")
                 .amount("Footprint", 48, "MB")
-                .amount("RAM held", 16, "MB")
+                .amount("RAM held", 32, "MB")
                 .property("Version line", "Frames 4.00.950")
                 .subheading("Installing Frames 95")
                 .steps("Put the Frames 95 CD in the CD Drive, and start the computer from it. If the computer does"
@@ -165,7 +165,7 @@ final class FramesEditionsPages {
                 .property("Minimum era", "Legacy")
                 .property("Install medium", "CD, in the CD Drive")
                 .amount("Footprint", 1536, "MB")
-                .amount("RAM held", 64, "MB")
+                .amount("RAM held", 128, "MB")
                 .property("Version line", "Frames NT 5.1")
                 .subheading("Installing Frames XP")
                 .steps("Put the Frames XP CD in the CD Drive, and start the computer from it. If the computer does not"
@@ -221,7 +221,7 @@ final class FramesEditionsPages {
                 .property("Minimum era", "Transition")
                 .property("Install medium", "DVD, in the DVD Drive")
                 .amount("Footprint", 16384, "MB")
-                .amount("RAM held", 384, "MB")
+                .amount("RAM held", 1024, "MB")
                 .property("Version line", "Frames NT 6.1")
                 .subheading("Installing Frames 7")
                 .steps("Put the Frames 7 DVD in the DVD Drive, and start the computer from it. If the computer does not"
@@ -273,7 +273,7 @@ final class FramesEditionsPages {
                 .property("Minimum era", "Standard")
                 .property("Install medium", "USB stick, in the Dock Station")
                 .amount("Footprint", 16384, "MB")
-                .amount("RAM held", 512, "MB")
+                .amount("RAM held", 3072, "MB")
                 .property("Version line", "Frames NT 10.0")
                 .subheading("Installing Frames 10")
                 .steps("Put the Frames 10 install stick in the Dock Station ([](jsc:dock_station)).",
@@ -316,13 +316,13 @@ final class FramesEditionsPages {
                 .paragraph("Frames 11 is the newest edition, the fifth. It needs an Advanced computer, the newest era"
                         + " with parts, and it needs the most room of the family: 20,480 MB, which is 80 items on an"
                         + " Advanced disk.")
-                .paragraph("It installs from a USB stick in the [Dock Station](jsc:dock_station), and it keeps 768 MB"
-                        + " of RAM for itself.")
+                .paragraph("It installs from a USB stick in the [Dock Station](jsc:dock_station), and it keeps"
+                        + " 8,192 MB of RAM for itself.")
                 .table("Frames 11 at a glance")
                 .property("Minimum era", "Advanced")
                 .property("Install medium", "USB stick, in the Dock Station")
                 .amount("Footprint", 20480, "MB")
-                .amount("RAM held", 768, "MB")
+                .amount("RAM held", 8192, "MB")
                 .property("Version line", "Frames NT 10.0")
                 .subheading("Installing Frames 11")
                 .steps("Put the Frames 11 USB stick in the Dock Station, and start the computer from it. If the"
