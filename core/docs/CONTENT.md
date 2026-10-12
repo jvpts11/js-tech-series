@@ -89,6 +89,36 @@ section can also show stacks that are declared elsewhere (`alsoShowing(output ->
 can sort its entries another way than the order they were declared in (`sortedBy(comparator)`). The tab's name
 is written to the language file from the English you give it.
 
+### Item tags from the tabs
+
+*Added 2026-10-12.*
+
+```java
+public static final ContentTab TAB = CONTENT.tab("main", "My Mod", () -> MyContent.COPPER_BOX).tagging("all");
+public static final ContentTab.Section MACHINES = TAB.section().tagging("machines");
+```
+
+A tab or a section can name item tags of the mod, by their path in its namespace. When the mod's data is
+generated, every item declared into the section is written into the section's tags and into its tab's, here
+`#mymod:machines` and `#mymod:all`. A tag that groups things the way the tabs already group them is then never a
+list kept by hand, and a datapack, a modpack's script or another mod can ask for "any of these" through it. The
+stacks a section only shows besides (`alsoShowing`) are not declared items and stay out of its tags.
+
+## Script bindings
+
+*Added 2026-10-12.*
+
+```java
+public static final ScriptBinding SCRIPTS = CONTENT.scriptBinding("MyMod", MyModScripts.class);
+```
+
+A mod can hand the scripts of a modpack a class of its own under a name: with KubeJS installed, a script calls
+the class's public static methods as `MyMod.method(...)`. It is for what a script cannot name by an item id, such
+as an item made with data written on it. The class must name nothing of KubeJS, so it loads without it; J's Core's
+plugin for KubeJS, which only KubeJS ever loads, hands KubeJS every binding the mods declared. The name is a plain
+identifier, and two mods cannot declare the same one. J's Computers' `JsComputers` is the example
+([its page](../../computers/docs/MODPACKS.md)).
+
 ## Items
 
 *Added 2026-09-23.*
