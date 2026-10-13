@@ -292,7 +292,7 @@ final class RackArrays {
      */
     private void notifyHotPull(final int topRow) {
         if (!(rack.getLevel() instanceof ServerLevel serverLevel)
-                || rack.hasService(topRow, Programs.INTEGRITY_MONITOR)) {
+                || rack.serviceUp(topRow, Programs.INTEGRITY_MONITOR)) {
             return;
         }
         final ItemStack stack = rack.serverSlot(topRow);

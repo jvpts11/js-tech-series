@@ -200,10 +200,10 @@ public final class DesktopPayloads {
              */
             // Nor does a system that has crashed: its session went down with it.
             if (!computer.needsPost() && computer.crashPage() == null) {
-                if (computer instanceof AbstractComputerBlockEntity machine && machine.killsForMemory()) {
+                if (computer.killsForMemory()) {
                     // A kernel that ends programs for their memory lets every window open and makes the room after.
-                    machine.setOpenWindows(payload.toOpenWindows());
-                    machine.weighMemory();
+                    computer.setOpenWindows(payload.toOpenWindows());
+                    computer.weighMemory();
                 } else {
                     computer.setOpenWindows(computer.windowsWithinBudget(payload.toOpenWindows()));
                 }

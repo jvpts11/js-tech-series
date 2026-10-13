@@ -94,7 +94,7 @@ public final class ServerServices {
             if (!(Loaded.blockEntity(level, BlockPos.of(where.rackPos())) instanceof ServerRackBlockEntity rack)) {
                 continue;
             }
-            if (rack.hasService(where.slot(), program) && rack.unitRunning(where.slot())) {
+            if (rack.serviceUp(where.slot(), program) && rack.unitRunning(where.slot())) {
                 found.add(new Host(rack, where.slot()));
             }
         }

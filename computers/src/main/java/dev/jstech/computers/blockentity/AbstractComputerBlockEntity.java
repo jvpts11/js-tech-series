@@ -35,7 +35,6 @@ import dev.jstech.computers.item.IExpansionCardItem;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
-import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
@@ -44,15 +43,12 @@ import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
-import dev.jstech.computers.operation.payload.crash.MemoryKilledPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
-import dev.jstech.computers.os.ProgramSpec;
-import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootLines;
@@ -64,8 +60,6 @@ import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.crash.CrashPages;
-import dev.jstech.computers.os.crash.CrashStyle;
-import dev.jstech.computers.os.crash.OomKiller;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
@@ -132,22 +126,14 @@ import java.util.Set;
  * kind settles for itself, and saves each part in turn.
  */
 public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
-        implements IPeripheralOwnerSupport, IOsHost, IWatchedConsole {
+        implements IPeripheralOwnerSupport, IOsHost, IKernelHost, IWatchedConsole {
 
     /** The parts installed and what they add up to; it is built with the layout, so the constructor sets it. */
     private final ComputerHardware hardware;
     /** Whether it is on, whether it comes up by itself, and whether the next look at it shows the self-test. */
     private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession);
-    /** The page the system crashed onto, while it stands. */
-    private final MachineCrash crash = new MachineCrash();
-    /** What its kernel ended for want of memory in this run, and what it logged of it. */
-    private final MachineOom oom = new MachineOom();
-    /**
-     * The system that came up and is running, which is not always what the disks say now: a system disk taken out
-     * from under it leaves the machine still running that system, on its way to crashing.
-     */
-    @Nullable
-    private OsDef runningSystem;
+    /** What its system does when it runs short: the page it goes down on, and what its kernel ends for memory. */
+    private final MachineKernel kernel = new MachineKernel(power.phases());
     /** Where this computer stands on the data network: its node, its network, and the cable it reads. */
     private final NetworkAttachment attachment = new NetworkAttachment(this);
     /** What is on the far end of its peripheral cables. */
@@ -227,8 +213,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
                 (tag, registries) -> power.load(tag))).save();
         fields().part("Session", IFieldPart.of((tag, registries) -> session.save(tag),
                 (tag, registries) -> session.load(tag))).save();
-        fields().part("OutOfMemory", IFieldPart.of((tag, registries) -> oom.save(tag),
-                (tag, registries) -> oom.load(tag))).save();
+        fields().part("OutOfMemory", IFieldPart.of((tag, registries) -> kernel.save(tag),
+                (tag, registries) -> kernel.load(tag))).save();
         this.computerName = fields().value("ComputerName", Codec.STRING, "").save().toClient();
         fields().part("Attachment", new AttachmentPart()).save().toClient();
         fields().part("Peripherals", IFieldPart.of((tag, registries) -> peripherals.save(tag),
@@ -688,8 +674,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     private void endSession() {
         session.drop();
-        runningSystem = null;
-        oom.reset();
+        kernel.runEnded();
         // A run that ends takes what it was running with it: a restart closes every program, as on any machine.
         if (!programs().isEmpty()) {
             programs().stopAll();
@@ -797,32 +782,18 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      */
     protected void tickBootPhases(final ServerLevel level) {
         BootRunner.tick(this, power.phases(), level, worldPosition);
-        if (level.getGameTime() % OS_CHECK_TICKS == 0) {
-            weighMemory();
-        }
+        kernel.tick(this, level);
     }
 
     /**
-     * Once a second, what the machine's system holds is weighed against what it has: a service installed, a server
-     * with more listeners, anything that took memory without asking first. A system that holds more than there is
-     * answers as it does to any program it has no room for. Asked again at once when a desktop hands the machine its
-     * windows, for a kernel that lets every window open and makes the room after.
+     * What the machine's system holds is weighed against what it has, once a second and again at once when a desktop
+     * hands the machine its windows, for a kernel that lets every window open and makes the room after.
      */
+    @Override
     public void weighMemory() {
-        if (!isRunning() || goingDown() || needsPost() || booting() || atBootMenu() || crashPage() != null) {
-            return;
+        if (level instanceof ServerLevel server) {
+            kernel.weigh(this, server);
         }
-        // A machine that was already up when it was loaded never saw its system come up, so it learns it here.
-        if (runningSystem == null) {
-            runningSystem = installedOs();
-        }
-        final RamLedger ledger = ramLedger();
-        if (runningSystem == null || ledger.usedMb() <= ledger.totalMb()) {
-            return;
-        }
-        // What tipped it over is whatever came last, so the newest entry stands for the program that asked.
-        final List<RamLedger.Entry> entries = ledger.entries();
-        memoryShort(entries.isEmpty() ? "" : entries.getLast().name(), 0);
     }
 
     /** Whether the machine is stopped at its boot menu. */
@@ -891,104 +862,46 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return level == null ? 0 : power.downRemaining(level.getGameTime());
     }
 
-    /**
-     * Brings the running system down on its crash page for {@code cause}: everything it was running dies where it
-     * stands, the session ends, and whoever is watching is shown the page. It stands its time, and then the machine
-     * starts over from its self-test; or, when what went was a part it cannot run without, the monitor goes dark.
-     *
-     * @return whether it went down: a machine that is off, testing itself, at its boot menu, still bringing its system
-     *         up or already on its way down, or whose system has no crash page (the earliest had none), stays as it is
-     */
-    public boolean crash(final CrashCause cause, final CrashPages.Moment moment) {
-        if (!(level instanceof ServerLevel server) || !power.on() || goingDown() || crashPage() != null
-                || needsPost() || haltedAtPost() || atBootMenu() || booting()) {
-            return false;
-        }
-        final OsDef system = runningOs();
-        final CrashStyle style = system == null ? null : CrashPages.styleFor(system.platform(), system.familyRank());
-        if (style == null) {
-            return false;
-        }
-        final long now = server.getGameTime();
-        final CrashPage page = CrashPages.of(style, system.platform(), cause,
-                MachineCrash.facts(this, power.upFor(now), moment));
-        final boolean dark = !buildValid();
-        crash.begin(page, now, dark);
-        if (dark) {
-            // No computer is left to close down: the session ends now, and it owes a self-test once it is whole again.
-            setNeedsPost(true);
-        } else {
-            power.beginDown(now, page.totalTicks());
-        }
-        // Whatever each of them had up, a desktop, a prompt or a session of the monitor's own, the page takes it over.
-        ScreenSessions.eachAtMachine(server, worldPosition,
-                (player, monitor) -> MonitorBlock.openCrash(player, server, monitor, worldPosition, this));
-        setChanged();
-        return true;
-    }
-
-    /**
-     * A program asked this machine for memory it no longer has: a window opened on its desktop, a program started at
-     * its prompt, a service. A system of the Frames family does not refuse it: it goes down on its blue page. A Unix
-     * kernel ends what holds the most until it fits, and panics only once nothing is left to end. MC-DOS and MC-NET
-     * refuse it.
-     *
-     * @param needMb what the program asks for on top of what the machine holds, or zero when it holds it already
-     * @return whether there is room for it now
-     */
-    public boolean memoryShort(final String program, final int needMb) {
-        final OsDef system = runningOs();
-        if (system == null || !(level instanceof ServerLevel server)) {
-            return false;
-        }
-        return switch (system.platform()) {
-            case FRAMES -> {
-                crash(CrashCause.MEMORY, CrashPages.Moment.memory(program, 0, List.of()));
-                yield false;
-            }
-            case LINUX, FREEBSD, UNIX -> oom.makeRoom(this, server, system, program, needMb,
-                    power.upFor(server.getGameTime()));
-            case MC_DOS, MC_NET -> false;
-        };
-    }
-
-    /** Whether this machine's system ends programs for their memory, and so lets every window open first. */
-    public boolean killsForMemory() {
-        final OsDef system = runningOs();
-        return system != null && OomKiller.runsOn(system.platform());
-    }
-
-    /** What the kernel logged about its memory in this run, oldest first, which {@code dmesg} prints. */
-    public List<String> memoryLog() {
-        return oom.logged();
-    }
-
-    /** A service ended in this run, for its memory or by a signal, is down until the machine starts over. */
+    /** The machine closes its programs for that long, as a crash does, and then starts over. */
     @Override
-    public boolean serviceRunning(final ProgramSpec service) {
-        return !serviceEnded(service.id()) && IOsHost.super.serviceRunning(service);
+    public void goDown(final long now, final int ticks) {
+        power.beginDown(now, ticks);
     }
 
-    /** Whether that service was ended in this run, by the kernel for its memory or by a signal sent to its process. */
+    @Override
+    public boolean crash(final CrashCause cause, final CrashPages.Moment moment) {
+        return level instanceof ServerLevel server && kernel.crash(this, server, cause, moment);
+    }
+
+    @Override
+    public boolean memoryShort(final String program, final int needMb) {
+        return level instanceof ServerLevel server && kernel.memoryShort(this, server, program, needMb);
+    }
+
+    @Override
+    public boolean killsForMemory() {
+        return kernel.killsForMemory(this);
+    }
+
+    @Override
+    public List<String> memoryLog() {
+        return kernel.memoryLog();
+    }
+
+    @Override
     public boolean serviceEnded(final ResourceLocation service) {
-        return oom.stopped(service);
+        return kernel.serviceEnded(service);
     }
 
-    /** Ends that service for the rest of this run, as a signal sent to its process does. */
+    @Override
     public void endService(final ResourceLocation service) {
-        oom.stop(service);
+        kernel.endService(service);
         setChanged();
     }
 
     @Override
     public void systemCameUp() {
-        runningSystem = installedOs();
-    }
-
-    /** The system that is running: the one that came up, or what the disks hold for a machine that never saw it. */
-    @Nullable
-    OsDef runningOs() {
-        return runningSystem != null ? runningSystem : installedOs();
+        kernel.cameUp(this);
     }
 
     /**
@@ -996,20 +909,14 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      * front of a terminal gives the prompt back with the shell's word for it, and the desktops showing the machine
      * close the windows that went.
      */
-    void memoryFreed(final ServerLevel level, final List<String> lines, final List<String> windows,
-                     final boolean frontKilled) {
+    @Override
+    public void memoryFreed(final ServerLevel level, final List<String> lines, final List<String> windows,
+                            final boolean frontKilled) {
         replication.kernelSays(level, lines);
         if (frontKilled) {
             replication.frontKilled(level);
         }
-        if (windows.isEmpty()) {
-            return;
-        }
-        for (final ServerPlayer viewer : consoleViewers(level)) {
-            if (viewer.containerMenu instanceof DesktopMenu) {
-                PacketDistributor.sendToPlayer(viewer, new MemoryKilledPayload(worldPosition, windows));
-            }
-        }
+        ClientReplication.windowsEnded(consoleViewers(level), worldPosition, windows);
     }
 
     /**
@@ -1020,8 +927,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      */
     void partTaken(final int slot, final ItemStack part) {
         final ComputerHardwareLayout layout = layout();
-        final boolean systemDisk = layout.isDisk(slot) && runningSystem != null
-                && OsDisks.systemsOn(part).has(runningSystem.id());
+        final OsDef up = kernel.upSystem();
+        final boolean systemDisk = layout.isDisk(slot) && up != null && OsDisks.systemsOn(part).has(up.id());
         if (layout.isRam(slot) || layout.isPcie(slot) || systemDisk) {
             crash(CrashCause.HARDWARE, CrashPages.Moment.hardware(part.getHoverName().getString()));
         }
@@ -1030,44 +937,29 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     @Override
     @Nullable
     public CrashPage crashPage() {
-        return level == null ? null : crash.page(level.getGameTime());
+        return level == null ? null : kernel.page(level.getGameTime());
     }
 
     @Override
     public int crashRemaining() {
-        return level == null ? 0 : crash.remaining(level.getGameTime());
+        return level == null ? 0 : kernel.remaining(level.getGameTime());
     }
 
     @Override
     public boolean crashHeld() {
-        return crashPage() != null && crash.held();
+        return level != null && kernel.held(level.getGameTime());
     }
 
     @Override
     public boolean crashEndsDark() {
-        return crash.endsDark();
+        return kernel.endsDark();
     }
 
-    /**
-     * A key on the console of a crashed system that offers to stop its automatic reboot: the first stops it and the
-     * machine waits, the next reboots it; whoever is watching is shown the page as it now stands.
-     */
     @Override
     public void crashKey() {
-        if (!(level instanceof ServerLevel server)) {
-            return;
+        if (level instanceof ServerLevel server) {
+            kernel.key(this, server);
         }
-        final long now = server.getGameTime();
-        if (!crash.key(now)) {
-            return;
-        }
-        if (crash.held()) {
-            power.holdDown();
-        } else {
-            power.releaseDown(now);
-        }
-        ScreenSessions.eachWatcher(server, worldPosition,
-                (player, monitor) -> MonitorBlock.openCrash(player, server, monitor, worldPosition, this));
     }
 
     /** What this machine's system shows while it comes up. */

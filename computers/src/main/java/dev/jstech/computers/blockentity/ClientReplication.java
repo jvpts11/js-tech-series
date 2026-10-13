@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.operation.payload.WireLine;
+import dev.jstech.computers.operation.payload.crash.MemoryKilledPayload;
 import dev.jstech.computers.operation.payload.program.ProgramKeyboard;
 import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.program.ComputerConsoleState;
@@ -28,6 +29,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -352,6 +354,18 @@ final class ClientReplication {
      * with whatever had it.
      */
     void kernelSays(final ServerLevel level, final List<String> lines) {
+        final MachinePrograms programs = this.machine.programs();
+        final var held = programs.byId(programs.held());
+        kernelSays(this.machine.consoleViewers(level), held != null ? ProgramKeyboard.atTerminal(held.process())
+                : keyboardOf(this.machine.console()), lines);
+    }
+
+    /**
+     * Prints what a kernel said on the terminals among {@code viewers}, a console's own lines, which a desktop's
+     * windows do not show; whoever had the keyboard keeps it.
+     */
+    static void kernelSays(final List<ServerPlayer> viewers, final TerminalKeyboard keyboard,
+                           final List<String> lines) {
         if (lines.isEmpty()) {
             return;
         }
@@ -359,16 +373,28 @@ final class ClientReplication {
         for (final String line : lines) {
             wire.add(new WireLine(Text.literal(line), CliStyle.PLAIN.id()));
         }
-        final MachinePrograms programs = this.machine.programs();
-        final var held = programs.byId(programs.held());
-        final ComputerConsoleState console = this.machine.console();
-        final TerminalKeyboard keyboard = held != null ? ProgramKeyboard.atTerminal(held.process())
-                : console != null && console.foreground().running() ? TerminalTools.keyboardOf(console)
-                : TerminalKeyboard.PROMPT;
         final CommandOutputPayload said = new CommandOutputPayload("", wire, keyboard);
-        for (final ServerPlayer viewer : this.machine.consoleViewers(level)) {
+        for (final ServerPlayer viewer : viewers) {
             if (!(viewer.containerMenu instanceof DesktopMenu)) {
                 PacketDistributor.sendToPlayer(viewer, said);
+            }
+        }
+    }
+
+    /** Who has the keyboard of a terminal with no program in front: the tool it is running, or the prompt. */
+    static TerminalKeyboard keyboardOf(@Nullable final ComputerConsoleState console) {
+        return console != null && console.foreground().running() ? TerminalTools.keyboardOf(console)
+                : TerminalKeyboard.PROMPT;
+    }
+
+    /** The desktops among {@code viewers} showing the machine at {@code host} close the windows its kernel ended. */
+    static void windowsEnded(final List<ServerPlayer> viewers, final BlockPos host, final List<String> windows) {
+        if (windows.isEmpty()) {
+            return;
+        }
+        for (final ServerPlayer viewer : viewers) {
+            if (viewer.containerMenu instanceof DesktopMenu) {
+                PacketDistributor.sendToPlayer(viewer, new MemoryKilledPayload(host, windows));
             }
         }
     }

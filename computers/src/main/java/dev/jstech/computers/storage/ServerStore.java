@@ -54,7 +54,7 @@ public final class ServerStore implements IWeightedStore {
              */
             rack.markStorageChanged(serverSlot);
             rack.setChanged();
-        }, rack.hasService(serverSlot, Programs.LOAD_BALANCER));
+        }, rack.serviceUp(serverSlot, Programs.LOAD_BALANCER));
     }
 
     public long capacity() {

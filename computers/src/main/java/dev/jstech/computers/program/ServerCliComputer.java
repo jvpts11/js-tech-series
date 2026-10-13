@@ -9,7 +9,6 @@ package dev.jstech.computers.program;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.ProgramTravels;
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.PackageService;
 import dev.jstech.computers.machine.ProgramService;
@@ -309,7 +308,7 @@ public final class ServerCliComputer extends ServerCliNetwork {
      */
     @Override
     public List<SigmaProcess> systemProcesses() {
-        final AbstractComputerBlockEntity machine = unixMachine();
+        final IOsHost machine = unixMachine();
         if (machine == null || !machine.isRunning()) {
             return List.of();
         }
@@ -337,7 +336,7 @@ public final class ServerCliComputer extends ServerCliNetwork {
      */
     @Override
     public OpResult signal(final int pid, final int signal, final String typed) {
-        final AbstractComputerBlockEntity machine = unixMachine();
+        final IOsHost machine = unixMachine();
         if (machine == null) {
             return stopSigma(pid);
         }
@@ -358,10 +357,10 @@ public final class ServerCliComputer extends ServerCliNetwork {
         return stopSigma(pid);
     }
 
-    /* This machine, when it is a computer running a Unix system; null otherwise. */
+    /* This machine, when it is a computer or a server running a Unix system; null otherwise. */
     @Nullable
-    private AbstractComputerBlockEntity unixMachine() {
-        if (!(hostBlock instanceof AbstractComputerBlockEntity machine)) {
+    private IOsHost unixMachine() {
+        if (!(hostBlock instanceof IOsHost machine)) {
             return null;
         }
         final OsDef system = machine.installedOs();

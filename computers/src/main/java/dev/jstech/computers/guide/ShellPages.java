@@ -386,7 +386,9 @@ final class ShellPages {
                         + " and a line for each process it ended. On a desktop, a window the kernel ends closes with"
                         + " a balloon, \"Out of memory\", that names it. A program ended in front of the terminal"
                         + " leaves the word Killed. Only when nothing is left to end does the kernel panic, and then"
-                        + " the computer starts over by itself.")
+                        + " the computer starts over by itself. A server in a rack does all of this as a computer"
+                        + " does, each server on its own, and a service the kernel ends there, or that you stop,"
+                        + " serves the network no more until that server starts again.")
                 .command(CommandGuidePages.id(Platform.LINUX, "dmesg"))
                 .command(CommandGuidePages.id(Platform.LINUX, "jobs"))
                 .paragraph("The crontab command sets a line that the machine runs by itself, at an hour you choose,"

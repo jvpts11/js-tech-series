@@ -35,6 +35,9 @@ import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootPhases;
 import dev.jstech.computers.os.boot.BootRunner;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.crash.CrashCause;
+import dev.jstech.computers.os.crash.CrashPage;
+import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
@@ -78,6 +81,7 @@ import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.Arrays;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -129,6 +133,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 public class ServerRackBlockEntity extends SyncedBlockEntity
         implements IPeripheralOwnerSupport,
         IOsHost,
+        IKernelHost,
         IComputerTerminalHost,
         IWatchedConsole,
         GeoBlockEntity {
@@ -438,6 +443,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
          * the monitor is showing this bay.
          */
         final BootPhases phases = new BootPhases();
+        /** What its system does when it runs short, by the rule of that system, as on any computer. */
+        final MachineKernel kernel = new MachineKernel(phases);
         int bootDiskSlot = -1;
         /** The desktop this machine booted into, fixed at POST so later package changes wait for a reboot. */
         @Nullable
@@ -544,6 +551,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 state.installerMemo = saved.contains("Installer") ? saved.getCompound("Installer") : null;
                 ServiceStateNbt.loadMessenger(saved, state.messenger);
                 ServiceStateNbt.loadKnot(saved, state.knot);
+                state.kernel.load(saved);
                 if (saved.contains("Studio") && getLevel() != null) {
                     state.studio.load(saved.getCompound("Studio"), getLevel().registryAccess());
                 }
@@ -578,6 +586,14 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return console != null && console.isInstalled(program.toString());
     }
 
+    /**
+     * Whether the machine at {@code slot} runs the given service and it is still up: one its kernel ended for memory
+     * in this run, or a signal stopped, does nothing until the machine starts over, installed or not.
+     */
+    public boolean serviceUp(final int slot, final ResourceLocation program) {
+        return hasService(slot, program) && !unitState(slot).kernel.serviceEnded(program);
+    }
+
     /** Whether the machine at {@code slot} is switched on and its hardware can run at all. */
     public boolean unitRunning(final int slot) {
         return slot >= 0 && slot < CAPACITY_U && asUnit(slot, this::isRunning);
@@ -592,7 +608,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
      */
     public int serviceSlot(final ResourceLocation program) {
         for (int slot = 0; slot < CAPACITY_U; slot++) {
-            if (hasService(slot, program) && unitRunning(slot)) {
+            if (serviceUp(slot, program) && unitRunning(slot)) {
                 return slot;
             }
         }
@@ -691,6 +707,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
         ServiceStateNbt.saveMessenger(tag, state.messenger);
         ServiceStateNbt.saveKnot(tag, state.knot);
+        state.kernel.save(tag);
         if (getLevel() != null) {
             final CompoundTag studioTag = new CompoundTag();
             state.studio.save(studioTag, getLevel().registryAccess());
@@ -703,6 +720,30 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         for (final int slot : unitStates.keySet()) {
             flushConsole(slot);
         }
+    }
+
+    /*
+     * A run of the machine at {@code slot} is over, by a restart, a power cut or a crash: its windows close, it leaves
+     * the workspace it was on, a finished installer stops waiting for it, and its kernel forgets what it ended.
+     */
+    private void endRun(final int slot) {
+        final UnitState state = unitState(slot);
+        state.openWindows.clear();
+        state.desktopWorkspace = 0;
+        state.pendingInstallSlot = IOsHost.NO_PENDING_INSTALL;
+        state.kernel.runEnded();
+    }
+
+    /*
+     * Runs {@code body} on the kernel of the machine the monitor shows, or the one a caller is addressing, with every
+     * call it makes back into the rack pinned to that machine; {@code none} when there is no machine or no server side.
+     */
+    private <T> T onKernel(final T none, final BiFunction<MachineKernel, ServerLevel, T> body) {
+        final int slot = soleComputerSlot();
+        if (slot < 0 || !(level instanceof ServerLevel server)) {
+            return none;
+        }
+        return asUnit(slot, () -> body.apply(unitState(slot).kernel, server));
     }
 
     // Five hotswap slots per rack unit, owned by the rack: index = uRow * SLOTS_PER_U + column.
@@ -895,9 +936,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
          * Off or a cold start, no desktop survives; writing the self-test flag directly here had let it skip
          * the clearing setNeedsPost does.
          */
-        unitState(slot).openWindows.clear();
-        unitState(slot).desktopWorkspace = 0;
-        unitState(slot).pendingInstallSlot = IOsHost.NO_PENDING_INSTALL;
+        endRun(slot);
         flushConsole(slot);
         setChanged();
     }
@@ -1180,6 +1219,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
              */
             final IOsHost unit = unitHost(i);
             BootRunner.tick(unit, unitState(i).phases, level, worldPosition);
+            // Its kernel weighs what its system holds once a second, as every computer's does.
+            final int row = i;
+            asUnit(row, () -> {
+                unitState(row).kernel.tick(this, level);
+                return null;
+            });
             SetupRunner.tick(unit, level, worldPosition);
             OsInstallRunner.tick(unit, level, worldPosition);
             // And whatever was left running in front of its terminal goes on running, watched or not.
@@ -1486,6 +1531,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         if (unitOverride >= 0) {
             return unitOverride; // a caller is addressing one unit directly (see asUnit)
         }
+        return shownRow();
+    }
+
+    /** The row of the machine a linked monitor shows, whichever one a caller is addressing; -1 when it shows none. */
+    public int shownRow() {
         final List<Integer> computers = computerSlots();
         if (computers.isEmpty()) {
             return -1;
@@ -1860,10 +1910,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         if (slot >= 0) {
             unitState(slot).phases.setNeedsPost(value);
             if (value) {
-                unitState(slot).openWindows.clear(); // a restart closes everything
-                unitState(slot).desktopWorkspace = 0;
-                unitState(slot).pendingInstallSlot = // and is what a finished installer was waiting for
-                        IOsHost.NO_PENDING_INSTALL;
+                endRun(slot);
             }
             /*
              * Write it through immediately: the flag lives on the Server item, and a world that unloads
@@ -1872,6 +1919,163 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             flushConsole(slot);
             setChanged();
         }
+    }
+
+    /*
+     * The machine's kernel: a server follows the rule of its system as every computer does. Frames goes down on its
+     * page, a Unix kernel ends what holds the most and panics with nothing left to end, and the earliest systems
+     * refuse. Each machine in the rack has its own, and every call is pinned to the machine it is for.
+     */
+
+    /** Whether the switch of the machine's bay is on. */
+    @Override
+    public boolean isManualOn() {
+        final int slot = soleComputerSlot();
+        return slot >= 0 && bayPowerOn(slot);
+    }
+
+    /** Whether the machine's parts make a computer, which a server's always do while it is in the rack. */
+    @Override
+    public boolean buildValid() {
+        final ComputerBuild build = soleBuild();
+        return build != null && build.isPowered();
+    }
+
+    /** The machine closes down for that long on a crash, everything it was running ending with it. */
+    @Override
+    public void goDown(final long now, final int ticks) {
+        final int slot = soleComputerSlot();
+        if (slot < 0) {
+            return;
+        }
+        final UnitState state = unitState(slot);
+        state.phases.beginDown(now, ticks);
+        endRun(slot);
+        // Whatever was running in front of its terminal went down with it, unfinished.
+        state.console.newSession();
+        flushConsole(slot);
+        setChanged();
+    }
+
+    @Override
+    public boolean goingDown() {
+        final int slot = soleComputerSlot();
+        return slot >= 0 && unitState(slot).phases.goingDown();
+    }
+
+    @Override
+    public int downTotal() {
+        final int slot = soleComputerSlot();
+        return slot < 0 ? 0 : unitState(slot).phases.downTotal();
+    }
+
+    @Override
+    public int downRemaining() {
+        final int slot = soleComputerSlot();
+        return slot < 0 || level == null ? 0 : unitState(slot).phases.downRemaining(level.getGameTime());
+    }
+
+    @Override
+    public boolean crash(final CrashCause cause, final CrashPages.Moment moment) {
+        return onKernel(false, (kernel, server) -> kernel.crash(this, server, cause, moment));
+    }
+
+    @Override
+    public boolean memoryShort(final String program, final int needMb) {
+        return onKernel(false, (kernel, server) -> kernel.memoryShort(this, server, program, needMb));
+    }
+
+    @Override
+    public boolean killsForMemory() {
+        return onKernel(false, (kernel, server) -> kernel.killsForMemory(this));
+    }
+
+    @Override
+    public void weighMemory() {
+        onKernel(null, (kernel, server) -> {
+            kernel.weigh(this, server);
+            return null;
+        });
+    }
+
+    @Override
+    public List<String> memoryLog() {
+        final int slot = soleComputerSlot();
+        return slot < 0 ? List.of() : unitState(slot).kernel.memoryLog();
+    }
+
+    @Override
+    public boolean serviceEnded(final ResourceLocation service) {
+        final int slot = soleComputerSlot();
+        return slot >= 0 && unitState(slot).kernel.serviceEnded(service);
+    }
+
+    @Override
+    public void endService(final ResourceLocation service) {
+        final int slot = soleComputerSlot();
+        if (slot >= 0) {
+            unitState(slot).kernel.endService(service);
+            flushConsole(slot);
+            setChanged();
+        }
+    }
+
+    @Override
+    public void systemCameUp() {
+        final int slot = soleComputerSlot();
+        if (slot >= 0) {
+            unitState(slot).kernel.cameUp(this);
+        }
+    }
+
+    @Override
+    @Nullable
+    public CrashPage crashPage() {
+        final int slot = soleComputerSlot();
+        return slot < 0 || level == null ? null : unitState(slot).kernel.page(level.getGameTime());
+    }
+
+    @Override
+    public int crashRemaining() {
+        final int slot = soleComputerSlot();
+        return slot < 0 || level == null ? 0 : unitState(slot).kernel.remaining(level.getGameTime());
+    }
+
+    @Override
+    public boolean crashHeld() {
+        final int slot = soleComputerSlot();
+        return slot >= 0 && level != null && unitState(slot).kernel.held(level.getGameTime());
+    }
+
+    @Override
+    public boolean crashEndsDark() {
+        final int slot = soleComputerSlot();
+        return slot >= 0 && unitState(slot).kernel.endsDark();
+    }
+
+    @Override
+    public void crashKey() {
+        onKernel(null, (kernel, server) -> {
+            kernel.key(this, server);
+            return null;
+        });
+    }
+
+    /**
+     * The machine's kernel ended things for their memory: whoever is at the rack's glass looking at that machine sees
+     * the lines at its console and the windows close on its desktop. A server runs no program in front of its
+     * terminal, so none is ever ended there.
+     */
+    @Override
+    public void memoryFreed(final ServerLevel level, final List<String> lines, final List<String> windows,
+                            final boolean frontKilled) {
+        final int slot = soleComputerSlot();
+        if (slot < 0) {
+            return;
+        }
+        final List<ServerPlayer> watching = terminals.watching(level, slot);
+        ClientReplication.kernelSays(watching, ClientReplication.keyboardOf(unitState(slot).console), lines);
+        ClientReplication.windowsEnded(watching, worldPosition, windows);
     }
 
     @Override

@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.item.CpuItem;
+import dev.jstech.computers.item.MotherboardItem;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.SystemProcesses;
 import dev.jstech.computers.os.install.Installers;
@@ -76,21 +79,28 @@ final class MachineCrash {
         return true;
     }
 
-    /** What the machine knows of itself at the moment it goes down, for the kernels to print. */
-    static CrashPages.Facts facts(final AbstractComputerBlockEntity machine, final long upFor,
+    /**
+     * What the machine knows of itself at the moment it goes down, for the kernels to print.
+     *
+     * @param system the system that came up, which a pulled disk no longer shows but which is still the one going down
+     */
+    static CrashPages.Facts facts(final IOsHost machine, final OsDef system, final long upFor,
                                   final CrashPages.Moment moment) {
-        // The system that came up, which a pulled disk no longer shows but which is still the one going down.
-        final OsDef system = machine.runningOs();
-        final ComputerHardwareLayout layout = machine.layout();
-        final ItemStack board = machine.getHardware().getStackInSlot(layout.motherboardSlot());
-        final ItemStack cpu = machine.getHardware().getStackInSlot(layout.cpuStart());
+        ItemStack board = ItemStack.EMPTY;
+        ItemStack cpu = ItemStack.EMPTY;
+        for (final ItemStack part : machine.hardwareStacks()) {
+            if (board.isEmpty() && part.getItem() instanceof MotherboardItem) {
+                board = part;
+            } else if (cpu.isEmpty() && part.getItem() instanceof CpuItem) {
+                cpu = part;
+            }
+        }
         final String cpuName = cpu.isEmpty() ? "" : cpu.getHoverName().getString();
         // The processor's maker is the first word of its name, which is how this world names every one of them.
         final String vendor = cpuName.isEmpty() ? "Velocion" : cpuName.split(" ", 2)[0];
-        final String init = system == null ? "init"
-                : SystemProcesses.initName(system.platform(), system.packageManager());
-        return CrashPages.Facts.of(Installers.hostName(machine), system == null ? "" : system.displayName(),
-                board.isEmpty() ? "" : board.getHoverName().getString(), vendor, init, upFor,
+        return CrashPages.Facts.of(Installers.hostName(machine), system.displayName(),
+                board.isEmpty() ? "" : board.getHoverName().getString(), vendor,
+                SystemProcesses.initName(system.platform(), system.packageManager()), upFor,
                 machine.ramTotalMb() * 1_048_576L, moment);
     }
 }

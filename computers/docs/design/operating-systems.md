@@ -233,15 +233,17 @@ the kernel ignores a kill of init from the system; here it is what it would do i
   install: a ritual, not a wall. The network engine is a program of that system ([Operations](operations.md)).
 - **Rack servers** install a real system on the disk in their bay (MC-NET, any Linux, FreeBSD or a Frames), every bay
   with its own POST, boot manager and installer; they are reached through a monitor (with a KVM Switch on a rack with
-  several machines) or through the Cluster Management Computer ([Servers and racks](servers-and-racks.md)).
+  several machines) or through the Cluster Management Computer ([Servers and racks](servers-and-racks.md)). Each
+  follows its system's rule when it runs short, as every computer does, on its own: the crash pages, the out-of-memory
+  killer, `ps`, `kill` and `dmesg`; a service ended on a server stops serving the network until that server starts
+  over. Its drive bays are hot-swap, so only a crash of its system brings a server down onto a page.
 - **Appliances** (the Server Router, the switches) only have firmware.
 - The registries of kernels, systems, desktops and operating spaces are open to add-ons ([The API](api.md)).
 
 ## To build
 
-- **Crashes on rack servers:** a rack's machines follow their system's rule as every computer does (the crash pages, the
-  out-of-memory killer, the red page); today a rack server only refuses what does not fit. Later triggers of the red
-  page: a thermal trip, a failing power supply, unstable power ([Temperature](temperature.md), [Power](power.md)).
+- **More triggers of the red page,** on every computer and rack server: a thermal trip, a failing power supply, unstable
+  power ([Temperature](temperature.md), [Power](power.md)).
 - **Accounts and passwords:** every system has real user accounts and its `passwd`; with a directory on the network, the
   login is the network's ([Security](security.md)). Today they only exist as pages.
 - **The portable devices' mobile systems** ([Wireless](wireless.md)): real systems, from the factory, with no installer,

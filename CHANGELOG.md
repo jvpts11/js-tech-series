@@ -1614,6 +1614,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   down until the machine starts over, a Mainframe's network engine, Automation Engine and Mirror included. Only when
   nothing is left to end does the kernel panic, on its own page, and the machine starts over: a machine whose system
   and desktop alone hold more than it has panics as soon as it is up.
+- A server in a rack follows the rule of its system when it runs short, as every computer does, each server on its
+  own: a Frames server goes down on its blue page and starts over, the kernel of a Linux, FreeBSD or UNIX server ends
+  what holds the most and logs it for `dmesg`, and MC-NET refuses as it always did. At a server's prompt `ps` lists
+  its init and its services, `kill -9 1` panics it, and a signal to a service stops it until the server starts over;
+  a service ended on a server, by a signal or for its memory, serves the network no more until then. The page is on
+  the monitor showing that server, and a key holds FreeBSD's reboot there as on any computer. A server used only to
+  refuse what did not fit, and nothing ended it.
 - A server's RAID controller and read cache are expansion cards now, not gadgets in the rack's front bays: Vaultis
   makes an Array and a Cache for each era's slot, from ISA to PCI-e 4.0. The Array joins the drives of the server it
   sits in and keeps the array's mode on itself, so a server pulled from its rack takes its array with it; the Cache

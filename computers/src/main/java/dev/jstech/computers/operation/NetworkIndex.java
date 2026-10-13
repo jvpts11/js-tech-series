@@ -322,7 +322,7 @@ public final class NetworkIndex {
      */
     private static int latencyOf(final ServerRackBlockEntity rack, final int slot, final StorageTier tier) {
         int cut = rack.cacheCutPercent(slot);
-        if (rack.hasService(slot, Programs.PREDICTIVE_CACHE)) {
+        if (rack.serviceUp(slot, Programs.PREDICTIVE_CACHE)) {
             cut += PREDICTIVE_CACHE_CUT_PERCENT;
         }
         return cut <= 0 ? tier.latencyTicks()

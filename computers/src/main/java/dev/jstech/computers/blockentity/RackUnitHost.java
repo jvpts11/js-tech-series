@@ -14,6 +14,9 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.crash.CrashCause;
+import dev.jstech.computers.os.crash.CrashPage;
+import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.program.ComputerConsoleState;
@@ -196,6 +199,99 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     @Override
     public BootSequence bootSequence() {
         return rack.asUnit(row, rack::bootSequence);
+    }
+
+    @Override
+    public boolean goingDown() {
+        return rack.asUnit(row, rack::goingDown);
+    }
+
+    @Override
+    public int downTotal() {
+        return rack.asUnit(row, rack::downTotal);
+    }
+
+    @Override
+    public int downRemaining() {
+        return rack.asUnit(row, rack::downRemaining);
+    }
+
+    @Override
+    public void systemCameUp() {
+        rack.asUnit(row, () -> {
+            rack.systemCameUp();
+            return null;
+        });
+    }
+
+    @Override
+    @Nullable
+    public CrashPage crashPage() {
+        return rack.asUnit(row, rack::crashPage);
+    }
+
+    @Override
+    public int crashRemaining() {
+        return rack.asUnit(row, rack::crashRemaining);
+    }
+
+    @Override
+    public boolean crashHeld() {
+        return rack.asUnit(row, rack::crashHeld);
+    }
+
+    @Override
+    public boolean crashEndsDark() {
+        return rack.asUnit(row, rack::crashEndsDark);
+    }
+
+    @Override
+    public void crashKey() {
+        rack.asUnit(row, () -> {
+            rack.crashKey();
+            return null;
+        });
+    }
+
+    @Override
+    public boolean crash(final CrashCause cause, final CrashPages.Moment moment) {
+        return rack.asUnit(row, () -> rack.crash(cause, moment));
+    }
+
+    @Override
+    public boolean memoryShort(final String program, final int needMb) {
+        return rack.asUnit(row, () -> rack.memoryShort(program, needMb));
+    }
+
+    @Override
+    public boolean killsForMemory() {
+        return rack.asUnit(row, rack::killsForMemory);
+    }
+
+    @Override
+    public void weighMemory() {
+        rack.asUnit(row, () -> {
+            rack.weighMemory();
+            return null;
+        });
+    }
+
+    @Override
+    public List<String> memoryLog() {
+        return rack.asUnit(row, rack::memoryLog);
+    }
+
+    @Override
+    public boolean serviceEnded(final ResourceLocation service) {
+        return rack.asUnit(row, () -> rack.serviceEnded(service));
+    }
+
+    @Override
+    public void endService(final ResourceLocation service) {
+        rack.asUnit(row, () -> {
+            rack.endService(service);
+            return null;
+        });
     }
 
     @Override

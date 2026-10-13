@@ -103,6 +103,7 @@ public final class ClientTestSuite {
             MediaDriveClientTests.class,
             MemoryCrashClientTests.class,
             OutOfMemoryClientTests.class,
+            RackCrashClientTests.class,
             MonitorClientTests.class,
             MsdClientTests.class,
             MultipartModelClientTests.class,

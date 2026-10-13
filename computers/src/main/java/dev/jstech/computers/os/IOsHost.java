@@ -14,6 +14,8 @@ import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.os.boot.IBootingMachine;
+import dev.jstech.computers.os.crash.CrashCause;
+import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.install.IInstallingMachine;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.JsCore;
@@ -346,6 +348,10 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
      * to switch is running as long as the machine is; a machine that can stop one of its own says so itself.
      */
     default boolean serviceRunning(final ProgramSpec service) {
+        // One ended in this run, for its memory or by a signal, is down until the machine starts over.
+        if (serviceEnded(service.id())) {
+            return false;
+        }
         /*
          * A language's runtime is in memory while it has something to run, the way an interpreter is loaded for
          * a program and not for the disk it sits on. A service registered under a language's own name is that
@@ -384,6 +390,54 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
      * @param program the program that was taken off
      */
     default void serviceUninstalled(final ResourceLocation program) {
+    }
+
+    /** Whether that service was ended in this run, by the kernel for its memory or by a signal sent to its process. */
+    default boolean serviceEnded(final ResourceLocation service) {
+        return false;
+    }
+
+    /** Ends that service for the rest of this run, as a signal sent to its process does. */
+    default void endService(final ResourceLocation service) {
+    }
+
+    /**
+     * Brings the running system down on its crash page for {@code cause}: everything it was running dies where it
+     * stands, and whoever is watching is shown the page.
+     *
+     * @return whether it went down; a host whose system cannot crash, or one that is not up, stays as it is
+     */
+    default boolean crash(final CrashCause cause, final CrashPages.Moment moment) {
+        return false;
+    }
+
+    /**
+     * A program asked this machine for memory it no longer has: Frames goes down on its page, a Unix kernel ends what
+     * holds the most until it fits, and the earliest systems refuse it, which is all a host that keeps no account of
+     * its memory does.
+     *
+     * @param needMb what the program asks for on top of what the machine holds, or zero when it holds it already
+     * @return whether there is room for it now
+     */
+    default boolean memoryShort(final String program, final int needMb) {
+        return false;
+    }
+
+    /** Whether this machine's system ends programs for their memory, and so lets every window open first. */
+    default boolean killsForMemory() {
+        return false;
+    }
+
+    /**
+     * Weighs what the system holds against what it has, and answers a system that holds more as it answers any program
+     * it has no room for. The machine does it once a second, and again at once when a desktop hands it windows.
+     */
+    default void weighMemory() {
+    }
+
+    /** What the kernel logged about its memory in this run, oldest first, which {@code dmesg} prints. */
+    default List<String> memoryLog() {
+        return List.of();
     }
 
     /** This machine's memory ledger, see {@link MachineMemory#ledgerOf}. */

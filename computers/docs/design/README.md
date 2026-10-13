@@ -85,8 +85,8 @@ describes it.
 - Programs: the "update available" badge, the Backup Service, the Media Player, the Data Compressor and the rest.
   [Programs](programs.md)
 - Σ# generics and exceptions, two new event sources, and the language reference in the game. [Σ and Σ#](sigma.md)
-- Crashes on rack servers, accounts and passwords, the portables' mobile systems with a third family of systems, and
-  the web of the world. [Operating systems](operating-systems.md)
+- More triggers of the red page, accounts and passwords, the portables' mobile systems with a third family of systems,
+  and the web of the world. [Operating systems](operating-systems.md)
 - Security: the directory, roles, ID cards, hardware security modules, and later offensive security.
   [Security](security.md)
 - The AI: AI Servers, datasets, models, training, generation and forecasting. [Artificial intelligence](ai.md)

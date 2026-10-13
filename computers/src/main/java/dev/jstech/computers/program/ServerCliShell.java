@@ -374,7 +374,7 @@ abstract class ServerCliShell implements ICliComputer {
 
     @Override
     public List<String> kernelLog() {
-        if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {
+        if (!(hostBlock instanceof IOsHost computer)) {
             return List.of();
         }
         final List<String> log = new ArrayList<>(BootLines.kernelLog(computer));

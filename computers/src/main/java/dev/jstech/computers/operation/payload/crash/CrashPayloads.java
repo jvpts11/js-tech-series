@@ -8,7 +8,6 @@
 package dev.jstech.computers.operation.payload.crash;
 
 import dev.jstech.computers.block.ICrashScreenOpener;
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
@@ -52,7 +51,7 @@ public final class CrashPayloads {
 
     private static void handleMemoryShort(final MemoryShortPayload payload, final ServerPlayer player,
                                           final ServerLevel level) {
-        if (level.getBlockEntity(payload.host()) instanceof AbstractComputerBlockEntity machine) {
+        if (level.getBlockEntity(payload.host()) instanceof IOsHost machine) {
             machine.memoryShort(payload.program(), 0);
         }
     }

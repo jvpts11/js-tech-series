@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.IntSupplier;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -78,21 +80,23 @@ final class MachineOom {
      * asked last.
      *
      * @param upFor how long the system has been up, in ticks, which the Linux kernel stamps on its lines
+     * @param pids where a number comes from for whatever the kernel names that has none of its own
      * @return whether the room was made; false when the kernel panicked instead
      */
-    boolean makeRoom(final AbstractComputerBlockEntity machine, final ServerLevel level, final OsDef system,
-                     final String asking, final int needMb, final long upFor) {
+    boolean makeRoom(final IKernelHost machine, final ServerLevel level, final OsDef system, final String asking,
+                     final int needMb, final long upFor, final IntSupplier pids) {
         final OomKiller.Plan plan = OomKiller.plan(machine.ramLedger(), needMb);
         if (plan.victims().isEmpty() && plan.fits()) {
             return true;
         }
+        final MachinePrograms programs = machine.programs();
         final List<CrashPages.Victim> victims = new ArrayList<>();
         final List<String> lines = new ArrayList<>();
         final List<String> windows = new ArrayList<>();
         final List<OpenWindow> open = new ArrayList<>(machine.openWindows());
         boolean front = false;
         for (final RamLedger.Entry entry : plan.victims()) {
-            final CrashPages.Victim victim = new CrashPages.Victim(pid(machine, entry), comm(entry), entry.mb());
+            final CrashPages.Victim victim = new CrashPages.Victim(pid(entry, pids), comm(entry), entry.mb());
             victims.add(victim);
             lines.add(CrashPages.killLine(system.platform(), upFor, victim));
             switch (entry.kind()) {
@@ -102,15 +106,19 @@ final class MachineOom {
                     }
                 }
                 case PROCESS -> {
-                    front |= machine.programs().held() == entry.id();
-                    machine.programs().stop(entry.id());
+                    if (programs != null) {
+                        front |= programs.held() == entry.id();
+                        programs.stop(entry.id());
+                    }
                 }
                 case SERVICE -> {
                     final ResourceLocation id = ResourceLocation.tryParse(entry.key());
                     if (id != null && JsCore.languages().get(id) != null) {
                         // A language's runtime is in memory for the programs it runs, so ending it ends them all.
-                        front |= machine.programs().held() != 0;
-                        machine.programs().stopAll();
+                        if (programs != null) {
+                            front |= programs.held() != 0;
+                            programs.stopAll();
+                        }
                     } else if (id != null) {
                         stopped.add(id);
                     }
@@ -125,7 +133,7 @@ final class MachineOom {
         log(lines);
         machine.setChanged();
         if (!plan.fits()) {
-            machine.crash(CrashCause.MEMORY, CrashPages.Moment.memory(asking, machine.programs().takePid(), victims));
+            machine.crash(CrashCause.MEMORY, CrashPages.Moment.memory(asking, pids.getAsInt(), victims));
             return false;
         }
         machine.memoryFreed(level, lines, windows, front);
@@ -171,17 +179,17 @@ final class MachineOom {
 
     /*
      * The number of the process an entry stands for: a program's own, a service's as a process list shows it, and a
-     * window's taken from the programs' count when it goes, so no number a kernel prints names two things.
+     * window's taken from the machine's count when it goes, so no number a kernel prints names two things.
      */
-    private static int pid(final AbstractComputerBlockEntity machine, final RamLedger.Entry entry) {
+    private static int pid(final RamLedger.Entry entry, final IntSupplier pids) {
         return switch (entry.kind()) {
             case PROCESS -> entry.id();
             case SERVICE -> {
                 final ResourceLocation id = ResourceLocation.tryParse(entry.key());
                 final int index = id == null ? -1 : OsRegistry.serviceIndex(id);
-                yield index < 0 ? machine.programs().takePid() : SystemProcesses.servicePid(index);
+                yield index < 0 ? pids.getAsInt() : SystemProcesses.servicePid(index);
             }
-            default -> machine.programs().takePid();
+            default -> pids.getAsInt();
         };
     }
 
