@@ -16,6 +16,8 @@ What is decided:
   other. Which combination of parameters gives which material is designed together with J's Industrial, which says what
   each material is for ([The series](series.md)).
 - It does **not** generate Teracoin: it is not a second way of mining ([Teracoin](teracoin.md)).
+- Without J's Industrial, it is where the **computronium** of the Singularity's hardware comes from
+  ([Survival](survival.md)).
 
 What is designed with the Singularity's hardware: the nodes' hardware (their motherboard, processors and memory), the
 cluster's cable, the switch that joins the nodes into a cluster, the Simulation Interface card, the simulation's

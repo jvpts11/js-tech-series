@@ -181,9 +181,10 @@ Computers loads a chunk on its own; J's Core already has chunk loading per owner
 
 ### Two pieces to keep machines working
 
-- **The Network Anchor Card:** an expansion card per era that keeps the chunk of the computer it is in loaded. It uses
-  J's Core's chunk loading per owner, within the owner's quota (`world.chunks_per_owner`), and draws a card's watts like
-  any other ([Power](power.md)).
+- **The Network Anchor Card:** an expansion card per era that keeps the chunks around the computer it is in loaded. It
+  uses J's Core's chunk loading per owner, always within the owner's quota (`world.chunks_per_owner`), and draws its
+  watts like any card ([Power](power.md)). Estimates: the computer's own chunk at 5 W in the Vintage and 8 W in the
+  Legacy, 3 by 3 chunks at 10 W in the Transition and 12 W in the Standard, 5 by 5 at 15 W in the Advanced.
 - **The Space Persistor:** a block of J's Core, the series' chunk loader (the Chicken Chunks one, with a technological
   look). The player chooses its radius and the rest on the block, within the owner's quota; whether it draws energy, and
   how much, is up to J's Core's settings. It serves any mod, not only computers.
@@ -194,9 +195,11 @@ The **WAN Gateway Computer** links distant places through the **long-distance li
 Line, the T3 Line, the VLDC and the Dark Fibre, one per era. (The Network Gateway is something else: the bridge with
 ComputerCraft, [Peripherals](peripherals.md).) Today only the long-distance line exists, with no function.
 
-**Its shape:** a very wide computer, bigger than the Mainframe, with a model per era like the long-distance line, and 4
-ports for that line. It takes hardware like any computer (motherboard, processors, memory, power supply), runs a system,
-and its function is **software**: a WAN service installed on it. Hardware is capacity, software is role.
+**Its shape:** a very wide computer, a 4×2×2 multiblock, bigger than the Mainframe's 3×2×2, drawn as one model per era
+from the Vintage to the Advanced, like the long-distance line, with 4 ports for that line. It takes hardware like any
+computer (motherboard, processors, memory, power supply), runs a system, and its function is **software**: the
+**Nouvell BorderLink** service, by Nouvell Networks after the real BorderManager, one version per era, installed on it.
+Hardware is capacity, software is role.
 
 **Its specialised hardware:** the **WAN Interface Cards**, one per port (4 ports, so up to 4 cards), only in the WAN
 Gateway Computer, each in its era's bus slot. A card takes the line of its era and the earlier ones, like cable ports:
@@ -223,12 +226,20 @@ line's speed and the gateway's capacity, so a gateway with a weak processor is t
 its half in its own storage and sends the items down the line. Each side logs it, and locks stay local to each network.
 The Network Interactor shows the other network in a view of its own ("Federated"), never mixed with the local one. If
 the line falls in the middle, the items in transit are lost by the rule for a network that splits ([Power](power.md),
-configurable).
+configurable). Cancelling a federated Operation cancels the other network's half too, and its items go back to that
+network's storage. The far side works only while it is loaded, as any machine; J's Core's Space Persistor keeps it so.
+
+**Through a network between:** when A is federated with B and B with C, A reaches C only through B, and only when B's
+owner lets it: each of B's ports has a **relay** switch, off by default. A request from A then goes to B, which passes
+it to C; the items travel both lines at the speed of the slower one, and B logs the Operation as its relay. The path is
+the shortest by number of networks, never loops, and crosses at most three hops. Extension sites need no relay: they
+are the same network.
 
 **Speed:** that of the slowest cable on the path, with the long-distance line at its own figures (1, 8, 24, 64 and 256
 items per tick, from the Vintage to the Advanced).
 
 **Permissions, before security exists:** per port, what may cross and in which direction (SELECT, pull, push, craft),
-and turning the port on or off. Groups of players come with security ([Security](security.md)).
+whether it relays for other networks, and turning the port on or off. Groups of players come with security
+([Security](security.md)).
 
 **Cost:** no merging of indexes every tick; a query to the other network goes to its Mainframe when it is asked.

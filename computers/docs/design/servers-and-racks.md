@@ -366,6 +366,8 @@ How racks are made is decided with how hardware is made ([Eras](eras.md)).
 
 ## To build
 
+- **The qServe,** Quince's 1U server, one per era from the Legacy to the Advanced, in the ordinary racks
+  ([Quince](quince.md)).
 - **The Rack UPS** protecting the whole rack from a power loss, like a UPS ([Power](power.md)). Today it takes 1U with
   no effect.
 - **More rack units**, each with its system:
@@ -373,7 +375,7 @@ How racks are made is decided with how hardware is made ([Eras](eras.md)).
   | Unit | Height | What it does |
   | --- | --- | --- |
   | UPS Battery Expansion | 1U | Makes the Rack UPS last longer. They stack. ([Power](power.md)) |
-  | Vent Panel | 1U | Passive ventilation: takes away some heat, the cheap partner of the Cooling Unit; the filler that is not only for looks. |
+  | Vent Panel | 1U | Passive ventilation: adds 500 W to the thermal budget ([Temperature](temperature.md)), the cheap partner of the Cooling Unit. |
   | PDU (Power Distribution Unit) | 1U | Measures the energy per bay and makes the bays' power programmable: it exposes their power to IQL, so an UPDATE or a JOB turns servers on and off by rule. Real power automation. ([Power](power.md)) |
   | Drive Shelf (JBOD) | 2U | A shelf of drives only (10 front slots, no server): it extends the bays of the server **right above it** in the stack. With no server above, it does nothing. A Storage Server with shelves is the monster NAS of the late game. |
   | Tape Library | 2U | Cold storage for **data only**, for the Backup Service ([Programs](programs.md)): files, settings and system images on tapes. Huge, slow, and it **never** stores items, so nothing can be duplicated through it. |
@@ -384,5 +386,9 @@ How racks are made is decided with how hardware is made ([Eras](eras.md)).
 - **A Server Router per era**, like the ordinary routers, with the rack budget growing with the era (estimates): Legacy
   4, Transition 8, Standard 16, Advanced 32. The Vintage has no datacenter sections: its racks join the backbone
   directly. Today there is one Server Router, with 8 racks in all.
-- **Diagnostics per section** (latency, throughput, capacity alerts), in the Cluster Manager, the program that runs the
-  sections as one machine.
+- **Diagnostics per section**, in the Cluster Manager, the program that runs the sections as one machine, with the last
+  hour's history as the Network Manager's Stats tab has: the **latency** (ticks from entering the router to the
+  server's answer, averaged over the last minute), the **throughput** (items a second through the section) and the
+  **alerts**: a server's disks over 90% full (WARN) or 98% (ERROR), a rack over its thermal budget, the section's router
+  at its rack budget, the latency over twice the section's base (WARN). The alerts go into the network's event log
+  ([Operations](operations.md)).

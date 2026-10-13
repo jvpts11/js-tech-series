@@ -128,3 +128,21 @@ harvest, ploughs, placers. A combine harvester drives and harvests at once.
 - **The API**: making, moving, pushing and asking structures; turning positions between the world and a structure;
   events for collisions, splits and docking; the **physical properties of every block as data** (mass, thrust, lift,
   buoyancy, levitation).
+
+### Living alongside other moving-structure mods
+
+The kit is the series' own and stays so: nothing of it is replaced by another mod's. A **translation layer** only makes
+sure the kit's structures and those of Create (its contraptions) and Create Aeronautics (Sable's sub-levels) never
+conflict or crash the game where they meet:
+
+- **Where they meet:** a Create contraption assembled from blocks of one of the kit's structures, or carrying one; a
+  ship of theirs and a structure of ours colliding; the region of the world the kit keeps its blocks in beside Sable's
+  sub-levels; a position on one turned into a world position for the other.
+- **Each side sees the other as something it knows:** to the kit, a contraption or a Sable ship is a moving obstacle
+  with its place and its speed in the world; to them, a structure of the kit is shown in the form their API knows,
+  where their API allows it.
+- **What it cannot vouch for, it refuses** rather than risk a crash (one kind of structure assembled inside the other,
+  for example), with a message saying why.
+- **Behind a guard,** isolated, pinned to the versions its tests cover, with GameTests for each place they meet; a
+  version outside that range turns the layer off with a warning in the log, and the kit then refuses every meeting
+  with that mod's structures.

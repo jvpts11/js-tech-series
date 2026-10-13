@@ -204,6 +204,12 @@ Controller bay gadget ([Servers and racks](servers-and-racks.md)).
 
 ## To build
 
+- **The DVD Drive becomes a Transition drive,** decided for Carbon, as the real ones were and as the Transition's
+  programs need, since they install from DVD ([Programs](programs.md)). Today it is a Standard drive, and the internal
+  DVD drive of a case's bay is already of the Transition.
+- **Touchscreen monitors,** decided for Carbon: a touch version of the flat monitors from the Standard on. A player
+  uses the computer by touching the monitor's face in the world, with the right button, without opening the screen.
+  How touching, dragging and typing work is settled when they are built.
 - **The Dock Station only takes disks of its era or older** in its trays ([Eras](eras.md)). Today it takes disks of any
   era.
 - **Copying music, media and books, decided for Carbon:**

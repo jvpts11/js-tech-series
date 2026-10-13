@@ -94,8 +94,8 @@ the efficiencies) live in the code, not in the settings: changing them on one se
 catalogue. Whoever wants a faster or slower network has the keys that exist (the disks' waits, the programs' clock, the
 setting that turns the energy draw off). The keys of each system still to build come with it (security, for example).
 The lists of items (the 3D Printer's and the AI's) are in the server's settings, not in data packs; models in loot come
-in through a loot function ([Artificial intelligence](ai.md)); the hardware's recipes follow J's Computers' simple path,
-and J's Industrial's with it installed ([Eras](eras.md)).
+in through a loot function ([Artificial intelligence](ai.md)); the hardware's recipes follow J's Computers' easy chain,
+and J's Industrial's with it installed ([Survival](survival.md)).
 
 ## Compatibility
 
@@ -115,6 +115,24 @@ J's Computers works with any mod without an integration of its own: the buses an
 inventory, the Crafting Interface feeds any machine with slots and the usual capabilities, and chemicals come in through
 the bridge. J's Core's Space Persistor makes Chicken Chunks unnecessary ([The network](network.md)). New specific
 integrations are decided when there is a concrete reason, always behind a guard.
+
+**To build: Create**, decided for Carbon, behind a guard and isolated in an adapter like every optional mod:
+
+- **On Create's contraptions** (lifts, bearings, trains), whose blocks leave the world: a computer shuts down cleanly
+  when the contraption is assembled, as `shutdown` does, keeps everything, and stays off when it is taken apart. It
+  refuses to be assembled while it does what it cannot lose (a copy, an install, Operations under way on a Mainframe or
+  a server): the contraption doesn't assemble, and both Create's message and the computer's state say why.
+- **On Create Aeronautics' ships**, whose blocks stay real on Sable's sub-levels, the computers and the peripherals
+  aboard keep working in flight, once it is checked that the sub-levels keep their positions and their block
+  entities running; if they don't, the computers fall back to the contraptions' rule.
+- **To the ground** a ship talks by wireless: an Access Point aboard reaches one on the ground within its reach, and a
+  data cable never crosses between them ([Wireless](wireless.md)).
+- **Create's machines:** items and fluids already go through the buses. The industrial control cable reads a kinetic
+  network for SELECT (its speed, stress and capacity, as the `create_kinetics` table) and an UPDATE sets a Rotation
+  Speed Controller's target speed; clutches and gearshifts stay the Redstone Interface's.
+- **Versions:** Create, Create Aeronautics and Sable are pinned at their stable versions when Carbon opens, with
+  GameTests on them; outside the tested range the integration turns itself off with a warning in the log, never a
+  crash.
 
 ## Saving
 
@@ -153,11 +171,20 @@ network_split = true
 network_conflict = true
 corruption = true
 
-[teracoin]                               # the block's target time, the reward, the halving and its interval,
-                                         # the difficulty floor, the blocks' rare items (Teracoin)
-[teracoin.printer]                       # the 3D Printer's prices: the list of what can be printed
+[teracoin]                               # target_minutes, reward, halving, halving_blocks, floor_days,
+                                         # rare_item_chance, rare_items, with their defaults (Teracoin)
+[teracoin.printer]                       # prices: the list of what can be printed (Teracoin)
 
 [ai]                                     # the AI's list: the items that can be generated and the tokens of each
+
+[wireless]
+lost_device_hours = 72                   # a portable out of every inventory this long is erased (Wireless)
+
+[temperature]                            # ambient_base, biome_factor, nether_extra, restart_below_c (Temperature)
+
+[survival]                               # J's Computers' own chain, the working ruins, the eras by distance
+[villagers]                              # the Programmer, the IT Technician and the computer shop in villages
+[structures.<building>]                  # each abandoned building: on or off, its spacing, its eras (Survival)
 
 # jscomputers-client.toml
 [client]

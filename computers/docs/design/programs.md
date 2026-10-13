@@ -236,6 +236,11 @@ on their own.
 
 ## To build
 
+- **Programs in survival.** Installation media are never crafted: they are found in abandoned buildings and sold by the
+  Programmer, a villager whose level is the era of what it sells ([Survival](survival.md)). Media copy them and the
+  Mirror serves them, as today.
+- **Systems and desktops written by players** are packages too: published to the Mirror and installed from it, or
+  copied on media ([Systems written by players](player-systems.md)).
 - **The "update available" badge.** Settings > Programs marks with "update available" every program whose registry
   version is newer than the installed one, and each manager's `list` marks them too (like `apt list --upgradable`).
 - **The Backup Service:** a service on a rack server (there is no backup chassis) that keeps **data only**: files,
@@ -248,14 +253,41 @@ on their own.
   - Backups run by hand or as an Automation Engine job (every night, for example).
   - **Restoring** puts files back: a system image fixes a corrupted system ([Storage](storage.md)); a restored wallet
     gives back access to its coins.
+  - The **Backup Console** (Vaultis, Legacy, any desktop machine) is its window, the same pattern as the Messenger and
+    the Messenger Service: the service lives on the rack, and the console sets the backups and restores them.
+- **The Messenger** never reaches the game's chat: conversations stay on the network, and whoever runs the Messenger
+  Service can delete the conversations it keeps.
 - **More programs**, decided and waiting:
-  - **The Media Player:** each system's media player, after the real ones (Frames', the Linux ones), playing the
-    machine's sound files and image sequences. Its form and era are decided when it is made.
+  - **The Media Player** comes with every desktop system (it isn't installed), under each environment's real name:
+    Media Player on Frames 95, Frames Media Player from Frames XP on, Dragon Player on KDE Plasma, Videos on
+    GNOME, Celluloid on Cinnamon, Audio on CDE and the QuinceTime Player on Quince's systems ([Quince](quince.md)). It
+    plays the machine's songs (Ogg Vorbis and Wave, Soundfoundry's files, only the local ones: the library and streaming
+    stay Soundfoundry's) and **image sequences**, a folder of pictures from Paint or the camera played in order at up
+    to 20 a second, the mod's video. It opens from Files and follows the sound hardware's rules
+    ([Sound](sound.md)): with no sound card it plays no recordings. Command `media`, 8 MB of memory.
   - **The Data Compressor:** a storage service on a server (Vaultis, Standard). More items per disk (+20%, an estimate)
     at the cost of a longer wait on every read (+2 ticks): good on a hard disk, debatable on an SSD, bad on NVMe, where
     it triples the wait. A trade-off for the player to decide.
-  - **The Crypto Wallet** and **the Mining Panel** ([Teracoin](teracoin.md)).
+  - **Teracoin's software** ([Teracoin](teracoin.md)), by a new house, **Blockwright**: the Crypto Wallet, the Mining
+    Panel, the `miner` at the prompt and the Mining Pool service.
   - **The firewall, the IDS and the antivirus**, with security's second phase ([Security](security.md)).
   - **The Defrag**, which every computer comes with ([Storage](storage.md)).
   - **The AI framework** of each era, the **inference service** and the **AI management program**
     ([Artificial intelligence](ai.md)).
+
+  Their figures (estimates), as in the table above:
+
+  | Program | House | Kind | Era (from) | Memory MB | Disk MB | Systems | Machine |
+  | --- | --- | --- | --- | ---: | ---: | --- | --- |
+  | Crypto Wallet | Blockwright | program | Transition | 32 | 64 | desktops | any |
+  | Mining Panel | Blockwright | program | Transition | 48 | 48 | desktops | any |
+  | miner | Blockwright | program | Transition | 16 | 8 | all | any |
+  | Mining Pool | Blockwright | service | Transition | 32 | 32 | all | server |
+  | Backup Service | Vaultis | service | Legacy | 32 | 48 | all | server |
+  | Backup Console | Vaultis | program | Legacy | 32 | 48 | desktops | any |
+  | Data Compressor | Vaultis | service | Standard | 64 | 32 | all | server |
+
+  Linux Mint's Software Manager (64 MB) and Update Manager (32 MB) come with it, by Spearmint Linux
+  ([Operating systems](operating-systems.md)).
+- **How they look:** every new program wears the skin of the desktop it runs on, as the others do (only Soundfoundry
+  has a skin of its own), and each has an approved mock before any code of its window.

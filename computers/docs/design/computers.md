@@ -38,7 +38,8 @@ on the backbone ([The network](network.md)). Its exclusive parts are the persona
 [Peripherals](peripherals.md)).
 
 Its cases: a beige AT minitower (Vintage), an ATX tower (Legacy), a mid tower (Transition), and in the Standard and the
-Advanced three cases, the neutral one, "High Performance" and "Aesthetic", which only differ in looks.
+Advanced three cases, the neutral one, "High Performance" and "Aesthetic", which differ in looks and, once temperature
+comes, in the heat they take away ([Temperature](temperature.md)).
 
 ### Mainframe
 
@@ -139,6 +140,19 @@ What happens when two Mainframes meet, and to a network whose Mainframe is gone,
 
 ## To build
 
+### Quince's computers
+
+The third family's machines, decided for Carbon: its Personal Computers in every era, the all-in-ones among them with
+their screen in their own block and no monitor, its qServe in the racks and the **Quince Mainframe** from the
+Transition on, running Quince OS X Server ([Quince](quince.md)).
+
+### A computer as one item
+
+Breaking a computer that is one block (the Personal Computer, the Crafting Computer, the Cluster Management Computer,
+the small computers to come) gives the whole computer, with its parts inside, as a rack server does today; parts come
+out by opening the case. The Prebuilder makes computers as that same item, and its motherboard needs firmware from the
+Preinstaller before the computer can start ([Survival](survival.md)).
+
 ### Making a Subframe
 
 The role comes from the software. The network engine of a Mainframe ([Operations](operations.md)) runs in one of two
@@ -165,7 +179,8 @@ as its Mainframe:
 - the other Subframes lend to the new orchestrator if they run its engine;
 - what belongs to an engine (IQL's views and procedures, Prophet's states, Nextgre's rules) stays with the engine that
   had it, and the programs that need an engine say so ([Programs](programs.md));
-- the fallen orchestrator's Operations follow the rule for a sudden shutdown ([Power](power.md)).
+- the fallen orchestrator's Operations are discarded, as in failover: nothing resumes from a checkpoint, and each is
+  logged as DISCARDED with what it had left ([Operations](operations.md)).
 
 ### Computers still to build
 

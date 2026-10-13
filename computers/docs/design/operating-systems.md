@@ -244,14 +244,44 @@ the kernel ignores a kill of init from the system; here it is what it would do i
 
 - **More triggers of the red page,** on every computer and rack server: a thermal trip, a failing power supply, unstable
   power ([Temperature](temperature.md), [Power](power.md)).
+- **The firmware lives on the motherboard.** A board made in survival comes out with no firmware, and a computer with a
+  blank board shows nothing; the Preinstaller writes the firmware of the board's era onto it ([Survival](survival.md)).
+- **Network boot from the Mirror.** From the Legacy, the firmware's setup can boot from the network (PXE); from the
+  Standard, UEFI boots over HTTP; the Vintage cannot. On a network whose Mainframe serves the Mirror, the firmware lists
+  the systems published there, the players' own included, and boots the installer of the one chosen; the install then
+  runs as from a medium. Today a system is only installed from the Mirror from inside a running one
+  ([Programs](programs.md)).
+- **Systems and desktops written by players**, in Σ or Σ#, through the `System.OS` namespace
+  ([Systems written by players](player-systems.md)).
+- **OpenBSD,** decided for Carbon: the proactively secure Unix, from the Legacy, on a kernel of its own (`openbsd`),
+  booting to the terminal, 1,024 MB of disk and 12 of memory, packages with `pkg_add` and the ports.
+  - Its installer is the real one, questions and answers at the terminal: *(I)nstall, (U)pgrade, (A)utoinstall or
+    (S)hell?*, the host name, the network, root's password, sshd, X, the disk and the sets (`bsd`, `base`, `comp`,
+    `man`...), from the medium or from the Mirror over the network.
+  - It boots through `boot>`, waiting five seconds, with its own lines (*Automatic boot in progress: starting file
+    system checks*, *starting network daemons*), greets with *Welcome to OpenBSD: The proactively secure Unix-like
+    operating system* and runs `ksh`.
+  - Secure by default: a service installed comes switched off and is switched on with `rcctl enable`; it has `doas`
+    and `syspatch`. The player stays root until accounts come ([Security](security.md)).
+  - Its panic stops in the kernel debugger, at `ddb>`: the machine waits until the player types `boot reboot`, with
+    `trace`, `ps` and `show panic` there too.
+  - Its memory follows the Unix family's rule, with OpenBSD's own line; it takes the desktop packages FreeBSD takes.
+  - With security, it is the system of the network's defence: `pf` is the network's firewall, OpenBSD machines are
+    the hardest to attack, and `pledge` and `unveil` restrict what a program may do; designed with security.
+- **Linux Mint,** decided for Carbon: from the Standard (the era of the mod's Cinnamon), on the `linux` kernel, the one
+  distribution that boots to its desktop, Cinnamon; 12,288 MB of disk and 64 of memory. Its medium boots a live
+  desktop with *Install Linux Mint* on it, which runs the guided installer. Packages through `apt`, the store, and
+  two programs of its own, by Spearmint Linux: the **Software Manager** and the **Update Manager**
+  ([Programs](programs.md)).
 - **Accounts and passwords:** every system has real user accounts and its `passwd`; with a directory on the network, the
   login is the network's ([Security](security.md)). Today they only exist as pages.
 - **The portable devices' mobile systems** ([Wireless](wireless.md)): real systems, from the factory, with no installer,
-  parodies of the real ones, with the registry's apps and the Mirror's store. With them comes a **third family of
-  systems and hardware**, next to Frames and Linux: a maker and software house in the manner of Apple, with its
-  computers (like the Macintosh), its phones and tablets, and its systems, desktop and mobile. The brand's name and the
-  names of its systems and machines are set when we get there; the instruction sets they bring (as the real ones did:
-  68k, PowerPC, ARM) register like any other ([Σ and Σ#](sigma.md)).
+  parodies of the real ones, with the registry's apps and the Mirror's store: Midsoft's **Frames Pocket** on the PDAs,
+  **qOS** on Quince's phones and tablets, and **Droidix**, open and on the Linux kernel, on the other makers'. With them
+  comes the **third family of systems and hardware**, next to Frames and Linux: **Quince**, in the manner of Apple,
+  with its computers, servers and Mainframe, its phones and tablets, its systems (the Quince System, Quince OS 9,
+  Quince OS X, Quince OS X Server, quinceOS and qOS) and the instruction sets they bring (68k, PowerPC, ARM64), decided
+  for Carbon ([Quince](quince.md)).
 - **The web of the world:** **sites** are files (pages, images) on a rack server running a **web server** service (a
   parody of a real one, like the Messenger Service); the **browser** is a program per era, a parody of the real ones
   (Netscape and Internet Explorer in the Legacy, Firefox and Chrome later), and shows the network's sites. Through the

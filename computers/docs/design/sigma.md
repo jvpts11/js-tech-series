@@ -261,10 +261,52 @@ of machine), or a **component type** for programs' windows ([The API](api.md)).
 
 ## To build
 
-- **Generics and exceptions in Σ#**, in a future version: **generics** defined by the player (classes and methods with
-  type parameters) and **exceptions** (`try`, `catch`, `finally`, a small `Exception` hierarchy; `finally` makes sure
-  the `dispose` calls of a block that leaves halfway still run). What the library makes answer keeps answering. Σ stays
-  a subset of Σ#. Today Σ# only has the built-in collections as generics, and no exceptions.
+- **Version 3 of Σ and Σ#**, decided for Carbon (`sgsc` 3.0 and `scc` 3.0, updated from the Mirror like any
+  package). Since Boron, its words are kept: each is refused at the word with S2014 and what to write until then, and
+  none can be a name; version 3 accepts them, and `--lang 2` still refuses them as today.
+  - **Exceptions in Σ#:** `try`, `catch (Type name)`, a `catch` with no type, `finally` and `throw` (with no `when`
+    filters and no `throw` expressions). A small hierarchy after C#'s: `Exception` (`Message`, `File`, `Line`,
+    `Trace` with up to 16 calls, `Inner`), `NullReferenceException` (reaching nothing), `ObjectDisposedException`
+    (using what was freed), `DivideByZeroException`, `IndexOutOfRangeException`, `ArgumentException` and
+    `ArgumentOutOfRangeException`, `InvalidOperationException`, `FormatException` (`Convert.Int` on text that isn't a
+    number), `IOException` and `FileNotFoundException`, `NetworkException` (asking a network there isn't). A player
+    makes their own by extending `Exception`.
+  - **The errors that stop a program today throw these instead.** Uncaught, they stop it as today, with the message
+    and now the trace, so an old program behaves exactly the same. What answers today keeps answering (`File.Write`
+    returns false, `Convert.TryInt`). Running out of memory and more than 1,024 nested calls still stop the program
+    with no exception, as .NET's stack overflow does: catching the lack of memory would need memory.
+  - **The price:** entering a `try` costs nothing; a `throw` costs 50 instructions, and 5 more for every call it
+    unwinds.
+  - **`finally`** runs as the calls unwind, as in C#, so the `dispose` calls of a block that leaves halfway still run.
+    A program stopped by `sigma stop`, the Task Manager or `kill` with TERM runs its pending `finally` blocks, within
+    one tick's credits, and then `OnDestroy`; `kill -9` and a machine losing power run nothing, as SIGKILL does.
+  - **`goto`:** in Σ#, C#'s whole form (labels, `goto case`, `goto default`), with its rules: a jump may leave a
+    block, never enter one. In Σ, only `goto` to a label, as in C.
+  - **`const`**, as in C#, on fields and locals, for values known when compiling (numbers, `bool`, `char`, strings,
+    enums, `null`), folded into the listing: whoever changes a library's `const` compiles again whoever uses it.
+  - **`comefrom`, `abstainfrom` and `reinstate`**, after INTERCAL, in Σ and Σ#:
+    - `comefrom label;` is INTERCAL's COME FROM: when the statement marked `label:` ends normally, control jumps to
+      just after the `comefrom`; not when that statement throws or leaves by `return`, `break` or `goto`. It sits in
+      the label's method, in a block that holds the label (`goto`'s rule backwards: it may leave a block, never enter
+      one), and two `comefrom` for one label are an error. In the listing it is what it really is: a `br` placed at
+      the end of the marked statement.
+    - `abstainfrom label;` switches off the code from the marked statement to the end of the block the label is in.
+      It acts while running, as INTERCAL's ABSTAIN does: from then on, every time execution reaches the label it
+      skips the whole region. The state is the process's: it holds across later calls of the method, threads share
+      it, it is saved with the process, and it starts clean when the program starts. It sits in the label's method;
+      the compiler counts on the region being skipped (a variable read after it needs a value from before the label,
+      and a method that returns a value needs a `return` after it). Switching off twice is the same as once. A
+      `comefrom` inside a switched-off region doesn't fire, and neither does one whose label lies in such a region.
+    - `reinstate label;` switches the region on again; switching on what is on does nothing.
+    - Each costs 1 instruction. The listing gains `abstain`, `reinstate` and `brabst` (jump past the region while it
+      is switched off), in the same format `.asm 2`. Boron keeps the three words as it keeps the others.
+  - **Σ 3** gets what C has, `goto` to a label and `const`, and the three words above; Σ still never has exceptions.
+  - **The listing:** exceptions need handler tables and new instructions (`throw`, `rethrow`, `leave`, `endfinally`),
+    in the format `.asm 2`. The compiler writes `.asm 2` only for a program that uses them: a version 3 program with
+    no `try` comes out as `.asm 1` and runs on an older runtime. `goto` uses the `br` that exists, and `const` adds no
+    instruction.
+- **Generics defined by the player** (classes and methods with type parameters), in version 4, with no cycle set. Today
+  Σ# only has the built-in collections as generics. Σ stays a subset of Σ#.
 - **Two more event sources:**
   - `Operations.OnSettled(handler)`, or `OnSettled(operation, handler)` for just one: an Operation settled ("tell me
     when this craft is done");
@@ -275,3 +317,8 @@ of machine), or a **component type** for programs' windows ([The API](api.md)).
   versions. It is read in the book and on every system through its help (`man sigma`, `info sigma`, Help Topics, Get
   Help; [Operating systems](operating-systems.md)), written once for both. Today the reference is only the public Σ#
   guide.
+- **Building for Quince's instruction sets** (68k, PowerPC, ARM64) with `sigma build --isa`, and **universal** builds
+  that carry several at once; Champollion runs a program across a switch ([Quince](quince.md)).
+- **`System.OS`**, the namespace an operating system or a desktop environment written by a player is made with, in Σ#
+  and through `Standard` in Σ; `sigma build --os` and `sigma build --desktop` write them out
+  ([Systems written by players](player-systems.md)).

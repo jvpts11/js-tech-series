@@ -49,10 +49,12 @@ The formulas of the systems still to build:
 | --- | --- | --- |
 | Energy drawn | the parts' watts / the supply's efficiency, in J's Core's real units (a setting turns the draw off) | [Power](power.md) |
 | A power supply's wear | the line's base life (60, 100, 150, 250 game days at full load) × 8 up to 50% load, × 3 from 50 to 80%, × 1 above; half in a rack that is throttling; ±20% drawn once; degraded at 80%, failed at 100% | [Power](power.md) |
-| Temperature | the surroundings + the rise from the load; load = thermal budget gives 80 °C; from 80 to 90 °C down to −15%; at 90 °C it cuts down to a floor of 25%; at 100 °C, thermal trip | [Temperature](temperature.md) |
+| A block computer's thermal budget | the case + its fans + its processors' coolers (a water cooler takes two fan slots); a Mainframe's cabinet 1,500 W + its coolers; a rack + 500 W per Vent Panel | [Temperature](temperature.md) |
+| The surroundings | 20 + 15 × (the biome's vanilla temperature − 0.8) °C, + 10 in the Nether | [Temperature](temperature.md) |
+| Temperature | the surroundings + 60 × load / thermal budget; from 80 to 90 °C down to −15%; at 90 °C it cuts down to a floor of 25%; at 100 °C, thermal trip; it starts again under 60 °C | [Temperature](temperature.md) |
 | A UPS's battery | runtime = battery in FE / draw; clean shutdown at 10% | [Power](power.md) |
 | A WAN Gateway Computer's speed | min(the line's speed, the gateway's capacity) | [The network](network.md) |
-| A Teracoin block | each miner's chance per block = hashrate / difficulty; hashrate from processor capacity and graphics card power; adjusted every 10 blocks, with a floor from the world's days; the reward halves every N blocks | [Teracoin](teracoin.md) |
+| A Teracoin block | each miner's chance each second = hashrate / difficulty; hashrate = processor capacity, or graphics card power × 10; adjusted every 10 blocks (×4 to ×1/4 at most), with a floor of the start × (1 + days / 100); the reward halves every 2,100 blocks | [Teracoin](teracoin.md) |
 | An item's dataset | 64, 256, 1,024, 4,096 samples give 50, 75, 90, 99% highest accuracy | [Artificial intelligence](ai.md) |
 | Training | work = samples × tokens per item × 3; time = work / tokens per tick of the graphics and compute cards | [Artificial intelligence](ai.md) |
 | Generating | items per tick = tokens per tick × the architecture's factor / tokens per item; only items whose tokens fit in the context window; hits per batch by accuracy; the part of a model offloaded to memory at about 1/10 | [Artificial intelligence](ai.md) |

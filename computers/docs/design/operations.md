@@ -295,11 +295,13 @@ Every engine and every version has its own dialect. A line that is refused says 
 
 - **DROP without asking.** A DROP runs with no confirmation, no phrase to type and no question, as on a real database.
   Today the ISMS asks before a DROP.
-- **UPDATE costs energy**, taken from the computer that has the cards: smelting, enchanting, repairing, combining and
-  naming each spend their own energy (estimates), and the cards draw their watts like any card ([Power](power.md)). The
-  server's settings (`jscomputers-server.toml`, `[update] cost`) choose what is paid: energy (the default), XP (levels
-  of the one asking, fewer than the vanilla blocks and with no lapis lazuli), both, or nothing. The Workshop pays the
-  same ([Programs](programs.md)). Today enchanting and the anvil cost levels, and the furnace nothing.
+- **UPDATE costs energy**, taken from the computer that has the cards, and the cards draw their watts like any card
+  ([Power](power.md)). Each action spends its own (estimates; 1 J is 1 FE): smelting, 2 kJ an item; enchanting, 10 kJ
+  for every level the vanilla table would ask; repairing, 2 kJ for every 1% of durability given back; combining, 10 kJ
+  for every level the vanilla anvil would ask; naming, 5 kJ. The server's settings (`jscomputers-server.toml`,
+  `[update] cost`) choose what is paid: energy (the default), XP (half the vanilla levels of the one asking, at least
+  1, and no lapis lazuli), both (the energy and that half), or nothing. The Workshop pays the same
+  ([Programs](programs.md)). Today enchanting and the anvil cost levels, and the furnace nothing.
 - **The network's event log**, apart from the Operations log, records what happens to every machine, with **levels**:
   INFO (turned on, turned off), WARN (a degraded power supply, a UPS on battery, stock below a threshold) and ERROR (a
   network conflict, a power loss, items lost, corruption, a failed power supply, a WAN link going down). It is read in

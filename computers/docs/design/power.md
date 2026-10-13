@@ -44,7 +44,10 @@ watts drawn from the grid = watts of the parts / efficiency of the power supply
   makes, carries and stores that energy, and so do the generators of other mods of the series, such as J's Space's,
   through J's Core's basic cable and battery; any other mod's FE reaches a computer through J's Core's converters, or
   directly when J's Core's setting accepts FE.
-- A server setting turns the draw off, so computers run free for whoever plays with no energy source at all.
+- J's Computers has no generator of its own: its computers, and the machines of its chain ([Survival](survival.md)),
+  run on the energy other mods make.
+- A server setting turns the draw off, so computers and machines run free for whoever plays with no energy source at
+  all.
 - The rule for starting compares the parts' watts with the supply's **rating** (real power supplies are rated by what
   they give out); the efficiency only weighs on what is drawn from the grid.
 - Without energy a computer doesn't start; losing the energy while it runs is a power loss (below).
@@ -148,8 +151,20 @@ A UPS block per era, like the other peripherals, and the Rack UPS (1U) for a who
   and "On battery" on Frames, a notification on Linux, a line on MC-DOS).
 - At 10% battery, the system shuts itself down cleanly, as real UPS software does: no item is lost, and the next boot
   doesn't check the disk.
-- The battery holds joules, J's Energy's unit; how long it lasts is the battery divided by the draw. Estimates: about 5
-  game minutes at 300 W on a Vintage or Legacy UPS, 10 minutes at 800 W on a Standard one, 15 minutes at 3 kW on the
-  Rack UPS. The rack's UPS Battery Expansions add battery ([Servers and racks](servers-and-racks.md)).
+- The battery holds joules, J's Energy's unit; how long it lasts is the battery divided by the draw. Estimates:
+
+  | UPS | Battery | Most it carries | Lasts |
+  | --- | ---: | ---: | --- |
+  | Vintage, Legacy | 90 kJ | 300 W | 5 game minutes at 300 W |
+  | Transition | 240 kJ | 500 W | 8 minutes at 500 W |
+  | Standard | 480 kJ | 800 W | 10 minutes at 800 W |
+  | Advanced | 1.35 MJ | 1,500 W | 15 minutes at 1,500 W |
+  | Rack UPS | 2.7 MJ | 3 kW | 15 minutes at 3 kW |
+
+- Every UPS Battery Expansion in the rack adds another 2.7 MJ, as real battery packs do; only the rack's room limits
+  them ([Servers and racks](servers-and-racks.md)).
+- An empty battery charges in 10 game minutes, and what it takes is drawn on top of the load.
+- Above what it carries, the UPS goes into **bypass**, as a real one does: the computer runs straight from the line,
+  unprotected, and the UPS beeps.
 
 Today there are no UPS blocks, and the Rack UPS takes 1U with no effect.

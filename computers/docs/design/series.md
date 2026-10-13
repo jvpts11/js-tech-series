@@ -41,9 +41,10 @@ and a Σ# program submits them like the others.
 
 ## Hardware and recipes
 
-Today everything comes from the creative tab. J's Computers makes every part of every era by its own simple path, from
-vanilla materials and J's Core's catalogue, and with J's Industrial installed the industrial chain is the path at scale;
-a server setting can make it the only one ([Eras](eras.md)).
+Today everything comes from the creative tab. J's Computers makes every part of every era by its own easy chain, from
+vanilla materials and J's Core's materials, and with J's Industrial installed the industrial chain is the hardcore path,
+at scale; switching J's Computers' chain off leaves the industrial one alone ([Survival](survival.md),
+[Eras](eras.md)). J's Computers has no generator: its computers and machines run on the energy other mods make.
 
 ## The other mods
 

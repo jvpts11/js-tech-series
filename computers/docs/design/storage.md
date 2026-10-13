@@ -118,20 +118,23 @@ Corruption never happens in normal play. It only comes from exceptional events: 
   corrupted. They don't vanish at once: they wait for the Defrag.
 - It can also hit a disk's **system files**; a system missing files may not start
   ([Operating systems](operating-systems.md)).
-- Heavy corruption (over 50%) damages the disk itself: **bad sectors**, a field of the volume that reduces its capacity;
-  over 90% the disk dies.
+- Heavy corruption (over 50%) damages the disk itself: **bad sectors**, a field of the volume that reduces its capacity
+  by what goes over 50% (a disk 70% corrupted loses 20% of its capacity); over 90% the disk dies.
 - The private part of a Personal Computer is never affected.
 
-**The Defrag** is the classic defragmenter, a program every computer comes with. It runs on the computer and tries to
-recover each corrupted item, with a chance by disk kind (estimates):
+**The Defrag** is the classic defragmenter, a program every computer comes with: `DEFRAG` on MC-DOS, the Disk
+Defragmenter on Frames, and `fsck` on Linux, FreeBSD and UNIX, which is what repairs a disk on those systems. It runs on
+the computer and tries every corrupted item once a pass, with a chance by disk kind (estimates):
 
-- a hard disk recovers almost always;
+- a hard disk recovers 95%;
 - an SSD recovers while the damage is under 70% (a base chance of 70%, minus 10 points for every 10% more damage);
 - an NVMe disk while it is under 50% (a base chance of 60%, minus 15 points for every 10%).
 
-What isn't recovered is lost. The Defrag also tries to repair part of the bad sectors. With luck, almost everything
-comes back. A system that won't start is fixed by taking the disk to a Dock Station on another computer and running the
-Defrag there, or by installing it again. The mechanics and the numbers will be tuned when it is built.
+What isn't recovered is lost. Every pass also repairs a quarter of the bad sectors left. With luck, almost everything
+comes back. A pass takes 3 game minutes on a hard disk, 1 on an SSD and 30 seconds on NVMe, with a progress bar in the
+system's style (on Frames 95, the grid of coloured blocks); the machine keeps working, but that disk's wait doubles
+while it runs. A system that won't start is fixed by taking the disk to a Dock Station on another computer and running
+the Defrag there, or by installing it again.
 
 **Settings:** in `[item_loss]` ([Power](power.md)), the `corruption` key turns all corruption off, and
 `network_conflict` only the corruption that comes from a conflict.
@@ -139,6 +142,9 @@ Defrag there, or by installing it again. The mechanics and the numbers will be t
 ### Every state of matter
 
 J's Core splits matter into its states: items, liquids, gases, plasmas, supercritical fluids, slurries and exotic
-matter. The storage key follows: its kinds become items, liquids, gases and plasmas (and the rest as J's Core declares
-them), with other mods' chemicals still coming in through the bridge. Buses, disks, the terminal and Operations treat
-every kind the same way, as they do the three of today.
+matter. The storage key follows: its kinds become ITEM, LIQUID (today's FLUID), GAS, PLASMA, SUPERCRITICAL, SLURRY and
+EXOTIC, as J's Core declares them, and every one weighs as fluids do today, 1,000 mB to an item. CHEMICAL stays only
+for what has no state in J's Core (Mekanism's infusion types and pigments); Mekanism's gases and slurries come in
+through the bridge as GAS and SLURRY. Buses, disks, the terminal and Operations treat every kind the same way, as they
+do the three of today, and the terminal shows each with its picture: a liquid's texture, a gas's or a plasma's colour
+swatch.

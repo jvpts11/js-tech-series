@@ -121,7 +121,10 @@ mods of the series fit together is in [The series](series.md).
 ## Configuration
 
 There are no module switches: a module is on when the mod of the J's Tech Series that brings it is installed. J's
-Computers does not turn parts of itself on or off; what can be adjusted is numbers and behaviour, in three files. Each
+Computers does not turn its systems on or off; what can be adjusted is numbers and behaviour, in three files, and some
+content of the world can be switched off: J's Computers' own chain of recipes, each abandoned building and the
+villagers ([Survival](survival.md)), and the failures that cost a player items, such as a power supply's
+([Power](power.md)). Each
 key has a range, a default, a comment and a unit; a value outside its range is pulled back into it, and a value that
 cannot be read returns to the default. All three also appear on J's Core's settings screen.
 
@@ -138,7 +141,9 @@ Every key, with its default and range, is listed in [Implementation](implementat
 The systems still to build follow the same rule:
 
 - **Wireless** is an essential part of the mod, like the cables: it cannot be turned off ([Wireless](wireless.md)).
-- Temperature, Teracoin, the AI and the simulator have no on and off switch. Each gets its number keys when it is built.
+- Temperature, Teracoin, the AI and the simulator have no on and off switch, only number keys: temperature's
+  (`[temperature]`) and Teracoin's (`[teracoin]`) are in [Implementation](implementation.md); the AI's and the
+  simulator's come with their design.
 - What creates items out of nothing (Teracoin's 3D Printer and the AI's item generation) has its own list of items in
   the server's configuration, one for each, and only what is on the list can be created ([Teracoin](teracoin.md),
   [Artificial intelligence](ai.md)).

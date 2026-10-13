@@ -329,6 +329,11 @@ The mining and simulation boards are designed with their systems ([Teracoin](ter
 
 ## To build
 
+- **Quince's hardware**, decided for Carbon: its logic boards, which take only the processors of their era (Motoroller
+  68000, PowerQ G3 and G4, Integra in the Transition and the Standard, Quince's Q1 to Q3), and the 68k, PowerPC and
+  ARM64 instruction sets, with Champollion to run programs across a switch ([Quince](quince.md)).
 - **Expansion slots in groups** on every motherboard: see [Eras](eras.md). Today each board has one kind of slot.
 - **Compute cards without video outputs**, on the AI Server's GPU baseboard: see [Artificial intelligence](ai.md). Today
   the Tessera cards work as ordinary graphics cards; the MI300X and the NPUs only exist as art.
+- **Cooling parts:** a cooler slot for every processor on the board, and the coolers and case fans of each era, with the
+  tower and water coolers of the Standard and the Advanced ([Temperature](temperature.md)).

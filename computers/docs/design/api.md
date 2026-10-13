@@ -68,20 +68,44 @@ A power supply can be declared self-sizing (it never refuses, and its rating is 
 the series shares.
 
 **Anyone extends J's Computers:** through the API, an add-on also declares **new eras, new hardware and new computers**,
-besides the programs and the rest that are already open.
+besides the programs and the rest that are already open. They are built in Carbon, which brings Quince's whole family,
+the cooling parts and the items of the survival chain, and J's Computers registers its own hardware through them, as it
+does its programs, so the add-ons' path is the one that always runs. Like the other registries, they are filled by the
+register events while the game loads and close after it; KubeJS's startup scripts can fill them too.
 
-- **The hardware registry:** the specs (processor, graphics card, memory, disk, motherboard, power supply, expansion
-  cards) and their items, with the era and the usual fitting rules.
-- **The computer registry:** a type of computer with its case, the form factors it takes, its machine (the host scope,
-  [Programs](programs.md)) and its block.
-- **Eras** go from a closed enum to a **registry** in J's Core: every era has an id (`namespace:path`), a name, a colour
-  and a **position in the order**, and is saved by its id. An add-on's era comes after the Singularity or between two
-  eras; the rules that compare eras follow the order. It touches saves, and it is done all at once.
-- **Dataset and model types** for the AI ([Artificial intelligence](ai.md)), so J's Robotics can train robots without
-  J's Computers knowing what a robot is.
+| Registry | What an entry declares |
+| --- | --- |
+| Eras (J's Core) | an id (`namespace:path`), a name, a colour, a **position in the order**, its years (for the installers' banners) and its installation medium |
+| Processors | the era, the socket, cores, threads, gigahertz, the design's efficiency, the instruction set, the watts, graphics on the die, the name and the codename |
+| Graphics cards | the era, cores, megahertz, the design's efficiency, video memory, the slot's generation, the watts, the video outputs |
+| Memory | the generation, the capacity, the speed |
+| Disks | the kind (hard disk, SSD, NVMe), the capacity, the era |
+| Motherboards | the era, the form factor, the socket and how many, the memory generations and slots, the groups of expansion slots, the disk slots, the ports |
+| Power supplies | the rating, the efficiency, the line (its base life) |
+| Expansion cards | the kind, the slot |
+| Cooling | the kind (cooler, tower, water, fan), the watts it takes away, the slots it takes ([Temperature](temperature.md)) |
+| Computers | the case, the form factors it takes, its machine (the host scope, [Programs](programs.md)), its block, how many of each part the case counts, the watts the case takes away and its fan slots |
 
-Cable types already belong to J's Core. The first mods to need the rest are J's Space (its machines that run as
-computers, the Flight Control and Aerospace Design Computers, the Satellite Cards and the rest of its hardware, and the
-Enigmatic hardware) and J's Industrial (the Industrial Controller Computer and its
-Fieldbus Cards, the machines that run as computers, and the hardware's industrial recipes); it is built when the first
-of them starts. Today there is no hardware, computer or era registry.
+Every item comes with its entry, with the era and the usual fitting rules. Eras go from a closed enum to the registry,
+and are saved by their id: an add-on's era comes after the Singularity or between two eras, and the rules that compare
+eras follow the order. It touches saves, and it is done all at once.
+
+**What else Carbon opens:**
+
+- **An event when a player reaches an era** (in J's Core, where the eras are), so other mods can gate their content
+  on it ([Survival](survival.md)).
+- **A computer's temperature and thermal budget**, read through a capability of J's Core, which is how J's
+  Industrial's chillers join later ([Temperature](temperature.md)).
+- **The kinds of recipe of the survival chain's machines**, as data: JEI and EMI show them and KubeJS changes them.
+
+Everything Carbon adds is **experimental** for its first cycle, as J's Core's three levels say, raises
+`JsComputersApi.VERSION` and is written line by line into `api/computers.txt`.
+
+**Later:** the **dataset and model types** for the AI ([Artificial intelligence](ai.md)), so J's Robotics can train
+robots without J's Computers knowing what a robot is, come with the AI (Nitrogen); Teracoin's API for J's Economy is
+designed with J's Economy ([Teracoin](teracoin.md)).
+
+Cable types already belong to J's Core. J's Space (its machines that run as computers, the Flight Control and Aerospace
+Design Computers, the Satellite Cards and the rest of its hardware, and the Enigmatic hardware) and J's Industrial (the
+Industrial Controller Computer and its Fieldbus Cards, the machines that run as computers, and the hardware's industrial
+recipes) build on these registries. Today there is no hardware, computer or era registry.
