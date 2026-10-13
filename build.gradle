@@ -9,6 +9,9 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
+// Each mod's changelog, written from the series' one.
+apply from: 'gradle/changelogs.gradle'
+
 // The version every artifact carries (the jar names and the mod metadata alike). A build from a tree that is
 // not the tagged release commit is a snapshot named after the commit it came from, "0.2.0a-SNAPSHOT.6a288a7":
 // the loader orders a snapshot below its release and above the previous one, so a development jar never

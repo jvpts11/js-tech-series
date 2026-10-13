@@ -1,0 +1,173 @@
+// Each mod's changelog is written from the series' changelog, which stays the one place a change is recorded: from
+// the first release that names its mods on, every entry there opens with the mods it concerns, as in
+// "(Computers) Racks and servers: ...", and a mod's file takes the entries that name it, without that opening. The
+// releases before it, whose entries name no mod, stay in the series' changelog alone.
+//
+//   ./gradlew changelogs        writes core/, computers/ and industrial/CHANGELOG.md
+//   ./gradlew checkChangelogs   fails when one of them is not what changelogs would write (part of every check)
+
+// The names an entry may open with, and the folder each mod's changelog goes in; a name with no folder is a mod
+// still being designed, whose entries stay in the series' changelog.
+def changelogMods = [Computers: 'computers', Industrial: 'industrial', Core: 'core', Space: '']
+
+abstract class ModChangelogs extends DefaultTask {
+
+    @InputFile
+    abstract RegularFileProperty getSeries()
+
+    @Input
+    abstract MapProperty<String, String> getMods()
+
+    @Input
+    abstract Property<String> getFirstOwnRelease()
+
+    @Input
+    abstract Property<String> getLastSharedRelease()
+
+    @Input
+    abstract Property<Boolean> getVerifyOnly()
+
+    @Internal
+    abstract DirectoryProperty getRepository()
+
+    @TaskAction
+    void apply() {
+        String text = series.get().asFile.getText('UTF-8')
+        String newline = text.contains('\r\n') ? '\r\n' : '\n'
+        Map<String, String> written = render(text.replace('\r\n', '\n').split('\n', -1) as List<String>, mods.get(),
+                firstOwnRelease.get(), lastSharedRelease.get())
+        List<String> stale = []
+        written.each { String folder, String content ->
+            File file = repository.get().file("${folder}/CHANGELOG.md").asFile
+            if (verifyOnly.get()) {
+                if (!file.exists() || file.getText('UTF-8').replace('\r\n', '\n') != content) {
+                    stale << "${folder}/CHANGELOG.md".toString()
+                }
+            } else {
+                file.setText(content.replace('\n', newline), 'UTF-8')
+            }
+        }
+        if (!stale.isEmpty()) {
+            throw new GradleException("These changelogs are not what the series' changelog makes of them: " +
+                    "${stale.join(', ')}. Run ./gradlew changelogs and commit what it writes.")
+        }
+    }
+
+    // Reads the releases above the last shared one into versions, their sections and the entries of each, then
+    // writes for every mod with a folder the same releases holding only its own entries.
+    static Map<String, String> render(List<String> lines, Map<String, String> mods, String firstOwn,
+                                      String lastShared) {
+        int start = lines.findIndexOf { it.startsWith('## [') }
+        int stop = lines.findIndexOf { it.startsWith("## [${lastShared}]") }
+        if (start < 0 || stop < start) {
+            throw new GradleException("CHANGELOG.md has no release section above [${lastShared}].")
+        }
+        List<Map> versions = []
+        Map entry = null
+        for (int i = start; i < stop; i++) {
+            String line = lines[i]
+            String at = "CHANGELOG.md:${i + 1}"
+            if (line.startsWith('## ')) {
+                versions << [header: line, intro: [], sections: []]
+                entry = null
+            } else if (line.startsWith('### ')) {
+                versions[-1].sections << [header: line, entries: []]
+                entry = null
+            } else if (line.startsWith('- ')) {
+                def opening = line =~ /^- \(([^)]+)\) (.+)$/
+                if (!opening.matches()) {
+                    throw new GradleException("${at}: an entry from ${firstOwn} on opens with the mods it concerns, " +
+                            "as in \"- (Computers) Subject: ...\".")
+                }
+                List<String> names = opening.group(1).split(', ') as List<String>
+                List<String> unknown = names.findAll { !mods.containsKey(it) }
+                if (!unknown.isEmpty()) {
+                    throw new GradleException("${at}: no mod of the series is called ${unknown.join(', ')}; the " +
+                            "names are ${mods.keySet().join(', ')}.")
+                }
+                if (versions[-1].sections.isEmpty()) {
+                    throw new GradleException("${at}: an entry stands under no section.")
+                }
+                entry = [mods: names, lines: ['- ' + opening.group(2)]]
+                versions[-1].sections[-1].entries << entry
+            } else if (line.startsWith('  ') && entry != null) {
+                entry.lines << line
+            } else if (line.isBlank()) {
+                entry = null
+                if (versions[-1].sections.isEmpty()) {
+                    versions[-1].intro << ''
+                }
+            } else if (versions[-1].sections.isEmpty()) {
+                versions[-1].intro << line
+            } else {
+                throw new GradleException("${at}: a line that belongs to no entry.")
+            }
+        }
+        Map<String, String> written = [:]
+        mods.each { String name, String folder ->
+            if (folder.isEmpty()) {
+                return
+            }
+            StringBuilder out = new StringBuilder()
+            out << "# Changelog of J's ${name}\n\n"
+            out << "Every change to J's ${name}, newest first, taken from the series' changelog\n"
+            out << "([CHANGELOG.md](../CHANGELOG.md)), which records each change once with the mods it concerns "
+            out << "and keeps\nthe releases before ${firstOwn}. "
+            out << "This file is written from it by `./gradlew changelogs`.\n"
+            versions.each { Map version ->
+                out << "\n${version.header}\n"
+                List<String> intro = version.intro as List<String>
+                while (!intro.isEmpty() && intro[0].isEmpty()) {
+                    intro = intro.drop(1)
+                }
+                while (!intro.isEmpty() && intro[-1].isEmpty()) {
+                    intro = intro.dropRight(1)
+                }
+                if (!intro.isEmpty()) {
+                    out << '\n'
+                    intro.each { out << it << '\n' }
+                }
+                version.sections.each { Map section ->
+                    List<Map> own = section.entries.findAll { (it.mods as List).contains(name) }
+                    if (!own.isEmpty()) {
+                        out << "\n${section.header}\n"
+                        own.each { Map e -> (e.lines as List<String>).each { out << it << '\n' } }
+                    }
+                }
+            }
+            written[folder] = out.toString()
+        }
+        return written
+    }
+}
+
+def configureChangelogs = { ModChangelogs task ->
+    task.series = layout.projectDirectory.file('CHANGELOG.md')
+    task.mods = changelogMods
+    task.firstOwnRelease = '0.5.0a'
+    task.lastSharedRelease = '0.4.0a'
+    task.repository = layout.projectDirectory
+}
+
+tasks.register('changelogs', ModChangelogs) {
+    group = 'documentation'
+    description = "Writes each mod's changelog from the series' changelog."
+    configureChangelogs(it)
+    verifyOnly = false
+}
+
+tasks.register('checkChangelogs', ModChangelogs) {
+    group = 'verification'
+    description = "Fails when a mod's changelog is not what the series' changelog makes of it."
+    configureChangelogs(it)
+    verifyOnly = true
+    mustRunAfter 'changelogs'
+}
+
+subprojects {
+    plugins.withId('java-library') {
+        tasks.named('check') {
+            dependsOn ':checkChangelogs'
+        }
+    }
+}

@@ -95,7 +95,9 @@ Every development cycle has a codename, and every release that brings more than 
 3. Move the `Unreleased` entries of `CHANGELOG.md` under the new version and date, followed by the
    release's name when it has one (`## [0.3.0a] - 2026-09-13 - The Programming Update`). The section
    opens with the cycle's codename, and notes a phase change if the release crosses a gate. Its API part
-   comes first and says the version each mod's API reached. Add the name to the table above.
+   comes first and says the version each mod's API reached. Add the name to the table above. Then run
+   `./gradlew changelogs`, which writes each mod's own changelog (`core/`, `computers/` and
+   `industrial/CHANGELOG.md`) from the series' one, and commit what it writes.
 4. Tag the commit `v<version>` (for example `v0.1.0a`) and push the tag.
 5. The tag starts the Release workflow. It checks that the tag and `mod_version` agree, builds the jars
    with `./gradlew build -Prelease`, takes the version's section of `CHANGELOG.md` as the notes and drafts
@@ -108,7 +110,8 @@ Every development cycle has a codename, and every release that brings more than 
 
 ## Checks
 
-Every push runs the Build workflow: it compiles every mod, runs the unit tests, regenerates the data of
-every mod and fails if the result differs from what is committed, and runs the GameTests. The client
+Every push runs the Build workflow: it compiles every mod, runs the unit tests, checks that each mod's
+changelog is what the series' changelog makes of it, regenerates the data of every mod and fails if the
+result differs from what is committed, and runs the GameTests. The client
 tests open real game windows, so they run every night on `main` and on demand from the Actions tab,
 with each shard's report and screenshots kept on the run.

@@ -2,76 +2,86 @@
 
 All notable changes to the J's Tech Series are recorded here, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version numbers and phase letters follow
-[docs/RELEASING.md](docs/RELEASING.md).
+[docs/RELEASING.md](docs/RELEASING.md). From 0.5.0a on, every entry opens with the mods it concerns and its
+subject, as in "(Computers) Racks and servers:", and each mod has a changelog of its own written from this one:
+[J's Core](core/CHANGELOG.md), [J's Computers](computers/CHANGELOG.md) and
+[J's Industrial](industrial/CHANGELOG.md).
 
 ## [Unreleased]
 
 ### API
-- J's Core's API is at version 4 and J's Computers' at version 7. Everything this release adds to either, or
-  changes, carries `@ApiStatus.Experimental`: it keeps the mark through this release and loses it when the next
-  cycle begins. Each mod's API is now kept line by line, every type and member a mod can reach with the version
-  that brought it, and the tests fail when the code and that list disagree; `docs/API.md` says how.
-- Added: `ComputersRegisterEvent.graphicsProgram` and `JsComputersApi.registerGraphicsProgram`: a program whose
-  windows draw through a surface says so on both sides, so the server counts the video memory they hold too. An ISA
-  or a file opener registered after the game has loaded is refused with a line in the log.
-- Added: `GuideBlockRenderers` and `IGuideBlockRenderer` in J's Core's client API: what draws a mod's own kind of
-  block on a manual's page, or a picture drawn as the page is shown, registered once from its client setup, handed
-  the block's data as a tag.
-- Added: a build can ask a language for an instruction set and a version of the language at once, with
-  `IProgrammingLanguage.compile(sources, CompileOptions)`; a language without versions builds as it did for the
-  instruction set alone, which is what the method does unless overridden.
-- Added: `IsaSpec`, `ComputersRegisterEvent.isa` and `JsComputersApi.registerIsa`, which take over from
+- (Core, Computers) Versions: J's Core's API is at version 4 and J's Computers' at version 7. Everything this release
+  adds to either, or changes, carries `@ApiStatus.Experimental`: it keeps the mark through this release and loses it
+  when the next cycle begins. Each mod's API is now kept line by line, every type and member a mod can reach with the
+  version that brought it, and the tests fail when the code and that list disagree; `docs/API.md` says how.
+- (Computers) Added: `ComputersRegisterEvent.graphicsProgram` and `JsComputersApi.registerGraphicsProgram`: a program
+  whose windows draw through a surface says so on both sides, so the server counts the video memory they hold too. An
+  ISA or a file opener registered after the game has loaded is refused with a line in the log.
+- (Computers) Added: `IsaSpec`, `ComputersRegisterEvent.isa` and `JsComputersApi.registerIsa`, which take over from
   `ArchitectureSpec`, `architecture` and `registerArchitecture`.
-- Added: `EngineDef`, `EngineCapability`, `ComputersRegisterEvent.engine` and `JsComputersApi.registerEngine`. A mod
-  registers a Network Operations Engine by its package (a program registered like any other), the dialect it
-  speaks, the version it ships in for each age of Mainframe and the extras it offers; until it brings a planner of
-  its own it plans the way the Midsoft IQL Server does. Its package is of the new kind `ProgramKind.NETWORK_ENGINE`.
-- Added: the package `dev.jstech.computers.api.planner`, for the engines that take extensions (NextgreIQL among
-  them): `IPlannerRule` weighs every plan the planner considers and is switched on or off per Mainframe;
+- (Computers) Added: `EngineDef`, `EngineCapability`, `ComputersRegisterEvent.engine` and
+  `JsComputersApi.registerEngine`. A mod registers a Network Operations Engine by its package (a program registered
+  like any other), the dialect it speaks, the version it ships in for each age of Mainframe and the extras it offers;
+  until it brings a planner of its own it plans the way the Midsoft IQL Server does. Its package is of the new kind
+  `ProgramKind.NETWORK_ENGINE`.
+- (Computers) Added: the package `dev.jstech.computers.api.planner`, for the engines that take extensions (NextgreIQL
+  among them): `IPlannerRule` weighs every plan the planner considers and is switched on or off per Mainframe;
   `IPlannerOperator` is a hint the dialect accepts after a statement; `IPlannerStatistic` shows among the planner's
   statistics and may say how long a step takes; `IExplainNode` adds notes under a plan's steps. A plan is a
   `PlanCandidate` of `PlanStep`s, whose cost a rule or a hint may change or which it may set aside, saying why. They
   are registered with `ComputersRegisterEvent.plannerRule`, `plannerOperator`, `plannerStatistic` and `explainNode`
   (or the `JsComputersApi.register...` methods of the same names).
-- Changed: what a program declares with `ProgramSpec.withRam` is what it holds on a machine of the Legacy era, grown
-  on the later eras and shrunk on the Vintage; `ProgramSpec.legacyMb()` says it, with what a program of its kind
-  holds when it declared nothing, and `ProgramSpec.ramMbOn(HardwareEra)` and `ramMbOn(HardwareEra, boolean)` say
+- (Computers) Added: `ProgramRequirement` and `ProgramSpec.requires`, with `requiring`: a program says what it needs
+  of the network's engine (the engine it is written for and the oldest version of it, or the capabilities it uses),
+  which is checked when it is opened rather than when it is installed.
+- (Computers) Added: kinds of component for Σ# programs' windows: `ComponentKind` and `IComponentValidator`,
+  registered with `ComputersRegisterEvent.componentKind` (or `JsComputersApi.registerComponentKind`) in the adding
+  mod's namespace; on the client, `ComponentRenderers.register` with an `IComponentRenderer`, which reports what a
+  player did through `IComponentActions`.
+- (Computers) Added: programs with windows written in Java: `DesktopApps.register` with an `IDesktopProgramFactory`
+  making a `DesktopProgram`, which draws itself or through a `SurfaceRenderer`, for whoever opened it; this replaces
+  registering a window factory with the mod's own desktop code.
+- (Computers) Changed: what a program declares with `ProgramSpec.withRam` is what it holds on a machine of the Legacy
+  era, grown on the later eras and shrunk on the Vintage; `ProgramSpec.legacyMb()` says it, with what a program of its
+  kind holds when it declared nothing, and `ProgramSpec.ramMbOn(HardwareEra)` and `ramMbOn(HardwareEra, boolean)` say
   what it holds on a machine of that era. The forms of `ramMbOn` that took the system an `OsDef` names are gone.
-- Added: `ProgramRequirement` and `ProgramSpec.requires`, with `requiring`: a program says what it needs of the
-  network's engine (the engine it is written for and the oldest version of it, or the capabilities it uses), which
-  is checked when it is opened rather than when it is installed.
-- Changed: `IProgrammingLanguage.Complaint` carries its message as a `Text`, read in the language of whoever is
-  shown it, with the `arguments` the message was written around; `text()` is the line a person reads, and
-  `format()` is still the same line in English.
-- Changed: `OsDef` says its shell with a `ShellKind` (`shell`, where it had the id `shellId`), and so do
+- (Computers) Changed: `OsDef` says its shell with a `ShellKind` (`shell`, where it had the id `shellId`), and so do
   `linuxDistro` and `terminalSystem`. `ProgramSpec` has a `description`, `of` no longer takes the display name
   (`named` and `described` give the English words), and `name()` is the name to translate. A
   `DesktopEnvironmentDef`'s native names are `TextKey`s, and so are what `nameOf` and `launcherLabel` give.
-- Changed: `ComputerTerminalMenu` stands on the Core's `CoreMenu`, which now holds what it had from the menu it
-  stood on before. Its layout constants (`INV_X`, `INV_Y`, `HOTBAR_Y` and the `STORAGE_` ones) and
-  `storageSlotCount()` are gone: `invY()` and `hotbarY()`, with the new `invX()`, give where the inventory is
-  drawn. `openingTab` says which tab a terminal opens on.
-- Added: J's Core's client API, `dev.jstech.core.api.client`: `ISkin`, the look a mod draws through inside a
-  machine's screen (moved here from the Core's own GUI package); `SurfaceRenderer`, what draws frames onto a
-  surface of its size, asked no faster than its frame cap and only while it is shown; and the two surfaces,
-  `PixelSurface`, an array of colours uploaded when it changed, and `GpuSurface`, a render target drawn into with
-  the game's rendering.
-- Added: kinds of component for Σ# programs' windows: `ComponentKind` and `IComponentValidator`, registered with
-  `ComputersRegisterEvent.componentKind` (or `JsComputersApi.registerComponentKind`) in the adding mod's namespace;
-  on the client, `ComponentRenderers.register` with an `IComponentRenderer`, which reports what a player did
-  through `IComponentActions`.
-- Added: programs with windows written in Java: `DesktopApps.register` with an `IDesktopProgramFactory` making a
-  `DesktopProgram`, which draws itself or through a `SurfaceRenderer`, for whoever opened it; this replaces
-  registering a window factory with the mod's own desktop code.
-- Changed: an operating space's screen is handed an `IOperatingSpace`, a narrow face of the machine (its menu as
-  the game's kind of menu, the machine, the monitor, the space and the era), in place of `ComputerTerminalMenu`,
-  which is no longer part of the API. `IOperatingSpaceScreen.open` takes it and gives back the screen built on its
-  menu.
-- Deprecated: `ComputersRegisterEvent.architecture`, `JsComputersApi.registerArchitecture` and
-  `ArchitectureSpec`. They still work, handing what they are given to the instruction set registration, and go
-  in the next cycle; `ArchitectureSpec.toIsa()` gives the same values under the new name.
-- Removed: `ArchitectureSpec.runs` (ask the `IsaSpec` from `toIsa()`), and `DesktopEnvironmentDef.programFor`.
-- Added (J's Core, outside the versioned API for now): the parts of a general library for technology mods.
+- (Computers) Changed: `ComputerTerminalMenu` stands on the Core's `CoreMenu`, which now holds what it had from the
+  menu it stood on before. Its layout constants (`INV_X`, `INV_Y`, `HOTBAR_Y` and the `STORAGE_` ones) and
+  `storageSlotCount()` are gone: `invY()` and `hotbarY()`, with the new `invX()`, give where the inventory is drawn.
+  `openingTab` says which tab a terminal opens on.
+- (Computers) Changed: an operating space's screen is handed an `IOperatingSpace`, a narrow face of the machine (its
+  menu as the game's kind of menu, the machine, the monitor, the space and the era), in place of
+  `ComputerTerminalMenu`, which is no longer part of the API. `IOperatingSpaceScreen.open` takes it and gives back the
+  screen built on its menu.
+- (Computers) Deprecated: `ComputersRegisterEvent.architecture`, `JsComputersApi.registerArchitecture` and
+  `ArchitectureSpec`. They still work, handing what they are given to the instruction set registration, and go in the
+  next cycle; `ArchitectureSpec.toIsa()` gives the same values under the new name.
+- (Computers) Removed: `ArchitectureSpec.runs` (ask the `IsaSpec` from `toIsa()`), and
+  `DesktopEnvironmentDef.programFor`.
+- (Computers) Changed: its advancements stand on J's Core's event trigger, `jscore:event`, with the events named in
+  the mod's namespace (`jsc:post_passed`); `JscEventTrigger`, `JscTriggers.EVENT` and the mod's own `AdvancementTab`,
+  `AdvancementSpec` and `ConditionalAdvancementProvider` are gone.
+- (Industrial) Changed: its machines stand on J's Core's; `AbstractMachineBlockEntity`,
+  `ProcessingMachineBlockEntity`, `MaceratingRecipe` and `CompressingRecipe` are gone, and its two kinds of recipe are
+  J's Core's processing recipes.
+- (Core) Added: `GuideBlockRenderers` and `IGuideBlockRenderer` in J's Core's client API: what draws a mod's own kind
+  of block on a manual's page, or a picture drawn as the page is shown, registered once from its client setup, handed
+  the block's data as a tag.
+- (Core) Added: a build can ask a language for an instruction set and a version of the language at once, with
+  `IProgrammingLanguage.compile(sources, CompileOptions)`; a language without versions builds as it did for the
+  instruction set alone, which is what the method does unless overridden.
+- (Core) Changed: `IProgrammingLanguage.Complaint` carries its message as a `Text`, read in the language of whoever is
+  shown it, with the `arguments` the message was written around; `text()` is the line a person reads, and `format()`
+  is still the same line in English.
+- (Core) Added: J's Core's client API, `dev.jstech.core.api.client`: `ISkin`, the look a mod draws through inside a
+  machine's screen (moved here from the Core's own GUI package); `SurfaceRenderer`, what draws frames onto a surface
+  of its size, asked no faster than its frame cap and only while it is shown; and the two surfaces, `PixelSurface`, an
+  array of colours uploaded when it changed, and `GpuSurface`, a render target drawn into with the game's rendering.
+- (Core) Added, outside the versioned API for now: the parts of a general library for technology mods.
   Progression axes (`ProgressionAxis`, `ProgressionAxes`, `PlayerProgress`, `ProgressionGate`) that the hardware
   eras and the industrial tiers are now two of; multiblock patterns from data files or code, with ports on their
   parts (`MultiblockPattern`, `MultiblockPatterns`, `PortKind`); chunk and region data with a spatial index
@@ -89,12 +99,6 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   vehicles (`VehicleEntity`, `VehicleSpec`, `DriverInput`, `IDriver`), robots (`RobotEntity`, `IRobotTask`,
   `RobotTasks`, `CoreRobotTasks`) and projectiles (`CoreProjectile`, `ProjectileSpec`, `Projectiles`); and the
   settings screen (`CoreConfigScreen`, `ConfigDraft`).
-- Changed (J's Computers): its advancements stand on J's Core's event trigger, `jscore:event`, with the events named
-  in the mod's namespace (`jsc:post_passed`); `JscEventTrigger`, `JscTriggers.EVENT` and the mod's own
-  `AdvancementTab`, `AdvancementSpec` and `ConditionalAdvancementProvider` are gone.
-- Changed (J's Industrial): its machines stand on J's Core's; `AbstractMachineBlockEntity`,
-  `ProcessingMachineBlockEntity`, `MaceratingRecipe` and `CompressingRecipe` are gone, and its two kinds of recipe
-  are J's Core's processing recipes.
 
 ### Added
 - (Computers) Eras: Two hardware eras join the ladder: the Transition, between Legacy and Standard (the late 2000s,
