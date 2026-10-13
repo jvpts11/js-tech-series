@@ -32,6 +32,7 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
+import net.neoforged.neoforge.common.IOUtilities;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -124,7 +125,14 @@ public final class LegacySaveGameTests {
             NbtIo.writeCompressed(root, file);
             final DimensionDataStorage storage = new DimensionDataStorage(folder.toFile(),
                     level.getServer().getFixerUpper(), level.registryAccess());
-            return Objects.requireNonNull(storage.get(factory, name), "the file " + name);
+            final StateSave<V> read = Objects.requireNonNull(storage.get(factory, name), "the file " + name);
+            /*
+             * A new storage tidies its folder's temporary files on NeoForge's IO worker. Deleting the folder under
+             * that task makes it fail, and the failure surfaces in whichever test next waits on the worker, so the
+             * folder only goes once the worker is done with it.
+             */
+            IOUtilities.waitUntilIOWorkerComplete();
+            return read;
         } catch (final IOException cannotWrite) {
             throw new UncheckedIOException("the old file " + name + " could not be written", cannotWrite);
         } finally {
