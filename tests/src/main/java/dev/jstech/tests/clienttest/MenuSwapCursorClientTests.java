@@ -43,6 +43,7 @@ public final class MenuSwapCursorClientTests {
         /* A quarter of the way in from the left and a third down: well clear of the middle the game would use. */
         final double[] put = new double[2];
         final boolean[] focused = new boolean[1];
+        final int[] settled = new int[1];
         ctx.thenBuild(0, world -> {
                     world.setBlock(MACHINE, ComputingModule.MAINFRAME.get());
                     final MainframeBlockEntity machine = world.blockEntity(MACHINE, MainframeBlockEntity.class);
@@ -62,13 +63,20 @@ public final class MenuSwapCursorClientTests {
                     InputConstants.grabOrReleaseMouse(window, GLFW.GLFW_CURSOR_NORMAL, put[0], put[1]);
                     focused[0] = ctx.mc().isWindowActive();
                 })
-                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
-                .then(SETTLE, () -> {
-                    /*
-                     * The window has to hold the focus the whole way. Run beside other clients, one of theirs can
-                     * take it in between, and then where the cursor stands is not this window's doing, so it says
-                     * nothing about what this checks.
-                     */
+                /*
+                 * The window has to hold the focus the whole way, so it is looked at on every tick until the check.
+                 * Run beside other clients, one of theirs can take it in between and give it back, and the cursor a
+                 * window gets back is not where this checks it was left, so a run that lost it says nothing here.
+                 */
+                .thenWaitUntil(() -> {
+                    focused[0] &= ctx.mc().isWindowActive();
+                    return ctx.mc().screen instanceof DesktopScreen;
+                }, BOOT_WAIT, "the desktop to open")
+                .thenWaitUntil(() -> {
+                    focused[0] &= ctx.mc().isWindowActive();
+                    return ++settled[0] > SETTLE;
+                }, SETTLE * 4, "the desktop to settle")
+                .then(0, () -> {
                     if (!focused[0] || !ctx.mc().isWindowActive()) {
                         return;
                     }
